@@ -40,10 +40,10 @@ FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::FrankWolfeGDDP(const GDDP_Settings& gddpSe
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <size_t STATE_DIM, size_t INPUT_DIM>
-void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(scalar_array_t eventTimes, const slq_data_collector_t* dcPtr,
-                                               const dynamic_vector_t& maxGradientInverse, NLP_Constraints* eventTimeConstraintPtr) {
+void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(const slq_data_collector_t* dcPtr, const dynamic_vector_t& maxGradientInverse,
+                                               NLP_Constraints* eventTimeConstraintPtr) {
   // run the base method which will calculate the gradient
-  this->run(eventTimes, dcPtr);
+  this->run(dcPtr);
 
   // no need for using Frank-Wolfe if there is no constraint
   if (!eventTimeConstraintPtr) {
@@ -57,7 +57,7 @@ void FrankWolfeGDDP<STATE_DIM, INPUT_DIM>::run(scalar_array_t eventTimes, const 
 
   // compute the projected gradient
   dynamic_vector_t fwDescentDirection;
-  frankWolfeDescentDirectionPtr_->run(eventTimes, this->nominalCostFuntionDerivative_, maxGradientInverse, eventTimeConstraintPtr,
+  frankWolfeDescentDirectionPtr_->run(this->eventTimes_, this->nominalCostFuntionDerivative_, maxGradientInverse, eventTimeConstraintPtr,
                                       fwDescentDirection);
   // since it is gradient not the descent direction
   this->nominalCostFuntionDerivative_ = -fwDescentDirection;

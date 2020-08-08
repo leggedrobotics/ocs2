@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,16 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef CONSTRAINTBASE_OCS2_H_
-#define CONSTRAINTBASE_OCS2_H_
+#pragma once
 
-#include <cstring>
-#include <memory>
-
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
-#include "ocs2_core/logic/rules/HybridLogicRules.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
@@ -57,220 +50,111 @@ namespace ocs2 {
  * - Quadratic approximation of each inequality constraint: \f$ h_{0,i}(t) + h_{x,i}(t) \delta x + h_{u,i}(t) \delta u \f$ \n
  *  \f$ \qquad + 0.5 \delta x  H_{xx,i}(t) \delta x +  \delta u  H_{ux,i}(t) \delta x + 0.5 \delta u  H_{uu,i}(t) \delta u
  *  \geq  0 \quad \forall i \f$
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class ConstraintBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<ConstraintBase<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const ConstraintBase<STATE_DIM, INPUT_DIM> >;
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
-  using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-  using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
-  using constraint1_vector_array_t = typename DIMENSIONS::constraint1_vector_array_t;
-  using constraint2_vector_t = typename DIMENSIONS::constraint2_vector_t;
-  using constraint2_vector_array_t = typename DIMENSIONS::constraint2_vector_array_t;
-  using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
-  using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
-  using constraint2_state_matrix_t = typename DIMENSIONS::constraint2_state_matrix_t;
-
-  /**
-   * Default constructor
-   */
+  /** Default constructor */
   ConstraintBase() = default;
 
-  /**
-   * Default copy constructor
-   */
-  ConstraintBase(const ConstraintBase& rhs) = default;
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   virtual ~ConstraintBase() = default;
 
-  /**
-   * Sets the current time, state, and control input.
-   *
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @param [in] u: Current input.
-   */
-  virtual void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
-    t_ = t;
-    x_ = x;
-    u_ = u;
-  }
-
-  /**
-   * Clones the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual ConstraintBase<STATE_DIM, INPUT_DIM>* clone() const { return new ConstraintBase<STATE_DIM, INPUT_DIM>(*this); }
+  /** Clones the class. */
+  virtual ConstraintBase* clone() const;
 
   /**
    * Computes the state-input equality constraints.
    *
-   * @param [out] e: The state-input equality constraints value.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
+   * @return The state-input equality constraints value.
    */
-  virtual void getConstraint1(constraint1_vector_t& e) {}
-
-  /**
-   * Gets the number of active state-input equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-input active equality constraints.
-   */
-  virtual size_t numStateInputConstraint(const scalar_t& time) { return 0; }
+  virtual vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Gets the state-only equality constraints.
    *
-   * @param [out] h: The state-only (in)equality constraints value.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @return The state-only equality constraints value.
    */
-  virtual void getConstraint2(constraint2_vector_t& h) {}
-
-  /**
-   * Get the number of state-only active equality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of state-only active (in)equality constraints.
-   */
-  virtual size_t numStateOnlyConstraint(const scalar_t& time) { return 0; }
+  virtual vector_t stateEqualityConstraint(scalar_t t, const vector_t& x);
 
   /**
    * Gets the inequality constraints.
    *
    *  \f$ h(x, u, t) \geq 0 \f$
    *
-   * @param [out] h: Vector of inequality constraints values.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
+   * @return Vector of inequality constraints values.
    */
-  virtual void getInequalityConstraint(scalar_array_t& h) {}
-
-  /**
-   * Get the number of inequality constraints.
-   *
-   * @param [in] time: time.
-   * @return number of inequality constraints.
-   */
-  virtual size_t numInequalityConstraint(const scalar_t& time) { return 0; }
+  virtual vector_t inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
    * Compute the final state-only equality constraints.
    *
-   * @param [out] h_f: The final state-only (in)equality constraints value.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @return The final state-only equality constraints value.
    */
-  virtual void getFinalConstraint2(constraint2_vector_t& h_f) {}
+  virtual vector_t finalStateEqualityConstraint(scalar_t t, const vector_t& x);
 
   /**
-   * Get the number of final state-only active (in)equality constraints.
+   * Gets the state-input equality constraints linear approximation.
    *
-   * @param [in] time: time.
-   * @return number of final state-only active equality constraints.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
+   * @return The constraint function linear approximation
    */
-  virtual size_t numStateOnlyFinalConstraint(const scalar_t& time) { return 0; }
+  virtual VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                            const vector_t& u);
 
   /**
-   * The C matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
+   * Gets the state-only equality constraints linear approximation.
    *
-   * @param [out] C: \f$ C(t) \f$ matrix.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @return The constraint function linear approximation (dfdu is not set)
    */
-  virtual void getConstraint1DerivativesState(constraint1_state_matrix_t& C) {}
+  virtual VectorFunctionLinearApproximation stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x);
 
   /**
-   * The D matrix at a given operating point for the linearized state-input constraints,
-   * \f$ C(t) \delta x + D(t) \delta u + e(t) = 0 \f$.
+   * Gets the inequality constraints quadratic approximation.
    *
-   * @param [out] D: \f$ D(t) \f$ matrix.
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @param [in] u: Current input.
+   * @return The constraint function quadratic approximation
    */
-  virtual void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) {}
+  virtual VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Gets the final state-only equality constraints linear approximation.
+   *
+   * @param [in] t: Current time.
+   * @param [in] x: Current state.
+   * @return The constraint function linear approximation (dfdu is not set)
+   */
+  virtual VectorFunctionLinearApproximation finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x);
 
   /**
    * calculate and retrieve the the derivative of the state-input constraints w.r.t. event times.
-   * g1DevArray[i] is a vector of dimension MAX_CONSTRAINT1_DIM_ which is the partial derivative of
-   * state-input equality constraints with respect to i'th event time.
-   *
-   * Note that only nc1 top rows of g1DevArray[i] are valid where nc1 is the number of active
-   * state-input constraints at the current time.
+   * g1DevArray[i] is the partial derivative of state-input equality constraints with respect to i'th event time.
    *
    * If the constraints are not a function of event times either set the array size to zero (as the default)
-   * implementation or set it to an array of zero vector with a size equal to number event times.
+   * or set it to an array of zero vectors with a size equal to number event times.
    *
-   * @param [out] g1DevArray: an array of nc1-by-1 vector.
+   * @return array of vectors.
    */
-  virtual void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) { g1DevArray.clear(); }
-
-  /**
-   * The F matrix at a given operating point for the linearized state-only constraints,
-   * \f$ F(t) \delta x + h(t) = 0 \f$.
-   *
-   * @param [out] F: \f$ F(t) \f$ matrix.
-   */
-  virtual void getConstraint2DerivativesState(constraint2_state_matrix_t& F) {}
-
-  /**
-   * Get the derivative of the inequality constraints.
-   * @param [out] dhdx: Vector of derivatives for each constraint with respect to state vector.
-   */
-  virtual void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) {}
-
-  /**
-   * Get the derivative of the inequality constraints.
-   * @param [out] dhdu: Vector derivatives for each constraint with respect to input vector.
-   */
-  virtual void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) {}
-
-  /**
-   * Get the second derivative of the inequality constraints.
-   * @param [out] ddhdxdx: Vector of second derivatives for each constraint with respect to state vector.
-   */
-  virtual void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) {}
-
-  /**
-   * Get the second derivative of the inequality constraints.
-   * @param [out] ddhudu: Vector of second derivatives for each constraint with respect to input vector.
-   */
-  virtual void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) {}
-
-  /**
-   * Get the second derivative of the inequality constraints.
-   * @param [out] ddhudx: Vector of second derivatives for each constraint with respect to input vector and state.
-   */
-  virtual void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) {}
-
-  /**
-   * The F matrix at a given operating point for the linearized terminal state-only constraints,
-   * \f$ F_f(t) \delta x + h_f(t) = 0 \f$.
-   *
-   * @param [out] F_f: \f$ F_f(t) \f$ matrix.
-   */
-  virtual void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) {}
+  virtual vector_array_t stateInputEqualityConstraintDerivativesEventTimes(scalar_t t, const vector_t& x, const vector_t& u);
 
  protected:
-  scalar_t t_;
-  state_vector_t x_;
-  input_vector_t u_;
+  /** Default copy constructor */
+  ConstraintBase(const ConstraintBase& rhs) = default;
 };
 
 }  // end of namespace ocs2
-
-#endif /* CONSTRAINTBASE_OCS2_H_ */

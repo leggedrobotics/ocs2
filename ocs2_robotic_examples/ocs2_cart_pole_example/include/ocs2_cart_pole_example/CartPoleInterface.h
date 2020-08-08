@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,41 +32,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // C++
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <string>
 
 // OCS2
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // CartPole
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
-#include "ocs2_cart_pole_example/cost/CartPoleCost.h"
 #include "ocs2_cart_pole_example/definitions.h"
 #include "ocs2_cart_pole_example/dynamics/CartPoleSystemDynamics.h"
 
 namespace ocs2 {
 namespace cartpole {
 
-class CartPoleInterface final : public RobotInterface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+class CartPoleInterface final : public RobotInterface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = RobotInterface<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-
-  using dim_t = Dimensions<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-  using CartPoleConstraint = ConstraintBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-  using CartPoleOperatingPoint = SystemOperatingPoint<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-
-  using rollout_base_t = RolloutBase<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-  using time_triggered_rollout_t = TimeTriggeredRollout<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-
-  using mpc_t = MPC_SLQ<cartpole::STATE_DIM_, cartpole::INPUT_DIM_>;
-
   /**
    * Constructor
    *
@@ -79,19 +67,22 @@ class CartPoleInterface final : public RobotInterface<cartpole::STATE_DIM_, cart
    */
   ~CartPoleInterface() override = default;
 
-  const dim_t::state_vector_t& getInitialState() { return initialState_; }
-  SLQ_Settings& slqSettings() { return slqSettings_; };
-  MPC_Settings& mpcSettings() { return mpcSettings_; };
+  const vector_t& getInitialState() { return initialState_; }
+  const vector_t& getInitialTarget() { return xFinal_; }
 
-  std::unique_ptr<mpc_t> getMpc();
+  ddp::Settings& ddpSettings() { return ddpSettings_; }
+
+  mpc::Settings& mpcSettings() { return mpcSettings_; }
+
+  std::unique_ptr<MPC_DDP> getMpc();
 
   const CartPoleSytemDynamics& getDynamics() const override { return *cartPoleSystemDynamicsPtr_; }
 
-  const CartPoleSytemDynamics& getDynamicsDerivatives() const override { return *cartPoleSystemDynamicsPtr_; }
+  const QuadraticCostFunction& getCost() const override { return *cartPoleCostPtr_; }
 
-  const CartPoleCost& getCost() const override { return *cartPoleCostPtr_; }
+  const RolloutBase& getRollout() const { return *ddpCartPoleRolloutPtr_; }
 
-  const rollout_base_t& getRollout() const { return *ddpCartPoleRolloutPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *cartPoleOperatingPointPtr_; }
 
  protected:
   /**
@@ -107,27 +98,23 @@ class CartPoleInterface final : public RobotInterface<cartpole::STATE_DIM_, cart
   std::string taskFile_;
   std::string libraryFolder_;
 
-  SLQ_Settings slqSettings_;
-  MPC_Settings mpcSettings_;
+  ddp::Settings ddpSettings_;
+  mpc::Settings mpcSettings_;
 
-  std::unique_ptr<rollout_base_t> ddpCartPoleRolloutPtr_;
+  std::unique_ptr<RolloutBase> ddpCartPoleRolloutPtr_;
 
   std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
-  std::unique_ptr<CartPoleCost> cartPoleCostPtr_;
-  std::unique_ptr<CartPoleConstraint> cartPoleConstraintPtr_;
-  std::unique_ptr<CartPoleOperatingPoint> cartPoleOperatingPointPtr_;
+  std::unique_ptr<QuadraticCostFunction> cartPoleCostPtr_;
+  std::unique_ptr<ConstraintBase> cartPoleConstraintPtr_;
+  std::unique_ptr<OperatingPoints> cartPoleOperatingPointPtr_;
 
   // cost parameters
-  dim_t::state_matrix_t qm_;
-  dim_t::input_matrix_t rm_;
-  dim_t::state_matrix_t qmFinal_;
-  dim_t::state_vector_t xFinal_;
-  dim_t::state_vector_t xNominal_;
-  dim_t::input_vector_t uNominal_;
+  matrix_t qm_{STATE_DIM, STATE_DIM};
+  matrix_t rm_{INPUT_DIM, INPUT_DIM};
+  matrix_t qmFinal_{STATE_DIM, STATE_DIM};
 
-  size_t numPartitions_ = 0;
-  dim_t::scalar_array_t partitioningTimes_;
-  dim_t::state_vector_t initialState_;
+  vector_t initialState_{STATE_DIM};
+  vector_t xFinal_{STATE_DIM};
 };
 
 }  // namespace cartpole

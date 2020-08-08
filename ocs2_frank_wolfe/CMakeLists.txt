@@ -12,17 +12,15 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(GLPK MODULE REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
-
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-   INCLUDE_DIRS 
+   INCLUDE_DIRS
      include
      ${EIGEN3_INCLUDE_DIRS}
-   CATKIN_DEPENDS 
-     ocs2_core 
+   CATKIN_DEPENDS
+     ocs2_core
    LIBRARIES
      ${PROJECT_NAME}
    DEPENDS
@@ -47,6 +45,7 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #############
 ## Install ##
@@ -71,29 +70,32 @@ install(TARGETS ${PROJECT_NAME}
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_frank_wolfe
 
-catkin_add_gtest(quadratic_test 
+catkin_add_gtest(quadratic_test
   test/QuadraticTest.cpp
 )
 target_link_libraries(quadratic_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
+  gtest_main
 )
 
-catkin_add_gtest(matyas_test 
+catkin_add_gtest(matyas_test
   test/MatyasTest.cpp
 )
 target_link_libraries(matyas_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
+  gtest_main
 )
 
-catkin_add_gtest(glpk_test 
+catkin_add_gtest(glpk_test
   test/testGLPK.cpp
 )
 target_link_libraries(glpk_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
+  gtest_main
 )

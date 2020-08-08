@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <vector>
 
+#include <ocs2_core/Types.h>
 #include "ocs2_frank_wolfe/FrankWolfeDescentDirection.h"
 #include "ocs2_frank_wolfe/NLP_Constraints.h"
 #include "ocs2_frank_wolfe/NLP_Cost.h"
@@ -55,15 +56,6 @@ namespace ocs2 {
  */
 class GradientDescent {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<0, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using eigen_scalar_array_t = typename DIMENSIONS::eigen_scalar_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-
   /**
    * Constructor.
    *
@@ -81,21 +73,21 @@ class GradientDescent {
    *
    * @param [out] cost value
    */
-  void getCost(scalar_t& cost);
+  void getCost(scalar_t& cost) const;
 
   /**
    * Gets the parameter vector.
    *
    * @param [out] parameters: the parameter vector
    */
-  void getParameters(dynamic_vector_t& parameters) const;
+  void getParameters(vector_t& parameters) const;
 
   /**
    * Gets the iteration cost log.
    *
    * @param [out] iterationCost: The cost value in each iteration.
    */
-  void getIterationsLog(eigen_scalar_array_t& iterationCost) const;
+  void getIterationsLog(scalar_array_t& iterationCost) const;
 
   /**
    * Gets a constant reference to the optimal solver's ID.
@@ -125,7 +117,7 @@ class GradientDescent {
    * @param [in] costPtr: A pointer to the NLP cost.
    * @param [in] constraintsPtr: A pointer to the NLP constraints.
    */
-  void run(const dynamic_vector_t& initParameters, const dynamic_vector_t& maxGradientInverse, NLP_Cost* costPtr,
+  void run(const vector_t& initParameters, const vector_t& maxGradientInverse, NLP_Cost* costPtr,
            NLP_Constraints* constraintsPtr = nullptr);
 
  protected:
@@ -142,8 +134,8 @@ class GradientDescent {
    * @param [out] optimizedID: The ID of the optimized solution.
    * @param [out] optimizedLearningRate: The optimized learning rate.
    */
-  void lineSearch(const dynamic_vector_t& parameters, const dynamic_vector_t& gradient, NLP_Cost* costPtr, NLP_Constraints* constraintsPtr,
-                  dynamic_vector_t& optimizedParameters, scalar_t& optimizedCost, size_t& optimizedID, scalar_t& optimizedLearningRate);
+  void lineSearch(const vector_t& parameters, const vector_t& gradient, NLP_Cost* costPtr, NLP_Constraints* constraintsPtr,
+                  vector_t& optimizedParameters, scalar_t& optimizedCost, size_t& optimizedID, scalar_t& optimizedLearningRate);
 
   /*
    * Variables
@@ -153,11 +145,11 @@ class GradientDescent {
 
   scalar_t optimizedCost_;
   size_t optimizedID_;
-  dynamic_vector_t optimizedParameters_;
-  dynamic_vector_t optimizedGradient_;
+  vector_t optimizedParameters_;
+  vector_t optimizedGradient_;
   size_t numFuntionCall_;
 
-  eigen_scalar_array_t iterationCost_;
+  scalar_array_t iterationCost_;
 
   Eigen::IOFormat CleanFmtDisplay_;
 };

@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // GNU Linear Programming Kit
 #include <glpk.h>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_frank_wolfe/NLP_Constraints.h>
 
@@ -47,14 +47,6 @@ namespace ocs2 {
  */
 class FrankWolfeDescentDirection {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<0, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_matrix_t = typename DIMENSIONS::dynamic_matrix_t;
-
   /**
    * Constructor.
    *
@@ -82,8 +74,8 @@ class FrankWolfeDescentDirection {
    * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
    * @param [out] fwDescentDirection: The Frank-Wolfe descent direction at the current parameter vector.
    */
-  void run(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient, const dynamic_vector_t& maxGradientInverse,
-           NLP_Constraints* nlpConstraintsPtr, dynamic_vector_t& fwDescentDirection);
+  void run(const vector_t& parameter, const vector_t& gradient, const vector_t& maxGradientInverse, NLP_Constraints* nlpConstraintsPtr,
+           vector_t& fwDescentDirection);
 
  private:
   /**
@@ -99,8 +91,7 @@ class FrankWolfeDescentDirection {
    * @param [in] maxGradientInverse: descent directions element-wise maximum inverse, \f$ e_v \f$.
    * @param [in] nlpConstraintsPtr: A pointer to the NLP constraints.
    */
-  void setupLP(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient, const dynamic_vector_t& maxGradientInverse,
-               NLP_Constraints* nlpConstraintsPtr);
+  void setupLP(const vector_t& parameter, const vector_t& gradient, const vector_t& maxGradientInverse, NLP_Constraints* nlpConstraintsPtr);
 
   /***********
    * Variables

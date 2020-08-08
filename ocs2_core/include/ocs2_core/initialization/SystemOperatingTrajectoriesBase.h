@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,51 +27,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SYSTEMOPERATINGTRAJECTORIESBASE_OCS2_H_
-#define SYSTEMOPERATINGTRAJECTORIESBASE_OCS2_H_
+#pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <type_traits>
-#include <vector>
-
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/logic/machine/HybridLogicRulesMachine.h"
-#include "ocs2_core/logic/rules/NullLogicRules.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
 /**
- * This is base class for initializing the SLQ-based algorithms.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
+ * This is the base class for initializing the DDP-based algorithms.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class SystemOperatingTrajectoriesBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM> >;
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-
-  /**
-   * Default constructor
-   */
+  /** Default constructor */
   SystemOperatingTrajectoriesBase() = default;
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor */
   virtual ~SystemOperatingTrajectoriesBase() = default;
 
   /**
@@ -79,7 +49,7 @@ class SystemOperatingTrajectoriesBase {
    *
    * @return A raw pointer to the class.
    */
-  virtual SystemOperatingTrajectoriesBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
+  virtual SystemOperatingTrajectoriesBase* clone() const = 0;
 
   /**
    * Gets the Operating Trajectories of the system in time interval [startTime, finalTime] where there is
@@ -91,16 +61,15 @@ class SystemOperatingTrajectoriesBase {
    * @param [out] timeTrajectory: Output time stamp trajectory.
    * @param [out] stateTrajectory: Output state trajectory.
    * @param [out] inputTrajectory: Output control input trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or
-   * override (default).
+   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
    */
-  virtual void getSystemOperatingTrajectories(const state_vector_t& initialState, const scalar_t& startTime, const scalar_t& finalTime,
-                                              scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
-                                              input_vector_array_t& inputTrajectory, bool concatOutput = false) = 0;
+  virtual void getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                                              scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
+                                              vector_array_t& inputTrajectory, bool concatOutput) = 0;
 
- private:
+ protected:
+  /** Copy constructor */
+  SystemOperatingTrajectoriesBase(const SystemOperatingTrajectoriesBase& rhs) = default;
 };
 
 }  // namespace ocs2
-
-#endif /* SYSTEMOPERATINGTRAJECTORIESBASE_OCS2_H_ */

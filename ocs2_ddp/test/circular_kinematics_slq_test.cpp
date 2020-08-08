@@ -44,53 +44,51 @@ using namespace ocs2;
 enum { STATE_DIM = 2, INPUT_DIM = 2 };
 
 TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
-  using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
+  ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.displayInfo_ = false;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.checkNumericalStability_ = false;
+  ddpSettings.debugPrintRollout_ = false;
+  ddpSettings.absTolODE_ = 1e-9;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.backwardPassIntegratorType_ = IntegratorType::ODE45;
+  ddpSettings.maxNumIterations_ = 150;
+  ddpSettings.minRelCost_ = 1e-3;
+  ddpSettings.constraintTolerance_ = 1e-5;
+  ddpSettings.constraintPenaltyInitialValue_ = 2.0;
+  ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
+  ddpSettings.preComputeRiccatiTerms_ = false;
+  ddpSettings.useNominalTimeForBackwardPass_ = true;
+  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.lineSearch_.minStepLength_ = 0.01;
+  ddpSettings.lineSearch_.hessianCorrectionStrategy_ = hessian_correction::Strategy::CHOLESKY_MODIFICATION;
+  ddpSettings.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
 
-  SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
-  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = false;
-  slqSettings.RiccatiIntegratorType_ = IntegratorType::ODE45;
-  slqSettings.ddpSettings_.displayInfo_ = true;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.checkNumericalStability_ = false;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-9;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
-  slqSettings.ddpSettings_.maxNumIterations_ = 150;
-  slqSettings.ddpSettings_.minRelCost_ = 1e-3;
-  slqSettings.ddpSettings_.constraintTolerance_ = 1e-5;
-  slqSettings.ddpSettings_.constraintPenaltyInitialValue_ = 2.0;
-  slqSettings.ddpSettings_.constraintPenaltyIncreaseRate_ = 2.0;
-  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
-  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.01;
-  slqSettings.ddpSettings_.lineSearch_.hessianCorrectionStrategy_ = Hessian_Correction::CHOLESKY_MODIFICATION;
-  slqSettings.ddpSettings_.lineSearch_.hessianCorrectionMultiple_ = 1e-3;
-
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-9;
   rolloutSettings.relTolODE_ = 1e-7;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
-  double startTime = 0.0;
-  double finalTime = 10.0;
+  scalar_t startTime = 0.0;
+  scalar_t finalTime = 10.0;
 
   // partitioning times
-  std::vector<double> partitioningTimes;
+  std::vector<scalar_t> partitioningTimes;
   partitioningTimes.push_back(startTime);
   partitioningTimes.push_back(finalTime / 2.0);
   partitioningTimes.push_back(finalTime);
 
-  using state_vector_t = CircularKinematicsSystem::state_vector_t;
-  using input_vector_t = CircularKinematicsSystem::input_vector_t;
-  CircularKinematicsSystem::state_vector_t initState(1.0, 0.0);  // radius 1.0
+  vector_t initState(2);
+  initState << 1.0, 0.0;  // radius 1.0
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system rollout and system derivatives
   CircularKinematicsSystem systemDynamics;
-  TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
+  TimeTriggeredRollout timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // cost functions
   CircularKinematicsCost systemCostFunction;
@@ -103,30 +101,28 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   CircularKinematicsConstraints systemConstraint;
 
   // system operatingTrajectories
-  state_vector_t stateOperatingPoint = initState;
-  CircularKinematicsSystemOperatingTrajectories operatingTrajectories(initState, input_vector_t::Zero());
+  OperatingPoints operatingTrajectories(initState, vector_t::Zero(INPUT_DIM));
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // SLQ - single-thread version
-  slqSettings.ddpSettings_.nThreads_ = 1;
-  slq_t slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  ddpSettings.nThreads_ = 1;
+  SLQ slqST(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
 
   // SLQ - multi-thread version
-  slqSettings.ddpSettings_.nThreads_ = 3;
-  slqSettings.ddpSettings_.displayInfo_ = false;
-  slq_t slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, slqSettings);
+  ddpSettings.nThreads_ = 3;
+  SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
   slqMT.useParallelRiccatiSolverFromInitItr(false);
 
   // run single core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> single-core SLQ" << std::endl;
   }
   slqST.run(startTime, initState, finalTime, partitioningTimes);
 
   // run multi-core SLQ
-  if (slqSettings.ddpSettings_.displayInfo_ || slqSettings.ddpSettings_.displayShortSummary_) {
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n>>> multi-core SLQ" << std::endl;
   }
   slqMT.run(startTime, initState, finalTime, partitioningTimes);
@@ -135,33 +131,25 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // get solution
-  slq_t::primal_solution_t solutionST = slqST.primalSolution(finalTime);
-  slq_t::primal_solution_t solutionMT = slqMT.primalSolution(finalTime);
+  auto solutionST = slqST.primalSolution(finalTime);
+  auto solutionMT = slqMT.primalSolution(finalTime);
 
   // get performance indices
-  double totalCostST, totalCostMT;
-  double constraint1ISE_ST, constraint1ISE_MT;
-  double constraint2ISE_ST, constraint2ISE_MT;
-  slqST.getPerformanceIndeces(totalCostST, constraint1ISE_ST, constraint2ISE_ST);
-  slqMT.getPerformanceIndeces(totalCostMT, constraint1ISE_MT, constraint2ISE_MT);
+  auto performanceIndecesST = slqST.getPerformanceIndeces();
+  auto performanceIndecesMT = slqMT.getPerformanceIndeces();
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  const double expectedCost = 0.1;
-  ASSERT_LT(totalCostST - expectedCost, 0.0)
+  const scalar_t expectedCost = 0.1;
+  ASSERT_LT(performanceIndecesST.totalCost - expectedCost, 0.0)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's cost test!";
-  ASSERT_LT(totalCostMT - expectedCost, 0.0)
+  ASSERT_LT(performanceIndecesMT.totalCost - expectedCost, 0.0)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's cost test!";
 
-  const double expectedISE1 = 0.0;
-  ASSERT_LT(fabs(constraint1ISE_ST - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+  const scalar_t expectedISE1 = 0.0;
+  ASSERT_LT(fabs(performanceIndecesST.stateInputEqConstraintISE - expectedISE1), ddpSettings.constraintTolerance_)
       << "MESSAGE: single-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-  ASSERT_LT(fabs(constraint1ISE_MT - expectedISE1), slqSettings.ddpSettings_.constraintTolerance_)
+  ASSERT_LT(fabs(performanceIndecesMT.stateInputEqConstraintISE - expectedISE1), ddpSettings.constraintTolerance_)
       << "MESSAGE: multi-threaded SLQ failed in the Circular_Kinematics's type-1 constraint ISE test!";
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

@@ -48,49 +48,11 @@ namespace ocs2 {
  * The user provides implementations for f and g. The Jacobians of f and g are computed by auto differentiation.
  * This costfunction approximates the Hessians of L and \Phi by applying the chain rule and neglecting the terms
  * with hessians of f and g. Hess_{L} and H_{\Phi} are therefore guaranteed to be at least positive semidefinite.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
- * @tparam INTERMEDIATE_COST_DIM dim(image(f))
- * @tparam TERMINAL_COST_DIM dim(image(g))
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t INTERMEDIATE_COST_DIM, size_t TERMINAL_COST_DIM>
-class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
+class RelaxedBarrierCost : public CostFunctionBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using rbf_costfunction_base_ad_t = RelaxedBarrierCost<STATE_DIM, INPUT_DIM, INTERMEDIATE_COST_DIM, TERMINAL_COST_DIM>;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-
-  using ad_interface_t = CppAdInterface<scalar_t>;
-  using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
-  using ad_intermediate_cost_vector_t = Eigen::Matrix<ad_scalar_t, INTERMEDIATE_COST_DIM, 1>;
-  using ad_terminal_cost_vector_t = Eigen::Matrix<ad_scalar_t, TERMINAL_COST_DIM, 1>;
-
-  using timeStateInput_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1>;
-  using intermediate_cost_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1 + STATE_DIM + INPUT_DIM>;
-  using terminal_cost_timeState_matrix_t = Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1 + STATE_DIM>;
-  using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM + INPUT_DIM, 1 + STATE_DIM + INPUT_DIM>;
-
-  using timeState_vector_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM, 1>;
-  using timeState_rowVector_t = Eigen::Matrix<scalar_t, 1, 1 + STATE_DIM>;
-  using timeState_matrix_t = Eigen::Matrix<scalar_t, 1 + STATE_DIM, 1 + STATE_DIM>;
-
-  using intermediate_cost_vector_t = Eigen::Matrix<scalar_t, INTERMEDIATE_COST_DIM, 1>;
-  using terminal_cost_vector_t = Eigen::Matrix<scalar_t, TERMINAL_COST_DIM, 1>;
+  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
+  using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
   /**
    * Configuration object
@@ -108,25 +70,17 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    *
    * @param Config : configuration object containing mu and delta
    */
-  explicit RelaxedBarrierCost(Config config);
+  RelaxedBarrierCost(Config config, size_t stateDim, size_t inputDim, size_t intermediateCostDim, size_t finalCostDim);
 
   /**
    * Constructior
    *
-   * @param Config : arrays with configuration objects containing mu and delta for each intermediate and terminal constraint
+   * @param Config : arrays with configuration objects containing mu and delta for each intermediate and final constraint
    */
-  explicit RelaxedBarrierCost(std::array<Config, INTERMEDIATE_COST_DIM> intermediateConfig,
-                              std::array<Config, TERMINAL_COST_DIM> terminalConfig);
+  explicit RelaxedBarrierCost(std::vector<Config> intermediateConfig, std::vector<Config> finalConfig, size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  RelaxedBarrierCost(const RelaxedBarrierCost& rhs);
-
-  /**
-   * Default destructor
-   */
-  virtual ~RelaxedBarrierCost() = default;
+  /** Default destructor */
+  ~RelaxedBarrierCost() override = default;
 
   /**
    * Initializes model libraries
@@ -140,31 +94,17 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final;
-
-  void getIntermediateCost(scalar_t& L);
-
-  void getIntermediateCostDerivativeTime(scalar_t& dLdt);
-
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx);
-
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
-
-  void getIntermediateCostDerivativeInput(input_vector_t& dLdu);
-
-  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
-
-  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
-
-  void getTerminalCost(scalar_t& Phi);
-
-  void getTerminalCostDerivativeTime(scalar_t& dPhidt);
-
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx);
-
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) override;
 
  protected:
+  /** Copy constructor */
+  RelaxedBarrierCost(const RelaxedBarrierCost& rhs);
+
   /**
    * Interface method to the cost term f such that the intermediate cost is
    * - \f$ L = RelaxedBarrierFunction(f(x,u,t)) \f$
@@ -177,7 +117,7 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: costValues = f(x,u,t).
    */
-  virtual dynamic_vector_t getIntermediateParameters(scalar_t time) const { return dynamic_vector_t(0); }
+  virtual vector_t getIntermediateParameters(scalar_t time) const;
 
   /**
    * Number of parameters for the intermediate cost function.
@@ -185,7 +125,7 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    *
    * @return number of parameters
    */
-  virtual size_t getNumIntermediateParameters() const { return 0; }
+  virtual size_t getNumIntermediateParameters() const;
 
   /**
    * Interface method to the cost term g such that the intermediate cost is
@@ -198,15 +138,15 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [in] parameters: parameter vector.
    * @param [out] costValue: costValues = g(x,t).
    */
-  virtual dynamic_vector_t getTerminalParameters(scalar_t time) const { return dynamic_vector_t(0); }
+  virtual vector_t getFinalParameters(scalar_t time) const;
 
   /**
-   * Number of parameters for the terminal cost function.
+   * Number of parameters for the final cost function.
    * This number must be remain constant after the model libraries are created
    *
    * @return number of parameters
    */
-  virtual size_t getNumTerminalParameters() const { return 0; }
+  virtual size_t getNumFinalParameters() const;
 
   /**
    * Interface method to the intermediate cost function. This method must be implemented by the derived class.
@@ -216,24 +156,21 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    * @param [in] state: state vector.
    * @param [in] input: input vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @return cost value.
    */
-  virtual void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                        const ad_dynamic_vector_t& parameters, ad_intermediate_cost_vector_t& costValues) const = 0;
+  virtual ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                               const ad_vector_t& parameters) const = 0;
 
   /**
-   * Interface method to the terminal cost function. This method can be implemented by the derived class.
+   * Interface method to the final cost function. This method can be implemented by the derived class.
    *
    * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] parameters: parameter vector.
-   * @param [out] costValue: cost value.
+   * @return cost value.
    */
-  virtual void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                                    ad_terminal_cost_vector_t& costValues) const {
-    costValues = ad_terminal_cost_vector_t::Zero();
-  }
+  virtual ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
 
  private:
   /**
@@ -255,53 +192,30 @@ class RelaxedBarrierCost : public CostFunctionBase<STATE_DIM, INPUT_DIM> {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  scalar_t getPenaltyFunctionValue(scalar_t h, const Config& config) const {
-    if (h > config.delta) {
-      return -config.mu * log(h);
-    } else {
-      return config.mu * (-log(config.delta) + scalar_t(0.5) * pow((h - 2.0 * config.delta) / config.delta, 2.0) - scalar_t(0.5));
-    };
-  };
+  scalar_t getPenaltyFunctionValue(scalar_t h, const Config& config) const;
+  scalar_t getPenaltyFunctionDerivative(scalar_t h, const Config& config) const;
+  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const Config& config) const;
 
-  scalar_t getPenaltyFunctionDerivative(scalar_t h, const Config& config) const {
-    if (h > config.delta) {
-      return -config.mu / h;
-    } else {
-      return config.mu * ((h - 2.0 * config.delta) / (config.delta * config.delta));
-    };
-  };
+  std::unique_ptr<CppAdInterface> finalADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> intermediateADInterfacePtr_;
 
-  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const Config& config) const {
-    if (h > config.delta) {
-      return config.mu / (h * h);
-    } else {
-      return config.mu / (config.delta * config.delta);
-    };
-  };
-
-  std::unique_ptr<ad_interface_t> terminalADInterfacePtr_;
-  std::unique_ptr<ad_interface_t> intermediateADInterfacePtr_;
+  size_t stateDim_;
+  size_t inputDim_;
 
   // Intermediate cost
-  bool intermediateCostValuesComputed_;
-  intermediate_cost_vector_t intermediateCostValues_;
-  bool intermediateDerivativesComputed_;
-  intermediate_cost_timeStateInput_matrix_t intermediateJacobian_;
-  dynamic_vector_t intermediateParameters_;
-  timeStateInput_vector_t tapedTimeStateInput_;
+  vector_t intermediateCostValues_;
+  matrix_t intermediateJacobian_;
+  vector_t intermediateParameters_;
+  vector_t tapedTimeStateInput_;
 
   // Final cost
-  bool terminalCostValuesComputed_;
-  terminal_cost_vector_t terminalCostValues_;
-  bool terminalDerivativesComputed_;
-  terminal_cost_timeState_matrix_t terminalJacobian_;
-  dynamic_vector_t terminalParameters_;
-  timeState_vector_t tapedTimeState_;
+  vector_t finalCostValues_;
+  matrix_t finalJacobian_;
+  vector_t finalParameters_;
+  vector_t tapedTimeState_;
 
-  std::array<Config, INTERMEDIATE_COST_DIM> intermediateConfig_;
-  std::array<Config, TERMINAL_COST_DIM> terminalConfig_;
+  std::vector<Config> intermediateConfig_;
+  std::vector<Config> finalConfig_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/RelaxedBarrierCost.h"

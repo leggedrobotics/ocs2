@@ -29,16 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <iostream>
-#include <memory>
-#include <sstream>
+#include <ostream>
 #include <string>
 #include <vector>
 
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/misc/LinearAlgebra.h"
+#include "ocs2_core/Types.h"
 
 namespace ocs2 {
 
@@ -46,18 +41,6 @@ namespace ocs2 {
  * The base class for model data.
  */
 struct ModelDataBase {
-  using scalar_t = typename Dimensions<0, 0>::scalar_t;
-  using dynamic_vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using dynamic_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
-
-  using scalar_array_t = typename Dimensions<0, 0>::scalar_array_t;
-  using eigen_scalar_t = typename Dimensions<0, 0>::eigen_scalar_t;
-  using dynamic_vector_array_t = typename Dimensions<0, 0>::dynamic_vector_array_t;
-  using dynamic_matrix_array_t = typename Dimensions<0, 0>::dynamic_matrix_array_t;
-
-  using array_t = std::vector<ModelDataBase>;
-  using array2_t = std::vector<array_t>;
-
   /**
    * Creates a deep copy of the object.
    * @warning Cloning implies that the caller takes ownership and deletes the created object.
@@ -99,45 +82,28 @@ struct ModelDataBase {
   /**
    * Variables
    */
-  scalar_t time_;
-  int stateDim_;
-  int inputDim_;
+  scalar_t time_ = 0;
+  int stateDim_ = 0;
+  int inputDim_ = 0;
 
   // dynamics
-  dynamic_vector_t dynamics_;
-  dynamic_vector_t dynamicsBias_;
-  dynamic_matrix_t dynamicsStateDerivative_;
-  dynamic_matrix_t dynamicsInputDerivative_;
-
-  dynamic_matrix_t dynamicsCovariance_;
+  VectorFunctionLinearApproximation dynamics_;
+  vector_t dynamicsBias_;
+  matrix_t dynamicsCovariance_;
 
   // cost
-  scalar_t cost_;
-  dynamic_vector_t costStateDerivative_;
-  dynamic_vector_t costInputDerivative_;
-  dynamic_matrix_t costStateSecondDerivative_;
-  dynamic_matrix_t costInputSecondDerivative_;
-  dynamic_matrix_t costInputStateDerivative_;
+  ScalarFunctionQuadraticApproximation cost_;
 
   // state equality constraints
-  int numStateEqConstr_;
-  dynamic_vector_t stateEqConstr_;
-  dynamic_matrix_t stateEqConstrStateDerivative_;
+  VectorFunctionLinearApproximation stateEqConstr_;
 
   // state-input equality constraints
-  int numStateInputEqConstr_;
-  dynamic_vector_t stateInputEqConstr_;
-  dynamic_matrix_t stateInputEqConstrStateDerivative_;
-  dynamic_matrix_t stateInputEqConstrInputDerivative_;
+  VectorFunctionLinearApproximation stateInputEqConstr_;
 
   // inequality constraints
-  int numIneqConstr_;
-  scalar_array_t ineqConstr_;
-  dynamic_vector_array_t ineqConstrStateDerivative_;
-  dynamic_vector_array_t ineqConstrInputDerivative_;
-  dynamic_matrix_array_t ineqConstrStateSecondDerivative_;
-  dynamic_matrix_array_t ineqConstrInputSecondDerivative_;
-  dynamic_matrix_array_t ineqConstrInputStateDerivative_;
+  VectorFunctionQuadraticApproximation ineqConstr_;
 };
+
+std::ostream& operator<<(std::ostream& out, const ModelDataBase& data);
 
 }  // namespace ocs2

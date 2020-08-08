@@ -29,13 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// OCS2
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 namespace ocs2 {
 
@@ -44,54 +42,37 @@ namespace ocs2 {
  *
  * The lifetime of the returned objects is tied to the lifetime of the robot interface.
  * The exposed objects are not thread-safe and should be cloned to get an exclusive copy.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class RobotInterface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using dynamics_t = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-  using dynamics_derivatives_t = DerivativesBase<STATE_DIM, INPUT_DIM>;
-  using cost_t = CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using constraint_t = ConstraintBase<STATE_DIM, INPUT_DIM>;
-
   /**
    * Destructor
    */
   virtual ~RobotInterface() = default;
 
   /**
-   * @brief getLogicRulesPtr
-   * @return Pointer to the internal logic rules
-   */
-  virtual std::shared_ptr<HybridLogicRules> getLogicRulesPtr() const { return nullptr; }
-
-  /**
    * @brief getDynamics
    * @return a reference to the interal system dynamics
    */
-  virtual const dynamics_t& getDynamics() const = 0;
-
-  /**
-   * @brief getDynamicsDerivatives
-   * @return a reference to the internal system dynamics derivatives
-   */
-  virtual const dynamics_derivatives_t& getDynamicsDerivatives() const = 0;
+  virtual const SystemDynamicsBase& getDynamics() const = 0;
 
   /**
    * @brief getCost
    * @return reference to internal cost function
    */
-  virtual const cost_t& getCost() const = 0;
+  virtual const CostFunctionBase& getCost() const = 0;
 
   /**
    * @brief getConstraintPtr
    * @return pointer to internal constraint object. Can be nullptr in case of zero constraints
    */
-  virtual const constraint_t* getConstraintPtr() const { return nullptr; }
+  virtual const ConstraintBase* getConstraintPtr() const { return nullptr; }
+
+  /**
+   * @brief getOperatingPoints
+   * @return reference to the internal operating point
+   */
+  virtual const SystemOperatingTrajectoriesBase& getOperatingPoints() const = 0;
 };
 
 }  // namespace ocs2

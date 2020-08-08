@@ -15,8 +15,8 @@
 namespace ocs2 {
 namespace ballbot {
 
-void BallbotSystemDynamics::systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                          ad_dynamic_vector_t& stateDerivative) const {
+BallbotSystemDynamics::ad_vector_t BallbotSystemDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
+                                                                        const ad_vector_t& input) const {
   // compute actuationMatrix S_transposed which appears in the equations: M(q)\dot v + h = S^(transpose)\tau
   Eigen::Matrix<ad_scalar_t, 5, 3> S_transposed = Eigen::Matrix<ad_scalar_t, 5, 3>::Zero();
 
@@ -72,11 +72,12 @@ void BallbotSystemDynamics::systemFlowMap(ad_scalar_t time, const ad_dynamic_vec
   iit::Ballbot::dyn::tpl::InertiaProperties<trait_t> inertias;
   iit::Ballbot::tpl::MotionTransforms<trait_t> transforms;
   iit::Ballbot::dyn::tpl::ForwardDynamics<trait_t> forward_dyn(inertias, transforms);
-  forward_dyn.fd(qdd, state.template head<5>(), state.template tail<5>(), new_input);
+  forward_dyn.fd(qdd, state.head<5>(), state.tail<5>(), new_input);
 
   // dxdt
-  stateDerivative.template head<5>() = state.template tail<5>();
-  stateDerivative.template tail<5>() = qdd;
+  ad_vector_t stateDerivative(10);
+  stateDerivative << state.tail<5>(), qdd;
+  return stateDerivative;
 }
 
 }  // namespace ballbot

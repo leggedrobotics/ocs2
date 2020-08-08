@@ -76,24 +76,63 @@ Eigen::Matrix<SCALAR_T, 3, 4> quaternionDistanceJacobian(const Eigen::Quaternion
  */
 template <typename SCALAR_T>
 Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) {
-  SCALAR_T yaw = eulerAnglesZyx(0);
-  SCALAR_T pitch = eulerAnglesZyx(1);
-  SCALAR_T roll = eulerAnglesZyx(2);
-  // Abbreviations for the trigonometric functions
-  SCALAR_T cy = cos(yaw * 0.5);
-  SCALAR_T sy = sin(yaw * 0.5);
-  SCALAR_T cp = cos(pitch * 0.5);
-  SCALAR_T sp = sin(pitch * 0.5);
-  SCALAR_T cr = cos(roll * 0.5);
-  SCALAR_T sr = sin(roll * 0.5);
+  // clang-format off
+  return Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(0), Eigen::Vector3d::UnitZ()) *
+         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(1), Eigen::Vector3d::UnitY()) *
+         Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(2), Eigen::Vector3d::UnitX());
+  // clang-format on
+}
 
-  Eigen::Quaternion<SCALAR_T> quaternion;
-  quaternion.w() = cy * cp * cr + sy * sp * sr;
-  quaternion.x() = cy * cp * sr - sy * sp * cr;
-  quaternion.y() = sy * cp * sr + cy * sp * cr;
-  quaternion.z() = sy * cp * cr - cy * sp * sr;
+/**
+ * @brief Transform a set of Euler Angles (each in [-pi, pi)) into Euler Angles in the range [-pi,pi),[-pi/2,pi/2),[-pi,pi)
+ * @param[in,out] Reference to eulerAngles XYZ or ZYX which will be modified in place
+ * @note Code taken from https://github.com/ANYbotics/kindr/blob/master/include/kindr/rotations/EulerAnglesXyz.hpp
+ * @note Works for Euler Angles XYZ and ZYX alike
+ */
+template <typename SCALAR_T>
+void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  SCALAR_T tol(1e-9);  // FIXME(jcarius) magic number
+  SCALAR_T pi(M_PI);
 
-  return quaternion;
+  if (eulerAngles.y() < -pi / 2 - tol) {
+    if (eulerAngles.x() < 0) {
+      eulerAngles.x() = eulerAngles.x() + pi;
+    } else {
+      eulerAngles.x() = eulerAngles.x() - pi;
+    }
+
+    eulerAngles.y() = -(eulerAngles.y() + pi);
+
+    if (eulerAngles.z() < 0) {
+      eulerAngles.z() = eulerAngles.z() + pi;
+    } else {
+      eulerAngles.z() = eulerAngles.z() - pi;
+    }
+  } else if (-pi / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= -pi / 2 + tol) {
+    eulerAngles.x() -= eulerAngles.z();
+    eulerAngles.z() = 0;
+  } else if (-pi / 2 + tol < eulerAngles.y() && eulerAngles.y() < pi / 2 - tol) {
+    // ok
+  } else if (pi / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= pi / 2 + tol) {
+    // todo: pi/2 should not be in range, other formula?
+    eulerAngles.x() += eulerAngles.z();
+    eulerAngles.z() = 0;
+  } else  // pi/2 + tol < eulerAngles.y()
+  {
+    if (eulerAngles.x() < 0) {
+      eulerAngles.x() = eulerAngles.x() + pi;
+    } else {
+      eulerAngles.x() = eulerAngles.x() - pi;
+    }
+
+    eulerAngles.y() = -(eulerAngles.y() - pi);
+
+    if (eulerAngles.z() < 0) {
+      eulerAngles.z() = eulerAngles.z() + pi;
+    } else {
+      eulerAngles.z() = eulerAngles.z() - pi;
+    }
+  }
 }
 
 }  // namespace ocs2

@@ -1,27 +1,54 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-#ifndef OCS2_CTRL_LOOKUP_H
-#define OCS2_CTRL_LOOKUP_H
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#pragma once
 
 #include <algorithm>
 #include <sstream>
 #include <vector>
 
-#include "ocs2_core/OCS2NumericTraits.h"
-#include "ocs2_core/misc/Numerics.h"
+#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
 namespace lookup {
 
 /**
  * finds the index of an element in a sorted dataArray which is equal to value (epsilon distance)
+ *
+ * @tparam SCALAR : scalar type
  * @param [in] dataArray: data array
  * @param [in] value: enquiry value
  * @return: index
  */
-template <typename scalar_t = double>
-size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t value,
-                               scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+template <typename SCALAR = double>
+size_t findFirstIndexWithinTol(const std::vector<SCALAR>& dataArray, SCALAR value, SCALAR eps = OCS2NumericTraits<SCALAR>::weakEpsilon()) {
   // Search for a match by linearly traversing the data, returning first match
   for (size_t i = 0; i < dataArray.size(); i++) {
     if (std::abs(dataArray[i] - value) < eps) {
@@ -53,15 +80,14 @@ size_t findFirstIndexWithinTol(const std::vector<scalar_t>& dataArray, scalar_t 
  *       for example: if t1 = t2 = t3  and the requested time t <= t3 -> index = 1
  *
  *
- * @tparam scalar_t : numerical type of time
+ * @tparam SCALAR : numerical type of time
  * @param timeArray : sorted time array to perform the lookup in
  * @param time : enquiry time
  * @return index between [0, size(timeArray)]
  */
-template <typename scalar_t = double>
-int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
-  auto lessOperator = [](scalar_t element, scalar_t value) { return !numerics::almost_ge(element, value); };
-  auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time, lessOperator);
+template <typename SCALAR = double>
+int findIndexInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
+  auto firstLargerValueIterator = std::lower_bound(timeArray.begin(), timeArray.end(), time);
   return static_cast<int>(firstLargerValueIterator - timeArray.begin());
 }
 
@@ -75,13 +101,13 @@ int findIndexInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) 
  *
  *  Corner cases are handled as in findIndexInTimeArray
  *
- * @tparam scalar_t : numerical type of time
+ * @tparam SCALAR : numerical type of time
  * @param timeArray : sorted time array to perform the lookup in
  * @param time : enquiry time
  * @return interval between [-1, size(timeArray)-1]
  */
-template <typename scalar_t = double>
-int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+template <typename SCALAR = double>
+int findIntervalInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
   if (!timeArray.empty()) {
     return findIndexInTimeArray(timeArray, time) - 1;
   } else {
@@ -90,14 +116,17 @@ int findIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t tim
 }
 
 /**
- *  Same as findIntervalInTimeArray except for 1 rule:
- *  if t = t0, a 0 is returned instead of -1
- *  This means that any query t_front <= t <= t_back gets assigned to a partition [0, size -2]
+ * Same as findIntervalInTimeArray except for 1 rule:
+ * if t = t0, a 0 is returned instead of -1
+ * This means that any query t_front <= t <= t_back gets assigned to a partition [0, size -2]
  *
- *  @return partition between [-1, size(timeArray)-1]
+ * @tparam SCALAR : scalar type
+ * @param timeArray : sorted time array to perform the lookup in
+ * @param time : enquiry time
+ * @return partition between [-1, size(timeArray)-1]
  */
-template <typename scalar_t = double>
-int findActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+template <typename SCALAR = double>
+int findActiveIntervalInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
   if (!timeArray.empty() && !numerics::almost_eq(time, timeArray.front())) {
     return findIntervalInTimeArray(timeArray, time);
   } else {  // t = t0
@@ -110,10 +139,13 @@ int findActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar
  * throws an error if time before of after the end is selected.
  * Also throws on timeArrays that are empty or with 1 element only.
  *
+ * @tparam SCALAR : scalar type
+ * @param timeArray : sorted time array to perform the lookup in
+ * @param time : enquiry time
  * @return partition between [0, size(timeArray)-2]
  */
-template <typename scalar_t = double>
-int findBoundedActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray, scalar_t time) {
+template <typename SCALAR = double>
+int findBoundedActiveIntervalInTimeArray(const std::vector<SCALAR>& timeArray, SCALAR time) {
   auto partition = findActiveIntervalInTimeArray(timeArray, time);
 
   if (timeArray.empty()) {
@@ -140,5 +172,3 @@ int findBoundedActiveIntervalInTimeArray(const std::vector<scalar_t>& timeArray,
 
 }  // namespace lookup
 }  // namespace ocs2
-
-#endif  // OCS2_CTRL_LOOKUP_H

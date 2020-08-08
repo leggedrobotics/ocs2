@@ -29,7 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/Types.h>
+
 #include "ocs2_ddp/test/bouncingmass/Reference.h"
+
+using scalar_t = ocs2::scalar_t;
+using vector_t = ocs2::vector_t;
+using matrix_t = ocs2::matrix_t;
+using scalar_array_t = ocs2::scalar_array_t;
+using vector_array_t = ocs2::vector_array_t;
 
 /*
  * 	This class constructs, contains and provides the reference for the
@@ -38,14 +46,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * by M. Rijnen]
  */
 class OverallReference {
-  using DIMENSIONS = ocs2::Dimensions<3, 1>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-
  public:
+  enum { STATE_DIM = 3, INPUT_DIM = 1 };
   /*
    * Constructor
    */
@@ -57,7 +59,7 @@ class OverallReference {
    * @param [in] trajTimes: list of times at which the reference is defined
    * @param [in] trajState: list of waypoints at which the reference is defined
    */
-  OverallReference(const scalar_array_t trajTimes, const state_vector_array_t trajState);
+  OverallReference(const scalar_array_t trajTimes, const vector_array_t trajState);
 
   /*
    * Calculate the input at a certain time
@@ -65,7 +67,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @param [out] input: input corresponding to time
    */
-  void getInput(scalar_t time, input_vector_t& input);
+  void getInput(scalar_t time, vector_t& input);
 
   /*
    * Calculate the input at a certain time
@@ -73,7 +75,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @return input corresponding to time
    */
-  input_vector_t getInput(scalar_t time);
+  vector_t getInput(scalar_t time);
 
   /*
    * Calculate the reference state at a certain time
@@ -81,7 +83,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @param [out] state: state corresponding to time
    */
-  void getState(scalar_t time, state_vector_t& x);
+  void getState(scalar_t time, vector_t& x);
 
   /*
    * Calculate the reference state at a certain time
@@ -89,7 +91,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @return state corresponding to time
    */
-  state_vector_t getState(scalar_t time);
+  vector_t getState(scalar_t time);
 
   /*
    * Calculate the reference state at a certain time and mode
@@ -98,7 +100,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @return state corresponding to time and mode
    */
-  state_vector_t getState(int idx, scalar_t time);
+  vector_t getState(int idx, scalar_t time);
 
   /*
    * Calculate the reference state at a certain time and mode
@@ -107,7 +109,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @param [out] state: state corresponding to time and mode
    */
-  void getState(int idx, scalar_t time, state_vector_t& x);
+  void getState(int idx, scalar_t time, vector_t& x);
 
   /*
    * Extend the reference past the event times, by integrating the input signal
@@ -141,7 +143,7 @@ class OverallReference {
    *
    * @return currently active index
    */
-  void jumpMap(state_vector_t& x);
+  void jumpMap(vector_t& x);
 
   std::vector<Reference> References_;
   std::vector<scalar_t> switchtimes_;

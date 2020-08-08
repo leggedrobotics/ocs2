@@ -1,7 +1,7 @@
 
 
-#include <gtest/gtest.h>
 #include "testLoopshapingDynamics.h"
+#include <gtest/gtest.h>
 
 using namespace ocs2;
 
@@ -9,44 +9,44 @@ TYPED_TEST_CASE(TestFixtureLoopShapingDynamics, FilterConfigurations);
 
 TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamics) {
   // Evaluate system
-  typename TestFixtureLoopShapingDynamics<TypeParam>::system_state_vector_t dx_sys;
-  this->testSystem->computeFlowMap(this->t, this->x_sys_, this->u_sys_, dx_sys);
+  vector_t dx_sys = this->testSystem->computeFlowMap(this->t, this->x_sys_, this->u_sys_);
 
   // Evaluate loopshaping system
-  typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx;
-  this->testLoopshapingDynamics->computeFlowMap(this->t, this->x_, this->u_, dx);
+  vector_t dx = this->testLoopshapingDynamics->computeFlowMap(this->t, this->x_, this->u_);
 
   // System part of the flowmap should stay the same
-  ASSERT_TRUE(dx_sys.isApprox(dx.segment(0, this->SYSTEM_STATE_DIM)));
+  ASSERT_TRUE(dx_sys.isApprox(dx.head(dx_sys.rows())));
 };
 
-TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamicsDerivative) {
-
+TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamicsApproximation) {
   // Extract linearization
-  typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx_0;
-  typename TestFixtureLoopShapingDynamics<TypeParam>::state_matrix_t A;
-  typename TestFixtureLoopShapingDynamics<TypeParam>::state_input_matrix_t B;
-
-  this->testLoopshapingDynamics->computeFlowMap(this->t, this->x_, this->u_, dx_0);
-  this->testLoopshapingDynamicsDerivative->getFlowMapDerivativeState(A);
-  this->testLoopshapingDynamicsDerivative->getFlowMapDerivativeInput(B);
+  const auto linearization = this->testLoopshapingDynamics->linearApproximation(this->t, this->x_, this->u_);
 
   // Reevaluate at disturbed state
-  typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx_disturbance;
-  this->testLoopshapingDynamics->computeFlowMap(this->t,
-                                                this->x_ + this->x_disturbance_,
-                                                this->u_ + this->u_disturbance_,
-                                                dx_disturbance);
+  vector_t dx_disturbance =
+      this->testLoopshapingDynamics->computeFlowMap(this->t, this->x_ + this->x_disturbance_, this->u_ + this->u_disturbance_);
 
   // Evaluate approximation
-  typename TestFixtureLoopShapingDynamics<TypeParam>::state_vector_t dx_approximation;
-  dx_approximation = dx_0 + A * this->x_disturbance_ + B * this->u_disturbance_;
+  vector_t dx_approximation = linearization.f + linearization.dfdx * this->x_disturbance_ + linearization.dfdu * this->u_disturbance_;
 
   // Difference between new evaluation and linearization should be less than tol
   ASSERT_LE((dx_disturbance - dx_approximation).array().abs().maxCoeff(), this->tol);
-};
+}
 
-int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMap) {
+  // Evaluate jump map
+  const vector_t jumpMap_sys = this->testSystem->computeJumpMap(this->t, this->x_sys_);
+  const vector_t jumpMap = this->testLoopshapingDynamics->computeJumpMap(this->t, this->x_);
+
+  EXPECT_TRUE(jumpMap.head(this->x_sys_.rows()).isApprox(jumpMap_sys));
+}
+
+TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMapApproximation) {
+  // Evaluate linearization
+  const auto jumpMap_sys = this->testSystem->jumpMapLinearApproximation(this->t, this->x_sys_, this->u_sys_);
+  const auto jumpMap = this->testLoopshapingDynamics->jumpMapLinearApproximation(this->t, this->x_, this->u_);
+
+  EXPECT_TRUE(jumpMap.f.head(this->x_sys_.rows()).isApprox(jumpMap_sys.f));
+  EXPECT_TRUE(jumpMap.dfdx.topLeftCorner(this->x_sys_.rows(), this->x_sys_.rows()).isApprox(jumpMap_sys.dfdx));
+  EXPECT_TRUE(jumpMap.dfdu.topLeftCorner(this->x_sys_.rows(), this->u_sys_.rows()).isApprox(jumpMap_sys.dfdu));
 }

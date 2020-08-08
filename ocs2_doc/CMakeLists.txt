@@ -12,7 +12,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ocs2
   ocs2_raisim
   ocs2_mpc
-  ocs2_comm_interfaces
+  ocs2_ros_interfaces
   ocs2_ballbot_example
   ocs2_cart_pole_example
   ocs2_cart_pole_raisim_example
@@ -34,7 +34,7 @@ catkin_package(
 )
 
 # find ocs2_core
-find_path(SOURCE_OCS2_CORE_DIR NAMES ocs2_core/Dimensions.h PATHS ${ocs2_core_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+find_path(SOURCE_OCS2_CORE_DIR NAMES ocs2_core/Types.h PATHS ${ocs2_core_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_CORE_DIR}")
   set(SOURCE_OCS2_CORE_DIR "${SOURCE_OCS2_CORE_DIR}/ocs2_core")
   message(STATUS "Found ocs2_core at: ${SOURCE_OCS2_CORE_DIR}")
@@ -70,7 +70,7 @@ else()
 endif()
 
 # find ocs2_ocs2
-find_path(SOURCE_OCS2_OCS2_DIR NAMES ocs2_ocs2/OCS2Projected.h PATHS ${ocs2_ocs2_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+find_path(SOURCE_OCS2_OCS2_DIR NAMES ocs2_ocs2/GDDP.h PATHS ${ocs2_ocs2_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_OCS2_DIR}")
   set(SOURCE_OCS2_OCS2_DIR "${SOURCE_OCS2_OCS2_DIR}/ocs2_ocs2")
   message(STATUS "Found ocs2_ocs2 at: ${SOURCE_OCS2_OCS2_DIR}")
@@ -96,13 +96,13 @@ else()
   message(FATAL_ERROR "Couldn't find ocs2_mpc")
 endif()
 
-# find ocs2_comm_interfaces
-find_path(SOURCE_OCS2_COMM_INTERFACES_DIR NAMES ocs2_comm_interfaces/SystemObservation.h PATHS ${ocs2_comm_interfaces_INCLUDE_DIRS}... NO_DEFAULT_PATH)
-if(EXISTS "${SOURCE_OCS2_COMM_INTERFACES_DIR}")
-  set(SOURCE_OCS2_COMM_INTERFACES_DIR "${SOURCE_OCS2_COMM_INTERFACES_DIR}/ocs2_comm_interfaces")
-  message(STATUS "Found ocs2_comm_interfaces at: ${SOURCE_OCS2_COMM_INTERFACES_DIR}")
+# find ocs2_ros_interfaces
+find_path(SOURCE_OCS2_ROS_INTERFACES_DIR NAMES ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h PATHS ${ocs2_ros_interfaces_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+if(EXISTS "${SOURCE_OCS2_ROS_INTERFACES_DIR}")
+  set(SOURCE_OCS2_ROS_INTERFACES_DIR "${SOURCE_OCS2_ROS_INTERFACES_DIR}/ocs2_ros_interfaces")
+  message(STATUS "Found ocs2_ros_interfaces at: ${SOURCE_OCS2_ROS_INTERFACES_DIR}")
 else()
-  message(FATAL_ERROR "Couldn't find ocs2_comm_interfaces")
+  message(FATAL_ERROR "Couldn't find ocs2_ros_interfaces")
 endif()
 
 # find ocs2_ballbot_example
@@ -173,7 +173,7 @@ Set(DOXYGEN_SOURCE_DIRS "${DOXYGEN_SOURCE_DIRS}\
   \"${SOURCE_OCS2_OCS2_DIR}/\"\
   \"${SOURCE_OCS2_RAISIM_DIR}/\"\
   \"${SOURCE_OCS2_MPC_DIR}/\"\
-  \"${SOURCE_OCS2_COMM_INTERFACES_DIR}/\"\
+  \"${SOURCE_OCS2_ROS_INTERFACES_DIR}/\"\
   \"${SOURCE_OCS2_BALLBOT_EXAMPLE_DIR}/\"\
   \"${SOURCE_OCS2_CART_POLE_EXAMPLE_DIR}/\"\
   \"${SOURCE_OCS2_CART_POLE_RAISIM_EXAMPLE_DIR}/\"\

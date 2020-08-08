@@ -4,13 +4,17 @@ project(ocs2_cart_pole_example)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CATKIN_PACKAGE_DEPENDENCIES
+  ocs2_core
+  ocs2_ddp
+  ocs2_mpc
+  ocs2_ros_interfaces
+  ocs2_robotic_tools
+)
+
 find_package(catkin REQUIRED COMPONENTS
-   roslib
-   ocs2_core
-   ocs2_ddp
-   ocs2_mpc
-   ocs2_comm_interfaces
-   ocs2_robotic_tools
+  roslib
+  ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -21,8 +25,6 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(raisim CONFIG QUIET)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
 ## catkin specific configuration ##
@@ -35,11 +37,7 @@ catkin_package(
   LIBRARIES
     cartpole_interface
   CATKIN_DEPENDS
-    ocs2_core
-    ocs2_ddp
-    ocs2_mpc
-    ocs2_comm_interfaces
-    ocs2_robotic_tools
+    ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     Boost
 )
@@ -68,6 +66,7 @@ target_link_libraries(cartpole_interface
   ${Boost_LIBRARIES}
   dl
 )
+target_compile_options(cartpole_interface PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(cartpole_mpc

@@ -1,9 +1,10 @@
-#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/Types.h>
 
 // Automatic Differentation
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
+#include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>
@@ -31,7 +32,6 @@
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
@@ -39,7 +39,7 @@
 #include <ocs2_core/dynamics/TransferFunctionBase.h>
 
 // Initialization
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 // Integration
@@ -53,17 +53,15 @@
 #include <ocs2_core/integration/steppers.h>
 
 // Logic
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
-#include <ocs2_core/logic/rules/NullLogicRules.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 
 // Loopshaping
 #include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/misc/LTI_Equations.h>
-#include <ocs2_core/misc/LinearFunction.h>
+// #include <ocs2_core/misc/LTI_Equations.h>
+// #include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>

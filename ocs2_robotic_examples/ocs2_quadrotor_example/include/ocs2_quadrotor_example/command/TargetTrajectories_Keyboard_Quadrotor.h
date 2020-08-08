@@ -42,21 +42,10 @@ namespace quadrotor {
 
 /**
  * This class implements TargetTrajectories communication using ROS.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajectories_Keyboard_Interface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  enum { command_dim_ = 12 };
-
-  using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
+  enum { COMMAND_DIM = 12 };
 
   /**
    * Constructor.
@@ -83,7 +72,7 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
   TargetTrajectories_Keyboard_Quadrotor(int argc, char* argv[], const std::string& robotName = "robot",
                                         const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0,
                                                                                              2.0, 2.0, 2.0, 2.0})
-      : BASE(argc, argv, robotName, command_dim_, goalPoseLimit) {
+      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {
     observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
                                                           &TargetTrajectories_Keyboard_Quadrotor::observationCallback, this);
   }
@@ -99,15 +88,15 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
   }
 
   CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
-    SystemObservation<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> observation;
+    SystemObservation observation;
     ::ros::spinOnce();
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      RosMsgConversions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>::readObservationMsg(*latestObservation_, observation);
+      ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
     }
 
     // reversing the order of the position and orientation.
-    scalar_array_t commadLineTargetOrderCorrected(command_dim_);
+    scalar_array_t commadLineTargetOrderCorrected(COMMAND_DIM);
     for (size_t j = 0; j < 3; j++) {
       // pose
       commadLineTargetOrderCorrected[j] = commadLineTarget[3 + j];
@@ -118,22 +107,22 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     }
 
     // relative state target
-    dynamic_vector_t desiredStateRelative;
-    TargetPoseTransformation<scalar_t>::toCostDesiredState(commadLineTargetOrderCorrected, desiredStateRelative);
+    vector_t desiredStateRelative;
+    target_pose_transformation::toCostDesiredState(commadLineTargetOrderCorrected, desiredStateRelative);
 
     // target transformation
-    typename TargetPoseTransformation<scalar_t>::pose_vector_t targetPoseDisplacement, targetVelocity;
-    TargetPoseTransformation<scalar_t>::toTargetPoseDisplacement(desiredStateRelative, targetPoseDisplacement, targetVelocity);
+    Eigen::Matrix<scalar_t, target_pose_transformation::POSE_DIM_, 1> targetPoseDisplacement, targetVelocity;
+    target_pose_transformation::toTargetPoseDisplacement(desiredStateRelative, targetPoseDisplacement, targetVelocity);
 
     // reversing the order of the position and orientation.
     {
       Eigen::Matrix<scalar_t, 3, 1> temp;
-      temp = targetPoseDisplacement.template head<3>();
-      targetPoseDisplacement.template head<3>() = targetPoseDisplacement.template tail<3>();
-      targetPoseDisplacement.template tail<3>() = temp;
-      temp = targetVelocity.template head<3>();
-      targetVelocity.template head<3>() = targetVelocity.template tail<3>();
-      targetVelocity.template tail<3>() = temp;
+      temp = targetPoseDisplacement.head<3>();
+      targetPoseDisplacement.head<3>() = targetPoseDisplacement.tail<3>();
+      targetPoseDisplacement.tail<3>() = temp;
+      temp = targetVelocity.head<3>();
+      targetVelocity.head<3>() = targetVelocity.tail<3>();
+      targetVelocity.tail<3>() = temp;
     }
 
     // targetReachingDuration
@@ -147,25 +136,25 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
     // Desired time trajectory
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
     tDesiredTrajectory.resize(2);
-    tDesiredTrajectory[0] = observation.time();
-    tDesiredTrajectory[1] = observation.time() + targetReachingDuration;
+    tDesiredTrajectory[0] = observation.time;
+    tDesiredTrajectory[1] = observation.time + targetReachingDuration;
 
     // Desired state trajectory
     auto& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
-    xDesiredTrajectory[0].setZero(quadrotor::STATE_DIM_);
-    xDesiredTrajectory[0].template segment<6>(0) = observation.state().template segment<6>(0);
-    xDesiredTrajectory[0].template segment<6>(6) = observation.state().template segment<6>(6);
+    xDesiredTrajectory[0].setZero(STATE_DIM);
+    xDesiredTrajectory[0].segment<6>(0) = observation.state.segment<6>(0);
+    xDesiredTrajectory[0].segment<6>(6) = observation.state.segment<6>(6);
 
-    xDesiredTrajectory[1].resize(quadrotor::STATE_DIM_);
+    xDesiredTrajectory[1].resize(STATE_DIM);
     xDesiredTrajectory[1].setZero();
-    xDesiredTrajectory[1].template segment<6>(0) = observation.state().template segment<6>(0) + targetPoseDisplacement;
-    xDesiredTrajectory[1].template segment<6>(6) = targetVelocity;
+    xDesiredTrajectory[1].segment<6>(0) = observation.state.segment<6>(0) + targetPoseDisplacement;
+    xDesiredTrajectory[1].segment<6>(6) = targetVelocity;
 
     // Desired input trajectory
     costDesiredTrajectories.desiredInputTrajectory().resize(2);
-    costDesiredTrajectories.desiredInputTrajectory()[0] = dynamic_vector_t::Zero(quadrotor::INPUT_DIM_);
-    costDesiredTrajectories.desiredInputTrajectory()[1] = dynamic_vector_t::Zero(quadrotor::INPUT_DIM_);
+    costDesiredTrajectories.desiredInputTrajectory()[0] = vector_t::Zero(INPUT_DIM);
+    costDesiredTrajectories.desiredInputTrajectory()[1] = vector_t::Zero(INPUT_DIM);
 
     return costDesiredTrajectories;
   }

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/constraint/PenaltyBase.h"
+#include <ocs2_core/constraint/PenaltyBase.h>
 
 namespace ocs2 {
 
@@ -50,8 +50,6 @@ namespace ocs2 {
  */
 class RelaxedBarrierPenalty final : public PenaltyBase {
  public:
-  using scalar_t = typename PenaltyBase::scalar_t;
-
   RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {}
   virtual ~RelaxedBarrierPenalty() = default;
 
@@ -63,4 +61,5 @@ class RelaxedBarrierPenalty final : public PenaltyBase {
   scalar_t getPenaltyFunctionDerivative(scalar_t h) const override;
   scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const override;
 };
+
 }  // namespace ocs2

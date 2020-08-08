@@ -34,7 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ballbot {
 
-enum ballbot : size_t { STATE_DIM_ = 10, INPUT_DIM_ = 3, JOINTS_DOF_NUM_ = 5 };
+constexpr size_t STATE_DIM = 10;
+constexpr size_t INPUT_DIM = 3;
+constexpr size_t JOINTS_DOF_NUM = 5;
 
 }  // namespace ballbot
 }  // namespace ocs2

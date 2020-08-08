@@ -49,10 +49,6 @@ class UpperLevelCost final : public NLP_Cost {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using BASE = NLP_Cost;
-  using typename BASE::dynamic_matrix_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
 
   using gddp_t = GDDP<STATE_DIM, INPUT_DIM>;
   using slq_t = SLQ<STATE_DIM, INPUT_DIM>;
@@ -80,14 +76,18 @@ class UpperLevelCost final : public NLP_Cost {
    */
   UpperLevelCost(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr,
                  const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,
-                 const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings = SLQ_Settings(),
-                 std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr, const cost_function_base_t* heuristicsFunctionPtr = nullptr,
-                 bool display = false, const GDDP_Settings& gddpSettings = GDDP_Settings())
+                 const operating_trajectories_base_t* operatingTrajectoriesPtr, const SLQ_Settings& settings,
+                 std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr,
+                 const cost_function_base_t* heuristicsFunctionPtr = nullptr, bool display = false,
+                 GDDP_Settings gddpSettings = GDDP_Settings())
       : slqPtr_(new slq_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, settings,
-                          logicRulesPtr, heuristicsFunctionPtr)),
+                          heuristicsFunctionPtr)),
         slqDataCollectorPtr_(new ddp_data_collector_t(rolloutPtr, systemDerivativesPtr, systemConstraintsPtr, costFunctionPtr)),
-        gddpPtr_(new gddp_t(gddpSettings)),
-        display_(display) {}
+        modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
+        gddpPtr_(new gddp_t(std::move(gddpSettings))),
+        display_(display) {
+    slqPtr_->setModeScheduleManager(modeScheduleManagerPtr_);
+  }
 
   /**
    * Default destructor.
@@ -111,10 +111,10 @@ class UpperLevelCost final : public NLP_Cost {
   }
 
   size_t setCurrentParameter(const dynamic_vector_t& x) override {
-    // set event time
-    eventTimes_ = scalar_array_t(x.data(), x.data() + x.size());
-    slqPtr_->getLogicRulesPtr()->eventTimes() = eventTimes_;
-    slqPtr_->getLogicRulesMachinePtr()->logicRulesUpdated();
+    // set mode schedule
+    const scalar_array_t eventTimes(x.data(), x.data() + x.size());
+    const auto modeSequence = modeScheduleManagerPtr_->getModeSchedule().modeSequence;
+    modeScheduleManagerPtr_->setModeSchedule({eventTimes, modeSequence});
 
     // run SLQ
     try {
@@ -126,11 +126,12 @@ class UpperLevelCost final : public NLP_Cost {
     }
 
     // get the cost and constraints ISE
-    slqPtr_->getPerformanceIndeces(cost_, constraintISE1_, constraintISE2_);
+    performanceIndex_ = slqPtr_->getPerformanceIndeces();
 
     // display
     if (display_) {
-      std::cerr << "\t     constraintISE1: " << constraintISE1_ << "\t     constraintISE2: " << constraintISE2_
+      std::cerr << "\t     state equality constraints ISE:       " << performanceIndex_.stateEqConstraintISE
+                << "\t     state-input equality constraints ISE: " << performanceIndex_.stateInputEqConstraintISE
                 << "\t#Iterations: " << slqPtr_->getNumIterations() << std::endl;
     }
 
@@ -138,20 +139,20 @@ class UpperLevelCost final : public NLP_Cost {
     slqDataCollectorPtr_->collect(slqPtr_.get());
 
     // status is false if the constraints ISE is higher than minAbsConstraint1RMSE_
-    bool status1 = (constraintISE1_ <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
-    bool status2 = (constraintISE2_ <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
-
+    bool status1 = (performanceIndex_.stateInputEqConstraintISE <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
+    bool status2 = (performanceIndex_.stateEqConstraintISE <= slqPtr_->ddpSettings().minAbsConstraint1ISE_) ? true : false;
     status_ = status1 && status2;
+
     return 0;
   }
 
   bool getCost(size_t id, scalar_t& f) override {
-    f = cost_;
+    f = performanceIndex_.merit;
     return status_;
   }
 
   void getCostDerivative(size_t id, dynamic_vector_t& g) override {
-    gddpPtr_->run(eventTimes_, slqDataCollectorPtr_.get());
+    gddpPtr_->run(slqDataCollectorPtr_.get());
     gddpPtr_->getCostFuntionDerivative(g);
   }
 
@@ -176,6 +177,7 @@ class UpperLevelCost final : public NLP_Cost {
  private:
   std::unique_ptr<slq_t> slqPtr_;
   std::unique_ptr<ddp_data_collector_t> slqDataCollectorPtr_;
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr_;
   std::unique_ptr<gddp_t> gddpPtr_;
   bool display_;
 
@@ -184,12 +186,8 @@ class UpperLevelCost final : public NLP_Cost {
   scalar_t finalTime_;
   scalar_array_t partitioningTimes_;
 
-  scalar_array_t eventTimes_;
-
   bool status_;
-  scalar_t cost_;
-  scalar_t constraintISE1_;
-  scalar_t constraintISE2_;
+  PerformanceIndex performanceIndex_;
 };
 
 }  // namespace ocs2

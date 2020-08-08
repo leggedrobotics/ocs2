@@ -41,39 +41,23 @@ namespace ocs2 {
 
 /**
  * This rollout class uses the Raisim physics simulator for integrating the system dynamics
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
+class RaisimRollout final : public RolloutBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using typename RolloutBase::time_interval_array_t;
+  using typename RolloutBase::time_interval_t;
 
-  using Base = RolloutBase<STATE_DIM, INPUT_DIM>;
-
-  using typename Base::controller_t;
-  using typename Base::input_vector_array_t;
-  using typename Base::input_vector_t;
-  using typename Base::scalar_array_t;
-  using typename Base::scalar_t;
-  using typename Base::size_array_t;
-  using typename Base::state_vector_array_t;
-  using typename Base::state_vector_t;
-  using typename Base::time_interval_array_t;
-  using typename Base::time_interval_t;
-
-  using state_to_raisim_gen_coord_gen_vel_t =
-      std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(const state_vector_t&, const input_vector_t&)>;
-  using raisim_gen_coord_gen_vel_to_state_t = std::function<state_vector_t(const Eigen::VectorXd&, const Eigen::VectorXd&)>;
+  using state_to_raisim_gen_coord_gen_vel_t = std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(const vector_t&, const vector_t&)>;
+  using raisim_gen_coord_gen_vel_to_state_t = std::function<vector_t(const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using input_to_raisim_generalized_force_t =
-      std::function<Eigen::VectorXd(double, const input_vector_t&, const state_vector_t&, const Eigen::VectorXd&, const Eigen::VectorXd&)>;
+      std::function<Eigen::VectorXd(double, const vector_t&, const vector_t&, const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using input_to_raisim_pd_targets_t = std::function<std::pair<Eigen::VectorXd, Eigen::VectorXd>(
-      double, const input_vector_t&, const state_vector_t&, const Eigen::VectorXd&, const Eigen::VectorXd&)>;
+      double, const vector_t&, const vector_t&, const Eigen::VectorXd&, const Eigen::VectorXd&)>;
   using data_extraction_callback_t = std::function<void(double, const raisim::ArticulatedSystem&)>;
 
   /**
-   * @brief Constructor
+   * Constructor
+   *
    * @param[in] path: Absolute file path to the *.urdf description or the urdf string (xml document)
    * @param[in] stateToRaisimGenCoordGenVel: Transformation function that converts ocs2 state to generalized coordinate and generalized
    * velocity used by Raisim
@@ -98,7 +82,7 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   //! Copy constructor
   RaisimRollout(const RaisimRollout& other);
 
-  RaisimRollout<STATE_DIM, INPUT_DIM>* clone() const override { return new RaisimRollout(*this); }
+  RaisimRollout* clone() const override { return new RaisimRollout(*this); }
 
   /**
    * @brief Replaces the default flat ground plane with a generated terrain in Raisim
@@ -108,10 +92,29 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   raisim::HeightMap* generateTerrain(raisim::TerrainProperties properties = raisim::TerrainProperties());
 
   /**
-   * @brief Replaces the default glat ground plane with the given heightMap
+   * @brief Replaces the default flat ground plane with the given heightMap
    * @param[in] heightMap The new terrain
    */
   void setTerrain(const raisim::HeightMap& heightMap);
+
+  /**
+   * @brief Replaces the default flat ground plane with the given heightMap described by a png file
+   * @param[in] pngFileName Path to the png file which is loaded as the new terrain
+   * @param[in] centerX World X-coordinate corresponding to the map center
+   * @param[in] centerY World Y-coordinate corresponding to the map center
+   * @param[in] xSize Actual size of the map in X-direction [m]
+   * @param[in] ySize Actual size of the map in Y-direction [m]
+   * @param[in] heightScale Distance [m] that a single level of greyscale saturation [0 - 255] corresponds to
+   * @param[in] heightOffset Height offset of the zero level [m]
+   */
+  void setTerrain(const std::string& pngFileName, double centerX, double centerY, double xSize, double ySize, double heightScale,
+                  double heightOffset);
+
+  /**
+   * @brief Returns the heightMap, which can be read for terrain information
+   * @return Pointer to the class heightMap_ member variable
+   */
+  const raisim::HeightMap* getTerrain() const;
 
   /**
    * @brief Save and apply P and D gain values. They only take effect if the controlMode is not FORCE_AND_TORQUE
@@ -121,9 +124,9 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
   void setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain);
 
  protected:
-  state_vector_t runImpl(time_interval_array_t timeIntervalArray, const state_vector_t& initState, controller_t* controller,
-                         scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, state_vector_array_t& stateTrajectory,
-                         input_vector_array_t& inputTrajectory, ModelDataBase::array_t* modelDataTrajectoryPtr) override;
+  vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+                   scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
+                   vector_array_t& inputTrajectory) override;
 
  private:
   /**
@@ -135,8 +138,8 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
    * @param[out] stateTrajectory: Vector to which states will be appended
    * @param[out] inputTrajectory: Vector to which inputs will be appended
    */
-  void runSimulation(const time_interval_t& timeInterval, controller_t* controller, scalar_array_t& timeTrajectory,
-                     state_vector_array_t& stateTrajectory, input_vector_array_t& inputTrajectory);
+  void runSimulation(const time_interval_t& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
+                     vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
 
   //! Helper method to remove the ground plane from simulation
   void deleteGroundPlane();
@@ -169,5 +172,3 @@ class RaisimRollout final : public RolloutBase<STATE_DIM, INPUT_DIM> {
 };
 
 }  // namespace ocs2
-
-#include "implementation/RaisimRollout.h"

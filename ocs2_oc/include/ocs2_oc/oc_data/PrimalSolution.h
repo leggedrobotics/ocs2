@@ -31,28 +31,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
+#include <ocs2_core/logic/ModeSchedule.h>
 
 namespace ocs2 {
 
 /**
  * This class contains the primal problem's solution.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 struct PrimalSolution {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
-  using size_array_t = typename dim_t::size_array_t;
-  using scalar_array_t = typename dim_t::scalar_array_t;
-  using state_vector_array_t = typename dim_t::state_vector_array_t;
-  using input_vector_array_t = typename dim_t::input_vector_array_t;
-
   /**
    * Constructor
    */
@@ -64,40 +52,42 @@ struct PrimalSolution {
   ~PrimalSolution() = default;
 
   /**
-   * Move constructor
-   */
-  PrimalSolution(PrimalSolution&& other) = default;
-
-  /**
    * Copy constructor
    */
   PrimalSolution(const PrimalSolution& other)
       : timeTrajectory_(other.timeTrajectory_),
         stateTrajectory_(other.stateTrajectory_),
         inputTrajectory_(other.inputTrajectory_),
-        eventTimes_(other.eventTimes_),
-        subsystemsSequence_(other.subsystemsSequence_),
+        modeSchedule_(other.modeSchedule_),
         controllerPtr_(other.controllerPtr_->clone()) {}
 
   /**
-   * Assignment operators
+   * Copy Assignment
    */
-  PrimalSolution& operator=(PrimalSolution other) noexcept {
-    timeTrajectory_.swap(other.timeTrajectory_);
-    stateTrajectory_.swap(other.stateTrajectory_);
-    inputTrajectory_.swap(other.inputTrajectory_);
-    eventTimes_.swap(other.eventTimes_);
-    subsystemsSequence_.swap(other.subsystemsSequence_);
-    controllerPtr_.swap(other.controllerPtr_);
+  PrimalSolution& operator=(const PrimalSolution& other) {
+    timeTrajectory_ = other.timeTrajectory_;
+    stateTrajectory_ = other.stateTrajectory_;
+    inputTrajectory_ = other.inputTrajectory_;
+    modeSchedule_ = other.modeSchedule_;
+    controllerPtr_.reset(other.controllerPtr_->clone());
     return *this;
   }
 
+  /**
+   * Move constructor
+   */
+  PrimalSolution(PrimalSolution&& other) noexcept = default;
+
+  /**
+   * Move Assignement
+   */
+  PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
+
   scalar_array_t timeTrajectory_;
-  state_vector_array_t stateTrajectory_;
-  input_vector_array_t inputTrajectory_;
-  scalar_array_t eventTimes_;
-  size_array_t subsystemsSequence_;
-  std::unique_ptr<controller_t> controllerPtr_;
+  vector_array_t stateTrajectory_;
+  vector_array_t inputTrajectory_;
+  ModeSchedule modeSchedule_;
+  std::unique_ptr<ControllerBase> controllerPtr_;
 };
 
 }  // namespace ocs2

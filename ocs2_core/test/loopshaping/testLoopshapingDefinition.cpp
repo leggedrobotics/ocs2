@@ -16,7 +16,7 @@ const std::string settingsFile_r = std::string(pathToTest.parent_path()) + "/loo
 const std::string settingsFile_r_simple = std::string(pathToTest.parent_path()) + "/loopshaping_r_simple.conf";
 const std::string settingsFile_s = std::string(pathToTest.parent_path()) + "/loopshaping_s.conf";
 const std::string settingsFile_s_simple = std::string(pathToTest.parent_path()) + "/loopshaping_s_simple.conf";
-const auto inf_ = std::numeric_limits<double>::infinity();
+const auto inf_ = std::numeric_limits<scalar_t>::infinity();
 
 TEST(testLoopshapingDefinition, SISO_Definition) {
   boost::property_tree::ptree pt;
@@ -36,7 +36,7 @@ TEST(testLoopshapingDefinition, SISO_Definition) {
 TEST(testLoopshapingDefinition, MIMO_Definition) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(settingsFile_s, pt);
-  auto filter = loopshaping_property_tree::readMIMOFilter(pt, "s_inv_filter", true);
+  auto filter = loopshaping_property_tree::readMIMOFilter(pt, "s_inv_filter", /*invert=*/true);
   filter.print();
 
   ASSERT_TRUE(true);
@@ -68,10 +68,4 @@ TEST(testLoopshapingDefinition, Loopshaping_Definition_s_simple) {
   filter->print();
 
   ASSERT_TRUE(true);
-}
-
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

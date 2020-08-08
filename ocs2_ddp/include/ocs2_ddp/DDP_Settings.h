@@ -29,22 +29,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <boost/property_tree/info_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <iostream>
 #include <string>
 
-#include <ocs2_core/Dimensions.h>
-#include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_core/integration/Integrator.h>
 
-#include "ocs2_ddp/Strategy_Settings.h"
+#include "StrategySettings.h"
 
 namespace ocs2 {
+namespace ddp {
+
+/**
+ * @brief The DDP algorithm enum
+ * Enum used in selecting either SLQ, ILQR algorithms.
+ */
+enum class algorithm { SLQ, ILQR };
+
+/**
+ * Get string name of DDP algorithm type
+ * @param [in] type: DDP algorithm type enum
+ */
+std::string toAlgorithmName(algorithm type);
+
+/**
+ * Get DDP algorithm type from string name, useful for reading config file
+ * @param [in] name: DDP algorithm name
+ */
+algorithm fromAlgorithmName(std::string name);
 
 /**
  * This structure contains the settings for the DDP algorithm.
  */
-struct DDP_Settings {
+struct Settings {
+  /** It should be either SLQ or ILQR */
+  algorithm algorithm_ = algorithm::SLQ;
+
   /** Number of threads used in the multi-threading scheme. */
   size_t nThreads_ = 1;
   /** Priority of threads used in the multi-threading scheme. */
@@ -53,9 +72,9 @@ struct DDP_Settings {
   /** Maximum number of iterations of DDP. */
   size_t maxNumIterations_ = 15;
   /** This value determines the termination condition based on the minimum relative changes of the cost. */
-  double minRelCost_ = 1e-3;
+  scalar_t minRelCost_ = 1e-3;
   /** This value determines the tolerance of constraint's ISE (Integral of Square Error). */
-  double constraintTolerance_ = 1e-3;
+  scalar_t constraintTolerance_ = 1e-3;
 
   /** This value determines to display the log output DDP. */
   bool displayInfo_ = false;
@@ -69,118 +88,68 @@ struct DDP_Settings {
   bool debugCaching_ = false;
 
   /** This value determines the absolute tolerance error for ode solvers. */
-  double absTolODE_ = 1e-9;
+  scalar_t absTolODE_ = 1e-9;
   /** This value determines the relative tolerance error for ode solvers. */
-  double relTolODE_ = 1e-6;
+  scalar_t relTolODE_ = 1e-6;
   /** This value determines the maximum number of integration points per a second for ode solvers. */
   size_t maxNumStepsPerSecond_ = 10000;
   /** The minimum integration time step */
-  double minTimeStep_ = 1e-3;
+  scalar_t minTimeStep_ = 1e-3;
+  /** The backward pass integrator type: SLQ uses it for solving Riccati equation and ILQR uses it for discretizing LQ approximation. */
+  IntegratorType backwardPassIntegratorType_ = IntegratorType::ODE45;
 
   /** The initial coefficient of the quadratic penalty function in augmented Lagrangian method. It should be greater than one. */
-  double constraintPenaltyInitialValue_ = 2.0;
+  scalar_t constraintPenaltyInitialValue_ = 2.0;
   /** The rate that the coefficient of the quadratic penalty function in augmented Lagrangian method grows. It should be greater than
    * one. */
-  double constraintPenaltyIncreaseRate_ = 2.0;
+  scalar_t constraintPenaltyIncreaseRate_ = 2.0;
   /** Scaling factor, \f$\mu\f$,  for the inequality constraints barrier */
-  double inequalityConstraintMu_ = 0.0;
+  scalar_t inequalityConstraintMu_ = 0.0;
   /** Threshold parameter, \f$\delta\f$, where the relaxed log barrier function changes from log to quadratic */
-  double inequalityConstraintDelta_ = 1e-6;
+  scalar_t inequalityConstraintDelta_ = 1e-6;
 
   /** If true, terms of the Riccati equation will be precomputed before interpolation in the flow-map */
   bool preComputeRiccatiTerms_ = true;
+  /** If true, SLQ solves the backward path over the nominal time trajectory. */
+  bool useNominalTimeForBackwardPass_ = false;
 
   /** Use either the optimized control policy (true) or the optimized state-input trajectory (false). */
   bool useFeedbackPolicy_ = false;
 
   /** The risk sensitivity coefficient for risk aware DDP. */
-  double riskSensitiveCoeff_ = 0.0;
+  scalar_t riskSensitiveCoeff_ = 0.0;
 
   /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
-  DDP_Strategy strategy_ = DDP_Strategy::LINE_SEARCH;
+  ddp_strategy::type strategy_ = ddp_strategy::type::LINE_SEARCH;
   /** The line-search strategy settings. */
-  Line_Search lineSearch_;
+  line_search::Settings lineSearch_;
   /** The levenberg_marquardt strategy settings. */
-  Levenberg_Marquardt levenbergMarquardt_;
-
-  /**
-   * This function loads the "DDP_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
-   * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
-   *
-   * It has the following format:	<br>
-   * slq	<br>
-   * {	<br>
-   *   maxIteration        value		<br>
-   *   minLearningRate     value		<br>
-   *   maxLearningRate     value		<br>
-   *   minRelCost          value		<br>
-   *   (and so on for the other fields)	<br>
-   * }	<br>
-   *
-   * If a value for a specific field is not defined it will set to the default value defined in "DDP_Settings".
-   *
-   * @param [in] filename: File name which contains the configuration data.
-   * @param [in] fieldName: Field name which contains the configuration data.
-   * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
-   */
-  void loadSettings(const std::string& filename, const std::string& fieldName, bool verbose = true) {
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_info(filename, pt);
-
-    if (verbose) {
-      std::cerr << std::endl << " #### DDP Settings: " << std::endl;
-      std::cerr << " #### =============================================================================" << std::endl;
-    }
-
-    loadData::loadPtreeValue(pt, nThreads_, fieldName + ".nThreads", verbose);
-    loadData::loadPtreeValue(pt, threadPriority_, fieldName + ".threadPriority", verbose);
-
-    loadData::loadPtreeValue(pt, maxNumIterations_, fieldName + ".maxNumIterations", verbose);
-    loadData::loadPtreeValue(pt, minRelCost_, fieldName + ".minRelCost", verbose);
-    loadData::loadPtreeValue(pt, constraintTolerance_, fieldName + ".constraintTolerance", verbose);
-
-    loadData::loadPtreeValue(pt, displayInfo_, fieldName + ".displayInfo", verbose);
-    loadData::loadPtreeValue(pt, displayShortSummary_, fieldName + ".displayShortSummary", verbose);
-    loadData::loadPtreeValue(pt, checkNumericalStability_, fieldName + ".checkNumericalStability", verbose);
-    loadData::loadPtreeValue(pt, debugPrintRollout_, fieldName + ".debugPrintRollout", verbose);
-    loadData::loadPtreeValue(pt, debugCaching_, fieldName + ".debugCaching", verbose);
-
-    loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
-    loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
-    loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
-    loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
-
-    loadData::loadPtreeValue(pt, constraintPenaltyInitialValue_, fieldName + ".constraintPenaltyInitialValue", verbose);
-    loadData::loadPtreeValue(pt, constraintPenaltyIncreaseRate_, fieldName + ".constraintPenaltyIncreaseRate", verbose);
-    loadData::loadPtreeValue(pt, inequalityConstraintMu_, fieldName + ".inequalityConstraintMu", verbose);
-    loadData::loadPtreeValue(pt, inequalityConstraintDelta_, fieldName + ".inequalityConstraintDelta", verbose);
-
-    loadData::loadPtreeValue(pt, preComputeRiccatiTerms_, fieldName + ".preComputeRiccatiTerms", verbose);
-
-    loadData::loadPtreeValue(pt, useFeedbackPolicy_, fieldName + ".useFeedbackPolicy", verbose);
-
-    loadData::loadPtreeValue(pt, riskSensitiveCoeff_, fieldName + ".riskSensitiveCoeff", verbose);
-
-    std::string strategyName = ddp_strategy::toString(strategy_);
-    loadData::loadPtreeValue(pt, strategyName, fieldName + ".strategy", verbose);
-    strategy_ = ddp_strategy::fromString(strategyName);
-
-    switch (strategy_) {
-      case DDP_Strategy::LINE_SEARCH: {
-        lineSearch_.loadSettings(filename, fieldName + ".lineSearch", verbose);
-        break;
-      }
-      case DDP_Strategy::LEVENBERG_MARQUARDT: {
-        levenbergMarquardt_.loadSettings(filename, fieldName + ".levenbergMarquardt", verbose);
-        break;
-      }
-    }
-
-    if (verbose) {
-      std::cerr << " #### =============================================================================" << std::endl;
-    }
-  }
+  levenberg_marquardt::Settings levenbergMarquardt_;
 
 };  // end of DDP_Settings
 
+/**
+ * This function loads the "DDP_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
+ * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
+ *
+ * It has the following format: <br>
+ * slq  <br>
+ * {  <br>
+ *   maxIteration        value    <br>
+ *   minLearningRate     value    <br>
+ *   maxLearningRate     value    <br>
+ *   minRelCost          value    <br>
+ *   (and so on for the other fields) <br>
+ * }  <br>
+ *
+ * If a value for a specific field is not defined it will set to the default value defined in "DDP_Settings".
+ *
+ * @param [in] filename: File name which contains the configuration data.
+ * @param [in] fieldName: Field name which contains the configuration data.
+ * @param [in] verbose: Flag to determine whether to print out the loaded settings or not (The default is true).
+ * @return The DDP settings.
+ */
+Settings loadSettings(const std::string& filename, const std::string& fieldName = "ddp", bool verbose = true);
+
+}  // namespace ddp
 }  // namespace ocs2

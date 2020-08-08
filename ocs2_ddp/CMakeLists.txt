@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_oc
+  ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -16,8 +17,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
 
 ###################################
 ## catkin specific configuration ##
@@ -32,6 +31,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_oc
+    ocs2_qp_solver
   DEPENDS
     Boost
 )
@@ -51,10 +51,19 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/ContinuousTimeRiccatiEquations.cpp
   src/DiscreteTimeRiccatiEquations.cpp
+  src/DDP_DataCollector.cpp
+  src/GaussNewtonDDP.cpp
+  src/HessianCorrection.cpp
+  src/ILQR.cpp
+  src/RiccatiModification.cpp
+  src/SLQ.cpp
+  src/DDP_Settings.cpp
+  src/StrategySettings.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -68,8 +77,8 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME}_lintTarget)
   add_clang_tooling(
     TARGETS ${PROJECT_NAME}_lintTarget ${PROJECT_NAME}
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_ddp
-    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_ddp
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
 )
 endif(cmake_clang_tools_FOUND)
@@ -104,6 +113,7 @@ target_link_libraries(exp0_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(exp1_slq_test
@@ -113,6 +123,7 @@ target_link_libraries(exp1_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(riccati_ode_test
@@ -121,6 +132,7 @@ catkin_add_gtest(riccati_ode_test
 target_link_libraries(riccati_ode_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(hybrid_slq_test
@@ -130,6 +142,7 @@ target_link_libraries(hybrid_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(exp0_ilqr_test
@@ -139,6 +152,7 @@ target_link_libraries(exp0_ilqr_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(exp1_ilqr_test
@@ -148,6 +162,7 @@ target_link_libraries(exp1_ilqr_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(bouncing_mass_test
@@ -159,6 +174,7 @@ target_link_libraries(bouncing_mass_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(circular_kinematics_ilqr_test
@@ -168,6 +184,7 @@ target_link_libraries(circular_kinematics_ilqr_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(circular_kinematics_slq_test
@@ -177,4 +194,15 @@ target_link_libraries(circular_kinematics_slq_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(ddp_correctness_test
+  test/ddpCorrectnessTest.cpp
+)
+target_link_libraries(ddp_correctness_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
 )

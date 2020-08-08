@@ -4,11 +4,6 @@ project(ocs2_cart_pole_raisim_example)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Compile flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Catkin packages we depend on
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_cart_pole_example
@@ -47,6 +42,7 @@ add_executable(cartpole_dummy_raisim
 target_link_libraries(cartpole_dummy_raisim
   ${catkin_LIBRARIES}
 )
+target_compile_options(cartpole_dummy_raisim PRIVATE ${OCS2_CXX_FLAGS})
 
 
 
@@ -91,4 +87,6 @@ catkin_add_gtest(cartpole_raisim_rollout
 )
 target_link_libraries(cartpole_raisim_rollout
   ${catkin_LIBRARIES}
+  gtest_main
 )
+target_compile_options(cartpole_raisim_rollout PRIVATE ${OCS2_CXX_FLAGS})

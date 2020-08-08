@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,66 +34,60 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
-
-#include "ocs2_oc/rollout/TimeTriggeredRollout.h"
-#include "ocs2_oc/test/EXP1.h"
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 using namespace ocs2;
 
-enum { STATE_DIM = 2, INPUT_DIM = 1 };
-
 TEST(time_rollout_test, time_rollout_test) {
-  double initTime = 0.0;
-  double finalTime = 10.0;
+  const size_t nx = 2;
+  const size_t nu = 1;
+  scalar_t initTime = 0.0;
+  scalar_t finalTime = 10.0;
 
-  Eigen::Matrix2d A;
+  Eigen::Matrix2d A(nx, nx);
   A << -2, -1, 1, 0;
-  Eigen::Vector2d B;
+  Eigen::Vector2d B(nx, nu);
   B << 1, 0;
 
-  typedef LinearSystemDynamics<STATE_DIM, INPUT_DIM> SecondOrderSystem;
-  SecondOrderSystem systemDynamics(A, B);
+  LinearSystemDynamics systemDynamics(A, B);
 
   // controller
-  SecondOrderSystem::scalar_array_t cntTimeStamp{initTime, finalTime};
-  SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
-  SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
-  using controller_t = ocs2::LinearController<STATE_DIM, INPUT_DIM>;
-  auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
+  scalar_array_t cntTimeStamp{initTime, finalTime};
+  vector_array_t uff(2, vector_t::Ones(nu));
+  matrix_array_t k(2, matrix_t::Zero(nu, nx));
+  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
 
-  SecondOrderSystem::state_vector_t initState;
-  initState.setZero();
+  vector_t initState = vector_t::Zero(nx);
 
   // partitioning times
-  std::vector<double> partitioningTimes{0.0, 4.0, 5.0, 7.0};
+  std::vector<scalar_t> partitioningTimes{0.0, 4.0, 5.0, 7.0};
 
   // event times
-  std::vector<double> eventTimes = std::vector<double>{3.0, 4.0, 4.0};
+  std::vector<scalar_t> eventTimes = std::vector<scalar_t>{3.0, 4.0, 4.0};
 
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
   // Rollout Settings
-  Rollout_Settings rolloutSettings;
+  rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-7;
   rolloutSettings.relTolODE_ = 1e-5;
   rolloutSettings.maxNumStepsPerSecond_ = 10000;
 
   // rollout class
-  using rollout_base_t = RolloutBase<STATE_DIM, INPUT_DIM>;
-  std::unique_ptr<rollout_base_t> rolloutBasePtr(new TimeTriggeredRollout<STATE_DIM, INPUT_DIM>(systemDynamics, rolloutSettings));
+  std::unique_ptr<RolloutBase> rolloutBasePtr(new TimeTriggeredRollout(systemDynamics, rolloutSettings));
 
-  rollout_base_t::scalar_array_t timeTrajectory;
-  rollout_base_t::size_array_t eventsPastTheEndIndeces;
-  rollout_base_t::state_vector_array_t stateTrajectory;
-  rollout_base_t::input_vector_array_t inputTrajectory;
-  ModelDataBase::array_t modelDataTrajectory;
+  scalar_array_t timeTrajectory;
+  size_array_t eventsPastTheEndIndeces;
+  vector_array_t stateTrajectory;
+  vector_array_t inputTrajectory;
 
   size_t partitionIndex = 0;
   rolloutBasePtr->run(initTime, initState, finalTime, controller.get(), eventTimes, timeTrajectory, eventsPastTheEndIndeces,
-                      stateTrajectory, inputTrajectory, &modelDataTrajectory);
+                      stateTrajectory, inputTrajectory);
 
   /******************************************************************************************************/
   /******************************************************************************************************/
@@ -102,17 +96,4 @@ TEST(time_rollout_test, time_rollout_test) {
   const auto totalSize = timeTrajectory.size();
   ASSERT_EQ(totalSize, stateTrajectory.size());
   ASSERT_EQ(totalSize, inputTrajectory.size());
-  ASSERT_EQ(totalSize, modelDataTrajectory.size());
-
-  // check model data trajectory
-  for (const auto& modelData : modelDataTrajectory) {
-    ASSERT_EQ(modelData.stateDim_, stateTrajectory.front().rows());
-    ASSERT_EQ(modelData.inputDim_, inputTrajectory.front().rows());
-    ASSERT_EQ(modelData.dynamics_.rows(), stateTrajectory.front().rows());
-  }
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

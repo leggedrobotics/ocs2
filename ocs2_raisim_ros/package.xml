@@ -20,4 +20,6 @@
   <depend>ocs2_raisim</depend>
   <depend>grid_map_msgs</depend>
 
+  <exec_depend>grid_map_rviz_plugin</exec_depend>
+
 </package>

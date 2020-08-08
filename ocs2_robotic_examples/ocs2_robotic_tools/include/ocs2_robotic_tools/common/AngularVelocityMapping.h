@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
@@ -61,6 +61,54 @@ inline Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/**
+ * @brief Convert derivatives of ZYX euler angles to angular velocity
+ * @param[in] The current orientation (ZYX euler angles)
+ * @param[in] The derivatives of the ZYX euler angles
+ * @return The angular velocity in world frame
+ */
+template <typename SCALAR_T>
+inline Eigen::Matrix<SCALAR_T, 3, 1> eulerAngleZyxDerivativesToAngularVelocityInWorld(
+    const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles, const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesTimeDerivative) {
+  const double cyaw = cos(eulerAngles(0));
+  const double cpitch = cos(eulerAngles(1));
+
+  const double syaw = sin(eulerAngles(0));
+  const double spitch = sin(eulerAngles(1));
+
+  Eigen::Matrix3d transform;
+  transform << 0, -syaw, cpitch * cyaw,  // clang-format off
+               0,  cyaw, cpitch * syaw,
+               1,     0,       -spitch;  // clang-format on
+
+  return transform * eulerAnglesTimeDerivative;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+inline Eigen::Matrix<SCALAR_T, 3, 1> angularVelocityInWorldToEulerAngleZyxDerivatives(
+    const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles, const Eigen::Matrix<SCALAR_T, 3, 1>& omega_world_base_inWorld) {
+  const double cyaw = cos(eulerAngles(0));
+  const double cpitch = cos(eulerAngles(1));
+
+  const double syaw = sin(eulerAngles(0));
+  const double spitch = sin(eulerAngles(1));
+
+  assert(abs(cpitch) > 1e-8);  // test for singularity in debug mode
+
+  Eigen::Matrix<SCALAR_T, 3, 3> transform;
+  transform << cyaw * spitch / cpitch, spitch * syaw / cpitch, 1,  // clang-format off
+                                -syaw,                   cyaw, 0,
+                        cyaw / cpitch,            syaw/cpitch, 0;  // clang-format on
+
+  return transform * omega_world_base_inWorld;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 
 /**
  * to map local angular velocity \omega_W expressed in body coordinates, to changes in Euler Angles expressed in an inertial frame q_I
@@ -78,14 +126,13 @@ inline Eigen::Matrix<SCALAR_T, 6, 3> JacobianOfAngularVelocityMapping(const Eige
   using std::cos;
   using std::sin;
 
-  Eigen::Matrix<SCALAR_T, 6, 1> xAD;
-  xAD << eulerAnglesXyz, angularVelocity;
-  const SCALAR_T* x = xAD.data();
+  Eigen::Matrix<SCALAR_T, 6, 1> x;
+  x << eulerAnglesXyz, angularVelocity;
 
   std::array<SCALAR_T, 10> v;
 
   Eigen::Matrix<SCALAR_T, 6, 3> jac;
-  SCALAR_T* y = jac.data();
+  Eigen::Map<Eigen::Matrix<SCALAR_T, 3 * 6, 1>> y(jac.data());
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "cppcoreguidelines-pro-bounds-pointer-arithmetic"

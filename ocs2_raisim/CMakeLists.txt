@@ -1,19 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_raisim)
-include(ExternalProject)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# installing raisim before find_package(raisim)
-execute_process(
-  COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/
-)
-execute_process(
-  COMMAND make
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/
-)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
@@ -24,9 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
     ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-find_package(raisim REQUIRED
-  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/raisim_subproject/raisim/install/lib/cmake/raisim
-)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(raisim REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -35,6 +23,8 @@ catkin_package(
   INCLUDE_DIRS
     include
     ${raisim_INCLUDE_DIRS}
+  LIBRARIES
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
@@ -47,8 +37,18 @@ catkin_package(
 ###########
 include_directories(
   include
+  ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${raisim_INCLUDE_DIRS}
 )
+
+add_library(${PROJECT_NAME}
+  src/RaisimRollout.cpp)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -76,6 +76,13 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
+
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )

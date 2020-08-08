@@ -43,21 +43,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
  * For example the signature of function for dynamics is:
- * const dynamic_vector_t& dynamics(const ocs2::ModelDataBase::array_t* vec, size_t n) {
+ * const vector_t& dynamics(const std::vector<ocs2::ModelDataBase>* vec, size_t n) {
  *   return (*vec)[n].dynamic_;
  * }
  */
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                               \
-  inline auto FIELD(const ocs2::ModelDataBase::array_t* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
-    return (*vec)[ind].FIELD##_;                                                                                  \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                   \
+  inline auto FIELD(const std::vector<ocs2::ModelDataBase>* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
+    return (*vec)[ind].FIELD##_;                                                                                      \
+  }
+
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                    \
+  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelDataBase>* vec, size_t ind) \
+      ->const decltype((*vec)[ind].FIELD##_.SUBFIELD)& {                                  \
+    return (*vec)[ind].FIELD##_.SUBFIELD;                                                 \
   }
 
 namespace ocs2 {
 namespace ModelData {
-
-using scalar_t = ocs2::ModelDataBase::scalar_t;
-using dynamic_vector_t = ocs2::ModelDataBase::dynamic_vector_t;
-using dynamic_matrix_t = ocs2::ModelDataBase::dynamic_matrix_t;
 
 /**
  * Helper specialization of interpolate() of ModelData array types for scalar_t subfields.
@@ -65,34 +67,33 @@ using dynamic_matrix_t = ocs2::ModelDataBase::dynamic_matrix_t;
  * possible to write a general interpolate() function with template argument Field_T.
  */
 inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, scalar_t& enquiryData,
-                        const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const scalar_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+                        const std::vector<ocs2::ModelDataBase>* dataPtr,
+                        std::function<const scalar_t&(const std::vector<ocs2::ModelDataBase>*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
 /**
- * Helper specialization of interpolate() of ModelData array types for dynamic_vector_t subfields.
+ * Helper specialization of interpolate() of ModelData array types for vector_t subfields.
  */
-inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_vector_t& enquiryData,
-                        const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const dynamic_vector_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, vector_t& enquiryData,
+                        const std::vector<ocs2::ModelDataBase>* dataPtr,
+                        std::function<const vector_t&(const std::vector<ocs2::ModelDataBase>*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
 /**
  * Helper specialization of interpolate() of ModelData array types for scalar_t subfields.
  */
-inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, dynamic_matrix_t& enquiryData,
-                        const ocs2::ModelDataBase::array_t* dataPtr,
-                        std::function<const dynamic_matrix_t&(const ocs2::ModelDataBase::array_t*, size_t)> accessFun) {
+inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, matrix_t& enquiryData,
+                        const std::vector<ocs2::ModelDataBase>* dataPtr,
+                        std::function<const matrix_t&(const std::vector<ocs2::ModelDataBase>*, size_t)> accessFun) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
 /**
  * Re-defining the timeSegment() in ModelData namespace.
  */
-inline ocs2::LinearInterpolation::index_alpha_t timeSegment(ocs2::LinearInterpolation::scalar_t enquiryTime,
-                                                            const std::vector<ocs2::LinearInterpolation::scalar_t>* timeArrayPtr) {
+inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime, const scalar_array_t* timeArrayPtr) {
   return ocs2::LinearInterpolation::timeSegment(enquiryTime, timeArrayPtr);
 }
 
@@ -104,30 +105,31 @@ inline ocs2::LinearInterpolation::index_alpha_t timeSegment(ocs2::LinearInterpol
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 
 // dynamics
-CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamics)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, f)
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsBias)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsStateDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsInputDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, dfdx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(dynamics, dfdu)
 CREATE_INTERPOLATION_ACCESS_FUNCTION(dynamicsCovariance)
 
 // cost
-CREATE_INTERPOLATION_ACCESS_FUNCTION(cost)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costStateDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costInputDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costStateSecondDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costInputSecondDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(costInputStateDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdu)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdxx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfduu)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(cost, dfdux)
 
 // state equality constraints
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateEqConstr)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateEqConstrStateDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstr, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateEqConstr, dfdx)
 
 // state-input equality constraints
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateInputEqConstr)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateInputEqConstrStateDerivative)
-CREATE_INTERPOLATION_ACCESS_FUNCTION(stateInputEqConstrInputDerivative)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, f)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdx)
+CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdu)
 
 }  // namespace ModelData
 }  // namespace ocs2
 
 #undef CREATE_INTERPOLATION_ACCESS_FUNCTION
+#undef CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD

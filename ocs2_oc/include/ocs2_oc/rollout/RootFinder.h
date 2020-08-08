@@ -33,9 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 
-#include "ocs2_oc/rollout/RootFinderType.h"
+#include "RootFinderType.h"
 
 namespace ocs2 {
 
@@ -64,7 +64,6 @@ namespace ocs2 {
  */
 class RootFinder {
  public:
-  using scalar_t = Dimensions<0, 0>::scalar_t;
   using pair_t = std::pair<scalar_t, scalar_t>;
 
   /**
@@ -87,13 +86,7 @@ class RootFinder {
    * @param [in] timeInt: Pair of two time moments.
    * @param [in] guardInt: Pair of two function values at time_int times, should have opposite sign.
    */
-  void setInitBracket(pair_t timeInt, pair_t guardInt) {
-    if (guardInt.first * guardInt.second > 0) {
-      throw std::runtime_error("Bracket function values should have opposite signs!");
-    }
-    timeInt_ = timeInt;
-    guardInt_ = guardInt;
-  }
+  void setInitBracket(pair_t timeInt, pair_t guardInt);
 
   /**
    * Sets the initial bracket when the RootFinding method is initialized.
@@ -114,56 +107,14 @@ class RootFinder {
    * @param [in] query: Time moment of last query point
    * @param [in] fQuery: Function evaluation of last query time
    */
-  void updateBracket(const scalar_t& query, const scalar_t& fQuery) {
-    if (fQuery * guardInt_.first < 0) {
-      guardInt_.second = guardInt_.first;
-      timeInt_.second = timeInt_.first;
-
-      guardInt_.first = fQuery;
-      timeInt_.first = query;
-
-    } else {
-      scalar_t gamma;
-      switch (rootFindingAlgorithm_) {
-        case (RootFinderType::ANDERSON_BJORCK): {
-          gamma = 1 - (fQuery / guardInt_.first);
-          if (gamma < 0) {
-            gamma = 0.5;
-          }
-          break;
-        }
-        case (RootFinderType::PEGASUS): {
-          gamma = guardInt_.first / (guardInt_.first + fQuery);
-          break;
-        }
-        case (RootFinderType::ILLINOIS): {
-          gamma = 0.5;
-          break;
-        }
-        case (RootFinderType::REGULA_FALSI): {
-          gamma = 1.0;
-          break;
-        }
-        default: {
-          throw std::runtime_error("Root finding algorithm of type " +
-                                   std::to_string(static_cast<std::underlying_type<RootFinderType>::type>(rootFindingAlgorithm_)) +
-                                   " is not supported.");
-        }
-      }
-
-      guardInt_.first = fQuery;
-      timeInt_.first = query;
-
-      guardInt_.second *= gamma;
-    }
-  }
+  void updateBracket(const scalar_t& query, const scalar_t& fQuery);
 
   /**
    * Uses (adapted-) regula falsi method to obtain a new query point
    *
    * @return Time moment of new query point
    */
-  inline scalar_t getNewQuery() {
+  scalar_t getNewQuery() {
     const scalar_t& fa = guardInt_.first;
     const scalar_t& ta = timeInt_.first;
     const scalar_t& fb = guardInt_.second;
@@ -174,11 +125,7 @@ class RootFinder {
   /**
    * Displays relevant bracketing information
    */
-  void display() {
-    std::cerr << "Root Finding Information" << std::endl;
-    std::cerr << "Time Bracket:  [" << timeInt_.first << ";" << timeInt_.second << "]" << std::endl;
-    std::cerr << "Value Bracket: [" << guardInt_.first << ";" << guardInt_.second << "]" << std::endl;
-  }
+  void display();
 
  private:
   RootFinderType rootFindingAlgorithm_;

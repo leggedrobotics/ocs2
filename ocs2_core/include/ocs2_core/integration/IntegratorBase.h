@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <functional>
 #include <limits>
+#include <memory>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/integration/Observer.h>
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/integration/SystemEventHandler.h>
@@ -40,32 +42,17 @@ namespace ocs2 {
 
 /**
  * The interface class for integration of autonomous systems.
- *
- * @tparam STATE_DIM: Dimension of the state space, can be Eigen::Dynamic.
  */
-template <int STATE_DIM>
 class IntegratorBase {
  public:
-  using DIMENSIONS = Dimensions<STATE_DIM, 0>;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-
-  using system_t = OdeBase<STATE_DIM>;
-  using observer_t = Observer<STATE_DIM>;
-  using system_func_t = std::function<void(const state_vector_t& x, state_vector_t& dxdt, scalar_t t)>;
-  using observer_func_t = std::function<void(const state_vector_t& x, scalar_t t)>;
+  using system_func_t = std::function<void(const vector_t& x, vector_t& dxdt, scalar_t t)>;
+  using observer_func_t = std::function<void(const vector_t& x, scalar_t t)>;
 
   /**
    * Default constructor
    * @param [in] eventHandler
    */
-  explicit IntegratorBase(std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr = nullptr)
-      : eventHandlerPtr_(std::move(eventHandlerPtr)) {
-    if (eventHandlerPtr_ == nullptr) {
-      eventHandlerPtr_ = std::make_shared<SystemEventHandler<STATE_DIM>>();
-    }
-  }
+  explicit IntegratorBase(std::shared_ptr<SystemEventHandler> eventHandlerPtr = nullptr);
 
   /**
    * Default destructor
@@ -82,15 +69,8 @@ class IntegratorBase {
    * @param [in] finalTime: Final time.
    * @param [in] dt: Time step.
    */
-  void integrate_const(system_t& system, observer_t& observer, const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                       scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max()) {
-    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
-    observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
-      observer.observe(system, x, t);
-      eventHandlerPtr_->handleEvent(system, t, x);
-    };
-    run_integrate_const(system.systemFunction(), callback, initialState, startTime, finalTime, dt);
-  }
+  void integrateConst(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                      scalar_t dt, int maxNumSteps = std::numeric_limits<int>::max());
 
   /**
    * Adaptive time integration based on start time and final time.
@@ -104,16 +84,9 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_adaptive(system_t& system, observer_t& observer, const state_vector_t& initialState, scalar_t startTime,
-                          scalar_t finalTime, scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
-                          int maxNumSteps = std::numeric_limits<int>::max()) {
-    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
-    observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
-      observer.observe(system, x, t);
-      eventHandlerPtr_->handleEvent(system, t, x);
-    };
-    run_integrate_adaptive(system.systemFunction(), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
-  }
+  void integrateAdaptive(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                         scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
+                         int maxNumSteps = std::numeric_limits<int>::max());
 
   /**
    * Output integration based on a given time trajectory.
@@ -127,31 +100,29 @@ class IntegratorBase {
    * @param [in] AbsTol: The absolute tolerance error for ode solver.
    * @param [in] RelTol: The relative tolerance error for ode solver.
    */
-  void integrate_times(system_t& system, observer_t& observer, const state_vector_t& initialState,
-                       typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
-                       scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
-                       int maxNumSteps = std::numeric_limits<int>::max()) {
-    eventHandlerPtr_->setMaxNumSteps(maxNumSteps);
-    observer_func_t callback = [&](const state_vector_t& x, scalar_t t) {
-      observer.observe(system, x, t);
-      eventHandlerPtr_->handleEvent(system, t, x);
-    };
-    run_integrate_times(system.systemFunction(), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
-  }
+  void integrateTimes(OdeBase& system, Observer& observer, const vector_t& initialState,
+                      typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
+                      scalar_t dtInitial = 0.01, scalar_t AbsTol = 1e-6, scalar_t RelTol = 1e-3,
+                      int maxNumSteps = std::numeric_limits<int>::max());
 
  protected:
-  virtual void run_integrate_const(system_func_t system, observer_func_t observer, const state_vector_t& initialState, scalar_t startTime,
-                                   scalar_t finalTime, scalar_t dt) = 0;
+  /** Copy constructor */
+  IntegratorBase(const IntegratorBase& rhs) = default;
 
-  virtual void run_integrate_adaptive(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
-                                      scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
+  system_func_t systemFunction(OdeBase& system, int maxNumSteps) const;
 
-  virtual void run_integrate_times(system_func_t system, observer_func_t observer, const state_vector_t& initialState,
-                                   typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
-                                   scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
+  virtual void runIntegrateConst(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
+                                 scalar_t finalTime, scalar_t dt) = 0;
+
+  virtual void runIntegrateAdaptive(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
+                                    scalar_t finalTime, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
+
+  virtual void runIntegrateTimes(system_func_t system, observer_func_t observer, const vector_t& initialState,
+                                 typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
+                                 scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) = 0;
 
  private:
-  std::shared_ptr<SystemEventHandler<STATE_DIM>> eventHandlerPtr_;
+  std::shared_ptr<SystemEventHandler> eventHandlerPtr_;
 };
 
 }  // namespace ocs2

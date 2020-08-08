@@ -33,10 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Eigen/Dense>
 
-
 TEST(RotationTransforms, quaternionDifferenceJacobian) {
-  using ad_vector_t = ocs2::CppAdInterface<double>::ad_dynamic_vector_t;
-  using ad_scalar_t = ocs2::CppAdInterface<double>::ad_scalar_t;
+  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
+  using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
 
   auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     Eigen::Quaternion<ad_scalar_t> q(x.head<4>());
@@ -45,7 +44,7 @@ TEST(RotationTransforms, quaternionDifferenceJacobian) {
     y = ocs2::quaternionDistance(q, qRef);
   };
 
-  ocs2::CppAdInterface<double> adInterface(adFunction, 3, 4, 4, "quaternion_error");
+  ocs2::CppAdInterface adInterface(adFunction, 4, 4, "quaternion_error");
   adInterface.createModels();
 
   for (int i = 0; i < 1000; i++) {
@@ -62,9 +61,4 @@ TEST(RotationTransforms, quaternionDifferenceJacobian) {
   }
 
   ASSERT_TRUE(true);
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

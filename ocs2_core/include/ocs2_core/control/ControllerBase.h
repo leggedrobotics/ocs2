@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,48 +29,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <iostream>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/control/ControllerType.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_core/control/ControllerType.h>
 
 namespace ocs2 {
 
 /**
  * The base class for all controllers.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 class ControllerBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename dimensions_t::scalar_t;
-  using size_array_t = typename dimensions_t::size_array_t;
-  using scalar_array_t = typename dimensions_t::scalar_array_t;
-  using float_array_t = std::vector<float>;
-  using state_vector_t = typename dimensions_t::state_vector_t;
-  using input_vector_t = typename dimensions_t::input_vector_t;
-
-  using self_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using array_t = std::vector<self_t, Eigen::aligned_allocator<self_t>>;
-
-  /**
-   * Default constructor.
-   */
+  /** Constructor */
   ControllerBase() = default;
 
-  /**
-   * Default destructor.
-   */
+  /** Default destructor. */
   virtual ~ControllerBase() = default;
 
   /**
@@ -80,21 +52,7 @@ class ControllerBase {
    * @param [in] x: Current state.
    * @return Current input.
    */
-  virtual input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) = 0;
-
-  /**
-   * @brief Saves the controller at given time to an array of arrays structure for ROS transmission
-   * @param[in] timeArray array of query times
-   * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
-   */
-  virtual void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const = 0;
-
-  /**
-   * @brief Restores and initializes the controller from a flattened array
-   * @param[in] timeArray array of times
-   * @param[in] flatArray2 The array the represents the compressed controller
-   */
-  virtual void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) = 0;
+  virtual vector_t computeInput(scalar_t t, const vector_t& x) = 0;
 
   /**
    * @brief Merges this controller with another controller that comes active later in time
@@ -138,11 +96,6 @@ class ControllerBase {
   virtual void clear() = 0;
 
   /**
-   * @brief Fills all the data containers with zeros. Does not change size, does not change time array.
-   */
-  virtual void setZero() = 0;
-
-  /**
    * Returns whether the class contains any information.
    *
    * @return true if it contains no information, false otherwise.
@@ -161,11 +114,25 @@ class ControllerBase {
    */
   virtual void display() const {}
 
-  /*
-   * Gets the event times for which the controller is designed.
+  /**
+   * @brief Gets the event times for which the controller is designed.
    * @return The event times of the controller.
    */
-  virtual scalar_array_t controllerEventTimes() const {}
+  virtual scalar_array_t controllerEventTimes() const { return {}; }
+
+  /**
+   * Saves the controller at given time to an array of arrays structure for ROS transmission
+   *
+   * @param[in] timeArray array of query times
+   * @param[out] flatArray2 The array of arrays that is to be filled, i.e., the compressed controller. One array per query time
+   */
+  virtual void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const {
+    throw std::runtime_error("ControllerBase::flatten: not implemented.");
+  }
+
+ protected:
+  /** Copy constructor */
+  ControllerBase(const ControllerBase& rhs) = default;
 };
 
 }  // namespace ocs2

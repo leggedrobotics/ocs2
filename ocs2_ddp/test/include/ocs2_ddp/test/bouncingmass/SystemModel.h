@@ -29,167 +29,132 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <iostream>
-#include <vector>
+#include <utility>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
-#include <ocs2_core/initialization/SystemOperatingPoint.h>
-#include <ocs2_core/logic/machine/HybridLogicRulesMachine.h>
-#include <ocs2_ddp/SLQ.h>
-#include <ocs2_ddp/SLQ_Settings.h>
-#include <ocs2_oc/rollout/StateTriggeredRollout.h>
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
 
-enum { STATE_DIM = 3, INPUT_DIM = 1 };
+static constexpr size_t STATE_DIM = 3;
+static constexpr size_t INPUT_DIM = 1;
 
-using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-using scalar_t = typename DIMENSIONS::scalar_t;
-using state_vector_t = typename DIMENSIONS::state_vector_t;
-using input_vector_t = typename DIMENSIONS::input_vector_t;
-using dynamic_vec_t = typename DIMENSIONS::dynamic_vector_t;
+using scalar_t = ocs2::scalar_t;
+using vector_t = ocs2::vector_t;
+using matrix_t = ocs2::matrix_t;
+using ScalarFunctionQuadraticApproximation = ocs2::ScalarFunctionQuadraticApproximation;
 
-using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-using input_matrix_t = typename DIMENSIONS::input_matrix_t;
-using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-
-using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-using size_array_t = typename DIMENSIONS::size_array_t;
-
-using logic_template_type = ocs2::ModeSequenceTemplate<scalar_t>;
-using logic_rules_machine_t = ocs2::HybridLogicRulesMachine;
-
-class systemLogic final : public ocs2::HybridLogicRules {
+class BouncingMassDynamics final : public ocs2::LinearSystemDynamics {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = HybridLogicRules;
-
-  systemLogic() = default;
-
-  ~systemLogic() = default;
-
-  systemLogic(scalar_array_t switchingTimes, size_array_t subsystemsSequence)
-      : BASE(std::move(switchingTimes), std::move(subsystemsSequence)) {}
-
-  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) final override {}
-
-  void update() final override {}
-
- protected:
-  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                  const scalar_t& finalTime) override{};
-};
-
-class systemDynamics final : public ocs2::ControlledSystemBase<STATE_DIM, INPUT_DIM> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-
-  systemDynamics() = default;
-  ~systemDynamics() = default;
-
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) {
-    state_matrix_t A;
-    A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-    state_input_matrix_t B;
-    B << 0.0, 1.0, 0.0;
-
-    dxdt = A * x + B * u;
-  }
-
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+  BouncingMassDynamics()
+      : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM), matrix_t(STATE_DIM, STATE_DIM)) {
+    LinearSystemDynamics::A_ << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    LinearSystemDynamics::B_ << 0.0, 1.0, 0.0;
     const scalar_t e = 0.95;
+    LinearSystemDynamics::G_ << 1.0, 0.0, 0.0, 0.0, -e, 0.0, 0.0, 0.0, 1.0;
+  }
 
-    state_matrix_t delta;
-    delta << 0.0, 0.0, 0.0, 0.0, -(1.0 + e), 0.0, 0.0, 0.0, 0.0;
-    mappedState = state + delta * state;
+  ~BouncingMassDynamics() override = default;
 
-    if (state[2] < 5) {
-      mappedState[2] += 1;
+  BouncingMassDynamics* clone() const override { return new BouncingMassDynamics(*this); }
+
+  vector_t computeJumpMap(scalar_t t, const vector_t& x) override {
+    vector_t mappedState = LinearSystemDynamics::computeJumpMap(t, x);
+    if (x(2) < 5) {
+      mappedState(2) += 1;
     }
+    return mappedState;
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) {
-    guardSurfacesValue.resize(1);
-    guardSurfacesValue[0] = state[0];
+  vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) override {
+    vector_t guardSurfaces(1);
+    guardSurfaces(0) = x(0);
+    return guardSurfaces;
   }
 
-  systemDynamics* clone() const final { return new systemDynamics(*this); }
+  ocs2::VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override {
+    ocs2::VectorFunctionLinearApproximation approximation;
+    approximation.dfdx.setIdentity(1, x.rows());
+    approximation.dfdu.setZero(1, u.rows());
+    approximation.f = computeGuardSurfaces(t, x);
+    return approximation;
+  }
 };
 
-class systemDerivative final : public ocs2::DerivativesBase<STATE_DIM, INPUT_DIM> {
+class BouncingMassCost final : public ocs2::CostFunctionBase {
  public:
-  systemDerivative() = default;
-  ~systemDerivative() = default;
+  BouncingMassCost(OverallReference ref, matrix_t Q, matrix_t R, matrix_t QFinal, scalar_t timeFinal)
+      : ref_(ref), timeFinal_(timeFinal), Q_(std::move(Q)), R_(std::move(R)), QFinal_(std::move(QFinal)) {}
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& state, const input_vector_t& u) {
-    t_ = t;
-    state_ = state;
-    u_ = u;
+  ~BouncingMassCost() override = default;
+
+  BouncingMassCost* clone() const override { return new BouncingMassCost(*this); }
+
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) {
+    const auto stateInput = getNominalStateInput(t, x, u);
+    vector_t xDeviation = x - stateInput.first;
+    vector_t uDeviation = u - stateInput.second;
+    return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation);
   }
 
-  void getFlowMapDerivativeState(state_matrix_t& A) { A << 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0; }
+  scalar_t finalCost(scalar_t t, const vector_t& x) {
+    vector_t xDeviation = x - getNominalFinalState(t, x);
+    return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
+  }
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) { B << 0.0, 1.0, 0.0; }
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+    const auto stateInput = getNominalStateInput(t, x, u);
+    vector_t xDeviation = x - stateInput.first;
+    vector_t uDeviation = u - stateInput.second;
 
-  systemDerivative* clone() const final { return new systemDerivative(*this); }
+    ScalarFunctionQuadraticApproximation L;
+    L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation);
+    L.dfdx = Q_ * xDeviation;
+    L.dfdu = R_ * uDeviation;
+    L.dfdxx = Q_;
+    L.dfdux.setZero(INPUT_DIM, STATE_DIM);
+    L.dfduu = R_;
+    return L;
+  }
+
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+    vector_t xDeviation = x - getNominalFinalState(t, x);
+
+    ScalarFunctionQuadraticApproximation Phi;
+    Phi.f = 0.5 * xDeviation.dot(QFinal_ * xDeviation);
+    Phi.dfdx = QFinal_ * xDeviation;
+    Phi.dfdxx = QFinal_;
+    return Phi;
+  }
 
  private:
-  scalar_t t_;
-  state_vector_t state_;
-  input_vector_t u_;
-};
+  std::pair<vector_t, vector_t> getNominalStateInput(scalar_t t, const vector_t& x, const vector_t& u) {
+    vector_t xRef;
+    vector_t uRef;
+    const int currentMode = x.tail(1).value();
+    ref_.getInput(t, uRef);
+    ref_.getState(currentMode, t, xRef);
+    return {xRef, uRef};
+  }
 
-class systemCost final : public ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM> {
- public:
-  using BASE = ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>;
-
-  systemCost(OverallReference ref, state_matrix_t Q, input_matrix_t R, state_matrix_t P, state_vector_t xNom, input_vector_t uNom,
-             state_vector_t xFin, scalar_t timeFinal)
-      : BASE(Q, R, xNom, uNom, P, xFin), ref_(ref), xFin_(xFin), timeFinal_(timeFinal) {}
-
-  ~systemCost() = default;
-
-  systemCost* clone() const final { return new systemCost(*this); }
-
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& state, const input_vector_t& u) {
-    t_ = t;
-    state_ = state;
-    u_ = u;
-
-    int currentMode = state_.tail(1).value();
-    ref_.getInput(t_, uRef_);
-    ref_.getState(currentMode, t_, stateRef_);
-
+  vector_t getNominalFinalState(scalar_t t, const vector_t& x) {
     // Terminal cost only calculated for final state, not for intermediate switch states
     if (std::fabs(t - timeFinal_) > ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon()) {
-      BASE::setCurrentStateAndControl(t_, state_, u_, stateRef_, uRef_, state_);
-    } else {
-      BASE::setCurrentStateAndControl(t_, state_, u_, stateRef_, uRef_, stateRef_);
+      return x;
     }
+
+    vector_t xRef;
+    const int currentMode = x.tail(1).value();
+    ref_.getState(currentMode, t, xRef);
+    return xRef;
   }
 
  private:
-  scalar_t t_;
-  state_vector_t state_;
-  state_vector_t stateRef_;
-  input_vector_t u_;
-  input_vector_t uRef_;
-
-  state_vector_t xFin_;
   scalar_t timeFinal_;
-
   OverallReference ref_;
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t QFinal_;
 };
-
-using systemConstraint = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
-
-using systemOperatingTrajectories = ocs2::SystemOperatingPoint<STATE_DIM, INPUT_DIM>;

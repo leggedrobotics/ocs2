@@ -48,13 +48,9 @@ namespace ocs2 {
  * @tparam INPUT_DIM: Dimension of the control input space.
  */
 template <size_t STATE_DIM, size_t INPUT_DIM>
-class OCS2 : public GradientDescent {
+class OCS2 {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = GradientDescent;
-  using typename BASE::dynamic_matrix_t;
-  using typename BASE::dynamic_vector_t;
 
   using upper_level_cost_t = UpperLevelCost<STATE_DIM, INPUT_DIM>;
   using upper_level_constraints_t = UpperLevelConstraints;
@@ -88,14 +84,14 @@ class OCS2 : public GradientDescent {
    */
   OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
        const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
-       const SLQ_Settings& settings = SLQ_Settings(), std::shared_ptr<HybridLogicRules> logicRulesPtr = nullptr,
+       const SLQ_Settings& settings, std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr,
        const cost_function_base_t* heuristicsFunctionPtr = nullptr, const GDDP_Settings& gddpSettings = GDDP_Settings(),
        const NLP_Settings& nlpSettings = NLP_Settings());
 
   /**
    * Default destructor.
    */
-  ~OCS2() override = default;
+  ~OCS2() = default;
 
   /**
    * Gets a reference to the GDDP settings structure.
@@ -112,19 +108,48 @@ class OCS2 : public GradientDescent {
   SLQ_Settings& slqSettings();
 
   /**
-   * The main routine of DDP which runs DDP for a given initial state, initial time, and final time. In order
-   * to retrieve the initial nominal trajectories in the forward pass, DDP will use the given operatingTrajectories
-   * in the constructor.
+   * Gets a constant reference to the NLP of settings.
+   *
+   * @return A constant reference to the NLP of settings.
+   */
+  NLP_Settings& nlpSettings();
+
+  /**
+   * Gets the iteration cost log.
+   *
+   * @param [out] iterationCost: The cost value in each iteration.
+   */
+  void getIterationsLog(scalar_array_t& iterationCost) const;
+
+  /**
+   * Gets the parameter vector.
+   *
+   * @param [out] parameters: the parameter vector
+   */
+  void getParameters(dynamic_vector_t& parameters) const;
+
+  /**
+   * Gets the cost.
+   *
+   * @param [out] cost value
+   */
+  void getCost(scalar_t& cost) const;
+
+  /**
+   * The main routine of OCS2 which uses a first order method to optimize the event time in the top-level of the bi-level
+   * optimization scheme.
    *
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
    * @param [in] partitioningTimes: The partitioning times between subsystems.
+   * @param [in] initEventTimes: The initial guess for the optimum event times.
    */
   void run(const scalar_t& initTime, const state_vector_t& initState, const scalar_t& finalTime, const scalar_array_t& partitioningTimes,
            const scalar_array_t& initEventTimes);
 
  private:
+  GradientDescent frankWolfeGradientDescentSolver_;
   std::unique_ptr<upper_level_cost_t> ulCostPtr_;
   std::unique_ptr<upper_level_constraints_t> ulConstraintsPtr_;
 };

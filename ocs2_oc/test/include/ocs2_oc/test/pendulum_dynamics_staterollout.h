@@ -32,53 +32,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/logic/rules/HybridLogicRules.h>
 
 namespace ocs2 {
 
-class pendulum_logic final : public HybridLogicRules {
+class pendulum_dyn final : public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = HybridLogicRules;
-
-  pendulum_logic() = default;
-  ~pendulum_logic() override = default;
-
-  pendulum_logic(scalar_array_t switchingTimes, size_array_t sybsystemsSequence) {}
-
-  void rewind(const scalar_t& lowerBoundTime, const scalar_t& upperBoundTime) override {}
-
-  void update() override {}
-
- protected:
-  void insertModeSequenceTemplate(const logic_template_type& modeSequenceTemplate, const scalar_t& startTime,
-                                  const scalar_t& finalTime) override{};
-};
-
-class pendulum_dyn final : public ControlledSystemBase<2, 1> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   pendulum_dyn() = default;
   ~pendulum_dyn() override = default;
 
-  void computeFlowMap(const scalar_t& t, const state_vector_t& x, const input_vector_t& u, state_vector_t& dxdt) override {
-    double g = 9.81;
-    double L = 1;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override {
+    const double g = 9.81;
+    const double L = 1;
+    vector_t dxdt(2);
     dxdt << x[1], -(g / L) * std::sin(x[0]);
+    return dxdt;
   }
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& mappedState) override {
+  vector_t computeJumpMap(scalar_t t, const vector_t& state) override {
+    vector_t mappedState(2);
     mappedState[0] = state[0];
     mappedState[1] = -0.9 * state[1];
+    return mappedState;
   }
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) override {
-    guardSurfacesValue.resize(1);
-    guardSurfacesValue[0] = state[0];
+  vector_t computeGuardSurfaces(scalar_t t, const vector_t& state) override {
+    vector_t guardSurfaces(1);
+    guardSurfaces[0] = state[0];
+    return guardSurfaces;
   }
 
   pendulum_dyn* clone() const override { return new pendulum_dyn(*this); }
 };
+
 }  // namespace ocs2

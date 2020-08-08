@@ -9,14 +9,24 @@ find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
 )
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+# pthread and OpenMp
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+if (Threads_FOUND) # Rename for catkin
+  set(Threads_INCLUDE_DIRS ${THREADS_PTHREADS_INCLUDE_DIR})
+  set(Threads_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+endif (Threads_FOUND)
+find_package(OpenMP REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -Wfatal-errors -Wl,--no-as-needed")
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Load ocs2 compile flags
+include(cmake/ocs2_cxx_flags.cmake)
+message(STATUS "OCS2_CXX_FLAGS: " ${OCS2_CXX_FLAGS})
 
 ###################################
 ## catkin specific configuration ##
@@ -32,6 +42,10 @@ catkin_package(
     ocs2_thirdparty
   DEPENDS
     Boost
+    OpenMP_CXX
+    Threads
+  CFG_EXTRAS
+    ocs2_cxx_flags.cmake
 )
 
 ###########
@@ -49,12 +63,53 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
+  src/automatic_differentation/FiniteDifferenceMethods.cpp
+  src/constraint/ConstraintBase.cpp
+  src/constraint/ConstraintBaseAD.cpp
+  src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
+  src/control/FeedforwardController.cpp
+  src/control/LinearController.cpp
+  src/control/StateBasedLinearController.cpp
+  src/control/TrajectorySpreadingControllerAdjustment.cpp
+  src/cost/CostFunctionBase.cpp
+  src/cost/CostFunctionBaseAD.cpp
+  src/cost/CostDesiredTrajectories.cpp
+  src/cost/RelaxedBarrierCost.cpp
+  src/cost/CostFunctionLinearCombination.cpp
+  src/cost/QuadraticCostFunction.cpp
+  src/cost/QuadraticGaussNewtonCostBaseAD.cpp
+  src/dynamics/ControlledSystemBase.cpp
+  src/dynamics/LinearSystemDynamics.cpp
+  src/dynamics/SystemDynamicsBase.cpp
+  src/dynamics/SystemDynamicsBaseAD.cpp
+  src/dynamics/SystemDynamicsLinearizer.cpp
+  src/dynamics/TransferFunctionBase.cpp
+  src/initialization/OperatingPoints.cpp
   src/integration/Integrator.cpp
-  src/logic/machine/HybridLogicRulesMachine.cpp
+  src/integration/IntegratorBase.cpp
+  src/integration/OdeBase.cpp
+  src/integration/Observer.cpp
+  src/integration/StateTriggeredEventHandler.cpp
+  src/integration/SystemEventHandler.cpp
+  src/logic/ModeSchedule.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
+  src/loopshaping/LoopshapingOperatingPoint.cpp
+  src/loopshaping/cost/LoopshapingCost.cpp
+  src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
+  src/loopshaping/cost/LoopshapingCostInputPattern.cpp
+  src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraint.cpp
+  src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamics.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsEliminatePattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
+  src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
+  src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
@@ -62,7 +117,10 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  OpenMP::OpenMP_CXX
+  Threads::Threads
 )
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -81,8 +139,8 @@ if(cmake_clang_tools_FOUND)
     TARGETS
       ${PROJECT_NAME}
       ${PROJECT_NAME}_lintTarget
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
-    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/ocs2_core
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
@@ -112,10 +170,31 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_core
 
-catkin_add_gtest(integration_unittest
-  test/integration/IntegrationTest.cpp
+catkin_add_gtest(test_control
+  test/control/testLinearController.cpp
+  test/control/testFeedforwardController.cpp
 )
-target_link_libraries(integration_unittest
+target_link_libraries(test_control
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(initialization_unittest
+  test/initialization/InitializationTest.cpp
+)
+target_link_libraries(initialization_unittest
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_integration
+  test/integration/IntegrationTest.cpp
+  test/integration/TrapezoidalIntegrationTest.cpp
+)
+target_link_libraries(test_integration
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -126,118 +205,49 @@ catkin_add_gtest(interpolation_unittest
   test/misc/testInterpolation.cpp
 )
 target_link_libraries(interpolation_unittest
-  ${catkin_LIBRARIES}
-)
-
-catkin_add_gtest(logic_rules_machine_unittest
-  test/logic/testLogicRulesMachine.cpp
-)
-target_link_libraries(logic_rules_machine_unittest
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
+  gtest_main
 )
 
-catkin_add_gtest(cppadcg_constraint_unittest
+catkin_add_gtest(${PROJECT_NAME}_cppadcg
   test/cppad_cg/testCppADCG_constraint.cpp
-)
-target_link_libraries(cppadcg_constraint_unittest
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-)
-
-catkin_add_gtest(cppadcg_cost_unittest
   test/cppad_cg/testCppADCG_cost.cpp
-)
-target_link_libraries(cppadcg_cost_unittest
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-)
-
-catkin_add_gtest(cppadcg_dynamics_unittest
   test/cppad_cg/testCppADCG_dynamics.cpp
-)
-target_link_libraries(cppadcg_dynamics_unittest
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES} -lm -ldl
-)
-
-catkin_add_gtest(testSparsityHelpers
   test/cppad_cg/testSparsityHelpers.cpp
-)
-target_link_libraries(testSparsityHelpers
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  dl
-)
-
-catkin_add_gtest(testCppAdInterface
   test/cppad_cg/testCppAdInterface.cpp
 )
-target_link_libraries(testCppAdInterface
+target_link_libraries(${PROJECT_NAME}_cppadcg
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
-  dl
+  ${catkin_LIBRARIES}
+  -lm -ldl
+  gtest_main
 )
 
 catkin_add_gtest(test_transferfunctionbase
   test/dynamics/testTransferfunctionBase.cpp
 )
 target_link_libraries(test_transferfunctionbase
-  ${catkin_LIBRARIES}
-)
-
-catkin_add_gtest(test_loopshapingDefinition
-  test/loopshaping/testLoopshapingDefinition.cpp
-)
-target_link_libraries(test_loopshapingDefinition
-   ${PROJECT_NAME}
-   ${Boost_LIBRARIES}
-   ${catkin_LIBRARIES}
-   -lstdc++fs
-)
-
-catkin_add_gtest(test_loopshapingDynamics
-  test/loopshaping/testLoopshapingDynamics.cpp
-)
-target_link_libraries(test_loopshapingDynamics
   ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
-  -lstdc++fs
+  gtest_main
 )
 
-catkin_add_gtest(test_loopshapingCost
-  test/loopshaping/testLoopshapingCost.cpp
-)
-target_link_libraries(test_loopshapingCost
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  -lstdc++fs
-)
-
-catkin_add_gtest(test_loopshapingConstraint
+catkin_add_gtest(${PROJECT_NAME}_loopshaping
+  test/loopshaping/testLoopshapingConfiguration.cpp
   test/loopshaping/testLoopshapingConstraint.cpp
-)
-target_link_libraries(test_loopshapingConstraint
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  -lstdc++fs
-)
-
-catkin_add_gtest(test_loopshapingFilterDynamics
+  test/loopshaping/testLoopshapingCost.cpp
+  test/loopshaping/testLoopshapingDefinition.cpp
+  test/loopshaping/testLoopshapingDynamics.cpp
   test/loopshaping/testLoopshapingFilterDynamics.cpp
 )
-target_link_libraries(test_loopshapingFilterDynamics
+target_link_libraries(${PROJECT_NAME}_loopshaping
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   -lstdc++fs
+  gtest_main
 )
 
 catkin_add_gtest(test_LinearAlgebra
@@ -247,22 +257,26 @@ target_link_libraries(test_LinearAlgebra
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(test_lookup
   test/misc/testLookup.cpp
 )
 target_link_libraries(test_lookup
+  ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  gtest_main
 )
 
-catkin_add_gtest(derivative_checker_unittest
+catkin_add_gtest(test_dynamics
   test/dynamics/testSystemDynamicsLinearizer.cpp
 )
-target_link_libraries(derivative_checker_unittest
+target_link_libraries(test_dynamics
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  gtest_main
 )
 
 catkin_add_gtest(test_ThreadPool
@@ -275,10 +289,13 @@ target_link_libraries(test_ThreadPool
   gtest_main
 )
 
-catkin_add_gtest(test_CostFunctionLinearCombination
+catkin_add_gtest(test_cost
+  test/cost/testRelaxedBarrierCost.cpp
   test/cost/testCostFunctionLinearCombination.cpp
+  test/cost/testQuadraticCostFunction.cpp
 )
-target_link_libraries(test_CostFunctionLinearCombination
+target_link_libraries(test_cost
+  ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main
@@ -290,4 +307,5 @@ catkin_add_gtest(test_ModelDataBase
 target_link_libraries(test_ModelDataBase
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  gtest_main
 )

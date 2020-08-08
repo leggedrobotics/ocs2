@@ -55,7 +55,7 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.minRelCost_ = 5e-4;
   slqSettings.ddpSettings_.checkNumericalStability_ = false;
-  slqSettings.ddpSettings_.strategy_ = DDP_Strategy::LINE_SEARCH;
+  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
@@ -72,10 +72,11 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   gddpSettings.relTolODE_ = 1e-7;
   gddpSettings.maxNumStepsPerSecond_ = 10000;
 
-  // switching times
+  // event times
   std::vector<double> optimumEventTimes{0.1897};
   std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<EXP0_LogicRules> logicRules(new EXP0_LogicRules(optimumEventTimes, subsystemsSequence));
+  std::shared_ptr<ModeScheduleManager<STATE_DIM, INPUT_DIM>> modeScheduleManagerPtr(
+      new ModeScheduleManager<STATE_DIM, INPUT_DIM>({optimumEventTimes, subsystemsSequence}));
 
   double startTime = 0.0;
   double finalTime = 2.0;
@@ -92,17 +93,17 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   // system dynamics
-  EXP0_System systemDynamics(logicRules);
+  EXP0_System systemDynamics(modeScheduleManagerPtr);
   TimeTriggeredRollout<STATE_DIM, INPUT_DIM> timeTriggeredRollout(systemDynamics, rolloutSettings);
 
   // system derivatives
-  EXP0_SystemDerivative systemDerivative(logicRules);
+  EXP0_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
-  EXP0_SystemConstraint systemConstraint;
+  ConstraintBase systemConstraint;
 
   // system cost functions
-  EXP0_CostFunction systemCostFunction(logicRules);
+  EXP0_CostFunction systemCostFunction(modeScheduleManagerPtr);
 
   // system operatingTrajectories
   Eigen::Matrix<double, STATE_DIM, 1> stateOperatingPoint = Eigen::Matrix<double, STATE_DIM, 1>::Zero();
@@ -114,7 +115,9 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   // SLQ - single core version
   SLQ<STATE_DIM, INPUT_DIM> slqST(&timeTriggeredRollout, &systemDerivative, &systemConstraint, &systemCostFunction, &operatingTrajectories,
-                                  slqSettings, logicRules);
+                                  slqSettings);
+  slqST.setModeScheduleManager(modeScheduleManagerPtr);
+
   // SLQ data collector
   SLQ_DataCollector<STATE_DIM, INPUT_DIM> slqDataCollector(&timeTriggeredRollout, &systemDerivative, &systemConstraint,
                                                            &systemCostFunction);
@@ -126,19 +129,18 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   slqDataCollector.collect(&slqST);
 
   // cost
-  double costFunction, constraint1ISE, constraint2ISE;
-  slqST.getPerformanceIndeces(costFunction, constraint1ISE, constraint2ISE);
+  const auto performanceIndex = slqST.getPerformanceIndeces();
 
   // run GDDP using LQ
   gddp.settings().useLQForDerivatives_ = true;
-  gddp.run(optimumEventTimes, &slqDataCollector);
+  gddp.run(&slqDataCollector);
   // cost derivative
   Eigen::Matrix<double, 1, 1> costFunctionDerivative_LQ;
   gddp.getCostFuntionDerivative(costFunctionDerivative_LQ);
 
   // run GDDP using BVP
   gddp.settings().useLQForDerivatives_ = false;
-  gddp.run(optimumEventTimes, &slqDataCollector);
+  gddp.run(&slqDataCollector);
   // cost derivative
   Eigen::Matrix<double, 1, 1> costFunctionDerivative_BVP;
   gddp.getCostFuntionDerivative(costFunctionDerivative_BVP);
@@ -146,15 +148,15 @@ TEST(exp0_gddp_test, optimum_gradient_test) {
   /******************************************************************************************************/
   /******************************************************************************************************/
   /******************************************************************************************************/
-  std::cerr << "### Optimum cost is: " << costFunction << "\n";
+  std::cerr << "### Optimum cost is: " << performanceIndex.totalCost << "\n";
   std::cerr << "### Optimum event times are:            ["
             << Eigen::Map<Eigen::VectorXd>(optimumEventTimes.data(), optimumEventTimes.size()).transpose() << "]\n";
   std::cerr << "### Optimum cost derivative LQ method:  [" << costFunctionDerivative_LQ.transpose() << "]\n";
   std::cerr << "### Optimum cost derivative BVP method: [" << costFunctionDerivative_BVP.transpose() << "]\n";
 
-  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(costFunction), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(costFunctionDerivative_LQ.norm() / fabs(performanceIndex.totalCost), 10 * slqSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: GDDP failed in the EXP0's cost derivative LQ test!";
-  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(costFunction), 10 * slqSettings.ddpSettings_.minRelCost_)
+  ASSERT_LT(costFunctionDerivative_BVP.norm() / fabs(performanceIndex.totalCost), 10 * slqSettings.ddpSettings_.minRelCost_)
       << "MESSAGE: GDDP failed in the EXP0's cost derivative BVP test!";
 }
 

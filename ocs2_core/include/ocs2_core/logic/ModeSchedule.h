@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ostream>
 #include <vector>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
@@ -40,8 +40,6 @@ namespace ocs2 {
  * Defines a sequence of N modes, separated by N-1 event times
  */
 struct ModeSchedule {
-  using scalar_t = typename Dimensions<0, 0>::scalar_t;
-
   /**
    * Default constructor.
    */

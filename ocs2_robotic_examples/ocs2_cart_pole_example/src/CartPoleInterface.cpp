@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
+
+#include <ocs2_core/misc/LoadData.h>
+
 #include <ros/package.h>
 
 namespace ocs2 {
@@ -57,15 +60,15 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
-   * SLQ-MPC settings
+   * DDP-MPC settings
    */
-  slqSettings_.loadSettings(taskFile);
-  mpcSettings_.loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * Cartpole parameters
    */
-  CartPoleParameters<dim_t::scalar_t> cartPoleParameters;
+  CartPoleParameters cartPoleParameters;
   cartPoleParameters.loadSettings(taskFile);
 
   /*
@@ -77,9 +80,8 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Rollout
    */
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpCartPoleRolloutPtr_.reset(new time_triggered_rollout_t(*cartPoleSystemDynamicsPtr_, rolloutSettings));
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  ddpCartPoleRolloutPtr_.reset(new TimeTriggeredRollout(*cartPoleSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
@@ -88,9 +90,6 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "R", rm_);
   loadData::loadEigenMatrix(taskFile, "Q_final", qmFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  //	xNominal_ = dim_t::state_vector_t::Zero();
-  xNominal_ = xFinal_;
-  uNominal_ = dim_t::input_vector_t::Zero();
 
   std::cerr << "Q:  \n" << qm_ << std::endl;
   std::cerr << "R:  \n" << rm_ << std::endl;
@@ -98,32 +97,25 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  cartPoleCostPtr_.reset(new CartPoleCost(qm_, rm_, xNominal_, uNominal_, qmFinal_, xFinal_));
+  cartPoleCostPtr_.reset(new QuadraticCostFunction(qm_, rm_, qmFinal_));
 
   /*
    * Constraints
    */
-  cartPoleConstraintPtr_.reset(new CartPoleConstraint);
+  cartPoleConstraintPtr_.reset(new ConstraintBase());
 
   /*
    * Initialization
    */
-  cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
-
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  dim_t::scalar_t timeHorizon;
-  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+  cartPoleOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<CartPoleInterface::mpc_t> CartPoleInterface::getMpc() {
-  return std::unique_ptr<mpc_t>(new mpc_t(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
-                                          cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), partitioningTimes_, slqSettings_,
-                                          mpcSettings_));
+std::unique_ptr<MPC_DDP> CartPoleInterface::getMpc() {
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
+                                              cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace cartpole

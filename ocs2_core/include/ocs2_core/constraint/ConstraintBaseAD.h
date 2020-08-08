@@ -27,11 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef CONSTRAINTBASEAD_OCS2_H_
-#define CONSTRAINTBASEAD_OCS2_H_
+#pragma once
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include "ocs2_core/constraint/ConstraintBase.h"
+#include <ocs2_core/constraint/ConstraintBase.h>
 
 namespace ocs2 {
 
@@ -43,50 +42,21 @@ namespace ocs2 {
  * \f$ 0 = F(t) \delta x + h(t) \f$ \n
  * The linearized final state-only constraint is defined as: \n
  * \f$ 0 = F_f \delta x + h_f \f$ \n
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
+class ConstraintBaseAD : public ConstraintBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  static constexpr size_t MAX_CONSTRAINT_DIM_ = INPUT_DIM;
-
-  using BASE = ConstraintBase<STATE_DIM, INPUT_DIM>;
-
-  using typename BASE::constraint1_input_matrix_t;
-  using typename BASE::constraint1_state_matrix_t;
-  using typename BASE::constraint1_vector_t;
-  using typename BASE::constraint2_state_matrix_t;
-  using typename BASE::constraint2_vector_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
-
-  using ad_scalar_t = CppAdInterface::ad_scalar_t;
-  using ad_dynamic_vector_t = CppAdInterface::ad_dynamic_vector_t;
-
-  using constraint_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, -1, 1 + STATE_DIM + INPUT_DIM>;
-  using constraint_timeState_matrix_t = Eigen::Matrix<scalar_t, -1, 1 + STATE_DIM>;
+  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
+  using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
   /**
-   * Default constructor.
+   * Constructor.
    *
+   * @param[in] stateDim: State vector dimension
+   * @param[in] inputDim: Input vector dimension
    */
-  ConstraintBaseAD();
+  ConstraintBaseAD(size_t stateDim, size_t inputDim);
 
-  /**
-   * Copy constructor
-   */
-  ConstraintBaseAD(const ConstraintBaseAD& rhs);
-
-  /**
-   * Default destructor
-   *
+  /** Default destructor */
   ~ConstraintBaseAD() override = default;
 
   /**
@@ -101,59 +71,44 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) final;
-
-  void getConstraint1(constraint1_vector_t& e) final { e = stateInputValues_; }
-
-  void getConstraint2(constraint2_vector_t& h) final { h = stateOnlyValues_; }
-
-  void getFinalConstraint2(constraint2_vector_t& h_f) final { h_f = stateOnlyFinalValues_; }
-
-  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) final { C = stateInputJacobian_.template middleCols<STATE_DIM>(1); }
-
-  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) final { D = stateInputJacobian_.template rightCols<INPUT_DIM>(); }
-
-  void getConstraint2DerivativesState(constraint2_state_matrix_t& F) final { F = stateOnlyJacobian_.template rightCols<STATE_DIM>(); }
-
-  void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_f) final {
-    F_f = stateOnlyFinalJacobian_.template rightCols<STATE_DIM>();
-  }
+  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) final;
+  vector_t stateEqualityConstraint(scalar_t t, const vector_t& x) final;
+  vector_t finalStateEqualityConstraint(scalar_t t, const vector_t& x) final;
+  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
+  VectorFunctionLinearApproximation stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) final;
+  VectorFunctionLinearApproximation finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) final;
 
  protected:
+  /** Copy constructor */
+  ConstraintBaseAD(const ConstraintBaseAD& rhs);
+
   /**
    * Interface method to the state-input equality constraints. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector
-   * @param [out] constraintVector: constraints vector.
+   * return constraints vector.
    */
-  virtual void stateInputConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                    ad_dynamic_vector_t& constraintVector) const {
-    constraintVector = ad_dynamic_vector_t(0);
-  }
+  virtual ad_vector_t stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const;
 
   /**
    * Interface method to the state-only equality constraints. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] constraintVector: constraint vector.
+   * return constraint vector.
    */
-  virtual void stateOnlyConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const {
-    constraintVector = ad_dynamic_vector_t(0);
-  }
+  virtual ad_vector_t stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const;
 
   /**
    * Interface method to the state-only final equality constraints. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] constraintVector: constraint vector.
+   * return constraint vector.
    */
-  virtual void stateOnlyFinalConstraint(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& constraintVector) const {
-    constraintVector = ad_dynamic_vector_t(0);
-  }
+  virtual ad_vector_t stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const;
 
  private:
   /**
@@ -175,20 +130,21 @@ class ConstraintBaseAD : public ConstraintBase<STATE_DIM, INPUT_DIM> {
    */
   void loadModelsIfAvailable(bool verbose);
 
+  size_t stateDim_;
+  size_t inputDim_;
+
   std::unique_ptr<CppAdInterface> stateInputADInterfacePtr_;
   std::unique_ptr<CppAdInterface> stateOnlyADInterfacePtr_;
   std::unique_ptr<CppAdInterface> stateOnlyFinalADInterfacePtr_;
 
-  constraint_timeStateInput_matrix_t stateInputJacobian_;
-  constraint_timeState_matrix_t stateOnlyJacobian_;
-  constraint_timeState_matrix_t stateOnlyFinalJacobian_;
-  constraint1_vector_t stateInputValues_;
-  constraint2_vector_t stateOnlyValues_;
-  constraint2_vector_t stateOnlyFinalValues_;
+  vector_t tapedTimeState_;
+  vector_t tapedTimeStateInput_;
+  matrix_t stateInputJacobian_;
+  matrix_t stateOnlyJacobian_;
+  matrix_t stateOnlyFinalJacobian_;
+  vector_t stateInputValues_;
+  vector_t stateOnlyValues_;
+  vector_t stateOnlyFinalValues_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/ConstraintBaseAD.h"
-
-#endif /* CONSTRAINTBASEAD_OCS2_H_ */

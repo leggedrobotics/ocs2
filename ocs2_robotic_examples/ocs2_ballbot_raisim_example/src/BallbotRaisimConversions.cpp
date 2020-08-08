@@ -1,14 +1,44 @@
-#include <ocs2_ballbot_raisim_example/BallbotRaisimConversions.h>
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
 
 #include <ocs2_ballbot_example/BallbotParameters.h>
+#include <ocs2_ballbot_example/definitions.h>
 #include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
+
+#include <ocs2_ballbot_raisim_example/BallbotRaisimConversions.h>
 
 namespace ocs2 {
 namespace ballbot {
 
 BallbotRaisimConversions::BallbotRaisimConversions() {
-  BallbotParameters<double> params;
+  BallbotParameters params;
   ballRadius_ = params.ballRadius_;
   omniWheelRadius_ = params.wheelRadius_;
   distanceBaseToBallCenter_ = params.heightBallCenterToBase_;
@@ -22,8 +52,8 @@ Eigen::Vector3d BallbotRaisimConversions::ballCenterInWorld(const Eigen::VectorX
   return r_world_base_inWorld + q_world_base * rbaseBallInBase_;
 }
 
-std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRaisimGenCoordGenVel(const state_vector_t& state,
-                                                                                                  const input_vector_t&) const {
+std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRaisimGenCoordGenVel(const vector_t& state,
+                                                                                                  const vector_t&) const {
   // assume ball is on the ground
   const double terrainHeight = (terrain_ == nullptr) ? 0.0 : terrain_->getHeight(state(0), state(1));
   const Eigen::Vector3d r_world_ball_inWorld{state(0), state(1), ballRadius_ + terrainHeight};
@@ -48,7 +78,7 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> BallbotRaisimConversions::stateToRai
   return {q, dq};
 }
 
-auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const -> state_vector_t {
+auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) const -> vector_t {
   assert(q.size() == 3 + 4 + 4);
   assert(dq.size() == 3 + 3 + 3);
   if (dq.head<6>().cwiseAbs().maxCoeff() > 100.0) {
@@ -65,7 +95,7 @@ auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd
     throw std::runtime_error("BallbotRaisimConversions::raisimGenCoordGenVelToState: pitch or roll diverged");
   }
 
-  state_vector_t state;
+  vector_t state(ocs2::ballbot::STATE_DIM);
   state(0) = r_world_ball_inWorld(0);  // ball x
   state(1) = r_world_ball_inWorld(1);  // ball y
   state.segment<3>(2) = eulerAngles;   // base ypr in EulerAngles ZYX convention
@@ -74,7 +104,7 @@ auto BallbotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd
   return state;
 }
 
-Eigen::VectorXd BallbotRaisimConversions::inputToRaisimGeneralizedForce(double, const input_vector_t& input, const state_vector_t&,
+Eigen::VectorXd BallbotRaisimConversions::inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t&,
                                                                         const Eigen::VectorXd& q, const Eigen::VectorXd&) const {
   const double geometricFactor = ballRadius_ / omniWheelRadius_;
   const Eigen::Matrix3d torqueTransformationMatrixWheelsToBase =

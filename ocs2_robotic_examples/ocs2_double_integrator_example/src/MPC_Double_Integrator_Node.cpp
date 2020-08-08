@@ -27,15 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ros/init.h>
+
+#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
 int main(int argc, char** argv) {
   const std::string robotName = "double_integrator";
   using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
+  using mpc_ros_t = ocs2::MPC_ROS_Interface;
 
   // task file
   std::vector<std::string> programArgs{};

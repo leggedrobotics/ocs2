@@ -1,4 +1,31 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
@@ -6,10 +33,12 @@
 
 namespace ocs2 {
 
-CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, int rangeDim, int variableDim, int parameterDim,
-                               std::string modelName, std::string folderName, std::vector<std::string> compileFlags)
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
+                               std::string folderName, std::vector<std::string> compileFlags)
     : adFunction_(std::move(adFunction)),
-      rangeDim_(rangeDim),
       variableDim_(variableDim),
       parameterDim_(parameterDim),
       modelName_(std::move(modelName)),
@@ -21,17 +50,16 @@ CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, int range
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::CppAdInterface(ad_function_t adFunction, int rangeDim, int variableDim, std::string modelName, std::string folderName,
+CppAdInterface::CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName,
                                std::vector<std::string> compileFlags)
-    : CppAdInterface([adFunction](const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) { adFunction(x, y); },
-                     rangeDim, variableDim, 0, std::move(modelName), std::move(folderName), std::move(compileFlags)) {}
+    : CppAdInterface([adFunction](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { adFunction(x, y); }, variableDim, 0,
+                     std::move(modelName), std::move(folderName), std::move(compileFlags)){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 CppAdInterface::CppAdInterface(const CppAdInterface& rhs)
-    : CppAdInterface(rhs.adFunction_, rhs.rangeDim_, rhs.variableDim_, rhs.parameterDim_, rhs.modelName_, rhs.folderName_,
-                     rhs.compileFlags_) {
+    : CppAdInterface(rhs.adFunction_, rhs.variableDim_, rhs.parameterDim_, rhs.modelName_, rhs.folderName_, rhs.compileFlags_) {
   if (isLibraryAvailable()) {
     loadModels(false);
   }
@@ -44,17 +72,18 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
   createFolderStructure();
 
   // set and declare independent variables and start tape recording
-  ad_dynamic_vector_t xp(variableDim_ + parameterDim_);
+  ad_vector_t xp(variableDim_ + parameterDim_);
   xp.setOnes();  // Ones are better than zero, to prevent devision by zero in taping
   CppAD::Independent(xp);
 
   // Split in variables and parameters
-  ad_dynamic_vector_t x = xp.segment(0, variableDim_);
-  ad_dynamic_vector_t p = xp.segment(variableDim_, parameterDim_);
+  ad_vector_t x = xp.segment(0, variableDim_);
+  ad_vector_t p = xp.segment(variableDim_, parameterDim_);
   // dependent variable vector
-  ad_dynamic_vector_t y(rangeDim_);
+  ad_vector_t y;
   // the model equation
   adFunction_(x, p, y);
+  rangeDim_ = y.rows();
   // create f: xp -> y and stop tape recording
   ad_fun_t fun(xp, y);
   // Optimize the operation sequence
@@ -71,8 +100,8 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
   setCompilerOptions(gccCompiler);
 
   if (verbose) {
-    std::cerr << "Compiling Shared Library: " << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION
-              << std::endl;
+    std::cerr << "[CppAdInterface] Compiling Shared Library: "
+              << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
   }
 
   // Compile and store the library
@@ -83,7 +112,7 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
 
   // Rename generated library after loading
   if (verbose) {
-    std::cerr << "Renaming " << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << " to "
+    std::cerr << "[CppAdInterface] Renaming " << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << " to "
               << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
   }
   boost::filesystem::rename(libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION,
@@ -95,10 +124,12 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
 /******************************************************************************************************/
 void CppAdInterface::loadModels(bool verbose) {
   if (verbose) {
-    std::cerr << "Loading Shared Library: " << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
+    std::cerr << "[CppAdInterface] Loading Shared Library: " << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION
+              << std::endl;
   }
   dynamicLib_.reset(new CppAD::cg::LinuxDynamicLib<scalar_t>(libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION));
   model_ = dynamicLib_->model(modelName_);
+  rangeDim_ = model_->Range();
 
   setSparsityNonzeros();
 }
@@ -117,11 +148,11 @@ void CppAdInterface::loadModelsIfAvailable(ApproximationOrder approximationOrder
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-dynamic_vector_t CppAdInterface::getFunctionValue(const dynamic_vector_t& x, const dynamic_vector_t& p) const {
-  dynamic_vector_t xp(variableDim_ + parameterDim_);
+vector_t CppAdInterface::getFunctionValue(const vector_t& x, const vector_t& p) const {
+  vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
 
-  dynamic_vector_t functionValue(rangeDim_);
+  vector_t functionValue(model_->Range());
 
   model_->ForwardZero(xp, functionValue);
   assert(functionValue.allFinite());
@@ -131,9 +162,9 @@ dynamic_vector_t CppAdInterface::getFunctionValue(const dynamic_vector_t& x, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-dynamic_matrix_t CppAdInterface::getJacobian(const dynamic_vector_t& x, const dynamic_vector_t& p) const {
+matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const {
   // Concatenate input
-  dynamic_vector_t xp(variableDim_ + parameterDim_);
+  vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
   CppAD::cg::ArrayView<scalar_t> xpArrayView(xp.data(), xp.size());
 
@@ -146,7 +177,7 @@ dynamic_matrix_t CppAdInterface::getJacobian(const dynamic_vector_t& x, const dy
 
   // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
   // to parameters. Write to rowMajor type because sparsity is specified as row major.
-  dynamic_rowMajor_matrix_t jacobian = dynamic_rowMajor_matrix_t::Zero(rangeDim_, variableDim_);
+  rowMajor_matrix_t jacobian = rowMajor_matrix_t::Zero(model_->Range(), variableDim_);
   for (size_t i = 0; i < nnzJacobian_; i++) {
     jacobian(rows[i], cols[i]) = sparseJacobian[i];
   }
@@ -158,8 +189,8 @@ dynamic_matrix_t CppAdInterface::getJacobian(const dynamic_vector_t& x, const dy
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-dynamic_matrix_t CppAdInterface::getHessian(size_t outputIndex, const dynamic_vector_t& x, const dynamic_vector_t& p) const {
-  dynamic_vector_t w = dynamic_vector_t::Zero(rangeDim_);
+matrix_t CppAdInterface::getHessian(size_t outputIndex, const vector_t& x, const vector_t& p) const {
+  vector_t w = vector_t::Zero(rangeDim_);
   w[outputIndex] = 1.0;
 
   return getHessian(w, x, p);
@@ -168,9 +199,9 @@ dynamic_matrix_t CppAdInterface::getHessian(size_t outputIndex, const dynamic_ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-dynamic_matrix_t CppAdInterface::getHessian(const dynamic_vector_t& w, const dynamic_vector_t& x, const dynamic_vector_t& p) const {
+matrix_t CppAdInterface::getHessian(const vector_t& w, const vector_t& x, const vector_t& p) const {
   // Concatenate input
-  dynamic_vector_t xp(variableDim_ + parameterDim_);
+  vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
   CppAD::cg::ArrayView<const scalar_t> xpArrayView(xp.data(), xp.size());
 
@@ -185,7 +216,7 @@ dynamic_matrix_t CppAdInterface::getHessian(const dynamic_vector_t& w, const dyn
   model_->SparseHessian(xpArrayView, wArrayView, sparseHessianArrayView, &rows, &cols);
 
   // Fills upper triangular sparsity of hessian w.r.t variables. Write to rowMajor type because sparsity is specified as row major.
-  dynamic_rowMajor_matrix_t hessian = dynamic_rowMajor_matrix_t::Zero(variableDim_, variableDim_);
+  rowMajor_matrix_t hessian = rowMajor_matrix_t::Zero(variableDim_, variableDim_);
   for (size_t i = 0; i < nnzHessian_; i++) {
     hessian(rows[i], cols[i]) = sparseHessian[i];
   }
@@ -274,6 +305,7 @@ void CppAdInterface::setApproximationOrder(ApproximationOrder approximationOrder
       throw std::runtime_error("CppAdInterface: Invalid approximation order");
   }
 }
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/

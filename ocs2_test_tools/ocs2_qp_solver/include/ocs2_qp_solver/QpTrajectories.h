@@ -43,9 +43,9 @@ struct ContinuousTrajectory {
   /** time trajectory, size N+1 */
   scalar_array_t timeTrajectory;
   /** trajectory of state vectors, size N+1 */
-  dynamic_vector_array_t stateTrajectory;
+  vector_array_t stateTrajectory;
   /** trajectory of input vectors, size N */
-  dynamic_vector_array_t inputTrajectory;
+  vector_array_t inputTrajectory;
 };
 
 /** Adds state and inputs of two trajectories, time is not added. */
@@ -56,9 +56,9 @@ struct TrajectoryRef {
   /** time */
   scalar_t t;
   /** state */
-  const dynamic_vector_t& x;
+  const vector_t& x;
   /** input */
-  const dynamic_vector_t& u;
+  const vector_t& u;
 };
 
 /** Reference to the state at a point along a trajectory. Does not own the state data. */
@@ -66,7 +66,7 @@ struct StateTrajectoryRef {
   /** time */
   scalar_t t;
   /** state */
-  const dynamic_vector_t& x;
+  const vector_t& x;
 };
 
 }  // namespace qp_solver

@@ -1,8 +1,40 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <gtest/gtest.h>
+
 #include <iostream>
 
-#include <ocs2_core/Dimensions.h>
-#include <ocs2_core/control/StateBasedLinearController.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include "ocs2_ddp/test/bouncingmass/OverallReference.h"
@@ -34,87 +66,74 @@
  * (2) Check of cost function compared against cost calculated during trusted run of SLQ
  */
 TEST(testStateRollOut_SLQ, BouncingMassTest) {
-  using DIMENSIONS = ocs2::Dimensions<3, 1>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using dynamic_vector_t = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+  using scalar_t = ocs2::scalar_t;
+  using vector_t = ocs2::vector_t;
+  using matrix_t = ocs2::matrix_t;
+  using scalar_array_t = ocs2::scalar_array_t;
+  using vector_array_t = ocs2::vector_array_t;
+  using matrix_array_t = ocs2::matrix_array_t;
 
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using controller_t = ocs2::ControllerBase<STATE_DIM, INPUT_DIM>;
-  using linear_controller_t = ocs2::LinearController<STATE_DIM, INPUT_DIM>;
+  ocs2::ddp::Settings ddpSettings;
+  ddpSettings.algorithm_ = ocs2::ddp::algorithm::SLQ;
+  ddpSettings.displayInfo_ = false;
+  ddpSettings.displayShortSummary_ = true;
+  ddpSettings.maxNumIterations_ = 30;
+  ddpSettings.minRelCost_ = 1e-4;
+  ddpSettings.nThreads_ = 1;
+  ddpSettings.checkNumericalStability_ = true;
+  ddpSettings.absTolODE_ = 1e-10;
+  ddpSettings.relTolODE_ = 1e-7;
+  ddpSettings.maxNumStepsPerSecond_ = 10000;
+  ddpSettings.useNominalTimeForBackwardPass_ = true;
+  ddpSettings.useFeedbackPolicy_ = true;
+  ddpSettings.debugPrintRollout_ = false;
 
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using dynamic_vector_array_t = std::vector<dynamic_vector_t, Eigen::aligned_allocator<dynamic_vector_t>>;
-
-  using controller_ptr_array_t = std::vector<controller_t*>;
-
-  ocs2::SLQ_Settings slqSettings;
-  slqSettings.useNominalTimeForBackwardPass_ = true;
-  slqSettings.ddpSettings_.displayInfo_ = false;
-  slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.ddpSettings_.maxNumIterations_ = 30;
-  slqSettings.ddpSettings_.minRelCost_ = 1e-4;
-  slqSettings.ddpSettings_.nThreads_ = 1;
-  slqSettings.ddpSettings_.checkNumericalStability_ = true;
-  slqSettings.ddpSettings_.absTolODE_ = 1e-10;
-  slqSettings.ddpSettings_.relTolODE_ = 1e-7;
-  slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 1e7;
-  slqSettings.ddpSettings_.useFeedbackPolicy_ = true;
-  slqSettings.ddpSettings_.debugPrintRollout_ = false;
-
-  ocs2::Rollout_Settings rolloutSettings;
+  ocs2::rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
   rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 1e7;
+  rolloutSettings.maxNumStepsPerSecond_ = 10000;
   rolloutSettings.maxSingleEventIterations_ = 5;
   rolloutSettings.useTrajectorySpreadingController_ = true;
 
   // Parameters
-  const double startTime = 0.0;
-  const double finalTime = 2.5;
-  const state_vector_t x0 = {0.7, 0.5, 0};
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 2.5;
+  const vector_t x0 = Eigen::Matrix<scalar_t, 3, 1>(0.7, 0.5, 0);
+  const vector_t u0 = vector_t::Zero(INPUT_DIM);
   bool outputSolution = false;
 
   // Generation of Reference Trajectory
   const scalar_array_t trajTimes{0, 0.2, 0.8, 1.0, 1.2, 1.8, 2.0};
 
-  state_vector_t state0;  //	Intial and final state
+  vector_t state0(STATE_DIM);  //	Initial and final state
   state0 << 0.5, 0, 0;
-  state_vector_t state1;  //	Hard impact
+  vector_t state1(STATE_DIM);  //	Hard impact
   state1 << 0, -5, 0;
-  state_vector_t state2;  // 	Soft impact
+  vector_t state2(STATE_DIM);  // Soft impact
   state2 << 0, -1, 0;
 
   const scalar_t delta = 0.5;
-  const state_vector_array_t trajStates{state0, state1, state2, state2, state1, state2, state0};
+  const vector_array_t trajStates{state0, state1, state2, state2, state1, state2, state0};
   OverallReference reference(trajTimes, trajStates);
   reference.extendref(delta);
 
   // Dynamics, Constraints and derivative classes
-  systemDynamics systemModel;
-  systemDerivative systemDerivatives;
-  systemConstraint systemConstraints;
+  BouncingMassDynamics systemDynamics;
+  ocs2::ConstraintBase systemConstraints;
 
   // Cost Function
-  state_matrix_t Q;
+  matrix_t Q(STATE_DIM, STATE_DIM);
   Q << 50.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0;
 
-  input_matrix_t R(1);
-  state_matrix_t P;
+  matrix_t R(INPUT_DIM, INPUT_DIM);
+  R << 1.0;
+  matrix_t P(STATE_DIM, STATE_DIM);
   P << 56.63, 7.07, 0.0, 7.07, 8.01, 0.0, 0.0, 0.0, 0.0;
 
-  state_vector_t xNom = state0;
-  input_vector_t uNom(0);
-  state_vector_t xFin = state0;
-  systemCost systemCost(reference, Q, R, P, xNom, uNom, xFin, finalTime);
+  BouncingMassCost systemCost(reference, Q, R, P, finalTime);
 
   // Rollout Class
-  ocs2::StateTriggeredRollout<STATE_DIM, INPUT_DIM> stateTriggeredRollout(systemModel, rolloutSettings);
+  ocs2::StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);
 
   // Operating points and PartitioningTimes
   scalar_array_t partitioningTimes;
@@ -122,11 +141,12 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   partitioningTimes.push_back(finalTime);
 
   // Initial Controller
-  const input_state_matrix_t controllerGain = {25, 10, 0};
-  input_vector_t controllerBias;
+  matrix_t controllerGain(INPUT_DIM, STATE_DIM);
+  controllerGain << 25, 10, 0;
+  vector_t controllerBias;
 
-  input_state_matrix_array_t controllerGainArray;
-  input_vector_array_t controllerBiasArray;
+  matrix_array_t controllerGainArray;
+  vector_array_t controllerBiasArray;
   scalar_array_t timeStampArray;
 
   const scalar_t controllerDeltaTime = 1e-3;  // Time step for controller time array
@@ -137,7 +157,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   for (int i = 0; i < controlTimes.size() - 1; i++) {
     scalar_t timeSteps = (controlTimes[i + 1] + eps - controlTimes[i]) / controllerDeltaTime;
     scalar_t timeStamp = 0;
-    state_vector_t refState;
+    vector_t refState;
 
     for (int j = 0; j <= timeSteps; j++) {
       if (j == 0 && i < controlTimes.size() - 2) {
@@ -146,8 +166,8 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
         timeStamp = controlTimes[i] + j * controllerDeltaTime;
       }
 
-      state_vector_t refState = reference.getState(timeStamp);
-      input_vector_t refInput = reference.getInput(timeStamp);
+      vector_t refState = reference.getState(timeStamp);
+      vector_t refInput = reference.getInput(timeStamp);
       controllerBias = controllerGain * refState + refInput;
 
       timeStampArray.push_back(timeStamp);
@@ -156,26 +176,25 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
     }
   }
 
-  linear_controller_t Control(timeStampArray, controllerBiasArray, controllerGainArray);
-  controller_ptr_array_t controllerPtrArray = {&Control};
+  ocs2::LinearController Control(timeStampArray, controllerBiasArray, controllerGainArray);
+  std::vector<ocs2::ControllerBase*> controllerPtrArray = {&Control};
 
-  OperatingPoints operatingTrajectories(x0, input_vector_t::Zero());
+  ocs2::OperatingPoints operatingTrajectories(x0, u0);
   // SLQ
-  ocs2::SLQ<STATE_DIM, INPUT_DIM> slq(&stateTriggeredRollout, &systemDerivatives, &systemConstraints, &systemCost, &operatingTrajectories,
-                                      slqSettings);
+  ocs2::SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, ddpSettings);
   slq.run(startTime, x0, finalTime, partitioningTimes, controllerPtrArray);
-  ocs2::SLQ<STATE_DIM, INPUT_DIM>::primal_solution_t solutionST = slq.primalSolution(finalTime);
+  auto solutionST = slq.primalSolution(finalTime);
 
   for (int i = 0; i < solutionST.stateTrajectory_.size(); i++) {
     // Test 1: No penetration of Guard Surfaces
-    EXPECT_GT(solutionST.stateTrajectory_[i][0], -slqSettings.ddpSettings_.absTolODE_);
+    EXPECT_GT(solutionST.stateTrajectory_[i][0], -ddpSettings.absTolODE_);
     // Display output
     // format: idx;time;x[0];xref[0];x[1];xref[1];u;uref
     if (outputSolution) {
-      int idx = solutionST.stateTrajectory_[i][2];
+      auto idx = static_cast<int>(solutionST.stateTrajectory_[i][2]);
 
-      input_vector_t uRef = reference.getInput(solutionST.timeTrajectory_[i]);
-      state_vector_t xRef = reference.getState(idx, solutionST.timeTrajectory_[i]);
+      vector_t uRef = reference.getInput(solutionST.timeTrajectory_[i]);
+      vector_t xRef = reference.getState(idx, solutionST.timeTrajectory_[i]);
 
       std::cerr << i << ";" << idx << ";";
       std::cerr << std::setprecision(25) << solutionST.timeTrajectory_[i];
@@ -187,11 +206,6 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
 
   // Test 2: Check of cost function
   auto performanceIndeces = slq.getPerformanceIndeces();
-  const scalar_t expectedCost = 7.188299;
-  EXPECT_LT(std::fabs(performanceIndeces.totalCost - expectedCost), 10 * slqSettings.ddpSettings_.minRelCost_);
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  const scalar_t expectedCost = 7.12;
+  EXPECT_LT(std::fabs(performanceIndeces.totalCost - expectedCost), 100 * ddpSettings.minRelCost_);
 }

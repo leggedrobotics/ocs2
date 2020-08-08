@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "PenaltyBase.h"
+#include <ocs2_core/constraint/PenaltyBase.h>
 
 namespace ocs2 {
 
@@ -48,42 +48,18 @@ namespace ocs2 {
  *  where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
  *
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class RelaxedBarrierPenalty final : public PenaltyBase<STATE_DIM, INPUT_DIM> {
+class RelaxedBarrierPenalty final : public PenaltyBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using scalar_t = typename PenaltyBase<STATE_DIM, INPUT_DIM>::scalar_t;
-
-  RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta){};
+  RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {}
   virtual ~RelaxedBarrierPenalty() = default;
 
  private:
   scalar_t mu_;
   scalar_t delta_;
 
-  scalar_t getPenaltyFunctionValue(scalar_t h) const override {
-    if (h > delta_) {
-      return -mu_ * log(h);
-    } else {
-      return mu_ * (-log(delta_) + scalar_t(0.5) * pow((h - 2.0 * delta_) / delta_, 2.0) - scalar_t(0.5));
-    };
-  };
-
-  scalar_t getPenaltyFunctionDerivative(scalar_t h) const override {
-    if (h > delta_) {
-      return -mu_ / h;
-    } else {
-      return mu_ * ((h - 2.0 * delta_) / (delta_ * delta_));
-    };
-  };
-
-  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const override {
-    if (h > delta_) {
-      return mu_ / (h * h);
-    } else {
-      return mu_ / (delta_ * delta_);
-    };
-  };
+  scalar_t getPenaltyFunctionValue(scalar_t h) const override;
+  scalar_t getPenaltyFunctionDerivative(scalar_t h) const override;
+  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const override;
 };
+
 }  // namespace ocs2

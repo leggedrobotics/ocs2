@@ -47,8 +47,8 @@ namespace qp_solver {
  * @param dx0 : initial state deviation from the nominal trajectories.
  * @return trajectory of state and inputs (in relative coordinates), .i.e. dx(t), du(t)
  */
-std::pair<dynamic_vector_array_t, dynamic_vector_array_t> solveLinearQuadraticProblem(
-    const std::vector<LinearQuadraticStage>& lqApproximation, const dynamic_vector_t& dx0);
+std::pair<vector_array_t, vector_array_t> solveLinearQuadraticProblem(const std::vector<LinearQuadraticStage>& lqApproximation,
+                                                                      const vector_t& dx0);
 
 /**
  * Constructs the matrix of stacked dynamic constraints A w + b = 0
@@ -66,7 +66,7 @@ std::pair<dynamic_vector_array_t, dynamic_vector_array_t> solveLinearQuadraticPr
  * @param numDecisionVariables : size of w
  * @return linear constraints in w, where w is the vector of decision variables
  */
-VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const dynamic_vector_t& dx0,
+VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<LinearQuadraticStage>& lqp, const vector_t& dx0,
                                                         int numConstraints, int numDecisionVariables);
 
 /**
@@ -94,8 +94,8 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
  *
  * @return {w, lambda} at the solution, where w is the vector of decision variables, and lambda is the vector of lagrange multipliers
  */
-std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
-                                                           const VectorFunctionLinearApproximation& constraints);
+std::pair<vector_t, vector_t> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,
+                                           const VectorFunctionLinearApproximation& constraints);
 
 /**
  * Reconstructs the optimal state and input trajectory recursively based on the full qp solution vector
@@ -104,9 +104,8 @@ std::pair<dynamic_vector_t, dynamic_vector_t> solveDenseQp(const ScalarFunctionQ
  * @param w : the vector of decision variables
  * @return { state_trajectory, input_trajectory }
  */
-std::pair<dynamic_vector_array_t, dynamic_vector_array_t> getStateAndInputTrajectory(const std::vector<int>& numStates,
-                                                                                     const std::vector<int>& numInputs,
-                                                                                     const dynamic_vector_t& w);
+std::pair<vector_array_t, vector_array_t> getStateAndInputTrajectory(const std::vector<int>& numStates, const std::vector<int>& numInputs,
+                                                                     const vector_t& w);
 
 }  // namespace qp_solver
 }  // namespace ocs2

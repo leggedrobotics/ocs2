@@ -27,9 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 #include <ros/init.h>
+
+#include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
+#include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 #include "ocs2_double_integrator_example/definitions.h"
@@ -37,10 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, char** argv) {
   const std::string robotName = "double_integrator";
-  using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
-  using vis_t = ocs2::double_integrator::DoubleIntegratorDummyVisualization;
-  using mrt_t = ocs2::MRT_ROS_Interface<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
-  using dummy_t = ocs2::MRT_ROS_Dummy_Loop<ocs2::double_integrator::STATE_DIM_, ocs2::double_integrator::INPUT_DIM_>;
 
   // task file
   std::vector<std::string> programArgs{};
@@ -55,31 +52,33 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t doubleIntegratorInterface(taskFileFolderName);
+  ocs2::double_integrator::DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
 
   // MRT
-  mrt_t mrt(robotName);
+  ocs2::MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&doubleIntegratorInterface.getRollout());
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<vis_t> doubleIntegratorDummyVisualization(new vis_t(nodeHandle));
+  auto doubleIntegratorDummyVisualization = std::make_shared<ocs2::double_integrator::DoubleIntegratorDummyVisualization>(nodeHandle);
 
   // Dummy loop
-  dummy_t dummyDoubleIntegrator(mrt, doubleIntegratorInterface.mpcSettings().mrtDesiredFrequency_,
-                                doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_);
+  ocs2::MRT_ROS_Dummy_Loop dummyDoubleIntegrator(mrt, doubleIntegratorInterface.mpcSettings().mrtDesiredFrequency_,
+                                                 doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_);
   dummyDoubleIntegrator.subscribeObservers({doubleIntegratorDummyVisualization});
 
   // initial state
-  mrt_t::system_observation_t initObservation;
-  initObservation.state() = doubleIntegratorInterface.getInitialState();
+  ocs2::SystemObservation initObservation;
+  initObservation.time = 0.0;
+  initObservation.state = doubleIntegratorInterface.getInitialState();
+  initObservation.input = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time()}, {initObservation.state()}, {initObservation.input()});
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {doubleIntegratorInterface.getInitialTarget()},
+                                                                  {ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM)});
 
   // Run dummy (loops while ros is ok)
   dummyDoubleIntegrator.run(initObservation, initCostDesiredTrajectories);
 
-  // Successful exit
   return 0;
 }

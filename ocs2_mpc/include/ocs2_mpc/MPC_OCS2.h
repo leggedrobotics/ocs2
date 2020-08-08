@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,64 +33,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <thread>
 
-#include <ocs2_ddp/SLQ_DataCollector.h>
+#include <ocs2_ddp/DDP_DataCollector.h>
 #include <ocs2_ocs2/FrankWolfeGDDP.h>
 
-#include "ocs2_mpc/MPC_SLQ.h"
+#include "MPC_SLQ.h"
 
 namespace ocs2 {
 
 /**
  * This an MPC implementation with OCS2 optimal control solver.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
+class MPC_OCS2 : public MPC_SLQ {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Ptr = std::shared_ptr<MPC_OCS2<STATE_DIM, INPUT_DIM>>;
-
-  using slq_data_collector_t = SLQ_DataCollector<STATE_DIM, INPUT_DIM>;
-  using gddp_t = FrankWolfeGDDP<STATE_DIM, INPUT_DIM>;
-
-  using BASE = MPC_SLQ<STATE_DIM, INPUT_DIM>;
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using state_vector_array2_t = typename DIMENSIONS::state_vector_array2_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_vector_array2_t = typename DIMENSIONS::input_vector_array2_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using input_state_matrix_array2_t = typename DIMENSIONS::input_state_matrix_array2_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_vector_array_t = typename DIMENSIONS::dynamic_vector_array_t;
-
-  using event_handler_t = typename BASE::event_handler_t;
-  using derivatives_base_t = typename BASE::derivatives_base_t;
-  using constraint_base_t = typename BASE::constraint_base_t;
-  using cost_function_base_t = typename BASE::cost_function_base_t;
-  using operating_trajectories_base_t = typename BASE::operating_trajectories_base_t;
-  using rollout_base_t = typename BASE::rollout_base_t;
-
-  /**
-   * Default constructor.
-   */
-  MPC_OCS2();
-
   /**
    * Constructor
    *
    * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
+   * @param [in] systemDynamicsPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
@@ -102,11 +61,11 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
-  MPC_OCS2(const rollout_base_t* rolloutPtr, const derivatives_base_t* systemDerivativesPtr, const constraint_base_t* systemConstraintsPtr,
-           const cost_function_base_t* costFunctionPtr, const operating_trajectories_base_t* operatingTrajectoriesPtr,
+  MPC_OCS2(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
+           const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
            const scalar_array_t& partitioningTimes, const SLQ_Settings& slqSettings = SLQ_Settings(),
            const GDDP_Settings& gddpSettings = GDDP_Settings(), const MPC_Settings& mpcSettings = MPC_Settings(),
-           const cost_function_base_t* heuristicsFunctionPtr = nullptr);
+           const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /**
    * Destructor.
@@ -118,20 +77,13 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
    */
   void reset() override;
 
-  //	/**
-  //	 * Gets the OCS2 settings structure.
-  //	 *
-  //	 * @return OCS2 settings structure
-  //	 */
-  //	virtual OCs2_Settings& ocs2Settings();
-
   /**
    * The main routine of MPC which runs MPC for the given state and time.
    *
    * @param [in] currentTime: The given time.
    * @param [in] currentState: The given state.
    */
-  virtual bool run(const scalar_t& currentTime, const state_vector_t& currentState);
+  virtual bool run(const scalar_t& currentTime, const vector_t& currentState);
 
  protected:
   /**
@@ -142,7 +94,7 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   void runOCS2();
 
  private:
-  std::unique_ptr<gddp_t> gddpPtr_;
+  std::unique_ptr<FrankWolfeGDDP> gddpPtr_;
 
   std::thread workerOCS2_;
 
@@ -151,12 +103,10 @@ class MPC_OCS2 : public MPC_SLQ<STATE_DIM, INPUT_DIM> {
   std::atomic_bool terminateOCS2_;
   std::condition_variable ocs2Synchronization_;
 
-  std::unique_ptr<slq_data_collector_t> slqDataCollectorPtr_;
+  std::unique_ptr<DDP_DataCollector> slqDataCollectorPtr_;
 
   scalar_array_t eventTimesOptimized_;
   size_array_t modeSequenceOptimized_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/MPC_OCS2.h"

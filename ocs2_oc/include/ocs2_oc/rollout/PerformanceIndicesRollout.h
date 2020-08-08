@@ -31,65 +31,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <functional>
 
-#include <ocs2_core/Dimensions.h>
-#include <ocs2_core/integration/TrapezoidalIntegration.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace PerformanceIndicesRollout {
 
-template <int STATE_DIM, int INPUT_DIM>
-using cost_wraper_t =
-    std::function<scalar_t(scalar_t, const Eigen::Matrix<scalar_t, STATE_DIM, 1>&, const Eigen::Matrix<scalar_t, INPUT_DIM, 1>&)>;
-
-template <int STATE_DIM, int INPUT_DIM>
-using constraints_wraper_t =
-    std::function<dynamic_vector_t(scalar_t, const Eigen::Matrix<scalar_t, STATE_DIM, 1>&, const Eigen::Matrix<scalar_t, INPUT_DIM, 1>&)>;
-
-template <int STATE_DIM, int INPUT_DIM>
-using state_vector_array_t = typename Dimensions<STATE_DIM, INPUT_DIM>::state_vector_array_t;
-template <int STATE_DIM, int INPUT_DIM>
-using input_vector_array_t = typename Dimensions<STATE_DIM, INPUT_DIM>::input_vector_array_t;
+using cost_wraper_t = std::function<scalar_t(scalar_t, const vector_t&, const vector_t&)>;
+using constraints_wraper_t = std::function<vector_t(scalar_t, const vector_t&, const vector_t&)>;
 
 /**
  * Computes the accumulated cost over the given trajectory.
  */
-template <int STATE_DIM, int INPUT_DIM>
-scalar_t rolloutCost(cost_wraper_t<STATE_DIM, INPUT_DIM> costWraper, const scalar_array_t& timeTrajectory,
-                     const state_vector_array_t<STATE_DIM, INPUT_DIM>& stateTrajectory,
-                     const input_vector_array_t<STATE_DIM, INPUT_DIM>& inputTrajectory) {
-  const size_t N = timeTrajectory.size();
-  assert(stateTrajectory.size() == N);
-  assert(inputTrajectory.size() == N);
-
-  scalar_array_t costTrajectory;
-  costTrajectory.reserve(N);
-  for (size_t i = 0; i < N; i++) {
-    costTrajectory.push_back(costWraper(timeTrajectory[i], stateTrajectory[i], inputTrajectory[i]));
-  }
-
-  return trapezoidalIntegration(timeTrajectory, costTrajectory);
-}
+scalar_t rolloutCost(cost_wraper_t costWraper, const scalar_array_t& timeTrajectory, const vector_array_t& stateTrajectory,
+                     const vector_array_t& inputTrajectory);
 
 /**
  * Computes the ISE (Integral of Square Error) of constraint over the given trajectory.
  */
-template <int STATE_DIM, int INPUT_DIM>
-scalar_t rolloutConstraint(constraints_wraper_t<STATE_DIM, INPUT_DIM> constraintWraper, const scalar_array_t& timeTrajectory,
-                           const state_vector_array_t<STATE_DIM, INPUT_DIM>& stateTrajectory,
-                           const input_vector_array_t<STATE_DIM, INPUT_DIM>& inputTrajectory) {
-  const size_t N = timeTrajectory.size();
-  assert(stateTrajectory.size() == N);
-  assert(inputTrajectory.size() == N);
-
-  scalar_array_t constraintTrajectoryISE;
-  constraintTrajectoryISE.reserve(N);
-  for (size_t i = 0; i < N; i++) {
-    const auto constraint = constraintWraper(constraintWraper(timeTrajectory[i], stateTrajectory[i], inputTrajectory[i]));
-    constraintTrajectoryISE.push_back(constraint.squaredNorm());
-  }
-
-  return trapezoidalIntegration(timeTrajectory, constraintTrajectoryISE);
-}
+scalar_t rolloutConstraint(constraints_wraper_t constraintWraper, const scalar_array_t& timeTrajectory,
+                           const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory);
 
 }  // namespace PerformanceIndicesRollout
 }  // namespace ocs2

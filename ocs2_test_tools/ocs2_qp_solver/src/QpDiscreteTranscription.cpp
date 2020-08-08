@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& cost, SystemWrapper& system,
+std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBase& cost, SystemDynamicsBase& system,
                                                                   const ContinuousTrajectory& nominalTrajectory) {
   if (nominalTrajectory.timeTrajectory.empty()) {
     return {};
@@ -53,12 +53,13 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostWrapper& c
   for (int k = 0; k < N; ++k) {  // Intermediate stages
     lqp.emplace_back(approximateStage(cost, system, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}));
   }
-  lqp.emplace_back(cost.getTerminalQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation());  // Terminal cost, no dynamics.
+  lqp.emplace_back(cost.finalCostQuadraticApproximation(t[N], x[N]),
+                   VectorFunctionLinearApproximation());  // Terminal cost, no dynamics.
 
   return lqp;
 }
 
-LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, TrajectoryRef start, StateTrajectoryRef end) {
+LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, TrajectoryRef start, StateTrajectoryRef end) {
   LinearQuadraticStage lqStage;
   auto dt = end.t - start.t;
 
@@ -73,10 +74,10 @@ LinearQuadraticStage approximateStage(CostWrapper& cost, SystemWrapper& system, 
   return lqStage;
 }
 
-ScalarFunctionQuadraticApproximation approximateCost(CostWrapper& cost, TrajectoryRef start, scalar_t dt) {
+ScalarFunctionQuadraticApproximation approximateCost(CostFunctionBase& cost, TrajectoryRef start, scalar_t dt) {
   // Approximates the cost accumulation of the dt interval.
   // Use Euler integration
-  const auto continuousCosts = cost.getQuadraticApproximation(start.t, start.x, start.u);
+  const auto continuousCosts = cost.costQuadraticApproximation(start.t, start.x, start.u);
   ScalarFunctionQuadraticApproximation discreteCosts;
   discreteCosts.dfdxx = continuousCosts.dfdxx * dt;
   discreteCosts.dfdux = continuousCosts.dfdux * dt;
@@ -87,13 +88,13 @@ ScalarFunctionQuadraticApproximation approximateCost(CostWrapper& cost, Trajecto
   return discreteCosts;
 }
 
-VectorFunctionLinearApproximation approximateDynamics(SystemWrapper& system, TrajectoryRef start, scalar_t dt) {
+VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system, TrajectoryRef start, scalar_t dt) {
   // Forward Euler discretization
   // x[k+1] = x[k] + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * (A_c dx[k] + B_c du[k] + b_c)
   // x[k+1] = (I + A_c * dt) dx[k] + (B_c * dt) du[k] + (b_c * dt + x0[k])
-  const auto continuousDynamics = system.getLinearApproximation(start.t, start.x, start.u);
+  const auto continuousDynamics = system.linearApproximation(start.t, start.x, start.u);
   VectorFunctionLinearApproximation discreteDynamics;
   discreteDynamics.dfdx = continuousDynamics.dfdx * dt;
   discreteDynamics.dfdx.diagonal().array() += 1.0;

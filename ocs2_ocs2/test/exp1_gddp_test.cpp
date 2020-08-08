@@ -47,7 +47,7 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   SLQ_Settings slqSettings;
   slqSettings.ddpSettings_.displayInfo_ = false;
   slqSettings.ddpSettings_.displayShortSummary_ = true;
-  slqSettings.preComputeRiccatiTerms_ = true;
+  slqSettings.ddpSettings_.preComputeRiccatiTerms_ = true;
   slqSettings.useNominalTimeForBackwardPass_ = true;
   slqSettings.ddpSettings_.maxNumIterations_ = 30;
   slqSettings.ddpSettings_.nThreads_ = 1;  // single threaded
@@ -56,6 +56,8 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   slqSettings.ddpSettings_.absTolODE_ = 1e-10;
   slqSettings.ddpSettings_.relTolODE_ = 1e-7;
   slqSettings.ddpSettings_.maxNumStepsPerSecond_ = 10000;
+  slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
   Rollout_Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;
@@ -100,7 +102,7 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   EXP1_SystemDerivative systemDerivative(modeScheduleManagerPtr);
 
   // system constraints
-  EXP1_SystemConstraint systemConstraint;
+  ConstraintBase systemConstraint;
 
   // system cost functions
   EXP1_CostFunction systemCostFunction(modeScheduleManagerPtr);

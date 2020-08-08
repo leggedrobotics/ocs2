@@ -28,6 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
+
+#include <ocs2_core/misc/LoadData.h>
+
 #include <ros/package.h>
 
 namespace ocs2 {
@@ -57,27 +60,25 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
-   * SLQ-MPC settings
+   * DDP-MPC settings
    */
-  slqSettings_.loadSettings(taskFile);
-  mpcSettings_.loadSettings(taskFile);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * Dynamics
    */
-  dim_t::state_matrix_t A;
+  matrix_t A(STATE_DIM, STATE_DIM);
   A << 0.0, 1.0, 0.0, 0.0;
-  dim_t::state_input_matrix_t B;
+  matrix_t B(STATE_DIM, INPUT_DIM);
   B << 0.0, 1.0;
   linearSystemDynamicsPtr_.reset(new DoubleIntegratorDynamics(A, B));
-  linearSystemDynamicsDerivativesPtr_.reset(new DoubleIntegratorDynamicsDerivatives(A, B));
 
   /*
    * Rollout
    */
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.loadSettings(taskFile, "slq.rollout");
-  ddpLinearSystemRolloutPtr_.reset(new time_triggered_rollout_t(*linearSystemDynamicsPtr_, rolloutSettings));
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  ddpLinearSystemRolloutPtr_.reset(new TimeTriggeredRollout(*linearSystemDynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
@@ -86,8 +87,6 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "R", R_);
   loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
-  xNominal_ = dim_t::state_vector_t::Zero();
-  uNominal_ = dim_t::input_vector_t::Zero();
 
   std::cerr << "Q:  \n" << Q_ << std::endl;
   std::cerr << "R:  \n" << R_ << std::endl;
@@ -99,28 +98,21 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Constraints
    */
-  linearSystemConstraintPtr_.reset(new DoubleIntegratorConstraint);
+  linearSystemConstraintPtr_.reset(new ConstraintBase());
 
   /*
    * Initialization
    */
-  //	cartPoleOperatingPointPtr_.reset(new CartPoleOperatingPoint(dim_t::state_vector_t::Zero(), dim_t::input_vector_t::Zero()));
-  linearSystemOperatingPointPtr_.reset(new DoubleIntegratorOperatingPoint(initialState_, dim_t::input_vector_t::Zero()));
-
-  /*
-   * Time partitioning which defines the time horizon and the number of data partitioning
-   */
-  dim_t::scalar_t timeHorizon;
-  ocs2::loadData::loadPartitioningTimes(taskFile, timeHorizon, numPartitions_, partitioningTimes_, true);
+  linearSystemOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<DoubleIntegratorInterface::mpc_t> DoubleIntegratorInterface::getMpc() {
-  return std::unique_ptr<mpc_t>(new mpc_t(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsDerivativesPtr_.get(),
-                                          linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                          linearSystemOperatingPointPtr_.get(), partitioningTimes_, slqSettings_, mpcSettings_));
+std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc() {
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
+                                              linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
+                                              linearSystemOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace double_integrator

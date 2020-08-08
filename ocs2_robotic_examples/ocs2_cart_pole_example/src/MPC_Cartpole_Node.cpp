@@ -27,15 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ros/init.h>
+
+#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
 
 int main(int argc, char** argv) {
   const std::string robotName = "cartpole";
-  using interface_t = ocs2::cartpole::CartPoleInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::cartpole::STATE_DIM_, ocs2::cartpole::INPUT_DIM_>;
 
   // task file
   std::vector<std::string> programArgs{};
@@ -50,11 +49,11 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t cartPoleInterface(taskFileFolderName);
+  ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
   // Launch MPC ROS node
   auto mpcPtr = cartPoleInterface.getMpc();
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   return 0;

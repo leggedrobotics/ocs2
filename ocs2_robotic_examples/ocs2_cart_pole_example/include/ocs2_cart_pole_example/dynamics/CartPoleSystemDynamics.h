@@ -41,20 +41,10 @@ namespace cartpole {
  * CartPole dynamics.
  * refer to: https://pdfs.semanticscholar.org/f95b/9d4cc0814034f2e601cb91fcd70b2e806420.pdf
  */
-class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1> {
+class CartPoleSytemDynamics : public SystemDynamicsBaseAD {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = SystemDynamicsBaseAD<cartpole::STATE_DIM_, cartpole::INPUT_DIM_, 1>;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
-
-  using cart_pole_parameters_t = CartPoleParameters<scalar_t>;
-
-  explicit CartPoleSytemDynamics(const cart_pole_parameters_t& cartPoleParameters) : param_(cartPoleParameters) {}
+  explicit CartPoleSytemDynamics(const CartPoleParameters& cartPoleParameters)
+      : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM), param_(cartPoleParameters) {}
 
   ~CartPoleSytemDynamics() override = default;
 
@@ -62,8 +52,7 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
 
   CartPoleSytemDynamics* clone() const override { return new CartPoleSytemDynamics(*this); }
 
-  void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                     ad_dynamic_vector_t& stateDerivative) const override {
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override {
     const ad_scalar_t cosTheta = cos(state(0));
     const ad_scalar_t sinTheta = sin(state(0));
 
@@ -78,13 +67,13 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD<cartpole::STATE_DIM_, 
                                          input(0) + param_.poleMass_ * param_.poleHalfLength_ * pow(state(2), 2) * sinTheta);
 
     // dxdt
-    stateDerivative(0) = state(2);
-    stateDerivative(1) = state(3);
-    stateDerivative.template tail<2>() = I.inverse() * rhs;
+    ad_vector_t stateDerivative(STATE_DIM);
+    stateDerivative << state.tail<2>(), I.inverse() * rhs;
+    return stateDerivative;
   }
 
  private:
-  cart_pole_parameters_t param_;
+  CartPoleParameters param_;
 };
 
 }  // namespace cartpole

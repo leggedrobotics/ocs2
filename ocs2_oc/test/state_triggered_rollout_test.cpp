@@ -1,89 +1,113 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#include <gtest/gtest.h>
+
+#include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
-#include "include/ocs2_oc/test/ball_dynamics_staterollout.h"
-#include "include/ocs2_oc/test/dynamics_hybrid_slq_test.h"
-#include "include/ocs2_oc/test/pendulum_dynamics_staterollout.h"
-#include "ocs2_core/Dimensions.h"
 
-#include <gtest/gtest.h>
+#include "ocs2_oc/test/ball_dynamics_staterollout.h"
+#include "ocs2_oc/test/dynamics_hybrid_slq_test.h"
+#include "ocs2_oc/test/pendulum_dynamics_staterollout.h"
+
+using scalar_t = ocs2::scalar_t;
+using vector_t = ocs2::vector_t;
+using matrix_t = ocs2::matrix_t;
+using scalar_array_t = ocs2::scalar_array_t;
+using size_array_t = ocs2::size_array_t;
+using vector_array_t = ocs2::vector_array_t;
+using matrix_array_t = ocs2::matrix_array_t;
+using time_interval_t = std::pair<scalar_t, scalar_t>;
+using time_interval_array_t = std::vector<time_interval_t>;
+
 /*
- *      Test 1 for StateTriggeredRollout
- *      The system being tested is a bouncing ball system with dissipation on bouncing
+ *     Test 1 for StateTriggeredRollout
+ *     The system being tested is a bouncing ball system with dissipation on bouncing
  *
- *      Guard Surfaces are:  x_1 > 0
- *                           x_1 < 0.5
+ *     Guard Surfaces are: x_1 > 0
+ *                         x_1 < 0.5
  *
- *      The following tests are implemented and performed:
- *        - No penetration of Guard Surfaces.
- *        - Conservation of energy in between jumps.
- *        - Event times compared to accurate run of rollout.
+ *     The following tests are implemented and performed:
+ *       - No penetration of Guard Surfaces.
+ *       - Conservation of energy in between jumps.
+ *       - Event times compared to accurate run of rollout.
  */
 TEST(StateRolloutTests, rolloutTestBallDynamics) {
-  using DIMENSIONS = ocs2::Dimensions<2, 1>;
-  using controller_t = ocs2::ControllerBase<2, 1>;
-
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using time_interval_t = std::pair<scalar_t, scalar_t>;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-
-  using time_interval_array_t = std::vector<time_interval_t>;
+  const size_t nx = 2;
+  const size_t nu = 1;
 
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings RolloutSettings;
+  ocs2::rollout::Settings RolloutSettings;
   RolloutSettings.absTolODE_ = 1e-10;
   RolloutSettings.relTolODE_ = 1e-7;
   ocs2::ballDyn dynamics;
-  ocs2::StateTriggeredRollout<2, 1> rollout(dynamics, RolloutSettings);
+  ocs2::StateTriggeredRollout rollout(dynamics, RolloutSettings);
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
   scalar_t t1 = 10;
   // Initial State
-  state_vector_t initState(2, 0);
-  initState[0] = 1;
+  vector_t initState(nx);
+  initState << 1, 0;
   // Initial Event times (none)
   scalar_array_t eventTimes(1, t0);
   // Controller (time constant zero controller)
-  // Controller (time constant zero controller)
   scalar_array_t timestamp(1, t0);
 
-  input_vector_t bias;
+  vector_t bias(nu);
   bias << 0;
-  input_vector_array_t biasArray(1, bias);
+  vector_array_t biasArray(1, bias);
 
-  input_state_matrix_t gain;
+  matrix_t gain(nu, nx);
   gain << 0, 0;
-  input_state_matrix_array_t gainArray(1, gain);
-  ocs2::LinearController<2, 1> control(timestamp, biasArray, gainArray);
-  ocs2::LinearController<2, 1>* controller = &control;
+  matrix_array_t gainArray(1, gain);
+  ocs2::LinearController control(timestamp, biasArray, gainArray);
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
   size_array_t eventsPastTheEndIndeces(0);
-  state_vector_array_t stateTrajectory(0);
-  input_vector_array_t inputTrajectory(0);
+  vector_array_t stateTrajectory(0);
+  vector_array_t inputTrajectory(0);
   // Output State
-  state_vector_t finalState;
+  vector_t finalState;
   // Run
   finalState =
-      rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, &control, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
-  double energyLast = 9.81 * stateTrajectory[0][0] + +0.5 * stateTrajectory[0][1] * stateTrajectory[0][1];
+  scalar_t energyLast = 9.81 * stateTrajectory[0][0] + +0.5 * stateTrajectory[0][1] * stateTrajectory[0][1];
   size_t eventCounter = 0;
 
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: Energy Conservation
-    double energy = 9.81 * stateTrajectory[i][0] + 0.5 * stateTrajectory[i][1] * stateTrajectory[i][1];
+    scalar_t energy = 9.81 * stateTrajectory[i][0] + 0.5 * stateTrajectory[i][1] * stateTrajectory[i][1];
     if (i != eventsPastTheEndIndeces[eventCounter]) {
       EXPECT_LT(std::fabs(energy - energyLast), 1e-5);
     } else {
@@ -124,60 +148,45 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
  * 		- 	Eventtimes compared to accurate run of rollout
  */
 TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
-  using DIMENSIONS = ocs2::Dimensions<2, 1>;
-  using controller_t = ocs2::ControllerBase<2, 1>;
+  const size_t nx = 2;
+  const size_t nu = 1;
 
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using time_interval_t = std::pair<scalar_t, scalar_t>;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-
-  using time_interval_array_t = std::vector<time_interval_t>;
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings rolloutSettings;
+  ocs2::rollout::Settings rolloutSettings;
   ocs2::pendulum_dyn dynamics;
-  ocs2::StateTriggeredRollout<2, 1> rollout(dynamics, rolloutSettings);
+  ocs2::StateTriggeredRollout rollout(dynamics, rolloutSettings);
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;
   scalar_t t1 = 15;
   // Initial State
-  state_vector_t initState(2, 0);
-  initState[0] = 3.1415;
+  vector_t initState(nx);
+  initState << 3.1415, 0;
   // Initial Event times (none)
   scalar_array_t eventTimes(1, t0);
   // Controller (time constant zero controller)
   scalar_array_t timestamp(1, t0);
   // bias Array of Controller
-  input_vector_t bias;
+  vector_t bias(nu);
   bias << 0;
-  input_vector_array_t biasArray(1, bias);
+  vector_array_t biasArray(1, bias);
   // gain Array of Controller
-  input_state_matrix_t gain;
+  matrix_t gain(nu, nx);
   gain << 0, 0;
-  input_state_matrix_array_t gainArray(1, gain);
+  matrix_array_t gainArray(1, gain);
 
-  ocs2::LinearController<2, 1> control(timestamp, biasArray, gainArray);
-  ocs2::LinearController<2, 1>* controller = &control;
+  ocs2::LinearController control(timestamp, biasArray, gainArray);
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
   size_array_t eventsPastTheEndIndeces(0);
-  state_vector_array_t stateTrajectory(0);
-  input_vector_array_t inputTrajectory(0);
+  vector_array_t stateTrajectory(0);
+  vector_array_t inputTrajectory(0);
   // Output State
-  state_vector_t finalState;
+  vector_t finalState;
   // Run
   finalState =
-      rollout.run(t0, initState, t1, controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, &control, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   scalar_t energyPrevious = 9.81 * 2;  // Initial energy (pendulum in upright position h = 2*L)
   size_t eventCounter = 0;
@@ -225,68 +234,51 @@ TEST(StateRolloutTests, rolloutTestPendulumDynamics) {
  * 		- 	Eventtimes compared to accurate run of rollout
  */
 TEST(StateRolloutTests, runHybridDynamics) {
-  using DIMENSIONS = ocs2::Dimensions<3, 1>;
-  using controller_t = ocs2::ControllerBase<3, 1>;
+  const size_t nx = 3;
+  const size_t nu = 1;
 
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using time_interval_t = std::pair<scalar_t, scalar_t>;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using input_state_matrix_t = typename DIMENSIONS::input_state_matrix_t;
-
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using size_array_t = typename DIMENSIONS::size_array_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-  using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
-  using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-
-  using time_interval_array_t = std::vector<time_interval_t>;
   // Create Logic Rules
-  std::vector<double> eventTimes(0);
+  std::vector<scalar_t> eventTimes(0);
   std::vector<size_t> subsystemsSequence{1};
   // Construct State TriggerdRollout Object
-  ocs2::Rollout_Settings rolloutSettings;
+  ocs2::rollout::Settings rolloutSettings;
   ocs2::hybridSysDynamics dynamics;
-  ocs2::StateTriggeredRollout<3, 1> rollout(dynamics, rolloutSettings);
+  ocs2::StateTriggeredRollout rollout(dynamics, rolloutSettings);
   // Construct Variables for run
   // Simulation time
-  scalar_t t0 = 0;
-  scalar_t t1 = 5;
+  const scalar_t t0 = 0;
+  const scalar_t t1 = 5;
   // Initial State
-  state_vector_t initState(2, 0, 1);
-  initState[0] = 5;
-  initState[1] = 2;
+  vector_t initState(nx);
+  initState << 5, 2, 1;
   // Controller (time constant zero controller)
   scalar_array_t timestamp(1, t0);
-  input_vector_t bias;
+  vector_t bias(nu);
   bias << 0;
-  input_vector_array_t biasArray(1, bias);
+  vector_array_t biasArray(1, bias);
 
-  input_state_matrix_t gain;
+  matrix_t gain(nu, nx);
   gain << 0, 0, 0;
-  input_state_matrix_array_t gainArray(1, gain);
-  ocs2::LinearController<3, 1> control(timestamp, biasArray, gainArray);
-  ocs2::LinearController<3, 1>* Controller = &control;
+  matrix_array_t gainArray(1, gain);
+  ocs2::LinearController control(timestamp, biasArray, gainArray);
 
   // Trajectory storage
   scalar_array_t timeTrajectory(0);
   size_array_t eventsPastTheEndIndeces(0);
-  state_vector_array_t stateTrajectory(0);
-  input_vector_array_t inputTrajectory(0);
+  vector_array_t stateTrajectory(0);
+  vector_array_t inputTrajectory(0);
   // Output State
-  state_vector_t finalState;
+  vector_t finalState;
   // Run
   finalState =
-      rollout.run(t0, initState, t1, Controller, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
+      rollout.run(t0, initState, t1, &control, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);
 
   // Test (and display statetrajectory)
   for (int i = 0; i < timeTrajectory.size(); i++) {
     // Test 1: No Significant penetration of Guard Surface
-    dynamic_vector_t currentGuardValues;
     scalar_t currentTime = timeTrajectory[i];
-    state_vector_t currentState = stateTrajectory[i];
-    dynamics.computeGuardSurfaces(currentTime, currentState, currentGuardValues);
+    vector_t currentState = stateTrajectory[i];
+    vector_t currentGuardValues = dynamics.computeGuardSurfaces(currentTime, currentState);
 
     EXPECT_GT(currentGuardValues[0], -1e-6);
     EXPECT_GT(currentGuardValues[1], -1e-6);
@@ -300,9 +292,4 @@ TEST(StateRolloutTests, runHybridDynamics) {
       EXPECT_LT(std::fabs(timeTrajectory[eventsPastTheEndIndeces[i] - 1] - eventTestTimes[i]), 1e-8);
     }
   }
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

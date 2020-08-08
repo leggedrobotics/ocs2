@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,39 +29,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <string>
-#include <vector>
-
-#include "ocs2_core/integration/OdeBase.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
 /**
  * The Observer class stores data in given containers.
- *
- * @tparam STATE_DIM: Dimension of the state space.
  */
-template <int STATE_DIM>
 class Observer {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using DIMENSIONS = Dimensions<STATE_DIM, 0>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using scalar_array_t = typename DIMENSIONS::scalar_array_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
-
   /**
    * Constructor.
    *
    * @param stateTrajectoryPtr: A pinter to an state trajectory container to store resulting state trajectory.
    * @param timeTrajectoryPtr: A pinter to an time trajectory container to store resulting time trajectory.
    */
-  explicit Observer(state_vector_array_t* stateTrajectoryPtr = nullptr, scalar_array_t* timeTrajectoryPtr = nullptr)
-      : timeTrajectoryPtr_(timeTrajectoryPtr), stateTrajectoryPtr_(stateTrajectoryPtr) {}
+  explicit Observer(vector_array_t* stateTrajectoryPtr = nullptr, scalar_array_t* timeTrajectoryPtr = nullptr);
 
   /**
    * Default destructor.
@@ -70,23 +53,14 @@ class Observer {
 
   /**
    * Observe function to retrieve the variable of interest.
-   * @param [in] system: system dynamics object.
    * @param [in] state: Current state.
    * @param [in] time: Current time.
    */
-  void observe(OdeBase<STATE_DIM>& system, const state_vector_t& state, const scalar_t time) {
-    // Store data
-    if (stateTrajectoryPtr_ != nullptr) {
-      stateTrajectoryPtr_->push_back(state);
-    }
-    if (timeTrajectoryPtr_ != nullptr) {
-      timeTrajectoryPtr_->push_back(time);
-    }
-  }
+  void observe(const vector_t& state, scalar_t time);
 
  private:
   scalar_array_t* timeTrajectoryPtr_;
-  state_vector_array_t* stateTrajectoryPtr_;
+  vector_array_t* stateTrajectoryPtr_;
 };
 
 }  // namespace ocs2

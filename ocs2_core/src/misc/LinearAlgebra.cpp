@@ -32,19 +32,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace LinearAlgebra {
 
-bool makePSD(Eigen::MatrixXd& squareMatrix) {
-  if (squareMatrix.rows() != squareMatrix.cols()) {
-    throw std::runtime_error("Not a square matrix: makePSD() method is for square matrix.");
-  }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void makePsdEigenvalue(Eigen::MatrixXd& squareMatrix, double minEigenvalue) {
+  assert(squareMatrix.rows() == squareMatrix.cols());
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(squareMatrix, Eigen::EigenvaluesOnly);
   Eigen::VectorXd lambda = eig.eigenvalues();
 
   bool hasNegativeEigenValue = false;
   for (size_t j = 0; j < lambda.size(); j++) {
-    if (lambda(j) < 0.0) {
+    if (lambda(j) < minEigenvalue) {
       hasNegativeEigenValue = true;
-      lambda(j) = 1e-6;
+      lambda(j) = minEigenvalue;
     }
   }
 
@@ -54,42 +55,80 @@ bool makePSD(Eigen::MatrixXd& squareMatrix) {
   } else {
     squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
   }
-
-  return hasNegativeEigenValue;
 }
 
-void computeConstraintProjection(const Eigen::MatrixXd& D, const Eigen::MatrixXd& RinvChol, Eigen::MatrixXd& Ddagger,
-                                 Eigen::MatrixXd& DdaggerT_R_Ddagger_Chol, Eigen::MatrixXd& RinvConstrainedChol) {
-  const auto numConstraints = D.rows();
-  const auto numInputs = D.cols();
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue) {
+  using scalar_t = typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar;
+  using dense_matrix_t = Eigen::MatrixXd;
+  using sparse_matrix_t = Eigen::SparseMatrix<scalar_t>;
+
+  assert(A.rows() == A.cols());
+
+  // set the minimum eigenvalue
+  A.diagonal().array() -= minEigenvalue;
+
+  // S P' (A + E) P S = L L'
+  sparse_matrix_t squareMatrix = 0.5 * A.sparseView();
+  A.transposeInPlace();
+  squareMatrix += 0.5 * A.sparseView();
+  Eigen::IncompleteCholesky<scalar_t> incompleteCholesky(squareMatrix);
+  // P' A P = M M'
+  sparse_matrix_t M = (incompleteCholesky.scalingS().asDiagonal().inverse() * incompleteCholesky.matrixL());
+  // L L' = P M M' P'
+  sparse_matrix_t LmTwisted;
+  LmTwisted.template selfadjointView<Eigen::Lower>() =
+      M.template selfadjointView<Eigen::Lower>().twistedBy(incompleteCholesky.permutationP());
+  dense_matrix_t L = dense_matrix_t(LmTwisted);
+  // A = L L'
+  A = L * L.transpose();
+
+  // correction for the minimum eigenvalue
+  A.diagonal().array() += minEigenvalue;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void computeConstraintProjection(const Eigen::MatrixXd& Dm, const Eigen::MatrixXd& RmInvUmUmT, Eigen::MatrixXd& DmDagger,
+                                 Eigen::MatrixXd& DmDaggerTRmDmDaggerUUT, Eigen::MatrixXd& RmInvConstrainedUUT) {
+  const auto numConstraints = Dm.rows();
+  const auto numInputs = Dm.cols();
 
   // Constraint Projectors are based on the QR decomposition
-  Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RinvCholT_DmT(RinvChol.transpose() * D.transpose());
+  Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RmInvUmUmTT_DmT(RmInvUmUmT.transpose() * Dm.transpose());
 
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Rc =
-      QRof_RinvCholT_DmT.matrixQR().topLeftCorner(numConstraints, numConstraints).template triangularView<Eigen::Upper>();
+  Eigen::MatrixXd QRof_RmInvUmUmTT_DmT_Rc = QRof_RmInvUmUmTT_DmT.matrixQR().topRows(numConstraints).template triangularView<Eigen::Upper>();
 
   // Computes the inverse of Rc with an efficient in-place forward-backward substitution
-  // Turns out that this is equal to the cholesky decomposition of Ddagger^T * R * Ddagger after simplification
-  DdaggerT_R_Ddagger_Chol.setIdentity(numConstraints, numConstraints);
-  QRof_RinvCholT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DdaggerT_R_Ddagger_Chol);
+  // Turns out that this is equal to the UUT decomposition of DmDagger^T * R * DmDagger after simplification
+  DmDaggerTRmDmDaggerUUT.setIdentity(numConstraints, numConstraints);
+  QRof_RmInvUmUmTT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DmDaggerTRmDmDaggerUUT);
 
-  Eigen::MatrixXd QRof_RinvCholT_DmT_Q = QRof_RinvCholT_DmT.householderQ();
+  Eigen::MatrixXd QRof_RmInvUmUmTT_DmT_Q = QRof_RmInvUmUmTT_DmT.householderQ();
   // Auto take reference to the column view here without making a temporary
-  auto QRof_RinvCholT_DmT_Qc = QRof_RinvCholT_DmT_Q.leftCols(numConstraints);
-  auto QRof_RinvCholT_DmT_Qu = QRof_RinvCholT_DmT_Q.rightCols(numInputs - numConstraints);
+  auto QRof_RmInvUmUmTT_DmT_Qc = QRof_RmInvUmUmTT_DmT_Q.leftCols(numConstraints);
+  auto QRof_RmInvUmUmTT_DmT_Qu = QRof_RmInvUmUmTT_DmT_Q.rightCols(numInputs - numConstraints);
 
   // Compute Weighted Pseudo Inverse, brackets used to compute the smaller, right-side product first
-  Ddagger.noalias() = RinvChol * (QRof_RinvCholT_DmT_Qc * DdaggerT_R_Ddagger_Chol.transpose());
+  DmDagger.noalias() = RmInvUmUmT * (QRof_RmInvUmUmTT_DmT_Qc * DmDaggerTRmDmDaggerUUT.transpose());
 
-  // Constraint input cost cholesky decomposition
-  RinvConstrainedChol.noalias() = RinvChol * QRof_RinvCholT_DmT_Qu;
+  // Constraint input cost UUT decomposition
+  RmInvConstrainedUUT.noalias() = RmInvUmUmT * QRof_RmInvUmUmTT_DmT_Qu;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 int rank(const Eigen::MatrixXd& A) {
   return A.colPivHouseholderQr().rank();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A) {
   return A.eigenvalues();
 }

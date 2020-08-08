@@ -1,17 +1,15 @@
-
-
 #pragma once
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
-#include <Eigen/Core>
+
+namespace ocs2 {
 
 class CommonCppAdNoParameterFixture : public ::testing::Test {
  public:
-  using ad_dynamic_vector_t = ocs2::CppAdInterface::ad_dynamic_vector_t;
-  using dynamic_vector_t = ocs2::dynamic_vector_t;
-  using dynamic_matrix_t = ocs2::dynamic_matrix_t;
+  using ad_fun_t = ocs2::CppAdInterface::ad_fun_t;
+  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
 
   const size_t variableDim_ = 3;
   const size_t rangeDim_ = 1;
@@ -26,19 +24,20 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
 
   void create(){};
 
-  static void funImpl(const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
+  static void funImpl(const ad_vector_t& x, ad_vector_t& y) {
     // the model equation
+    y.resize(1);
     y(0) = x(0) + 0.5 * x(0) * x(1) + 2.0 * x(0) * x(1) * x(2);
   }
 
-  dynamic_vector_t testFun(const dynamic_vector_t& x) {
-    dynamic_vector_t y(rangeDim_);
+  vector_t testFun(const vector_t& x) {
+    vector_t y(rangeDim_);
     y(0) = x(0) + 0.5 * x(0) * x(1) + 2.0 * x(0) * x(1) * x(2);
     return y;
   }
 
-  dynamic_matrix_t testJacobian(const dynamic_vector_t& x) {
-    dynamic_matrix_t jacobian(rangeDim_, variableDim_);
+  matrix_t testJacobian(const vector_t& x) {
+    matrix_t jacobian(rangeDim_, variableDim_);
     // y(0):
     jacobian(0, 0) = 1.0 + 0.5 * x(1) + 2.0 * x(1) * x(2);
     jacobian(0, 1) = 0.5 * x(0) + 2.0 * x(0) * x(2);
@@ -46,8 +45,8 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
     return jacobian;
   }
 
-  dynamic_matrix_t testHessian(const dynamic_vector_t& x) {
-    dynamic_matrix_t hessian(variableDim_, variableDim_);
+  matrix_t testHessian(const vector_t& x) {
+    matrix_t hessian(variableDim_, variableDim_);
     hessian.setZero();
 
     hessian(0, 0) = 0.0;
@@ -69,9 +68,7 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
 class CommonCppAdParameterizedFixture : public ::testing::Test {
  public:
   using ad_fun_t = ocs2::CppAdInterface::ad_fun_t;
-  using ad_dynamic_vector_t = ocs2::CppAdInterface::ad_dynamic_vector_t;
-  using dynamic_vector_t = ocs2::dynamic_vector_t;
-  using dynamic_matrix_t = ocs2::dynamic_matrix_t;
+  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
 
   const size_t variableDim_ = 2;
   const size_t rangeDim_ = 2;
@@ -86,13 +83,13 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
 
   void create() {
     // set and declare independent variables and start tape recording
-    ad_dynamic_vector_t xp(variableDim_ + parameterDim_);
+    ad_vector_t xp(variableDim_ + parameterDim_);
     xp.setOnes();
     CppAD::Independent(xp);
 
-    ad_dynamic_vector_t x = xp.segment(0, variableDim_);
-    ad_dynamic_vector_t p = xp.segment(variableDim_, parameterDim_);
-    ad_dynamic_vector_t y(rangeDim_);
+    ad_vector_t x = xp.segment(0, variableDim_);
+    ad_vector_t p = xp.segment(variableDim_, parameterDim_);
+    ad_vector_t y;
     funImpl(x, p, y);
 
     // create f: x -> y and stop tape recording
@@ -109,21 +106,22 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
     hessianSparsity_[2] = {1};
   }
 
-  static void funImpl(const ad_dynamic_vector_t& x, const ad_dynamic_vector_t& p, ad_dynamic_vector_t& y) {
+  static void funImpl(const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     // the model equation
+    y.resize(2);
     y(0) = x(0) + 0.5 * x(0) * x(1) + 2.0 * p(0) * x(1) * x(1);
     y(1) = x(0) * x(0) * x(1) / 2.0;
   }
 
-  dynamic_vector_t testFun(const dynamic_vector_t& x, const dynamic_vector_t& p) {
-    dynamic_vector_t y(rangeDim_);
+  vector_t testFun(const vector_t& x, const vector_t& p) {
+    vector_t y(rangeDim_);
     y(0) = x(0) + 0.5 * x(0) * x(1) + 2.0 * p(0) * x(1) * x(1);
     y(1) = x(0) * x(0) * x(1) / 2.0;
     return y;
   }
 
-  dynamic_matrix_t testJacobian(const dynamic_vector_t& x, const dynamic_vector_t& p) {
-    dynamic_matrix_t jacobian(rangeDim_, variableDim_);
+  matrix_t testJacobian(const vector_t& x, const vector_t& p) {
+    matrix_t jacobian(rangeDim_, variableDim_);
     // y(0):
     jacobian(0, 0) = 1.0 + 0.5 * x(1);
     jacobian(0, 1) = 0.5 * x(0) + 4.0 * p(0) * x(1);
@@ -133,8 +131,8 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
     return jacobian;
   }
 
-  dynamic_matrix_t testHessian(int outputIndex, const dynamic_vector_t& x, const dynamic_vector_t& p) {
-    dynamic_matrix_t hessian(variableDim_, variableDim_);
+  matrix_t testHessian(int outputIndex, const vector_t& x, const vector_t& p) {
+    matrix_t hessian(variableDim_, variableDim_);
 
     switch (outputIndex) {
       case 0:
@@ -157,6 +155,8 @@ class CommonCppAdParameterizedFixture : public ::testing::Test {
   void init() {}
 
   std::unique_ptr<ad_fun_t> fun_;
-  ocs2::cppad_sparsity::SparsityPattern jacobianSparsity_;
-  ocs2::cppad_sparsity::SparsityPattern hessianSparsity_;
+  cppad_sparsity::SparsityPattern jacobianSparsity_;
+  cppad_sparsity::SparsityPattern hessianSparsity_;
 };
+
+}  // namespace ocs2

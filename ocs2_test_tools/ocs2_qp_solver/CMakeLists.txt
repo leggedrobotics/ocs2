@@ -39,8 +39,6 @@ add_library(${PROJECT_NAME}
   src/QpDiscreteTranscription.cpp
   src/QpSolver.cpp
   src/QpTrajectories.cpp
-  src/wrappers/CostWrapper.cpp
-  src/wrappers/SystemWrapper.cpp
   )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -75,7 +73,7 @@ install(
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-        
+
 install(DIRECTORY test/include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
@@ -84,15 +82,12 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-catkin_add_gtest(${PROJECT_NAME}_testWrappers
-  test/testCostWrapper.cpp
+catkin_add_gtest(test_${PROJECT_NAME}
   test/testDiscreteTranscription.cpp
   test/testOcs2QpSolver.cpp
   test/testQpSolver.cpp
-  test/testSystemWrapper.cpp
   )
-target_link_libraries(${PROJECT_NAME}_testWrappers
+target_link_libraries(test_${PROJECT_NAME}
   ${PROJECT_NAME}
   gtest_main
   )
-  

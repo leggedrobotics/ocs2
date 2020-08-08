@@ -27,20 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef DOUBLE_INTEGRATOR_DEFINITIONS_OCS2_H_
-#define DOUBLE_INTEGRATOR_DEFINITIONS_OCS2_H_
+#pragma once
 
 #include <cstddef>
 
 namespace ocs2 {
 namespace double_integrator {
 
-enum double_integrator : size_t {
-  STATE_DIM_ = 2,
-  INPUT_DIM_ = 1,
-};
+static constexpr size_t STATE_DIM = 2;
+static constexpr size_t INPUT_DIM = 1;
 
 }  // namespace double_integrator
 }  // namespace ocs2
-
-#endif  // DOUBLE_INTEGRATOR_DEFINITIONS_OCS2_H_

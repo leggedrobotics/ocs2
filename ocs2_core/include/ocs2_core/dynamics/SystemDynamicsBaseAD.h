@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,11 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SYSTEMDYNAMICSBASEAD_OCS2_H_
-#define SYSTEMDYNAMICSBASEAD_OCS2_H_
+#pragma once
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include "ocs2_core/dynamics/SystemDynamicsBase.h"
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
 namespace ocs2 {
 
@@ -41,44 +40,15 @@ namespace ocs2 {
  * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
  * The linearized system jump map is defined as: \n
  * \f$ x^+ = G \delta x + H \delta u \f$ \n
- *
- * @tparam Derived: Derived class type.
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES = 1>
-class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES> {
+class SystemDynamicsBaseAD : public SystemDynamicsBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
+  using ad_vector_t = typename CppAdInterface::ad_vector_t;
 
-  using BASE = SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM_MODES>;
+  SystemDynamicsBaseAD(size_t stateDim, size_t inputDim);
 
-  using typename BASE::dynamic_input_matrix_t;
-  using typename BASE::dynamic_state_matrix_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_input_matrix_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
-
-  using ad_scalar_t = CppAdInterface::ad_scalar_t;
-  using ad_dynamic_vector_t = CppAdInterface::ad_dynamic_vector_t;
-
-  using state_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, 1 + STATE_DIM + INPUT_DIM>;
-  using state_timeState_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, 1 + STATE_DIM>;
-  using mode_timeState_matrix_t = Eigen::Matrix<scalar_t, NUM_MODES, 1 + STATE_DIM>;
-
-  SystemDynamicsBaseAD();
-
-  /**
-   * Copy constructor
-   */
-  SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs);
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   ~SystemDynamicsBaseAD() override = default;
 
   /**
@@ -93,53 +63,49 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
-  void computeFlowMap(const scalar_t& time, const state_vector_t& state, const input_vector_t& input,
-                      state_vector_t& stateDerivative) final;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) final;
 
-  void computeJumpMap(const scalar_t& time, const state_vector_t& state, state_vector_t& jumpedState) final;
+  vector_t computeJumpMap(scalar_t time, const vector_t& state) final;
 
-  void computeGuardSurfaces(const scalar_t& time, const state_vector_t& state, dynamic_vector_t& guardSurfacesValue) final;
+  vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
 
-  void setCurrentStateAndControl(const scalar_t& time, const state_vector_t& state, const input_vector_t& input) final;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getFlowMapDerivativeTime(state_vector_t& df) final { df = flowJacobian_.template leftCols<1>(); }
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getFlowMapDerivativeState(state_matrix_t& A) final { A = flowJacobian_.template middleCols<STATE_DIM>(1); }
+  VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getFlowMapDerivativeInput(state_input_matrix_t& B) final { B = flowJacobian_.template rightCols<INPUT_DIM>(); }
+  /** @note: Requires linear approximation to be called before */
+  vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getJumpMapDerivativeTime(state_vector_t& dg) final { dg = jumpJacobian_.template leftCols<1>(); }
+  /** @note: Requires jump map linear approximation to be called before */
+  vector_t jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
-  void getJumpMapDerivativeState(state_matrix_t& G) final { G = jumpJacobian_.template rightCols<STATE_DIM>(); }
-
-  void getGuardSurfacesDerivativeTime(dynamic_vector_t& D_t_gamma) final { D_t_gamma = guardJacobian_.template leftCols<1>(); }
-
-  void getGuardSurfacesDerivativeState(dynamic_state_matrix_t& D_x_gamma) final {
-    D_x_gamma = guardJacobian_.template rightCols<STATE_DIM>();
-  }
+  /** @note: Requires guard surfaces linear approximation to be called before */
+  vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
  protected:
+  /** Copy constructor */
+  SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs);
+
   /**
    * Interface method to the state flow map of the hybrid system. This method should be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector.
-   * @param [out] stateDerivative: state vector time derivative.
+   * @return state vector time derivative.
    */
-  virtual void systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                             ad_dynamic_vector_t& stateDerivative) const = 0;
+  virtual ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const = 0;
 
   /**
    * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
-   * @param [out] jumpedState: jumped state.
+   * @return jumped state.
    */
-  virtual void systemJumpMap(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& jumpedState) const {
-    jumpedState = state;
-  }
+  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state) const;
 
   /**
    * Interface method to the guard surfaces. This method can be implemented by the derived class.
@@ -147,11 +113,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    * @param [in] time: time.
    * @param [in] state: state.
    * @param [in] input: input vector
-   * @param [out] guardSurfacesValue: A vector of guard surfaces values
+   * @return A vector of guard surfaces values
    */
-  virtual void systemGuardSurfaces(ad_scalar_t time, const ad_dynamic_vector_t& state, ad_dynamic_vector_t& guardSurfacesValue) const {
-    guardSurfacesValue = -ad_dynamic_vector_t::Ones(1);
-  }
+  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state) const;
 
  private:
   /**
@@ -173,17 +137,16 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase<STATE_DIM, INPUT_DIM, NUM
    */
   void loadModelsIfAvailable(bool verbose);
 
+  size_t stateDim_;
+  size_t inputDim_;
+
   std::unique_ptr<CppAdInterface> flowMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> jumpMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> guardSurfacesADInterfacePtr_;
 
-  state_timeStateInput_matrix_t flowJacobian_;
-  state_timeState_matrix_t jumpJacobian_;
-  mode_timeState_matrix_t guardJacobian_;
+  matrix_t flowJacobian_;
+  matrix_t jumpJacobian_;
+  matrix_t guardJacobian_;
 };
 
 }  // namespace ocs2
-
-#include "implementation/SystemDynamicsBaseAD.h"
-
-#endif /* SYSTEMDYNAMICSBASEAD_OCS2_H_ */

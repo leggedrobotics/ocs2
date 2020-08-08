@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,36 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Core>
-#include <Eigen/StdVector>
-
-#include <csignal>
-#include <iomanip>
-#include <iostream>
 #include <string>
-#include <thread>
-#include <vector>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
 
 namespace ocs2 {
 
 /**
  * This class lets the user to insert robot command form command line.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T>
-class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_ROS_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_ROS_Interface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = ocs2::TargetTrajectories_ROS_Interface<SCALAR_T>;
-  using scalar_t = typename BASE::scalar_t;
-  using scalar_array_t = typename BASE::scalar_array_t;
-  using dynamic_vector_t = typename BASE::dynamic_vector_t;
-  using dynamic_vector_array_t = typename BASE::dynamic_vector_array_t;
-
   /**
    * Constructor
    *
@@ -76,7 +58,7 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
   /**
    * Default destructor
    */
-  virtual ~TargetTrajectories_Keyboard_Interface() = default;
+  ~TargetTrajectories_Keyboard_Interface() override = default;
 
   /**
    * Gets the command vector size.
@@ -95,8 +77,8 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
    * @param [in] desiredState: Desired state to be published.
    * @param [in] desiredInput: Desired input to be published.
    */
-  virtual void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, dynamic_vector_t& desiredState,
-                                           dynamic_vector_t& desiredInput);
+  virtual void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, vector_t& desiredState,
+                                           vector_t& desiredInput);
 
   /**
    * @brief Turns command line values into a costDesiredTrajectories object
@@ -132,5 +114,3 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
 };
 
 }  // namespace ocs2
-
-#include "implementation/TargetTrajectories_Keyboard_Interface.h"

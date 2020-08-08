@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <fstream>
 #include <memory>
 
 #include <ocs2_core/control/LinearController.h>
@@ -38,42 +37,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-template <class Integrator>
-void testSecondOrderSystem() {
-  Eigen::Matrix2d A;
+void testSecondOrderSystem(IntegratorType integrator_type) {
+  const size_t stateDim = 2;
+  const size_t inputDim = 1;
+
+  matrix_t A(2, 2);
   A << -2, -1,  // clang-format off
         1,  0;  // clang-format on
-  Eigen::Vector2d B;
+  matrix_t B(2, 1);
   B << 1, 0;
 
-  typedef LinearSystemDynamics<2, 1> SecondOrderSystem;
-  ControlledSystemBase<2, 1>::Ptr sys = ControlledSystemBase<2, 1>::Ptr(new SecondOrderSystem(A, B));
+  auto sys = std::shared_ptr<ControlledSystemBase>(new LinearSystemDynamics(A, B));
 
-  const double t0 = 0.0;
-  const double t1 = 10.0;
-  SecondOrderSystem::scalar_array_t cntTimeStamp{0, 10};
-  SecondOrderSystem::input_vector_array_t uff(2, SecondOrderSystem::input_vector_t::Ones());
-  SecondOrderSystem::input_state_matrix_array_t k(2, SecondOrderSystem::input_state_matrix_t::Zero());
+  const scalar_t t0 = 0.0;
+  const scalar_t t1 = 10.0;
+  const scalar_t dt = 0.05;
+  vector_t x0 = vector_t::Zero(2);
+  scalar_array_t cntTimeStamp{0, 10};
+  vector_array_t uff(2, vector_t::Ones(1));
+  matrix_array_t k(2, matrix_t::Zero(1, 2));
 
-  using controller_t = ocs2::LinearController<2, 1>;
-  auto controller = std::unique_ptr<controller_t>(new controller_t(cntTimeStamp, uff, k));
+  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
 
   sys->setController(controller.get());
 
-  ControlledSystemBase<2, 1>::Ptr sysClone1(sys->clone());
+  std::shared_ptr<ControlledSystemBase> sysClone1(sys->clone());
   ASSERT_TRUE(sysClone1.unique());
 
-  std::vector<double> timeTrajectory1, timeTrajectory2;
-  std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> stateTrajectory1, stateTrajectory2, stateTrajectory3;
+  scalar_array_t timeTrajectory1, timeTrajectory2;
+  vector_array_t stateTrajectory1, stateTrajectory2, stateTrajectory3;
 
-  Eigen::Vector2d x0;
-  x0.setZero();
-  const double dt = 0.05;
+  std::unique_ptr<IntegratorBase> integrator = newIntegrator(integrator_type);
 
   // Adaptive time integrator
-  Integrator odeAdaptive;
-  Observer<2> observer1(&stateTrajectory1, &timeTrajectory1);
-  odeAdaptive.integrate_adaptive(*sys, observer1, x0, t0, t1);
+  Observer observer1(&stateTrajectory1, &timeTrajectory1);
+  integrator->integrateAdaptive(*sys, observer1, x0, t0, t1);
 
   EXPECT_NEAR(timeTrajectory1.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory1.back(), t1, 1e-6);
@@ -81,9 +79,8 @@ void testSecondOrderSystem() {
   EXPECT_NEAR(stateTrajectory1.back()(1), 1.0, 1e-3);
 
   // Equidistant time integrator
-  Integrator odeConst;
-  Observer<2> observer2(&stateTrajectory2, &timeTrajectory2);
-  odeConst.integrate_const(*sys, observer2, x0, t0, t1, dt);
+  Observer observer2(&stateTrajectory2, &timeTrajectory2);
+  integrator->integrateConst(*sys, observer2, x0, t0, t1, dt);
 
   EXPECT_NEAR(timeTrajectory2.front(), t0, 1e-6);
   EXPECT_NEAR(timeTrajectory2.back(), t1, 1e-6);
@@ -91,31 +88,26 @@ void testSecondOrderSystem() {
   EXPECT_NEAR(stateTrajectory2.back()(1), 1.0, 1e-3);
 
   // Integrator with given time trajectory
-  Integrator odeTime;
-  Observer<2> observer3(&stateTrajectory3);
+  Observer observer3(&stateTrajectory3);
 
   // integrate with given time trajectory
-  odeTime.integrate_times(*sys, observer3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
+  integrator->integrateTimes(*sys, observer3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
 
   EXPECT_NEAR(stateTrajectory3.back()(1), 1.0, 1e-3);
 }
 
 TEST(IntegrationTest, SecondOrderSystem_ODE45) {
-  testSecondOrderSystem<ODE45<2>>();
+  testSecondOrderSystem(IntegratorType::ODE45);
 }
 
 TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort) {
-  const size_t order = 5;
-  using AdamBashforth = IntegratorAdamsBashforth<2, order>;
-  testSecondOrderSystem<AdamBashforth>();
+  testSecondOrderSystem(IntegratorType::ADAMS_BASHFORTH);
 }
 
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 55)
 
 TEST(IntegrationTest, SecondOrderSystem_AdamsBashfortMoulton) {
-  const size_t order = 5;
-  using AdamsBashforthMoulton = IntegratorAdamsBashforthMoulton<2, order>;
-  testSecondOrderSystem<AdamsBashforthMoulton>();
+  testSecondOrderSystem(IntegratorType::ADAMS_BASHFORTH_MOULTON);
 }
 
 #endif

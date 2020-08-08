@@ -22,7 +22,7 @@
   <depend>ocs2_ocs2</depend>
   <depend>ocs2_raisim</depend>
   <depend>ocs2_mpc</depend>
-  <depend>ocs2_comm_interfaces</depend>
+  <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_ballbot_example</depend>
   <depend>ocs2_cart_pole_example</depend>
   <depend>ocs2_cart_pole_raisim_example</depend>

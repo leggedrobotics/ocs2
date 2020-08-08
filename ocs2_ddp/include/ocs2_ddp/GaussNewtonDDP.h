@@ -558,6 +558,7 @@ class GaussNewtonDDP : public Solver_BASE {
   size_t finalActivePartition_ = 0;
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
+  bool isInitInternalControllerEmpty_ = false;
 
   std::vector<std::unique_ptr<LinearQuadraticApproximator>> linearQuadraticApproximatorPtrStock_;
 

@@ -1061,24 +1061,18 @@ void GaussNewtonDDP::calculateRolloutMerit(PerformanceIndex& performanceIndex) c
 void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarquardtModule) {
   const size_t taskId = 0;
 
-  // local evenberg marquardt forward simulation's variables
-  scalar_t merit;
-  scalar_t totalCost;
-  scalar_t stateInputEqConstraintISE;
-  scalar_t stateEqConstraintISE, stateEqFinalConstraintISE;
-  scalar_t inequalityConstraintPenalty, inequalityConstraintISE;
+  // local levenberg marquardt forward simulation's variables
+  PerformanceIndex performanceIndex;
   scalar_array2_t timeTrajectoriesStock(numPartitions_);
   size_array2_t postEventIndicesStock(numPartitions_);
-  state_vector_array2_t stateTrajectoriesStock(numPartitions_);
-  input_vector_array2_t inputTrajectoriesStock(numPartitions_);
-  ModelDataBase::array2_t modelDataTrajectoriesStock(numPartitions_);
+  vector_array2_t stateTrajectoriesStock(numPartitions_);
+  vector_array2_t inputTrajectoriesStock(numPartitions_);
+  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock(numPartitions_);
 
   // do a full step rollout
   const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
-  scalar_t avgTimeStepFP =
-      performFullRollout(taskId, stepLength, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                         inputTrajectoriesStock, modelDataTrajectoriesStock, merit, totalCost, stateInputEqConstraintISE,
-                         stateEqConstraintISE, stateEqFinalConstraintISE, inequalityConstraintPenalty, inequalityConstraintISE);
+  scalar_t avgTimeStepFP = performFullRollout(taskId, stepLength, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock,
+                                              stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, performanceIndex);
 
   // compute average time step of forward rollout
   avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStepFP;
@@ -1088,14 +1082,14 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
 
   // compute pho (the ratio between actual reduction and predicted reduction)
   const auto predictedCost = sTrajectoryStock_[initActivePartition_].front();
-  auto actualReduction = nominalTotalCost_ - totalCost;
-  auto predictedReduction = nominalTotalCost_ - predictedCost;
-  if (std::abs(actualReduction) < 1e-3 * std::abs(nominalTotalCost_)) {
-    levenbergMarquardtImpl_.pho = 1.0;
+  auto actualReduction = performanceIndex_.totalCost - performanceIndex.totalCost;
+  auto predictedReduction = performanceIndex_.totalCost - predictedCost;
+  if (std::abs(actualReduction) < 1e-3 * std::abs(performanceIndex_.totalCost)) {
+    levenbergMarquardtModule_.pho = 1.0;
   } else if (actualReduction < 0.0) {
-    levenbergMarquardtImpl_.pho = 0.0;
+    levenbergMarquardtModule_.pho = 0.0;
   } else {
-    levenbergMarquardtImpl_.pho = actualReduction / predictedReduction;
+    levenbergMarquardtModule_.pho = actualReduction / predictedReduction;
   }
 
   // display
@@ -1104,51 +1098,43 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
   }
 
   // adjust riccatiMultipleAdaptiveRatio and riccatiMultiple
-  if (levenbergMarquardtImpl_.pho < 0.25) {
+  if (levenbergMarquardtModule_.pho < 0.25) {
     // increase riccatiMultipleAdaptiveRatio
-    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio =
-        std::max(1.0, levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) * lvSettings.riccatiMultipleDefaultRatio_;
+    levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio =
+        std::max(1.0, levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) * lvSettings.riccatiMultipleDefaultRatio_;
 
     // increase riccatiMultiple
-    auto riccatiMultipleTemp = levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio * levenbergMarquardtImpl_.riccatiMultiple;
+    auto riccatiMultipleTemp = levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio * levenbergMarquardtModule_.riccatiMultiple;
     if (riccatiMultipleTemp > lvSettings.riccatiMultipleDefaultFactor_) {
-      levenbergMarquardtImpl_.riccatiMultiple = riccatiMultipleTemp;
+      levenbergMarquardtModule_.riccatiMultiple = riccatiMultipleTemp;
     } else {
-      levenbergMarquardtImpl_.riccatiMultiple = lvSettings.riccatiMultipleDefaultFactor_;
+      levenbergMarquardtModule_.riccatiMultiple = lvSettings.riccatiMultipleDefaultFactor_;
     }
 
-  } else if (levenbergMarquardtImpl_.pho > 0.75) {
+  } else if (levenbergMarquardtModule_.pho > 0.75) {
     // decrease riccatiMultipleAdaptiveRatio
-    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio =
-        std::min(1.0, levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) / lvSettings.riccatiMultipleDefaultRatio_;
+    levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio =
+        std::min(1.0, levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) / lvSettings.riccatiMultipleDefaultRatio_;
 
     // decrease riccatiMultiple
-    auto riccatiMultipleTemp = levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio * levenbergMarquardtImpl_.riccatiMultiple;
+    auto riccatiMultipleTemp = levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio * levenbergMarquardtModule_.riccatiMultiple;
     if (riccatiMultipleTemp > lvSettings.riccatiMultipleDefaultFactor_) {
-      levenbergMarquardtImpl_.riccatiMultiple = riccatiMultipleTemp;
+      levenbergMarquardtModule_.riccatiMultiple = riccatiMultipleTemp;
     } else {
-      levenbergMarquardtImpl_.riccatiMultiple = 0.0;
+      levenbergMarquardtModule_.riccatiMultiple = 0.0;
     }
   } else {
-    levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio = 1.0;
-    // levenbergMarquardtImpl_.riccatiMultiple will not change.
+    levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio = 1.0;
+    // levenbergMarquardtModule_.riccatiMultiple will not change.
   }
 
   // accept or reject the step and modify numSuccessiveRejections
-  if (levenbergMarquardtImpl_.pho >= lvSettings.minAcceptedPho_ || isInitInternalControllerEmpty_) {
+  if (levenbergMarquardtModule_.pho >= lvSettings.minAcceptedPho_ || isInitInternalControllerEmpty_) {
     // accept the solution
-    levenbergMarquardtImpl_.numSuccessiveRejections = 0;
+    levenbergMarquardtModule_.numSuccessiveRejections = 0;
 
     // update nominal trajectories
-    nominalMerit_ = merit;
-    nominalTotalCost_ = totalCost;
-    lineSearchImpl_.stepLengthStar = stepLength;
-    stateInputEqConstraintISE_ = stateInputEqConstraintISE;
-    stateEqConstraintISE_ = stateEqConstraintISE;
-    stateEqFinalConstraintISE_ = stateEqFinalConstraintISE;
-    inequalityConstraintPenalty_ = inequalityConstraintPenalty;
-    inequalityConstraintISE_ = inequalityConstraintISE;
-
+    performanceIndex_ = performanceIndex;
     nominalTimeTrajectoriesStock_.swap(timeTrajectoriesStock);
     nominalPostEventIndicesStock_.swap(postEventIndicesStock);
     nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
@@ -1161,7 +1147,7 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
 
   } else {
     // reject the solution
-    ++levenbergMarquardtImpl_.numSuccessiveRejections;
+    ++levenbergMarquardtModule_.numSuccessiveRejections;
 
     // swap back the cached nominal trajectories
     swapDataToCache();
@@ -1173,29 +1159,29 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
   // display
   if (ddpSettings_.displayInfo_) {
     std::string levenbergMarquardtDisplay;
-    if (levenbergMarquardtImpl_.numSuccessiveRejections == 0) {
-      levenbergMarquardtDisplay = "The step is accepted with pho: " + std::to_string(levenbergMarquardtImpl_.pho) + ". ";
+    if (levenbergMarquardtModule_.numSuccessiveRejections == 0) {
+      levenbergMarquardtDisplay = "The step is accepted with pho: " + std::to_string(levenbergMarquardtModule_.pho) + ". ";
     } else {
-      levenbergMarquardtDisplay = "The step is rejected with pho: " + std::to_string(levenbergMarquardtImpl_.pho) + " (" +
-                                  std::to_string(levenbergMarquardtImpl_.numSuccessiveRejections) + " out of " +
+      levenbergMarquardtDisplay = "The step is rejected with pho: " + std::to_string(levenbergMarquardtModule_.pho) + " (" +
+                                  std::to_string(levenbergMarquardtModule_.numSuccessiveRejections) + " out of " +
                                   std::to_string(lvSettings.maxNumSuccessiveRejections_) + "). ";
     }
 
-    if (numerics::almost_eq(levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio, 1.0)) {
+    if (numerics::almost_eq(levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio, 1.0)) {
       levenbergMarquardtDisplay += "The Riccati multiple is kept constant: ";
-    } else if (levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio < 1.0) {
+    } else if (levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio < 1.0) {
       levenbergMarquardtDisplay += "The Riccati multiple is decreased to: ";
     } else {
       levenbergMarquardtDisplay += "The Riccati multiple is increased to: ";
     }
-    levenbergMarquardtDisplay += std::to_string(levenbergMarquardtImpl_.riccatiMultiple) +
-                                 ", with ratio: " + std::to_string(levenbergMarquardtImpl_.riccatiMultipleAdaptiveRatio) + ".";
+    levenbergMarquardtDisplay += std::to_string(levenbergMarquardtModule_.riccatiMultiple) +
+                                 ", with ratio: " + std::to_string(levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) + ".";
 
-    BASE::printString(levenbergMarquardtDisplay);
+    Solver_BASE::printString(levenbergMarquardtDisplay);
   }
 
   // max accepted number of successive rejections
-  if (levenbergMarquardtImpl_.numSuccessiveRejections > lvSettings.maxNumSuccessiveRejections_) {
+  if (levenbergMarquardtModule_.numSuccessiveRejections > lvSettings.maxNumSuccessiveRejections_) {
     throw std::runtime_error("The maximum number of successive solution rejections has been reached!");
   }
 }
@@ -2078,9 +2064,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   performanceIndexHistory_.clear();
 
   // check if after the truncation the internal controller is empty
-  bool isInitInternalControllerEmpty = false;
+  isInitInternalControllerEmpty_ = false;
   for (const auto& controller : nominalControllersStock_) {
-    isInitInternalControllerEmpty = isInitInternalControllerEmpty || controller.empty();
+    isInitInternalControllerEmpty_ = isInitInternalControllerEmpty_ || controller.empty();
   }
 
   // display
@@ -2132,12 +2118,12 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
                        performanceIndexHistory_.back().totalCost - performanceIndexHistory_.back().inequalityConstraintPenalty);
     switch (ddpSettings_.strategy_) {
       case ddp_strategy::type::LINE_SEARCH: {
-        isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty;
+        isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty_;
         isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
         break;
       }
       case ddp_strategy::type::LEVENBERG_MARQUARDT: {
-        if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !isInitInternalControllerEmpty) {
+        if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !isInitInternalControllerEmpty_) {
           isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
         }
         break;
@@ -2145,7 +2131,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     }
     isConstraintsSatisfied = performanceIndex_.stateInputEqConstraintISE <= ddpSettings_.constraintTolerance_;
     isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraintsSatisfied;
-    isInitInternalControllerEmpty = false;
+    isInitInternalControllerEmpty_ = false;
 
   }  // end of while loop
 

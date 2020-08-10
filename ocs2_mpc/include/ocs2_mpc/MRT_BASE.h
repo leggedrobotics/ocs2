@@ -63,7 +63,7 @@ class MRT_BASE {
   /**
    * @brief Default destructor
    */
-  ~MRT_BASE() = default;
+  virtual ~MRT_BASE() = default;
 
   /**
    * Resets the class to its instantiated state.

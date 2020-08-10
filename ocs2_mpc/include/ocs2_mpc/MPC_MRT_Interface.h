@@ -57,7 +57,7 @@ class MPC_MRT_Interface final : public MRT_BASE {
   /**
    * Destructor.
    */
-  virtual ~MPC_MRT_Interface() = default;
+  ~MPC_MRT_Interface() override = default;
 
   void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override;
 

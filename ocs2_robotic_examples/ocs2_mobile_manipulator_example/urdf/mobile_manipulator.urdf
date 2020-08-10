@@ -83,9 +83,9 @@
   <!-- shoulder link -->
   <link name="SHOULDER">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -0.03"/>
       <geometry>
-        <cylinder length="0.6" radius="0.05"/>
+        <cylinder length="0.31" radius="0.09"/>
       </geometry>
       <material name="mm_red"/>
     </visual>
@@ -123,9 +123,23 @@
   <!-- arm link -->
   <link name="ARM">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.205"/>
       <geometry>
-        <cylinder length="0.6" radius="0.05"/>
+        <cylinder length="0.22" radius="0.09"/>
+      </geometry>
+      <material name="mm_red"/>
+    </visual>
+    <visual>
+      <origin rpy="0.0 1.57079632679 0.0" xyz="0.36 0.0 0.195"/>
+      <geometry>
+        <cylinder length="0.52" radius="0.085"/>
+      </geometry>
+      <material name="mm_red"/>
+    </visual>
+    <visual>
+      <origin rpy="0.0 0.0 0.0" xyz="0.7 0.0 0.205"/>
+      <geometry>
+        <cylinder length="0.19" radius="0.07"/>
       </geometry>
       <material name="mm_red"/>
     </visual>
@@ -174,9 +188,9 @@
   <!-- Elbow link -->
   <link name="ELBOW">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0.0"/>
+      <origin rpy="0.0 1.57079632679 0.0" xyz="0.115 0.0 0.0"/>
       <geometry>
-        <cylinder length="0.6" radius="0.05"/>
+        <cylinder length="0.46" radius="0.066"/>
       </geometry>
       <material name="mm_red"/>
     </visual>
@@ -213,9 +227,16 @@
   <!-- Forearm link -->
   <link name="FOREARM">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.115 0.37"/>
       <geometry>
-        <cylinder length="0.6" radius="0.05"/>
+        <cylinder length="0.25" radius="0.048"/>
+      </geometry>
+      <material name="mm_red"/>
+    </visual>
+    <visual>
+      <origin rpy="1.57079632679 0.0 0.0" xyz="0.0 0.13 0.55"/>
+      <geometry>
+        <cylinder length="0.145" radius="0.05"/>
       </geometry>
       <material name="mm_red"/>
     </visual>
@@ -258,9 +279,9 @@
   <!-- wrist1 link -->
   <link name="WRIST_1">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0.0"/>
+      <origin rpy="1.57079632679 0.0 0.0" xyz="0.0 0.016 0.0"/>
       <geometry>
-        <cylinder length="0.6" radius="0.05"/>
+        <cylinder length="0.148" radius="0.05"/>
       </geometry>
       <material name="mm_red"/>
     </visual>
@@ -297,10 +318,10 @@
   <!-- Wrist2 link -->
   <link name="WRIST_2">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0.0 -0.01"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -0.02"/>
       <geometry>
-        <cylinder length="0.6" radius="0.05"/>
-      </geometry>
+        <cylinder length="0.038" radius="0.05"/>
+      </geometry>Z
       <material name="silver">
         <color rgba="0.737254901961 0.776470588235 0.8 1.0"/>
       </material>

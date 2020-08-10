@@ -29,7 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 
+#include "pinocchio/algorithm/joint-configuration.hpp"
+
 namespace mobile_manipulator {
+
+MobileManipulatorDynamics::MobileManipulatorDynamics(const PinocchioInterface<ad_scalar_t>& pinocchioInterface)
+    : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
+  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
+}
 
 MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
                                                                                 const ad_vector_t& input) const {

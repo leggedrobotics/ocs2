@@ -31,6 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/package.h>
 
+#include <pinocchio/fwd.hpp>
+#include "pinocchio/algorithm/joint-configuration.hpp"
+#include "pinocchio/algorithm/kinematics.hpp"
+
 #include "ocs2_mobile_manipulator_example/MobileManipulatorInterface.h"
 
 namespace mobile_manipulator {
@@ -45,6 +49,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   libraryFolder_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/auto_generated";
   std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
+  urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
+
   // load setting from loading file
   loadSettings(taskFile_);
 }
@@ -58,6 +64,27 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
    */
   ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
+  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(urdfPath_));
+
+  auto test = std::unique_ptr<PinocchioInterface<scalar_t>>(new PinocchioInterface<scalar_t>(urdfPath_));
+  // Debugging the pinocchio model
+  auto model = test->getModel().cast<scalar_t>();
+  assert(model.nq == STATE_DIM);
+  pinocchio::Data data(model);
+  Eigen::VectorXd q = pinocchio::neutral(model);
+  std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
+  std::cout << "model.nv = " << model.nv << '\n';
+  std::cout << "model.nq = " << model.nq << '\n';
+  std::cout << "model.njoints = " << model.njoints << '\n';
+  std::cout << "q = " << q.transpose() << '\n';
+
+  pinocchio::forwardKinematics(model, data, q);
+  for (int k = 0; k < model.njoints; ++k) {
+    std::cerr << "\"" << model.names[k] << "\":\t";
+    std::cerr << " t = " << data.oMi[k].translation().transpose();
+    std::cerr << '\n';
+  }
+
   /*
    * DDP-MPC settings
    */
@@ -70,7 +97,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics
    */
-  dynamicsPtr_.reset(new MobileManipulatorDynamics());
+  dynamicsPtr_.reset(new MobileManipulatorDynamics(*pinocchioInterface_));
   dynamicsPtr_->initialize("mobile_manipulator_dynamics", libraryFolder_, recompileLibraries, true);
 
   /*

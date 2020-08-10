@@ -37,9 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
-#include "ocs2_mobile_manipulator_example/MobileManipulatorCost.h"
-#include "ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator_example/definitions.h"
+#include <ocs2_mobile_manipulator_example/MobileManipulatorCost.h>
+#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
+#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
 
@@ -75,6 +76,7 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
 
   std::string taskFile_;
   std::string libraryFolder_;
+  std::string urdfPath_;
 
   ocs2::ddp::Settings ddpSettings_;
   ocs2::mpc::Settings mpcSettings_;
@@ -84,6 +86,8 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   std::unique_ptr<MobileManipulatorCost> costPtr_;
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr_;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointPtr_;
+
+  std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
 
   vector_t initialState_{STATE_DIM};
 };

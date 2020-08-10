@@ -25,6 +25,8 @@ find_package(Boost REQUIRED COMPONENTS
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
 
+message(WARNING ${pinocchio_CFLAGS})
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 ###################################
@@ -34,7 +36,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 catkin_package(
   INCLUDE_DIRS
     include
-    ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
@@ -48,9 +49,18 @@ catkin_package(
 ## Build ##
 ###########
 
+set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS} -Wno-invalid-partial-specialization)
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${pinocchio_INCLUDE_DIRS}
+)
+
+link_directories(
+  ${pinocchio_LIBRARY_DIRS}
 )
 
 # mobile maniulator interface library
@@ -58,14 +68,17 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorCost.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
+  src/PinocchioInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${pinocchio_LIBRARIES}
 )
-target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
 # MPC node
 add_executable(mobile_manipulator_mpc_node
@@ -79,6 +92,7 @@ target_link_libraries(mobile_manipulator_mpc_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
 
 # Dummy node
 add_executable(mobile_manipulator_dummy_mrt_node
@@ -92,6 +106,7 @@ target_link_libraries(mobile_manipulator_dummy_mrt_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+target_compile_options(mobile_manipulator_dummy_mrt_node PUBLIC ${FLAGS})
 
 ####################
 ## Clang tooling ###

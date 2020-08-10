@@ -31,7 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 
-#include "ocs2_mobile_manipulator_example/definitions.h"
+#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
 
@@ -40,12 +41,21 @@ class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
   using ocs2::SystemDynamicsBaseAD::ad_scalar_t;
   using ocs2::SystemDynamicsBaseAD::ad_vector_t;
 
-  MobileManipulatorDynamics() : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM){};
+  explicit MobileManipulatorDynamics(const PinocchioInterface<ad_scalar_t>& pinocchioInterface);
   ~MobileManipulatorDynamics() override = default;
 
+  /* Copy constructor */
+  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) : ocs2::SystemDynamicsBaseAD(rhs) {
+    pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
+  }
+
+  /* Clone */
   MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
 
   ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
+
+ private:
+  std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
 };
 
 }  // namespace mobile_manipulator

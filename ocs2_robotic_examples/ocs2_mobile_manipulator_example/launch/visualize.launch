@@ -1,4 +1,5 @@
 <launch>
+  <arg name="test"        default="false"/>
   <arg name="rviz"        default="true"/>
   <arg name="rvizconfig"  default="$(find ocs2_mobile_manipulator_example)/rviz/mobile_manipulator.rviz"/>
   <arg name="urdf"       default="$(find ocs2_mobile_manipulator_example)/urdf/mobile_manipulator.urdf"/>
@@ -7,6 +8,6 @@
   <param name="use_gui" value="true"/>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  <node if="$(arg test)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rvizconfig)" output="screen" if="$(arg rviz)"/>
 </launch>

@@ -126,12 +126,32 @@ target_link_libraries(exp1_ddp_test
   gtest_main
 )
 
+catkin_add_gtest(ddp_correctness_test
+  test/ddpCorrectnessTest.cpp
+)
+target_link_libraries(ddp_correctness_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
 catkin_add_gtest(riccati_ode_test
   test/riccati_ode_test.cpp
 )
 target_link_libraries(riccati_ode_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(circular_kinematics_ddp_test
+  test/ddpCircularKinematicsTest.cpp
+)
+target_link_libraries(circular_kinematics_ddp_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
   gtest_main
 )
 
@@ -151,36 +171,6 @@ catkin_add_gtest(bouncing_mass_test
   test/bouncingmass/Reference.cpp
 )
 target_link_libraries(bouncing_mass_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(circular_kinematics_ilqr_test
-  test/circular_kinematics_ilqr_test.cpp
-)
-target_link_libraries(circular_kinematics_ilqr_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(circular_kinematics_slq_test
-  test/circular_kinematics_slq_test.cpp
-)
-target_link_libraries(circular_kinematics_slq_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(ddp_correctness_test
-  test/ddpCorrectnessTest.cpp
-)
-target_link_libraries(ddp_correctness_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

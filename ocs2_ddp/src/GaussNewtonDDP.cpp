@@ -1082,9 +1082,9 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
 
   // compute pho (the ratio between actual reduction and predicted reduction)
   const auto predictedCost = sTrajectoryStock_[initActivePartition_].front();
-  auto actualReduction = performanceIndex_.totalCost - performanceIndex.totalCost;
-  auto predictedReduction = performanceIndex_.totalCost - predictedCost;
-  if (std::abs(actualReduction) < 1e-3 * std::abs(performanceIndex_.totalCost)) {
+  const auto actualReduction = performanceIndex_.totalCost - performanceIndex.totalCost;
+  const auto predictedReduction = performanceIndex_.totalCost - predictedCost;
+  if (std::abs(actualReduction) < ddpSettings_.minRelCost_ || predictedReduction <= 0.0) {
     levenbergMarquardtModule_.pho = 1.0;
   } else if (actualReduction < 0.0) {
     levenbergMarquardtModule_.pho = 0.0;
@@ -1453,7 +1453,11 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
           augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff, 0.0,
                             modelDataEventTimesStock_[i][timeIndex]);
           // shift Hessian
-          shiftHessian(modelDataEventTimesStock_[i][timeIndex].cost_.dfdxx);
+          if (ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH) {
+            hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_,
+                                             modelDataEventTimesStock_[i][timeIndex].cost_.dfdxx,
+                                             ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+          }
         }
       };
       runParallel(task, ddpSettings_.nThreads_);
@@ -1471,7 +1475,10 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
       nominalTimeTrajectoriesStock_[finalActivePartition_].back(), nominalStateTrajectoriesStock_[finalActivePartition_].back());
 
   // shift Hessian
-  shiftHessian(heuristics_.dfdxx);
+  if (ddpSettings_.strategy_ == ddp_strategy::type::LINE_SEARCH) {
+    hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, heuristics_.dfdxx,
+                                     ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
+  }
 }
 
 /******************************************************************************************************/
@@ -1551,7 +1558,8 @@ void GaussNewtonDDP::computeRiccatiModification(ddp_strategy::type strategy, con
 
       // deltaQm
       deltaQm = Q_minus_PTRinvP;
-      shiftHessian(deltaQm);
+      hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, deltaQm,
+                                       ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
       deltaQm -= Q_minus_PTRinvP;
 
       // deltaGv, deltaGm
@@ -1567,7 +1575,7 @@ void GaussNewtonDDP::computeRiccatiModification(ddp_strategy::type strategy, con
       const auto& BmProjected = projectedModelData.dynamics_.dfdu;
 
       // deltaQm, deltaRm, deltaPm
-      deltaQm = 1e-6 * matrix_t::Identity(projectedModelData.stateDim_, projectedModelData.stateDim_);
+      deltaQm.setZero(projectedModelData.stateDim_, projectedModelData.stateDim_);
       deltaGv.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * HvProjected;
       deltaGm.noalias() = levenbergMarquardtModule_.riccatiMultiple * BmProjected.transpose() * AmProjected;
 
@@ -1653,14 +1661,6 @@ void GaussNewtonDDP::projectLQ(const ModelDataBase& modelData, const matrix_t& c
     // += 0.5 DmDaggerEv_Trans_RmDmDaggerEv
     projectedModelData.cost_.f += 0.5 * projectedModelData.stateInputEqConstr_.f.dot(RmDmDaggerEv);
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaussNewtonDDP::shiftHessian(matrix_t& matrix) const {
-  hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, matrix,
-                                   ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
 }
 
 /******************************************************************************************************/

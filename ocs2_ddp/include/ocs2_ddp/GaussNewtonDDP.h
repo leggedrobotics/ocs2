@@ -473,13 +473,6 @@ class GaussNewtonDDP : public Solver_BASE {
                  ModelDataBase& projectedModelData) const;
 
   /**
-   * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
-   *
-   * @param matrix: The Hessian matrix.
-   */
-  void shiftHessian(matrix_t& matrix) const;
-
-  /**
    * Augments the cost function for the given model data.
    *
    * @param [in] workerIndex: Working agent index.

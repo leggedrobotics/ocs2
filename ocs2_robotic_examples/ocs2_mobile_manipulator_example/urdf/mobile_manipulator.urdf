@@ -33,10 +33,10 @@
   </material>
 
   <!-- Base link -->
-  <link name="world"/>
+  <link name="base"/>
   <!-- Fixed joint to add dummy inertia link -->
   <joint name="world_to_arm_base" type="fixed">
-    <parent link="world"/>
+    <parent link="base"/>
     <child link="arm_base"/>
     <origin rpy="0 0 0" xyz="0 0 0.3"/>
   </joint>
@@ -72,12 +72,6 @@
       <inertia ixx="0.00322" ixy="0.0" ixz="0.0" iyy="0.00322" iyz="0.0" izz="0.0023264"/>
     </inertial>
   </link>
-  <gazebo reference="arm_base">
-    <kp>1000000.0</kp>
-    <kd>1.5</kd>
-    <mu1>1.2</mu1>
-    <mu2>1.2</mu2>
-  </gazebo>
 
   <!-- Arm components -->
   <!-- shoulder link -->
@@ -110,16 +104,7 @@
     <limit effort="150.0" lower="-5.23598775598" upper="5.23598775598" velocity="1.308996939"/>
     <dynamics damping="0.1" friction="0.3"/>
   </joint>
-  <!-- Gazebo customization -->
-  <gazebo reference="SHOULDER">
-    <kp>1000000.0</kp>
-    <kd>1.5</kd>
-    <mu1>1.2</mu1>
-    <mu2>1.2</mu2>
-    <self_collide>1</self_collide>
-  </gazebo>
-  <gazebo reference="SH_ROT">
-  </gazebo>
+
   <!-- arm link -->
   <link name="ARM">
     <visual>
@@ -176,15 +161,6 @@
     <limit effort="150.0" lower="-3.14159265359" upper="0.0" velocity="1.308996939"/>
     <dynamics damping="0.1" friction="0.3"/>
   </joint>
-  <!-- Gazebo customization -->
-  <gazebo reference="ARM">
-    <kp>1000000.0</kp>
-    <kd>1.5</kd>
-    <mu1>1.2</mu1>
-    <mu2>1.2</mu2>
-  </gazebo>
-  <gazebo reference="SH_FLE">
-  </gazebo>
   <!-- Elbow link -->
   <link name="ELBOW">
     <visual>
@@ -215,15 +191,6 @@
     <limit effort="100.0" lower="-2.47836753783" upper="2.47836753783" velocity="2.53072741539"/>
     <dynamics damping="0.1" friction="0.2"/>
   </joint>
-  <!-- Gazebo customization -->
-  <gazebo reference="ELBOW">
-    <kp>1000000.0</kp>
-    <kd>1.5</kd>
-    <mu1>1.2</mu1>
-    <mu2>1.2</mu2>
-  </gazebo>
-  <gazebo reference="EL_FLE">
-  </gazebo>
   <!-- Forearm link -->
   <link name="FOREARM">
     <visual>
@@ -267,15 +234,6 @@
     <limit effort="40.0" lower="-5.23598775598" upper="5.23598775598" velocity="2.53072741539"/>
     <dynamics damping="0.1" friction="0.2"/>
   </joint>
-  <!-- Gazebo customization -->
-  <gazebo reference="FOREARM">
-    <kp>1000000.0</kp>
-    <kd>1.5</kd>
-    <mu1>1.2</mu1>
-    <mu2>1.2</mu2>
-  </gazebo>
-  <gazebo reference="EL_ROT">
-  </gazebo>
   <!-- wrist1 link -->
   <link name="WRIST_1">
     <visual>
@@ -306,15 +264,6 @@
     <limit effort="40.0" lower="-2.39110107523" upper="2.39110107523" velocity="4.79965544298"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
-  <!-- Gazebo customization -->
-  <gazebo reference="WRIST_1">
-    <kp>1000000.0</kp>
-    <kd>1.5</kd>
-    <mu1>1.2</mu1>
-    <mu2>1.2</mu2>
-  </gazebo>
-  <gazebo reference="WR_FLE">
-  </gazebo>
   <!-- Wrist2 link -->
   <link name="WRIST_2">
     <visual>
@@ -347,13 +296,4 @@
     <limit effort="40.0" lower="-3.14159265359" upper="3.14159265359" velocity="4.79965544298"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
-  <!-- Gazebo customization -->
-  <gazebo reference="WRIST_2">
-    <kp>1000000.0</kp>
-    <kd>1.5</kd>
-    <mu1>1.2</mu1>
-    <mu2>1.2</mu2>
-  </gazebo>
-  <gazebo reference="WR_ROT">
-  </gazebo>
 </robot>

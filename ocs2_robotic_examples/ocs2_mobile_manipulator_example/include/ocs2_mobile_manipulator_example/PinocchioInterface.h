@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
-#include <pinocchio/parsers/urdf.hpp>
 
 #include <string>
 
@@ -52,42 +51,37 @@ class PinocchioInterface {
   using PinocchioModel = pinocchio::ModelTpl<SCALAR>;
   using PinocchioData = typename PinocchioModel::Data;
 
+  using AffineType = Eigen::Transform<SCALAR, 3, Eigen::Affine>;
+
   /**
    * Load pinocchio model from URDF
    * @param[in] urdfFile Path to URDF
    * @param[out] model pinocchio model
    */
-  explicit PinocchioInterface(const std::string& urdfPath) {
-    pinocchio::ModelTpl<double> tempModel;
-
-    // build robot model and robot data
-    pinocchio::urdf::buildModel(urdfPath, tempModel);
-
-    robotModel_ = std::make_shared<const PinocchioModel>(tempModel.cast<SCALAR>());
-    robotData_ = PinocchioData(*robotModel_);
-  }
+  explicit PinocchioInterface(const std::string& urdfPath);
 
   /**
    * Copy constructor
    * Keeps a pointer to the shared robot model.
    */
-  PinocchioInterface(const PinocchioInterface& other) {
-    robotModel_ = other.robotModel_;
-    robotData_ = other.robotData_;
-  }
+  PinocchioInterface(const PinocchioInterface& other);
 
   /**
    * Copy assignment operator
    * Keeps a pointer to the shared robot model.
    */
-  PinocchioInterface& operator=(const PinocchioInterface& rhs) {
-    robotModel_ = rhs.robotModel_;
-    robotData_ = rhs.robotData_;
-    *this;
-  }
+  PinocchioInterface& operator=(const PinocchioInterface& rhs);
 
   const PinocchioModel& getModel() const { return *robotModel_; }
   PinocchioData& getData() { return robotData_; }
+
+  /**
+   * Gets the pose of a body in the (pinocchio) world frame
+   * @param[in] name of the body (corresponds to the pinocchio name, which is usually the URDF link name)
+   * @param[out] the body pose
+   * TODO(perry) make this const by caching or mutabling the robotData_
+   */
+  AffineType getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
  private:
   std::shared_ptr<const PinocchioModel> robotModel_;

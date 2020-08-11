@@ -64,26 +64,9 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
    */
   ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(urdfPath_));
-
-  auto test = std::unique_ptr<PinocchioInterface<scalar_t>>(new PinocchioInterface<scalar_t>(urdfPath_));
-  // Debugging the pinocchio model
-  auto model = test->getModel().cast<scalar_t>();
-
-  pinocchio::Data data(model);
-  Eigen::VectorXd q = pinocchio::neutral(model);
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
-  std::cout << "model.nv = " << model.nv << '\n';
-  std::cout << "model.nq = " << model.nq << '\n';
-  std::cout << "model.njoints = " << model.njoints << '\n';
-  std::cout << "q = " << q.transpose() << '\n';
-
-  pinocchio::forwardKinematics(model, data, q);
-  for (int k = 0; k < model.njoints; ++k) {
-    std::cerr << "\"" << model.names[k] << "\":\t";
-    std::cerr << " t = " << data.oMi[k].translation().transpose();
-    std::cerr << '\n';
-  }
+  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(urdfPath_));
+  pinocchioInterface_->display();
 
   /*
    * DDP-MPC settings

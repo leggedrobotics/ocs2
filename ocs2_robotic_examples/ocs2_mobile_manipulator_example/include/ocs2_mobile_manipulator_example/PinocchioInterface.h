@@ -83,6 +83,11 @@ class PinocchioInterface {
    */
   AffineType getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
+  /**
+   * Prints some debug info of the pinocchio model.
+   */
+  void display();
+
  private:
   std::shared_ptr<const PinocchioModel> robotModel_;
   PinocchioData robotData_;

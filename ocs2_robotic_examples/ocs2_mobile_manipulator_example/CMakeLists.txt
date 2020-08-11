@@ -5,6 +5,10 @@ project(ocs2_mobile_manipulator_example)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
+  tf
+  urdf
+  kdl_parser
+  robot_state_publisher
   ocs2_ros_interfaces
   ocs2_core
   ocs2_ddp
@@ -24,8 +28,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
-
-message(WARNING ${pinocchio_CFLAGS})
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -49,7 +51,7 @@ catkin_package(
 ## Build ##
 ###########
 
-set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS} -Wno-invalid-partial-specialization)
+set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS_OTHER} -Wno-invalid-partial-specialization)
 
 include_directories(
   include
@@ -97,6 +99,7 @@ target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
 # Dummy node
 add_executable(mobile_manipulator_dummy_mrt_node
   src/MobileManipulatorDummyMRT.cpp
+  src/MobileManipulatorDummyVisualization.cpp
 )
 add_dependencies(mobile_manipulator_dummy_mrt_node
   ${PROJECT_NAME}

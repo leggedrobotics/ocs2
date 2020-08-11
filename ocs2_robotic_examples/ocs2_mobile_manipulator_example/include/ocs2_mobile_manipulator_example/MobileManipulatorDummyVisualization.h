@@ -25,26 +25,30 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+ ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
+#pragma once
 
-#include "pinocchio/algorithm/joint-configuration.hpp"
+#include <robot_state_publisher/robot_state_publisher.h>
+#include <tf/transform_broadcaster.h>
+
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 namespace mobile_manipulator {
 
-MobileManipulatorDynamics::MobileManipulatorDynamics(const PinocchioInterface<ad_scalar_t>& pinocchioInterface)
-    : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
-}
+class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
+ public:
+  explicit MobileManipulatorDummyVisualization(ros::NodeHandle& nodeHandle) { launchVisualizerNode(nodeHandle); }
 
-MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
-                                                                                const ad_vector_t& input) const {
-  ad_vector_t dxdt(STATE_DIM);
-  const auto theta = state(2);
-  const auto v = input(0);  // forward velociyt in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
-  return dxdt;
-}
+  ~MobileManipulatorDummyVisualization() override = default;
+
+  void update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& policy, const ocs2::CommandData& command) override;
+
+ private:
+  void launchVisualizerNode(ros::NodeHandle& nodeHandle);
+
+  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
+  tf::TransformBroadcaster tfBroadcaster_;
+};
 
 }  // namespace mobile_manipulator

@@ -60,14 +60,8 @@ class PinocchioInterface {
   explicit PinocchioInterface(const std::string& urdfPath) {
     pinocchio::ModelTpl<double> tempModel;
 
-    // add 3 DOF for wheelbase
-    pinocchio::JointModelComposite jointComposite(3);
-    jointComposite.addJoint(pinocchio::JointModelPX());
-    jointComposite.addJoint(pinocchio::JointModelPY());
-    jointComposite.addJoint(pinocchio::JointModelRZ());
-
     // build robot model and robot data
-    pinocchio::urdf::buildModel(urdfPath, jointComposite, tempModel);
+    pinocchio::urdf::buildModel(urdfPath, tempModel);
 
     robotModel_ = std::make_shared<const PinocchioModel>(tempModel.cast<SCALAR>());
     robotData_ = PinocchioData(*robotModel_);

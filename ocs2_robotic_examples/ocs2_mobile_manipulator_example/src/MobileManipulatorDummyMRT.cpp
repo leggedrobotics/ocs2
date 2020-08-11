@@ -29,9 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 
+#include <ocs2_mobile_manipulator_example/MobileManipulatorDummyVisualization.h>
+
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+
 #include <ros/init.h>
 
 int main(int argc, char** argv) {
@@ -58,12 +61,12 @@ int main(int argc, char** argv) {
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  // std::shared_ptr<ocs2::mobile_manipulator::MobileManipulatorDummyVisualization> dummyVisualization(
-  //     new ocs2::mobile_manipulator::MobileManipulatorDummyVisualization(nodeHandle));
+  std::shared_ptr<mobile_manipulator::MobileManipulatorDummyVisualization> dummyVisualization(
+      new mobile_manipulator::MobileManipulatorDummyVisualization(nodeHandle));
 
   // Dummy MRT
   ocs2::MRT_ROS_Dummy_Loop dummy(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
-  // dummy.subscribeObservers({dummyVisualization});
+  dummy.subscribeObservers({dummyVisualization});
 
   // initial state
   ocs2::SystemObservation initObservation;

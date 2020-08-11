@@ -69,7 +69,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   auto test = std::unique_ptr<PinocchioInterface<scalar_t>>(new PinocchioInterface<scalar_t>(urdfPath_));
   // Debugging the pinocchio model
   auto model = test->getModel().cast<scalar_t>();
-  assert(model.nq == STATE_DIM);
+
   pinocchio::Data data(model);
   Eigen::VectorXd q = pinocchio::neutral(model);
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';

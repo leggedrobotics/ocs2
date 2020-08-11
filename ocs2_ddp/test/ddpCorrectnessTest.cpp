@@ -238,3 +238,75 @@ TEST_F(DdpCorrectnessTest, ilqr_multi_partition_linesearch) {
 
   correctnessTest(ddpSettings, performanceIndex, solution);
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_F(DdpCorrectnessTest, slq_single_partition_levenberg_marquardt) {
+  // settings
+  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
+  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+
+  // ddp
+  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  const auto performanceIndex = ddp.getPerformanceIndeces();
+  const auto solution = ddp.primalSolution(finalTime);
+
+  correctnessTest(ddpSettings, performanceIndex, solution);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_F(DdpCorrectnessTest, slq_multi_partition_levenberg_marquardt) {
+  // settings
+  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
+  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+
+  // ddp
+  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  const auto performanceIndex = ddp.getPerformanceIndeces();
+  const auto solution = ddp.primalSolution(finalTime);
+
+  correctnessTest(ddpSettings, performanceIndex, solution);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_F(DdpCorrectnessTest, ilqr_single_partition_levenberg_marquardt) {
+  // settings
+  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
+  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+
+  // ddp
+  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  const auto performanceIndex = ddp.getPerformanceIndeces();
+  const auto solution = ddp.primalSolution(finalTime);
+
+  correctnessTest(ddpSettings, performanceIndex, solution);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_F(DdpCorrectnessTest, ilqr_multi_partition_levenberg_marquardt) {
+  // settings
+  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
+  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+
+  // ddp
+  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  const auto performanceIndex = ddp.getPerformanceIndeces();
+  const auto solution = ddp.primalSolution(finalTime);
+
+  correctnessTest(ddpSettings, performanceIndex, solution);
+}

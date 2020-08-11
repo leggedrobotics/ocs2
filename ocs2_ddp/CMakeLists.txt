@@ -106,6 +106,26 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_ddp
 
+catkin_add_gtest(exp0_ddp_test
+  test/ddpExp0Test.cpp
+)
+target_link_libraries(exp0_ddp_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(exp1_ddp_test
+  test/ddpExp1Test.cpp
+)
+target_link_libraries(exp1_ddp_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
 catkin_add_gtest(exp0_slq_test
   test/exp0_slq_test.cpp
 )

@@ -31,7 +31,7 @@
  * (2) Constraint compliance
  * (3) Check of cost function compared against cost calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
+TEST(HybridSlqTest, state_rollout_slq) {
   using namespace ocs2;
 
   const size_t stateDim = STATE_DIM;

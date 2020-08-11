@@ -36,27 +36,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-#include <ocs2_oc/test/EXP0.h>
+#include <ocs2_oc/test/EXP1.h>
 
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 
-class ddpExp0Test : public testing::Test {
+class Exp1Test : public testing::Test {
  protected:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
-  static constexpr ocs2::scalar_t expectedCost = 9.766;
+  static constexpr ocs2::scalar_t expectedCost = 5.4399;
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
   static constexpr ocs2::scalar_t expectedStateEqConstraintISE = 0.0;
 
-  ddpExp0Test() {
+  Exp1Test() {
     // event times
-    const ocs2::scalar_array_t eventTimes{0.1897};
-    const std::vector<size_t> subsystemsSequence{0, 1};
+    const ocs2::scalar_array_t eventTimes{0.2262, 1.0176};
+    const std::vector<size_t> subsystemsSequence{0, 1, 2};
     modeScheduleManagerPtr.reset(new ocs2::ModeScheduleManager({eventTimes, subsystemsSequence}));
 
     // partitioning times
-    partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], finalTime};
+    partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], eventTimes[1], finalTime};
 
     // rollout settings
     const auto rolloutSettings = []() {
@@ -68,11 +68,11 @@ class ddpExp0Test : public testing::Test {
     }();
 
     // dynamics and rollout
-    systemPtr.reset(new ocs2::EXP0_System(modeScheduleManagerPtr));
+    systemPtr.reset(new ocs2::EXP1_System(modeScheduleManagerPtr));
     rolloutPtr.reset(new ocs2::TimeTriggeredRollout(*systemPtr, rolloutSettings));
 
     // cost function
-    costPtr.reset(new ocs2::EXP0_CostFunction(modeScheduleManagerPtr));
+    costPtr.reset(new ocs2::EXP1_CostFunction(modeScheduleManagerPtr));
 
     // constraint
     constraintPtr.reset(new ocs2::ConstraintBase);
@@ -88,17 +88,16 @@ class ddpExp0Test : public testing::Test {
     ocs2::ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = algorithmType;
     ddpSettings.nThreads_ = numThreads;
-    ddpSettings.preComputeRiccatiTerms_ = true;
+    ddpSettings.preComputeRiccatiTerms_ = false;
     ddpSettings.displayInfo_ = false;
     ddpSettings.displayShortSummary_ = display;
+    ddpSettings.maxNumIterations_ = 30;
+    ddpSettings.checkNumericalStability_ = true;
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.maxNumIterations_ = 30;
-    ddpSettings.minRelCost_ = 1e-3;
-    ddpSettings.checkNumericalStability_ = true;
-    ddpSettings.useNominalTimeForBackwardPass_ = false;
-    ddpSettings.useFeedbackPolicy_ = true;
+    ddpSettings.useNominalTimeForBackwardPass_ = true;
+    ddpSettings.useFeedbackPolicy_ = false;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;
     ddpSettings.lineSearch_.minStepLength_ = 0.0001;
@@ -107,7 +106,7 @@ class ddpExp0Test : public testing::Test {
 
   std::string getTestName(const ocs2::ddp::Settings& ddpSettings) const {
     std::string testName;
-    testName += "EXP0 Test { ";
+    testName += "EXP1 Test { ";
     testName += "Algorithm: " + ocs2::ddp::toAlgorithmName(ddpSettings.algorithm_) + ",  ";
     testName += "Strategy: " + ocs2::ddp_strategy::toString(ddpSettings.strategy_) + ",  ";
     testName += "#threads: " + std::to_string(ddpSettings.nThreads_) + " }";
@@ -125,8 +124,8 @@ class ddpExp0Test : public testing::Test {
   }
 
   const ocs2::scalar_t startTime = 0.0;
-  const ocs2::scalar_t finalTime = 2.0;
-  const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 0.0, 2.0).finished();
+  const ocs2::scalar_t finalTime = 3.0;
+  const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 2.0, 3.0).finished();
   ocs2::scalar_array_t partitioningTimes;
   std::shared_ptr<ocs2::ModeScheduleManager> modeScheduleManagerPtr;
 
@@ -137,16 +136,16 @@ class ddpExp0Test : public testing::Test {
   std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
 };
 
-constexpr size_t ddpExp0Test::STATE_DIM;
-constexpr size_t ddpExp0Test::INPUT_DIM;
-constexpr ocs2::scalar_t ddpExp0Test::expectedCost;
-constexpr ocs2::scalar_t ddpExp0Test::expectedStateInputEqConstraintISE;
-constexpr ocs2::scalar_t ddpExp0Test::expectedStateEqConstraintISE;
+constexpr size_t Exp1Test::STATE_DIM;
+constexpr size_t Exp1Test::INPUT_DIM;
+constexpr ocs2::scalar_t Exp1Test::expectedCost;
+constexpr ocs2::scalar_t Exp1Test::expectedStateInputEqConstraintISE;
+constexpr ocs2::scalar_t Exp1Test::expectedStateEqConstraintISE;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, slq_single_thread_linesearch) {
+TEST_F(Exp1Test, slq_single_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 1, ocs2::ddp_strategy::type::LINE_SEARCH);
 
@@ -170,7 +169,7 @@ TEST_F(ddpExp0Test, slq_single_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, slq_multi_thread_linesearch) {
+TEST_F(Exp1Test, slq_multi_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 3, ocs2::ddp_strategy::type::LINE_SEARCH);
 
@@ -194,7 +193,7 @@ TEST_F(ddpExp0Test, slq_multi_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, ilqr_single_thread_linesearch) {
+TEST_F(Exp1Test, ilqr_single_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 1, ocs2::ddp_strategy::type::LINE_SEARCH);
 
@@ -218,7 +217,7 @@ TEST_F(ddpExp0Test, ilqr_single_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, ilqr_multi_thread_linesearch) {
+TEST_F(Exp1Test, ilqr_multi_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 3, ocs2::ddp_strategy::type::LINE_SEARCH);
 
@@ -242,7 +241,7 @@ TEST_F(ddpExp0Test, ilqr_multi_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, slq_single_thread_levenberg_marquardt) {
+TEST_F(Exp1Test, slq_single_thread_levenberg_marquardt) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
 
@@ -266,7 +265,7 @@ TEST_F(ddpExp0Test, slq_single_thread_levenberg_marquardt) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, slq_multi_thread_levenberg_marquardt) {
+TEST_F(Exp1Test, slq_multi_thread_levenberg_marquardt) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 3, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
 
@@ -290,7 +289,7 @@ TEST_F(ddpExp0Test, slq_multi_thread_levenberg_marquardt) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, ilqr_single_thread_levenberg_marquardt) {
+TEST_F(Exp1Test, ilqr_single_thread_levenberg_marquardt) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
 
@@ -314,7 +313,7 @@ TEST_F(ddpExp0Test, ilqr_single_thread_levenberg_marquardt) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpExp0Test, ilqr_multi_thread_levenberg_marquardt) {
+TEST_F(Exp1Test, ilqr_multi_thread_levenberg_marquardt) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 3, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
 
@@ -333,96 +332,4 @@ TEST_F(ddpExp0Test, ilqr_multi_thread_levenberg_marquardt) {
 
   // performanceIndeces test
   performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(ddpExp0Test, ddp_feedback_policy) {
-  // ddp settings
-  auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
-  ddpSettings.useFeedbackPolicy_ = true;
-  ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get solution
-  const auto solution = ddp.primalSolution(finalTime);
-  const auto ctrlFinalTime = dynamic_cast<ocs2::LinearController*>(solution.controllerPtr_.get())->timeStamp_.back();
-
-  ASSERT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
-  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(ddpExp0Test, ddp_feedforward_policy) {
-  // ddp settings
-  auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
-  ddpSettings.useFeedbackPolicy_ = false;
-  ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get solution
-  const auto solution = ddp.primalSolution(finalTime);
-  const auto ctrlFinalTime = dynamic_cast<ocs2::FeedforwardController*>(solution.controllerPtr_.get())->timeStamp_.back();
-
-  ASSERT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
-  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(ddpExp0Test, ddp_caching) {
-  // ddp settings
-  auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
-  ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
-
-  // event times
-  const ocs2::scalar_array_t eventTimes{1.0};
-  const std::vector<size_t> subsystemsSequence{0, 1};
-  modeScheduleManagerPtr.reset(new ocs2::ModeScheduleManager({eventTimes, subsystemsSequence}));
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  // run single core SLQ (no active event)
-  ocs2::scalar_t startTime = 0.2;
-  ocs2::scalar_t finalTime = 0.7;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes));
-
-  // run similar to the MPC setup (a new partition)
-  startTime = 0.4;
-  finalTime = 0.9;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
-
-  // run similar to the MPC setup (one active event)
-  startTime = 0.6;
-  finalTime = 1.2;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
-
-  // run similar to the MPC setup (no active event + a new partition)
-  startTime = 1.1;
-  finalTime = 1.5;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
-
-  // run similar to the MPC setup (no overlap)
-  startTime = 1.6;
-  finalTime = 2.0;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
 }

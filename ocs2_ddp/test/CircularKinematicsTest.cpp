@@ -40,14 +40,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/circular_kinematics.h>
 
-class ddpCircularKinematicsTest : public testing::Test {
+class CircularKinematicsTest : public testing::Test {
  protected:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 2;
   static constexpr ocs2::scalar_t expectedCost = 0.1;
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
 
-  ddpCircularKinematicsTest() {
+  CircularKinematicsTest() {
     // rollout settings
     const auto rolloutSettings = []() {
       ocs2::rollout::Settings rolloutSettings;
@@ -130,15 +130,15 @@ class ddpCircularKinematicsTest : public testing::Test {
   std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
 };
 
-constexpr size_t ddpCircularKinematicsTest::STATE_DIM;
-constexpr size_t ddpCircularKinematicsTest::INPUT_DIM;
-constexpr ocs2::scalar_t ddpCircularKinematicsTest::expectedCost;
-constexpr ocs2::scalar_t ddpCircularKinematicsTest::expectedStateInputEqConstraintISE;
+constexpr size_t CircularKinematicsTest::STATE_DIM;
+constexpr size_t CircularKinematicsTest::INPUT_DIM;
+constexpr ocs2::scalar_t CircularKinematicsTest::expectedCost;
+constexpr ocs2::scalar_t CircularKinematicsTest::expectedStateInputEqConstraintISE;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpCircularKinematicsTest, slq_single_thread_linesearch) {
+TEST_F(CircularKinematicsTest, slq_single_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 1, ocs2::ddp_strategy::type::LINE_SEARCH);
 
@@ -161,7 +161,7 @@ TEST_F(ddpCircularKinematicsTest, slq_single_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpCircularKinematicsTest, slq_multi_thread_linesearch) {
+TEST_F(CircularKinematicsTest, slq_multi_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 3, ocs2::ddp_strategy::type::LINE_SEARCH);
 
@@ -184,7 +184,7 @@ TEST_F(ddpCircularKinematicsTest, slq_multi_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpCircularKinematicsTest, ilqr_single_thread_linesearch) {
+TEST_F(CircularKinematicsTest, ilqr_single_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 1, ocs2::ddp_strategy::type::LINE_SEARCH);
 
@@ -207,7 +207,7 @@ TEST_F(ddpCircularKinematicsTest, ilqr_single_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(ddpCircularKinematicsTest, ilqr_multi_thread_linesearch) {
+TEST_F(CircularKinematicsTest, ilqr_multi_thread_linesearch) {
   // ddp settings
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 3, ocs2::ddp_strategy::type::LINE_SEARCH);
 

@@ -32,40 +32,17 @@ PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(const Pinocchi
 }
 
 template <typename SCALAR>
-typename PinocchioInterface<SCALAR>::AffineType PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(
-    const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  pinocchio::JointIndex bodyId = this->robotModel_->getBodyId(bodyName);
+Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::string bodyName,
+                                                                 const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::JointIndex bodyId = robotModel_->getBodyId(bodyName);
 
   pinocchio::forwardKinematics(*robotModel_, robotData_, q);
-  pinocchio::updateFramePlacements(*this->robotModel_, this->robotData_);
+  pinocchio::updateFramePlacements(*robotModel_, robotData_);
 
-  AffineType bodyPose;
-  bodyPose.linear() = this->robotData_.oMf[bodyId].rotation();
-  bodyPose.translation() = this->robotData_.oMf[bodyId].translation();
+  const Eigen::Matrix<SCALAR, 3, 1> position(robotData_.oMf[bodyId].translation());
+  const Eigen::Quaternion<SCALAR> orientation(robotData_.oMf[bodyId].rotation());
 
-  return bodyPose;
-}
-
-template <typename SCALAR>
-Eigen::Matrix<SCALAR, 3, 1> PinocchioInterface<SCALAR>::getBodyPositionInWorldFrame(const std::string bodyName,
-                                                                                    const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  pinocchio::JointIndex bodyId = this->robotModel_->getBodyId(bodyName);
-
-  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
-  pinocchio::updateFramePlacements(*this->robotModel_, this->robotData_);
-
-  return this->robotData_.oMf[bodyId].translation();
-}
-
-template <typename SCALAR>
-Eigen::Quaternion<SCALAR> PinocchioInterface<SCALAR>::getBodyOrientationInWorldFrame(const std::string bodyName,
-                                                                                     const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  pinocchio::JointIndex bodyId = this->robotModel_->getBodyId(bodyName);
-
-  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
-  pinocchio::updateFramePlacements(*this->robotModel_, this->robotData_);
-
-  return Eigen::Quaternion<SCALAR>(this->robotData_.oMf[bodyId].rotation());
+  return Pose<SCALAR>{position, orientation};
 }
 
 template <typename SCALAR>

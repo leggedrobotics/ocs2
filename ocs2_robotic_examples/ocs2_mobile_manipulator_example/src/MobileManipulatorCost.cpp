@@ -42,8 +42,8 @@ MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFuncti
   ad_vector_t eePosDesired = parameters.tail(3);
   ad_scalar_t cost(0.0);
   cost += input.transpose() * R_ * input;
-  ad_vector_t eePos = pinocchioInterface_->getBodyPositionInWorldFrame("WRIST_2", state.tail(6));
-  ad_vector_t err = eePos - eePosDesired.cast<ad_scalar_t>();
+  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state.tail(6));
+  ad_vector_t err = eePose.position - eePosDesired.cast<ad_scalar_t>();
   cost += err.transpose() * Q_ * err;
   return cost;
 }
@@ -51,8 +51,8 @@ MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFuncti
 MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state,
                                                                             const ad_vector_t& parameters) const {
   ad_vector_t eePosDesired = parameters.tail(3);
-  ad_vector_t eePos = pinocchioInterface_->getBodyPositionInWorldFrame("WRIST_2", state.tail(6));
-  ad_vector_t err = eePos - eePosDesired.cast<ad_scalar_t>();
+  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state.tail(6));
+  ad_vector_t err = eePose.position - eePosDesired.cast<ad_scalar_t>();
   ad_scalar_t cost = err.transpose() * Qf_ * err;
   return cost;
 }

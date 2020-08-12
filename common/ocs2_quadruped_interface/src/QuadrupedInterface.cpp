@@ -19,15 +19,16 @@ namespace switched_model {
 QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
                                        const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder)
 
-    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), configFile_(pathToConfigFolder + "/task.info") {
-  loadSettings(configFile_);
+    : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()) {
+  loadSettings(pathToConfigFolder + "/task.info");
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 auto QuadrupedInterface::loadCostMatrices(const std::string& pathToConfigFile, const kinematic_model_t& kinematicModel,
-                                          state_vector_t initialState) -> std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> {
+                                          const state_vector_t& initialState)
+    -> std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> {
   state_matrix_t Q;
   input_matrix_t R;
   state_matrix_t QFinal;
@@ -85,7 +86,7 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   SwingTrajectoryPlanner swingTrajectoryPlanner{swingTrajectorySettings, getComModel(), getKinematicModel()};
 
   // Terrain
-  const auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);
+  auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);
   std::unique_ptr<TerrainModel> terrainModel(new PlanarTerrainModel(std::move(loadedTerrain)));
 
   // Mode schedule manager

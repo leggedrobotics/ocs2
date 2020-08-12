@@ -26,7 +26,7 @@ class PoseCommandToCostDesiredRos {
   scalar_t initZHeight;
   joint_coordinate_t defaultJointState;
 
-  using PoseCommand_t = std::array<double, 6>; // [x, y, z, roll, pitch, yaw]
+  using PoseCommand_t = std::array<scalar_t, 6>; // [x, y, z, roll, pitch, yaw]
 
   PoseCommandToCostDesiredRos(const std::string& configFile, ros::NodeHandle& nodeHandle);
 

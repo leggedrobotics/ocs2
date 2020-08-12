@@ -93,6 +93,26 @@ feet_array_t<scalar_t> getSwingPhasePerLeg(scalar_t currentTime, feet_array_t<sc
   return swingPhasePerLeg;
 }
 
+feet_array_t<scalar_t> getStancePhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastTouchDownTimePerLeg,
+                                            const ocs2::ModeSchedule& modeSchedule) {
+  feet_array_t<scalar_t> stancePhasePerLeg;
+
+  // Convert mode sequence to a time until next touch down per leg.
+  const auto& timUntilNextLiftOffPerLeg = getTimeUntilNextLiftOffPerLeg(currentTime, modeSchedule);
+
+  // Extract swing phase per leg.
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    if (currentTime < 0.0 || lastTouchDownTimePerLeg[leg] < 0.0 || lastTouchDownTimePerLeg[leg] > currentTime ||
+        timUntilNextLiftOffPerLeg[leg] < 0.0) {
+      stancePhasePerLeg[leg] = -1.0;
+    } else {
+      stancePhasePerLeg[leg] =
+          (currentTime - lastTouchDownTimePerLeg[leg]) / (timUntilNextLiftOffPerLeg[leg] + currentTime - lastTouchDownTimePerLeg[leg]);
+    }
+  }
+  return stancePhasePerLeg;
+}
+
 std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags) {
   assert(eventTimes.size() + 1 == contactFlags.size());
   const int numPhases = contactFlags.size();

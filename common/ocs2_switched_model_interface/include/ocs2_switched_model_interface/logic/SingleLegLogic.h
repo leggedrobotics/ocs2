@@ -57,6 +57,10 @@ feet_array_t<scalar_t> getTimeUntilNextTouchDownPerLeg(scalar_t currentTime, con
 feet_array_t<scalar_t> getSwingPhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastLiftOffTimePerLeg,
                                            const ocs2::ModeSchedule& modeSchedule);
 
+/** Returns stance phase for all legs from a modeschedule. Returns -1 if stance phase can not be calculated */
+feet_array_t<scalar_t> getStancePhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastTouchDownTimePerLeg,
+                                            const ocs2::ModeSchedule& modeSchedule);
+
 /**
  * Get {startTime, endTime} for all contact phases. Swingphases are always implied in between: endTime[i] < startTime[i+1]
  * times are NaN if they cannot be identified at the boundaries

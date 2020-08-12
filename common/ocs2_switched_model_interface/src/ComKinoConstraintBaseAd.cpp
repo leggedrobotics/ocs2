@@ -90,9 +90,6 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
-    // Active friction cone constraint for stanceLegs
-    inequalityConstraintCollection_.get(footName + "_FrictionCone").setActivity(stanceLegs_[i]);
-
     // Zero forces active for swing legs
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
 
@@ -111,6 +108,13 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
       eeVelConSettings.b = Eigen::Vector2d::Zero();
       EEVelConstraint.configure(eeVelConSettings);
     }
+
+    // Active friction cone constraint for stanceLegs
+    auto& frictionConeConstraint = inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
+    frictionConeConstraint.setActivity(stanceLegs_[i]);
+    frictionConeConstraint.setSurfaceNormalInWorld(
+        normalDirectionConstraint.velocityMatrix
+            .normalized());  // TODO (rgrandia) : Find a better way to obtain the surface normal during a contact phase
   }
 }
 

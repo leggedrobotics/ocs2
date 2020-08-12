@@ -112,7 +112,9 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     // Active friction cone constraint for stanceLegs
     auto& frictionConeConstraint = inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
     frictionConeConstraint.setActivity(stanceLegs_[i]);
-    frictionConeConstraint.setSurfaceNormalInWorld(normalDirectionConstraint.velocityMatrix.normalized());
+    frictionConeConstraint.setSurfaceNormalInWorld(
+        normalDirectionConstraint.velocityMatrix
+            .normalized());  // TODO (rgrandia) : Find a better way to obtain the surface normal during a contact phase
   }
 }
 

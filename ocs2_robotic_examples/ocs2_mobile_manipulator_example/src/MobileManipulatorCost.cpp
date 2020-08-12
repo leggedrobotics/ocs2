@@ -31,17 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace mobile_manipulator {
 
-MobileManipulatorCost::MobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface)
-    : ocs2::CostFunctionBaseAD(STATE_DIM, INPUT_DIM) {
+MobileManipulatorCost::MobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf)
+    : ocs2::CostFunctionBaseAD(STATE_DIM, INPUT_DIM), Q_(std::move(Q)), R_(std::move(R)), Qf_(std::move(Qf)) {
   pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
-  Q_.setZero(3, 3);
-  Q_.diagonal() << 1.0, 1.0, 1.0;
-
-  R_.setZero(INPUT_DIM, INPUT_DIM);
-  R_.diagonal() << vector_t::Constant(INPUT_DIM, 1.0);
-
-  Qf_.setZero(3, 3);
-  Qf_.diagonal() << 1.0, 1.0, 1.0;
 }
 
 MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state,
@@ -58,12 +50,11 @@ MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFuncti
 
 MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state,
                                                                             const ad_vector_t& parameters) const {
-  // ad_vector_t eePosDesired = parameters.tail(3);
-  // ad_vector_t eePos = pinocchioInterface_->getBodyPositionInWorldFrame("WRIST_2", state.tail(6));
-  // ad_vector_t err = eePos - eePosDesired.cast<ad_scalar_t>();
-  // ad_scalar_t cost = err.transpose() * Qf_ * err;
-  // return cost;
-  return ad_scalar_t(0);
+  ad_vector_t eePosDesired = parameters.tail(3);
+  ad_vector_t eePos = pinocchioInterface_->getBodyPositionInWorldFrame("WRIST_2", state.tail(6));
+  ad_vector_t err = eePos - eePosDesired.cast<ad_scalar_t>();
+  ad_scalar_t cost = err.transpose() * Qf_ * err;
+  return cost;
 }
 
 vector_t MobileManipulatorCost::getIntermediateParameters(scalar_t time) const {

@@ -92,8 +92,17 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  costPtr_.reset(new MobileManipulatorCost(*pinocchioInterface_));
+  matrix_t Q(3, 3), R(INPUT_DIM, INPUT_DIM), Qf(3, 3);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
+  ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
+  costPtr_.reset(new MobileManipulatorCost(*pinocchioInterface_, std::move(Q), std::move(R), std::move(Qf)));
   costPtr_->initialize("mobile_manipulator_cost", libraryFolder_, recompileLibraries, true);
+
+  std::cerr << "Q:  \n" << Q << std::endl;
+  std::cerr << "R:  \n" << R << std::endl;
+  std::cerr << "Q_final:\n" << Qf << std::endl;
+  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
   /*
    * Constraints

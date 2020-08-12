@@ -41,7 +41,7 @@ class MobileManipulatorCost final : public ocs2::CostFunctionBaseAD {
   using ocs2::CostFunctionBaseAD::ad_scalar_t;
   using ocs2::CostFunctionBaseAD::ad_vector_t;
 
-  explicit MobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface);
+  MobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf);
   ~MobileManipulatorCost() override = default;
 
   /* Copy constructor */

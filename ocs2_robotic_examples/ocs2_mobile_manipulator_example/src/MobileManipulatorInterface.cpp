@@ -92,7 +92,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  costPtr_.reset(new MobileManipulatorCost());
+  costPtr_.reset(new MobileManipulatorCost(*pinocchioInterface_));
   costPtr_->initialize("mobile_manipulator_cost", libraryFolder_, recompileLibraries, true);
 
   /*

@@ -47,6 +47,28 @@ typename PinocchioInterface<SCALAR>::AffineType PinocchioInterface<SCALAR>::getB
 }
 
 template <typename SCALAR>
+Eigen::Matrix<SCALAR, 3, 1> PinocchioInterface<SCALAR>::getBodyPositionInWorldFrame(const std::string bodyName,
+                                                                                    const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::JointIndex bodyId = this->robotModel_->getBodyId(bodyName);
+
+  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
+  pinocchio::updateFramePlacements(*this->robotModel_, this->robotData_);
+
+  return this->robotData_.oMf[bodyId].translation();
+}
+
+template <typename SCALAR>
+Eigen::Quaternion<SCALAR> PinocchioInterface<SCALAR>::getBodyOrientationInWorldFrame(const std::string bodyName,
+                                                                                     const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::JointIndex bodyId = this->robotModel_->getBodyId(bodyName);
+
+  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
+  pinocchio::updateFramePlacements(*this->robotModel_, this->robotData_);
+
+  return Eigen::Quaternion<SCALAR>(this->robotData_.oMf[bodyId].rotation());
+}
+
+template <typename SCALAR>
 void PinocchioInterface<SCALAR>::display() {
   const auto& model = getModel();
   std::cout << "model.nv = " << model.nv << '\n';

@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <pinocchio/codegen/cppadcg.hpp>
+
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
@@ -82,6 +84,8 @@ class PinocchioInterface {
    * TODO(perry) make this const by caching or mutabling the robotData_
    */
   AffineType getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  Eigen::Matrix<SCALAR, 3, 1> getBodyPositionInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  Eigen::Quaternion<SCALAR> getBodyOrientationInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
   /**
    * Prints some debug info of the pinocchio model.

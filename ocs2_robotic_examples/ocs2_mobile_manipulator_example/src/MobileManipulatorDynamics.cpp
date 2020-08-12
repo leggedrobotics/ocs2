@@ -42,9 +42,10 @@ MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(
                                                                                 const ad_vector_t& input) const {
   ad_vector_t dxdt(STATE_DIM);
   const auto theta = state(2);
-  const auto v = input(0);  // forward velociyt in base frame
+  const auto v = input(0);  // forward velocity in base frame
   dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
   return dxdt;
+  // return ad_vector_t::Zero(STATE_DIM);
 }
 
 }  // namespace mobile_manipulator

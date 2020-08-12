@@ -31,7 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/CostFunctionBaseAD.h>
 
-#include "ocs2_mobile_manipulator_example/definitions.h"
+#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
 
@@ -40,13 +41,34 @@ class MobileManipulatorCost final : public ocs2::CostFunctionBaseAD {
   using ocs2::CostFunctionBaseAD::ad_scalar_t;
   using ocs2::CostFunctionBaseAD::ad_vector_t;
 
-  MobileManipulatorCost() : ocs2::CostFunctionBaseAD(STATE_DIM, INPUT_DIM) {}
+  explicit MobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface);
   ~MobileManipulatorCost() override = default;
+
+  /* Copy constructor */
+  MobileManipulatorCost(const MobileManipulatorCost& rhs) : ocs2::CostFunctionBaseAD(rhs) {
+    pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
+  }
 
   MobileManipulatorCost* clone() const override { return new MobileManipulatorCost(*this); }
 
   ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                        const ad_vector_t& parameters) const override;
+  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
+
+  /* Set num parameters to size of desired trajectory state */
+  size_t getNumIntermediateParameters() const override { return 3; }
+  vector_t getIntermediateParameters(scalar_t time) const override;
+
+  size_t getNumFinalParameters() const override { return 3; }
+  vector_t getFinalParameters(scalar_t time) const override;
+
+ private:
+  std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
+
+  /* Quadratic cost */
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t Qf_;
 };
 
 }  // namespace mobile_manipulator

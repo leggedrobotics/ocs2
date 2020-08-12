@@ -11,16 +11,14 @@
 
 namespace switched_model {
 
-inline vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, const scalar_t desiredHeight) {
-  // Project to plane along gravity, interpret old z as desired height offset.
-  vector3_t adaptedPosition = projectPositionInWorldOntoPlaneAlongGravity(desiredPosition, terrainPlane);
-  adaptedPosition.z() += desiredHeight;
-  return adaptedPosition;
+inline vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, scalar_t desiredHeight) {
+  const auto adaptedHeight = projectPositionInWorldOntoPlaneAlongGravity(desiredPosition, terrainPlane).z() + desiredHeight;
+  return {desiredPosition.x(), desiredPosition.y(), adaptedHeight};
 }
 
 inline scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t reference) {
-  while (std::abs(yaw - reference) > M_PI) {
-    yaw -= (yaw - reference) / std::abs(yaw - reference) * 2.0 * M_PI;
+  while (std::abs(reference - yaw) > M_PI) {
+    yaw += std::copysign(scalar_t(2.0 * M_PI), reference - yaw);
   }
   return yaw;
 }
@@ -34,8 +32,7 @@ inline vector3_t eulerXYZFromRotationMatrix(const matrix3_t& orientationTargetTo
 
 inline vector3_t getHeadingVectorInWorld(const vector3_t& eulerXYZ) {
   const matrix3_t o_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
-  const vector3_t xAxisInWorld = o_R_b.col(0);
-  return xAxisInWorld;
+  return o_R_b.col(0); // x-axis in world frame
 }
 
 matrix3_t getOrientationProjectedHeadingFrameToWorld(const vector3_t& headingVector, const TerrainPlane& terrainPlane);

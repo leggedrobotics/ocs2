@@ -46,11 +46,6 @@ const FootPhase& SwingTrajectoryPlanner::getFootPhase(size_t leg, scalar_t time)
   return *feetNormalTrajectories_[leg][index];
 }
 
-const FootTangentialConstraintMatrix* SwingTrajectoryPlanner::getTangentialDirectionConstraint(size_t leg, scalar_t time) const {
-  const auto index = ocs2::lookup::findIndexInTimeArray(feetNormalTrajectoriesEvents_[leg], time);
-  return feetNormalTrajectories_[leg][index]->getFootTangentialConstraintInWorldFrame();
-}
-
 auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const
     -> std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> {
   std::vector<scalar_t> eventTimes;

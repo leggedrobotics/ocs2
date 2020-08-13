@@ -57,12 +57,13 @@ class FootPhase {
  */
 class StancePhase final : public FootPhase {
  public:
-  StancePhase(const TerrainPlane& stanceTerrain, scalar_t positionGain = 0.0);
+  StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain = 0.0);
   ~StancePhase() override = default;
 
   bool contactFlag() const override { return true; };
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
+  const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
 
  private:
   const ConvexTerrain* stanceTerrain_;

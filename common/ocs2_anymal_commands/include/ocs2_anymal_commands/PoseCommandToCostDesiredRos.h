@@ -24,9 +24,9 @@ class PoseCommandToCostDesiredRos {
   scalar_t targetDisplacementVelocity;
   scalar_t targetRotationVelocity;
   scalar_t initZHeight;
-  Eigen::Matrix<scalar_t, 12, 1> defaultJointState;
+  joint_coordinate_t defaultJointState;
 
-  using PoseCommand_t = std::array<double, 6>; // [x, y, z, roll, pitch, yaw]
+  using PoseCommand_t = std::array<scalar_t, 6>; // [x, y, z, roll, pitch, yaw]
 
   PoseCommandToCostDesiredRos(const std::string& configFile, ros::NodeHandle& nodeHandle);
 
@@ -37,7 +37,7 @@ class PoseCommandToCostDesiredRos {
 
   void terrainCallback(const visualization_msgs::Marker::ConstPtr& msg);
 
-  scalar_t estimeTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const;
+  scalar_t desiredTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const;
 
   ros::Publisher costDesiredPublisher_;
 

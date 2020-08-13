@@ -12,8 +12,14 @@ template <typename SCALAR>
 PinocchioInterface<SCALAR>::PinocchioInterface(const std::string& urdfPath) {
   pinocchio::ModelTpl<double> tempModel;
 
+  // add 3 DOF for wheelbase
+  pinocchio::JointModelComposite jointComposite(3);
+  jointComposite.addJoint(pinocchio::JointModelPX());
+  jointComposite.addJoint(pinocchio::JointModelPY());
+  jointComposite.addJoint(pinocchio::JointModelRZ());
+
   // build robot model and robot data
-  pinocchio::urdf::buildModel(urdfPath, tempModel);
+  pinocchio::urdf::buildModel(urdfPath, jointComposite, tempModel);
 
   robotModel_ = std::make_shared<const PinocchioModel>(tempModel.cast<SCALAR>());
   robotData_ = PinocchioData(*robotModel_);
@@ -39,10 +45,22 @@ Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::stri
   pinocchio::forwardKinematics(*robotModel_, robotData_, q);
   pinocchio::updateFramePlacements(*robotModel_, robotData_);
 
-  const Eigen::Matrix<SCALAR, 3, 1> position(robotData_.oMf[bodyId].translation());
-  const Eigen::Quaternion<SCALAR> orientation(robotData_.oMf[bodyId].rotation());
+  Pose<SCALAR> pose;
+  pose.position = robotData_.oMf[bodyId].translation();
+  pose.orientation = robotData_.oMf[bodyId].rotation();
 
-  return Pose<SCALAR>{position, orientation};
+  return pose;
+}
+
+template <typename SCALAR>
+Eigen::Matrix<SCALAR, 3, 1> PinocchioInterface<SCALAR>::getBodyPositionInWorldFrame(const std::string bodyName,
+                                                                                    const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::JointIndex bodyId = robotModel_->getBodyId(bodyName);
+
+  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
+  pinocchio::updateFramePlacements(*robotModel_, robotData_);
+
+  return robotData_.oMf[bodyId].translation();
 }
 
 template <typename SCALAR>

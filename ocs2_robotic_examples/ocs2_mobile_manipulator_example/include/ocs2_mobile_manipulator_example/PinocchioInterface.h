@@ -46,7 +46,7 @@ struct Pose {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Eigen::Matrix<SCALAR, 3, 1> position;
-  Eigen::Quaternion<SCALAR> orientation;
+  Eigen::Matrix<SCALAR, 3, 3> orientation;
 };
 
 /**
@@ -90,6 +90,7 @@ class PinocchioInterface {
    * TODO(perry) make this const by caching or mutabling the robotData_
    */
   Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  Eigen::Matrix<SCALAR, 3, 1> getBodyPositionInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
   /**
    * Prints some debug info of the pinocchio model.

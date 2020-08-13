@@ -56,10 +56,10 @@ class MobileManipulatorCost final : public ocs2::CostFunctionBaseAD {
   ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
 
   /* Set num parameters to size of desired trajectory state */
-  size_t getNumIntermediateParameters() const override { return 3; }
+  size_t getNumIntermediateParameters() const override;
   vector_t getIntermediateParameters(scalar_t time) const override;
 
-  size_t getNumFinalParameters() const override { return 3; }
+  size_t getNumFinalParameters() const override;
   vector_t getFinalParameters(scalar_t time) const override;
 
  private:

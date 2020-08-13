@@ -1,33 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <robot name="mm_arm">
-  <material name="black">
-    <color rgba="0.0 0.0 0.0 1.0"/>
-  </material>
-  <material name="blue">
-    <color rgba="0.0 0.0 0.8 1.0"/>
-  </material>
-  <material name="green">
-    <color rgba="0.0 0.8 0.0 1.0"/>
-  </material>
   <material name="grey">
     <color rgba="0.2 0.2 0.2 1.0"/>
   </material>
-  <material name="light_grey">
-    <color rgba="0.4 0.4 0.4 1.0"/>
-  </material>
-  <material name="orange">
-    <color rgba="1.0 0.423529411765 0.0392156862745 1.0"/>
-  </material>
-  <material name="brown">
-    <color rgba="0.870588235294 0.811764705882 0.764705882353 1.0"/>
-  </material>
-  <material name="red">
-    <color rgba="0.8 0.0 0.0 1.0"/>
-  </material>
-  <material name="white">
-    <color rgba="1.0 1.0 1.0 1.0"/>
-  </material>
-
   <material name="mm_red">
     <color rgba="0.698039215686 0.133333333333 0.133333333333 1.0"/>
   </material>
@@ -38,14 +13,14 @@
   <joint name="world_to_arm_base" type="fixed">
     <parent link="base"/>
     <child link="arm_base"/>
-    <origin rpy="0 0 0" xyz="0 0 0.3"/>
+    <origin rpy="0 0 0" xyz="0 0 0.2"/>
   </joint>
   <!-- Base link -->
   <link name="arm_base">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 -0.15"/>
+      <origin rpy="0 0 0" xyz="0 0 -0.1"/>
       <geometry>
-        <box size="0.5 0.5 0.3"/>
+        <box size="0.5 0.5 0.2"/>
       </geometry>
       <material name="gray">
         <color rgba="0.411764705882 0.411764705882 0.411764705882 1.0"/>
@@ -54,7 +29,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 -0.5"/>
       <geometry>
-        <box size="0.5 0.5 1"/>
+        <box size="0.5 0.5 0.2"/>
       </geometry>
     </collision>
   </link>

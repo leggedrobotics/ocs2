@@ -42,8 +42,8 @@ MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFuncti
   ad_vector_t eePosDesired = parameters.tail(3);
   ad_scalar_t cost(0.0);
   cost += input.transpose() * R_ * input;
-  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state.tail(6));
-  ad_vector_t err = eePose.position - eePosDesired.cast<ad_scalar_t>();
+  const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
+  ad_vector_t err = eePosition - eePosDesired;
   cost += err.transpose() * Q_ * err;
   return cost;
 }
@@ -51,10 +51,14 @@ MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFuncti
 MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state,
                                                                             const ad_vector_t& parameters) const {
   ad_vector_t eePosDesired = parameters.tail(3);
-  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state.tail(6));
-  ad_vector_t err = eePose.position - eePosDesired.cast<ad_scalar_t>();
+  const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
+  ad_vector_t err = eePosition - eePosDesired;
   ad_scalar_t cost = err.transpose() * Qf_ * err;
   return cost;
+}
+
+size_t MobileManipulatorCost::getNumIntermediateParameters() const {
+  return 6;
 }
 
 vector_t MobileManipulatorCost::getIntermediateParameters(scalar_t time) const {
@@ -62,9 +66,13 @@ vector_t MobileManipulatorCost::getIntermediateParameters(scalar_t time) const {
   if (this->costDesiredTrajectoriesPtr_ == nullptr) {
     desiredState.setZero(3);
   } else {
-    desiredState = this->costDesiredTrajectoriesPtr_->getDesiredState(time).tail(3);
+    desiredState = this->costDesiredTrajectoriesPtr_->getDesiredState(time);
   }
   return desiredState;
+}
+
+size_t MobileManipulatorCost::getNumFinalParameters() const {
+  return 6;
 }
 
 vector_t MobileManipulatorCost::getFinalParameters(scalar_t time) const {
@@ -72,7 +80,7 @@ vector_t MobileManipulatorCost::getFinalParameters(scalar_t time) const {
   if (this->costDesiredTrajectoriesPtr_ == nullptr) {
     desiredState.setZero(3);
   } else {
-    desiredState = this->costDesiredTrajectoriesPtr_->getDesiredState(time).tail(3);
+    desiredState = this->costDesiredTrajectoriesPtr_->getDesiredState(time);
   }
   return desiredState;
 }

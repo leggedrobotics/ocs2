@@ -53,7 +53,6 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/LocalTerrainVisualizer.cpp
   src/QuadrupedDummyNode.cpp
   src/QuadrupedInterface.cpp
   src/QuadrupedMpcNode.cpp
@@ -64,6 +63,7 @@ add_library(${PROJECT_NAME}
   src/QuadrupedVisualizer.cpp
   src/QuadrupedWheeledInterface.cpp
   src/SwingPlanningVisualizer.cpp
+  src/TerrainPlaneVisualizer.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

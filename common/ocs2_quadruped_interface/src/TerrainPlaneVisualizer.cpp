@@ -2,7 +2,7 @@
 // Created by rgrandia on 30.04.20.
 //
 
-#include "ocs2_quadruped_interface/LocalTerrainVisualizer.h"
+#include "ocs2_quadruped_interface/TerrainPlaneVisualizer.h"
 
 #include "ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h"
 
@@ -25,10 +25,11 @@ void TerrainPlaneVisualizer::update(scalar_t time, const TerrainPlane& terrainPl
   terrainPublisher_.publish(planeMsg);
 }
 
-LocalTerrainVisualizer::LocalTerrainVisualizer(ocs2::LockablePtr<TerrainModel>& terrainPtr, ros::NodeHandle& nodeHandle)
+TerrainPlaneVisualizerSynchronizedModule::TerrainPlaneVisualizerSynchronizedModule(ocs2::LockablePtr<TerrainModel>& terrainPtr,
+                                                                                   ros::NodeHandle& nodeHandle)
     : terrainPptr_(&terrainPtr), planeVisualizer_(nodeHandle) {}
 
-void LocalTerrainVisualizer::postSolverRun(const primal_solution_t& primalSolution) {
+void TerrainPlaneVisualizerSynchronizedModule::postSolverRun(const primal_solution_t& primalSolution) {
   const base_coordinate_t comPose = getComPose(primalSolution.stateTrajectory_.front());
 
   // Obtain local terrain below the base

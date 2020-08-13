@@ -11,37 +11,52 @@
 
 namespace switched_model {
 
-inline vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, scalar_t desiredHeight) {
-  const auto adaptedHeight = projectPositionInWorldOntoPlaneAlongGravity(desiredPosition, terrainPlane).z() + desiredHeight;
-  return {desiredPosition.x(), desiredPosition.y(), adaptedHeight};
-}
+/**
+ * Creates a desired position at a height above the given terrain. The x-y coordinated remain the same
+ */
+vector3_t adaptDesiredPositionHeightToTerrain(const vector3_t& desiredPosition, const TerrainPlane& terrainPlane, scalar_t desiredHeight);
 
-inline scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t reference) {
-  while (std::abs(reference - yaw) > M_PI) {
-    yaw += std::copysign(scalar_t(2.0 * M_PI), reference - yaw);
-  }
-  return yaw;
-}
+/**
+ * Returns a yaw angle (yaw + k*2*pi) with k such that the result is within [reference - pi, reference + pi]
+ */
+scalar_t findOrientationClostestToReference(scalar_t yaw, scalar_t reference);
 
-inline vector3_t eulerXYZFromRotationMatrix(const matrix3_t& orientationTargetToWorld, scalar_t referenceYaw = 0.0) {
-  vector3_t eulerXYZ = orientationTargetToWorld.eulerAngles(0, 1, 2);
-  ocs2::makeEulerAnglesUnique(eulerXYZ);
-  eulerXYZ.z() = findOrientationClostestToReference(eulerXYZ.z(), referenceYaw);
-  return eulerXYZ;
-}
+/**
+ * Return euler angles XYZ from a rotation matrix. When a reference yaw is given, the yaw angle is chosen as close as possible to the
+ * reference.
+ */
+vector3_t eulerXYZFromRotationMatrix(const matrix3_t& orientationTargetToWorld, scalar_t referenceYaw = 0.0);
 
-inline vector3_t getHeadingVectorInWorld(const vector3_t& eulerXYZ) {
-  const matrix3_t o_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
-  return o_R_b.col(0); // x-axis in world frame
-}
+/**
+ * Return the x-axis of the body frame expressed in world coordinates.
+ */
+vector3_t getHeadingVectorInWorld(const vector3_t& eulerXYZ);
 
+/**
+ * Returns a rotation matrix from the "projected heading frame" to world. See definition below.
+ */
 matrix3_t getOrientationProjectedHeadingFrameToWorld(const vector3_t& headingVector, const TerrainPlane& terrainPlane);
 
-inline TerrainPlane getProjectedHeadingFrame(const vector3_t& eulerXYZ, const TerrainPlane& terrainPlane) {
-  const vector3_t xAxisInWorld = getHeadingVectorInWorld(eulerXYZ);
-  return {terrainPlane.positionInWorld, getOrientationProjectedHeadingFrameToWorld(xAxisInWorld, terrainPlane).transpose()};
-}
+/**
+ * The heading of the robot refers to the x-axis of the body frame.
+ *
+ * The "projected heading frame" is defined as follows:
+ * - the x-Axis points in same direction as the given x-axis of the body frame in world when both are projected to the world XY plane.
+ * - z-Axis is the surface normal.
+ * - y-Axis is found from the right hand rule.
+ * - the origin is the same as to origin of the terrain projected to.
+ *
+ * @param eulerXYZ : current body eulerXYZ from which the heading vector is derived.
+ * @param terrainPlane : plane to project the heading on.
+ * @return projected heading frame
+ */
+TerrainPlane getProjectedHeadingFrame(const vector3_t& eulerXYZ, const TerrainPlane& terrainPlane);
 
+/**
+ * Modifies a desired orientation such that the body z-axis is aligned with the surface normal and the heading vector (x-axis) projected
+ * onto the terrain still points in the same direction. The orientation is the same as that of the projected heading frame defined above.
+ * @return adapted euler angles XYZ
+ */
 vector3_t alignDesiredOrientationToTerrain(const vector3_t& desiredEulerXYZ, const TerrainPlane& terrainPlane);
 
 /**

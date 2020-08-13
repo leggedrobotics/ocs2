@@ -18,7 +18,7 @@ void TerrainPlaneVisualizer::update(scalar_t time, const TerrainPlane& terrainPl
   // Headers
   Eigen::Quaterniond terrainOrientation(terrainPlane.orientationWorldToTerrain.transpose());
   auto planeMsg = getPlaneMsg(terrainPlane.positionInWorld, terrainOrientation, Color::black, planeWidth_, planeLength_, planeThickness_);
-  planeMsg.header = getHeaderMsg(originFrameId_, timeStamp);
+  planeMsg.header = getHeaderMsg(frameId_, timeStamp);
   planeMsg.id = 0;
   planeMsg.color.a = planeAlpha_;
 

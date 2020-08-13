@@ -33,9 +33,9 @@ class TerrainPlaneVisualizer {
   ros::Publisher terrainPublisher_;
 };
 
-class LocalTerrainVisualizer : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
-  LocalTerrainVisualizer(ocs2::LockablePtr<TerrainModel>& terrainPtr, ros::NodeHandle& nodeHandle);
+  TerrainPlaneVisualizerSynchronizedModule(ocs2::LockablePtr<TerrainModel>& terrainPtr, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override{};

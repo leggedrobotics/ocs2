@@ -38,8 +38,7 @@ class SwingTrajectoryPlanner {
               const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
               const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg, const TerrainModel& terrainModel);
 
-  FootNormalConstraintMatrix getNormalDirectionConstraint(size_t leg, scalar_t time) const;
-  const FootTangentialConstraintMatrix* getTangentialDirectionConstraint(size_t leg, scalar_t time) const;
+  const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
 
   std::vector<ConvexTerrain> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
 

@@ -19,7 +19,7 @@ namespace switched_model {
 class TerrainPlaneVisualizer {
  public:
   /** Visualization settings (publicly available) */
-  std::string originFrameId_ = "world";  // Frame name all messages are published in
+  std::string frameId_ = "world";  // Frame name all messages are published in
   double planeWidth_ = 1.5;
   double planeLength_ = 1.5;
   double planeThickness_ = 0.005;
@@ -33,9 +33,9 @@ class TerrainPlaneVisualizer {
   ros::Publisher terrainPublisher_;
 };
 
-class LocalTerrainVisualizer : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
  public:
-  LocalTerrainVisualizer(ocs2::LockablePtr<TerrainModel>& terrainPtr, ros::NodeHandle& nodeHandle);
+  TerrainPlaneVisualizerSynchronizedModule(ocs2::LockablePtr<TerrainModel>& terrainPtr, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override{};

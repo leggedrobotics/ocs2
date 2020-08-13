@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
+#include "ocs2_switched_model_interface/core/Rotations.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 TEST(TestFrictionConeConstraint, finiteDifference) {
@@ -20,7 +21,7 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
     TestedConstraint frictionConeConstraint(mu, regularization, legNumber);
-    switched_model::vector3_t surfaceNormal = switched_model::vector3_t{0.0, 0.0, 1.0} + 0.1*switched_model::vector3_t::Random();
+    switched_model::vector3_t surfaceNormal = switched_model::vector3_t{0.0, 0.0, 1.0} + 0.1 * switched_model::vector3_t::Random();
     surfaceNormal.normalize();
     frictionConeConstraint.setSurfaceNormalInWorld(surfaceNormal);
 
@@ -34,7 +35,7 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
     auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x0, u0);
 
     switched_model::dynamic_vector_t data(N);
-    switched_model::dynamic_matrix_t regressor(N, 6+ 6+6+9);
+    switched_model::dynamic_matrix_t regressor(N, 6 + 6 + 6 + 9);
     TestedConstraint::state_vector_t dx = TestedConstraint::state_vector_t::Zero();
     TestedConstraint::input_vector_t du = TestedConstraint::input_vector_t::Zero();
     for (int i = 0; i < N; i++) {
@@ -42,16 +43,16 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
       switched_model::vector3_t dEuler = eps * switched_model::vector3_t::Random();
       switched_model::vector3_t dF = eps * switched_model::vector3_t::Random();
       dx.segment<3>(0) = dEuler;
-      du.segment<3>(3*legNumber) = dF;
+      du.segment<3>(3 * legNumber) = dF;
       switched_model::vector6_t dz;
       dz << dEuler, dF;
       const switched_model::dynamic_matrix_t quadTerms = dz * dz.transpose();
-      switched_model::dynamic_vector_t quadTermsVector(6+6+9);
-      int count =0;
-      for (int p=0; p<6; ++p) {
-        for (int q=p; q<6; ++q) {
+      switched_model::dynamic_vector_t quadTermsVector(6 + 6 + 9);
+      int count = 0;
+      for (int p = 0; p < 6; ++p) {
+        for (int q = p; q < 6; ++q) {
           quadTermsVector(count) = quadTerms(p, q);
-          if (q==p) {
+          if (q == p) {
             quadTermsVector(count) *= 0.5;
           }
           count++;
@@ -60,18 +61,18 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
 
       // Scale to condition the regressor
       regressor.row(i) << dEuler.transpose() / eps, dF.transpose() / eps, quadTermsVector.transpose() / (eps * eps);
-      data(i)  = (frictionConeConstraint.getValue(t, x0 + dx, u0 + du).front() - y0);
+      data(i) = (frictionConeConstraint.getValue(t, x0 + dx, u0 + du).front() - y0);
     }
 
     switched_model::dynamic_vector_t dh_emperical = regressor.colPivHouseholderQr().solve(data);
     dh_emperical /= eps;
-    dh_emperical.tail<6+6+9>()  /= eps;
+    dh_emperical.tail<6 + 6 + 9>() /= eps;
 
     switched_model::dynamic_matrix_t quadTerms(6, 6);
     int count = 0;
-    for (int p=0; p<6; ++p) {
-      for (int q=p; q<6; ++q) {
-        quadTerms(p, q) = dh_emperical(6+count);
+    for (int p = 0; p < 6; ++p) {
+      for (int q = p; q < 6; ++q) {
+        quadTerms(p, q) = dh_emperical(6 + count);
         quadTerms(q, p) = quadTerms(p, q);
         count++;
       }
@@ -83,10 +84,10 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
     switched_model::matrix3_t ddhdudx_emperical = quadTerms.block<3, 3>(3, 0);
     switched_model::matrix3_t ddhdudu_emperical = quadTerms.block<3, 3>(3, 3);
 
-    switched_model::matrix3_t ddhdudu = quadraticApproximation.secondDerivativesInput.front().block<3, 3>(3*legNumber, 3*legNumber);
+    switched_model::matrix3_t ddhdudu = quadraticApproximation.secondDerivativesInput.front().block<3, 3>(3 * legNumber, 3 * legNumber);
     switched_model::matrix3_t ddhdxdx = quadraticApproximation.secondDerivativesState.front().block<3, 3>(0, 0);
-    ASSERT_LT((dhdx_emperical - quadraticApproximation.derivativeState.front().segment<3>(0) ).array().abs().maxCoeff(), tol);
-    ASSERT_LT((dhdu_emperical - quadraticApproximation.derivativeInput.front().segment<3>(3*legNumber) ).array().abs().maxCoeff(), tol);
+    ASSERT_LT((dhdx_emperical - quadraticApproximation.derivativeState.front().segment<3>(0)).array().abs().maxCoeff(), tol);
+    ASSERT_LT((dhdu_emperical - quadraticApproximation.derivativeInput.front().segment<3>(3 * legNumber)).array().abs().maxCoeff(), tol);
     ASSERT_LT((ddhdudu_emperical - ddhdudu).array().abs().maxCoeff(), tol);
     // ddhdxdx and ddhdudx are off because of the negative definite hessian approximation
   }

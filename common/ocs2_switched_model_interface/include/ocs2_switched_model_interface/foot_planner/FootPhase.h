@@ -31,23 +31,49 @@ struct FootTangentialConstraintMatrix {
 
 FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain);
 
+/**
+ * Base class for a planned foot phase : Stance or Swing.
+ */
 class FootPhase {
  public:
-  virtual FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const = 0;
+  virtual ~FootPhase() = default;
+
+  /** Returns the contact flag for this phase. Stance phase: True, Swing phase: false */
+  virtual bool contactFlag() const = 0;
+
+  /** Returns the unit vector pointing in the normal direction */
+  virtual vector3_t normalDirectionInWorldFrame(scalar_t time) const = 0;
+
+  /** Returns the velocity equality constraint formulated in the normal direction */
+  virtual FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const = 0;
+
+  /** Returns the position inequality constraints formulated in the tangential direction */
   virtual const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const { return nullptr; };
 };
 
+/**
+ * Encodes a planned stance phase on a terrain plane.
+ * The normal constraint makes the foot converge to the terrain plane when positionGain > 0.0
+ */
 class StancePhase final : public FootPhase {
  public:
-  StancePhase(const ConvexTerrain& stanceTerrain);
-  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
-  const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
+  StancePhase(const TerrainPlane& stanceTerrain, scalar_t positionGain = 0.0);
+  ~StancePhase() override = default;
+
+  bool contactFlag() const override { return true; };
+  vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
+  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
 
  private:
   const ConvexTerrain* stanceTerrain_;
   FootTangentialConstraintMatrix footTangentialConstraint_;
+  scalar_t positionGain_;
 };
 
+/**
+ * Encodes a swing trajectory between two terrain planes.
+ * A cubic spline is designed in both liftoff and target plane. The constraint then smoothly interpolates between the two splines.
+ */
 class SwingPhase final : public FootPhase {
  public:
   struct SwingEvent {
@@ -56,8 +82,12 @@ class SwingPhase final : public FootPhase {
     const TerrainPlane* terrainPlane;
   };
 
-  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown);
-  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const override;
+  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, scalar_t positionGain = 0.0);
+  ~SwingPhase() override = default;
+
+  bool contactFlag() const override { return false; };
+  vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
+  FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   const SplineCpg& getMotionInLiftOffFrame() const { return *liftOffMotion_; };
   const TerrainPlane& getLiftOffFrame() const { return *liftOff_.terrainPlane; };
   const SplineCpg& getMotionInTouchDownFrame() const { return *touchdownMotion_; };
@@ -73,6 +103,7 @@ class SwingPhase final : public FootPhase {
   SwingEvent touchDown_;
   std::unique_ptr<SplineCpg> liftOffMotion_;
   std::unique_ptr<SplineCpg> touchdownMotion_;
+  scalar_t positionGain_;
 };
 
 }  // namespace switched_model

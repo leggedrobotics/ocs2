@@ -89,6 +89,7 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
 
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
+    const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
 
     // Zero forces active for swing legs
     equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
@@ -96,15 +97,14 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     // Foot normal constraint always active
     auto& EENormalConstraint = equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
     EENormalConstraint.setActivity(true);
-    const auto normalDirectionConstraint = swingTrajectoryPlannerPtr_->getNormalDirectionConstraint(i, t);
-    EENormalConstraint.configure(normalDirectionConstraint);
+    EENormalConstraint.configure(footPhase.getFootNormalConstraintInWorldFrame(t));
 
     // Foot tangential constraints only for stanceLegs
     auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_EEVel");
     EEVelConstraint.setActivity(stanceLegs_[i]);
     if (stanceLegs_[i]) {
       EndEffectorVelocityConstraintSettings eeVelConSettings;
-      eeVelConSettings.A = tangentialBasisFromSurfaceNormal(normalDirectionConstraint.velocityMatrix);
+      eeVelConSettings.A = tangentialBasisFromSurfaceNormal(footPhase.normalDirectionInWorldFrame(t));
       eeVelConSettings.b = Eigen::Vector2d::Zero();
       EEVelConstraint.configure(eeVelConSettings);
     }
@@ -112,7 +112,9 @@ void ComKinoConstraintBaseAd::setCurrentStateAndControl(const scalar_t& t, const
     // Active friction cone constraint for stanceLegs
     auto& frictionConeConstraint = inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
     frictionConeConstraint.setActivity(stanceLegs_[i]);
-    frictionConeConstraint.setSurfaceNormalInWorld(normalDirectionConstraint.velocityMatrix.normalized());
+    if (stanceLegs_[i]) {
+      frictionConeConstraint.setSurfaceNormalInWorld(footPhase.normalDirectionInWorldFrame(t));
+    }
   }
 }
 

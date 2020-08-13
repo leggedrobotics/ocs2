@@ -82,7 +82,8 @@ void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const s
   // Foot placement costs
   feet_array_t<const FootTangentialConstraintMatrix*> constraints = {{nullptr}};
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    constraints[leg] = swingTrajectoryPlannerPtr_->getTangentialDirectionConstraint(leg, t);
+    const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(leg, t);
+    constraints[leg] = footPhase.getFootTangentialConstraintInWorldFrame();
   }
   footPlacementCost_->setStateAndConstraint(x, constraints);
 }

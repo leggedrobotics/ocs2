@@ -51,13 +51,17 @@ FootNormalConstraintMatrix computeFootNormalConstraint(scalar_t feedforwardVeloc
   return footNormalConstraint;
 }
 
-StancePhase::StancePhase(const ConvexTerrain& stanceTerrain)
-    : stanceTerrain_(&stanceTerrain), footTangentialConstraint_(tangentialConstraintsFromConvexTerrain(stanceTerrain)) {}
+StancePhase::StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain)
+    : stanceTerrain_(&stanceTerrain), footTangentialConstraint_(tangentialConstraintsFromConvexTerrain(stanceTerrain)), positionGain_(positionGain) {}
 
-FootNormalConstraintMatrix StancePhase::getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const {
+vector3_t StancePhase::normalDirectionInWorldFrame(scalar_t time) const {
+  return surfaceNormalInWorld(*stanceTerrain_);
+}
+
+FootNormalConstraintMatrix StancePhase::getFootNormalConstraintInWorldFrame(scalar_t time) const {
   const scalar_t feedForwardVelocity = 0.0;
   const scalar_t desiredTerrainDistance = 0.0;
-  return computeFootNormalConstraint(feedForwardVelocity, desiredTerrainDistance, stanceTerrain_->plane, positionGain);
+  return computeFootNormalConstraint(feedForwardVelocity, desiredTerrainDistance, *stanceTerrain_, positionGain_);
 }
 
 const FootTangentialConstraintMatrix* StancePhase::getFootTangentialConstraintInWorldFrame() const {
@@ -68,7 +72,9 @@ const FootTangentialConstraintMatrix* StancePhase::getFootTangentialConstraintIn
   }
 }
 
-SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown) : liftOff_(liftOff), touchDown_(touchDown) {
+
+SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, scalar_t positionGain)
+    : liftOff_(liftOff), touchDown_(touchDown), positionGain_(positionGain) {
   if (touchDown_.terrainPlane == nullptr) {
     setHalveSwing(swingHeight);
   } else {
@@ -128,11 +134,18 @@ void SwingPhase::setHalveSwing(scalar_t swingHeight) {
   touchDown_.terrainPlane = liftOff_.terrainPlane;
 }
 
-FootNormalConstraintMatrix SwingPhase::getFootNormalConstraintInWorldFrame(scalar_t time, scalar_t positionGain) const {
+vector3_t SwingPhase::normalDirectionInWorldFrame(scalar_t time) const {
+  // Returns "average" surface normal.
+  const scalar_t scaling = getScaling(time);
+  return ((1.0 - scaling) * surfaceNormalInWorld(*liftOff_.terrainPlane) + scaling * surfaceNormalInWorld(*touchDown_.terrainPlane))
+      .normalized();
+}
+
+FootNormalConstraintMatrix SwingPhase::getFootNormalConstraintInWorldFrame(scalar_t time) const {
   const auto liftOffConstraint =
-      computeFootNormalConstraint(liftOffMotion_->velocity(time), liftOffMotion_->position(time), *liftOff_.terrainPlane, positionGain);
+      computeFootNormalConstraint(liftOffMotion_->velocity(time), liftOffMotion_->position(time), *liftOff_.terrainPlane, positionGain_);
   const auto touchDownConstraint = computeFootNormalConstraint(touchdownMotion_->velocity(time), touchdownMotion_->position(time),
-                                                               *touchDown_.terrainPlane, positionGain);
+                                                               *touchDown_.terrainPlane, positionGain_);
   const scalar_t scaling = getScaling(time);
 
   FootNormalConstraintMatrix footNormalConstraint;

@@ -41,9 +41,9 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
   }
 }
 
-FootNormalConstraintMatrix SwingTrajectoryPlanner::getNormalDirectionConstraint(size_t leg, scalar_t time) const {
+const FootPhase& SwingTrajectoryPlanner::getFootPhase(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetNormalTrajectoriesEvents_[leg], time);
-  return feetNormalTrajectories_[leg][index]->getFootNormalConstraintInWorldFrame(time, settings_.errorGain);
+  return *feetNormalTrajectories_[leg][index];
 }
 
 const FootTangentialConstraintMatrix* SwingTrajectoryPlanner::getTangentialDirectionConstraint(size_t leg, scalar_t time) const {
@@ -70,7 +70,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
-    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown));
+    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, settings_.errorGain));
   }
 
   // Loop through contact phases
@@ -87,7 +87,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     if (hasStartTime(currentContactTiming)) {
       eventTimes.push_back(currentContactTiming.start);
     }
-    footPhases.emplace_back(new StancePhase(nominalFoothold));
+    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain));
 
     // generate swing phase afterwards if the current contact is finite and ends before the horizon
     if (hasEndTime(currentContactTiming) && currentContactTiming.end < finalTime) {
@@ -105,7 +105,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       liftOff.velocity *= scaling;
       touchDown.velocity *= scaling;
       eventTimes.push_back(currentContactTiming.end);
-      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown));
+      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, settings_.errorGain));
     }
   }
 

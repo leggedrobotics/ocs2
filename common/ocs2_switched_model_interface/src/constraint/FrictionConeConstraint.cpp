@@ -15,7 +15,10 @@ FrictionConeConstraint::FrictionConeConstraint(scalar_t frictionCoefficient, sca
       regularization_(regularization),
       gripperForce_(gripperForce),
       legNumber_(legNumber),
-      t_R_w(matrix3_t::Identity()) {}
+      t_R_w(matrix3_t::Identity()) {
+  assert(frictionCoefficient_ > 0.0);
+  assert(regularization_ > 0.0);
+}
 
 void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld) {
   t_R_w = orientationWorldToTerrainFromSurfaceNormalInWorld(surfaceNormalInWorld);
@@ -27,9 +30,7 @@ scalar_array_t FrictionConeConstraint::getValue(scalar_t time, const state_vecto
 
   const auto localForce = computeLocalForces(eulerXYZ, forcesInBodyFrame);
 
-  scalar_array_t constraintValue;
-  constraintValue.emplace_back(coneConstraint(localForce));
-  return constraintValue;
+  return {coneConstraint(localForce)};
 }
 
 FrictionConeConstraint::LinearApproximation_t FrictionConeConstraint::getLinearApproximation(scalar_t time, const state_vector_t& state,
@@ -69,6 +70,7 @@ FrictionConeConstraint::QuadraticApproximation_t FrictionConeConstraint::getQuad
   quadraticApproximation.derivativesInputState.emplace_back(frictionConeDerivativesInputState(coneDerivatives));
   return quadraticApproximation;
 }
+
 FrictionConeConstraint::LocalForceDerivatives FrictionConeConstraint::computeLocalForceDerivatives(
     const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const {
   LocalForceDerivatives localForceDerivatives{};
@@ -77,27 +79,28 @@ FrictionConeConstraint::LocalForceDerivatives FrictionConeConstraint::computeLoc
   return localForceDerivatives;
 }
 
-FrictionConeConstraint::LocalForces FrictionConeConstraint::computeLocalForces(const vector3_t& eulerXYZ,
-                                                                               const vector3_t& forcesInBodyFrame) const {
+vector3_t FrictionConeConstraint::computeLocalForces(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const {
   matrix3_t t_R_b = t_R_w * rotationMatrixBaseToOrigin(eulerXYZ);
   return t_R_b * forcesInBodyFrame;
 }
 
-FrictionConeConstraint::ConeLocalDerivatives FrictionConeConstraint::computeConeLocalDerivatives(const LocalForces& localForces) const {
-  const auto F_tangent = localForces.x() * localForces.x() + localForces.y() * localForces.y() + regularization_;
-  const auto F_norm = sqrt(F_tangent);
-  const auto F_norm32 = F_tangent * F_norm;
+FrictionConeConstraint::ConeLocalDerivatives FrictionConeConstraint::computeConeLocalDerivatives(const vector3_t& localForces) const {
+  const auto F_x_square = localForces.x() * localForces.x();
+  const auto F_y_square = localForces.y() * localForces.y();
+  const auto F_tangent_square = F_x_square + F_y_square + regularization_;
+  const auto F_tangent_norm = sqrt(F_tangent_square);
+  const auto F_tangent_square_pow32 = F_tangent_norm * F_tangent_square;  // = F_tangent_square ^ (3/2)
 
   ConeLocalDerivatives coneDerivatives{};
-  coneDerivatives.dCone_dF(0) = -localForces.x() / F_norm;
-  coneDerivatives.dCone_dF(1) = -localForces.y() / F_norm;
+  coneDerivatives.dCone_dF(0) = -localForces.x() / F_tangent_norm;
+  coneDerivatives.dCone_dF(1) = -localForces.y() / F_tangent_norm;
   coneDerivatives.dCone_dF(2) = frictionCoefficient_;
 
-  coneDerivatives.d2Cone_dF2(0, 0) = -(localForces.y() * localForces.y() + regularization_) / F_norm32;
-  coneDerivatives.d2Cone_dF2(0, 1) = localForces.x() * localForces.y() / F_norm32;
+  coneDerivatives.d2Cone_dF2(0, 0) = -(F_y_square + regularization_) / F_tangent_square_pow32;
+  coneDerivatives.d2Cone_dF2(0, 1) = localForces.x() * localForces.y() / F_tangent_square_pow32;
   coneDerivatives.d2Cone_dF2(0, 2) = 0.0;
   coneDerivatives.d2Cone_dF2(1, 0) = coneDerivatives.d2Cone_dF2(0, 1);
-  coneDerivatives.d2Cone_dF2(1, 1) = -(localForces.x() * localForces.x() + regularization_) / F_norm32;
+  coneDerivatives.d2Cone_dF2(1, 1) = -(F_x_square + regularization_) / F_tangent_square_pow32;
   coneDerivatives.d2Cone_dF2(1, 2) = 0.0;
   coneDerivatives.d2Cone_dF2(2, 0) = 0.0;
   coneDerivatives.d2Cone_dF2(2, 1) = 0.0;
@@ -106,25 +109,26 @@ FrictionConeConstraint::ConeLocalDerivatives FrictionConeConstraint::computeCone
   return coneDerivatives;
 }
 
-scalar_t FrictionConeConstraint::coneConstraint(const LocalForces& localForces) const {
-  const auto F_tangent = localForces.x() * localForces.x() + localForces.y() * localForces.y() + regularization_;
-  const auto F_norm = sqrt(F_tangent);
+scalar_t FrictionConeConstraint::coneConstraint(const vector3_t& localForces) const {
+  const auto F_tangent_square = localForces.x() * localForces.x() + localForces.y() * localForces.y() + regularization_;
+  const auto F_tangent_norm = sqrt(F_tangent_square);
 
-  return frictionCoefficient_ * (localForces.z() + gripperForce_) - F_norm;
+  return frictionCoefficient_ * (localForces.z() + gripperForce_) - F_tangent_norm;
 }
 
 FrictionConeConstraint::ConeDerivatives FrictionConeConstraint::computeConeConstraintDerivatives(
     const ConeLocalDerivatives& coneLocalDerivatives, const LocalForceDerivatives& localForceDerivatives) const {
   ConeDerivatives coneDerivatives;
   // First order derivatives
-  coneDerivatives.dCone_deuler = coneLocalDerivatives.dCone_dF.transpose() * localForceDerivatives.dF_deuler;
-  coneDerivatives.dCone_du = coneLocalDerivatives.dCone_dF.transpose() * localForceDerivatives.dF_du;
+  coneDerivatives.dCone_deuler.noalias() = coneLocalDerivatives.dCone_dF.transpose() * localForceDerivatives.dF_deuler;
+  coneDerivatives.dCone_du.noalias() = coneLocalDerivatives.dCone_dF.transpose() * localForceDerivatives.dF_du;
 
   // Second order derivatives
-  coneDerivatives.d2Cone_du2 = localForceDerivatives.dF_du.transpose() * coneLocalDerivatives.d2Cone_dF2 * localForceDerivatives.dF_du;
-  coneDerivatives.d2Cone_deuler2 =
+  coneDerivatives.d2Cone_du2.noalias() =
+      localForceDerivatives.dF_du.transpose() * coneLocalDerivatives.d2Cone_dF2 * localForceDerivatives.dF_du;
+  coneDerivatives.d2Cone_deuler2.noalias() =
       localForceDerivatives.dF_deuler.transpose() * coneLocalDerivatives.d2Cone_dF2 * localForceDerivatives.dF_deuler;
-  coneDerivatives.d2Cone_dudeuler =
+  coneDerivatives.d2Cone_dudeuler.noalias() =
       localForceDerivatives.dF_du.transpose() * coneLocalDerivatives.d2Cone_dF2 * localForceDerivatives.dF_deuler;
 
   return coneDerivatives;

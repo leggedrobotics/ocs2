@@ -43,7 +43,7 @@ class FootPhase {
  */
 class StancePhase final : public FootPhase {
  public:
-  StancePhase(const TerrainPlane& stanceTerrain, scalar_t positionGain);
+  StancePhase(const TerrainPlane& stanceTerrain, scalar_t positionGain = 0.0);
   ~StancePhase() override = default;
 
   bool contactFlag() const override { return true; };
@@ -67,7 +67,7 @@ class SwingPhase final : public FootPhase {
     const TerrainPlane* terrainPlane;
   };
 
-  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, scalar_t positionGain);
+  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, scalar_t positionGain = 0.0);
   ~SwingPhase() override = default;
 
   bool contactFlag() const override { return false; };

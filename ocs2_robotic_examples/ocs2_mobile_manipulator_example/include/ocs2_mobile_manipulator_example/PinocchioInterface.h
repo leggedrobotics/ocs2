@@ -90,7 +90,6 @@ class PinocchioInterface {
    * TODO(perry) make this const by caching or mutabling the robotData_
    */
   Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
-  Eigen::Matrix<SCALAR, 3, 1> getBodyPositionInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
   /**
    * Prints some debug info of the pinocchio model.

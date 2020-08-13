@@ -3,7 +3,9 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /MarkerArray1
+        - /PoseArray1
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz/Selection
@@ -99,7 +101,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        world:
+        base:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -130,6 +132,10 @@ Visualization Manager:
           Value: true
         arm_base_inertia:
           Value: true
+        base:
+          Value: true
+        command:
+          Value: true
         world:
           Value: true
       Marker Scale: 1
@@ -139,17 +145,44 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          arm_base:
-            SHOULDER:
-              ARM:
-                ELBOW:
-                  FOREARM:
-                    WRIST_1:
-                      WRIST_2:
-                        {}
-            arm_base_inertia:
-              {}
+          base:
+            arm_base:
+              SHOULDER:
+                ARM:
+                  ELBOW:
+                    FOREARM:
+                      WRIST_1:
+                        WRIST_2:
+                          {}
+              arm_base_inertia:
+                {}
+          command:
+            {}
       Update Interval: 0
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /mobile_manipulator/optimizedStateTrajectory
+      Name: MarkerArray
+      Namespaces:
+        Base Trajectory: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.10000000149011612
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Axes
+      Topic: /mobile_manipulator/optimizedPoseTrajectory
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
@@ -179,7 +212,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10
+      Distance: 5.187254905700684
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

@@ -45,7 +45,7 @@ class MobileManipulatorCost final : public ocs2::CostFunctionBaseAD {
   ~MobileManipulatorCost() override = default;
 
   /* Copy constructor */
-  MobileManipulatorCost(const MobileManipulatorCost& rhs) : ocs2::CostFunctionBaseAD(rhs) {
+  MobileManipulatorCost(const MobileManipulatorCost& rhs) : ocs2::CostFunctionBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_) {
     pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
   }
 

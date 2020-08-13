@@ -53,17 +53,6 @@ Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::stri
 }
 
 template <typename SCALAR>
-Eigen::Matrix<SCALAR, 3, 1> PinocchioInterface<SCALAR>::getBodyPositionInWorldFrame(const std::string bodyName,
-                                                                                    const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  pinocchio::JointIndex bodyId = robotModel_->getBodyId(bodyName);
-
-  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
-  pinocchio::updateFramePlacements(*robotModel_, robotData_);
-
-  return robotData_.oMf[bodyId].translation();
-}
-
-template <typename SCALAR>
 void PinocchioInterface<SCALAR>::display() {
   const auto& model = getModel();
   std::cout << "model.nv = " << model.nv << '\n';

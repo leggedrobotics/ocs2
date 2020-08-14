@@ -2,7 +2,7 @@
 
 // Constraints
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
-#include "ocs2_switched_model_interface/constraint/FootNormalContraint.h"
+#include "ocs2_switched_model_interface/constraint/FootNormalConstraint.h"
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 
@@ -110,16 +110,25 @@ void ComKinoConstraintBaseAd::timeUpdate(scalar_t t) {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 vector_t ComKinoConstraintBaseAd::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
   timeUpdate(t);
   return equalityStateInputConstraintCollection_.getValueAsVector(t, x, u);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 vector_t ComKinoConstraintBaseAd::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
   timeUpdate(t);
   return inequalityConstraintCollection_.getValueAsVector(t, x, u);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation ComKinoConstraintBaseAd::stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
                                                                                                            const vector_t& u) {
   timeUpdate(t);
@@ -133,6 +142,9 @@ VectorFunctionLinearApproximation ComKinoConstraintBaseAd::stateInputEqualityCon
   return g;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionQuadraticApproximation ComKinoConstraintBaseAd::inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                          const vector_t& u) {
   timeUpdate(t);

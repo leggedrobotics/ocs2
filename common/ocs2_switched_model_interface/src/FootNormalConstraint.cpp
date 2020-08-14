@@ -2,7 +2,7 @@
 // Created by rgrandia on 29.04.20.
 //
 
-#include <ocs2_switched_model_interface/constraint/FootNormalContraint.h>
+#include <ocs2_switched_model_interface/constraint/FootNormalConstraint.h>
 
 namespace switched_model {
 

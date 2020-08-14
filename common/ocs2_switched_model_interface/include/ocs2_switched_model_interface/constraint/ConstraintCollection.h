@@ -20,8 +20,6 @@ namespace ocs2 {
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class ConstraintCollection {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;

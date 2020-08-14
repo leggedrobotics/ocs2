@@ -57,7 +57,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
                         ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, adfunc_t adfunc, bool generateModels,
                         bool loadModels = true);
 
-  ~EndEffectorConstraint() = default;
+  ~EndEffectorConstraint() override = default;
 
   //! Note: Since the constructors are based on a copy we do not regenerate/generate the models
   EndEffectorConstraint(const EndEffectorConstraint& rhs);

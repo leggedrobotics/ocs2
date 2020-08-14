@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_bear_mpc");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalBearInterface(anymal::getTaskFilePathBear(taskName));
+  auto anymalInterface = anymal::getAnymalBearInterface(anymal::getTaskFileFolderBear(taskName));
   ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathBear(taskName));
   ocs2::ddp::Settings ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathBear(taskName));
   quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, ddpSettings);

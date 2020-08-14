@@ -34,8 +34,8 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
     const auto y0 = frictionConeConstraint.getValue(t, x0, u0).front();
     auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x0, u0);
 
-    switched_model::dynamic_vector_t data(N);
-    switched_model::dynamic_matrix_t regressor(N, 6 + 6 + 6 + 9);
+    switched_model::vector_t data(N);
+    switched_model::matrix_t regressor(N, 6 + 6 + 6 + 9);
     TestedConstraint::state_vector_t dx = TestedConstraint::state_vector_t::Zero();
     TestedConstraint::input_vector_t du = TestedConstraint::input_vector_t::Zero();
     for (int i = 0; i < N; i++) {
@@ -46,8 +46,8 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
       du.segment<3>(3 * legNumber) = dF;
       switched_model::vector6_t dz;
       dz << dEuler, dF;
-      const switched_model::dynamic_matrix_t quadTerms = dz * dz.transpose();
-      switched_model::dynamic_vector_t quadTermsVector(6 + 6 + 9);
+      const switched_model::matrix_t quadTerms = dz * dz.transpose();
+      switched_model::vector_t quadTermsVector(6 + 6 + 9);
       int count = 0;
       for (int p = 0; p < 6; ++p) {
         for (int q = p; q < 6; ++q) {
@@ -64,11 +64,11 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
       data(i) = (frictionConeConstraint.getValue(t, x0 + dx, u0 + du).front() - y0);
     }
 
-    switched_model::dynamic_vector_t dh_emperical = regressor.colPivHouseholderQr().solve(data);
+    switched_model::vector_t dh_emperical = regressor.colPivHouseholderQr().solve(data);
     dh_emperical /= eps;
     dh_emperical.tail<6 + 6 + 9>() /= eps;
 
-    switched_model::dynamic_matrix_t quadTerms(6, 6);
+    switched_model::matrix_t quadTerms(6, 6);
     int count = 0;
     for (int p = 0; p < 6; ++p) {
       for (int q = p; q < 6; ++q) {

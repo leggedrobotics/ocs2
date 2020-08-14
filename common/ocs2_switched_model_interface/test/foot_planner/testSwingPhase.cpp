@@ -16,18 +16,18 @@ TEST(TestSwingPhase, flatTerrainSwing) {
 
   SwingPhase swingPhase(liftOff, midHeight, touchdown);
 
-  auto startConstraint = swingPhase.getFootNormalConstraintInWorldFrame(liftOff.time, 0.0);
+  auto startConstraint = swingPhase.getFootNormalConstraintInWorldFrame(liftOff.time);
   ASSERT_TRUE(startConstraint.velocityMatrix.isApprox(surfaceNormalInWorld((flatTerrain)).transpose()));
   ASSERT_DOUBLE_EQ(startConstraint.positionMatrix.norm(), 0.0);
-  ASSERT_LT(std::abs(startConstraint.constant+liftOff.velocity), 1e-9);
+  ASSERT_LT(std::abs(startConstraint.constant + liftOff.velocity), 1e-9);
 
-  auto midConstraint = swingPhase.getFootNormalConstraintInWorldFrame(0.5*(liftOff.time+touchdown.time), 0.0);
+  auto midConstraint = swingPhase.getFootNormalConstraintInWorldFrame(0.5 * (liftOff.time + touchdown.time));
   ASSERT_TRUE(midConstraint.velocityMatrix.isApprox(surfaceNormalInWorld((flatTerrain)).transpose()));
   ASSERT_DOUBLE_EQ(midConstraint.positionMatrix.norm(), 0.0);
   ASSERT_LT(std::abs(midConstraint.constant), 1e-9);
 
-  auto endConstraint = swingPhase.getFootNormalConstraintInWorldFrame(touchdown.time, 0.0);
+  auto endConstraint = swingPhase.getFootNormalConstraintInWorldFrame(touchdown.time);
   ASSERT_TRUE(endConstraint.velocityMatrix.isApprox(surfaceNormalInWorld((flatTerrain)).transpose()));
   ASSERT_DOUBLE_EQ(endConstraint.positionMatrix.norm(), 0.0);
-  ASSERT_LT(std::abs(endConstraint.constant+touchdown.velocity), 1e-9);
+  ASSERT_LT(std::abs(endConstraint.constant + touchdown.velocity), 1e-9);
 }

@@ -37,9 +37,9 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
   }
 }
 
-FootNormalConstraintMatrix SwingTrajectoryPlanner::getNormalDirectionConstraint(size_t leg, scalar_t time) const {
+const FootPhase& SwingTrajectoryPlanner::getFootPhase(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetNormalTrajectoriesEvents_[leg], time);
-  return feetNormalTrajectories_[leg][index]->getFootNormalConstraintInWorldFrame(time, settings_.errorGain);
+  return *feetNormalTrajectories_[leg][index];
 }
 
 auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const
@@ -60,7 +60,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
-    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown));
+    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, settings_.errorGain));
   }
 
   // Loop through contact phases
@@ -77,7 +77,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     if (hasStartTime(currentContactTiming)) {
       eventTimes.push_back(currentContactTiming.start);
     }
-    footPhases.emplace_back(new StancePhase(nominalFoothold));
+    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain));
 
     // generate swing phase afterwards if the current contact is finite and ends before the horizon
     if (hasEndTime(currentContactTiming) && currentContactTiming.end < finalTime) {
@@ -94,7 +94,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       liftOff.velocity *= scaling;
       touchDown.velocity *= scaling;
       eventTimes.push_back(currentContactTiming.end);
-      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown));
+      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, settings_.errorGain));
     }
   }
 
@@ -137,7 +137,7 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
       const auto nominalFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
 
-      nominalFootholdTerrain.push_back(terrainModel.getLocalTerrainAtPositionInWorld(nominalFootholdPositionInWorld));
+      nominalFootholdTerrain.push_back(terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(nominalFootholdPositionInWorld));
     }
   }
 
@@ -147,7 +147,7 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
 void SwingTrajectoryPlanner::updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition,
                                                const TerrainModel& terrainModel) {
   // Get orientation from terrain model, position from the kinematics
-  auto lastContactTerrain = terrainModel.getLocalTerrainAtPositionInWorld(currentFootPosition);
+  auto lastContactTerrain = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(currentFootPosition);
   lastContactTerrain.positionInWorld = currentFootPosition;
   lastContacts_[leg] = {expectedLiftOff, lastContactTerrain};
 }

@@ -48,9 +48,13 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
-  vector_t uNominal;
   const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
+  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
   inputFromContactFlags(contactFlags, xNominal, uNominal);
+  // TODO (mspieler) : Same issue as in next function.
+  if (uNominal.isZero()) {
+    inputFromContactFlags(contactFlags, xNominal, uNominal);
+  }
 
   vector_t xDeviation = x - xNominal;
   vector_t uDeviation = u - uNominal;
@@ -68,9 +72,14 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
-  vector_t uNominal;
   const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
-  inputFromContactFlags(contactFlags, xNominal, uNominal);
+  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  // If the input has non-zero values, don't overwrite it.
+  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
+  // TODO (mspieler) : uNominal is always updated by costDesiredTrajectories.
+  if (uNominal.isZero()) {
+    inputFromContactFlags(contactFlags, xNominal, uNominal);
+  }
 
   vector_t xDeviation = x - xNominal;
   vector_t uDeviation = u - uNominal;

@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 
       ros::spinOnce(); // Spin before commanding, to receive latest observation and terrain.
       poseCommandPublisher.publishCostDesiredFromCommand(command);
-    } catch (...) {
+    } catch (const std::invalid_argument& e) { // possibly thrown by std::stof
       std::cout << "Invalid command : " << inputString << std::endl;
     }
   }

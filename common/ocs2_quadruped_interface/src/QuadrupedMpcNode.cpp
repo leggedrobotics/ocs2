@@ -9,9 +9,9 @@
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
-#include <ocs2_quadruped_interface/LocalTerrainVisualizer.h>
 #include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
+#include <ocs2_quadruped_interface/TerrainPlaneVisualizer.h>
 
 namespace switched_model {
 
@@ -27,9 +27,9 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   solverModules.push_back(gaitReceiver);
 
   // Terrain
-  auto localTerrainVisualizer =
-      std::make_shared<LocalTerrainVisualizer>(quadrupedInterface.getModeScheduleManagerPtr()->getTerrainPtr(), nodeHandle);
-  solverModules.push_back(localTerrainVisualizer);
+  auto terrainVisualizer = std::make_shared<TerrainPlaneVisualizerSynchronizedModule>(
+      quadrupedInterface.getModeScheduleManagerPtr()->getTerrainPtr(), nodeHandle);
+  solverModules.push_back(terrainVisualizer);
 
   // Swing planner
   auto swingPlanningVisualizer =

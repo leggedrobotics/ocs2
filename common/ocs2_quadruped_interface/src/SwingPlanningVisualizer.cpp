@@ -40,7 +40,7 @@ void SwingPlanningVisualizer::preSolverRun(scalar_t initTime, scalar_t finalTime
       poseArray.poses.push_back(std::move(pose));
     });
 
-    poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
+    poseArray.header = getHeaderMsg(frameId_, timeStamp);
     nominalFootholdPublishers_[leg].publish(poseArray);
   }
 }

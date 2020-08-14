@@ -83,7 +83,7 @@ slq
     checkNumericalStability          0
     debugPrintRollout                0
     debugCaching                     0
-    
+
     AbsTolODE                        1e-5
     RelTolODE                        1e-3
     maxNumStepsPerSecond             10000
@@ -99,7 +99,7 @@ slq
     riskSensitiveCoeff               0
 
     strategy                         LINE_SEARCH
-    lineSearch                       
+    lineSearch
     {
         minStepLength                1e-4
         maxStepLength                1.0

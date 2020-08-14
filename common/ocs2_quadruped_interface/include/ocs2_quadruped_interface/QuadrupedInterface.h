@@ -26,18 +26,14 @@ class QuadrupedInterface : public ocs2::RobotInterface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using com_model_t = ComModelBase<double>;
-  using kinematic_model_t = KinematicsModelBase<double>;
+  using com_model_t = ComModelBase<scalar_t>;
+  using kinematic_model_t = KinematicsModelBase<scalar_t>;
 
-  using ad_base_t = CppAD::cg::CG<double>;
-  using ad_scalar_t = CppAD::AD<ad_base_t>;
+  using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = dimension_t::scalar_t;
-  using scalar_array_t = dimension_t::scalar_array_t;
-  using size_array_t = dimension_t::size_array_t;
   using state_vector_t = dimension_t::state_vector_t;
   using state_matrix_t = dimension_t::state_matrix_t;
   using input_matrix_t = dimension_t::input_matrix_t;
@@ -90,15 +86,12 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Loads {Q, R, Q_final} from file and maps R to taskspace of the initial state */
   static std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> loadCostMatrices(const std::string& pathToConfigFile,
                                                                                      const kinematic_model_t& kinematicModel,
-                                                                                     state_vector_t initialState);
-
-  const std::string& getConfigFile() const { return configFile_; }
+                                                                                     const state_vector_t& initialState);
 
  private:
   /** Load the general quadruped settings from file. */
   void loadSettings(const std::string& pathToConfigFile);
 
-  std::string configFile_;
   ocs2::rollout::Settings rolloutSettings_;
   ModelSettings modelSettings_;
 

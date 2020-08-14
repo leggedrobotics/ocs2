@@ -104,7 +104,7 @@ void QuadrupedVisualizer::publishJointTransforms(ros::Time timeStamp, const join
 
 void QuadrupedVisualizer::publishBaseTransform(ros::Time timeStamp, const base_coordinate_t& basePose) {
   geometry_msgs::TransformStamped baseToWorldTransform;
-  baseToWorldTransform.header = getHeaderMsg(originFrameId_, timeStamp);
+  baseToWorldTransform.header = getHeaderMsg(frameId_, timeStamp);
   baseToWorldTransform.child_frame_id = "base";
 
   const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(getOrientation(basePose));
@@ -148,7 +148,7 @@ void QuadrupedVisualizer::publishCartesianMarkers(ros::Time timeStamp, const con
       getSupportPolygonMarker(feetPosition.begin(), feetPosition.end(), contactFlags.begin(), Color::black, supportPolygonLineWidth_));
 
   // Give markers an id and a frame
-  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(originFrameId_, timeStamp));
+  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(frameId_, timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
 
   // Publish cartesian markers (minus the CoM Pose)
@@ -161,7 +161,7 @@ void QuadrupedVisualizer::publishCenterOfMassPose(ros::Time timeStamp, const bas
   pose.orientation = getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(comPose)));
 
   geometry_msgs::PoseArray poseArray;
-  poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
+  poseArray.header = getHeaderMsg(frameId_, timeStamp);
   poseArray.poses.push_back(std::move(pose));
 
   currentPosePublisher_.publish(poseArray);
@@ -207,10 +207,10 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 
   // Headers
   auto comLineMsg = getLineMsg(std::move(desiredComPositionMsg), Color::green, trajectoryLineWidth_);
-  comLineMsg.header = getHeaderMsg(originFrameId_, timeStamp);
+  comLineMsg.header = getHeaderMsg(frameId_, timeStamp);
   comLineMsg.id = 0;
-  poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
-  assignHeader(feetPoseArrays.begin(), feetPoseArrays.end(), getHeaderMsg(originFrameId_, timeStamp));
+  poseArray.header = getHeaderMsg(frameId_, timeStamp);
+  assignHeader(feetPoseArrays.begin(), feetPoseArrays.end(), getHeaderMsg(frameId_, timeStamp));
 
   // Publish
   costDesiredPublisher_.publish(comLineMsg);
@@ -310,10 +310,10 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   markerArray.markers.push_back(std::move(sphereList));
 
   // Add headers and Id
-  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(originFrameId_, timeStamp));
+  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg(frameId_, timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
-  poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
-  assignHeader(feetPoseMsgs.begin(), feetPoseMsgs.end(), getHeaderMsg(originFrameId_, timeStamp));
+  poseArray.header = getHeaderMsg(frameId_, timeStamp);
+  assignHeader(feetPoseMsgs.begin(), feetPoseMsgs.end(), getHeaderMsg(frameId_, timeStamp));
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
@@ -326,7 +326,7 @@ void QuadrupedVisualizer::publishEndEffectorPoses(ros::Time timeStamp, const fee
                                                   const feet_array_t<Eigen::Quaternion<scalar_t>>& feetOrientations) const {
   // Feet positions and Forces
   geometry_msgs::PoseArray poseArray;
-  poseArray.header = getHeaderMsg(originFrameId_, timeStamp);
+  poseArray.header = getHeaderMsg(frameId_, timeStamp);
   for (int i = 0; i < NUM_CONTACT_POINTS; ++i) {
     geometry_msgs::Pose pose;
     pose.position = getPointMsg(feetPositions[i]);

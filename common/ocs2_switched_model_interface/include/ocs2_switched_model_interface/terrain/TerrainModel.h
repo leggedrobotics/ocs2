@@ -9,6 +9,9 @@
 
 namespace switched_model {
 
+/**
+ * This abstract class defines the interface for terrain models.
+ */
 class TerrainModel {
  public:
   TerrainModel() = default;
@@ -16,7 +19,8 @@ class TerrainModel {
   TerrainModel(const TerrainModel&) = delete;
   TerrainModel& operator=(const TerrainModel&) = delete;
 
-  virtual TerrainPlane getLocalTerrainAtPositionInWorld(const vector3_t& positionInWorld) const = 0;
+  /** Returns a linear approximation of the terrain at the query point projected along gravity onto the terrain  */
+  virtual TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const = 0;
 };
 
-}
+}  // namespace switched_model

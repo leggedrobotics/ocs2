@@ -14,6 +14,14 @@
 
 namespace switched_model {
 
+/**
+ * Implements the swing motion equality constraint in the normal direction of the terrain.
+ *
+ * The constraint is a hybrid position-velocity constraint formulated in task space:
+ * A_p * p + A_v * v + b = 0
+ *
+ * The derivative of the end-effector velocity and position w.r.t the joint space is generated with auto-differentation.
+ */
 class FootNormalConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
   static constexpr size_t domain_dim_ = 1 + STATE_DIM + INPUT_DIM;
 

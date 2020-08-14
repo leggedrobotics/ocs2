@@ -32,7 +32,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   using kinematic_model_t = KinematicsModelBase<scalar_t>;
 
   /** Visualization settings (publicly available) */
-  std::string originFrameId_ = "world";       // Frame name all messages are published in
+  std::string frameId_ = "world";             // Frame name all messages are published in
   scalar_t footMarkerDiameter_ = 0.03;        // Size of the spheres at the feet
   scalar_t footAlphaWhenLifted_ = 0.3;        // Alpha value when a foot is lifted.
   scalar_t forceScale_ = 1000.0;              // Vector scale in N/m

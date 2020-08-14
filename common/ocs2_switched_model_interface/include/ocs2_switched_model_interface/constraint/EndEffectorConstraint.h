@@ -1,9 +1,10 @@
 #pragma once
 
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 #include <Eigen/Core>
 #include <memory>
+
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>

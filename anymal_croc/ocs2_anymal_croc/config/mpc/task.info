@@ -33,6 +33,8 @@ model_settings
     liftOffVelocity             0.2
     touchDownVelocity           -0.4
     swingHeight                 0.1
+    touchdownAfterHorizon       0.2
+    errorGain                   5.0
     swingTimeScale              0.15
   }
 
@@ -41,6 +43,22 @@ model_settings
   gaitOptimization              0
 
   recompileLibraries            1
+}
+
+terrainPlane
+{
+  position
+  {
+    x       0.0;
+    y       0.0;
+    z       0.0;
+  }
+  orientation
+  {
+    roll    0.0;
+    pitch   0.0;
+    yaw     0.0;
+  }
 }
 
 initialModeSchedule
@@ -176,7 +194,7 @@ initialRobotState
    ; position
    (3,0) 0.0     ; x
    (4,0) 0.0     ; y
-   (5,0) 0.5163  ; z
+   (5,0) 0.57    ; z
 
    ; joint state
    (6,0)  -0.25; -0.2      ; LF_HAA

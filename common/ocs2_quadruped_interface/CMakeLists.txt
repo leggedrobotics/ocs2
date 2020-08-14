@@ -9,6 +9,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_comm_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface
+  ocs2_anymal_commands
   roscpp
   tf
   kdl_parser
@@ -61,6 +62,8 @@ add_library(${PROJECT_NAME}
   src/QuadrupedVisualizationHelpers.cpp
   src/QuadrupedVisualizer.cpp
   src/QuadrupedWheeledInterface.cpp
+  src/SwingPlanningVisualizer.cpp
+  src/TerrainPlaneVisualizer.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

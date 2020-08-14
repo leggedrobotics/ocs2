@@ -78,6 +78,19 @@ visualization_msgs::Marker getSphereMsg(const Eigen::Vector3d& point, Color colo
   return sphere;
 }
 
+visualization_msgs::Marker getPlaneMsg(const Eigen::Vector3d& point, const Eigen::Quaterniond& orientation, Color color, double width,
+                                       double length, double thickness) {
+  visualization_msgs::Marker plane;
+  plane.type = visualization_msgs::Marker::CUBE;
+  plane.pose.position = getPointMsg(point);
+  plane.pose.orientation = getOrientationMsg(orientation);
+  plane.scale.x = length;
+  plane.scale.y = width;
+  plane.scale.z = thickness;
+  plane.color = getColor(color);
+  return plane;
+}
+
 visualization_msgs::Marker getArrowToPointMsg(const Eigen::Vector3d& vec, const Eigen::Vector3d& point, Color color) {
   visualization_msgs::Marker arrow;
   arrow.type = visualization_msgs::Marker::ARROW;

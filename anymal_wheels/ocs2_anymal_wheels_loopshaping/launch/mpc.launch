@@ -1,6 +1,6 @@
 <launch>
     <arg name="rviz"       default="true" />
-    <arg name="task_name"  default="mpc_augmented"/>
+    <arg name="task_name"  default="mpc"/>
     <arg name="description_name"      default="ocs2_anymal_description"/>
     <arg name="target_command"        default="$(find ocs2_anymal_wheels_loopshaping)/config/commands/targetCommand.info"/>
 

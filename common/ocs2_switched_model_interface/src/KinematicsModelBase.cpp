@@ -113,6 +113,23 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityInFootFrame(siz
   return foot_R_b * b_footVelocity;
 }
 
+///******************************************************************************************************/
+///******************************************************************************************************/
+///******************************************************************************************************/
+template <typename SCALAR_T>
+std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR_T>::feetVelocitiesInOriginFrame(
+    const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
+    const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const {
+  matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePoseInOriginFrame));
+  vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePoseInOriginFrame);
+
+  std::array<vector3_s_t<SCALAR_T>, 4> feetVelocitiesInOriginFrame;
+  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
+    feetVelocitiesInOriginFrame[i] = o_R_b * footVelocityInBaseFrame(i, baseTwistInBaseFrame, jointPositions, jointVelocities);
+  }
+  return feetVelocitiesInOriginFrame;
+}
+
 template class KinematicsModelBase<scalar_t>;
 template class KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 

@@ -52,6 +52,9 @@ geometry_msgs::Quaternion getOrientationMsg(const Eigen::Quaterniond& orientatio
 
 visualization_msgs::Marker getSphereMsg(const Eigen::Vector3d& point, Color color, double diameter);
 
+visualization_msgs::Marker getPlaneMsg(const Eigen::Vector3d& point, const Eigen::Quaterniond& orientation, Color color, double width,
+                                       double length, double thickness);
+
 visualization_msgs::Marker getArrowToPointMsg(const Eigen::Vector3d& vec, const Eigen::Vector3d& point, Color color);
 
 visualization_msgs::Marker getFootMarker(const Eigen::Vector3d& position, bool contactFlag, Color color, double diameter,

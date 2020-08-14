@@ -65,6 +65,10 @@ class KinematicsModelBase {
   vector3_s_t<SCALAR_T> footVelocityInFootFrame(size_t footIndex, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointPositions,
                                                 const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+
+  std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> feetVelocitiesInOriginFrame(
+      const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
+      const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
 };
 
 extern template class KinematicsModelBase<scalar_t>;

@@ -70,9 +70,10 @@ inline vector3_t positionInWorldFrameFromPositionInTerrain(const vector3_t& posi
   return terrainPlane.orientationWorldToTerrain.transpose() * positionInTerrain + terrainPlane.positionInWorld;
 }
 
-/** Returns the z-direction distance between the terrain origin and a 3D point represented in world frame. */
-inline scalar_t terrainDistanceAlongGravityFromPositionInWorld(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
-  return positionInTerrainFrameFromPositionInWorld(positionWorld, terrainPlane).z();
+/** Returns the orthogonal signed distance between the terrain a 3D point represented in world frame. */
+inline scalar_t terrainSignedDistanceFromPositionInWorld(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
+  const vector3_t surfaceNormal = surfaceNormalInWorld(terrainPlane);
+  return surfaceNormal.dot(positionWorld - terrainPlane.positionInWorld);
 }
 
 /** Returns the orthogonal projection onto the terrain plane for a 3D position in world. The returned position is in world frame */

@@ -3,7 +3,7 @@ project(ocs2_switched_model_interface)
 
 ## Catkin Dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
-  roslib
+  roscpp
   ocs2_core
   ocs2_msgs
   ocs2_oc
@@ -42,16 +42,21 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/constraint/FrictionConeConstraint.cpp
 	src/foot_planner/CubicSpline.cpp
+	src/foot_planner/FootPhase.cpp
 	src/foot_planner/SplineCpg.cpp
 	src/foot_planner/SwingTrajectoryPlanner.cpp
+	src/logic/Gait.cpp
 	src/logic/GaitReceiver.cpp
 	src/logic/GaitSchedule.cpp
 	src/logic/ModeSequenceTemplate.cpp
+	src/logic/SingleLegLogic.cpp
 	src/logic/SwitchedModelModeScheduleManager.cpp
 	src/terrain/PlanarTerrainModel.cpp
 	src/terrain/TerrainPlane.cpp
 	src/EndEffectorConstraint.cpp
+	src/FootNormalConstraint.cpp
 	src/ComKinoConstraintBaseAd.cpp
 	src/AnymalWheelsComKinoConstraintAd.cpp
 	src/ComKinoOperatingPointsBase.cpp
@@ -127,10 +132,39 @@ target_link_libraries(test_zeroForceConstraint
 )
 
 catkin_add_gtest(test_frictionConeConstraint
-	test/constraint/testFrictionConeConstraint.cpp)
+	test/constraint/testFrictionConeConstraint.cpp
+)
 target_link_libraries(test_frictionConeConstraint
 	${PROJECT_NAME}
 	${catkin_LIBRARIES}
+)
+
+catkin_add_gtest(test_${PROJECT_NAME}_core
+	test/core/testRotation.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_core
+	${PROJECT_NAME}
+	gtest_main
+)
+
+catkin_add_gtest(test_${PROJECT_NAME}_footplanner
+	test/foot_planner/testSwingPhase.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_footplanner
+	${PROJECT_NAME}
+	gtest_main
+)
+
+catkin_add_gtest(test_${PROJECT_NAME}_logic
+	test/logic/testExtractContractTimings.cpp
+	test/logic/testGait.cpp
+	test/logic/testGaitSwitching.cpp
+	test/logic/testGaitSchedule.cpp
+	test/logic/testSingleLegLogic.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_logic
+	${PROJECT_NAME}
+	gtest_main
 )
 
 catkin_add_gtest(test_${PROJECT_NAME}_terrain

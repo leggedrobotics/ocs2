@@ -1,112 +1,114 @@
-#include <ocs2_switched_model_interface/logic/GaitSchedule.h>
+//
+// Created by rgrandia on 15.03.20.
+//
 
-#include <ocs2_core/misc/Lookup.h>
+#include "ocs2_switched_model_interface/logic/GaitSchedule.h"
+
+#include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
+#include "ocs2_switched_model_interface/logic/GaitSwitching.h"
 
 namespace switched_model {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-GaitSchedule::GaitSchedule(ocs2::ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate,
-                           scalar_t phaseTransitionStanceTime)
-    : modeSchedule_(std::move(initModeSchedule)),
-      modeSequenceTemplate_(std::move(initModeSequenceTemplate)),
-      phaseTransitionStanceTime_(phaseTransitionStanceTime) {}
+GaitSchedule::GaitSchedule(scalar_t time, Gait gait) : time_(time), phase_(0.0), gaitSchedule_{std::move(gait)} {}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaitSchedule::insertModeSequenceTemplate(const ModeSequenceTemplate& modeSequenceTemplate, scalar_t startTime, scalar_t finalTime) {
-  modeSequenceTemplate_ = modeSequenceTemplate;
-  auto& eventTimes = modeSchedule_.eventTimes;
-  auto& modeSequence = modeSchedule_.modeSequence;
+void GaitSchedule::advanceToTime(scalar_t time) {
+  assert(time >= time_);
 
-  // find the index on which the new gait should be added
-  const size_t index = std::lower_bound(eventTimes.begin(), eventTimes.end(), startTime) - eventTimes.begin();
+  const scalar_t dt = time - time_;
+  std::deque<Gait>::iterator newActiveGait;
+  std::tie(phase_, newActiveGait) = advancePhase(phase_, dt, gaitSchedule_.begin(), gaitSchedule_.end());
+  time_ = time;
 
-  // delete the old logic from the index
-  if (index < eventTimes.size()) {
-    eventTimes.erase(eventTimes.begin() + index, eventTimes.end());
-    modeSequence.erase(modeSequence.begin() + index + 1, modeSequence.end());
+  // Remove gaits that have been completed.
+  while (newActiveGait != gaitSchedule_.begin()) {
+    gaitSchedule_.pop_front();
   }
-
-  // add an intermediate stance phase
-  scalar_t phaseTransitionStanceTime = phaseTransitionStanceTime_;
-  if (!modeSequence.empty() && modeSequence.back() == ModeNumber::STANCE) {
-    phaseTransitionStanceTime = 0.0;
-  }
-
-  if (phaseTransitionStanceTime > 0.0) {
-    eventTimes.push_back(startTime);
-    modeSequence.push_back(ModeNumber::STANCE);
-  }
-
-  // tile the mode sequence template from startTime+phaseTransitionStanceTime to finalTime.
-  tileModeSequenceTemplate(startTime + phaseTransitionStanceTime, finalTime);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t lowerBoundTime, scalar_t upperBoundTime) {
-  auto& eventTimes = modeSchedule_.eventTimes;
-  auto& modeSequence = modeSchedule_.modeSequence;
-  const size_t index = std::lower_bound(eventTimes.begin(), eventTimes.end(), lowerBoundTime) - eventTimes.begin();
-
-  if (index > 0) {
-    // delete the old logic from index and set the default start phase to stance
-    eventTimes.erase(eventTimes.begin(), eventTimes.begin() + index - 1);  // keep the one before the last to make it stance
-    modeSequence.erase(modeSequence.begin(), modeSequence.begin() + index - 1);
-
-    // set the default initial phase
-    modeSequence.front() = ModeNumber::STANCE;
-  }
-
-  // Start tiling at time
-  const auto tilingStartTime = eventTimes.empty() ? upperBoundTime : eventTimes.back();
-
-  // delete the last default stance phase
-  eventTimes.erase(eventTimes.end() - 1, eventTimes.end());
-  modeSequence.erase(modeSequence.end() - 1, modeSequence.end());
-
-  // tile the template logic
-  tileModeSequenceTemplate(tilingStartTime, upperBoundTime);
-  return modeSchedule_;
+void GaitSchedule::setNextGait(const Gait& gait) {
+  setGaitSequenceAfterCurrentGait({gait});
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaitSchedule::tileModeSequenceTemplate(scalar_t startTime, scalar_t finalTime) {
-  auto& eventTimes = modeSchedule_.eventTimes;
-  auto& modeSequence = modeSchedule_.modeSequence;
-  const auto& templateTimes = modeSequenceTemplate_.switchingTimes;
-  const auto& templateModeSequence = modeSequenceTemplate_.modeSequence;
-  const size_t numTemplateSubsystems = modeSequenceTemplate_.modeSequence.size();
+void GaitSchedule::setGaitSequenceAfterCurrentGait(const std::vector<Gait>& gaitSequence) {
+  gaitSchedule_.erase(gaitSchedule_.begin() + 1, gaitSchedule_.end());
+  gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
+}
 
-  // If no template subsystem is defined, the last subsystem should continue for ever
-  if (numTemplateSubsystems == 0) {
-    return;
+void GaitSchedule::setGaitAtTime(const Gait& gait, scalar_t time) {
+  setGaitSequenceAtTime({gait}, time);
+}
+
+void GaitSchedule::setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, scalar_t time) {
+  assert(time >= time_);
+
+  rolloutGaitScheduleTillTime(time);
+
+  scalar_t newPhase;
+  std::deque<Gait>::iterator newActiveGait;
+  std::tie(newPhase, newActiveGait) = advancePhase(phase_, time - time_, gaitSchedule_.begin(), gaitSchedule_.end());
+
+  // Shrink the gait that is active at "time", s.t. it ends at "time"
+  if (newActiveGait == gaitSchedule_.begin()) {
+    // Gait to shrink is already active. Determine new duration from the amount of time and phase left.
+    newActiveGait->duration = (time - time_) / (1.0 - phase_);
+  } else {
+    newActiveGait->duration *= newPhase;
   }
 
-  if (!eventTimes.empty() && startTime <= eventTimes.back()) {
-    throw std::runtime_error("The initial time for template-tiling is not greater than the last event time.");
+  gaitSchedule_.erase(newActiveGait + 1, gaitSchedule_.end());
+  gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
+}
+
+void GaitSchedule::setGaitAfterTime(const Gait& gait, scalar_t time) {
+  setGaitSequenceAfterTime({gait}, time);
+}
+
+void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, scalar_t time) {
+  assert(time >= time_);
+
+  rolloutGaitScheduleTillTime(time);
+
+  scalar_t newPhase;
+  std::deque<Gait>::iterator newActiveGait;
+  std::tie(newPhase, newActiveGait) = advancePhase(phase_, time - time_, gaitSchedule_.begin(), gaitSchedule_.end());
+
+  gaitSchedule_.erase(newActiveGait + 1, gaitSchedule_.end());
+  gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
+}
+
+void GaitSchedule::adaptCurrentGait(
+    const std::function<void(scalar_t& currentPhase, Gait& currentGait, scalar_t currTime, Gait& nextGait)>& gaitAdaptor) {
+  // Repeat the last gait until we have 3 gaits in the schedule. This prevents that the gaitAdaptor modifies the nominal gait.
+  while (gaitSchedule_.size() < 3) {
+    gaitSchedule_.push_back(gaitSchedule_.back());
   }
 
-  // add a initial time
-  eventTimes.push_back(startTime);
+  // Apply gait adaptation to the current and next gait
+  gaitAdaptor(phase_, gaitSchedule_.front(), time_, gaitSchedule_[1]);
+}
 
-  // concatenate from index
-  while (eventTimes.back() < finalTime) {
-    for (size_t i = 0; i < templateModeSequence.size(); i++) {
-      modeSequence.push_back(templateModeSequence[i]);
-      scalar_t deltaTime = templateTimes[i + 1] - templateTimes[i];
-      eventTimes.push_back(eventTimes.back() + deltaTime);
-    }  // end of i loop
-  }    // end of while loop
+ocs2::ModeSchedule GaitSchedule::getModeSchedule(scalar_t timeHorizon) const {
+  return ::switched_model::getModeSchedule(phase_, time_, timeHorizon, gaitSchedule_.begin(), gaitSchedule_.end());
+}
 
-  // default final phase
-  modeSequence.push_back(ModeNumber::STANCE);
+void GaitSchedule::rolloutGaitScheduleTillTime(scalar_t time) {
+  scalar_t tGaitEnd = time_ + timeLeftInGait(getCurrentPhase(), getCurrentGait());
+  auto gaitIt = gaitSchedule_.begin();
+  while (tGaitEnd < time) {
+    if (std::next(gaitIt) == gaitSchedule_.end()) {
+      // End of the schedule reached: make the repetition of the last gait explicit
+      gaitSchedule_.push_back(gaitSchedule_.back());
+      gaitIt = std::prev(gaitSchedule_.end(), 2);  // Iterator can be invalidated after push_back, so reset set explicitly.
+    }
+    tGaitEnd += gaitIt->duration;
+    ++gaitIt;
+  }
+}
+
+bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitSchedule) {
+  const auto modeSchedule = gaitSchedule.getModeSchedule(timeHorizon);
+  return std::all_of(modeSchedule.modeSequence.begin(), modeSchedule.modeSequence.end(),
+                     [](size_t mode) { return mode == ModeNumber::STANCE; });
 }
 
 }  // namespace switched_model

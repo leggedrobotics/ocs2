@@ -168,6 +168,9 @@ class PythonInterface {
     throw std::runtime_error("PythonInterface::visualizeTrajectory must be implemented by robot-specific derived class.");
   }
 
+ protected:
+  std::unique_ptr<PenaltyBase> penalty_;
+
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;
   std::unique_ptr<MPC_MRT_Interface> mpcMrtInterface_;
@@ -176,8 +179,6 @@ class PythonInterface {
   std::unique_ptr<ConstraintBase> constraints_;
   std::unique_ptr<CostFunctionBase> cost_;
   CostDesiredTrajectories targetTrajectories_;
-
-  std::unique_ptr<PenaltyBase> penalty_;
 };
 
 }  // namespace ocs2

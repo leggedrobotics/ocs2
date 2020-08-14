@@ -1,13 +1,6 @@
-
-mpcTimeHorizon
-{
-    timehorizon        1.0
-    numPartitions      2
-}
-
 model_settings
 {
-  constrainedIntegration        1
+  constrainedIntegration        true
 
   gravitationalAcceleration     9.81
 
@@ -15,16 +8,16 @@ model_settings
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
 
-  enforceFrictionConeConstraint 0
+  enforceFrictionConeConstraint false
   frictionCoefficient           0.7
 
-  enforceTorqueConstraint       0
+  enforceTorqueConstraint       false
   torqueLimit                   40.0
 
   swing_trajectory_settings
   {
     liftOffVelocity             0.2
-    touchDownVelocity           -0.4
+    touchDownVelocity          -0.4
     swingHeight                 0.1
     touchdownAfterHorizon       0.2
     errorGain                   5.0
@@ -33,9 +26,25 @@ model_settings
 
   mpcGoalCommandDelay           0.1
 
-  gaitOptimization              0
+  gaitOptimization              false
 
-  recompileLibraries            1
+  recompileLibraries            true
+}
+
+terrainPlane
+{
+  position
+  {
+    x       0.0;
+    y       0.0;
+    z       0.0;
+  }
+  orientation
+  {
+    roll    0.0;
+    pitch   0.0;
+    yaw     0.0;
+  }
 }
 
 initialModeSchedule
@@ -64,62 +73,67 @@ defaultModeSequenceTemplate
   }
 }
 
-slq
+; DDP settings
+ddp
 {
-  useNominalTimeForBackwardPass      1
-  RiccatiIntegratorType              ODE45
+  algorithm                       SLQ
 
-  ddp
+  nThreads                        3
+  threadPriority                  50
+
+  maxNumIterations                10
+  minRelCost                      0.1
+  constraintTolerance             5e-3
+
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
+
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            10000
+  minTimeStep                     1e-2
+  backwardPassIntegratorType      ODE45
+
+  constraintPenaltyInitialValue   2.0
+  constraintPenaltyIncreaseRate   2.0
+  inequalityConstraintMu          0.1
+  inequalityConstraintDelta       5.0
+
+  preComputeRiccatiTerms          true
+  useNominalTimeForBackwardPass   true
+
+  useFeedbackPolicy               true
+
+  riskSensitiveCoeff              0.0
+
+  strategy                        LINE_SEARCH
+  lineSearch
   {
-    nThreads                         3
-    threadPriority                   50
-
-    maxNumIterations                 10
-    minRelCost                       0.1
-    constraintTolerance              5e-3
-
-    displayInfo                      0
-    displayShortSummary              1
-    checkNumericalStability          0
-    debugPrintRollout                0
-    debugCaching                     0
-
-    AbsTolODE                        1e-5
-    RelTolODE                        1e-3
-    maxNumStepsPerSecond             10000
-    minTimeStep                      1e-2
-
-    constraintPenaltyInitialValue    2.0
-    constraintPenaltyIncreaseRate    2.0
-    inequalityConstraintDelta        5.0
-    inequalityConstraintMu           0.1
-
-    preComputeRiccatiTerms           1
-    useFeedbackPolicy                1
-    riskSensitiveCoeff               0
-
-    strategy                         LINE_SEARCH
-    lineSearch
-    {
-        minStepLength                1e-4
-        maxStepLength                1.0
-        hessianCorrectionStrategy    DIAGONAL_SHIFT
-        hessianCorrectionMultiple    1e-5
-    }
+      minStepLength                 1e-4
+      maxStepLength                 1.0
+      hessianCorrectionStrategy     DIAGONAL_SHIFT
+      hessianCorrectionMultiple     1e-5
   }
+}
 
-  rollout
-  {
-    AbsTolODE                        1e-5
-    RelTolODE                        1e-3
-    minTimeStep                      1e-2
-    maxNumStepsPerSecond             10000
-    checkNumericalStability          0
-  }
+; Rollout settings
+rollout
+{
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  minTimeStep                     1e-2
+  maxNumStepsPerSecond            10000
+  checkNumericalStability         false
 }
 
 mpc
 {
+  timeHorizon                     1.0
+  numPartitions                   2
+
   runtimeMaxNumIterations         1
   initMaxNumIterations            10
 
@@ -128,17 +142,17 @@ mpc
   initMinStepLength               1e-2
   initMaxStepLength               1.0
 
-  debugPrint                      0
-  coldStart                       0
+  debugPrint                      false
+  coldStart                       false
 
-  useParallelRiccatiSolver        1   ; use disjoint riccati solver in multi-thread case
+  useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
 
   solutionTimeWindow              500 ; [ms]
 
   mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
 
-  maxTimeStep                     10e-3
+  maxTimeStep                     1e-2
 }
 
 ; initial state

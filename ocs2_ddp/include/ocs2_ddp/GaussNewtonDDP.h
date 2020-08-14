@@ -309,6 +309,7 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [in] workerIndex: Working thread (default is 0).
    *
    * @return average time step.
@@ -316,7 +317,7 @@ class GaussNewtonDDP : public Solver_BASE {
   scalar_t rolloutTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
                              vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                             size_t workerIndex = 0);
+                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, size_t workerIndex = 0);
 
   /**
    * Display rollout info and scores.
@@ -324,41 +325,38 @@ class GaussNewtonDDP : public Solver_BASE {
   void printRolloutInfo() const;
 
   /**
-   * Calculates constraints ISE (Integral of Square Error).
+   * Evaluates cost and constraints along the given time trajectories.
    *
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] stateInputEqConstraintISE: The state-input equality constraints ISE.
-   * @param [out] stateEqConstraintISE: The state-only equality constraints ISE.
-   * @param [out] stateEqFinalConstraintSSE: The final state equality constraints Sum of Square Error (SSE).
-   * @param [out] inequalityConstraintISE: The inequality constraints ISE.
-   * @param [out] inequalityConstraintPenalty: The inequality constraints penalty.
+   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [out] modelDataEventTimesStock: Array of model data at event times.
+   * @param [out] heuristicsValue: The Heuristics function value.
    * @param [in] workerIndex: Working thread (default is 0).
-   *
-   * @return maximum norm of the constraints.
    */
-  void calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                      const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
-                                      scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE,
-                                      scalar_t& stateEqFinalConstraintSSE, scalar_t& inequalityConstraintISE,
-                                      scalar_t& inequalityConstraintPenalty, size_t workerIndex = 0);
+  void rolloutCostAndConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                 const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
+                                 std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                 std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue,
+                                 size_t workerIndex = 0);
 
   /**
-   * Calculates cost of the rollout.
+   * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-   * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+   * @param [in] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [in] modelDataEventTimesStock: Array of model data at event times.
+   * @param [in] heuristicsValue: The Heuristics function value.
    * @param [in] workerIndex: Working thread (default is 0).
    *
-   * @return The total cost of the rollout.
+   * @return The cost, merit function and ISEs of constraints for the trajectory.
    */
-  scalar_t calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
-                                size_t workerIndex = 0);
+  PerformanceIndex calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
+                                                    const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                                    const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
+                                                    scalar_t heuristicsValue, size_t workerIndex = 0);
 
   /**
    * Performs a full rollout of dynamics, cost, and constraints with a given step length.
@@ -371,6 +369,7 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] performanceIndex: The cost, merit function and ISEs of constraints for the trajectory.
    *
    * @return average time step.
@@ -378,7 +377,8 @@ class GaussNewtonDDP : public Solver_BASE {
   scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
                               scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                               vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                              std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex);
+                              std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                              std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, PerformanceIndex& performanceIndex);
 
   /**
    * Line search on the feedforward parts of the controller. It chooses the largest acceptable step-size.

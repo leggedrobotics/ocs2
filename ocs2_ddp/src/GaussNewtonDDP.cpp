@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <algorithm>
+#include <numeric>
+
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Lookup.h>
@@ -538,7 +541,7 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
                                            size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
                                            vector_array2_t& inputTrajectoriesStock,
                                            std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                           size_t workerIndex /*= 0*/) {
+                                           std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, size_t workerIndex /*= 0*/) {
   const scalar_array_t& eventTimes = this->getModeSchedule().eventTimes;
 
   if (controllersStock.size() != numPartitions_) {
@@ -551,11 +554,14 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
   stateTrajectoriesStock.resize(numPartitions_);
   inputTrajectoriesStock.resize(numPartitions_);
   modelDataTrajectoriesStock.resize(numPartitions_);
+  modelDataEventTimesStock.resize(numPartitions_);
   for (size_t i = 0; i < numPartitions_; i++) {
     timeTrajectoriesStock[i].clear();
     postEventIndicesStock[i].clear();
     stateTrajectoriesStock[i].clear();
     inputTrajectoriesStock[i].clear();
+    modelDataTrajectoriesStock[i].clear();
+    modelDataEventTimesStock[i].clear();
   }
 
   // Find until where we have a controller available for the rollout
@@ -667,6 +673,16 @@ scalar_t GaussNewtonDDP::rolloutTrajectory(std::vector<LinearController>& contro
       modelDataTrajectoriesStock[i][k].dynamicsBias_.setZero(stateTrajectoriesStock[i][k].size());
     }
 
+    // update model data at event times
+    modelDataEventTimesStock[i].resize(postEventIndicesStock[i].size());
+    for (size_t ke = 0; ke < postEventIndicesStock[i].size(); ke++) {
+      const auto index = postEventIndicesStock[i][ke] - 1;
+      modelDataEventTimesStock[i][ke].time_ = timeTrajectoriesStock[i][index];
+      modelDataEventTimesStock[i][ke].stateDim_ = stateTrajectoriesStock[i][index].size();
+      modelDataEventTimesStock[i][ke].inputDim_ = inputTrajectoriesStock[i][index].size();
+      modelDataEventTimesStock[i][ke].dynamicsBias_.setZero(stateTrajectoriesStock[i][index].size());
+    }
+
     // total number of steps
     numSteps += timeTrajectoriesStock[i].size();
   }  // end of i loop
@@ -700,116 +716,41 @@ void GaussNewtonDDP::printRolloutInfo() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock,
-                                                    const size_array2_t& postEventIndicesStock,
-                                                    const vector_array2_t& stateTrajectoriesStock,
-                                                    const vector_array2_t& inputTrajectoriesStock, scalar_t& stateInputEqConstraintISE,
-                                                    scalar_t& stateEqConstraintISE, scalar_t& stateEqFinalConstraintSSE,
-                                                    scalar_t& inequalityConstraintISE, scalar_t& inequalityConstraintPenalty,
-                                                    size_t workerIndex /*= 0*/) {
-  size_t maxSize = 0;
-  for (size_t i = 0; i < numPartitions_; i++) {
-    maxSize = std::max(maxSize, timeTrajectoriesStock[i].size());
-  }
+void GaussNewtonDDP::rolloutCostAndConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                               const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
+                                               std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                               std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue,
+                                               size_t workerIndex /*= 0*/) {
+  auto& systemConstraints = linearQuadraticApproximatorPtrStock_[workerIndex]->systemConstraints();
+  auto& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
+  costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
 
-  scalar_array_t stateEqualityNorm2Trajectory(maxSize);
-  scalar_array_t stateFinalEqualityNorm2Trajectory(1);
-  scalar_array_t stateInputEqualityNorm2Trajectory(maxSize);
-  scalar_array_t inequalityNorm2Trajectory(maxSize);
-  scalar_array_t inequalityPenaltyTrajectory(maxSize);
-
-  stateEqConstraintISE = 0.0;
-  stateInputEqConstraintISE = 0.0;
-  inequalityConstraintPenalty = 0.0;
-  inequalityConstraintISE = 0.0;
-  stateEqFinalConstraintSSE = 0.0;
-  for (size_t i = 0; i < numPartitions_; i++) {
-    stateEqualityNorm2Trajectory.clear();
-    stateFinalEqualityNorm2Trajectory.clear();
-    stateInputEqualityNorm2Trajectory.clear();
-    inequalityNorm2Trajectory.clear();
-    inequalityPenaltyTrajectory.clear();
-
+  for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
-    // compute constraint1 trajectory for subsystem i
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
       const auto t = timeTrajectoriesStock[i][k];
       const auto& x = stateTrajectoriesStock[i][k];
       const auto& u = inputTrajectoriesStock[i][k];
-      auto& systemConstraints = linearQuadraticApproximatorPtrStock_[workerIndex]->systemConstraints();
+
+      // intermediate cost
+      modelDataTrajectoriesStock[i][k].cost_.f = costFunction.cost(t, x, u);
 
       // state equality constraint
-      stateEqualityNorm2Trajectory.emplace_back(systemConstraints.stateEqualityConstraint(t, x).squaredNorm());
+      modelDataTrajectoriesStock[i][k].stateEqConstr_.f = systemConstraints.stateEqualityConstraint(t, x);
 
       // state-input equality constraint
-      stateInputEqualityNorm2Trajectory.emplace_back(systemConstraints.stateInputEqualityConstraint(t, x, u).squaredNorm());
+      modelDataTrajectoriesStock[i][k].stateInputEqConstr_.f = systemConstraints.stateInputEqualityConstraint(t, x, u);
 
       // inequality constraints
-      vector_t HvIneq = systemConstraints.inequalityConstraint(t, x, u);
-      inequalityPenaltyTrajectory.emplace_back(penaltyPtrStock_[workerIndex]->penaltyCost(HvIneq));
-      inequalityNorm2Trajectory.emplace_back(penaltyPtrStock_[workerIndex]->constraintViolationSquaredNorm(HvIneq));
+      modelDataTrajectoriesStock[i][k].ineqConstr_.f = systemConstraints.inequalityConstraint(t, x, u);
 
-      // switching time constraints
+      // event time cost and constraints
       if (eventsPastTheEndItr != postEventIndicesStock[i].end() && k + 1 == *eventsPastTheEndItr) {
-        stateFinalEqualityNorm2Trajectory.emplace_back(systemConstraints.finalStateEqualityConstraint(t, x).squaredNorm());
+        const auto ke = std::distance(postEventIndicesStock[i].begin(), eventsPastTheEndItr);
+        modelDataEventTimesStock[i][ke].cost_.f = costFunction.finalCost(t, x);
+        modelDataEventTimesStock[i][ke].stateEqConstr_.f = systemConstraints.finalStateEqualityConstraint(t, x);
         eventsPastTheEndItr++;
       }
-
-    }  // end of k loop
-
-    // state equality constraint's ISE
-    stateEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], stateEqualityNorm2Trajectory);
-
-    // calculate state-input equality constraint's ISE
-    stateInputEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], stateInputEqualityNorm2Trajectory);
-
-    // inequality constraint
-    inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
-    inequalityConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityNorm2Trajectory);
-
-    // final state equality constraint's SSE
-    for (size_t ke = 0; ke < postEventIndicesStock[i].size(); ke++) {
-      stateEqFinalConstraintSSE += stateFinalEqualityNorm2Trajectory[ke];
-    }  // end of k loop
-
-  }  // end of i loop
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t GaussNewtonDDP::calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                              const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
-                                              size_t workerIndex /*= 0*/) {
-  // set desired trajectories
-  auto& costFunction = linearQuadraticApproximatorPtrStock_[workerIndex]->costFunction();
-  costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
-
-  scalar_array_t finalCosts;
-  scalar_array_t costTrajectory;
-  scalar_t totalCost = 0.0;
-  for (size_t i = 0; i < numPartitions_; i++) {
-    finalCosts.clear();
-    costTrajectory.resize(timeTrajectoriesStock[i].size());
-
-    auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
-    for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
-      // get intermediate cost for next time step
-      costTrajectory[k] = costFunction.cost(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k], inputTrajectoriesStock[i][k]);
-
-      // final cost at switching times
-      if (eventsPastTheEndItr != postEventIndicesStock[i].end() && k + 1 == *eventsPastTheEndItr) {
-        finalCosts.emplace_back(costFunction.finalCost(timeTrajectoriesStock[i][k], stateTrajectoriesStock[i][k]));
-        eventsPastTheEndItr++;
-      }
-    }  // end of k loop
-
-    // total cost
-    totalCost += trapezoidalIntegration(timeTrajectoriesStock[i], costTrajectory);
-
-    // final cost
-    for (size_t ke = 0; ke < postEventIndicesStock[i].size(); ke++) {
-      totalCost += finalCosts[ke];
     }  // end of k loop
   }    // end of i loop
 
@@ -817,11 +758,65 @@ scalar_t GaussNewtonDDP::calculateRolloutCost(const scalar_array2_t& timeTraject
   // set desired trajectories
   auto& heuristicsFunction = heuristicsFunctionsPtrStock_[workerIndex];
   heuristicsFunction->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
-  // set state-input
-  totalCost += heuristicsFunction->finalCost(timeTrajectoriesStock[finalActivePartition_].back(),
-                                             stateTrajectoriesStock[finalActivePartition_].back());
+  heuristicsValue = heuristicsFunction->finalCost(timeTrajectoriesStock[finalActivePartition_].back(),
+                                                  stateTrajectoriesStock[finalActivePartition_].back());
+}
 
-  return totalCost;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PerformanceIndex GaussNewtonDDP::calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
+                                                                  const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                                                  const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
+                                                                  scalar_t heuristicsValue, size_t workerIndex /*= 0*/) {
+  PerformanceIndex performanceIndex;
+  for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
+    // total cost
+    scalar_array_t costTrajectory(timeTrajectoriesStock[i].size());
+    std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), costTrajectory.begin(),
+                   [](const ModelDataBase& m) { return m.cost_.f; });
+    performanceIndex.totalCost += trapezoidalIntegration(timeTrajectoriesStock[i], costTrajectory);
+
+    // state equality constraint's ISE
+    scalar_array_t stateEqualityNorm2Trajectory(timeTrajectoriesStock[i].size());
+    std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), stateEqualityNorm2Trajectory.begin(),
+                   [](const ModelDataBase& m) { return m.stateEqConstr_.f.squaredNorm(); });
+    performanceIndex.stateEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], stateEqualityNorm2Trajectory);
+
+    // state-input equality constraint's ISE
+    scalar_array_t stateInputEqualityNorm2Trajectory(timeTrajectoriesStock[i].size());
+    std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), stateInputEqualityNorm2Trajectory.begin(),
+                   [](const ModelDataBase& m) { return m.stateInputEqConstr_.f.squaredNorm(); });
+    performanceIndex.stateInputEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], stateInputEqualityNorm2Trajectory);
+
+    // inequality constraints violation ISE
+    scalar_array_t inequalityNorm2Trajectory(timeTrajectoriesStock[i].size());
+    std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityNorm2Trajectory.begin(),
+                   [this, workerIndex](const ModelDataBase& m) {
+                     return penaltyPtrStock_[workerIndex]->constraintViolationSquaredNorm(m.ineqConstr_.f);
+                   });
+    performanceIndex.inequalityConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityNorm2Trajectory);
+
+    // inequality constraints penalty
+    scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock[i].size());
+    std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityPenaltyTrajectory.begin(),
+                   [this, workerIndex](const ModelDataBase& m) { return penaltyPtrStock_[workerIndex]->penaltyCost(m.ineqConstr_.f); });
+    performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
+
+    // final cost and constraints
+    for (const auto& me : modelDataEventTimesStock[i]) {
+      performanceIndex.totalCost += me.cost_.f;
+      performanceIndex.stateEqFinalConstraintSSE += me.stateEqConstr_.f.squaredNorm();
+    }
+  }  // end of i loop
+
+  // heuristic function
+  performanceIndex.totalCost += heuristicsValue;
+
+  // calculates rollout merit
+  calculateRolloutMerit(performanceIndex);
+
+  return performanceIndex;
 }
 
 /******************************************************************************************************/
@@ -831,6 +826,7 @@ scalar_t GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLen
                                             scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                                             vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
                                             std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                            std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
                                             PerformanceIndex& performanceIndex) {
   // modifying uff by local increments
   if (!numerics::almost_eq(stepLength, 0.0)) {
@@ -845,19 +841,14 @@ scalar_t GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLen
   try {
     // perform a rollout
     avgTimeStepFP = rolloutTrajectory(controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                                      inputTrajectoriesStock, modelDataTrajectoriesStock, workerIndex);
+                                      inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, workerIndex);
 
-    // calculate rollout constraints
-    calculateRolloutConstraintsISE(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                                   performanceIndex.stateInputEqConstraintISE, performanceIndex.stateEqConstraintISE,
-                                   performanceIndex.stateEqFinalConstraintSSE, performanceIndex.inequalityConstraintISE,
-                                   performanceIndex.inequalityConstraintPenalty, workerIndex);
-    // calculate rollout cost
-    performanceIndex.totalCost =
-        calculateRolloutCost(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, workerIndex);
+    scalar_t heuristicsValue;
+    rolloutCostAndConstraints(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
+                              modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue, workerIndex);
 
-    // calculates rollout merit
-    calculateRolloutMerit(performanceIndex);
+    performanceIndex = calculateRolloutPerformanceIndex(timeTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock,
+                                                        heuristicsValue, workerIndex);
 
     // display
     if (ddpSettings_.displayInfo_) {
@@ -899,9 +890,9 @@ void GaussNewtonDDP::lineSearch(LineSearchModule& lineSearchModule) {
   // perform a rollout with steplength zero.
   const size_t threadId = 0;
   const scalar_t stepLength = 0.0;
-  scalar_t avgTimeStepFP =
-      performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
-                         nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, performanceIndex_);
+  scalar_t avgTimeStepFP = performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_,
+                                              nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
+                                              modelDataTrajectoriesStock_, modelDataEventTimesStock_, performanceIndex_);
   if (performanceIndex_.merit == std::numeric_limits<scalar_t>::max()) {
     throw std::runtime_error("DDP feedback gains do not generate a stable rollout.");
   }
@@ -950,6 +941,7 @@ void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
   vector_array2_t stateTrajectoriesStock(numPartitions_);
   vector_array2_t inputTrajectoriesStock(numPartitions_);
   std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock(numPartitions_);
+  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock(numPartitions_);
 
   while (true) {
     size_t alphaExp = lineSearchModule.alphaExpNext++;
@@ -980,7 +972,7 @@ void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
     controllersStock = lineSearchModule.initControllersStock;
     scalar_t avgTimeStepFP =
         performFullRollout(taskId, stepLength, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                           inputTrajectoriesStock, modelDataTrajectoriesStock, performanceIndex);
+                           inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, performanceIndex);
 
     bool terminateLinesearchTasks = false;
     {
@@ -1003,6 +995,7 @@ void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
         nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
         nominalInputTrajectoriesStock_.swap(inputTrajectoriesStock);
         modelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock);
+        modelDataEventTimesStock_.swap(modelDataEventTimesStock);
 
         // whether to stop all other thread.
         terminateLinesearchTasks = true;
@@ -1310,7 +1303,6 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
      * also call shiftHessian on the event time's cost 2nd order derivative.
      */
     const size_t NE = nominalPostEventIndicesStock_[i].size();
-    modelDataEventTimesStock_[i].resize(NE);
     if (NE > 0) {
       // perform the approximateEventsLQWorker for partition i
       nextTimeIndex_ = 0;
@@ -1326,7 +1318,6 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
           linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblemAtEventTime(
               nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
               modelDataEventTimesStock_[i][timeIndex]);
-          modelDataEventTimesStock_[i][timeIndex].dynamicsBias_.setZero(nominalStateTrajectoriesStock_[i][k].size());
           // augment cost
           augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff, 0.0,
                             modelDataEventTimesStock_[i][timeIndex]);
@@ -1756,9 +1747,9 @@ void GaussNewtonDDP::runInit() {
   forwardPassTimer_.startTimer();
   const size_t threadId = 0;
   const scalar_t stepLength = 0.0;
-  avgTimeStepFP_ =
-      performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_,
-                         nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, performanceIndex_);
+  avgTimeStepFP_ = performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_,
+                                      nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
+                                      modelDataTrajectoriesStock_, modelDataEventTimesStock_, performanceIndex_);
 
   forwardPassTimer_.endTimer();
 

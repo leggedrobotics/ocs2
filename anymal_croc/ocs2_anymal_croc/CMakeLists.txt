@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   pybind11_catkin
   ocs2_anymal_croc_switched_model
   ocs2_quadruped_interface
+  ocs2_python_interface
 )
 
 ## Eigen3
@@ -37,6 +38,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_anymal_croc_switched_model
     ocs2_quadruped_interface
+    ocs2_python_interface
   DEPENDS
     Boost
 )
@@ -90,42 +92,42 @@ target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${catkin_LIBRARIES}
 )
 
-# # PyBindings library (c++ side)
-# add_library(${PROJECT_NAME}_PyBindings_cpp
-#   src/AnymalCrocPyBindings.cpp
-# )
-# add_dependencies(${PROJECT_NAME}_PyBindings_cpp
-#   ${PROJECT_NAME}
-#   ${catkin_EXPORTED_TARGETS}
-# )
-# target_link_libraries(${PROJECT_NAME}_PyBindings_cpp
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-# )
+# PyBindings library (c++ side)
+add_library(${PROJECT_NAME}_PyBindings_cpp
+  src/AnymalCrocPyBindings.cpp
+)
+add_dependencies(${PROJECT_NAME}_PyBindings_cpp
+  ${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}_PyBindings_cpp
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 
-# # Build python bindings
-# pybind11_add_module(AnymalCrocPyBindings SHARED
-#   src/pyBindModule.cpp
-# )
-# add_dependencies(AnymalCrocPyBindings
-#   ${PROJECT_NAME}_PyBindings_cpp
-#   ${catkin_EXPORTED_TARGETS}
-# )
-# target_link_libraries(AnymalCrocPyBindings PRIVATE
-#   ${PROJECT_NAME}_PyBindings_cpp
-#   ${catkin_LIBRARIES}
-# )
+# Build python bindings
+pybind11_add_module(AnymalCrocPyBindings SHARED
+  src/pyBindModule.cpp
+)
+add_dependencies(AnymalCrocPyBindings
+  ${PROJECT_NAME}_PyBindings_cpp
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(AnymalCrocPyBindings PRIVATE
+  ${PROJECT_NAME}_PyBindings_cpp
+  ${catkin_LIBRARIES}
+)
 
-# if(USE_PYBIND_PYTHON_3)
-#   # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-#   set_target_properties(AnymalCrocPyBindings
-#     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-#   )
-# else(USE_PYBIND_PYTHON_3)
-#   set_target_properties(AnymalCrocPyBindings
-#       PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-#   )
-# endif(USE_PYBIND_PYTHON_3)
+if(USE_PYBIND_PYTHON_3)
+  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
+  set_target_properties(AnymalCrocPyBindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
+  )
+else(USE_PYBIND_PYTHON_3)
+  set_target_properties(AnymalCrocPyBindings
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  )
+endif(USE_PYBIND_PYTHON_3)
 
 catkin_python_setup()
 
@@ -159,13 +161,14 @@ install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-# # TODO handle python2/3 case properly
-# install(TARGETS AnymalCrocPyBindings
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-# )
+# TODO handle python2/3 case properly
+install(TARGETS AnymalCrocPyBindings
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
 
 #############
 ## Testing ##
 #############
+
 catkin_add_nosetests(test)

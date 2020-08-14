@@ -39,6 +39,12 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
   }
+
+  // Copy the signed distance field if there is one
+  const auto* const sdfPtr = terrainModel.getSignedDistanceField();
+  if (sdfPtr != nullptr) {
+    signedDistanceField_.reset(sdfPtr->clone());
+  }
 }
 
 const FootPhase& SwingTrajectoryPlanner::getFootPhase(size_t leg, scalar_t time) const {

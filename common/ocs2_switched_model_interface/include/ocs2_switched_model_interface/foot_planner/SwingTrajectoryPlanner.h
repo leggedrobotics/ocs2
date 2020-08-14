@@ -61,6 +61,7 @@ class SwingTrajectoryPlanner {
   feet_array_t<vector3_t> nominalConfigurationBaseToFootInBaseFrame_;
 
   feet_array_t<std::vector<ConvexTerrain>> nominalFootholdsPerLeg_;
+  std::unique_ptr<SignedDistanceField> signedDistanceField_;
 };
 
 }  // namespace switched_model

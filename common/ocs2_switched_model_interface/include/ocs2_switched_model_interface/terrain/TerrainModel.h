@@ -6,6 +6,7 @@
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/terrain/ConvexTerrain.h"
+#include "ocs2_switched_model_interface/terrain/SignedDistanceField.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
@@ -25,7 +26,10 @@ class TerrainModel {
 
   virtual ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const {
     return {getLocalTerrainAtPositionInWorldAlongGravity(positionInWorld), {}};
-  };
+  }
+
+  /** Returns the signed distance field for this terrain if one is available */
+  virtual const SignedDistanceField* getSignedDistanceField() const { return nullptr; }
 };
 
 }  // namespace switched_model

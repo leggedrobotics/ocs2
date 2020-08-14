@@ -18,4 +18,4 @@ struct ConvexTerrain {
   std::vector<vector2_t> boundary;
 };
 
-}
+}  // namespace switched_model

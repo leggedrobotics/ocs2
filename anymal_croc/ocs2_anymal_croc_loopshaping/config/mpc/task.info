@@ -24,8 +24,6 @@ model_settings
     swingTimeScale              0.15
   }
 
-  torqueMixingFactor            0.0
-
   mpcGoalCommandDelay           0.1
 
   gaitOptimization              false

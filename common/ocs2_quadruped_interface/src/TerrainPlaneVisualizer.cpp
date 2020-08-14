@@ -30,7 +30,7 @@ TerrainPlaneVisualizerSynchronizedModule::TerrainPlaneVisualizerSynchronizedModu
     : terrainPptr_(&terrainPtr), planeVisualizer_(nodeHandle) {}
 
 void TerrainPlaneVisualizerSynchronizedModule::postSolverRun(const ocs2::PrimalSolution& primalSolution) {
-  const base_coordinate_t comPose = getComPose(primalSolution.stateTrajectory_.front());
+  const base_coordinate_t comPose = getComPose(comkino_state_t(primalSolution.stateTrajectory_.front()));
 
   // Obtain local terrain below the base
   const auto localBaseTerrain = [&] {

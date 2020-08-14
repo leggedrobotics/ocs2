@@ -3,7 +3,7 @@ project(ocs2_anymal_commands)
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
-  ocs2_comm_interfaces
+  ocs2_ros_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface
 )
@@ -28,7 +28,7 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
-    ocs2_comm_interfaces
+    ocs2_ros_interfaces
     ocs2_robotic_tools
     ocs2_switched_model_interface
   DEPENDS

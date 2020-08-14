@@ -107,7 +107,7 @@ ddp
 
   useFeedbackPolicy               true
 
-  riskSensitiveCoeff              0
+  riskSensitiveCoeff              0.0
 
   strategy                        LINE_SEARCH
   lineSearch

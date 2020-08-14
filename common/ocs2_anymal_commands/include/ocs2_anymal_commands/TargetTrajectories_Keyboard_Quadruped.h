@@ -10,8 +10,8 @@
 #include <iomanip>
 #include <mutex>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
@@ -145,15 +145,15 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     // Desired time trajectory
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
     tDesiredTrajectory.resize(2);
-    tDesiredTrajectory[0] = observation.time();
-    tDesiredTrajectory[1] = observation.time() + desiredTime;
+    tDesiredTrajectory[0] = observation.time;
+    tDesiredTrajectory[1] = observation.time + desiredTime;
 
     // Desired state trajectory
     vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
     xDesiredTrajectory[0].resize(STATE_DIM);
     xDesiredTrajectory[0].setZero();
-    xDesiredTrajectory[0].segment(0, 12) = observation.state().segment(0, 12);
+    xDesiredTrajectory[0].segment(0, 12) = observation.state.segment(0, 12);
     xDesiredTrajectory[0].segment(12, 12) = defaultJointCoordinates_;
 
     xDesiredTrajectory[1].resize(STATE_DIM);
@@ -161,9 +161,9 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     // Roll and pitch are absolute
     xDesiredTrajectory[1].segment(0, 2) = desiredBaseState.segment(0, 2);
     // Yaw relative to current
-    xDesiredTrajectory[1][2] = observation.state()[2] + desiredBaseState[2];
+    xDesiredTrajectory[1][2] = observation.state[2] + desiredBaseState[2];
     // base x, y relative to current state
-    xDesiredTrajectory[1].segment(3, 2) = observation.state().segment(3, 2) + desiredBaseState.segment(3, 2);
+    xDesiredTrajectory[1].segment(3, 2) = observation.state.segment(3, 2) + desiredBaseState.segment(3, 2);
     // base z relative to initialization
     xDesiredTrajectory[1][5] = initZHeight_ + desiredBaseState[5];
     // target velocities

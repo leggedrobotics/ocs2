@@ -12,7 +12,7 @@
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include "ocs2_quadruped_interface/QuadrupedVisualizationColors.h"
 

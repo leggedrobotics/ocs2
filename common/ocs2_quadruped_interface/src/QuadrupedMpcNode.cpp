@@ -4,7 +4,7 @@
 
 #include "ocs2_quadruped_interface/QuadrupedMpcNode.h"
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>

@@ -8,7 +8,7 @@
 
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
 #include "ocs2_anymal_commands/TerrainAdaptation.h"
 
@@ -49,12 +49,12 @@ void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseComman
 
   // Command to desired Base
   // x, y are relative, z is relative to terrain + default offset;
-  vector3_t comPositionDesired{command[0] + observation.state()[3], command[1] + observation.state()[4], command[2] + initZHeight};
+  vector3_t comPositionDesired{command[0] + observation.state[3], command[1] + observation.state[4], command[2] + initZHeight};
   // Roll and pitch are absolute, yaw is relative
-  vector3_t comOrientationDesired{deg2rad(command[3]), deg2rad(command[4]), deg2rad(command[5]) + observation.state()[2]};
+  vector3_t comOrientationDesired{deg2rad(command[3]), deg2rad(command[4]), deg2rad(command[5]) + observation.state[2]};
   const auto desiredTime =
-      desiredTimeToTarget(comOrientationDesired.z() - observation.state()[2], comPositionDesired.x() - observation.state()[3],
-                          comPositionDesired.y() - observation.state()[4]);
+      desiredTimeToTarget(comOrientationDesired.z() - observation.state[2], comPositionDesired.x() - observation.state[3],
+                          comPositionDesired.y() - observation.state[4]);
 
   {  // Terrain adaptation
     std::lock_guard<std::mutex> lock(terrainMutex_);
@@ -68,15 +68,15 @@ void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseComman
   // Desired time trajectory
   scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   tDesiredTrajectory.resize(2);
-  tDesiredTrajectory[0] = observation.time();
-  tDesiredTrajectory[1] = observation.time() + desiredTime;
+  tDesiredTrajectory[0] = observation.time;
+  tDesiredTrajectory[1] = observation.time + desiredTime;
 
   // Desired state trajectory
   vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
   xDesiredTrajectory.resize(2);
   xDesiredTrajectory[0].resize(STATE_DIM);
   xDesiredTrajectory[0].setZero();
-  xDesiredTrajectory[0].segment(0, 12) = observation.state().segment(0, 12);
+  xDesiredTrajectory[0].segment(0, 12) = observation.state.segment(0, 12);
   xDesiredTrajectory[0].segment(12, 12) = defaultJointState;
 
   xDesiredTrajectory[1].resize(STATE_DIM);

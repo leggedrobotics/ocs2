@@ -57,7 +57,7 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
 
   const vector_t xDeviation = x - xNominal;
   const vector_t uDeviation = u - uNominal;
-  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation);
 }
 
 /******************************************************************************************************/
@@ -83,14 +83,13 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
   const vector_t uDeviation = u - uNominal;
   const vector_t qDeviation = Q_ * xDeviation;
   const vector_t rDeviation = R_ * uDeviation;
-  const vector_t pDeviation = P_ * xDeviation;
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation) + uDeviation.dot(pDeviation);
-  L.dfdx = qDeviation + P_.transpose() * uDeviation;
-  L.dfdu = rDeviation + pDeviation;
+  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation);
+  L.dfdx = qDeviation;
+  L.dfdu = rDeviation;
   L.dfdxx = Q_;
-  L.dfdux = P_;
+  L.dfdux.setZero(u.rows(), x.rows());
   L.dfduu = R_;
   return L;
 }

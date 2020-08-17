@@ -1,21 +1,19 @@
 #pragma once
 
-#include <ocs2_comm_interfaces/ocs2_interfaces/Python_Interface.h>
+#include <ocs2_python_interface/PythonInterface.h>
 #include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
 
 namespace anymal {
 
-class AnymalCrocPyBindings final : public ocs2::PythonInterface<switched_model::STATE_DIM, switched_model::INPUT_DIM> {
+class AnymalCrocPyBindings final : public ocs2::PythonInterface {
  public:
-  using Base = ocs2::PythonInterface<switched_model::STATE_DIM, switched_model::INPUT_DIM>;
-  using visualizer_t = switched_model::QuadrupedVisualizer;
+  explicit AnymalCrocPyBindings(std::string taskName);
 
-  explicit AnymalCrocPyBindings(std::string taskName, bool async = false);
-
-  void visualizeTrajectory(const scalar_array_t& t, const state_vector_array_t& x, const input_vector_array_t& u, double speed) override;
+  void visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x, const ocs2::vector_array_t& u,
+                           ocs2::scalar_t speed) override;
 
  private:
-  std::unique_ptr<visualizer_t> visualizer_;
+  std::unique_ptr<switched_model::QuadrupedVisualizer> visualizer_;
   std::string taskName_;
 };
 

@@ -13,7 +13,7 @@ void runAnymalRaisimDummy(ros::NodeHandle& nodeHandle, std::unique_ptr<switched_
   // Set up Raisim rollout
   anymal::AnymalRaisimConversions conversions(anymalInterface->getComModel(), anymalInterface->getKinematicModel());
 
-  ocs2::RaisimRollout<switched_model::STATE_DIM, switched_model::INPUT_DIM> simRollout(
+  ocs2::RaisimRollout simRollout(
       urdf,
       std::bind(&anymal::AnymalRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1, std::placeholders::_2),
       std::bind(&anymal::AnymalRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1, std::placeholders::_2),

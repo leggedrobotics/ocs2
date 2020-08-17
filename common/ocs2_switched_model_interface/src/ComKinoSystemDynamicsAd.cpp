@@ -10,7 +10,7 @@ namespace switched_model {
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
                                                  bool recompileModel)
-    : Base(), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()) {
+    : Base(STATE_DIM, INPUT_DIM), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()) {
   std::string libName = "anymal_dynamics";
   std::string libFolder = "/tmp/ocs2";
   const bool verbose = recompileModel;
@@ -24,16 +24,17 @@ ComKinoSystemDynamicsAd* ComKinoSystemDynamicsAd::clone() const {
   return new ComKinoSystemDynamicsAd(*this);
 }
 
-void ComKinoSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                            ad_dynamic_vector_t& stateDerivative) const {
+auto ComKinoSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const -> ad_vector_t {
   const comkino_state_ad_t comkinoState = state;
   const comkino_input_ad_t comkinoInput = input;
+  ad_vector_t stateDerivative(state.rows());
 
   const joint_coordinate_ad_t dqJoints = getJointVelocities(comkinoInput);
   const com_state_ad_t comStateDerivative = computeComStateDerivative(*adComModelPtr_, *adKinematicModelPtr_, comkinoState, comkinoInput);
 
   // extended state time derivatives
   stateDerivative << comStateDerivative, dqJoints;
+  return stateDerivative;
 }
 
 template <typename SCALAR_T>

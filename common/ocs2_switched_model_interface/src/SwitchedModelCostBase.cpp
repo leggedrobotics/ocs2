@@ -17,9 +17,7 @@ namespace switched_model {
 SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
                                              std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
                                              const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
-    : BASE(Q, R, state_vector_t::Zero(), input_vector_t::Zero(), QFinal, state_vector_t::Zero()),
-      comModelPtr_(comModel.clone()),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
+    : BASE(Q, R, QFinal), comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
   if (!modeScheduleManagerPtr_) {
     throw std::runtime_error("[SwitchedModelCostBase] Mode schedule manager cannot be a nullptr");
   }
@@ -42,30 +40,65 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
+scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  }
+
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
-  dynamic_vector_t xNominal = state_vector_t::Zero();
-  dynamic_vector_t uNominal;
-  if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
-    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
-    BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
-  }
-  // If the input has non-zero values, don't overwrite it.
-  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
+  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
+  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  inputFromContactFlags(contactFlags, xNominal, uNominal);
+  // TODO (mspieler) : Same issue as in next function.
   if (uNominal.isZero()) {
     inputFromContactFlags(contactFlags, xNominal, uNominal);
   }
 
-  BASE::setCurrentStateAndControl(t, x, u, xNominal, uNominal, xNominal);
+  vector_t xDeviation = x - xNominal;
+  vector_t uDeviation = u - uNominal;
+  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  }
+
+  // Get stance configuration
+  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
+
+  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
+  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  // If the input has non-zero values, don't overwrite it.
+  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
+  // TODO (mspieler) : uNominal is always updated by costDesiredTrajectories.
+  if (uNominal.isZero()) {
+    inputFromContactFlags(contactFlags, xNominal, uNominal);
+  }
+
+  vector_t xDeviation = x - xNominal;
+  vector_t uDeviation = u - uNominal;
+
+  ScalarFunctionQuadraticApproximation L;
+  L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+  L.dfdx = Q_ * xDeviation + P_.transpose() * uDeviation;
+  L.dfdu = R_ * uDeviation + P_ * xDeviation;
+  L.dfdxx = Q_;
+  L.dfdux = P_;
+  L.dfduu = R_;
+  return L;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState,
-                                                  dynamic_vector_t& inputs) {
+                                                  vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
   inputs.setZero(INPUT_DIM);
 

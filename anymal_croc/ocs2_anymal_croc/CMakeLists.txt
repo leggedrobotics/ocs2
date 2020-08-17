@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   pybind11_catkin
   ocs2_anymal_croc_switched_model
   ocs2_quadruped_interface
+  ocs2_python_interface
 )
 
 ## Eigen3
@@ -37,6 +38,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_anymal_croc_switched_model
     ocs2_quadruped_interface
+    ocs2_python_interface
   DEPENDS
     Boost
 )
@@ -168,4 +170,5 @@ install(TARGETS AnymalCrocPyBindings
 #############
 ## Testing ##
 #############
+
 catkin_add_nosetests(test)

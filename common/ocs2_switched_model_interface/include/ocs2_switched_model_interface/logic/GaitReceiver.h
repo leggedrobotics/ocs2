@@ -19,16 +19,16 @@
 
 namespace switched_model {
 
-class GaitReceiver : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class GaitReceiver : public ocs2::SolverSynchronizedModule {
  public:
   using LockableGaitSchedule = ocs2::Lockable<GaitSchedule>;
 
   GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
 
-  void postSolverRun(const primal_solution_t& primalSolution) override{};
+  void postSolverRun(const ocs2::PrimalSolution& primalSolution) override{};
 
  private:
   void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);

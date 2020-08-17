@@ -23,11 +23,9 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocInterface(anymal::getTaskFileFolderCroc(taskName));
-  ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(anymal::getTaskFilePathCroc(taskName));
-  ocs2::SLQ_Settings slqSettings;
-  slqSettings.loadSettings(anymal::getTaskFilePathCroc(taskName));
-  quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, slqSettings);
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
+  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathCroc(taskName));
+  quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, ddpSettings);
 
   return 0;
 }

@@ -8,17 +8,17 @@
 #include <ros/node_handle.h>
 #include <tf/transform_broadcaster.h>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include "ocs2_quadruped_interface/QuadrupedVisualizationColors.h"
 
 namespace switched_model {
 
-class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
+class QuadrupedVisualizer : public ocs2::DummyObserver {
  public:
   using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using scalar_t = typename dimension_t::scalar_t;
@@ -27,21 +27,18 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
   using size_array_t = typename dimension_t::size_array_t;
   using state_vector_array_t = typename dimension_t::state_vector_array_t;
   using input_vector_t = typename dimension_t::input_vector_t;
-  using dynamic_vector_t = typename dimension_t::dynamic_vector_t;
 
-  using system_observation_array_t = std::vector<system_observation_t, Eigen::aligned_allocator<system_observation_t>>;
-
-  using com_model_t = ComModelBase<double>;
-  using kinematic_model_t = KinematicsModelBase<double>;
+  using com_model_t = ComModelBase<scalar_t>;
+  using kinematic_model_t = KinematicsModelBase<scalar_t>;
 
   /** Visualization settings (publicly available) */
-  std::string frameId_ = "world";           // Frame name all messages are published in
-  double footMarkerDiameter_ = 0.03;        // Size of the spheres at the feet
-  double footAlphaWhenLifted_ = 0.3;        // Alpha value when a foot is lifted.
-  double forceScale_ = 1000.0;              // Vector scale in N/m
-  double copMarkerDiameter_ = 0.03;         // Size of the sphere at the center of pressure
-  double supportPolygonLineWidth_ = 0.005;  // LineThickness for the support polygon
-  double trajectoryLineWidth_ = 0.005;      // LineThickness for trajectories
+  std::string frameId_ = "world";             // Frame name all messages are published in
+  scalar_t footMarkerDiameter_ = 0.03;        // Size of the spheres at the feet
+  scalar_t footAlphaWhenLifted_ = 0.3;        // Alpha value when a foot is lifted.
+  scalar_t forceScale_ = 1000.0;              // Vector scale in N/m
+  scalar_t copMarkerDiameter_ = 0.03;         // Size of the sphere at the center of pressure
+  scalar_t supportPolygonLineWidth_ = 0.005;  // LineThickness for the support polygon
+  scalar_t trajectoryLineWidth_ = 0.005;      // LineThickness for trajectories
   feet_array_t<Color> feetColorMap_ = {Color::blue, Color::orange, Color::yellow, Color::purple};  // Colors for markers per feet
 
   /**
@@ -52,25 +49,26 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
    * @param maxUpdateFrequency : maximum publish frequency measured in MPC time.
    */
   QuadrupedVisualizer(const kinematic_model_t& kinematicModel, const com_model_t& comModel, ros::NodeHandle& n,
-                      double maxUpdateFrequency = 1000.0)
+                      scalar_t maxUpdateFrequency = 1000.0)
       : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), minPublishTimeDifference_(1 / maxUpdateFrequency) {
     launchVisualizerNode(n);
   };
 
   ~QuadrupedVisualizer() override = default;
 
-  void update(const system_observation_t& observation, const primal_solution_t& primalSolution, const command_data_t& command) override;
+  void update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,
+              const ocs2::CommandData& command) override;
 
   void launchVisualizerNode(ros::NodeHandle& nodeHandle);
 
-  void publishTrajectory(const system_observation_array_t& system_observation_array, double speed = 1.0);
+  void publishTrajectory(const std::vector<ocs2::SystemObservation>& system_observation_array, scalar_t speed = 1.0);
 
-  void publishObservation(ros::Time timeStamp, const system_observation_t& observation);
+  void publishObservation(ros::Time timeStamp, const ocs2::SystemObservation& observation);
 
   void publishDesiredTrajectory(ros::Time timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory) const;
 
   void publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
-                                       const state_vector_array_t& mpcStateTrajectory, const ocs2::ModeSchedule& modeSchedule) const;
+                                       const vector_array_t& mpcStateTrajectory, const ocs2::ModeSchedule& modeSchedule) const;
 
  private:
   void publishJointTransforms(ros::Time timeStamp, const joint_coordinate_t& jointAngles) const;
@@ -97,7 +95,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver<STATE_DIM, INPUT_DIM> {
   ros::Publisher currentPosePublisher_;
   ros::Publisher currentFeetPosesPublisher_;
 
-  double minPublishTimeDifference_;
+  scalar_t minPublishTimeDifference_;
 };
 
 }  // namespace switched_model

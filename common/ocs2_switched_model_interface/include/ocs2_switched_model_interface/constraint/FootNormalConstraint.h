@@ -24,13 +24,12 @@ namespace switched_model {
  */
 class FootNormalConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
   static constexpr size_t domain_dim_ = 1 + STATE_DIM + INPUT_DIM;
-  static constexpr size_t range_dim_ = 6;
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Base_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
-  using ad_dynamic_vector_t = ocs2::CppAdInterface::ad_dynamic_vector_t;
+  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
 
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
@@ -53,7 +52,7 @@ class FootNormalConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
   FootNormalConstraint(const FootNormalConstraint& rhs);
 
   static void adfunc(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                     const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footPositionVelocity);
+                     const ad_vector_t& tapedInput, ad_vector_t& o_footPositionVelocity);
 
   std::unique_ptr<ocs2::CppAdInterface> adInterface_;
   FootNormalConstraintMatrix settings_;

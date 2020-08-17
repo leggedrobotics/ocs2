@@ -10,18 +10,16 @@
 #include <iomanip>
 #include <mutex>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
 
 /**
  * This class implements TargetTrajectories communication using ROS.
- *
- * @tparam SCALAR_T: scalar type.
  */
-template <typename SCALAR_T, size_t STATE_DIM, size_t INPUT_DIM>
-class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T> {
+class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Keyboard_Interface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -29,12 +27,8 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
 
   enum class COMMAND_MODE { POSITION, VELOCITY };
 
-  using BASE = ocs2::TargetTrajectories_Keyboard_Interface<SCALAR_T>;
-  using typename BASE::dynamic_vector_array_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using joint_coordinates_t = Eigen::Matrix<SCALAR_T, 12, 1>;
+  using BASE = ocs2::TargetTrajectories_Keyboard_Interface;
+  using joint_coordinates_t = Eigen::Matrix<scalar_t, 12, 1>;
 
   /**
    * Constructor.
@@ -88,8 +82,8 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
    * @param [in] desiredState: Desired state to be published.
    * @param [in] desiredInput: Desired input to be published.
    */
-  void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, dynamic_vector_t& desiredState,
-                                   dynamic_vector_t& desiredInput) final {
+  void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, vector_t& desiredState,
+                                   vector_t& desiredInput) final {
     auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };
 
     desiredState.resize(command_dim_);
@@ -122,7 +116,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     desiredTime = estimeTimeToTarget(desiredState[2], desiredState[3], desiredState[4]);
     // input
     // TODO(Ruben)
-    desiredInput = dynamic_vector_t::Zero(INPUT_DIM);
+    desiredInput = vector_t::Zero(INPUT_DIM);
     desiredInput[2 + 0] = 80.0;
     desiredInput[2 + 3] = 80.0;
     desiredInput[2 + 6] = 80.0;
@@ -130,7 +124,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
   }
 
   ocs2::CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) final {
-    ocs2::SystemObservation<STATE_DIM, INPUT_DIM> observation;
+    ocs2::SystemObservation observation;
     ::ros::spinOnce();
     if (latestObservation_) {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
@@ -141,8 +135,8 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
 
     // Convert commandline target to base desired
     scalar_t desiredTime;
-    dynamic_vector_t desiredBaseState;
-    dynamic_vector_t desiredInput;
+    vector_t desiredBaseState;
+    vector_t desiredInput;
     toCostDesiredTimeStateInput(commadLineTarget, desiredTime, desiredBaseState, desiredInput);
 
     // Trajectory to publish
@@ -151,15 +145,15 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     // Desired time trajectory
     scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
     tDesiredTrajectory.resize(2);
-    tDesiredTrajectory[0] = observation.time();
-    tDesiredTrajectory[1] = observation.time() + desiredTime;
+    tDesiredTrajectory[0] = observation.time;
+    tDesiredTrajectory[1] = observation.time + desiredTime;
 
     // Desired state trajectory
-    ocs2::CostDesiredTrajectories::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+    vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
     xDesiredTrajectory[0].resize(STATE_DIM);
     xDesiredTrajectory[0].setZero();
-    xDesiredTrajectory[0].segment(0, 12) = observation.state().segment(0, 12);
+    xDesiredTrajectory[0].segment(0, 12) = observation.state.segment(0, 12);
     xDesiredTrajectory[0].segment(12, 12) = defaultJointCoordinates_;
 
     xDesiredTrajectory[1].resize(STATE_DIM);
@@ -167,9 +161,9 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     // Roll and pitch are absolute
     xDesiredTrajectory[1].segment(0, 2) = desiredBaseState.segment(0, 2);
     // Yaw relative to current
-    xDesiredTrajectory[1][2] = observation.state()[2] + desiredBaseState[2];
+    xDesiredTrajectory[1][2] = observation.state[2] + desiredBaseState[2];
     // base x, y relative to current state
-    xDesiredTrajectory[1].segment(3, 2) = observation.state().segment(3, 2) + desiredBaseState.segment(3, 2);
+    xDesiredTrajectory[1].segment(3, 2) = observation.state.segment(3, 2) + desiredBaseState.segment(3, 2);
     // base z relative to initialization
     xDesiredTrajectory[1][5] = initZHeight_ + desiredBaseState[5];
     // target velocities
@@ -178,7 +172,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
     xDesiredTrajectory[1].segment(12, 12) = defaultJointCoordinates_;
 
     // Desired input trajectory
-    ocs2::CostDesiredTrajectories::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+    vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
     uDesiredTrajectory.resize(2);
     uDesiredTrajectory[0] = desiredInput;
     uDesiredTrajectory[1] = desiredInput;

@@ -15,7 +15,7 @@ namespace switched_model {
 class PlanarTerrainModel : public TerrainModel {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  PlanarTerrainModel(TerrainPlane terrainPlane);
+  explicit PlanarTerrainModel(TerrainPlane terrainPlane);
   ~PlanarTerrainModel() override = default;
 
   TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const override;

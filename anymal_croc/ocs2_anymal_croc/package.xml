@@ -14,6 +14,7 @@
   <depend>pybind11_catkin</depend>
   <depend>ocs2_anymal_croc_switched_model</depend>
   <depend>ocs2_quadruped_interface</depend>
+  <depend>ocs2_python_interface</depend>
 
   <exec_depend>ocs2_anymal_croc_description</exec_depend>
   <exec_depend>ocs2_anymal_commands</exec_depend>

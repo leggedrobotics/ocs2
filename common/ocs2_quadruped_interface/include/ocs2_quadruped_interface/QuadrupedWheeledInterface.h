@@ -25,7 +25,7 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
   using constraint_t = switched_model::AnymalWheelsComKinoConstraintAd;
   using cost_function_t = switched_model::SwitchedModelCostBase;
   using operating_point_t = switched_model::ComKinoOperatingPointsBase;
-  using time_triggered_rollout_t = ocs2::TimeTriggeredRollout<STATE_DIM, INPUT_DIM>;
+  using time_triggered_rollout_t = ocs2::TimeTriggeredRollout;
 
   QuadrupedWheeledInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
                             const com_model_t& comModel, const ad_com_model_t& adComModel, const std::string& pathToConfigFolder);
@@ -38,8 +38,6 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
 
   const system_dynamics_t& getDynamics() const override { return *dynamicsPtr_; }
 
-  const system_dynamics_derivative_t& getDynamicsDerivatives() const override { return *dynamicsDerivativesPtr_; }
-
   const cost_function_t& getCost() const override { return *costFunctionPtr_; }
 
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
@@ -48,7 +46,6 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
 
  private:
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
-  std::unique_ptr<system_dynamics_derivative_t> dynamicsDerivativesPtr_;
   std::unique_ptr<constraint_t> constraintsPtr_;
   std::unique_ptr<cost_function_t> costFunctionPtr_;
   std::unique_ptr<operating_point_t> operatingPointsPtr_;

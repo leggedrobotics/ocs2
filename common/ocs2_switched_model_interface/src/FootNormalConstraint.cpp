@@ -2,21 +2,20 @@
 // Created by rgrandia on 29.04.20.
 //
 
-#include <ocs2_switched_model_interface/constraint/FootNormalContraint.h>
+#include <ocs2_switched_model_interface/constraint/FootNormalConstraint.h>
 
 namespace switched_model {
 
 // Static member definition
 constexpr size_t FootNormalConstraint::domain_dim_;
-constexpr size_t FootNormalConstraint::range_dim_;
 
 FootNormalConstraint::FootNormalConstraint(int legNumber, FootNormalConstraintMatrix settings, const ad_com_model_t& adComModel,
                                            const ad_kinematic_model_t& adKinematicsModel, bool generateModel)
     : Base_t(constraintOrder_), settings_(std::move(settings)) {
-  auto FootNormalAd = [&](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { adfunc(adComModel, adKinematicsModel, legNumber, x, y); };
+  auto FootNormalAd = [&](const ad_vector_t& x, ad_vector_t& y) { adfunc(adComModel, adKinematicsModel, legNumber, x, y); };
   std::string modelName{"FootNormalConstraint_" + std::to_string(legNumber)};
   std::string modelFolder{"/tmp/ocs2"};
-  adInterface_.reset(new ocs2::CppAdInterface(FootNormalAd, range_dim_, domain_dim_, modelName, modelFolder));
+  adInterface_.reset(new ocs2::CppAdInterface(FootNormalAd, domain_dim_, modelName, modelFolder));
 
   if (generateModel) {
     adInterface_->createModels(order_, true);
@@ -34,11 +33,11 @@ FootNormalConstraint* FootNormalConstraint::clone() const {
 
 scalar_array_t FootNormalConstraint::getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const {
   // Assemble input
-  dynamic_vector_t tapedInput(domain_dim_);
+  vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;
 
   // Compute foot position and velocity
-  const dynamic_vector_t funcVal = adInterface_->getFunctionValue(tapedInput);
+  const vector_t funcVal = adInterface_->getFunctionValue(tapedInput);
 
   // Change to std::vector
   scalar_array_t constraintValue(1);
@@ -51,7 +50,7 @@ scalar_array_t FootNormalConstraint::getValue(scalar_t time, const state_vector_
 auto FootNormalConstraint::getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const
     -> LinearApproximation_t {
   // Assemble input
-  dynamic_vector_t tapedInput(domain_dim_);
+  vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;
 
   // Compute end effector velocity and derivatives
@@ -65,7 +64,7 @@ auto FootNormalConstraint::getLinearApproximation(scalar_t time, const state_vec
   LinearApproximation_t linearApproximation;
   linearApproximation.constraintValues = getValue(time, state, input);
 
-  dynamic_vector_t positionVelocityMatrix(6);
+  vector_t positionVelocityMatrix(6);
   positionVelocityMatrix << settings_.positionMatrix.transpose(), settings_.velocityMatrix.transpose();
   linearApproximation.derivativeState.emplace_back(positionVelocityMatrix.transpose() * dhdx);
   linearApproximation.derivativeInput.emplace_back(positionVelocityMatrix.transpose() * dhdu);
@@ -74,7 +73,7 @@ auto FootNormalConstraint::getLinearApproximation(scalar_t time, const state_vec
 }
 
 void FootNormalConstraint::adfunc(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                                  const ad_dynamic_vector_t& tapedInput, ad_dynamic_vector_t& o_footPositionVelocity) {
+                                  const ad_vector_t& tapedInput, ad_vector_t& o_footPositionVelocity) {
   // Extract elements from taped input
   ad_scalar_t t = tapedInput(0);
   comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
@@ -93,6 +92,7 @@ void FootNormalConstraint::adfunc(const ad_com_model_t& adComModel, const ad_kin
   const auto o_footPosition = adKinematicsModel.footPositionInOriginFrame(legNumber, basePose, qJoints);
   const auto o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber, basePose, com_baseTwist, qJoints, dqJoints);
 
+  o_footPositionVelocity.resize(6);
   o_footPositionVelocity << o_footPosition, o_footVelocity;
 }
 

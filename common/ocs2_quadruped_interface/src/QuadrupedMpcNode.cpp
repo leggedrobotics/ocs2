@@ -4,7 +4,7 @@
 
 #include "ocs2_quadruped_interface/QuadrupedMpcNode.h"
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
@@ -15,10 +15,9 @@
 
 namespace switched_model {
 
-void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::MPC_Settings& mpcSettings,
-                      const ocs2::SLQ_Settings& slqSettings) {
+void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::mpc::Settings& mpcSettings,
+                      const ocs2::ddp::Settings& ddpSettings) {
   const std::string robotName = "anymal";
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<STATE_DIM, INPUT_DIM>;
 
   auto solverModules = quadrupedInterface.getSynchronizedModules();
 
@@ -38,9 +37,9 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   solverModules.push_back(swingPlanningVisualizer);
 
   // launch MPC nodes
-  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, slqSettings);
+  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, ddpSettings);
   mpcPtr->getSolverPtr()->setSynchronizedModules(solverModules);
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }
 }  // namespace switched_model

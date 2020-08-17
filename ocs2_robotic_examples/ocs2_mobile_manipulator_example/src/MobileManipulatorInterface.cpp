@@ -101,7 +101,9 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "Q_final:\n" << Qf << std::endl;
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectory({0.0}, {initialState_}, {vector_t::Zero(INPUT_DIM)});
   costPtr_.reset(new MobileManipulatorCost(*pinocchioInterface_, std::move(Q), std::move(R), std::move(Qf)));
+  costPtr_->setCostDesiredTrajectoriesPtr(&initCostDesiredTrajectory);
   costPtr_->initialize("mobile_manipulator_cost", libraryFolder_, recompileLibraries, true);
 
   /*

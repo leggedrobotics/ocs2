@@ -85,7 +85,7 @@ initialState
   (8,0)  0.0  ; WR_ROT
 }
 
-; state weight matrix
+; End effector cost weight matrix
 Q
 {
   scaling 1e+1
@@ -110,7 +110,7 @@ R
   (7,7)  1.0  ; WR_ROT velocity
 }
 
-; final state weight matrix
+; final end effector cost weight matrix
 Q_final
 {
   scaling 1e+0

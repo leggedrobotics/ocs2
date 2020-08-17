@@ -69,7 +69,7 @@ link_directories(
 
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
-  src/MobileManipulatorCost.cpp
+  src/cost/MobileManipulatorCost.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
   src/PinocchioInterface.cpp

@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorCost.h>
+#include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 
 namespace mobile_manipulator {
 
@@ -43,7 +43,7 @@ MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFuncti
   ad_scalar_t cost(0.0);
   cost += input.transpose() * R_ * input;
   const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
-  ad_vector_t err = eePosition - eePosDesired;
+  const ad_vector_t err = eePosition - eePosDesired;
   cost += err.transpose() * Q_ * err;
   return cost;
 }
@@ -52,9 +52,8 @@ MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::finalCostFunction(ad_s
                                                                             const ad_vector_t& parameters) const {
   ad_vector_t eePosDesired = parameters.tail(3);
   const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
-  ad_vector_t err = eePosition - eePosDesired;
-  ad_scalar_t cost = err.transpose() * Qf_ * err;
-  return cost;
+  const ad_vector_t err = eePosition - eePosDesired;
+  return err.transpose() * Qf_ * err;
 }
 
 size_t MobileManipulatorCost::getNumIntermediateParameters() const {
@@ -62,13 +61,10 @@ size_t MobileManipulatorCost::getNumIntermediateParameters() const {
 }
 
 vector_t MobileManipulatorCost::getIntermediateParameters(scalar_t time) const {
-  vector_t desiredState;
-  if (this->costDesiredTrajectoriesPtr_ == nullptr) {
-    desiredState.setZero(3);
-  } else {
-    desiredState = this->costDesiredTrajectoriesPtr_->getDesiredState(time);
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
   }
-  return desiredState;
+  return this->costDesiredTrajectoriesPtr_->getDesiredState(time);
 }
 
 size_t MobileManipulatorCost::getNumFinalParameters() const {
@@ -76,13 +72,10 @@ size_t MobileManipulatorCost::getNumFinalParameters() const {
 }
 
 vector_t MobileManipulatorCost::getFinalParameters(scalar_t time) const {
-  vector_t desiredState;
-  if (this->costDesiredTrajectoriesPtr_ == nullptr) {
-    desiredState.setZero(3);
-  } else {
-    desiredState = this->costDesiredTrajectoriesPtr_->getDesiredState(time);
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
   }
-  return desiredState;
+  return this->costDesiredTrajectoriesPtr_->getDesiredState(time);
 }
 
 }  // namespace mobile_manipulator

@@ -42,7 +42,7 @@ namespace mobile_manipulator {
 
 void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
-  std::string urdfName = "robot_description";
+  const std::string urdfName = "robot_description";
   urdf::Model model;
   if (!model.initParam(urdfName)) {
     ROS_ERROR("URDF model load was NOT successful");

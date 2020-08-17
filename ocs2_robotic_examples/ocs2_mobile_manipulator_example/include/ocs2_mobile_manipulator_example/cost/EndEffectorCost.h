@@ -29,67 +29,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
-
-#include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
-#include <ocs2_mpc/MPC_DDP.h>
-#include <ocs2_robotic_tools/common/RobotInterface.h>
-
-#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
-#include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
+
+#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
 
 namespace mobile_manipulator {
 
-/**
- * Mobile Manipulator Robot Interface class
- */
-class MobileManipulatorInterface final : public ocs2::RobotInterface {
+class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
  public:
-  /**
-   * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
-   */
-  explicit MobileManipulatorInterface(const std::string& taskFileFolderName);
+  EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf);
+  ~EndEffectorCost() override = default;
 
-  ~MobileManipulatorInterface() override = default;
+  /* Copy constructor */
+  EndEffectorCost(const EndEffectorCost& rhs) : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_) {
+    pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
+  }
 
-  const vector_t& getInitialState() { return initialState_; }
-
-  ocs2::ddp::Settings& ddpSettings() { return ddpSettings_; }
-
-  ocs2::mpc::Settings& mpcSettings() { return mpcSettings_; }
-
-  std::unique_ptr<ocs2::MPC_DDP> getMpc();
-
-  const MobileManipulatorDynamics& getDynamics() const override { return *dynamicsPtr_; }
-  const EndEffectorCost& getCost() const override { return *costPtr_; }
-  const ocs2::RolloutBase& getRollout() const { return *rolloutPtr_; }
-  const ocs2::OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
-  const ocs2::ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
+  EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
 
  protected:
-  void loadSettings(const std::string& taskFile);
+  ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                       const ad_vector_t& parameters) const override;
+  ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
 
-  std::string taskFile_;
-  std::string libraryFolder_;
-  std::string urdfPath_;
+  /* Set num parameters to size of desired trajectory state */
+  size_t getNumIntermediateParameters() const override;
+  vector_t getIntermediateParameters(scalar_t time) const override;
 
-  ocs2::ddp::Settings ddpSettings_;
-  ocs2::mpc::Settings mpcSettings_;
+  size_t getNumFinalParameters() const override;
+  vector_t getFinalParameters(scalar_t time) const override;
 
-  std::unique_ptr<ocs2::RolloutBase> rolloutPtr_;
-  std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr_;
-  std::unique_ptr<EndEffectorCost> costPtr_;
-  std::unique_ptr<ocs2::ConstraintBase> constraintPtr_;
-  std::unique_ptr<ocs2::OperatingPoints> operatingPointPtr_;
-
+ private:
   std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
 
-  vector_t initialState_{STATE_DIM};
+  /* Quadratic cost */
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t Qf_;
 };
 
 }  // namespace mobile_manipulator

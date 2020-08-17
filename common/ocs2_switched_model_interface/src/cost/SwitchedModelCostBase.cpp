@@ -36,7 +36,7 @@ SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
-    : BASE(rhs),
+    : ocs2::CostFunctionBase(rhs),
       comModelPtr_(rhs.comModelPtr_->clone()),
       footPlacementCost_(rhs.footPlacementCost_->clone()),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
@@ -60,6 +60,8 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
     throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
   }
 
+  update(t, x, u);
+
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
@@ -73,7 +75,20 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
 
   vector_t xDeviation = x - xNominal;
   vector_t uDeviation = u - uNominal;
-  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+
+  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + footPlacementCost_->getCostValue();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SwitchedModelCostBase::finalCost(scalar_t t, const vector_t& x) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  }
+
+  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
 }
 
 /******************************************************************************************************/
@@ -83,6 +98,8 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
   if (costDesiredTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
   }
+
+  update(t, x, u);
 
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
@@ -96,15 +113,17 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
     inputFromContactFlags(contactFlags, xNominal, uNominal);
   }
 
-  vector_t xDeviation = x - xNominal;
-  vector_t uDeviation = u - uNominal;
+  const vector_t xDeviation = x - xNominal;
+  const vector_t uDeviation = u - uNominal;
+  const vector_t qDeviation = Q_ * xDeviation;
+  const vector_t rDeviation = R_ * uDeviation;
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
-  L.dfdx = Q_ * xDeviation + P_.transpose() * uDeviation;
-  L.dfdu = R_ * uDeviation + P_ * xDeviation;
-  L.dfdxx = Q_;
-  L.dfdux = P_;
+  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation) + footPlacementCost_->getCostValue();
+  L.dfdx = qDeviation + footPlacementCost_->getCostDerivativeState();
+  L.dfdu = rDeviation;
+  L.dfdxx = Q_ + footPlacementCost_->getCostSecondDerivativeState();
+  L.dfdux.setZero(INPUT_DIM, STATE_DIM);
   L.dfduu = R_;
   return L;
 }
@@ -112,8 +131,38 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState,
-                                                  vector_t& inputs) {
+void SwitchedModelCostBase::update(scalar_t t, const vector_t& x, const vector_t& u) {
+  // Foot placement costs
+  feet_array_t<const FootTangentialConstraintMatrix*> constraints = {{nullptr}};
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(leg, t);
+    constraints[leg] = footPhase.getFootTangentialConstraintInWorldFrame();
+  }
+  footPlacementCost_->setStateAndConstraint(x, constraints);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation SwitchedModelCostBase::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  }
+
+  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t qDeviation = QFinal_ * xDeviation;
+
+  ScalarFunctionQuadraticApproximation Phi;
+  Phi.f = 0.5 * xDeviation.dot(qDeviation);
+  Phi.dfdx = qDeviation;
+  Phi.dfdxx = QFinal_;
+  return Phi;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const vector_t& nominalState, vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
   inputs.setZero(INPUT_DIM);
 
@@ -127,7 +176,7 @@ void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactF
   }
 
   if (numStanceLegs > 0) {
-    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(nominalState)));
+    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(switched_model::comkino_state_t(nominalState))));
     const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalMass / numStanceLegs};
 
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
@@ -136,47 +185,6 @@ void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactF
       }
     }
   }
-}
-
-void SwitchedModelCostBase::getIntermediateCost(scalar_t& L) {
-  L = 0.5 * xIntermediateDeviation_.dot(Q_ * xIntermediateDeviation_) + 0.5 * uIntermediateDeviation_.dot(R_ * uIntermediateDeviation_);
-  L += footPlacementCost_->getCostValue();
-}
-
-void SwitchedModelCostBase::getIntermediateCostDerivativeState(state_vector_t& dLdx) {
-  dLdx = Q_ * xIntermediateDeviation_;
-  dLdx += footPlacementCost_->getCostDerivativeState();
-}
-
-void SwitchedModelCostBase::getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) {
-  dLdxx = Q_;
-  dLdxx += footPlacementCost_->getCostSecondDerivativeState();
-}
-
-void SwitchedModelCostBase::getIntermediateCostDerivativeInput(input_vector_t& dLdu) {
-  dLdu = R_ * uIntermediateDeviation_;
-}
-
-void SwitchedModelCostBase::getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) {
-  dLduu = R_;
-}
-
-void SwitchedModelCostBase::getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) {
-  dLdux.setZero();
-}
-
-void SwitchedModelCostBase::getTerminalCost(scalar_t& cost) {
-  state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
-  cost = 0.5 * xFinalDeviation.dot(QFinal_ * xFinalDeviation);
-}
-
-void SwitchedModelCostBase::getTerminalCostDerivativeState(state_vector_t& dPhidx) {
-  state_vector_t xFinalDeviation = BASE::x_ - xNominalFinal_;
-  dPhidx = QFinal_ * xFinalDeviation;
-}
-
-void SwitchedModelCostBase::getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) {
-  dPhidxx = QFinal_;
 }
 
 }  // namespace switched_model

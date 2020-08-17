@@ -26,7 +26,7 @@ struct FootNormalConstraintMatrix {
  */
 struct FootTangentialConstraintMatrix {
   Eigen::Matrix<scalar_t, -1, 3> A;
-  dynamic_vector_t b;
+  vector_t b;
 };
 
 FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain);

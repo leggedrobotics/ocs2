@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+#include <ostream>
 #include <vector>
 
 namespace ocs2 {
@@ -96,7 +97,26 @@ struct ScalarFunctionQuadraticApproximation {
   vector_t dfdu;
   /** Constant term */
   scalar_t f = 0.;
+
+  ScalarFunctionQuadraticApproximation() = default;
+  ScalarFunctionQuadraticApproximation(const ScalarFunctionQuadraticApproximation& other) = default;
+  ScalarFunctionQuadraticApproximation& operator=(const ScalarFunctionQuadraticApproximation& other) = default;
+
+  /* Compound assignment opeartors for multiply and accumulate */
+  ScalarFunctionQuadraticApproximation& operator*=(scalar_t rhs);
+  ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);
+
+  ScalarFunctionQuadraticApproximation& resize(size_t stateDim, size_t inputDim);
+  ScalarFunctionQuadraticApproximation& setZero(size_t stateDim, size_t inputDim);
 };
+
+std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);
+
+/* Binary operators */
+ScalarFunctionQuadraticApproximation operator+(const ScalarFunctionQuadraticApproximation& lhs,
+                                               const ScalarFunctionQuadraticApproximation& rhs);
+ScalarFunctionQuadraticApproximation operator*(const scalar_t lhs, const ScalarFunctionQuadraticApproximation& rhs);
+ScalarFunctionQuadraticApproximation operator*(const ScalarFunctionQuadraticApproximation& lhs, const scalar_t rhs);
 
 /**
  * Defines the linear model of a vector-valued function
@@ -110,6 +130,8 @@ struct VectorFunctionLinearApproximation {
   /** Constant term */
   vector_t f;
 };
+
+std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximation& f);
 
 /**
  * Defines quadratic approximation of a vector-valued function
@@ -129,5 +151,7 @@ struct VectorFunctionQuadraticApproximation {
   /** Constant term */
   vector_t f;
 };
+
+std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f);
 
 }  // namespace ocs2

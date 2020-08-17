@@ -61,6 +61,7 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
+  src/Types.cpp
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/automatic_differentation/FiniteDifferenceMethods.cpp

@@ -93,20 +93,9 @@ scalar_t CostFunctionLinearCombination::finalCost(scalar_t t, const vector_t& x)
 ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::costQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                const vector_t& u) {
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.0;
-  L.dfdx.setZero(x.rows());
-  L.dfdu.setZero(u.rows());
-  L.dfdxx.setZero(x.rows(), x.rows());
-  L.dfdux.setZero(u.rows(), x.rows());
-  L.dfduu.setZero(u.rows(), u.rows());
+  L.setZero(x.rows(), u.rows());
   for (auto& weightedCost : weightedCosts_) {
-    const auto cost = weightedCost.second->costQuadraticApproximation(t, x, u);
-    L.f += weightedCost.first * cost.f;
-    L.dfdx += weightedCost.first * cost.dfdx;
-    L.dfdu += weightedCost.first * cost.dfdu;
-    L.dfdxx += weightedCost.first * cost.dfdxx;
-    L.dfdux += weightedCost.first * cost.dfdux;
-    L.dfduu += weightedCost.first * cost.dfduu;
+    L += weightedCost.first * weightedCost.second->costQuadraticApproximation(t, x, u);
   }
   return L;
 }
@@ -120,10 +109,7 @@ ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::finalCostQua
   Phi.dfdx.setZero(x.rows());
   Phi.dfdxx.setZero(x.rows(), x.rows());
   for (auto& weightedCost : weightedCosts_) {
-    const auto cost = weightedCost.second->finalCostQuadraticApproximation(t, x);
-    Phi.f += weightedCost.first * cost.f;
-    Phi.dfdx += weightedCost.first * cost.dfdx;
-    Phi.dfdxx += weightedCost.first * cost.dfdxx;
+    Phi += weightedCost.first * weightedCost.second->finalCostQuadraticApproximation(t, x);
   }
   return Phi;
 }

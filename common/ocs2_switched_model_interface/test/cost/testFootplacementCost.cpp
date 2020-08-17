@@ -41,8 +41,8 @@ TEST(TestFootplacementCost, constraintConversion) {
   ASSERT_EQ(linConstraints.A.rows(), numVertices);
   ASSERT_EQ(linConstraints.b.size(), numVertices);
 
-  dynamic_vector_t h = linConstraints.A*convexTerrain.plane.positionInWorld + linConstraints.b;
-  dynamic_vector_t h2 = linConstraints.A*vector3_t{center.x() + 0.99*radius, center.y(), 0.0} + linConstraints.b;
+  vector_t h = linConstraints.A*convexTerrain.plane.positionInWorld + linConstraints.b;
+  vector_t h2 = linConstraints.A*vector3_t{center.x() + 0.99*radius, center.y(), 0.0} + linConstraints.b;
   ASSERT_GT(h.minCoeff(), 0.0);
   ASSERT_GT(h2.minCoeff(), 0.0);
 }

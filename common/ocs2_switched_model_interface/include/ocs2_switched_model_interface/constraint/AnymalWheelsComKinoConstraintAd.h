@@ -4,10 +4,6 @@
 #include <ocs2_core/constraint/ConstraintBase.h>
 
 #include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h"
-#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
-#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
@@ -15,11 +11,9 @@
 
 namespace switched_model {
 
-class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, INPUT_DIM> {
+class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using Base = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
+  using Base = ocs2::ConstraintBase;
 
   using ad_base_t = CppAD::cg::CG<scalar_t>;
   using ad_scalar_t = CppAD::AD<ad_base_t>;
@@ -31,16 +25,6 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
   using QuadraticConstraintApproximation_t = ocs2::QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
   using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
 
-  /* Constraint Terms */
-  using FrictionConeConstraint_t = switched_model::FrictionConeConstraint;
-  using ZeroForceConstraint_t = switched_model::ZeroForceConstraint;
-  using EndEffectorVelocityConstraint_t = switched_model::EndEffectorVelocityConstraint;
-  using EndEffectorVelocityInFootFrameConstraint_t = switched_model::EndEffectorVelocityInFootFrameConstraint;
-
-  /* Settings */
-  using EndEffectorVelocityConstraintSettings_t = switched_model::EndEffectorVelocityConstraintSettings;
-  using EndEffectorVelocityInFootFrameConstraintSettings_t = switched_model::EndEffectorVelocityInFootFrameConstraintSettings;
-
   // Enumeration and naming
   enum class FeetEnum { LF, RF, LH, RH };
 
@@ -51,7 +35,7 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
 
   AnymalWheelsComKinoConstraintAd(const AnymalWheelsComKinoConstraintAd& rhs);
 
-  AnymalWheelsComKinoConstraintAd* clone() const override { return new AnymalWheelsComKinoConstraintAd(*this); }
+  AnymalWheelsComKinoConstraintAd* clone() const override;
 
   /** General Anymal switched_model  */
   ~AnymalWheelsComKinoConstraintAd() override = default;
@@ -61,30 +45,13 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
    */
   void initializeConstraintTerms();
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
+  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override;
+  vector_t inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  size_t numStateInputConstraint(const scalar_t& time) override;
-  void getConstraint1(constraint1_vector_t& e) override;
-
-  size_t numStateOnlyConstraint(const scalar_t& time) override;
-  void getConstraint2(constraint2_vector_t& h) override;
-  void getConstraint2DerivativesState(constraint2_state_matrix_t& F) override;
-
-  size_t numStateOnlyFinalConstraint(const scalar_t& time) override;
-  void getFinalConstraint2(constraint2_vector_t& h_f) override;
-  void getFinalConstraint2DerivativesState(constraint2_state_matrix_t& F_final) override;
-
-  void getConstraint1DerivativesState(constraint1_state_matrix_t& C) override;
-  void getConstraint1DerivativesControl(constraint1_input_matrix_t& D) override;
-  void getConstraint1DerivativesEventTimes(constraint1_vector_array_t& g1DevArray) override;
-
-  size_t numInequalityConstraint(const scalar_t& time) override;
-  void getInequalityConstraint(scalar_array_t& h) override;
-  void getInequalityConstraintDerivativesState(state_vector_array_t& dhdx) override;
-  void getInequalityConstraintDerivativesInput(input_vector_array_t& dhdu) override;
-  void getInequalityConstraintSecondDerivativesState(state_matrix_array_t& ddhdxdx) override;
-  void getInequalityConstraintSecondDerivativesInput(input_matrix_array_t& ddhdudu) override;
-  void getInequalityConstraintDerivativesInputState(input_state_matrix_array_t& ddhdudx) override;
+  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                    const vector_t& u) override;
+  VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                  const vector_t& u) override;
 
   /**
    * set the stance legs
@@ -97,15 +64,14 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase<STATE_DIM, I
   void getStanceLegs(contact_flag_t& stanceLegs);
 
  private:
+  void timeUpdate(scalar_t t);
+
+ private:
   // state input equality constraints
   ConstraintCollection_t equalityStateInputConstraintCollection_;
-  bool stateInputConstraintsComputed_;
-  LinearConstraintApproximationAsMatrices_t linearStateInputConstraintApproximation_;
 
   // inequality constraints
   ConstraintCollection_t inequalityConstraintCollection_;
-  bool inequalityConstraintsComputed_;
-  QuadraticConstraintApproximation_t quadraticInequalityConstraintApproximation_;
 
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;

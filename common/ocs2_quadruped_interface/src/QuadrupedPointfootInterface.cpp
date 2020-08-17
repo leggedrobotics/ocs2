@@ -14,16 +14,16 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   input_matrix_t R;
   state_matrix_t Qfinal;
   std::tie(Q, R, Qfinal) = loadCostMatrices(pathToConfigFolder + "/task.info", getKinematicModel(), getInitialState());
-  costFunctionPtr_.reset(new cost_function_t(getComModel(), adComModel, adKinematicModel, getModeScheduleManagerPtr(),
+  costFunctionPtr_.reset(new SwitchedModelCostBase(getComModel(), adComModel, adKinematicModel, getModeScheduleManagerPtr(),
                                              getModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), Q, R, Qfinal,
                                              modelSettings().recompileLibraries_));
 
-  dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
-  dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
-  constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, getModeScheduleManagerPtr(),
-                                         getModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), modelSettings()));
-  operatingPointsPtr_.reset(new operating_point_t(getComModel(), getModeScheduleManagerPtr()));
-  timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings()));
+
+  dynamicsPtr_.reset(new ComKinoSystemDynamicsAd(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
+  constraintsPtr_.reset(new ComKinoConstraintBaseAd(adKinematicModel, adComModel, getModeScheduleManagerPtr(),
+                                                    getModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), modelSettings()));
+  operatingPointsPtr_.reset(new ComKinoOperatingPointsBase(getComModel(), getModeScheduleManagerPtr()));
+  timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings()));
 }
 
 }  // namespace switched_model

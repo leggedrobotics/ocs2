@@ -2,7 +2,7 @@
     <arg name="rviz"       default="true" />
     <arg name="task_name"  default="mpc_augmented"/>
     <arg name="description_name"      default="ocs2_anymal_description"/>
-    <arg name="target_command"        default="$(find ocs2_anymal_command)/config/commands/targetCommand.info"/>
+    <arg name="target_command"        default="$(find ocs2_anymal_commands)/config/targetCommand.info"/>
 
     <group if="$(arg rviz)">
       <!-- Load robot description -->

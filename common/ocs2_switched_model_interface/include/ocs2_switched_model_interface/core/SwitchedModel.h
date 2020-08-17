@@ -44,10 +44,30 @@ constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  
 constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
 /* Import ocs2 types into the switched_model namespace */
-using ocs2::dynamic_matrix_t;
-using ocs2::dynamic_vector_t;
+using ocs2::matrix_array_t;
+using ocs2::matrix_t;
 using ocs2::scalar_array_t;
 using ocs2::scalar_t;
+using ocs2::size_array_t;
+using ocs2::vector_array_t;
+using ocs2::vector_t;
+
+using ocs2::ScalarFunctionQuadraticApproximation;
+using ocs2::VectorFunctionLinearApproximation;
+using ocs2::VectorFunctionQuadraticApproximation;
+
+/* Define fixed-size types */
+using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
+using input_vector_t = Eigen::Matrix<scalar_t, INPUT_DIM, 1>;
+using state_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>;
+using input_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM>;
+using input_state_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM>;
+
+using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
+using input_vector_array_t = std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t>>;
+using state_matrix_array_t = std::vector<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>>;
+using input_matrix_array_t = std::vector<input_matrix_t, Eigen::aligned_allocator<input_matrix_t>>;
+using input_state_matrix_array_t = std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>>;
 
 /* Feet related declarations */
 enum class FeetEnum { LF, RF, LH, RH };

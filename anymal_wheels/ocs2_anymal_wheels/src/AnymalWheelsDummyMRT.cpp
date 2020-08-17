@@ -48,8 +48,7 @@ int main(int argc, char* argv[]) {
   });
 
   auto anymalInterface = anymal::getAnymalWheelsInterface(anymal::getTaskFileFolderWheels(taskName));
-  ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(anymal::getTaskFilePathWheels(taskName));
+  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathWheels(taskName));
   quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,
                      mpcSettings.mpcDesiredFrequency_);
 

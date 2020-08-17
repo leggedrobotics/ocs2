@@ -144,9 +144,8 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
         }
       }();
 
-      // Compute foot position from cost desired trajectory and nominal configuration
-      ocs2::CostDesiredTrajectories::dynamic_vector_t state;
-      costDesiredTrajectories.getDesiredState(middleContactTime, state);
+      // Compute foot position from cost desired trajectory
+      vector_t state = costDesiredTrajectories.getDesiredState(middleContactTime);
       const base_coordinate_t middleContactDesiredComPose = state.head<BASE_COORDINATE_SIZE>();
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
       const auto rotationBaseToWorld = rotationMatrixBaseToOrigin(getOrientation(desiredBasePose));

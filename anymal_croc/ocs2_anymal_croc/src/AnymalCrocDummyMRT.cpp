@@ -24,8 +24,7 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocInterface(anymal::getTaskFileFolderCroc(taskName));
-  ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(anymal::getTaskFilePathCroc(taskName));
+  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
   quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,
                      mpcSettings.mpcDesiredFrequency_);
 

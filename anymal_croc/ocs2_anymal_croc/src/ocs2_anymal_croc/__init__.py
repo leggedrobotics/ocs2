@@ -1,3 +1,2 @@
 from AnymalCrocPyBindings import mpc_interface
-from AnymalCrocPyBindings import scalar_array, state_vector_array, state_matrix_array, dynamic_vector_array, cost_desired_trajectories
-from AnymalCrocPyBindings import state_vector_array as input_vector_array
+from AnymalCrocPyBindings import scalar_array, vector_array, matrix_array, CostDesiredTrajectories

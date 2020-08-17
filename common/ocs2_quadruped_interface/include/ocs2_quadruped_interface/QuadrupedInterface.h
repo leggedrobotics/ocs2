@@ -12,6 +12,7 @@
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
+#include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
@@ -21,7 +22,7 @@
 
 namespace switched_model {
 
-class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
+class QuadrupedInterface : public ocs2::RobotInterface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -37,9 +38,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   using state_matrix_t = dimension_t::state_matrix_t;
   using input_matrix_t = dimension_t::input_matrix_t;
 
-  using rollout_base_t = ocs2::RolloutBase<STATE_DIM, INPUT_DIM>;
-
-  using synchronized_module_t = ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM>;
+  using synchronized_module_t = ocs2::SolverSynchronizedModule;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
 
   /**
@@ -73,16 +72,13 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   const scalar_array_t& getInitialPartitionTimes() const { return partitioningTimes_; }
 
   /** Access to rollout settings */
-  const ocs2::Rollout_Settings& rolloutSettings() const { return rolloutSettings_; }
+  const ocs2::rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
 
   /** Access to model settings */
   const ModelSettings& modelSettings() const { return modelSettings_; };
 
-  /** Gets the time horizon of MPC */
-  scalar_t getTimeHorizon() const { return timeHorizon_; }
-
   /** Gets the rollout class */
-  virtual const rollout_base_t& getRollout() const = 0;
+  virtual const ocs2::RolloutBase& getRollout() const = 0;
 
   /** Gets the solver synchronized modules */
   virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const = 0;
@@ -96,8 +92,7 @@ class QuadrupedInterface : public ocs2::RobotInterface<STATE_DIM, INPUT_DIM> {
   /** Load the general quadruped settings from file. */
   void loadSettings(const std::string& pathToConfigFile);
 
-  scalar_t timeHorizon_;
-  ocs2::Rollout_Settings rolloutSettings_;
+  ocs2::rollout::Settings rolloutSettings_;
   ModelSettings modelSettings_;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;

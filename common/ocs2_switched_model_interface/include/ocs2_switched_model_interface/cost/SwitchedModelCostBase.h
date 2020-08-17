@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "ocs2_core/cost/CostFunctionBase.h"
+#include <ocs2_core/cost/CostFunctionBase.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
@@ -49,18 +49,8 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM
   //! clone SwitchedModelCostBase class.
   SwitchedModelCostBase* clone() const override;
 
-  void setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) override;
-
-  void getIntermediateCost(scalar_t& L) override;
-  void getIntermediateCostDerivativeState(state_vector_t& dLdx) override;
-  void getIntermediateCostSecondDerivativeState(state_matrix_t& dLdxx) override;
-  void getIntermediateCostDerivativeInput(input_vector_t& dLdu) override;
-  void getIntermediateCostSecondDerivativeInput(input_matrix_t& dLduu) override;
-  void getIntermediateCostDerivativeInputState(input_state_matrix_t& dLdux) override;
-
-  void getTerminalCost(scalar_t& cost) override;
-  void getTerminalCostDerivativeState(state_vector_t& dPhidx) override;
-  void getTerminalCostSecondDerivativeState(state_matrix_t& dPhidxx) override;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  private:
   void inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState, dynamic_vector_t& inputs);

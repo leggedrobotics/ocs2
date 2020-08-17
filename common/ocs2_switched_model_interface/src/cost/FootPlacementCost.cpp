@@ -11,8 +11,8 @@ FootPlacementCost::FootPlacementCost(FootPlacementCostParameters settings, const
     : settings_(settings), constraintValuesUpdated_(false), feetJacobiansUpdated_(false) {
   std::string libName = "FootPlacementCost";
   std::string libFolder = "/tmp/ocs2";
-  auto diffFunc = [&](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { adfunc(adComModel, adKinematicsModel, x, y); };
-  adInterface_.reset(new ad_interface_t(diffFunc, 3 * NUM_CONTACT_POINTS, STATE_DIM, libName, libFolder));
+  auto diffFunc = [&](const ad_vector_t& x, ad_vector_t& y) { adfunc(adComModel, adKinematicsModel, x, y); };
+  adInterface_.reset(new ad_interface_t(diffFunc, STATE_DIM, libName, libFolder));
   initAdModels(generateModels);
 }
 
@@ -26,8 +26,7 @@ FootPlacementCost* FootPlacementCost::clone() const {
   return new FootPlacementCost(*this);
 }
 
-void FootPlacementCost::setStateAndConstraint(const state_vector_t& x,
-                                              const feet_array_t<const FootTangentialConstraintMatrix*>& constraints) {
+void FootPlacementCost::setStateAndConstraint(const vector_t& x, const feet_array_t<const FootTangentialConstraintMatrix*>& constraints) {
   x_ = x;
   constraints_ = constraints;
   constraintValuesUpdated_ = false;
@@ -46,13 +45,13 @@ scalar_t FootPlacementCost::getCostValue() {
   return cost;
 }
 
-FootPlacementCost::state_vector_t FootPlacementCost::getCostDerivativeState() {
+vector_t FootPlacementCost::getCostDerivativeState() {
   updateConstraintValues();
   updateJacobians();
 
-  state_vector_t costDerivative = state_vector_t::Zero();
+  vector_t costDerivative = vector_t::Zero(STATE_DIM);
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    auto constraintMatrixPtr = constraints_[leg];
+    const auto* constraintMatrixPtr = constraints_[leg];
     if (constraintMatrixPtr != nullptr) {
       const auto& h = constraintValues_[leg];
       const auto penaltyDerivatives = h.unaryExpr([&](scalar_t hi) { return getPenaltyFunctionDerivative(hi, settings_); });
@@ -63,13 +62,13 @@ FootPlacementCost::state_vector_t FootPlacementCost::getCostDerivativeState() {
   return costDerivative;
 }
 
-FootPlacementCost::state_matrix_t FootPlacementCost::getCostSecondDerivativeState() {
+matrix_t FootPlacementCost::getCostSecondDerivativeState() {
   updateConstraintValues();
   updateJacobians();
 
-  state_matrix_t costSecondDerivative = state_matrix_t::Zero();
+  matrix_t costSecondDerivative = matrix_t::Zero(STATE_DIM, STATE_DIM);
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    auto constraintMatrixPtr = constraints_[leg];
+    const auto* constraintMatrixPtr = constraints_[leg];
     if (constraintMatrixPtr != nullptr) {
       const auto& h = constraintValues_[leg];
       const auto penaltySecondDerivatives = h.unaryExpr([&](scalar_t hi) { return getPenaltyFunctionSecondDerivative(hi, settings_); });
@@ -90,8 +89,8 @@ void FootPlacementCost::initAdModels(bool generateModels, bool verbose) {
   }
 }
 
-void FootPlacementCost::adfunc(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
-                               const ad_dynamic_vector_t& state, ad_dynamic_vector_t& o_feetPositions) {
+void FootPlacementCost::adfunc(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel, const ad_vector_t& state,
+                               ad_vector_t& o_feetPositions) {
   // Copy to fixed size
   comkino_state_ad_t x = state;
 
@@ -121,7 +120,7 @@ void FootPlacementCost::updateConstraintValues() {
     const auto feetPositionsInOrigin_ = adInterface_->getFunctionValue(x_);
 
     for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-      auto constraintMatrixPtr = constraints_[leg];
+      const auto* constraintMatrixPtr = constraints_[leg];
       if (constraintMatrixPtr != nullptr) {
         constraintValues_[leg] = constraintMatrixPtr->b;
         constraintValues_[leg].noalias() += constraintMatrixPtr->A * feetPositionsInOrigin_.segment<3>(3 * leg);
@@ -133,29 +132,29 @@ void FootPlacementCost::updateConstraintValues() {
   }
 }
 
-scalar_t FootPlacementCost::getPenaltyFunctionValue(scalar_t h, const FootPlacementCostParameters& config) const {
+scalar_t FootPlacementCost::getPenaltyFunctionValue(scalar_t h, const FootPlacementCostParameters& config) {
   if (h > config.delta) {
     return -config.mu * log(h);
   } else {
     auto tmp = (h - 2.0 * config.delta) / config.delta;
     return config.mu * (-log(config.delta) + scalar_t(0.5) * tmp * tmp - scalar_t(0.5));
   }
-};
+}
 
-scalar_t FootPlacementCost::getPenaltyFunctionDerivative(scalar_t h, const FootPlacementCostParameters& config) const {
+scalar_t FootPlacementCost::getPenaltyFunctionDerivative(scalar_t h, const FootPlacementCostParameters& config) {
   if (h > config.delta) {
     return -config.mu / h;
   } else {
     return config.mu * ((h - 2.0 * config.delta) / (config.delta * config.delta));
   }
-};
+}
 
-scalar_t FootPlacementCost::getPenaltyFunctionSecondDerivative(scalar_t h, const FootPlacementCostParameters& config) const {
+scalar_t FootPlacementCost::getPenaltyFunctionSecondDerivative(scalar_t h, const FootPlacementCostParameters& config) {
   if (h > config.delta) {
     return config.mu / (h * h);
   } else {
     return config.mu / (config.delta * config.delta);
   }
-};
-
 }
+
+}  // namespace switched_model

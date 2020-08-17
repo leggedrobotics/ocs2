@@ -19,7 +19,6 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
                                              modelSettings().recompileLibraries_));
 
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
-  dynamicsDerivativesPtr_.reset(dynamicsPtr_->clone());
   constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, getModeScheduleManagerPtr(),
                                          getModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), modelSettings()));
   operatingPointsPtr_.reset(new operating_point_t(getComModel(), getModeScheduleManagerPtr()));

@@ -10,7 +10,7 @@
 #include <ocs2_anymal_croc_switched_model/core/AnymalCrocCom.h>
 #include <ocs2_anymal_croc_switched_model/core/AnymalCrocKinematics.h>
 #include <ocs2_anymal_croc_switched_model/generated/declarations.h>
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <functional>

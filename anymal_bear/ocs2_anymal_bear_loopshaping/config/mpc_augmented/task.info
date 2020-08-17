@@ -1,20 +1,12 @@
-
-mpcTimeHorizon
-{
-    timehorizon        1.0		; 1.2		; 0.8
-    numPartitions      2
-}
-
 visualization
 {
     slowdown     1.0
     vizTime      200
 }
 
-
 model_settings
 {
-  constrainedIntegration        1
+  constrainedIntegration        true
 
   gravitationalAcceleration     9.81
 
@@ -22,31 +14,43 @@ model_settings
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
 
-  enforceFrictionConeConstraint 0
+  enforceFrictionConeConstraint false
   frictionCoefficient           0.7
 
-  enforceTorqueConstraint       0
+  enforceTorqueConstraint       false
   torqueLimit                   40.0
 
   swing_trajectory_settings
   {
     liftOffVelocity             0.2
-    touchDownVelocity           -0.4
+    touchDownVelocity          -0.4
     swingHeight                 0.1
     touchdownAfterHorizon       0.2
     errorGain                   5.0
     swingTimeScale              0.15
   }
 
-  useFeetTrajectoryFiltering    0
-  feetFilterFrequency           1000.0
+  mpcGoalCommandDelay           0.1
 
-  eps 	2e-4
-  eta 	1e+2
+  gaitOptimization              false
 
-  torqueMixingFactor            0.0
+  recompileLibraries            true
+}
 
-  gaitOptimization              0
+terrainPlane
+{
+  position
+  {
+    x       0.0;
+    y       0.0;
+    z       0.0;
+  }
+  orientation
+  {
+    roll    0.0;
+    pitch   0.0;
+    yaw     0.0;
+  }
 }
 
 initialModeSchedule
@@ -75,101 +79,87 @@ defaultModeSequenceTemplate
   }
 }
 
-slq
+; DDP settings
+ddp
 {
+  algorithm                       SLQ
 
-  useNominalTimeForBackwardPass 1
-  preComputeRiccatiTerms        1
-  RiccatiIntegratorType         ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
-  adams_integrator_dt           0.01
+  nThreads                        3
+  threadPriority                  50
 
-  warmStartGSLQ                 1
-  useLQForDerivatives           0
-  displayGradientDescent        0
-  tolGradientDescent            1e-2
-  acceptableTolGradientDescent  1e-2
-  maxIterationGradientDescent   5
-  minLearningRateNLP            0.05
-  maxLearningRateNLP            0.6
-  useAscendingLineSearchNLP     1
-  minEventTimeDifference        0.01
+  maxNumIterations                10
+  minRelCost                      0.1
+  constraintTolerance             5e-3
 
-  ddp
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
+
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            1000
+  minTimeStep                     1e-2
+  backwardPassIntegratorType      ODE45
+
+  constraintPenaltyInitialValue   2.0
+  constraintPenaltyIncreaseRate   2.0
+  inequalityConstraintMu          0.1
+  inequalityConstraintDelta       5.0
+
+  preComputeRiccatiTerms          true
+  useNominalTimeForBackwardPass   true
+
+  useFeedbackPolicy               true
+
+  riskSensitiveCoeff              0.0
+
+  strategy                        LINE_SEARCH
+  lineSearch
   {
-    maxNumIterations              1      ;50
-    minLearningRate               1e-4     ;0.1
-    maxLearningRate               1.0
-    minRelCost                    0.1     ;0.01
-    stateConstraintPenaltyCoeff   5.0
-    stateConstraintPenaltyBase    0.0
-    inequalityConstraintDelta     5.0
-    inequalityConstraintMu        0.1
-    meritFunctionRho              50.0
-    constraintStepSize            1.0
-    displayInfo                   0
-    displayShortSummary           1
-    debugPrintRollout             0
-
-    AbsTolODE                     1e-5  ;1e-6
-    RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-2
-    useMakePSD                    0
-    addedRiccatiDiagonal          1e-5
-    maxNumStepsPerSecond          1000
-    simulationIsConstrained       0
-    noStateConstraints            0
-    minAbsConstraint1ISE          5e-3
-    minRelConstraint1ISE          5e-6
-    checkNumericalStability       0
-
-    useMultiThreading             1
-    nThreads                      3
-    threadPriority                50
-    debugPrintMT                  0
-    lsStepsizeGreedy              1
-
-    useRiccatiSolver              1
-
-    useFeedbackPolicy               1
+      minStepLength                 1e-4
+      maxStepLength                 1.0
+      hessianCorrectionStrategy     DIAGONAL_SHIFT
+      hessianCorrectionMultiple     1e-5
   }
+}
 
-  rollout
-  {
-    AbsTolODE                     1e-5  ;1e-6
-    RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-2
-    maxNumStepsPerSecond          50000
-    checkNumericalStability       0
-  }
+; Rollout settings
+rollout
+{
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  minTimeStep                     1e-2
+  maxNumStepsPerSecond            10000
+  checkNumericalStability         false
 }
 
 mpc
 {
+  timeHorizon                     1.0
+  numPartitions                   2
+
   runtimeMaxNumIterations         1
-  initMaxNumIterations            1
+  initMaxNumIterations            10
 
-  runtimeMinLearningRate          1e-2
-  runtimeMaxLearningRate          1.0
-  initMinLearningRate             1e-2
-  initMaxLearningRate             1.0
+  runtimeMinStepLength            1e-2
+  runtimeMaxStepLength            1.0
+  initMinStepLength               1e-2
+  initMaxStepLength               1.0
 
-  debugPrint                      0
-  coldStart                       0
-  recedingHorizon                 1	; use receding horizon MPC
+  debugPrint                      false
+  coldStart                       false
 
-  useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
+  useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
 
-  forwardSimulationTime           28	; [ms] MRT time
+  solutionTimeWindow              500 ; [ms]
 
-  rosMsgTimeWindow                100	; [ms]
-  adaptiveRosMsgTimeWindow        0
-
-  mpcDesiredFrequency             20 ; [Hz]
+  mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
-  
-  maxTimeStep                     10e-3
-}
 
+  maxTimeStep                     1e-2
+}
 
 ; initial state
 initialRobotState

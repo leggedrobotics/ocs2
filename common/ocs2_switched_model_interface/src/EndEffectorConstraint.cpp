@@ -34,8 +34,8 @@ EndEffectorConstraint::EndEffectorConstraint(ocs2::ConstraintOrder constraintOrd
       settings_(std::move(settings)),
       libName_(eeConstraintName + std::to_string(legNumber)),
       libFolder_("/tmp/ocs2") {
-  auto diffFunc = [&](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) { adfunc(adComModel, adKinematicsModel, legNumber, x, y); };
-  adInterface_.reset(new ad_interface_t(diffFunc, range_dim_, domain_dim_, libName_, libFolder_));
+  auto diffFunc = [&](const ad_vector_t& x, ad_vector_t& y) { adfunc(adComModel, adKinematicsModel, legNumber, x, y); };
+  adInterface_.reset(new ad_interface_t(diffFunc, domain_dim_, libName_, libFolder_));
   assert(adInterface_);
   initAdModels(constraintOrder, generateModels, loadModels);
 }
@@ -64,11 +64,11 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
 
 scalar_array_t EndEffectorConstraint::getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const {
   // Assemble input
-  dynamic_vector_t tapedInput(domain_dim_);
+  vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;
 
   // Compute constraints
-  const dynamic_vector_t funcVal = adInterface_->getFunctionValue(tapedInput);
+  const vector_t funcVal = adInterface_->getFunctionValue(tapedInput);
 
   // Change to std::vector
   scalar_array_t constraintValue;
@@ -85,7 +85,7 @@ EndEffectorConstraint::LinearApproximation_t EndEffectorConstraint::getLinearApp
     return BASE::getLinearApproximation(time, state, input);
   }
   // Assemble input
-  dynamic_vector_t tapedInput(domain_dim_);
+  vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;
 
   // Compute end effector velocity and derivatives
@@ -111,7 +111,7 @@ EndEffectorConstraint::QuadraticApproximation_t EndEffectorConstraint::getQuadra
     return BASE::getQuadraticApproximation(time, state, input);
   }
   // Assemble input
-  dynamic_vector_t tapedInput(domain_dim_);
+  vector_t tapedInput(domain_dim_);
   tapedInput << time, state, input;
 
   // Convert to output format

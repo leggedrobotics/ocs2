@@ -18,7 +18,7 @@ struct FootNormalConstraintMatrix {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Eigen::Matrix<scalar_t, 1, 3> positionMatrix;
   Eigen::Matrix<scalar_t, 1, 3> velocityMatrix;
-  scalar_t constant;
+  scalar_t constant = 0;
 };
 
 /**
@@ -57,7 +57,7 @@ class FootPhase {
  */
 class StancePhase final : public FootPhase {
  public:
-  StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain = 0.0);
+  explicit StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain = 0.0);
   ~StancePhase() override = default;
 
   bool contactFlag() const override { return true; };

@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/CostDesiredTrajectories.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
@@ -46,7 +47,7 @@ class SwingTrajectoryPlanner {
   void updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition, const TerrainModel& terrainModel);
   std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> generateSwingTrajectories(
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
-  scalar_t getSwingMotionScaling(scalar_t startTime, scalar_t endTime) const;
+  scalar_t getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const;
   std::vector<ConvexTerrain> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
                                                           const ocs2::CostDesiredTrajectories& costDesiredTrajectories, scalar_t finalTime,
                                                           const TerrainModel& terrainModel) const;

@@ -1,3 +1,5 @@
+#include <ocs2_core/misc/LinearInterpolation.h>
+
 #include "ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h"
 
 #include "ocs2_switched_model_interface/core/Rotations.h"
@@ -30,8 +32,8 @@ ComKinoOperatingPointsBase* ComKinoOperatingPointsBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto ComKinoOperatingPointsBase::computeInputOperatingPoints(const contact_flag_t& contactFlags, const state_vector_t& nominalState) const
-    -> input_vector_t {
+input_vector_t ComKinoOperatingPointsBase::computeInputOperatingPoints(const contact_flag_t& contactFlags,
+                                                                       const state_vector_t& nominalState) const {
   // Distribute total mass equally over active stance legs.
   input_vector_t inputs = input_vector_t::Zero();
 
@@ -61,20 +63,16 @@ auto ComKinoOperatingPointsBase::computeInputOperatingPoints(const contact_flag_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const state_vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                                                scalar_array_t& timeTrajectory, state_vector_array_t& stateTrajectory,
-                                                                input_vector_array_t& inputTrajectory, bool concatOutput) {
+void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
+                                                                scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
+                                                                vector_array_t& inputTrajectory, bool concatOutput) {
   const auto midTime = 0.5 * (startTime + finalTime);
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(midTime);
-  const state_vector_t state = [&] {
-    state_vector_t interpolatedState;
-    if (timeTrajectory.empty() || stateTrajectory.empty()) {
-      interpolatedState.setZero();
-    } else {
-      ocs2::EigenLinearInterpolation<state_vector_t>::interpolate(midTime, interpolatedState, &timeTrajectory, &stateTrajectory);
-    }
-    return interpolatedState;
-  }();
+
+  vector_t state = vector_t::Zero(STATE_DIM);
+  if (!timeTrajectory.empty()) {
+    ocs2::LinearInterpolation::interpolate(midTime, state, &timeTrajectory, &stateTrajectory);
+  }
   const auto inputOperatingPoint = computeInputOperatingPoints(contactFlags, state);
 
   if (!concatOutput) {

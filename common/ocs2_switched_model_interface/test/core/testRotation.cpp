@@ -11,20 +11,20 @@
 
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrixBaseToOrigin_check(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesXYZ) {
-    // inputs are the intrinsic rotation angles in RADIANTS
-    SCALAR_T sinAlpha = sin(eulerAnglesXYZ(0));
-    SCALAR_T cosAlpha = cos(eulerAnglesXYZ(0));
-    SCALAR_T sinBeta = sin(eulerAnglesXYZ(1));
-    SCALAR_T cosBeta = cos(eulerAnglesXYZ(1));
-    SCALAR_T sinGamma = sin(eulerAnglesXYZ(2));
-    SCALAR_T cosGamma = cos(eulerAnglesXYZ(2));
+  // inputs are the intrinsic rotation angles in RADIANTS
+  SCALAR_T sinAlpha = sin(eulerAnglesXYZ(0));
+  SCALAR_T cosAlpha = cos(eulerAnglesXYZ(0));
+  SCALAR_T sinBeta = sin(eulerAnglesXYZ(1));
+  SCALAR_T cosBeta = cos(eulerAnglesXYZ(1));
+  SCALAR_T sinGamma = sin(eulerAnglesXYZ(2));
+  SCALAR_T cosGamma = cos(eulerAnglesXYZ(2));
 
-    Eigen::Matrix<SCALAR_T, 3, 3> Rx, Ry, Rz;
-    Rx << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), cosAlpha, -sinAlpha, SCALAR_T(0), sinAlpha, cosAlpha;
-    Ry << cosBeta, SCALAR_T(0), sinBeta, SCALAR_T(0), SCALAR_T(1), SCALAR_T(0), -sinBeta, SCALAR_T(0), cosBeta;
-    Rz << cosGamma, -sinGamma, SCALAR_T(0), sinGamma, cosGamma, SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
+  Eigen::Matrix<SCALAR_T, 3, 3> Rx, Ry, Rz;
+  Rx << SCALAR_T(1), SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), cosAlpha, -sinAlpha, SCALAR_T(0), sinAlpha, cosAlpha;
+  Ry << cosBeta, SCALAR_T(0), sinBeta, SCALAR_T(0), SCALAR_T(1), SCALAR_T(0), -sinBeta, SCALAR_T(0), cosBeta;
+  Rz << cosGamma, -sinGamma, SCALAR_T(0), sinGamma, cosGamma, SCALAR_T(0), SCALAR_T(0), SCALAR_T(0), SCALAR_T(1);
 
-    return Rx * Ry * Rz;
+  return Rx * Ry * Rz;
 }
 
 TEST(testRotations, rotationMatrix) {
@@ -40,7 +40,7 @@ TEST(testRotations, rotationMatrix) {
 }
 
 TEST(testRotations, rotationDerivative) {
-  using ad_vector_t = ocs2::CppAdInterface::ad_dynamic_vector_t;
+  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
   using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
 
   auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
@@ -50,7 +50,7 @@ TEST(testRotations, rotationDerivative) {
     y = R_WB * v_base;
   };
 
-  ocs2::CppAdInterface adInterface(adFunction, 3,3, 3, "rotationDerivativeTest");
+  ocs2::CppAdInterface adInterface(adFunction, 3, 3, "rotationDerivativeTest");
   adInterface.createModels();
 
   for (int i = 0; i < 1000; i++) {

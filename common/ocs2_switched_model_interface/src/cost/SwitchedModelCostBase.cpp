@@ -55,44 +55,65 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwitchedModelCostBase::setCurrentStateAndControl(const scalar_t& t, const state_vector_t& x, const input_vector_t& u) {
-  BASE::setCurrentStateAndControl(t, x, u);
+scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  }
 
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
 
-  // References for quadratic term
-  dynamic_vector_t xNominal = state_vector_t::Zero();
-  dynamic_vector_t uNominal;
-  if (BASE::costDesiredTrajectoriesPtr_ != nullptr) {
-    BASE::costDesiredTrajectoriesPtr_->getDesiredState(t, xNominal);
-    BASE::costDesiredTrajectoriesPtr_->getDesiredInput(t, uNominal);
-  }
-  // If the input has non-zero values, don't overwrite it.
-  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
+  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
+  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  inputFromContactFlags(contactFlags, xNominal, uNominal);
+  // TODO (mspieler) : Same issue as in next function.
   if (uNominal.isZero()) {
     inputFromContactFlags(contactFlags, xNominal, uNominal);
   }
 
-  inputFromContactFlags(contactFlags, xNominal, uNominal);
-  xIntermediateDeviation_ = x - xNominal;
-  uIntermediateDeviation_ = u - uNominal;
-  xNominalFinal_ = xNominal;
+  vector_t xDeviation = x - xNominal;
+  vector_t uDeviation = u - uNominal;
+  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+}
 
-  // Foot placement costs
-  feet_array_t<const FootTangentialConstraintMatrix*> constraints = {{nullptr}};
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(leg, t);
-    constraints[leg] = footPhase.getFootTangentialConstraintInWorldFrame();
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
   }
-  footPlacementCost_->setStateAndConstraint(x, constraints);
+
+  // Get stance configuration
+  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
+
+  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
+  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  // If the input has non-zero values, don't overwrite it.
+  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
+  // TODO (mspieler) : uNominal is always updated by costDesiredTrajectories.
+  if (uNominal.isZero()) {
+    inputFromContactFlags(contactFlags, xNominal, uNominal);
+  }
+
+  vector_t xDeviation = x - xNominal;
+  vector_t uDeviation = u - uNominal;
+
+  ScalarFunctionQuadraticApproximation L;
+  L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+  L.dfdx = Q_ * xDeviation + P_.transpose() * uDeviation;
+  L.dfdu = R_ * uDeviation + P_ * xDeviation;
+  L.dfdxx = Q_;
+  L.dfdux = P_;
+  L.dfduu = R_;
+  return L;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState,
-                                                  dynamic_vector_t& inputs) {
+                                                  vector_t& inputs) {
   // Distribute total mass equally over active stance legs.
   inputs.setZero(INPUT_DIM);
 

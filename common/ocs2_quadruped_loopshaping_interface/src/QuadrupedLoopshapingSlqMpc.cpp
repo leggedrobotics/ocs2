@@ -6,22 +6,20 @@
 
 namespace switched_model_loopshaping {
 
-std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>> getSlq(const QuadrupedLoopshapingInterface& quadrupedInterface,
-                                                        const ocs2::SLQ_Settings& slqSettings) {
-  auto slqPtr = std::unique_ptr<ocs2::SLQ<STATE_DIM, INPUT_DIM>>(new ocs2::SLQ<STATE_DIM, INPUT_DIM>(
-      &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamicsDerivatives(), quadrupedInterface.getConstraintPtr(),
-      &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), slqSettings));
+std::unique_ptr<ocs2::SLQ> getSlq(const QuadrupedLoopshapingInterface& quadrupedInterface, const ocs2::ddp::Settings& ddpSettings) {
+  auto slqPtr = std::unique_ptr<ocs2::SLQ>(new ocs2::SLQ(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
+                                                         quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
+                                                         &quadrupedInterface.getOperatingPoints(), ddpSettings));
   slqPtr->setModeScheduleManager(quadrupedInterface.getModeScheduleManagerPtr());
   return slqPtr;
 }
 
-std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>> getMpc(const QuadrupedLoopshapingInterface& quadrupedInterface,
-                                                            const ocs2::MPC_Settings& mpcSettings, const ocs2::SLQ_Settings& slqSettings) {
+std::unique_ptr<ocs2::MPC_DDP> getMpc(const QuadrupedLoopshapingInterface& quadrupedInterface, const ocs2::mpc::Settings& mpcSettings,
+                                      const ocs2::ddp::Settings& ddpSettings) {
   if (!quadrupedInterface.modelSettings().gaitOptimization_) {
-    auto mpcPtr = std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>>(new ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>(
-        &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamicsDerivatives(), quadrupedInterface.getConstraintPtr(),
-        &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), quadrupedInterface.getInitialPartitionTimes(), slqSettings,
-        mpcSettings));
+    auto mpcPtr = std::unique_ptr<ocs2::MPC_DDP>(new ocs2::MPC_DDP(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
+                                                                   quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
+                                                                   &quadrupedInterface.getOperatingPoints(), ddpSettings, mpcSettings));
     mpcPtr->getSolverPtr()->setModeScheduleManager(quadrupedInterface.getModeScheduleManagerPtr());
     return mpcPtr;
   } else {
@@ -30,12 +28,3 @@ std::unique_ptr<ocs2::MPC_SLQ<STATE_DIM, INPUT_DIM>> getMpc(const QuadrupedLoops
 }
 
 }  // namespace switched_model_loopshaping
-
-/**  Explicit instantiation of MPC and SLQ classes */
-namespace ocs2 {
-template class MPC_BASE<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
-template class MPC_SLQ<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
-template class Solver_BASE<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
-template class DDP_BASE<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
-template class SLQ<switched_model_loopshaping::STATE_DIM, switched_model_loopshaping::INPUT_DIM>;
-}  // namespace ocs2

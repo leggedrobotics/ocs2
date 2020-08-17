@@ -12,22 +12,20 @@
 
 namespace switched_model_loopshaping {
 
-class LoopshapingSynchronizedModule final : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class LoopshapingSynchronizedModule final : public ocs2::SolverSynchronizedModule {
  public:
-  using switched_model_solver_module_t = ocs2::SolverSynchronizedModule<switched_model::STATE_DIM, switched_model::INPUT_DIM>;
-
   /** Vector of switched model solver synchronized modules that will be wrapped with loopshaping*/
-  std::vector<std::shared_ptr<switched_model_solver_module_t>> synchronizedModules_;
+  std::vector<std::shared_ptr<ocs2::SolverSynchronizedModule>> synchronizedModules_;
 
-  LoopshapingSynchronizedModule(std::vector<std::shared_ptr<switched_model_solver_module_t>> synchronizedModules,
+  LoopshapingSynchronizedModule(std::vector<std::shared_ptr<ocs2::SolverSynchronizedModule>> synchronizedModules,
                                 std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition);
 
   ~LoopshapingSynchronizedModule() override = default;
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
 
-  void postSolverRun(const primal_solution_t& primalSolution) override;
+  void postSolverRun(const ocs2::PrimalSolution& primalSolution) override;
 
  private:
   std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition_;

@@ -8,7 +8,7 @@
 
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
 #include "ocs2_anymal_commands/TerrainAdaptation.h"
 
@@ -36,7 +36,7 @@ void PoseCommandToCostDesiredRos::observationCallback(const ocs2_msgs::mpc_obser
 void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseCommand_t& command) {
   auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };
 
-  ocs2::SystemObservation<STATE_DIM, INPUT_DIM> observation;
+  ocs2::SystemObservation observation;
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
     if (observation_) {
@@ -49,12 +49,12 @@ void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseComman
 
   // Command to desired Base
   // x, y are relative, z is relative to terrain + default offset;
-  vector3_t comPositionDesired{command[0] + observation.state()[3], command[1] + observation.state()[4], command[2] + initZHeight};
+  vector3_t comPositionDesired{command[0] + observation.state[3], command[1] + observation.state[4], command[2] + initZHeight};
   // Roll and pitch are absolute, yaw is relative
-  vector3_t comOrientationDesired{deg2rad(command[3]), deg2rad(command[4]), deg2rad(command[5]) + observation.state()[2]};
+  vector3_t comOrientationDesired{deg2rad(command[3]), deg2rad(command[4]), deg2rad(command[5]) + observation.state[2]};
   const auto desiredTime =
-      desiredTimeToTarget(comOrientationDesired.z() - observation.state()[2], comPositionDesired.x() - observation.state()[3],
-                         comPositionDesired.y() - observation.state()[4]);
+      desiredTimeToTarget(comOrientationDesired.z() - observation.state[2], comPositionDesired.x() - observation.state[3],
+                          comPositionDesired.y() - observation.state[4]);
 
   {  // Terrain adaptation
     std::lock_guard<std::mutex> lock(terrainMutex_);
@@ -68,15 +68,15 @@ void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseComman
   // Desired time trajectory
   scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   tDesiredTrajectory.resize(2);
-  tDesiredTrajectory[0] = observation.time();
-  tDesiredTrajectory[1] = observation.time() + desiredTime;
+  tDesiredTrajectory[0] = observation.time;
+  tDesiredTrajectory[1] = observation.time + desiredTime;
 
   // Desired state trajectory
-  ocs2::CostDesiredTrajectories::dynamic_vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+  vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
   xDesiredTrajectory.resize(2);
   xDesiredTrajectory[0].resize(STATE_DIM);
   xDesiredTrajectory[0].setZero();
-  xDesiredTrajectory[0].segment(0, 12) = observation.state().segment(0, 12);
+  xDesiredTrajectory[0].segment(0, 12) = observation.state.segment(0, 12);
   xDesiredTrajectory[0].segment(12, 12) = defaultJointState;
 
   xDesiredTrajectory[1].resize(STATE_DIM);
@@ -90,9 +90,9 @@ void PoseCommandToCostDesiredRos::publishCostDesiredFromCommand(const PoseComman
   xDesiredTrajectory[1].segment(12, 12) = defaultJointState;
 
   // Desired input trajectory
-  ocs2::CostDesiredTrajectories::dynamic_vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+  vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
   uDesiredTrajectory.resize(2);
-  uDesiredTrajectory[0] = ocs2::dynamic_vector_t::Zero(INPUT_DIM);
+  uDesiredTrajectory[0] = vector_t::Zero(INPUT_DIM);
   uDesiredTrajectory[1] = uDesiredTrajectory[0];
 
   ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;
@@ -117,4 +117,4 @@ scalar_t PoseCommandToCostDesiredRos::desiredTimeToTarget(scalar_t dyaw, scalar_
   return std::max(rotationTime, displacementTime);
 }
 
-}
+}  // namespace switched_model

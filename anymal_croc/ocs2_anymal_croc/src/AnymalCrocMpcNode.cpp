@@ -23,8 +23,8 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocInterface(anymal::getTaskFileFolderCroc(taskName));
-  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
-  ocs2::ddp::Settings ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathCroc(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
+  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathCroc(taskName));
   quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, ddpSettings);
 
   return 0;

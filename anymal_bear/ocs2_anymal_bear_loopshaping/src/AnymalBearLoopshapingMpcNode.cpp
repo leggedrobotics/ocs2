@@ -20,8 +20,8 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalBearLoopshapingInterface(anymal::getTaskFileFolderBearLoopshaping(taskName));
-  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathBearLoopshaping(taskName));
-  ocs2::ddp::Settings ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathBearLoopshaping(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathBearLoopshaping(taskName));
+  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathBearLoopshaping(taskName));
   quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, mpcSettings, ddpSettings);
 
   return 0;

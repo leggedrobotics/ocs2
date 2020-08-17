@@ -51,10 +51,10 @@ TEST(Anymal, PyBindings) {
   EXPECT_EQ(t_arr.size(), x_arr.size());
   EXPECT_EQ(t_arr.size(), u_arr.size());
 
-  std::cout << "t\t\tx(3)\tx(14)" << std::endl;
+  std::cerr << "t\t\tx(3)\tx(14)" << std::endl;
   for (size_t i = 0; i < t_arr.size(); i++) {
-    std::cout << std::setprecision(4);
-    std::cout << t_arr[i] << "\t\t" << x_arr[i](3) << "\t" << x_arr[i](14) << std::endl;
+    std::cerr << std::setprecision(4);
+    std::cerr << t_arr[i] << "\t\t" << x_arr[i](3) << "\t" << x_arr[i](14) << std::endl;
   }
 
   ocs2::scalar_t t = 0.0;
@@ -65,30 +65,30 @@ TEST(Anymal, PyBindings) {
     t += 0.01;
   }
 
-  std::cout << "computing FlowMap: " << std::endl;
+  std::cerr << "computing FlowMap: " << std::endl;
   const auto dxdt = bindings.flowMap(t_arr[0], x_arr[0], u_arr[0]);
-  std::cout << "dxdt: " << dxdt.transpose() << std::endl;
+  std::cerr << "dxdt: " << dxdt.transpose() << std::endl;
 
   const auto flowMap = bindings.flowMapLinearApproximation(t_arr[0], x_arr[0], u_arr[0]);
-  std::cout << "A\n" << flowMap.dfdx << "\nB\n" << flowMap.dfdu << std::endl;
+  std::cerr << "A\n" << flowMap.dfdx << "\nB\n" << flowMap.dfdu << std::endl;
 
   const auto L = bindings.costQuadraticApproximation(t_arr[0], x_arr[0], u_arr[0]);
-  std::cout << "L: " << L.f << "\ndLdx: " << L.dfdx.transpose() << "\ndLdu: " << L.dfdu.transpose() << std::endl;
+  std::cerr << "L: " << L.f << "\ndLdx: " << L.dfdx.transpose() << "\ndLdu: " << L.dfdu.transpose() << std::endl;
 
   auto V = bindings.valueFunction(t_arr[0], x_arr[0]);
-  std::cout << "V: " << V << std::endl;
+  std::cerr << "V: " << V << std::endl;
 
   auto Vx = bindings.valueFunctionStateDerivative(t_arr[0], x_arr[0]);
-  std::cout << "Vx: " << Vx.transpose() << std::endl;
+  std::cerr << "Vx: " << Vx.transpose() << std::endl;
 
   auto e = bindings.stateInputEqualityConstraint(t_arr[0], x_arr[0], u_arr[0]);
-  std::cout << "e: " << e.transpose() << std::endl;
+  std::cerr << "e: " << e.transpose() << std::endl;
 
   auto D = bindings.stateInputEqualityConstraintLinearApproximation(t_arr[0], x_arr[0], u_arr[0]).dfdu;
-  std::cout << "D:\n" << D << std::endl;
+  std::cerr << "D:\n" << D << std::endl;
 
   auto nu = bindings.stateInputEqualityConstraintLagrangian(t_arr[0], x_arr[0], u_arr[0]);
-  std::cout << "nu " << nu.transpose() << std::endl;
+  std::cerr << "nu " << nu.transpose() << std::endl;
 
   bindings.reset(costDesiredTraj);
 

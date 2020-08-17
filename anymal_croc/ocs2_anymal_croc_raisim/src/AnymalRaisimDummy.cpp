@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   auto anymalInterface = anymal::getAnymalCrocInterface(anymal::getTaskFileFolderCroc(taskName));
 
   // load settings
-  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
   ocs2::RaisimRolloutSettings raisimRolloutSettings;
   raisimRolloutSettings.loadSettings(ros::package::getPath("ocs2_anymal_croc_raisim") + "/config/raisim_rollout.info", "rollout");
 

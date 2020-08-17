@@ -151,8 +151,6 @@ mpc
 
   mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
-
-  maxTimeStep                     1e-2
 }
 
 ; initial state

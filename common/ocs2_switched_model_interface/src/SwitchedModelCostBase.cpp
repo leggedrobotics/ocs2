@@ -51,14 +51,13 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
   const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
   vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
   inputFromContactFlags(contactFlags, xNominal, uNominal);
-  // TODO (mspieler) : Same issue as in next function.
   if (uNominal.isZero()) {
     inputFromContactFlags(contactFlags, xNominal, uNominal);
   }
 
-  vector_t xDeviation = x - xNominal;
-  vector_t uDeviation = u - uNominal;
-  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+  const vector_t xDeviation = x - xNominal;
+  const vector_t uDeviation = u - uNominal;
+  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation);
 }
 
 /******************************************************************************************************/
@@ -76,20 +75,21 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
   vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
   // If the input has non-zero values, don't overwrite it.
   // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
-  // TODO (mspieler) : uNominal is always updated by costDesiredTrajectories.
   if (uNominal.isZero()) {
     inputFromContactFlags(contactFlags, xNominal, uNominal);
   }
 
-  vector_t xDeviation = x - xNominal;
-  vector_t uDeviation = u - uNominal;
+  const vector_t xDeviation = x - xNominal;
+  const vector_t uDeviation = u - uNominal;
+  const vector_t qDeviation = Q_ * xDeviation;
+  const vector_t rDeviation = R_ * uDeviation;
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
-  L.dfdx = Q_ * xDeviation + P_.transpose() * uDeviation;
-  L.dfdu = R_ * uDeviation + P_ * xDeviation;
+  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation);
+  L.dfdx = qDeviation;
+  L.dfdu = rDeviation;
   L.dfdxx = Q_;
-  L.dfdux = P_;
+  L.dfdux.setZero(u.rows(), x.rows());
   L.dfduu = R_;
   return L;
 }

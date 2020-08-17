@@ -7,8 +7,8 @@ namespace anymal {
 
 AnymalBearPyBindings::AnymalBearPyBindings(std::string taskName) : taskName_(std::move(taskName)) {
   auto anymalBearInterface = getAnymalBearInterface(getTaskFileFolderBear(taskName_));
-  auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePathBear(taskName_));
-  auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePathBear(taskName_));
+  const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePathBear(taskName_));
+  const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePathBear(taskName_));
 
   init(*anymalBearInterface, switched_model::getMpc(*anymalBearInterface, mpcSettings, ddpSettings));
 

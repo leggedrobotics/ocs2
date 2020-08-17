@@ -19,8 +19,8 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalWheelsLoopshapingInterface(anymal::getTaskFileFolderAnymalWheelsLoopshaping(taskName));
-  ocs2::mpc::Settings mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathAnymalWheelsLoopshaping(taskName));
-  ocs2::ddp::Settings ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathAnymalWheelsLoopshaping(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathAnymalWheelsLoopshaping(taskName));
+  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathAnymalWheelsLoopshaping(taskName));
   quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, mpcSettings, ddpSettings);
 
   return 0;

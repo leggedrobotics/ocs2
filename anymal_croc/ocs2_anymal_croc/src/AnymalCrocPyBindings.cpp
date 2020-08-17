@@ -7,8 +7,8 @@ namespace anymal {
 
 AnymalCrocPyBindings::AnymalCrocPyBindings(std::string taskName) : taskName_(std::move(taskName)) {
   auto anymalCrocInterface = getAnymalCrocInterface(getTaskFileFolderCroc(taskName_));
-  auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePathCroc(taskName_));
-  auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePathCroc(taskName_));
+  const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePathCroc(taskName_));
+  const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePathCroc(taskName_));
 
   init(*anymalCrocInterface, switched_model::getMpc(*anymalCrocInterface, mpcSettings, ddpSettings));
 

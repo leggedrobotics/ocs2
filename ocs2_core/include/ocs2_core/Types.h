@@ -98,10 +98,6 @@ struct ScalarFunctionQuadraticApproximation {
   /** Constant term */
   scalar_t f = 0.;
 
-  ScalarFunctionQuadraticApproximation() = default;
-  ScalarFunctionQuadraticApproximation(const ScalarFunctionQuadraticApproximation& other) = default;
-  ScalarFunctionQuadraticApproximation& operator=(const ScalarFunctionQuadraticApproximation& other) = default;
-
   /* Compound assignment opeartors for multiply and accumulate */
   ScalarFunctionQuadraticApproximation& operator*=(scalar_t rhs);
   ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);

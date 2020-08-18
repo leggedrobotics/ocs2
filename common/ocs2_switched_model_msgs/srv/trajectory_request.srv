@@ -5,6 +5,6 @@ ocs2_msgs/mpc_observation observation               # The latest observation
 float32 offsetTime                                  # Time to schedule the start of the trajectory at
 ---
 ocs2_msgs/mpc_target_trajectories trajectory        # The trajectory to track
-gait_sequence gaits                        # The gait,
+gait_sequence gaitSequence                          # The gait,
                                                     # the 0th element of the time is the
                                                     # gait start time

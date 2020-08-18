@@ -74,6 +74,20 @@ ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule&
   return {switchingTimes, modeSequence};
 }
 
+Gait toGait(const ModeSequenceTemplate& modeSequenceTemplate) {
+  const auto startTime = modeSequenceTemplate.switchingTimes.front();
+  const auto endTime = modeSequenceTemplate.switchingTimes.back();
+  Gait gait;
+  gait.duration = endTime - startTime;
+  // Events: from time -> phase
+  gait.eventPhases.reserve(modeSequenceTemplate.switchingTimes.size());
+  std::for_each(modeSequenceTemplate.switchingTimes.begin() + 1, modeSequenceTemplate.switchingTimes.end() - 1,
+                [&](scalar_t eventTime) { gait.eventPhases.push_back((eventTime - startTime) / gait.duration); });
+  // Modes:
+  gait.modeSequence = modeSequenceTemplate.modeSequence;
+  return gait;
+}
+
 ocs2::ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose) {
   std::vector<scalar_t> eventTimes;
   ocs2::loadData::loadStdVector(filename, topicName + ".eventTimes", eventTimes, verbose);

@@ -46,7 +46,7 @@ struct Pose {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Eigen::Matrix<SCALAR, 3, 1> position;
-  Eigen::Matrix<SCALAR, 3, 3> orientation;
+  Eigen::Quaternion<SCALAR> orientation;
 };
 
 /**

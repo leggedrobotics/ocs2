@@ -6,6 +6,8 @@
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
+#include "CppAdHelpers.h"
+
 namespace mobile_manipulator {
 
 template <typename SCALAR>
@@ -47,7 +49,7 @@ Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::stri
 
   Pose<SCALAR> pose;
   pose.position = robotData_.oMf[bodyId].translation();
-  pose.orientation = robotData_.oMf[bodyId].rotation();
+  pose.orientation = matrixToQuaternion(robotData_.oMf[bodyId].rotation());
 
   return pose;
 }

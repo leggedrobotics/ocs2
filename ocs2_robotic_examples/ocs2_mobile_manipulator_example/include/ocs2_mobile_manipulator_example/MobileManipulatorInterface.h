@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
-#include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
+#include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
@@ -66,7 +66,7 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   std::unique_ptr<ocs2::MPC_DDP> getMpc();
 
   const MobileManipulatorDynamics& getDynamics() const override { return *dynamicsPtr_; }
-  const EndEffectorCost& getCost() const override { return *costPtr_; }
+  const MobileManipulatorCost& getCost() const override { return *costPtr_; }
   const ocs2::RolloutBase& getRollout() const { return *rolloutPtr_; }
   const ocs2::OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
   const ocs2::ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
@@ -83,7 +83,7 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
 
   std::unique_ptr<ocs2::RolloutBase> rolloutPtr_;
   std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr_;
-  std::unique_ptr<EndEffectorCost> costPtr_;
+  std::unique_ptr<MobileManipulatorCost> costPtr_;
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr_;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointPtr_;
 

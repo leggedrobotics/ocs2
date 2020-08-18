@@ -59,11 +59,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
-  /*
-   * Default initial condition
-   */
-  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
   pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(urdfPath_));
   pinocchioInterface_->display();
@@ -92,19 +87,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  matrix_t Q(6, 6), R(INPUT_DIM, INPUT_DIM), Qf(6, 6);
-  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
-  ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
-  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
-  std::cerr << "Q:  \n" << Q << std::endl;
-  std::cerr << "R:  \n" << R << std::endl;
-  std::cerr << "Q_final:\n" << Qf << std::endl;
-  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectory({0.0}, {initialState_}, {vector_t::Zero(INPUT_DIM)});
-  costPtr_.reset(new EndEffectorCost(*pinocchioInterface_, std::move(Q), std::move(R), std::move(Qf)));
-  costPtr_->setCostDesiredTrajectoriesPtr(&initCostDesiredTrajectory);
-  costPtr_->initialize("mobile_manipulator_cost", libraryFolder_, recompileLibraries, true);
+  costPtr_ = getMobileManipulatorCost(*pinocchioInterface_, taskFile, libraryFolder_, recompileLibraries);
 
   /*
    * Constraints
@@ -114,6 +97,8 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
+  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   operatingPointPtr_.reset(new ocs2::OperatingPoints(initialState_, ocs2::vector_t::Zero(INPUT_DIM)));
 }
 

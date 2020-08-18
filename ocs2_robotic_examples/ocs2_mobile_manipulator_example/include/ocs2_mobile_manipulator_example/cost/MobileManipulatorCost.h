@@ -29,47 +29,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/CostFunctionBaseAD.h>
+#include <memory>
+
+#include <ocs2_core/cost/CostFunctionLinearCombination.h>
 
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
 
-class MobileManipulatorCost final : public ocs2::CostFunctionBaseAD {
- public:
-  using ocs2::CostFunctionBaseAD::ad_scalar_t;
-  using ocs2::CostFunctionBaseAD::ad_vector_t;
+using MobileManipulatorCost = ocs2::CostFunctionLinearCombination;
 
-  MobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf);
-  ~MobileManipulatorCost() override = default;
-
-  /* Copy constructor */
-  MobileManipulatorCost(const MobileManipulatorCost& rhs) : ocs2::CostFunctionBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_) {
-    pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
-  }
-
-  MobileManipulatorCost* clone() const override { return new MobileManipulatorCost(*this); }
-
-  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override;
-  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
-
- protected:
-  /* Set num parameters to size of desired trajectory state */
-  size_t getNumIntermediateParameters() const override;
-  vector_t getIntermediateParameters(scalar_t time) const override;
-
-  size_t getNumFinalParameters() const override;
-  vector_t getFinalParameters(scalar_t time) const override;
-
- private:
-  std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
-
-  /* Quadratic cost */
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t Qf_;
-};
+std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface,
+                                                                const std::string& taskFile, const std::string& libraryFolder,
+                                                                bool recompileLibraries);
 
 }  // namespace mobile_manipulator

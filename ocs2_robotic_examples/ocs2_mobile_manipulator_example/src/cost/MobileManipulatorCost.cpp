@@ -27,55 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/misc/LoadData.h>
+
+#include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 
 namespace mobile_manipulator {
 
-MobileManipulatorCost::MobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf)
-    : ocs2::CostFunctionBaseAD(STATE_DIM, INPUT_DIM), Q_(std::move(Q)), R_(std::move(R)), Qf_(std::move(Qf)) {
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
-}
+std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface,
+                                                                const std::string& taskFile, const std::string& libraryFolder,
+                                                                bool recompileLibraries) {
+  const bool verbose = true;
 
-MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state,
-                                                                                   const ad_vector_t& input,
-                                                                                   const ad_vector_t& parameters) const {
-  ad_vector_t eePosDesired = parameters.tail(3);
-  ad_scalar_t cost(0.0);
-  cost += input.transpose() * R_ * input;
-  const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
-  const ad_vector_t err = eePosition - eePosDesired;
-  cost += err.transpose() * Q_ * err;
-  return cost;
-}
+  std::vector<ocs2::CostFunctionLinearCombination::WeightedCost> costs;
 
-MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state,
-                                                                            const ad_vector_t& parameters) const {
-  ad_vector_t eePosDesired = parameters.tail(3);
-  const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
-  const ad_vector_t err = eePosition - eePosDesired;
-  return err.transpose() * Qf_ * err;
-}
+  /* End effector tracking cost */
+  matrix_t Q(6, 6), R(INPUT_DIM, INPUT_DIM), Qf(6, 6);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
+  ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << std::endl;
+  std::cerr << "R:  \n" << R << std::endl;
+  std::cerr << "Q_final:\n" << Qf << std::endl;
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectory({0.0}, {initialState_}, {vector_t::Zero(INPUT_DIM)});
 
-size_t MobileManipulatorCost::getNumIntermediateParameters() const {
-  return 6;
-}
+  costs.emplace_back({1.0, std::make_shared<EndEffectorCost>(pinocchioInterface, std::move(Q), std::move(R), std::move(Qf))});
+  costs.back.second->setCostDesiredTrajectoriesPtr(&initCostDesiredTrajectory);  // required for CppAD initialization pass
+  costs.back.second->initialize("EndEffectorCost", libraryFolder, recompileLibraries, verbose);
 
-vector_t MobileManipulatorCost::getIntermediateParameters(scalar_t time) const {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
-  }
-  return this->costDesiredTrajectoriesPtr_->getDesiredState(time);
-}
-
-size_t MobileManipulatorCost::getNumFinalParameters() const {
-  return 6;
-}
-
-vector_t MobileManipulatorCost::getFinalParameters(scalar_t time) const {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
-  }
-  return this->costDesiredTrajectoriesPtr_->getDesiredState(time);
+  // TODO(mspieler): use make_unique after switch to C++14
+  return std::unique_ptr<MobileManipulatorCost>(new MobileManipulatorCost(std::move(costs)));
 }
 
 }  // namespace mobile_manipulator

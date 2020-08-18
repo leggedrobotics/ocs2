@@ -37,7 +37,7 @@ ddp
   {
     minStepLength                 1.0
     maxStepLength                 1.0
-    hessianCorrectionStrategy     CHOLESKY_MODIFICATION
+    hessianCorrectionStrategy     DIAGONAL_SHIFT
     hessianCorrectionMultiple     1e-3
   }
 }
@@ -118,10 +118,10 @@ Q_final
 {
   scaling 1e+0
 
-  (0,0) 0.0  ; end effector x
-  (1,1) 0.0  ; end effector y
-  (2,2) 0.0  ; end effector z
-  (3,3) 0.0  ; end effector roll
-  (4,4) 0.0  ; end effector pitch
-  (5,5) 0.0  ; end effector yaw
+  (0,0) 1.0  ; end effector x
+  (1,1) 1.0  ; end effector y
+  (2,2) 1.0  ; end effector z
+  (3,3) 1.0  ; end effector roll
+  (4,4) 1.0  ; end effector pitch
+  (5,5) 1.0  ; end effector yaw
 }

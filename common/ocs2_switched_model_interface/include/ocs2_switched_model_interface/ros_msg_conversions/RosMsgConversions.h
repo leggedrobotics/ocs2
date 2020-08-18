@@ -43,4 +43,3 @@ std::pair<ocs2::CostDesiredTrajectories, GaitSchedule::GaitSequence> fromTraject
 
 }  // namespace ros_msg_conversions
 }  // namespace switched_model
-

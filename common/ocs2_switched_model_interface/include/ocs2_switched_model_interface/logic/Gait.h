@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <ocs2_core/logic/ModeSchedule.h>
 #include <ostream>
 #include <vector>
 

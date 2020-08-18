@@ -101,8 +101,9 @@ struct ScalarFunctionQuadraticApproximation {
   /* Compound assignment opeartor for addition */
   ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);
 
-  ScalarFunctionQuadraticApproximation& resize(size_t stateDim, size_t inputDim);
-  ScalarFunctionQuadraticApproximation& setZero(size_t stateDim, size_t inputDim);
+  ScalarFunctionQuadraticApproximation& resize(size_t nx, size_t nu);
+  ScalarFunctionQuadraticApproximation& setZero(size_t nx, size_t nu);
+  static ScalarFunctionQuadraticApproximation Zero(size_t nx, size_t nu);
 };
 
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);

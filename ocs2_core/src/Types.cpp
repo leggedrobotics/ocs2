@@ -41,23 +41,29 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::oper
   return *this;
 }
 
-ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::resize(size_t stateDim, size_t inputDim) {
-  dfdx.resize(stateDim);
-  dfdu.resize(inputDim);
-  dfdxx.resize(stateDim, stateDim);
-  dfdux.resize(inputDim, stateDim);
-  dfduu.resize(inputDim, inputDim);
+ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::resize(size_t nx, size_t nu) {
+  dfdx.resize(nx);
+  dfdu.resize(nu);
+  dfdxx.resize(nx, nx);
+  dfdux.resize(nu, nx);
+  dfduu.resize(nu, nu);
   return *this;
 }
 
-ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::setZero(size_t stateDim, size_t inputDim) {
+ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::setZero(size_t nx, size_t nu) {
   f = 0.0;
-  dfdx.setZero(stateDim);
-  dfdu.setZero(inputDim);
-  dfdxx.setZero(stateDim, stateDim);
-  dfdux.setZero(inputDim, stateDim);
-  dfduu.setZero(inputDim, inputDim);
+  dfdx.setZero(nx);
+  dfdu.setZero(nu);
+  dfdxx.setZero(nx, nx);
+  dfdux.setZero(nu, nx);
+  dfduu.setZero(nu, nu);
   return *this;
+}
+
+ScalarFunctionQuadraticApproximation ScalarFunctionQuadraticApproximation::Zero(size_t nx, size_t nu) {
+  ScalarFunctionQuadraticApproximation f;
+  f.setZero(nx, nu);
+  return f;
 }
 
 ScalarFunctionQuadraticApproximation operator+(const ScalarFunctionQuadraticApproximation& lhs,

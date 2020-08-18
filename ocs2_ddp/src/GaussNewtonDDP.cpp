@@ -103,20 +103,20 @@ GaussNewtonDDP::~GaussNewtonDDP() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::printBenchmarkingInfo() const {
-  const auto forwardPassTotal = forwardPassTimer_.getTotalInMilliseconds();
+  const auto initializationTotal = initializationTimer_.getTotalInMilliseconds();
   const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   const auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
   const auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
   const auto searchStrategyTotal = searchStrategyTimer_.getTotalInMilliseconds();
 
   const auto benchmarkTotal =
-      forwardPassTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + searchStrategyTotal;
+      initializationTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + searchStrategyTotal;
 
   if (benchmarkTotal > 0.0) {
     std::cerr << "\n########################################################################\n";
     std::cerr << "DDP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
-    std::cerr << "\tForward Pass       :\t" << forwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-              << forwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    std::cerr << "\tInitialization     :\t" << initializationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+              << initializationTotal / benchmarkTotal * 100 << "%)\n";
     std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
               << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
     std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
@@ -165,7 +165,7 @@ void GaussNewtonDDP::reset() {
   }  // end of i loop
 
   // reset timers
-  forwardPassTimer_.reset();
+  initializationTimer_.reset();
   linearQuadraticApproximationTimer_.reset();
   backwardPassTimer_.reset();
   computeControllerTimer_.reset();
@@ -818,12 +818,11 @@ PerformanceIndex GaussNewtonDDP::calculateRolloutPerformanceIndex(const scalar_a
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
-                                            scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                                            vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                                            std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                            std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                            PerformanceIndex& performanceIndex) {
+bool GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
+                                        scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                                        vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
+                                        std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                        std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue) {
   // modifying uff by local increments
   if (!numerics::almost_eq(stepLength, 0.0)) {
     for (auto& controller : controllersStock) {
@@ -833,38 +832,23 @@ scalar_t GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLen
     }
   }
 
-  scalar_t avgTimeStepFP = 0.0;
   try {
     // perform a rollout
-    avgTimeStepFP = rolloutTrajectory(controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                                      inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, workerIndex);
-
-    scalar_t heuristicsValue;
+    const auto avgTimeStep = rolloutTrajectory(controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                                               inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, workerIndex);
     rolloutCostAndConstraints(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
                               modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue, workerIndex);
-
-    performanceIndex =
-        calculateRolloutPerformanceIndex(timeTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
-
-    // display
-    if (ddpSettings_.displayInfo_) {
-      std::stringstream linesearchDisplay;
-      linesearchDisplay << "    [Thread " << workerIndex << "] - step length " << stepLength << '\n';
-      linesearchDisplay << std::setw(4) << performanceIndex << '\n';
-      linesearchDisplay << "    forward pass average time step: " << avgTimeStepFP * 1e+3 << " [ms].\n";
-      Solver_BASE::printString(linesearchDisplay.str());
-    }
+    // compute average time step of forward rollout
+    avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
+    return true;
 
   } catch (const std::exception& error) {
-    performanceIndex.merit = std::numeric_limits<scalar_t>::max();
-    performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
     if (ddpSettings_.displayInfo_) {
       Solver_BASE::printString("    [Thread " + std::to_string(workerIndex) + "] rollout with step length " + std::to_string(stepLength) +
                                " is terminated: " + error.what());
     }
+    return false;
   }
-
-  return avgTimeStepFP;
 }
 
 /******************************************************************************************************/
@@ -884,17 +868,27 @@ void GaussNewtonDDP::lineSearch(LineSearchModule& lineSearchModule) {
   }
 
   // perform a rollout with steplength zero.
-  const size_t threadId = 0;
-  const scalar_t stepLength = 0.0;
-  scalar_t avgTimeStepFP = performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_,
-                                              nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
-                                              modelDataTrajectoriesStock_, modelDataEventTimesStock_, performanceIndex_);
-  if (performanceIndex_.merit == std::numeric_limits<scalar_t>::max()) {
-    throw std::runtime_error("DDP feedback gains do not generate a stable rollout.");
-  }
+  constexpr size_t threadId = 0;
+  constexpr scalar_t stepLength = 0.0;
+  scalar_t heuristicsValue = 0.0;
+  const bool isStable = performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_,
+                                           nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
+                                           modelDataTrajectoriesStock_, modelDataEventTimesStock_, heuristicsValue);
 
-  // compute average time step of forward rollout
-  avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStepFP;
+  if (isStable) {
+    performanceIndex_ = calculateRolloutPerformanceIndex(nominalTimeTrajectoriesStock_, modelDataTrajectoriesStock_,
+                                                         modelDataEventTimesStock_, heuristicsValue);
+    // display
+    if (ddpSettings_.displayInfo_) {
+      std::stringstream infoDisplay;
+      infoDisplay << "    [Thread " << threadId << "] - step length " << stepLength << '\n';
+      infoDisplay << std::setw(4) << performanceIndex_ << '\n';
+      Solver_BASE::printString(infoDisplay.str());
+    }
+
+  } else {
+    throw std::runtime_error("DDP controller does not generate a stable rollout.");
+  }
 
   // initialize lineSearchModule
   lineSearchModule.baselineMerit = performanceIndex_.merit;
@@ -966,9 +960,27 @@ void GaussNewtonDDP::lineSearchTask(LineSearchModule& lineSearchModule) {
 
     // do a line search
     controllersStock = lineSearchModule.initControllersStock;
-    scalar_t avgTimeStepFP =
+
+    scalar_t heuristicsValue = 0.0;
+    const bool isStable =
         performFullRollout(taskId, stepLength, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                           inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, performanceIndex);
+                           inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+
+    if (isStable) {
+      performanceIndex =
+          calculateRolloutPerformanceIndex(timeTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+      // display
+      if (ddpSettings_.displayInfo_) {
+        std::stringstream infoDisplay;
+        infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
+        infoDisplay << std::setw(4) << performanceIndex << '\n';
+        Solver_BASE::printString(infoDisplay.str());
+      }
+
+    } else {
+      performanceIndex.merit = std::numeric_limits<scalar_t>::max();
+      performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
+    }
 
     bool terminateLinesearchTasks = false;
     {
@@ -1740,19 +1752,34 @@ void GaussNewtonDDP::runInit() {
   Eigen::setNbThreads(1);
 
   // initial controller rollout
-  forwardPassTimer_.startTimer();
-  const size_t threadId = 0;
-  const scalar_t stepLength = 0.0;
-  avgTimeStepFP_ = performFullRollout(threadId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_,
-                                      nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
-                                      modelDataTrajectoriesStock_, modelDataEventTimesStock_, performanceIndex_);
-
-  forwardPassTimer_.endTimer();
+  initializationTimer_.startTimer();
+  constexpr size_t taskId = 0;
+  constexpr scalar_t stepLength = 0.0;
+  scalar_t heuristicsValue = 0.0;
+  const bool isStable = performFullRollout(taskId, stepLength, nominalControllersStock_, nominalTimeTrajectoriesStock_,
+                                           nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_, nominalInputTrajectoriesStock_,
+                                           modelDataTrajectoriesStock_, modelDataEventTimesStock_, heuristicsValue);
 
   // This is necessary for:
   // + The moving horizon (MPC) application
   // + The very first call of the algorithm where there is no previous nominal trajectories.
   correctInitcachedNominalTrajectories();
+
+  if (isStable) {
+    performanceIndex_ = calculateRolloutPerformanceIndex(nominalTimeTrajectoriesStock_, modelDataTrajectoriesStock_,
+                                                         modelDataEventTimesStock_, heuristicsValue);
+    // display
+    if (ddpSettings_.displayInfo_) {
+      std::stringstream infoDisplay;
+      infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
+      infoDisplay << std::setw(4) << performanceIndex_ << '\n';
+      Solver_BASE::printString(infoDisplay.str());
+    }
+
+  } else {
+    throw std::runtime_error("Initial controller does not generate a stable rollout.");
+  }
+  initializationTimer_.endTimer();
 
   // update the constraint penalty coefficients
   updateConstraintPenalties(0.0, 0.0, 0.0);

@@ -369,15 +369,15 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
-   * @param [out] performanceIndex: The cost, merit function and ISEs of constraints for the trajectory.
+   * @param [out] heuristicsValue: The heuristics function value.
    *
-   * @return average time step.
+   * @return true if the rollout was stable.
    */
-  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
-                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                              vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                              std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                              std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, PerformanceIndex& performanceIndex);
+  bool performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
+                          scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                          vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
+                          std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                          std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue);
 
   /**
    * Line search on the feedforward parts of the controller. It chooses the largest acceptable step-size.
@@ -653,7 +653,7 @@ class GaussNewtonDDP : public Solver_BASE {
   std::mutex riccatiSolverDataMutex_;
 
   // benchmarking
-  benchmark::RepeatedTimer forwardPassTimer_;
+  benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer backwardPassTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;

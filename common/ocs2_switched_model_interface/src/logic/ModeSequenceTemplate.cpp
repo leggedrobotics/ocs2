@@ -85,6 +85,7 @@ Gait toGait(const ModeSequenceTemplate& modeSequenceTemplate) {
                 [&](scalar_t eventTime) { gait.eventPhases.push_back((eventTime - startTime) / gait.duration); });
   // Modes:
   gait.modeSequence = modeSequenceTemplate.modeSequence;
+  assert(isValidGait(gait));
   return gait;
 }
 

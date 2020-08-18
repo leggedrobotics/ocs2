@@ -35,7 +35,7 @@ Gait fromMessage(const ocs2_switched_model_msgs::gait& msg) {
   for (const auto& mode : msg.modeSequence) {
     gait.modeSequence.push_back(mode);
   }
-  assert(gait.eventPhase.size() + 1 == gait.modeSequence.size());
+  assert(isValidGait(gait));
   return gait;
 }
 

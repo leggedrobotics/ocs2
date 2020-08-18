@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
+#include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
@@ -349,14 +349,13 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [in] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    * @param [in] modelDataEventTimesStock: Array of model data at event times.
    * @param [in] heuristicsValue: The Heuristics function value.
-   * @param [in] workerIndex: Working thread (default is 0).
    *
    * @return The cost, merit function and ISEs of constraints for the trajectory.
    */
   PerformanceIndex calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
                                                     const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                                                     const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                                    scalar_t heuristicsValue, size_t workerIndex = 0);
+                                                    scalar_t heuristicsValue);
 
   /**
    * Performs a full rollout of dynamics, cost, and constraints with a given step length.
@@ -621,7 +620,7 @@ class GaussNewtonDDP : public Solver_BASE {
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
-  std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrStock_;
+  std::unique_ptr<PenaltyBase> penaltyPtrStock_;
 
   scalar_t nominalControllerUpdateIS_ = 0.0;
 

@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <numeric>
 
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Lookup.h>
@@ -56,8 +57,6 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
   heuristicsFunctionsPtrStock_.clear();
   heuristicsFunctionsPtrStock_.reserve(ddpSettings_.nThreads_);
-  penaltyPtrStock_.clear();
-  penaltyPtrStock_.reserve(ddpSettings_.nThreads_);
   dynamicsForwardRolloutPtrStock_.clear();
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
   operatingTrajectoriesRolloutPtrStock_.clear();
@@ -82,11 +81,10 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
     } else {  // use the cost function if no heuristics function is defined
       heuristicsFunctionsPtrStock_.emplace_back(costFunctionPtr->clone());
     }
-
-    // initialize penalty functions
-    penaltyPtrStock_.emplace_back(new RelaxedBarrierPenalty(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_));
-
   }  // end of i loop
+
+  // initialize penalty functions
+  penaltyPtrStock_.reset(new RelaxedBarrierPenalty(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_));
 
   // initialize Augmented Lagrangian parameters
   initializeConstraintPenalties();
@@ -768,7 +766,7 @@ void GaussNewtonDDP::rolloutCostAndConstraints(const scalar_array2_t& timeTrajec
 PerformanceIndex GaussNewtonDDP::calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
                                                                   const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                                                                   const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                                                  scalar_t heuristicsValue, size_t workerIndex /*= 0*/) {
+                                                                  scalar_t heuristicsValue) {
   PerformanceIndex performanceIndex;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     // total cost
@@ -792,15 +790,13 @@ PerformanceIndex GaussNewtonDDP::calculateRolloutPerformanceIndex(const scalar_a
     // inequality constraints violation ISE
     scalar_array_t inequalityNorm2Trajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityNorm2Trajectory.begin(),
-                   [this, workerIndex](const ModelDataBase& m) {
-                     return penaltyPtrStock_[workerIndex]->constraintViolationSquaredNorm(m.ineqConstr_.f);
-                   });
+                   [this](const ModelDataBase& m) { return penaltyPtrStock_->constraintViolationSquaredNorm(m.ineqConstr_.f); });
     performanceIndex.inequalityConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityNorm2Trajectory);
 
     // inequality constraints penalty
     scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityPenaltyTrajectory.begin(),
-                   [this, workerIndex](const ModelDataBase& m) { return penaltyPtrStock_[workerIndex]->penaltyCost(m.ineqConstr_.f); });
+                   [this](const ModelDataBase& m) { return penaltyPtrStock_->penaltyCost(m.ineqConstr_.f); });
     performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
 
     // final cost and constraints
@@ -847,8 +843,8 @@ scalar_t GaussNewtonDDP::performFullRollout(size_t workerIndex, scalar_t stepLen
     rolloutCostAndConstraints(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
                               modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue, workerIndex);
 
-    performanceIndex = calculateRolloutPerformanceIndex(timeTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock,
-                                                        heuristicsValue, workerIndex);
+    performanceIndex =
+        calculateRolloutPerformanceIndex(timeTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
 
     // display
     if (ddpSettings_.displayInfo_) {
@@ -1561,7 +1557,7 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
 
   // inequality constraints
   if (modelData.ineqConstr_.f.rows() > 0) {
-    auto penalty = penaltyPtrStock_[workerIndex]->penaltyCostQuadraticApproximation(modelData.ineqConstr_);
+    auto penalty = penaltyPtrStock_->penaltyCostQuadraticApproximation(modelData.ineqConstr_);
     modelData.cost_.f += penalty.f;
     modelData.cost_.dfdx.noalias() += penalty.dfdx;
     modelData.cost_.dfdu.noalias() += penalty.dfdu;

@@ -33,11 +33,11 @@ namespace ocs2 {
 
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator+=(const ScalarFunctionQuadraticApproximation& rhs) {
   f += rhs.f;
-  dfdx.noalias() += rhs.dfdx;
-  dfdu.noalias() += rhs.dfdu;
-  dfdxx.noalias() += rhs.dfdxx;
-  dfdux.noalias() += rhs.dfdux;
-  dfduu.noalias() += rhs.dfduu;
+  dfdx += rhs.dfdx;
+  dfdu += rhs.dfdu;
+  dfdxx += rhs.dfdxx;
+  dfdux += rhs.dfdux;
+  dfduu += rhs.dfduu;
   return *this;
 }
 
@@ -84,7 +84,7 @@ ScalarFunctionQuadraticApproximation operator*(const ScalarFunctionQuadraticAppr
 }
 
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f) {
-  out << "   f " << f.f << '\n';
+  out << "f " << f.f << '\n';
   out << "dfdx " << f.dfdx.transpose() << '\n';
   out << "dfdu " << f.dfdu.transpose() << '\n';
   out << "dfdxx\n" << f.dfdxx << '\n';

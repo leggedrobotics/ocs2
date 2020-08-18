@@ -1034,15 +1034,15 @@ void GaussNewtonDDP::calculateRolloutMerit(PerformanceIndex& performanceIndex) c
   performanceIndex.merit = performanceIndex.totalCost;
 
   // intermediate state-only equality constraints
-  performanceIndex.merit += constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff * std::sqrt(performanceIndex.stateEqConstraintISE);
+  performanceIndex.merit += constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff * std::sqrt(performanceIndex.stateEqConstraintISE);
 
   // final state-only equality constraints
   performanceIndex.merit +=
-      constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff * std::sqrt(performanceIndex.stateEqFinalConstraintSSE);
+      constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff * std::sqrt(performanceIndex.stateEqFinalConstraintSSE);
 
   // intermediate state-input equality constraints
   performanceIndex.merit +=
-      constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff * std::sqrt(performanceIndex.stateInputEqConstraintISE);
+      constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff * std::sqrt(performanceIndex.stateInputEqConstraintISE);
 
   // intermediate inequality constraints
   performanceIndex.merit += performanceIndex.inequalityConstraintPenalty;
@@ -1291,7 +1291,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
         // get next time index is atomic
         while ((timeIndex = nextTimeIndex_++) < nominalTimeTrajectoriesStock_[i].size()) {
           // augment cost
-          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff, 0.0,
+          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0,
                             modelDataTrajectoriesStock_[i][timeIndex]);
         }
       };
@@ -1319,7 +1319,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
               nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
               modelDataEventTimesStock_[i][timeIndex]);
           // augment cost
-          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff, 0.0,
+          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff, 0.0,
                             modelDataEventTimesStock_[i][timeIndex]);
           // shift Hessian
           shiftHessian(modelDataEventTimesStock_[i][timeIndex].cost_.dfdxx);
@@ -1535,28 +1535,28 @@ void GaussNewtonDDP::shiftHessian(matrix_t& matrix) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff, scalar_t stateInputEqualityPenaltyCoeff,
+void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConstrPenaltyCoeff, scalar_t stateInputEqConstrPenaltyCoeff,
                                        ModelDataBase& modelData) const {
   // state equality constraint (type 2) coefficients
   if (modelData.stateEqConstr_.f.rows() > 0) {
     const vector_t& Hv = modelData.stateEqConstr_.f;
     const matrix_t& Fm = modelData.stateEqConstr_.dfdx;
-    modelData.cost_.f += 0.5 * stateEqualityPenaltyCoeff * Hv.dot(Hv);
-    modelData.cost_.dfdx.noalias() += stateEqualityPenaltyCoeff * Fm.transpose() * Hv;
-    modelData.cost_.dfdu.noalias() += stateEqualityPenaltyCoeff * Fm.transpose() * Fm;
+    modelData.cost_.f += 0.5 * stateEqConstrPenaltyCoeff * Hv.dot(Hv);
+    modelData.cost_.dfdx.noalias() += stateEqConstrPenaltyCoeff * Fm.transpose() * Hv;
+    modelData.cost_.dfdu.noalias() += stateEqConstrPenaltyCoeff * Fm.transpose() * Fm;
   }
 
   // state-input equality constraint (type 1) coefficients
-  if (modelData.stateInputEqConstr_.f.rows() > 0 && !numerics::almost_eq(stateInputEqualityPenaltyCoeff, 0.0)) {
+  if (modelData.stateInputEqConstr_.f.rows() > 0 && !numerics::almost_eq(stateInputEqConstrPenaltyCoeff, 0.0)) {
     const vector_t& Ev = modelData.stateInputEqConstr_.f;
     const matrix_t& Cm = modelData.stateInputEqConstr_.dfdx;
     const matrix_t& Dm = modelData.stateInputEqConstr_.dfdu;
-    modelData.cost_.f += 0.5 * stateInputEqualityPenaltyCoeff * Ev.dot(Ev);
-    modelData.cost_.dfdx.noalias() += stateInputEqualityPenaltyCoeff * Cm.transpose() * Ev;
-    modelData.cost_.dfdu.noalias() += stateInputEqualityPenaltyCoeff * Dm.transpose() * Ev;
-    modelData.cost_.dfdxx.noalias() += stateInputEqualityPenaltyCoeff * Cm.transpose() * Cm;
-    modelData.cost_.dfduu.noalias() += stateInputEqualityPenaltyCoeff * Dm.transpose() * Dm;
-    modelData.cost_.dfdux.noalias() += stateInputEqualityPenaltyCoeff * Dm.transpose() * Cm;
+    modelData.cost_.f += 0.5 * stateInputEqConstrPenaltyCoeff * Ev.dot(Ev);
+    modelData.cost_.dfdx.noalias() += stateInputEqConstrPenaltyCoeff * Cm.transpose() * Ev;
+    modelData.cost_.dfdu.noalias() += stateInputEqConstrPenaltyCoeff * Dm.transpose() * Ev;
+    modelData.cost_.dfdxx.noalias() += stateInputEqConstrPenaltyCoeff * Cm.transpose() * Cm;
+    modelData.cost_.dfduu.noalias() += stateInputEqConstrPenaltyCoeff * Dm.transpose() * Dm;
+    modelData.cost_.dfdux.noalias() += stateInputEqConstrPenaltyCoeff * Dm.transpose() * Cm;
   }
 
   // inequality constraints
@@ -1587,17 +1587,17 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
   assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
 
   // state-only equality
-  constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.constraintTolerance_;
+  constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
+  constraintPenaltyCoefficients_.stateEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
 
   // final state-only equality
-  constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.constraintTolerance_;
+  constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
+  constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
 
   // state-input equality
-  constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
-  constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol =
-      1.0 / std::pow(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff, 0.1);
+  constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff = ddpSettings_.constraintPenaltyInitialValue_;
+  constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol =
+      1.0 / std::pow(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff, 0.1);
 }
 
 /******************************************************************************************************/
@@ -1607,45 +1607,45 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t stateEqConstraintISE, sc
                                                scalar_t stateInputEqConstraintISE) {
   // state-only equality penalty
   if (stateEqConstraintISE > ddpSettings_.constraintTolerance_) {
-    constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateEqualityPenaltyTol = ddpSettings_.constraintTolerance_;
+    constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
+    constraintPenaltyCoefficients_.stateEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
   }
 
   // final state-only equality
   if (stateEqFinalConstraintSSE > ddpSettings_.constraintTolerance_) {
-    constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol = ddpSettings_.constraintTolerance_;
+    constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
+    constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyTol = ddpSettings_.constraintTolerance_;
   }
 
   // state-input equality penalty
-  if (stateInputEqConstraintISE < constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol) {
+  if (stateInputEqConstraintISE < constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol) {
     // tighten tolerance
-    constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol /=
-        std::pow(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff, 0.9);
+    constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol /=
+        std::pow(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff, 0.9);
   } else {
     // tighten tolerance & increase penalty
-    constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
-    constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol /=
-        std::pow(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff, 0.1);
+    constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff *= ddpSettings_.constraintPenaltyIncreaseRate_;
+    constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol /=
+        std::pow(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff, 0.1);
   }
-  constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol =
-      std::max(constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol, ddpSettings_.constraintTolerance_);
+  constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol =
+      std::max(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol, ddpSettings_.constraintTolerance_);
 
   // display
   if (ddpSettings_.displayInfo_) {
     std::string displayText = "Augmented Lagrangian Penalty Parameters:\n";
 
     displayText += "    State Equality:      ";
-    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityPenaltyTol);
-    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityPenaltyCoeff) + '\n';
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateEqConstrPenaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff) + '\n';
 
     displayText += "    Final State Equality:";
-    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityFinalPenaltyTol);
-    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateEqualityFinalPenaltyCoeff) + '\n';
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff) + '\n';
 
     displayText += "    State-Input Equality:";
-    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqualityPenaltyTol);
-    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqualityPenaltyCoeff) + ".";
+    displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol);
+    displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff) + ".";
     Solver_BASE::printString(displayText);
   }
 }

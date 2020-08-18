@@ -82,14 +82,14 @@ class GaussNewtonDDP : public Solver_BASE {
   };
 
   struct ConstraintPenaltyCoefficients {
-    scalar_t stateEqualityPenaltyTol = 1e-3;
-    scalar_t stateEqualityPenaltyCoeff = 0.0;
+    scalar_t stateEqConstrPenaltyTol = 1e-3;
+    scalar_t stateEqConstrPenaltyCoeff = 0.0;
 
-    scalar_t stateEqualityFinalPenaltyTol = 1e-3;
-    scalar_t stateEqualityFinalPenaltyCoeff = 0.0;
+    scalar_t stateFinalEqConstrPenaltyTol = 1e-3;
+    scalar_t stateFinalEqConstrPenaltyCoeff = 0.0;
 
-    scalar_t stateInputEqualityPenaltyTol = 1e-3;
-    scalar_t stateInputEqualityPenaltyCoeff = 0.0;
+    scalar_t stateInputEqConstrPenaltyTol = 1e-3;
+    scalar_t stateInputEqConstrPenaltyCoeff = 0.0;
   };
 
   /**
@@ -483,11 +483,11 @@ class GaussNewtonDDP : public Solver_BASE {
    * Augments the cost function for the given model data.
    *
    * @param [in] workerIndex: Working agent index.
-   * @param [in] stateEqualityPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
-   * @param [in] stateInputEqualityPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
+   * @param [in] stateEqConstrPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
+   * @param [in] stateInputEqConstrPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
    * @param modelData: The model data.
    */
-  void augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff, scalar_t stateInputEqualityPenaltyCoeff,
+  void augmentCostWorker(size_t workerIndex, scalar_t stateEqConstrPenaltyCoeff, scalar_t stateInputEqConstrPenaltyCoeff,
                          ModelDataBase& modelData) const;
 
   /**

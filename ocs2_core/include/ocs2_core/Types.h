@@ -98,8 +98,7 @@ struct ScalarFunctionQuadraticApproximation {
   /** Constant term */
   scalar_t f = 0.;
 
-  /* Compound assignment opeartors for multiply and accumulate */
-  ScalarFunctionQuadraticApproximation& operator*=(scalar_t rhs);
+  /* Compound assignment opeartor for addition */
   ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);
 
   ScalarFunctionQuadraticApproximation& resize(size_t stateDim, size_t inputDim);
@@ -108,11 +107,9 @@ struct ScalarFunctionQuadraticApproximation {
 
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);
 
-/* Binary operators */
+/* Binary addition operator */
 ScalarFunctionQuadraticApproximation operator+(const ScalarFunctionQuadraticApproximation& lhs,
                                                const ScalarFunctionQuadraticApproximation& rhs);
-ScalarFunctionQuadraticApproximation operator*(const scalar_t lhs, const ScalarFunctionQuadraticApproximation& rhs);
-ScalarFunctionQuadraticApproximation operator*(const ScalarFunctionQuadraticApproximation& lhs, const scalar_t rhs);
 
 /**
  * Defines the linear model of a vector-valued function

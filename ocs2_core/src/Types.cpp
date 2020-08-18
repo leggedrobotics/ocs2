@@ -41,16 +41,6 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::oper
   return *this;
 }
 
-ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator*=(scalar_t rhs) {
-  f *= rhs;
-  dfdx *= rhs;
-  dfdu *= rhs;
-  dfdxx *= rhs;
-  dfdux *= rhs;
-  dfduu *= rhs;
-  return *this;
-}
-
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::resize(size_t stateDim, size_t inputDim) {
   dfdx.resize(stateDim);
   dfdu.resize(inputDim);
@@ -73,14 +63,6 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::setZ
 ScalarFunctionQuadraticApproximation operator+(const ScalarFunctionQuadraticApproximation& lhs,
                                                const ScalarFunctionQuadraticApproximation& rhs) {
   return ScalarFunctionQuadraticApproximation(lhs) += rhs;
-}
-
-ScalarFunctionQuadraticApproximation operator*(const scalar_t lhs, const ScalarFunctionQuadraticApproximation& rhs) {
-  return ScalarFunctionQuadraticApproximation(rhs) *= lhs;
-}
-
-ScalarFunctionQuadraticApproximation operator*(const ScalarFunctionQuadraticApproximation& lhs, const scalar_t rhs) {
-  return ScalarFunctionQuadraticApproximation(lhs) *= rhs;
 }
 
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f) {

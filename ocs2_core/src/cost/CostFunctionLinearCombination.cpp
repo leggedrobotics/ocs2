@@ -96,7 +96,6 @@ ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::costQuadrati
   L.setZero(x.rows(), u.rows());
   for (auto& weightedCost : weightedCosts_) {
     const auto cost = weightedCost.second->costQuadraticApproximation(t, x, u);
-    // Do manual multiply and accumulate to allow vectorization
     L.f += weightedCost.first * cost.f;
     L.dfdx += weightedCost.first * cost.dfdx;
     L.dfdu += weightedCost.first * cost.dfdu;
@@ -116,7 +115,6 @@ ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::finalCostQua
   Phi.dfdx.setZero(x.rows());
   Phi.dfdxx.setZero(x.rows(), x.rows());
   for (auto& weightedCost : weightedCosts_) {
-    // Do manual multiply and accumulate to allow vectorization
     const auto cost = weightedCost.second->finalCostQuadraticApproximation(t, x);
     Phi.f += weightedCost.first * cost.f;
     Phi.dfdx += weightedCost.first * cost.dfdx;

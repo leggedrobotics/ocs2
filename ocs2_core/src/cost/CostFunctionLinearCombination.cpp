@@ -95,7 +95,14 @@ ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::costQuadrati
   ScalarFunctionQuadraticApproximation L;
   L.setZero(x.rows(), u.rows());
   for (auto& weightedCost : weightedCosts_) {
-    L += weightedCost.first * weightedCost.second->costQuadraticApproximation(t, x, u);
+    const auto cost = weightedCost.second->costQuadraticApproximation(t, x, u);
+    // Do manual multiply and accumulate to allow vectorization
+    L.f += weightedCost.first * cost.f;
+    L.dfdx += weightedCost.first * cost.dfdx;
+    L.dfdu += weightedCost.first * cost.dfdu;
+    L.dfdxx += weightedCost.first * cost.dfdxx;
+    L.dfdux += weightedCost.first * cost.dfdux;
+    L.dfduu += weightedCost.first * cost.dfduu;
   }
   return L;
 }
@@ -109,7 +116,11 @@ ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::finalCostQua
   Phi.dfdx.setZero(x.rows());
   Phi.dfdxx.setZero(x.rows(), x.rows());
   for (auto& weightedCost : weightedCosts_) {
-    Phi += weightedCost.first * weightedCost.second->finalCostQuadraticApproximation(t, x);
+    // Do manual multiply and accumulate to allow vectorization
+    const auto cost = weightedCost.second->finalCostQuadraticApproximation(t, x);
+    Phi.f += weightedCost.first * cost.f;
+    Phi.dfdx += weightedCost.first * cost.dfdx;
+    Phi.dfdxx += weightedCost.first * cost.dfdxx;
   }
   return Phi;
 }

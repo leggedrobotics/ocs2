@@ -614,8 +614,8 @@ class GaussNewtonDDP : public Solver_BASE {
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
   // forward pass and backward pass average time step
-  scalar_t avgTimeStepFP_ = 0.0;
-  scalar_t avgTimeStepBP_ = 0.0;
+  std::atomic<scalar_t> avgTimeStepFP_{0.0};
+  std::atomic<scalar_t> avgTimeStepBP_{0.0};
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;

@@ -27,15 +27,49 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorCost.h>
+#pragma once
+
+#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
+
+#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
 
 namespace mobile_manipulator {
 
-MobileManipulatorCost::ad_scalar_t MobileManipulatorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state,
-                                                                                   const ad_vector_t& input,
-                                                                                   const ad_vector_t& parameters) const {
-  // TODO
-  return ad_scalar_t(0);
-}
+class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
+ public:
+  EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
+                  std::string endEffectorName = "WRIST_2");
+  ~EndEffectorCost() override = default;
+
+  /* Copy constructor */
+  EndEffectorCost(const EndEffectorCost& rhs);
+
+  EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
+
+ protected:
+  ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                       const ad_vector_t& parameters) const override;
+  ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
+
+  /* Set num parameters to size of desired trajectory state */
+  size_t getNumIntermediateParameters() const override;
+  vector_t getIntermediateParameters(scalar_t time) const override;
+
+  size_t getNumFinalParameters() const override;
+  vector_t getFinalParameters(scalar_t time) const override;
+
+ private:
+  vector_t interpolateReference(scalar_t time) const;
+
+  std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
+
+  /* Quadratic cost */
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t Qf_;
+
+  std::string endEffectorName_;
+};
 
 }  // namespace mobile_manipulator

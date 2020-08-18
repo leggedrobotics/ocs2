@@ -75,7 +75,11 @@ int main(int argc, char** argv) {
   initObservation.time = 0.0;
 
   // initial command
-  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time}, {initObservation.state}, {initObservation.input});
+  ocs2::vector_t initTarget(7);
+  initTarget.head(3) << 0, 1, 1;
+  initTarget.tail(4) << 1, 0, 0, 0;
+  ocs2::vector_t zeroInput = ocs2::vector_t::Zero(mobile_manipulator::INPUT_DIM);
+  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 
   // Run dummy (loops while ros is ok)
   dummy.run(initObservation, initCostDesiredTrajectories);

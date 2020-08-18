@@ -59,11 +59,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
-  /*
-   * Default initial condition
-   */
-  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
   pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(urdfPath_));
   pinocchioInterface_->display();
@@ -92,8 +87,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  costPtr_.reset(new MobileManipulatorCost());
-  costPtr_->initialize("mobile_manipulator_cost", libraryFolder_, recompileLibraries, true);
+  costPtr_ = getMobileManipulatorCost(*pinocchioInterface_, taskFile, libraryFolder_, recompileLibraries);
 
   /*
    * Constraints
@@ -103,6 +97,8 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
+  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   operatingPointPtr_.reset(new ocs2::OperatingPoints(initialState_, ocs2::vector_t::Zero(INPUT_DIM)));
 }
 

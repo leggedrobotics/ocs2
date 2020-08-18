@@ -29,24 +29,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/CostFunctionBaseAD.h>
+#include <memory>
 
-#include "ocs2_mobile_manipulator_example/definitions.h"
+#include <ocs2_core/cost/CostFunctionLinearCombination.h>
+
+#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
 
-class MobileManipulatorCost final : public ocs2::CostFunctionBaseAD {
- public:
-  using ocs2::CostFunctionBaseAD::ad_scalar_t;
-  using ocs2::CostFunctionBaseAD::ad_vector_t;
+using MobileManipulatorCost = ocs2::CostFunctionLinearCombination;
 
-  MobileManipulatorCost() : ocs2::CostFunctionBaseAD(STATE_DIM, INPUT_DIM) {}
-  ~MobileManipulatorCost() override = default;
-
-  MobileManipulatorCost* clone() const override { return new MobileManipulatorCost(*this); }
-
-  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override;
-};
+std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface,
+                                                                const std::string& taskFile, const std::string& libraryFolder,
+                                                                bool recompileLibraries);
 
 }  // namespace mobile_manipulator

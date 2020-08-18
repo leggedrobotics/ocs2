@@ -47,8 +47,15 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
  private:
   void launchVisualizerNode(ros::NodeHandle& nodeHandle);
 
+  void publishObservation(const ros::Time& timeStamp, const ocs2::SystemObservation& observation);
+  void publishDesiredTrajectory(const ros::Time& timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory);
+  void publishOptimizedTrajectory(const ros::Time& timeStamp, const ocs2::PrimalSolution& policy);
+
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   tf::TransformBroadcaster tfBroadcaster_;
+
+  ros::Publisher stateOptimizedPublisher_;
+  ros::Publisher stateOptimizedPosePublisher_;
 };
 
 }  // namespace mobile_manipulator

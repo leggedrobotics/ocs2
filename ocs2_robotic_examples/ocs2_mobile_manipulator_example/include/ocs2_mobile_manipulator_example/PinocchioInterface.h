@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <pinocchio/codegen/cppadcg.hpp>
+
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
@@ -38,6 +40,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
+
+template <typename SCALAR>
+struct Pose {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  Eigen::Matrix<SCALAR, 3, 1> position;
+  Eigen::Quaternion<SCALAR> orientation;
+};
 
 /**
  * Pinocchio interface class contatining robot model and data.
@@ -50,8 +60,6 @@ class PinocchioInterface {
 
   using PinocchioModel = pinocchio::ModelTpl<SCALAR>;
   using PinocchioData = typename PinocchioModel::Data;
-
-  using AffineType = Eigen::Transform<SCALAR, 3, Eigen::Affine>;
 
   /**
    * Load pinocchio model from URDF
@@ -81,7 +89,7 @@ class PinocchioInterface {
    * @param[out] the body pose
    * TODO(perry) make this const by caching or mutabling the robotData_
    */
-  AffineType getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
   /**
    * Prints some debug info of the pinocchio model.

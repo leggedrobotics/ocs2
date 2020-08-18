@@ -9,6 +9,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   urdf
   kdl_parser
   robot_state_publisher
+  visualization_msgs
+  geometry_msgs
   ocs2_ros_interfaces
   ocs2_core
   ocs2_ddp
@@ -67,7 +69,8 @@ link_directories(
 
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
-  src/MobileManipulatorCost.cpp
+  src/cost/MobileManipulatorCost.cpp
+  src/cost/EndEffectorCost.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
   src/PinocchioInterface.cpp
@@ -100,6 +103,7 @@ target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
 add_executable(mobile_manipulator_dummy_mrt_node
   src/MobileManipulatorDummyMRT.cpp
   src/MobileManipulatorDummyVisualization.cpp
+  src/MobileManipulatorVisualizationHelpers.cpp
 )
 add_dependencies(mobile_manipulator_dummy_mrt_node
   ${PROJECT_NAME}

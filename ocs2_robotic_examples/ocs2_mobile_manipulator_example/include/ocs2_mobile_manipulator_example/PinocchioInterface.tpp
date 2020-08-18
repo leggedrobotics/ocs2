@@ -6,14 +6,22 @@
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
+#include "CppAdHelpers.h"
+
 namespace mobile_manipulator {
 
 template <typename SCALAR>
 PinocchioInterface<SCALAR>::PinocchioInterface(const std::string& urdfPath) {
   pinocchio::ModelTpl<double> tempModel;
 
+  // add 3 DOF for wheelbase
+  pinocchio::JointModelComposite jointComposite(3);
+  jointComposite.addJoint(pinocchio::JointModelPX());
+  jointComposite.addJoint(pinocchio::JointModelPY());
+  jointComposite.addJoint(pinocchio::JointModelRZ());
+
   // build robot model and robot data
-  pinocchio::urdf::buildModel(urdfPath, tempModel);
+  pinocchio::urdf::buildModel(urdfPath, jointComposite, tempModel);
 
   robotModel_ = std::make_shared<const PinocchioModel>(tempModel.cast<SCALAR>());
   robotData_ = PinocchioData(*robotModel_);
@@ -32,18 +40,18 @@ PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(const Pinocchi
 }
 
 template <typename SCALAR>
-typename PinocchioInterface<SCALAR>::AffineType PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(
-    const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  pinocchio::JointIndex bodyId = this->robotModel_->getBodyId(bodyName);
+Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::string bodyName,
+                                                                 const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  const pinocchio::JointIndex bodyId = robotModel_->getBodyId(bodyName);
 
   pinocchio::forwardKinematics(*robotModel_, robotData_, q);
-  pinocchio::updateFramePlacements(*this->robotModel_, this->robotData_);
+  pinocchio::updateFramePlacements(*robotModel_, robotData_);
 
-  AffineType bodyPose;
-  bodyPose.linear() = this->robotData_.oMf[bodyId].rotation();
-  bodyPose.translation() = this->robotData_.oMf[bodyId].translation();
+  Pose<SCALAR> pose;
+  pose.position = robotData_.oMf[bodyId].translation();
+  pose.orientation = matrixToQuaternion(robotData_.oMf[bodyId].rotation());
 
-  return bodyPose;
+  return pose;
 }
 
 template <typename SCALAR>

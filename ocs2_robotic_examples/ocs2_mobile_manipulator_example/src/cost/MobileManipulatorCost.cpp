@@ -27,24 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
+#include <ocs2_core/misc/LoadData.h>
 
-#include "pinocchio/algorithm/joint-configuration.hpp"
+#include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
+#include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 
 namespace mobile_manipulator {
 
-MobileManipulatorDynamics::MobileManipulatorDynamics(const PinocchioInterface<ad_scalar_t>& pinocchioInterface)
-    : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
-}
+std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface,
+                                                                const std::string& taskFile, const std::string& libraryFolder,
+                                                                bool recompileLibraries) {
+  const bool verbose = true;
 
-MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
-                                                                                const ad_vector_t& input) const {
-  ad_vector_t dxdt(STATE_DIM);
-  const auto theta = state(2);
-  const auto v = input(0);  // forward velocity in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
-  return dxdt;
+  std::vector<ocs2::CostFunctionLinearCombination::WeightedCost> costs;
+
+  /* End effector tracking cost */
+  matrix_t Q(6, 6), R(INPUT_DIM, INPUT_DIM), Qf(6, 6);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
+  ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
+  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << std::endl;
+  std::cerr << "R:  \n" << R << std::endl;
+  std::cerr << "Q_final:\n" << Qf << std::endl;
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectory({0.0}, {initialState_}, {vector_t::Zero(INPUT_DIM)});
+
+  costs.emplace_back({1.0, std::make_shared<EndEffectorCost>(pinocchioInterface, std::move(Q), std::move(R), std::move(Qf))});
+  costs.back.second->setCostDesiredTrajectoriesPtr(&initCostDesiredTrajectory);  // required for CppAD initialization pass
+  costs.back.second->initialize("EndEffectorCost", libraryFolder, recompileLibraries, verbose);
+
+  // TODO(mspieler): use make_unique after switch to C++14
+  return std::unique_ptr<MobileManipulatorCost>(new MobileManipulatorCost(std::move(costs)));
 }
 
 }  // namespace mobile_manipulator

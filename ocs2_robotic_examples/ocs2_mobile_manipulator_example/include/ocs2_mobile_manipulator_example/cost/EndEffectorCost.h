@@ -38,13 +38,12 @@ namespace mobile_manipulator {
 
 class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
  public:
-  EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf);
+  EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
+                  std::string endEffectorName = "WRIST_2");
   ~EndEffectorCost() override = default;
 
   /* Copy constructor */
-  EndEffectorCost(const EndEffectorCost& rhs) : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_) {
-    pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
-  }
+  EndEffectorCost(const EndEffectorCost& rhs);
 
   EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
 
@@ -61,12 +60,16 @@ class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
   vector_t getFinalParameters(scalar_t time) const override;
 
  private:
+  vector_t interpolateReference(scalar_t time) const;
+
   std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
 
   /* Quadratic cost */
   matrix_t Q_;
   matrix_t R_;
   matrix_t Qf_;
+
+  std::string endEffectorName_;
 };
 
 }  // namespace mobile_manipulator

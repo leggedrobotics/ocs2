@@ -91,13 +91,16 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
 void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Time& timeStamp,
                                                                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
   // publish command transform
-  const Eigen::Vector3d desiredEndEffectorPosition = costDesiredTrajectory.desiredStateTrajectory().back().tail(3);
+  const Eigen::Vector3d eeDesiredPosition = costDesiredTrajectory.desiredStateTrajectory().back().head(3);
+  const auto q = Eigen::Vector4d(costDesiredTrajectory.desiredStateTrajectory().back().tail(4));
+  const Eigen::Quaterniond eeDesiredOrientation = Eigen::Quaterniond(q(0), q(1), q(2), q(3));
+  // const Eigen::Quaterniond eeDesiredOrientation = Eigen::Quaterniond(q);
   geometry_msgs::TransformStamped command_tf;
   command_tf.header.stamp = timeStamp;
   command_tf.header.frame_id = "world";
   command_tf.child_frame_id = "command";
-  command_tf.transform.translation = getVectorMsg(desiredEndEffectorPosition);
-  command_tf.transform.rotation = getOrientationMsg(Eigen::Quaterniond(1, 0, 0, 0));
+  command_tf.transform.translation = getVectorMsg(eeDesiredPosition);
+  command_tf.transform.rotation = getOrientationMsg(eeDesiredOrientation);
   tfBroadcaster_.sendTransform(command_tf);
 }
 

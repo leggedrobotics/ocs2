@@ -92,7 +92,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  matrix_t Q(3, 3), R(INPUT_DIM, INPUT_DIM), Qf(3, 3);
+  matrix_t Q(6, 6), R(INPUT_DIM, INPUT_DIM), Qf(6, 6);
   ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q);
   ocs2::loadData::loadEigenMatrix(taskFile, "R", R);
   ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", Qf);

@@ -29,53 +29,100 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
+
 namespace mobile_manipulator {
 
-EndEffectorCost::EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf)
-    : ocs2::QuadraticGaussNewtonCostBaseAD(STATE_DIM, INPUT_DIM), Q_(std::move(Q)), R_(std::move(R)), Qf_(std::move(Qf)) {
+EndEffectorCost::EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
+                                 std::string endEffectorName)
+    : ocs2::QuadraticGaussNewtonCostBaseAD(STATE_DIM, INPUT_DIM),
+      Q_(std::move(Q)),
+      R_(std::move(R)),
+      Qf_(std::move(Qf)),
+      endEffectorName_(std::move(endEffectorName)) {
   pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
+}
+
+EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
+    : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_), endEffectorName_(rhs.endEffectorName_) {
+  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
 }
 
 ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                                       const ad_vector_t& parameters) const {
-  ad_vector_t cost(INPUT_DIM + 3);
-  const ad_vector_t eePosDesired = parameters.tail(3);
-  const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
-  const ad_vector_t err = eePosition - eePosDesired;
+  const ad_vector_t eeDesiredPosition(parameters.head<3>());
+  const ad_vector_t q = parameters.tail(4);
+  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
+
+  ad_vector_t error(6);
+  error.head(3) = eePose.position - eeDesiredPosition;                                 // position error
+  error.tail(3) = ocs2::quaternionDistance(eePose.orientation, eeDesiredOrientation);  // orientation error
+
+  ad_vector_t cost(INPUT_DIM + 6);
   cost.head(INPUT_DIM) = R_.array().sqrt().matrix() * input;
-  cost.tail(3) = Q_.array().sqrt().matrix() * err;
+  cost.tail(6) = Q_.array().sqrt().matrix() * error;
   return cost;
 }
 
 ad_vector_t EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
-  ad_vector_t cost(3);
-  ad_vector_t eePosDesired = parameters.tail(3);
-  const auto eePosition = pinocchioInterface_->getBodyPoseInWorldFrame("WRIST_2", state).position;
-  const ad_vector_t err = eePosition - eePosDesired;
-  cost.tail(3) = Qf_.array().sqrt().matrix() * err;
-  return cost;
+  const ad_vector_t eeDesiredPosition(parameters.head(3));
+  const ad_vector_t q = parameters.tail(4);
+  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
+
+  ad_vector_t error(6);
+  error.head(3) = eePose.position - eeDesiredPosition;                                 // position error
+  error.tail(3) = ocs2::quaternionDistance(eePose.orientation, eeDesiredOrientation);  // orientation error
+
+  return Qf_.array().sqrt().matrix() * error;
+}
+
+/* Author: Johannes Pankert */
+vector_t EndEffectorCost::interpolateReference(scalar_t time) const {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[EndEffectorCost] costDesiredTrajectoriesPtr_ is not set.");
+  }
+
+  vector_t reference(7);
+  const auto& desiredTimeTrajectory = costDesiredTrajectoriesPtr_->desiredTimeTrajectory();
+  const auto& desiredStateTrajectory = costDesiredTrajectoriesPtr_->desiredStateTrajectory();
+
+  auto it = std::lower_bound(desiredTimeTrajectory.begin(), desiredTimeTrajectory.end(), time);
+  int timeAIdx = it - desiredTimeTrajectory.begin() - 1;
+  if (timeAIdx == -1) {
+    reference = desiredStateTrajectory[0];
+
+  } else if (timeAIdx == desiredTimeTrajectory.size() - 1) {
+    reference = desiredStateTrajectory[timeAIdx];
+
+  } else {
+    // interpolation
+    double tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
+    const Eigen::Quaterniond quatA(desiredStateTrajectory[timeAIdx].head<4>());
+    const Eigen::Quaterniond quatB(desiredStateTrajectory[timeAIdx + 1].head<4>());
+
+    reference.head<4>() = quatA.slerp(tau, quatB).coeffs();
+    reference.tail<3>() = (1 - tau) * desiredStateTrajectory[timeAIdx].tail<3>() + tau * desiredStateTrajectory[timeAIdx + 1].tail<3>();
+  }
+
+  return reference;
 }
 
 size_t EndEffectorCost::getNumIntermediateParameters() const {
-  return 6;
+  return 7;
 }
 
 vector_t EndEffectorCost::getIntermediateParameters(scalar_t time) const {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[EndEffectorCost] costDesiredTrajectoriesPtr_ is not set.");
-  }
-  return this->costDesiredTrajectoriesPtr_->getDesiredState(time);
+  return interpolateReference(time);
 }
 
 size_t EndEffectorCost::getNumFinalParameters() const {
-  return 6;
+  return 7;
 }
 
 vector_t EndEffectorCost::getFinalParameters(scalar_t time) const {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[EndEffectorCost] costDesiredTrajectoriesPtr_ is not set.");
-  }
-  return this->costDesiredTrajectoriesPtr_->getDesiredState(time);
+  return interpolateReference(time);
 }
 
 }  // namespace mobile_manipulator

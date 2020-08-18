@@ -13,9 +13,9 @@ namespace switched_model {
 /**
  * Manages the ModeSchedule for switched model.
  */
-class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM> {
+class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager {
  public:
-  using Base = ocs2::ModeScheduleManager<STATE_DIM, INPUT_DIM>;
+  using Base = ocs2::ModeScheduleManager;
   using LockableGaitSchedule = ocs2::Lockable<GaitSchedule>;
   using LockableTerrainModelPtr = ocs2::LockablePtr<TerrainModel>;
 
@@ -33,7 +33,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager<STATE_
   LockableTerrainModelPtr& getTerrainPtr() { return terrainPtr_; }
 
  private:
-  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
 
  private:

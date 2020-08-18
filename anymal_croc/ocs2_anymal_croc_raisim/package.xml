@@ -18,6 +18,6 @@
   <depend>ocs2_anymal_croc</depend>
   <depend>ocs2_anymal_raisim</depend>
 
-  <exec_depend>anymal_sim2real_models</exec_depend>
+  <exec_depend>sim2real_models</exec_depend>
 
 </package>

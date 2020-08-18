@@ -1,20 +1,6 @@
-
-mpcTimeHorizon
-{
-    timehorizon        1.0		; 1.2		; 0.8
-    numPartitions      2
-}
-
-visualization
-{
-    slowdown     1.0
-    vizTime      200
-}
-
-
 model_settings
 {
-  constrainedIntegration        1
+  constrainedIntegration        true
 
   gravitationalAcceleration     9.81
 
@@ -22,16 +8,16 @@ model_settings
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
 
-  enforceFrictionConeConstraint 0
+  enforceFrictionConeConstraint false
   frictionCoefficient           0.7
 
-  enforceTorqueConstraint       0
+  enforceTorqueConstraint       false
   torqueLimit                   40.0
 
   swing_trajectory_settings
   {
     liftOffVelocity             0.2
-    touchDownVelocity           -0.4
+    touchDownVelocity          -0.4
     swingHeight                 0.1
     touchdownAfterHorizon       0.2
     errorGain                   5.0
@@ -40,9 +26,25 @@ model_settings
 
   mpcGoalCommandDelay           0.1
 
-  gaitOptimization              0
+  gaitOptimization              false
 
-  recompileLibraries            1
+  recompileLibraries            true
+}
+
+terrainPlane
+{
+  position
+  {
+    x       0.0;
+    y       0.0;
+    z       0.0;
+  }
+  orientation
+  {
+    roll    0.0;
+    pitch   0.0;
+    yaw     0.0;
+  }
 }
 
 initialModeSchedule
@@ -71,101 +73,85 @@ defaultModeSequenceTemplate
   }
 }
 
-slq
+; DDP settings
+ddp
 {
+  algorithm                       SLQ
 
-  useNominalTimeForBackwardPass 1
-  RiccatiIntegratorType         ODE45  ; ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, ADAMS_BASHFORTH_MOULTON
-  adams_integrator_dt           0.01
+  nThreads                        3
+  threadPriority                  50
 
-  warmStartGSLQ                 1
-  useLQForDerivatives           0
-  displayGradientDescent        0
-  tolGradientDescent            1e-2
-  acceptableTolGradientDescent  1e-2
-  maxIterationGradientDescent   5
-  minLearningRateNLP            0.05
-  maxLearningRateNLP            0.6
-  useAscendingLineSearchNLP     1
-  minEventTimeDifference        0.01
+  maxNumIterations                10
+  minRelCost                      0.1
+  constraintTolerance             5e-3
 
-  ddp
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
+
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            10000
+  minTimeStep                     1e-2
+  backwardPassIntegratorType      ODE45
+
+  constraintPenaltyInitialValue   2.0
+  constraintPenaltyIncreaseRate   2.0
+  inequalityConstraintMu          0.1
+  inequalityConstraintDelta       5.0
+
+  preComputeRiccatiTerms          true
+  useNominalTimeForBackwardPass   true
+
+  useFeedbackPolicy               true
+
+  riskSensitiveCoeff              0.0
+
+  strategy                        LINE_SEARCH
+  lineSearch
   {
-
-    maxNumIterations              10      ;50
-    minLearningRate               1e-4     ;0.1
-    maxLearningRate               1.0
-    minRelCost                    0.1     ;0.01
-    stateConstraintPenaltyCoeff   5.0
-    stateConstraintPenaltyBase    0.0
-    inequalityConstraintDelta     5.0
-    inequalityConstraintMu        0.1
-    meritFunctionRho              50.0
-    constraintStepSize            1.0
-    displayInfo                   0
-    displayShortSummary           1
-    debugPrintRollout             0
-
-    AbsTolODE                     1e-5  ;1e-6
-    RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-2
-    useMakePSD                    0
-    addedRiccatiDiagonal          1e-5
-    maxNumStepsPerSecond          50000
-    simulationIsConstrained       0
-    noStateConstraints            0
-    minAbsConstraint1ISE          5e-3
-    minRelConstraint1ISE          5e-6
-    checkNumericalStability       0
-
-    useMultiThreading             1
-    nThreads                      3
-    threadPriority                50
-    debugPrintMP                  0
-    lsStepsizeGreedy              1
-
-    useRiccatiSolver              1
-
-    useFeedbackPolicy               1
+      minStepLength                 1e-4
+      maxStepLength                 1.0
+      hessianCorrectionStrategy     DIAGONAL_SHIFT
+      hessianCorrectionMultiple     1e-5
   }
+}
 
-  rollout
-  {
-    AbsTolODE                     1e-5  ;1e-6
-    RelTolODE                     1e-3  ;1e-4
-    minTimeStep                   1e-2
-    maxNumStepsPerSecond          50000
-    checkNumericalStability       0
-  }
+; Rollout settings
+rollout
+{
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  minTimeStep                     1e-2
+  maxNumStepsPerSecond            10000
+  checkNumericalStability         false
 }
 
 mpc
 {
+  timeHorizon                     1.0
+  numPartitions                   2
+
   runtimeMaxNumIterations         1
   initMaxNumIterations            10
 
-  runtimeMinLearningRate          1e-2
-  runtimeMaxLearningRate          1.0
-  initMinLearningRate             1e-2
-  initMaxLearningRate             1.0
+  runtimeMinStepLength            1e-2
+  runtimeMaxStepLength            1.0
+  initMinStepLength               1e-2
+  initMaxStepLength               1.0
 
-  debugPrint                      0
-  coldStart                       0
-  recedingHorizon                 1	; use receding horizon MPC
+  debugPrint                      false
+  coldStart                       false
 
-  useParallelRiccatiSolver        1	; use disjoint riccati solver in MP case and recedingHorizon fashion
+  useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
 
-  forwardSimulationTime           28	; [ms] MRT time
+  solutionTimeWindow              500 ; [ms]
 
-  rosMsgTimeWindow                200	; [ms]
-  adaptiveRosMsgTimeWindow        0
-
-  mpcDesiredFrequency             20 ; [Hz]
+  mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
-
-  maxTimeStep                     10e-3
 }
-
 
 ; initial state
 initialRobotState
@@ -181,18 +167,18 @@ initialRobotState
    (5,0) 0.5163  ; z
 
    ; joint state
-   (6,0)  -0.25; -0.2      ; LF_HAA
-   (7,0)  0.6;  0.723    ; LF_HFE
-   (8,0)  -0.85; -1.458    ; LF_KFE
-   (9,0)  0.25; -0.2      ; RF_HAA
-   (10,0) 0.6;  0.723    ; RF_HFE
-   (11,0) -0.85; -1.458    ; RF_KFE
-   (12,0) -0.25; -0.2      ; LH_HAA
-   (13,0) -0.6; -0.723    ; LH_HFE
-   (14,0) 0.85;  1.458    ; LH_KFE
-   (15,0) 0.25; -0.2      ; RH_HAA
-   (16,0) -0.6; -0.723    ; RH_HFE
-   (17,0) 0.85;  1.458    ; RH_KFE
+   (6,0)  -0.25       ; LF_HAA
+   (7,0)  0.6         ; LF_HFE
+   (8,0)  -0.85       ; LF_KFE
+   (9,0)  0.25        ; RF_HAA
+   (10,0) 0.6         ; RF_HFE
+   (11,0) -0.85       ; RF_KFE
+   (12,0) -0.25       ; LH_HAA
+   (13,0) -0.6        ; LH_HFE
+   (14,0) 0.85        ; LH_KFE
+   (15,0) 0.25        ; RH_HAA
+   (16,0) -0.6        ; RH_HFE
+   (17,0) 0.85        ; RH_KFE
 
    ; angular velocity
    (18,0) 0.0    ; x
@@ -218,7 +204,6 @@ initialRobotState
    (34,0) 0.0    ; HFE
    (35,0) 0.0    ; KFE
 }
-
 
 ; state weighting
 Q
@@ -246,26 +231,25 @@ Q
    (11,11)  30.0    ; z
 
    ; LF joints
-   (12,12) 20.0 ; LF_HAA  ; 100.0
-   (13,13) 20.0 ; LF_HFE  ; 70.0
-   (14,14) 10.0 ; LF_KFE  ; 50.0
+   (12,12) 20.0 ; LF_HAA
+   (13,13) 20.0 ; LF_HFE
+   (14,14) 10.0 ; LF_KFE
 
    ; RF joints
-   (15,15) 20.0 ; RF_HAA  ; 100.0
-   (16,16) 20.0 ; RF_HFE  ; 70.0
-   (17,17) 10.0 ; RF_KFE  ; 50.0
+   (15,15) 20.0 ; RF_HAA
+   (16,16) 20.0 ; RF_HFE
+   (17,17) 10.0 ; RF_KFE
 
    ; LH joints
-   (18,18) 20.0 ; LH_HAA  ; 100.0
-   (19,19) 20.0 ; LH_HFE  ; 70.0
-   (20,20) 10.0 ; LH_KFE  ; 50.0
+   (18,18) 20.0 ; LH_HAA
+   (19,19) 20.0 ; LH_HFE
+   (20,20) 10.0 ; LH_KFE
 
    ; RH joints
-   (21,21) 20.0 ; RH_HAA  ; 100.0
-   (22,22) 20.0 ; RH_HFE  ; 70.0
-   (23,23) 10.0 ; RH_KFE  ; 50.0
+   (21,21) 20.0 ; RH_HAA
+   (22,22) 20.0 ; RH_HFE
+   (23,23) 10.0 ; RH_KFE
 }
-
 
 ; control weighting
 R
@@ -273,47 +257,46 @@ R
    scaling 1e-3
 
    ; LF contact forces
-   (0,0)   1.0    ; LF_X    ; 10.0
-   (1,1)   1.0    ; LF_Y    ; 10.0
-   (2,2)   1.0    ; LF_Z    ; 10.0
+   (0,0)   1.0    ; LF_X
+   (1,1)   1.0    ; LF_Y
+   (2,2)   1.0    ; LF_Z
 
    ; RF contact forces
-   (3,3)   1.0    ; RF_X    ; 10.0
-   (4,4)   1.0    ; RF_Y    ; 10.0
-   (5,5)   1.0    ; RF_Z    ; 10.0
+   (3,3)   1.0    ; RF_X
+   (4,4)   1.0    ; RF_Y
+   (5,5)   1.0    ; RF_Z
 
    ; LH contact forces
-   (6,6)   1.0    ; LH_X    ; 10.0
-   (7,7)   1.0    ; LH_Y    ; 10.0
-   (8,8)   1.0    ; LH_Z    ; 10.0
+   (6,6)   1.0    ; LH_X
+   (7,7)   1.0    ; LH_Y
+   (8,8)   1.0    ; LH_Z
 
    ; RH contact forces
-   (9,9)   1.0    ; RH_X    ; 10.0
-   (10,10) 1.0    ; RH_Y    ; 10.0
-   (11,11) 1.0    ; RH_Z    ; 10.0
+   (9,9)   1.0    ; RH_X
+   (10,10) 1.0    ; RH_Y
+   (11,11) 1.0    ; RH_Z
 
 
    ; LF joint velocities
    (12,12) 1000   ; LF_HAA
    (13,13) 1000   ; LF_HFE
-   (14,14) 100   ; LF_KFE
+   (14,14) 100    ; LF_KFE
 
    ; RF joint velocities
    (15,15) 1000    ; RF_HAA
    (16,16) 1000    ; RF_HFE
-   (17,17) 100    ; RF_KFE
+   (17,17) 100     ; RF_KFE
 
    ; LH joint velocities
    (18,18) 1000    ; LH_HAA
    (19,19) 1000    ; LH_HFE
-   (20,20) 100    ; LH_KFE
+   (20,20) 100     ; LH_KFE
 
    ; RH joint velocities
    (21,21) 1000    ; RH_HAA
    (22,22) 1000    ; RH_HFE
-   (23,23) 100    ; RH_KFE
+   (23,23) 100     ; RH_KFE
 }
-
 
 ; state weighting
 Q_final
@@ -359,6 +342,4 @@ Q_final
   (21,21) 0.0    ; RH_HAA
   (22,22) 0.0    ; RH_HFE
   (23,23) 0.0    ; RH_KFE
-
 }
-

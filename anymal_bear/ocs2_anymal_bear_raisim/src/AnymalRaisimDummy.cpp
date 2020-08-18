@@ -28,8 +28,7 @@ int main(int argc, char* argv[]) {
   auto anymalInterface = anymal::getAnymalBearInterface(anymal::getTaskFileFolderBear(taskName));
 
   // load settings
-  ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(anymal::getTaskFilePathBear(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathBear(taskName));
   ocs2::RaisimRolloutSettings raisimRolloutSettings;
   raisimRolloutSettings.loadSettings(ros::package::getPath("ocs2_anymal_bear_raisim") + "/config/raisim_rollout.info", "rollout");
 

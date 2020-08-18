@@ -10,26 +10,25 @@ QuadrupedLoopshapingVisualizer::QuadrupedLoopshapingVisualizer(std::shared_ptr<o
                                                                std::unique_ptr<switched_model::QuadrupedVisualizer> quadrupedVisualizer)
     : loopshapingDefinition_(std::move(loopshapingDefinition)), quadrupedVisualizer_(std::move(quadrupedVisualizer)) {}
 
-void QuadrupedLoopshapingVisualizer::update(const system_observation_t& observation, const primal_solution_t& primalSolution,
-                                            const command_data_t& command) {
-  switched_model::QuadrupedVisualizer::system_observation_t quadrupedObservation;
-  quadrupedObservation.time() = observation.time();
-  loopshapingDefinition_->getSystemState(observation.state(), quadrupedObservation.state());
-  loopshapingDefinition_->getSystemInput(observation.state(), observation.input(), quadrupedObservation.input());
-  quadrupedObservation.subsystem() = observation.subsystem();
+void QuadrupedLoopshapingVisualizer::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,
+                                            const ocs2::CommandData& command) {
+  ocs2::SystemObservation quadrupedObservation;
+  quadrupedObservation.time = observation.time;
+  quadrupedObservation.state = loopshapingDefinition_->getSystemState(observation.state);
+  quadrupedObservation.input = loopshapingDefinition_->getSystemInput(observation.state, observation.input);
+  quadrupedObservation.mode = observation.mode;
 
   const auto quadrupedStateTrajectory = [&] {
-    switched_model::QuadrupedVisualizer::state_vector_array_t quadrupedStateTrajectory{};
+    vector_array_t quadrupedStateTrajectory{};
     quadrupedStateTrajectory.reserve(primalSolution.stateTrajectory_.size());
     for (const auto& loopshapingState : primalSolution.stateTrajectory_) {
-      switched_model::QuadrupedVisualizer::state_vector_t quadrupedState;
-      loopshapingDefinition_->getSystemState(loopshapingState, quadrupedState);
+      vector_t quadrupedState = loopshapingDefinition_->getSystemState(loopshapingState);
       quadrupedStateTrajectory.push_back(quadrupedState);
     }
     return quadrupedStateTrajectory;
   }();
 
-  const auto timeStamp = ros::Time(observation.time());
+  const auto timeStamp = ros::Time(observation.time);
   quadrupedVisualizer_->publishObservation(timeStamp, quadrupedObservation);
   quadrupedVisualizer_->publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
   quadrupedVisualizer_->publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, quadrupedStateTrajectory,

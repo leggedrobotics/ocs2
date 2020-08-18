@@ -15,7 +15,7 @@
       </include>
     </group>
 
-    <param name="/anymal_croc_raisim_urdf" textfile="$(find anymal_sim2real_models)/models/anymal/anymal_croc/2020-03-03/urdf/anymal_minimal.urdf"/>
+    <param name="/anymal_croc_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_croc/2020-05-11/urdf/anymal_minimal.urdf"/>
 
     <node pkg="ocs2_anymal_croc" type="ocs2_anymal_croc_mpc_node" name="ocs2_anymal_croc_mpc_node"
           output="screen" args="$(arg task_name)" launch-prefix=""/>

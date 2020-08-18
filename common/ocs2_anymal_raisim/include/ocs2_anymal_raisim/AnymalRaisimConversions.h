@@ -4,7 +4,7 @@
 #include <raisim/World.hpp>
 #include <utility>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>

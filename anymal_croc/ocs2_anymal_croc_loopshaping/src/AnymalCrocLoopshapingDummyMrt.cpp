@@ -21,8 +21,7 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nodeHandle;
 
   auto anymalInterface = anymal::getAnymalCrocLoopshapingInterface(anymal::getTaskFileFolderCrocLoopshaping(taskName));
-  ocs2::MPC_Settings mpcSettings;
-  mpcSettings.loadSettings(anymal::getTaskFilePathCrocLoopshaping(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCrocLoopshaping(taskName));
   quadrupedLoopshapingDummyNode(nodeHandle, *anymalInterface, mpcSettings.mrtDesiredFrequency_, mpcSettings.mpcDesiredFrequency_);
 
   return 0;

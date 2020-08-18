@@ -6,6 +6,8 @@
 
 #include "ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h"
 
+#include <ocs2_core/misc/LinearInterpolation.h>
+
 // Additional messages not in the helpers file
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -50,24 +52,24 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   }
 }
 
-void QuadrupedVisualizer::update(const system_observation_t& observation, const primal_solution_t& primalSolution,
-                                 const command_data_t& command) {
+void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,
+                                 const ocs2::CommandData& command) {
   static scalar_t lastTime = std::numeric_limits<scalar_t>::lowest();
-  if (observation.time() - lastTime > minPublishTimeDifference_) {
-    const auto timeStamp = ros::Time(observation.time());
+  if (observation.time - lastTime > minPublishTimeDifference_) {
+    const auto timeStamp = ros::Time(observation.time);
     publishObservation(timeStamp, observation);
     publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
     publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
                                     primalSolution.modeSchedule_);
-    lastTime = observation.time();
+    lastTime = observation.time;
   }
 }
 
-void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const system_observation_t& observation) {
+void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::SystemObservation& observation) {
   // Extract components from state
-  const base_coordinate_t comPose = getComPose(observation.state());
+  const base_coordinate_t comPose = getComPose(state_vector_t(observation.state));
   const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
-  const joint_coordinate_t qJoints = getJointPositions(observation.state());
+  const joint_coordinate_t qJoints = getJointPositions(state_vector_t(observation.state));
   const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(comPose));
 
   // Compute cartesian state and inputs
@@ -76,7 +78,7 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const system_o
   feet_array_t<Eigen::Quaternion<scalar_t>> feetOrientations;
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
     feetPosition[i] = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
-    feetForce[i] = o_R_b * observation.input().template segment<3>(3 * i);
+    feetForce[i] = o_R_b * observation.input.template segment<3>(3 * i);
     feetOrientations[i] = Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints));
   }
 
@@ -84,7 +86,7 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const system_o
   const auto rosTime = ros::Time::now();
   publishJointTransforms(rosTime, qJoints);  // TODO (rgrandia) : using mpc timestamp doesn't work for the TFs
   publishBaseTransform(rosTime, basePose);
-  publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.subsystem()), feetPosition, feetForce);
+  publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode), feetPosition, feetForce);
   publishCenterOfMassPose(timeStamp, comPose);
   publishEndEffectorPoses(timeStamp, feetPosition, feetOrientations);
 }
@@ -111,11 +113,11 @@ void QuadrupedVisualizer::publishBaseTransform(ros::Time timeStamp, const base_c
   tfBroadcaster_.sendTransform(baseToWorldTransform);
 }
 
-void QuadrupedVisualizer::publishTrajectory(const system_observation_array_t& system_observation_array, double speed) {
+void QuadrupedVisualizer::publishTrajectory(const std::vector<ocs2::SystemObservation>& system_observation_array, double speed) {
   for (size_t k = 0; k < system_observation_array.size() - 1; k++) {
-    double frameDuration = speed * (system_observation_array[k + 1].time() - system_observation_array[k].time());
+    double frameDuration = speed * (system_observation_array[k + 1].time - system_observation_array[k].time);
     double publishDuration =
-        timedExecutionInSeconds([&]() { publishObservation(ros::Time(system_observation_array[k].time()), system_observation_array[k]); });
+        timedExecutionInSeconds([&]() { publishObservation(ros::Time(system_observation_array[k].time), system_observation_array[k]); });
     if (frameDuration > publishDuration) {
       ros::WallDuration(frameDuration - publishDuration).sleep();
     }
@@ -179,7 +181,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   std::for_each(feetPoseArrays.begin(), feetPoseArrays.end(),
                 [&](geometry_msgs::PoseArray& p) { p.poses.reserve(stateTrajectory.size()); });
 
-  std::for_each(stateTrajectory.begin(), stateTrajectory.end(), [&](const dynamic_vector_t& state) {
+  std::for_each(stateTrajectory.begin(), stateTrajectory.end(), [&](const vector_t& state) {
     // Construct pose msg
     const base_coordinate_t comPose = state.head(6);
     geometry_msgs::Pose pose;
@@ -219,7 +221,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 }
 
 void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
-                                                          const state_vector_array_t& mpcStateTrajectory,
+                                                          const vector_array_t& mpcStateTrajectory,
                                                           const ocs2::ModeSchedule& modeSchedule) const {
   if (mpcTimeTrajectory.empty() || mpcStateTrajectory.empty()) {
     return;  // Nothing to publish
@@ -240,10 +242,10 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
   // Extract Com and Feet from state
-  std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const state_vector_array_t::value_type& state) {
-    const base_coordinate_t comPose = getComPose(state);
+  std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
+    const base_coordinate_t comPose = getComPose(state_vector_t(state));
     const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
-    const joint_coordinate_t qJoints = getJointPositions(state);
+    const joint_coordinate_t qJoints = getJointPositions(state_vector_t(state));
 
     // Fill com position and pose msgs
     geometry_msgs::Pose pose;
@@ -290,12 +292,11 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   for (int event = 0; event < eventTimes.size(); ++event) {
     if (tStart < eventTimes[event] && eventTimes[event] < tEnd) {  // Only publish future footholds within the optimized horizon
       const auto postEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event + 1]);
-      state_vector_t postEventState;
-      ocs2::EigenLinearInterpolation<state_vector_t>::interpolate(eventTimes[event], postEventState, &mpcTimeTrajectory,
-                                                                  &mpcStateTrajectory);
-      const base_coordinate_t comPose = getComPose(postEventState);
+      vector_t postEventState;
+      ocs2::LinearInterpolation::interpolate(eventTimes[event], postEventState, &mpcTimeTrajectory, &mpcStateTrajectory);
+      const base_coordinate_t comPose = getComPose(state_vector_t(postEventState));
       const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
-      const joint_coordinate_t qJoints = getJointPositions(postEventState);
+      const joint_coordinate_t qJoints = getJointPositions(state_vector_t(postEventState));
 
       for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
         if (postEventContactFlags[i]) {  // If a foot is in contact after an event, a marker is added at that location.

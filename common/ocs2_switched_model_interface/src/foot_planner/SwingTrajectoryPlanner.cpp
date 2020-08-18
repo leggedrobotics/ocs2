@@ -131,8 +131,7 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
       }();
 
       // Compute foot position from cost desired trajectory
-      ocs2::CostDesiredTrajectories::dynamic_vector_t state;
-      costDesiredTrajectories.getDesiredState(middleContactTime, state);
+      vector_t state = costDesiredTrajectories.getDesiredState(middleContactTime);
       const base_coordinate_t middleContactDesiredComPose = state.head<BASE_COORDINATE_SIZE>();
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);

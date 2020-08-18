@@ -13,17 +13,17 @@
 
 namespace switched_model {
 
-class SwingPlanningVisualizer : public ocs2::SolverSynchronizedModule<STATE_DIM, INPUT_DIM> {
+class SwingPlanningVisualizer : public ocs2::SolverSynchronizedModule {
  public:
   /** Visualization settings (publicly available) */
   std::string frameId_ = "world";  // Frame name all messages are published in
 
   SwingPlanningVisualizer(std::shared_ptr<const SwingTrajectoryPlanner> swingPlannerPtr, ros::NodeHandle& nodeHandle);
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
 
-  void postSolverRun(const primal_solution_t& primalSolution) override{};
+  void postSolverRun(const ocs2::PrimalSolution& primalSolution) override{};
 
  private:
   std::shared_ptr<const SwingTrajectoryPlanner> swingPlannerPtr_;

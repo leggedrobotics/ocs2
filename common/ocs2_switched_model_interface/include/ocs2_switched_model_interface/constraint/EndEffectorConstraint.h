@@ -44,20 +44,20 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
 
   using ad_interface_t = ocs2::CppAdInterface;
   using ad_scalar_t = typename ad_interface_t::ad_scalar_t;
-  using ad_dynamic_vector_t = typename ad_interface_t::ad_dynamic_vector_t;
+  using ad_vector_t = typename ad_interface_t::ad_vector_t;
 
   using constraint_timeStateInput_matrix_t = Eigen::Matrix<scalar_t, -1, domain_dim_>;
   using timeStateInput_matrix_t = Eigen::Matrix<scalar_t, domain_dim_, domain_dim_>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
-  using adfunc_t = void (*)(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                            const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y);
+  using adfunc_t = void (*)(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber, const ad_vector_t& x,
+                            ad_vector_t& y);
 
   EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber, Settings_t settings,
                         ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, adfunc_t adfunc, bool generateModels,
                         bool loadModels = true);
 
-  ~EndEffectorConstraint() = default;
+  ~EndEffectorConstraint() override = default;
 
   //! Note: Since the constructors are based on a copy we do not regenerate/generate the models
   EndEffectorConstraint(const EndEffectorConstraint& rhs);

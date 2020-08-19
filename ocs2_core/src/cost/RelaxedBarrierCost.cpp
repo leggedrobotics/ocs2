@@ -117,12 +117,7 @@ scalar_t RelaxedBarrierCost::finalCost(scalar_t t, const vector_t& x) {
 ScalarFunctionQuadraticApproximation RelaxedBarrierCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   ScalarFunctionQuadraticApproximation L;
   if (intermediateConfig_.empty()) {
-    L.dfdxx.setZero(stateDim_, stateDim_);
-    L.dfdux.setZero(inputDim_, stateDim_);
-    L.dfduu.setZero(inputDim_, inputDim_);
-    L.dfdx.setZero(stateDim_);
-    L.dfdu.setZero(inputDim_);
-    L.f = 0.0;
+    L.setZero(stateDim_, inputDim_);
     return L;
   }
 

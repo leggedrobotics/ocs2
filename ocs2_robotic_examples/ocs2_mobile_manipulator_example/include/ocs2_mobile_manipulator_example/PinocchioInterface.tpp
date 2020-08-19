@@ -42,7 +42,7 @@ PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(const Pinocchi
 template <typename SCALAR>
 Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::string bodyName,
                                                                  const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  const pinocchio::JointIndex bodyId = robotModel_->getBodyId(bodyName);
+  const pinocchio::FrameIndex bodyId = robotModel_->getBodyId(bodyName);
 
   pinocchio::forwardKinematics(*robotModel_, robotData_, q);
   pinocchio::updateFramePlacements(*robotModel_, robotData_);

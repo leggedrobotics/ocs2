@@ -87,6 +87,8 @@ initialState
 
 endEffectorCost
 {
+  weight  1.0
+
   ; End effector cost weight matrix
   Q
   {

@@ -98,11 +98,29 @@ struct ScalarFunctionQuadraticApproximation {
   /** Constant term */
   scalar_t f = 0.;
 
-  /* Compound assignment opeartor for addition */
+  /** Compound additinon assignment opeartor */
   ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);
 
+  /**
+   * Resize the members to the given size
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
   ScalarFunctionQuadraticApproximation& resize(size_t nx, size_t nu);
+
+  /**
+   * Resizes the members to the given size, and sets all coefficients to zero.
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
   ScalarFunctionQuadraticApproximation& setZero(size_t nx, size_t nu);
+
+  /**
+   * Factory function with zero initialization
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   * @return Zero initialized object of given size.
+   */
   static ScalarFunctionQuadraticApproximation Zero(size_t nx, size_t nu);
 };
 

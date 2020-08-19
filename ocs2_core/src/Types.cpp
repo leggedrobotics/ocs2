@@ -66,36 +66,31 @@ ScalarFunctionQuadraticApproximation ScalarFunctionQuadraticApproximation::Zero(
   return f;
 }
 
-ScalarFunctionQuadraticApproximation operator+(const ScalarFunctionQuadraticApproximation& lhs,
-                                               const ScalarFunctionQuadraticApproximation& rhs) {
-  return ScalarFunctionQuadraticApproximation(lhs) += rhs;
-}
-
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f) {
-  out << "f " << f.f << '\n';
-  out << "dfdx " << f.dfdx.transpose() << '\n';
-  out << "dfdu " << f.dfdu.transpose() << '\n';
-  out << "dfdxx\n" << f.dfdxx << '\n';
-  out << "dfdux\n" << f.dfdux << '\n';
-  out << "dfduu\n" << f.dfduu << '\n';
+  out << "f: " << f.f << '\n';
+  out << "dfdx: " << f.dfdx.transpose() << '\n';
+  out << "dfdu: " << f.dfdu.transpose() << '\n';
+  out << "dfdxx:\n" << f.dfdxx << '\n';
+  out << "dfdux:\n" << f.dfdux << '\n';
+  out << "dfduu:\n" << f.dfduu << '\n';
   return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximation& f) {
-  out << "f " << f.f.transpose() << '\n';
-  out << "dfdx\n" << f.dfdx << '\n';
-  out << "dfdu\n" << f.dfdu << '\n';
+  out << "f: " << f.f.transpose() << '\n';
+  out << "dfdx:\n" << f.dfdx << '\n';
+  out << "dfdu:\n" << f.dfdu << '\n';
   return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f) {
-  out << "f " << f.f.transpose() << '\n';
-  out << "dfdx\n" << f.dfdx << '\n';
-  out << "dfdu\n" << f.dfdu << '\n';
+  out << "f: " << f.f.transpose() << '\n';
+  out << "dfdx:\n" << f.dfdx << '\n';
+  out << "dfdu:\n" << f.dfdu << '\n';
   for (size_t i = 0; i < f.f.size(); i++) {
-    out << "dfdxx[" << i << "]\n" << f.dfdxx[i] << '\n';
-    out << "dfdux[" << i << "]\n" << f.dfdux[i] << '\n';
-    out << "dfduu[" << i << "]\n" << f.dfduu[i] << '\n';
+    out << "dfdxx[" << i << "]:\n" << f.dfdxx[i] << '\n';
+    out << "dfdux[" << i << "]:\n" << f.dfdux[i] << '\n';
+    out << "dfduu[" << i << "]:\n" << f.dfduu[i] << '\n';
   }
   return out;
 }

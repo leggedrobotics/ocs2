@@ -108,10 +108,6 @@ struct ScalarFunctionQuadraticApproximation {
 
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);
 
-/* Binary addition operator */
-ScalarFunctionQuadraticApproximation operator+(const ScalarFunctionQuadraticApproximation& lhs,
-                                               const ScalarFunctionQuadraticApproximation& rhs);
-
 /**
  * Defines the linear model of a vector-valued function
  * f(x,u) = dfdx dx + dfdu du + f

@@ -14,7 +14,10 @@ namespace switched_model {
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
                                                const KinematicsModelBase<scalar_t>& kinematicsModel,
                                                const joint_coordinate_t& nominalJointPositions)
-    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {
+    : settings_(std::move(settings)),
+      comModel_(comModel.clone()),
+      kinematicsModel_(kinematicsModel.clone()),
+      signedDistanceField_(nullptr) {
   nominalConfigurationBaseToFootInBaseFrame_ = kinematicsModel_->positionBaseToFeetInBaseFrame(nominalJointPositions);
 }
 
@@ -24,6 +27,12 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
                                     const TerrainModel& terrainModel) {
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
+
+  // Copy the signed distance field if there is one
+  const auto* const sdfPtr = terrainModel.getSignedDistanceField();
+  if (sdfPtr != nullptr) {
+    signedDistanceField_.reset(sdfPtr->clone());
+  }
 
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
     const auto& contactTimings = contactTimingsPerLeg[leg];
@@ -38,12 +47,6 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
-  }
-
-  // Copy the signed distance field if there is one
-  const auto* const sdfPtr = terrainModel.getSignedDistanceField();
-  if (sdfPtr != nullptr) {
-    signedDistanceField_.reset(sdfPtr->clone());
   }
 }
 
@@ -71,7 +74,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
-    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, settings_.errorGain));
+    footPhases.emplace_back(
+        new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, signedDistanceField_.get(), settings_.errorGain));
   }
 
   // Loop through contact phases
@@ -106,7 +110,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       liftOff.velocity *= scaling;
       touchDown.velocity *= scaling;
       eventTimes.push_back(currentContactTiming.end);
-      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, settings_.errorGain));
+      footPhases.emplace_back(
+          new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, signedDistanceField_.get(), settings_.errorGain));
     }
   }
 

@@ -7,6 +7,7 @@
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
 #include "ocs2_switched_model_interface/terrain/ConvexTerrain.h"
+#include "ocs2_switched_model_interface/terrain/SignedDistanceField.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
@@ -29,6 +30,14 @@ struct FootTangentialConstraintMatrix {
   vector_t b;
 };
 
+/**
+ * Proves information for the constraint sdf(x) >= minimumDistance
+ */
+struct SignedDistanceConstraint {
+  const SignedDistanceField* signedDistanceField;
+  scalar_t minimumDistance;
+};
+
 FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain);
 
 /**
@@ -49,6 +58,8 @@ class FootPhase {
 
   /** Returns the position inequality constraints formulated in the tangential direction */
   virtual const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const { return nullptr; };
+
+  virtual SignedDistanceConstraint getSignedDistanceConstraint(scalar_t time) const { return {nullptr, 0.0}; };
 };
 
 /**
@@ -83,12 +94,14 @@ class SwingPhase final : public FootPhase {
     const TerrainPlane* terrainPlane;
   };
 
-  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, scalar_t positionGain = 0.0);
+  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const SignedDistanceField* signedDistanceField = nullptr,
+             scalar_t positionGain = 0.0);
   ~SwingPhase() override = default;
 
   bool contactFlag() const override { return false; };
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
+  SignedDistanceConstraint getSignedDistanceConstraint(scalar_t time) const override;
   const SplineCpg& getMotionInLiftOffFrame() const { return *liftOffMotion_; };
   const TerrainPlane& getLiftOffFrame() const { return *liftOff_.terrainPlane; };
   const SplineCpg& getMotionInTouchDownFrame() const { return *touchdownMotion_; };
@@ -104,6 +117,8 @@ class SwingPhase final : public FootPhase {
   SwingEvent touchDown_;
   std::unique_ptr<SplineCpg> liftOffMotion_;
   std::unique_ptr<SplineCpg> touchdownMotion_;
+  const SignedDistanceField* signedDistanceField_;
+  scalar_t sdfClearance_ = 0.05;
   scalar_t positionGain_;
 };
 

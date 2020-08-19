@@ -32,7 +32,8 @@ class FootPlacementCost {
 
   FootPlacementCost* clone() const;
 
-  void setStateAndConstraint(const vector_t& x, const feet_array_t<const FootTangentialConstraintMatrix*>& constraints);
+  void setStateAndConstraint(const vector_t& x, const feet_array_t<const FootTangentialConstraintMatrix*>& constraints,
+                             const feet_array_t<SignedDistanceConstraint>& sdfConstraints);
 
   scalar_t getCostValue();
   vector_t getCostDerivativeState();
@@ -51,11 +52,14 @@ class FootPlacementCost {
   static scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const FootPlacementCostParameters& config);
 
   FootPlacementCostParameters settings_;
+  FootPlacementCostParameters sdfsettings_;
   state_vector_t x_;
   feet_array_t<const FootTangentialConstraintMatrix*> constraints_;
+  feet_array_t<SignedDistanceConstraint> sdfConstraints_;
 
   bool constraintValuesUpdated_;
   feet_array_t<vector_t> constraintValues_;
+  feet_array_t<std::pair<scalar_t, vector3_t>> sdfValues_;
 
   bool feetJacobiansUpdated_;
   feet_array_t<analytic_jacobian_t> feetJacobiansInOrigin_;

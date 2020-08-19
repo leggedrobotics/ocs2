@@ -8,7 +8,10 @@ namespace switched_model {
 
 FootPlacementCost::FootPlacementCost(FootPlacementCostParameters settings, const ad_com_model_t& adComModel,
                                      const ad_kinematic_model_t& adKinematicsModel, bool generateModels)
-    : settings_(settings), constraintValuesUpdated_(false), feetJacobiansUpdated_(false) {
+    : settings_(settings), sdfsettings_(), constraintValuesUpdated_(false), feetJacobiansUpdated_(false) {
+  sdfsettings_.mu = 0.5;
+  sdfsettings_.delta = 0.01;
+
   std::string libName = "FootPlacementCost";
   std::string libFolder = "/tmp/ocs2";
   auto diffFunc = [&](const ad_vector_t& x, ad_vector_t& y) { adfunc(adComModel, adKinematicsModel, x, y); };
@@ -18,6 +21,7 @@ FootPlacementCost::FootPlacementCost(FootPlacementCostParameters settings, const
 
 FootPlacementCost::FootPlacementCost(const FootPlacementCost& rhs)
     : settings_(rhs.settings_),
+      sdfsettings_(rhs.sdfsettings_),
       constraintValuesUpdated_(false),
       feetJacobiansUpdated_(false),
       adInterface_(new ad_interface_t(*rhs.adInterface_)) {}
@@ -26,9 +30,11 @@ FootPlacementCost* FootPlacementCost::clone() const {
   return new FootPlacementCost(*this);
 }
 
-void FootPlacementCost::setStateAndConstraint(const vector_t& x, const feet_array_t<const FootTangentialConstraintMatrix*>& constraints) {
+void FootPlacementCost::setStateAndConstraint(const vector_t& x, const feet_array_t<const FootTangentialConstraintMatrix*>& constraints,
+                                              const feet_array_t<SignedDistanceConstraint>& sdfConstraints) {
   x_ = x;
   constraints_ = constraints;
+  sdfConstraints_ = sdfConstraints;
   constraintValuesUpdated_ = false;
   feetJacobiansUpdated_ = false;
 }
@@ -42,6 +48,15 @@ scalar_t FootPlacementCost::getCostValue() {
       cost += getPenaltyFunctionValue(h(j), settings_);
     }
   }
+
+  // signed distance cost
+  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    if (sdfConstraints_[leg].signedDistanceField != nullptr) {
+      const auto h_sdf = sdfValues_[leg].first - sdfConstraints_[leg].minimumDistance;
+      cost += getPenaltyFunctionValue(h_sdf, sdfsettings_);
+    }
+  }
+
   return cost;
 }
 
@@ -52,13 +67,28 @@ vector_t FootPlacementCost::getCostDerivativeState() {
   vector_t costDerivative = vector_t::Zero(STATE_DIM);
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     const auto* constraintMatrixPtr = constraints_[leg];
-    if (constraintMatrixPtr != nullptr) {
-      const auto& h = constraintValues_[leg];
-      const auto penaltyDerivatives = h.unaryExpr([&](scalar_t hi) { return getPenaltyFunctionDerivative(hi, settings_); });
-      vector3_t tmp = constraintMatrixPtr->A.transpose() * penaltyDerivatives;
-      costDerivative.noalias() += feetJacobiansInOrigin_[leg].transpose() * tmp;
+    const auto* sdfPtr = sdfConstraints_[leg].signedDistanceField;
+    if (constraintMatrixPtr != nullptr || sdfPtr != nullptr) {
+      vector3_t taskSpaceDerivative = vector3_t::Zero();
+
+      // Tangential constraint contribution
+      if (constraintMatrixPtr != nullptr) {
+        const auto& h = constraintValues_[leg];
+        const auto penaltyDerivatives = h.unaryExpr([&](scalar_t hi) { return getPenaltyFunctionDerivative(hi, settings_); });
+        taskSpaceDerivative.noalias() += constraintMatrixPtr->A.transpose() * penaltyDerivatives;
+      }
+
+      // Sdf constraint contribution
+      if (sdfPtr != nullptr) {
+        const auto h_sdf = sdfValues_[leg].first - sdfConstraints_[leg].minimumDistance;
+        const auto penaltyDerivative = getPenaltyFunctionDerivative(h_sdf, sdfsettings_);
+        taskSpaceDerivative.noalias() += penaltyDerivative * sdfValues_[leg].second;
+      }
+
+      costDerivative.noalias() += feetJacobiansInOrigin_[leg].transpose() * taskSpaceDerivative;
     }
   }
+
   return costDerivative;
 }
 
@@ -69,11 +99,26 @@ matrix_t FootPlacementCost::getCostSecondDerivativeState() {
   matrix_t costSecondDerivative = matrix_t::Zero(STATE_DIM, STATE_DIM);
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     const auto* constraintMatrixPtr = constraints_[leg];
-    if (constraintMatrixPtr != nullptr) {
-      const auto& h = constraintValues_[leg];
-      const auto penaltySecondDerivatives = h.unaryExpr([&](scalar_t hi) { return getPenaltyFunctionSecondDerivative(hi, settings_); });
-      matrix3_t tmp = constraintMatrixPtr->A.transpose() * penaltySecondDerivatives.asDiagonal() * constraintMatrixPtr->A;
-      costSecondDerivative.noalias() += feetJacobiansInOrigin_[leg].transpose() * tmp * feetJacobiansInOrigin_[leg];
+    const auto* sdfPtr = sdfConstraints_[leg].signedDistanceField;
+    if (constraintMatrixPtr != nullptr || sdfPtr != nullptr) {
+      matrix3_t taskSpaceSecondDerivative = matrix3_t::Zero();
+
+      // Tangential constraint contribution
+      if (constraintMatrixPtr != nullptr) {
+        const auto& h = constraintValues_[leg];
+        const auto penaltySecondDerivatives = h.unaryExpr([&](scalar_t hi) { return getPenaltyFunctionSecondDerivative(hi, settings_); });
+        taskSpaceSecondDerivative.noalias() +=
+            constraintMatrixPtr->A.transpose() * penaltySecondDerivatives.asDiagonal() * constraintMatrixPtr->A;
+      }
+
+      // Sdf constraint contribution
+      if (sdfPtr != nullptr) {
+        const auto h_sdf = sdfValues_[leg].first - sdfConstraints_[leg].minimumDistance;
+        const auto penaltySecondDerivative = getPenaltyFunctionSecondDerivative(h_sdf, sdfsettings_);
+        taskSpaceSecondDerivative.noalias() += penaltySecondDerivative * sdfValues_[leg].second * sdfValues_[leg].second.transpose();
+      }
+
+      costSecondDerivative.noalias() += feetJacobiansInOrigin_[leg].transpose() * taskSpaceSecondDerivative * feetJacobiansInOrigin_[leg];
     }
   }
 
@@ -126,6 +171,13 @@ void FootPlacementCost::updateConstraintValues() {
         constraintValues_[leg].noalias() += constraintMatrixPtr->A * feetPositionsInOrigin_.segment<3>(3 * leg);
       } else {
         constraintValues_[leg].resize(0);
+      }
+
+      const auto* sdfPtr = sdfConstraints_[leg].signedDistanceField;
+      if (sdfPtr != nullptr) {
+        sdfValues_[leg] = sdfPtr->valueAndDerivative(feetPositionsInOrigin_.segment<3>(3 * leg));
+      } else {
+        sdfValues_[leg] = {scalar_t(0.0), vector3_t::Zero()};
       }
     }
     constraintValuesUpdated_ = true;

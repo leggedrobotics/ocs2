@@ -131,11 +131,13 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
 void SwitchedModelCostBase::update(scalar_t t, const vector_t& x, const vector_t& u) {
   // Foot placement costs
   feet_array_t<const FootTangentialConstraintMatrix*> constraints = {{nullptr}};
+  feet_array_t<SignedDistanceConstraint> sdfConstraints = {{nullptr, 0.0}};
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(leg, t);
     constraints[leg] = footPhase.getFootTangentialConstraintInWorldFrame();
+    sdfConstraints[leg] = footPhase.getSignedDistanceConstraint(t);
   }
-  footPlacementCost_->setStateAndConstraint(x, constraints);
+  footPlacementCost_->setStateAndConstraint(x, constraints, sdfConstraints);
 }
 
 /******************************************************************************************************/

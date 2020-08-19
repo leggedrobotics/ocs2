@@ -74,8 +74,9 @@ const FootTangentialConstraintMatrix* StancePhase::getFootTangentialConstraintIn
   }
 }
 
-SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, scalar_t positionGain)
-    : liftOff_(liftOff), touchDown_(touchDown), positionGain_(positionGain) {
+SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const SignedDistanceField* signedDistanceField,
+                       scalar_t positionGain)
+    : liftOff_(liftOff), touchDown_(touchDown), signedDistanceField_(signedDistanceField), positionGain_(positionGain) {
   if (touchDown_.terrainPlane == nullptr) {
     setHalveSwing(swingHeight);
   } else {
@@ -154,6 +155,18 @@ FootNormalConstraintMatrix SwingPhase::getFootNormalConstraintInWorldFrame(scala
   footNormalConstraint.positionMatrix = (1.0 - scaling) * liftOffConstraint.positionMatrix + scaling * touchDownConstraint.positionMatrix;
   footNormalConstraint.constant = (1.0 - scaling) * liftOffConstraint.constant + scaling * touchDownConstraint.constant;
   return footNormalConstraint;
+}
+
+SignedDistanceConstraint SwingPhase::getSignedDistanceConstraint(scalar_t time) const {
+  static const CubicSpline increaseSpline({0.0, 0.0, 0.0}, {0.5, 1.0, 0.0});
+  static const CubicSpline decreaseSpline({0.5, 1.0, 0.0}, {1.0, 0.0, 0.0});
+
+  const scalar_t normalizedTime = (time - liftOff_.time) / (touchDown_.time - liftOff_.time);
+  if (normalizedTime < 0.5) {
+    return {signedDistanceField_, sdfClearance_ * increaseSpline.position(normalizedTime)};
+  } else {
+    return {signedDistanceField_, sdfClearance_ * decreaseSpline.position(normalizedTime)};
+  }
 }
 
 scalar_t SwingPhase::getScaling(scalar_t time) const {

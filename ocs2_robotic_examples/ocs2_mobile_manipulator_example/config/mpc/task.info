@@ -85,43 +85,46 @@ initialState
   (8,0)  0.0  ; WR_ROT
 }
 
-; End effector cost weight matrix
-Q
+endEffectorCost
 {
-  scaling 1e+1
+  ; End effector cost weight matrix
+  Q
+  {
+    scaling 1e+1
 
-  (0,0) 1.0 ; end effector x
-  (1,1) 1.0 ; end effector y
-  (2,2) 1.0 ; end effector z
-  (3,3) 1.0 ; end effector roll
-  (4,4) 1.0 ; end effector pitch
-  (5,5) 1.0 ; end effector yaw
-}
+    (0,0) 1.0 ; end effector x
+    (1,1) 1.0 ; end effector y
+    (2,2) 1.0 ; end effector z
+    (3,3) 1.0 ; end effector roll
+    (4,4) 1.0 ; end effector pitch
+    (5,5) 1.0 ; end effector yaw
+  }
 
-; control weight matrix
-R
-{
-  scaling 1e-0
+  ; control weight matrix
+  R
+  {
+    scaling 1e-0
 
-  (0,0)  1.0  ; forward velocity
-  (1,1)  1.0  ; turning velocity
-  (2,2)  1.0  ; SH_ROT velocity
-  (3,3)  1.0  ; SH_FLE velocity
-  (4,4)  1.0  ; EL_FLE velocity
-  (5,5)  1.0  ; EL_ROT velocity
-  (6,6)  1.0  ; WR_FLE velocity
-  (7,7)  1.0  ; WR_ROT velocity
-}
+    (0,0)  1.0  ; forward velocity
+    (1,1)  1.0  ; turning velocity
+    (2,2)  1.0  ; SH_ROT velocity
+    (3,3)  1.0  ; SH_FLE velocity
+    (4,4)  1.0  ; EL_FLE velocity
+    (5,5)  1.0  ; EL_ROT velocity
+    (6,6)  1.0  ; WR_FLE velocity
+    (7,7)  1.0  ; WR_ROT velocity
+  }
 
-; final end effector cost weight matrix
-Q_final
-{
-  scaling 1e+0
+  ; final end effector cost weight matrix
+  Q_final
+  {
+    scaling 1e+0
 
-  (0,0) 1.0  ; end effector x
-  (1,1) 1.0  ; end effector y
-  (2,2) 1.0  ; end effector z
-  (3,3) 1.0  ; end effector roll
-  (4,4) 1.0  ; end effector pitch
-  (5,5) 1.0  ; end effector yaw
+    (0,0) 1.0  ; end effector x
+    (1,1) 1.0  ; end effector y
+    (2,2) 1.0  ; end effector z
+    (3,3) 1.0  ; end effector roll
+    (4,4) 1.0  ; end effector pitch
+    (5,5) 1.0  ; end effector yaw
+  }
 }

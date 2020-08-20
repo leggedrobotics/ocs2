@@ -766,7 +766,7 @@ void GaussNewtonDDP::rolloutCostAndConstraints(const scalar_array2_t& timeTrajec
 PerformanceIndex GaussNewtonDDP::calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
                                                                   const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                                                                   const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                                                  scalar_t heuristicsValue) {
+                                                                  scalar_t heuristicsValue) const {
   PerformanceIndex performanceIndex;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     // total cost

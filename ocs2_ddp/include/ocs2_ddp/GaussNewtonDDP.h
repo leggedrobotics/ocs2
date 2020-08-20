@@ -355,7 +355,7 @@ class GaussNewtonDDP : public Solver_BASE {
   PerformanceIndex calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
                                                     const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                                                     const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                                    scalar_t heuristicsValue);
+                                                    scalar_t heuristicsValue) const;
 
   /**
    * Performs a full rollout of dynamics, cost, and constraints with a given step length.

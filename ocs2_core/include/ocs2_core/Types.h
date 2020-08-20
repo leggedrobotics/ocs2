@@ -137,6 +137,31 @@ struct VectorFunctionLinearApproximation {
   matrix_t dfdu;
   /** Constant term */
   vector_t f;
+
+  /**
+   * Resize the members to the given size
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionLinearApproximation& resize(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Resizes the members to the given size, and sets all coefficients to zero.
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionLinearApproximation& setZero(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Factory function with zero initialization
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   * @return Zero initialized object of given size.
+   */
+  static VectorFunctionLinearApproximation Zero(size_t nv, size_t nx, size_t nu);
 };
 
 std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximation& f);
@@ -158,6 +183,31 @@ struct VectorFunctionQuadraticApproximation {
   matrix_t dfdu;
   /** Constant term */
   vector_t f;
+
+  /**
+   * Resize the members to the given size
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionQuadraticApproximation& resize(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Resizes the members to the given size, and sets all coefficients to zero.
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionQuadraticApproximation& setZero(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Factory function with zero initialization
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   * @return Zero initialized object of given size.
+   */
+  static VectorFunctionQuadraticApproximation Zero(size_t nv, size_t nx, size_t nu);
 };
 
 std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f);

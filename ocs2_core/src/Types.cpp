@@ -31,6 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator+=(const ScalarFunctionQuadraticApproximation& rhs) {
   f += rhs.f;
   dfdx += rhs.dfdx;
@@ -41,6 +44,9 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::oper
   return *this;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::resize(size_t nx, size_t nu) {
   dfdx.resize(nx);
   dfdu.resize(nu);
@@ -50,6 +56,9 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::resi
   return *this;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::setZero(size_t nx, size_t nu) {
   f = 0.0;
   dfdx.setZero(nx);
@@ -60,12 +69,18 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::setZ
   return *this;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation ScalarFunctionQuadraticApproximation::Zero(size_t nx, size_t nu) {
   ScalarFunctionQuadraticApproximation f;
   f.setZero(nx, nu);
   return f;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f) {
   out << "f: " << f.f << '\n';
   out << "dfdx: " << f.dfdx.transpose() << '\n';
@@ -76,6 +91,38 @@ std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproxi
   return out;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation& VectorFunctionLinearApproximation::resize(size_t nv, size_t nx, size_t nu) {
+  f.resize(nv);
+  dfdx.resize(nv, nx);
+  dfdu.resize(nv, nu);
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation& VectorFunctionLinearApproximation::setZero(size_t nv, size_t nx, size_t nu) {
+  f.setZero(nv);
+  dfdx.setZero(nv, nx);
+  dfdu.setZero(nv, nu);
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation VectorFunctionLinearApproximation::Zero(size_t nv, size_t nx, size_t nu) {
+  VectorFunctionLinearApproximation f;
+  f.setZero(nv, nx, nu);
+  return f;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximation& f) {
   out << "f: " << f.f.transpose() << '\n';
   out << "dfdx:\n" << f.dfdx << '\n';
@@ -83,6 +130,54 @@ std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximat
   return out;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionQuadraticApproximation& VectorFunctionQuadraticApproximation::resize(size_t nv, size_t nx, size_t nu) {
+  f.resize(nv);
+  dfdx.resize(nv, nx);
+  dfdu.resize(nv, nu);
+  dfdxx.resize(nv);
+  dfdux.resize(nv);
+  dfduu.resize(nv);
+  for (size_t i = 0; i < nv; i++) {
+    dfdxx[i].resize(nx, nx);
+    dfdux[i].resize(nu, nx);
+    dfduu[i].resize(nu, nu);
+  }
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionQuadraticApproximation& VectorFunctionQuadraticApproximation::setZero(size_t nv, size_t nx, size_t nu) {
+  f.setZero(nv);
+  dfdx.setZero(nv, nx);
+  dfdu.setZero(nv, nu);
+  dfdxx.resize(nv);
+  dfdux.resize(nv);
+  dfduu.resize(nv);
+  for (size_t i = 0; i < nv; i++) {
+    dfdxx[i].setZero(nx, nx);
+    dfdux[i].setZero(nu, nx);
+    dfduu[i].setZero(nu, nu);
+  }
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionQuadraticApproximation VectorFunctionQuadraticApproximation::Zero(size_t nv, size_t nx, size_t nu) {
+  VectorFunctionQuadraticApproximation f;
+  f.setZero(nv, nx, nu);
+  return f;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f) {
   out << "f: " << f.f.transpose() << '\n';
   out << "dfdx:\n" << f.dfdx << '\n';

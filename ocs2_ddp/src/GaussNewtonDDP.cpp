@@ -1569,13 +1569,7 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
 
   // inequality constraints
   if (modelData.ineqConstr_.f.rows() > 0) {
-    auto penalty = penaltyPtrStock_->penaltyCostQuadraticApproximation(modelData.ineqConstr_);
-    modelData.cost_.f += penalty.f;
-    modelData.cost_.dfdx.noalias() += penalty.dfdx;
-    modelData.cost_.dfdu.noalias() += penalty.dfdu;
-    modelData.cost_.dfdxx.noalias() += penalty.dfdxx;
-    modelData.cost_.dfduu.noalias() += penalty.dfduu;
-    modelData.cost_.dfdux.noalias() += penalty.dfdux;
+    modelData.cost_ += penaltyPtrStock_->penaltyCostQuadraticApproximation(modelData.ineqConstr_);
 
     // checking the numerical stability again
     if (ddpSettings_.checkNumericalStability_) {

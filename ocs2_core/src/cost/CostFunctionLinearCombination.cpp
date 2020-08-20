@@ -93,12 +93,7 @@ scalar_t CostFunctionLinearCombination::finalCost(scalar_t t, const vector_t& x)
 ScalarFunctionQuadraticApproximation CostFunctionLinearCombination::costQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                const vector_t& u) {
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.0;
-  L.dfdx.setZero(x.rows());
-  L.dfdu.setZero(u.rows());
-  L.dfdxx.setZero(x.rows(), x.rows());
-  L.dfdux.setZero(u.rows(), x.rows());
-  L.dfduu.setZero(u.rows(), u.rows());
+  L.setZero(x.rows(), u.rows());
   for (auto& weightedCost : weightedCosts_) {
     const auto cost = weightedCost.second->costQuadraticApproximation(t, x, u);
     L.f += weightedCost.first * cost.f;

@@ -55,8 +55,8 @@ scalar_t QuadraticCostFunction::cost(scalar_t t, const vector_t& x, const vector
   if (costDesiredTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
   return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
 }
 
@@ -67,7 +67,7 @@ scalar_t QuadraticCostFunction::finalCost(scalar_t t, const vector_t& x) {
   if (costDesiredTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
   return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
 }
 
@@ -78,13 +78,17 @@ ScalarFunctionQuadraticApproximation QuadraticCostFunction::costQuadraticApproxi
   if (costDesiredTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  const vector_t qDeviation = Q_ * xDeviation;
+  const vector_t rDeviation = R_ * uDeviation;
+  const vector_t pDeviation = P_ * xDeviation;
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
-  L.dfdx = Q_ * xDeviation + P_.transpose() * uDeviation;
-  L.dfdu = R_ * uDeviation + P_ * xDeviation;
+  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation) + uDeviation.dot(pDeviation);
+  L.dfdx = qDeviation;
+  L.dfdx.noalias() += P_.transpose() * uDeviation;
+  L.dfdu = rDeviation + pDeviation;
   L.dfdxx = Q_;
   L.dfdux = P_;
   L.dfduu = R_;
@@ -98,11 +102,12 @@ ScalarFunctionQuadraticApproximation QuadraticCostFunction::finalCostQuadraticAp
   if (costDesiredTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t qDeviation = QFinal_ * xDeviation;
 
   ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = 0.5 * xDeviation.dot(QFinal_ * xDeviation);
-  Phi.dfdx = QFinal_ * xDeviation;
+  Phi.f = 0.5 * xDeviation.dot(qDeviation);
+  Phi.dfdx = qDeviation;
   Phi.dfdxx = QFinal_;
   return Phi;
 }

@@ -29,7 +29,7 @@ void GaitSchedule::setNextGait(const Gait& gait) {
   setGaitSequenceAfterCurrentGait({gait});
 }
 
-void GaitSchedule::setGaitSequenceAfterCurrentGait(const std::vector<Gait>& gaitSequence) {
+void GaitSchedule::setGaitSequenceAfterCurrentGait(const GaitSequence& gaitSequence) {
   gaitSchedule_.erase(gaitSchedule_.begin() + 1, gaitSchedule_.end());
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
 }
@@ -38,7 +38,7 @@ void GaitSchedule::setGaitAtTime(const Gait& gait, scalar_t time) {
   setGaitSequenceAtTime({gait}, time);
 }
 
-void GaitSchedule::setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, scalar_t time) {
+void GaitSchedule::setGaitSequenceAtTime(const GaitSequence& gaitSequence, scalar_t time) {
   assert(time >= time_);
 
   rolloutGaitScheduleTillTime(time);
@@ -63,7 +63,7 @@ void GaitSchedule::setGaitAfterTime(const Gait& gait, scalar_t time) {
   setGaitSequenceAfterTime({gait}, time);
 }
 
-void GaitSchedule::setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, scalar_t time) {
+void GaitSchedule::setGaitSequenceAfterTime(const GaitSequence& gaitSequence, scalar_t time) {
   assert(time >= time_);
 
   rolloutGaitScheduleTillTime(time);

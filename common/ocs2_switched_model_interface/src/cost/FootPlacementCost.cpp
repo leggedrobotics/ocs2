@@ -9,8 +9,8 @@ namespace switched_model {
 FootPlacementCost::FootPlacementCost(FootPlacementCostParameters settings, const ad_com_model_t& adComModel,
                                      const ad_kinematic_model_t& adKinematicsModel, bool generateModels)
     : settings_(settings), sdfsettings_(), constraintValuesUpdated_(false), feetJacobiansUpdated_(false) {
-  sdfsettings_.mu = 0.5;
-  sdfsettings_.delta = 0.01;
+  sdfsettings_.mu = 2.5;
+  sdfsettings_.delta = 0.005;
 
   std::string libName = "FootPlacementCost";
   std::string libFolder = "/tmp/ocs2";

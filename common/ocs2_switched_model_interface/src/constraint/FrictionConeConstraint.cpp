@@ -9,15 +9,18 @@
 
 namespace switched_model {
 
-FrictionConeConstraint::FrictionConeConstraint(scalar_t frictionCoefficient, scalar_t regularization, int legNumber, scalar_t gripperForce)
+FrictionConeConstraint::FrictionConeConstraint(scalar_t frictionCoefficient, scalar_t regularization, int legNumber, scalar_t gripperForce,
+                                               scalar_t hessianDiagonalShift)
     : BASE(ocs2::ConstraintOrder::Quadratic),
       frictionCoefficient_(frictionCoefficient),
       regularization_(regularization),
       gripperForce_(gripperForce),
+      hessianDiagonalShift_(hessianDiagonalShift),
       legNumber_(legNumber),
       t_R_w(matrix3_t::Identity()) {
   assert(frictionCoefficient_ > 0.0);
   assert(regularization_ > 0.0);
+  assert(hessianDiagonalShift_ >= 0.0);
 }
 
 void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld) {
@@ -153,6 +156,7 @@ FrictionConeConstraint::input_matrix_t FrictionConeConstraint::frictionConeSecon
   input_matrix_t ddhdudu;
   ddhdudu.setZero();
   ddhdudu.block<3, 3>(3 * legNumber_, 3 * legNumber_) = coneDerivatives.d2Cone_du2;
+  ddhdudu.diagonal().array() -= hessianDiagonalShift_;
   return ddhdudu;
 }
 
@@ -161,6 +165,7 @@ FrictionConeConstraint::state_matrix_t FrictionConeConstraint::frictionConeSecon
   input_matrix_t ddhdxdx;
   ddhdxdx.setZero();
   ddhdxdx.block<3, 3>(0, 0) = coneDerivatives.d2Cone_deuler2;
+  ddhdxdx.diagonal().array() -= hessianDiagonalShift_;
   return ddhdxdx;
 }
 

@@ -4,23 +4,25 @@
 
 #include <gtest/gtest.h>
 
+#include <ocs2_core/misc/LinearAlgebra.h>
+
 #include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
 #include "ocs2_switched_model_interface/core/Rotations.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 TEST(TestFrictionConeConstraint, finiteDifference) {
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const double mu = 0.7;
-  const double regularization = 25;
+  const switched_model::scalar_t mu = 0.7;
+  const switched_model::scalar_t regularization = 25;
   TestedConstraint frictionConeConstraint(mu, regularization, 0);
 
-  double t = 0.0;
-  double eps = 1e-4;
-  double tol = 1e-2;  // tolerance on the Jacobian elements
+  switched_model::scalar_t t = 0.0;
+  switched_model::scalar_t eps = 1e-4;
+  switched_model::scalar_t tol = 1e-2;  // tolerance on the Jacobian elements
   int N = 10000;
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint(mu, regularization, legNumber);
+    TestedConstraint frictionConeConstraint(mu, regularization, legNumber, 0.0, 0.0);
     switched_model::vector3_t surfaceNormal = switched_model::vector3_t{0.0, 0.0, 1.0} + 0.1 * switched_model::vector3_t::Random();
     surfaceNormal.normalize();
     frictionConeConstraint.setSurfaceNormalInWorld(surfaceNormal);
@@ -97,11 +99,11 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   // Check friction cone for the case where the body is aligned with the terrain
 
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const double mu = 0.7;
-  const double regularization = 25;
+  const switched_model::scalar_t mu = 0.7;
+  const switched_model::scalar_t regularization = 25;
 
   // evaluation point
-  double t = 0.0;
+  switched_model::scalar_t t = 0.0;
   TestedConstraint::input_vector_t u;
   TestedConstraint::state_vector_t x;
   u.setRandom();
@@ -112,7 +114,7 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   terrainPlane.orientationWorldToTerrain = switched_model::rotationMatrixBaseToOrigin(eulerXYZ).transpose();
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint(mu, regularization, legNumber);
+    TestedConstraint frictionConeConstraint(mu, regularization, legNumber, 0.0, 0.0);
     frictionConeConstraint.setSurfaceNormalInWorld(switched_model::surfaceNormalInWorld(terrainPlane));
 
     // Local forces are equal to the body forces.
@@ -150,6 +152,36 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
     ddhdudu(3 * legNumber + 2, 3 * legNumber + 2) = 0.0;
 
     ASSERT_LT((quadraticApproximation.secondDerivativesInput.front() - ddhdudu).norm(), 1e-12);
+  }
+}
+
+TEST(TestFrictionConeConstraint, negativeDefinite) {
+  using TestedConstraint = switched_model::FrictionConeConstraint;
+  const switched_model::scalar_t mu = 0.7;
+  const switched_model::scalar_t regularization = 25;
+  const switched_model::scalar_t hessianShift = 1e-6;
+
+  // evaluation point
+  switched_model::scalar_t t = 0.0;
+  TestedConstraint::input_vector_t u;
+  TestedConstraint::state_vector_t x;
+  x.setRandom();
+  u.setRandom();
+  u(2) = 100.0;
+  u(5) = 100.0;
+  u(8) = 100.0;
+  u(11) = 100.0;
+
+  // Flat terrain
+  switched_model::TerrainPlane terrainPlane;
+
+  for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
+    TestedConstraint frictionConeConstraint(mu, regularization, legNumber, 0.0, hessianShift);
+    frictionConeConstraint.setSurfaceNormalInWorld(switched_model::surfaceNormalInWorld(terrainPlane));
+
+    auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);
+    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.secondDerivativesState.front()).maxCoeff(), 0.0);
+    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.secondDerivativesInput.front()).maxCoeff(), 0.0);
   }
 }
 

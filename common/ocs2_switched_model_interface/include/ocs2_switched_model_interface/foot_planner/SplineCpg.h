@@ -15,6 +15,8 @@ class SplineCpg {
  public:
   SplineCpg(CubicSpline::Node liftOff, scalar_t midHeight, CubicSpline::Node touchDown);
 
+  SplineCpg(CubicSpline::Node liftOff, CubicSpline::Node midNode, CubicSpline::Node touchDown);
+
   scalar_t position(scalar_t time) const;
 
   scalar_t velocity(scalar_t time) const;

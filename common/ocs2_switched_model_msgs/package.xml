@@ -6,10 +6,9 @@
   <maintainer email="mbjelonic@ethz.ch">Marko Bjelonic</maintainer>
   <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
   <maintainer email="oharley@student.ethz.ch">Oliver Harley</maintainer>
+  <author>Oliver Harley</author>
 
   <license>TODO</license>
-
-  <author>Oliver Harley</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>

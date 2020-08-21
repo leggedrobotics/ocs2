@@ -50,6 +50,9 @@ int rank(const matrix_t& A);
 
 Eigen::VectorXcd eigenvalues(const matrix_t& A);
 
+/** Computes the eigenvalues for a symmetric matrix A */
+Eigen::VectorXd symmetricEigenvalues(const matrix_t& A);
+
 /**
  * Makes the input matrix PSD using a eigenvalue decomposition.
  *

@@ -133,5 +133,12 @@ Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A) {
   return A.eigenvalues();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::VectorXd symmetricEigenvalues(const matrix_t& A) {
+  return A.selfadjointView<Eigen::Lower>().eigenvalues();
+}
+
 }  // namespace LinearAlgebra
 }  // namespace ocs2

@@ -40,8 +40,7 @@ class LoopshapingDefinition {
         }
       case LoopshapingType::eliminatepattern: {
         // u = C*x + D*v. Use noalias to prevent temporaries.
-        vector_t u;
-        u.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
+        vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
         u.noalias() += filter_.getD() * input;
         return u;
       }

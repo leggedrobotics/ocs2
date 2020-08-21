@@ -15,20 +15,20 @@ namespace switched_model {
 
 bool isValidGait(const Gait& gait) {
   bool validGait = true;
-  validGait &= gait.duration > 0;
-  validGait &= std::all_of(gait.eventPhases.begin(), gait.eventPhases.end(), [](scalar_t phase) { return 0 < phase && phase < 1; });
+  validGait &= gait.duration > 0.0;
+  validGait &= std::all_of(gait.eventPhases.begin(), gait.eventPhases.end(), [](scalar_t phase) { return 0.0 < phase && phase < 1.0; });
   validGait &= std::is_sorted(gait.eventPhases.begin(), gait.eventPhases.end());
   validGait &= gait.eventPhases.size() + 1 == gait.modeSequence.size();
   return validGait;
 }
 
 bool isValidPhase(scalar_t phase) {
-  return phase >= 0 && phase < 1.0;
+  return phase >= 0.0 && phase < 1.0;
 }
 
 scalar_t wrapPhase(scalar_t phase) {
   phase = std::fmod(phase, 1.0);
-  if (phase < 0) {
+  if (phase < 0.0) {
     phase += 1.0;
   }
   return phase;

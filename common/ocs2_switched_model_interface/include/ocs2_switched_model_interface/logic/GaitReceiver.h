@@ -14,6 +14,8 @@
 
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
+#include <ocs2_switched_model_msgs/scheduled_gait_sequence.h>
+
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/GaitSchedule.h"
 
@@ -32,14 +34,21 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
 
  private:
   void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  void mpcModeScheduledGaitCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  void mpcGaitSequenceCallback(const ocs2_switched_model_msgs::scheduled_gait_sequenceConstPtr& msg);
+
+  ros::Subscriber mpcModeSequenceSubscriber_;
+  ros::Subscriber mpcScheduledModeSequenceSubscriber_;
+  ros::Subscriber mpcGaitSequenceSubscriber_;
 
   std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
 
-  ros::Subscriber mpcModeSequenceSubscriber_;
+  std::atomic_bool gaitUpdated_;
 
-  std::mutex receivedGaitMutex_;
-  Gait receivedGait_;
-  bool gaitUpdated_;
+  std::mutex receivedGaitMutex_;  // protects the setGaitAction_ variable
+  std::function<void(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory)>
+      setGaitAction_;
 };
 
 }  // namespace switched_model

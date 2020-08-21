@@ -16,6 +16,7 @@ namespace switched_model {
 
 class GaitSchedule {
  public:
+  using GaitSequence = std::vector<Gait>;
   GaitSchedule(scalar_t time, Gait gait);
 
   /** Advances the gait schedule to a specified time, the specified time must be increasing w.r.t. previous calls. */
@@ -25,7 +26,7 @@ class GaitSchedule {
   void setNextGait(const Gait& gait);
 
   /** Adds sequence of gaits after completing the current gait */
-  void setGaitSequenceAfterCurrentGait(const std::vector<Gait>& gaitSequence);
+  void setGaitSequenceAfterCurrentGait(const GaitSequence& gaitSequence);
 
   /** Adds a gait at a specified time. The gait originally active at that time is shrunk in duration to make the new gait fit. Gaits after
    * that time are removed */
@@ -33,13 +34,13 @@ class GaitSchedule {
 
   /** Adds schedule of gaits at a specified time. The gait originally active at that time is shrunk in duration to make the new gait fit.
    * Gaits after that time are removed */
-  void setGaitSequenceAtTime(const std::vector<Gait>& gaitSequence, scalar_t time);
+  void setGaitSequenceAtTime(const GaitSequence& gaitSequence, scalar_t time);
 
   /** Adds a gait at the first opportunity after the specified time. Does not adapt gait cycle durations */
   void setGaitAfterTime(const Gait& gait, scalar_t time);
 
   /** Adds a gait sequence  at the first opportunity after the specified time. Does not adapt gait cycle durations */
-  void setGaitSequenceAfterTime(const std::vector<Gait>& gaitSequence, scalar_t time);
+  void setGaitSequenceAfterTime(const GaitSequence& gaitSequence, scalar_t time);
 
   /** Applies the provided function to the current gait. The function can adapt the current phase and gait. If the current gait is the last
    * scheduled gait, it is repeated before adaptation */

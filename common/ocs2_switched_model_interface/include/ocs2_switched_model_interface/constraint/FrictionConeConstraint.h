@@ -38,8 +38,10 @@ class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPU
    * @param regularization : (>0), see class documentation.
    * @param legNumber : leg index in {0, 1, 2, 3}.
    * @param gripperForce : Gripper force in normal direction.
+   * @param hessianDiagonalShift : Hessian shift to assure a strictly convex quadratic constraint approximation.
    */
-  FrictionConeConstraint(scalar_t frictionCoefficient, scalar_t regularization, int legNumber, scalar_t gripperForce = 0.0);
+  FrictionConeConstraint(scalar_t frictionCoefficient, scalar_t regularization, int legNumber, scalar_t gripperForce = 0.0,
+                         scalar_t hessianDiagonalShift = 1e-6);
 
   ~FrictionConeConstraint() override = default;
 
@@ -94,6 +96,7 @@ class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPU
   scalar_t frictionCoefficient_;
   scalar_t regularization_;
   scalar_t gripperForce_;
+  scalar_t hessianDiagonalShift_;
   int legNumber_;
   matrix3_t t_R_w;  // rotation world to terrain
 };

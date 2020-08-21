@@ -9,6 +9,7 @@
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include "ocs2_switched_model_interface/logic/Gait.h"
 
 namespace switched_model {
 
@@ -56,6 +57,9 @@ ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequenceTemplat
 
 /** Convert ROS message to mode sequence template */
 ModeSequenceTemplate readModeSequenceTemplateMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg);
+
+/** Converts a mode sequence template to a gait */
+Gait toGait(const ModeSequenceTemplate& modeSequenceTemplate);
 
 /**
  * Load a modesequence template from file.  The template needs to be declared as:

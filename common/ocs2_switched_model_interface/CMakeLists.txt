@@ -7,8 +7,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_msgs
   ocs2_oc
-  ocs2_comm_interfaces
-  switched_model_msgs
+  ocs2_ros_interfaces
+  ocs2_switched_model_msgs
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -55,6 +55,7 @@ add_library(${PROJECT_NAME}
 	src/logic/ModeSequenceTemplate.cpp
 	src/logic/SingleLegLogic.cpp
 	src/logic/SwitchedModelModeScheduleManager.cpp
+	src/ros_msg_conversions/RosMsgConversions.cpp
 	src/terrain/PlanarTerrainModel.cpp
 	src/terrain/TerrainPlane.cpp
 	src/EndEffectorConstraint.cpp

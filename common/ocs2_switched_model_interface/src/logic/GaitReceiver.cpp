@@ -27,56 +27,48 @@ void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const vec
       std::lock_guard<LockableGaitSchedule> gaitLock(*gaitSchedulePtr_);
       setGaitAction_(initTime, finalTime, currentState, costDesiredTrajectory);
     }
-    gaitUpdated_ = false;
     std::cout << std::endl;
+    gaitUpdated_ = false;
   }
 }
 
 void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg) {
-  auto modeSequenceTemplate = readModeSequenceTemplateMsg(*msg);
-  Gait gait;
-  gait.duration = modeSequenceTemplate.switchingTimes.back();
-  // Events: from time -> phase
-  std::for_each(modeSequenceTemplate.switchingTimes.begin() + 1, modeSequenceTemplate.switchingTimes.end() - 1,
-                [&](scalar_t eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
-  // Modes:
-  gait.modeSequence = modeSequenceTemplate.modeSequence;
+  const auto modeSequenceTemplate = readModeSequenceTemplateMsg(*msg);
+  const auto gait = toGait(modeSequenceTemplate);
 
-  std::lock_guard<std::mutex> lock(receivedGaitMutex_);
-  setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                       const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-    std::cout << "[GaitReceiver]: Setting new gait after time " << finalTime << "\n[GaitReceiver]: " << gait;
-    gaitSchedulePtr_->setGaitAfterTime(gait, finalTime);
-  };
-  gaitUpdated_ = true;
+  {
+    std::lock_guard<std::mutex> lock(receivedGaitMutex_);
+    setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+      std::cout << "[GaitReceiver]: Setting new gait after time " << finalTime << "\n[GaitReceiver]: " << gait;
+      gaitSchedulePtr_->setGaitAfterTime(gait, finalTime);
+    };
+    gaitUpdated_ = true;
+  }
 }
 
 void GaitReceiver::mpcModeScheduledGaitCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg) {
-  auto modeSequenceTemplate = readModeSequenceTemplateMsg(*msg);
+  const auto modeSequenceTemplate = readModeSequenceTemplateMsg(*msg);
+  const auto gait = toGait(modeSequenceTemplate);
+  const auto scheduledGaitTime = modeSequenceTemplate.switchingTimes.front();
+
   std::cout << "ScheduledGaitCallback:\n";
-  Gait gait;
-  gait.duration = modeSequenceTemplate.switchingTimes.back();
-
-  // Events: from time -> phase
-  std::for_each(modeSequenceTemplate.switchingTimes.begin() + 1, modeSequenceTemplate.switchingTimes.end() - 1,
-                [&](scalar_t eventTime) { gait.eventPhases.push_back((eventTime) / gait.duration); });
-
-  // Modes:
-  gait.modeSequence = modeSequenceTemplate.modeSequence;
   std::cout << "\nReceivedGait:\n" << gait << "\n";
 
-  setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                       const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-    std::cout << "[GaitReceiver]: Received new scheduled gait, setting it at time " << modeSequenceTemplate.switchingTimes.front()
-              << ", current time: " << initTime << "\n[GaitReceiver]: " << gait;
-    gaitSchedulePtr_->setGaitAtTime(gait, modeSequenceTemplate.switchingTimes.front());
-  };
-  gaitUpdated_ = true;
+  {
+    std::lock_guard<std::mutex> lock(receivedGaitMutex_);
+    setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+      std::cout << "[GaitReceiver]: Received new scheduled gait, setting it at time " << scheduledGaitTime << ", current time: " << initTime
+                << "\n[GaitReceiver]: " << gait;
+      gaitSchedulePtr_->setGaitAtTime(gait, scheduledGaitTime);
+    };
+    gaitUpdated_ = true;
+  }
 }
 
-void GaitReceiver::mpcGaitSequenceCallback(const switched_model_msgs::gait_sequenceConstPtr& msg) {
-  std::pair<GaitSchedule::GaitSequence, std::vector<ocs2::scalar_t>> scheduledGaitSequence;
-  ros_msg_conversions::readGaitSequenceMsg(*msg, scheduledGaitSequence.first, scheduledGaitSequence.second);
+void GaitReceiver::mpcGaitSequenceCallback(const ocs2_switched_model_msgs::scheduled_gait_sequenceConstPtr& msg) {
+  const auto scheduledGaitSequence = ros_msg_conversions::fromMessage(*msg);
 
   std::cout << "ScheduledGaitCallback:\n";
   std::cout << *msg << std::endl;
@@ -85,12 +77,7 @@ void GaitReceiver::mpcGaitSequenceCallback(const switched_model_msgs::gait_seque
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
     setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
                          const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-      const auto& gaitSequence = scheduledGaitSequence.first;
-      const auto& startTimes = scheduledGaitSequence.second;
-      assert(gaitSequence.size() == startTimes.size());
-      for (auto i = 0; i < gaitSequence.size(); ++i) {
-        gaitSchedulePtr_->setGaitSequenceAtTime({gaitSequence[i]}, startTimes[i]);
-      }
+      gaitSchedulePtr_->setGaitSequenceAtTime(scheduledGaitSequence.second, scheduledGaitSequence.first);
     };
     gaitUpdated_ = true;
   }

@@ -74,13 +74,13 @@ TEST(makePsdGershgorin, makePsdGershgorin) {
   ASSERT_TRUE(ddMat.isApprox(ddMatCorr, tol));
 
   // non-definite matrix
-  auto lambdaMin = ddMat.selfadjointView<Eigen::Lower>().eigenvalues().minCoeff();
+  auto lambdaMin = ocs2::LinearAlgebra::symmetricEigenvalues(ddMat).minCoeff();
   matrix_t ndMat = ddMat - (lambdaMin + 1e-2) * matrix_t::Identity(n, n);
   matrix_t ndMatCorr = ndMat;
   const scalar_t minDesiredEigenvalue = 1e-3;
   makePsdGershgorin(ndMatCorr, minDesiredEigenvalue);
-  Eigen::VectorXd lambda = ndMat.selfadjointView<Eigen::Lower>().eigenvalues();
-  Eigen::VectorXd lambdaCorr = ndMatCorr.selfadjointView<Eigen::Lower>().eigenvalues();
+  vector_t lambda = ocs2::LinearAlgebra::symmetricEigenvalues(ndMat);
+  vector_t lambdaCorr = ocs2::LinearAlgebra::symmetricEigenvalues(ndMatCorr);
   std::cerr << "MakePSD Gershgorin:" << std::endl;
   std::cerr << "eigenvalues            " << lambda.transpose() << std::endl;
   std::cerr << "eigenvalues corrected: " << lambdaCorr.transpose() << std::endl;
@@ -99,13 +99,13 @@ TEST(makePsdCholesky, makePsdCholesky) {
   ASSERT_TRUE(psdMat.isApprox(psdMatCorr, tol));
 
   // non-definite matrix
-  auto lambdaMin = psdMat.selfadjointView<Eigen::Lower>().eigenvalues().minCoeff();
+  auto lambdaMin = ocs2::LinearAlgebra::symmetricEigenvalues(psdMat).minCoeff();
   matrix_t ndMat = psdMat - (lambdaMin + 1e-2) * matrix_t::Identity(n, n);
   matrix_t ndMatCorr = ndMat;
   const scalar_t minDesiredEigenvalue = 1e-1;
   makePsdCholesky(ndMatCorr, minDesiredEigenvalue);
-  Eigen::VectorXd lambda = ndMat.selfadjointView<Eigen::Lower>().eigenvalues();
-  Eigen::VectorXd lambdaCorr = ndMatCorr.selfadjointView<Eigen::Lower>().eigenvalues();
+  vector_t lambda = ocs2::LinearAlgebra::symmetricEigenvalues(ndMat);
+  vector_t lambdaCorr = ocs2::LinearAlgebra::symmetricEigenvalues(ndMatCorr);
   std::cerr << "MakePSD Cholesky: " << std::endl;
   std::cerr << "eigenvalues            " << lambda.transpose() << std::endl;
   std::cerr << "eigenvalues corrected: " << lambdaCorr.transpose() << std::endl;
@@ -114,7 +114,7 @@ TEST(makePsdCholesky, makePsdCholesky) {
   // zero matrix
   matrix_t zeroMat = matrix_t::Zero(n, n);
   makePsdCholesky(zeroMat, minDesiredEigenvalue);
-  Eigen::VectorXd lambdaZeroMat = zeroMat.selfadjointView<Eigen::Lower>().eigenvalues();
+  vector_t lambdaZeroMat = ocs2::LinearAlgebra::symmetricEigenvalues(zeroMat);
   ASSERT_GE(lambdaZeroMat.minCoeff(), minDesiredEigenvalue);
 
   // sparse matrix
@@ -122,9 +122,9 @@ TEST(makePsdCholesky, makePsdCholesky) {
   vec = vec.unaryExpr([](scalar_t x) { return std::max(x, 0.0); });
   std::cerr << "Sparse vec:\n" << vec << std::endl;
   matrix_t sparseMat = vec * vec.transpose() - minDesiredEigenvalue * matrix_t::Identity(n, n);
-  Eigen::VectorXd lambdaSparseMat = sparseMat.selfadjointView<Eigen::Lower>().eigenvalues();
+  vector_t lambdaSparseMat = ocs2::LinearAlgebra::symmetricEigenvalues(sparseMat);
   makePsdCholesky(sparseMat, minDesiredEigenvalue);
-  Eigen::VectorXd lambdaSparseMatCorr = sparseMat.selfadjointView<Eigen::Lower>().eigenvalues();
+  vector_t lambdaSparseMatCorr = ocs2::LinearAlgebra::symmetricEigenvalues(sparseMat);
 
   std::cerr << "MakePSD Cholesky Sparse Matrix: " << std::endl;
   std::cerr << "Sparse Matrix:\n" << sparseMat << std::endl;

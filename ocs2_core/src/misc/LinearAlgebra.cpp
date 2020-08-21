@@ -119,26 +119,10 @@ void computeConstraintProjection(const Eigen::MatrixXd& Dm, const Eigen::MatrixX
   RmInvConstrainedUUT.noalias() = RmInvUmUmT * QRof_RmInvUmUmTT_DmT_Qu;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-int rank(const Eigen::MatrixXd& A) {
-  return A.colPivHouseholderQr().rank();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-Eigen::VectorXcd eigenvalues(const Eigen::MatrixXd& A) {
-  return A.eigenvalues();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-Eigen::VectorXd symmetricEigenvalues(const matrix_t& A) {
-  return A.selfadjointView<Eigen::Lower>().eigenvalues();
-}
+// Explicit instantiations for dynamic sized matrices
+template int rank(const matrix_t& A);
+template Eigen::VectorXcd eigenvalues(const matrix_t& A);
+template vector_t symmetricEigenvalues(const matrix_t& A);
 
 }  // namespace LinearAlgebra
 }  // namespace ocs2

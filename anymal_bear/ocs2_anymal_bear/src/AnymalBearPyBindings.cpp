@@ -1,7 +1,10 @@
-#include <ocs2_anymal_bear/AnymalBearInterface.h>
-#include <ocs2_anymal_bear/AnymalBearPyBindings.h>
+#include "ocs2_anymal_bear/AnymalBearPyBindings.h"
+
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
 #include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
+
+#include "ocs2_anymal_bear/AnymalBearInterface.h"
 
 namespace anymal {
 

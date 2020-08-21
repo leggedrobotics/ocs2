@@ -1,7 +1,10 @@
-#include <ocs2_anymal_croc/AnymalCrocInterface.h>
-#include <ocs2_anymal_croc/AnymalCrocPyBindings.h>
+#include "ocs2_anymal_croc/AnymalCrocPyBindings.h"
+
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
 #include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
+
+#include "ocs2_anymal_croc/AnymalCrocInterface.h"
 
 namespace anymal {
 

@@ -38,9 +38,13 @@ class LoopshapingDefinition {
         } else {
           return input;
         }
-      case LoopshapingType::eliminatepattern:
-        // u = C*x + D*v
-        return filter_.getC() * state.tail(filter_.getNumStates()) + filter_.getD() * input;
+      case LoopshapingType::eliminatepattern: {
+        // u = C*x + D*v. Use noalias to prevent temporaries.
+        vector_t u;
+        u.noalias() = filter_.getC() * state.tail(filter_.getNumStates());
+        u.noalias() += filter_.getD() * input;
+        return u;
+      }
       default:
         throw std::runtime_error("[LoopshapingDefinition::getSystemInput] invalid loopshaping type");
     }

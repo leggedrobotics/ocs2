@@ -85,44 +85,48 @@ SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touc
 }
 
 void SwingPhase::setFullSwing(scalar_t swingHeight) {
+  const scalar_t swingDuration = (touchDown_.time - liftOff_.time);
+  const auto& liftOffPositionInWorld = liftOff_.terrainPlane->positionInWorld;
+  const vector3_t liftOffVelocityInWorld{0.0, 0.0, liftOff_.velocity};
+  const auto& touchDownPositionInWorld = touchDown_.terrainPlane->positionInWorld;
+  const vector3_t touchDownVelocityInWorld{0.0, 0.0, touchDown_.velocity};
+
+  const vector3_t apexPositionInWorld{0.5 * (liftOffPositionInWorld.x() + touchDownPositionInWorld.x()),
+                                      0.5 * (liftOffPositionInWorld.y() + touchDownPositionInWorld.y()),
+                                      swingHeight + std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z())};
+  const vector3_t apexVelocityInWorld{(touchDownPositionInWorld.x() - liftOffPositionInWorld.x()) / swingDuration,
+                                      (touchDownPositionInWorld.y() - liftOffPositionInWorld.y()) / swingDuration, 0.0};
+
+  const scalar_t distanceLiftoffToApex = (apexPositionInWorld - liftOffPositionInWorld).norm();
+  const scalar_t distancetouchDownToApex = (apexPositionInWorld - touchDownPositionInWorld).norm();
+  const scalar_t apexTime = liftOff_.time + distanceLiftoffToApex / (distanceLiftoffToApex + distancetouchDownToApex) * swingDuration;
+
   {  // LiftOff Motion
-    const CubicSpline::Node liftOffInLiftOffFrame{liftOff_.time, 0.0, liftOff_.velocity};
-
-    // touchdown seen from liftoff frame
-    const scalar_t touchDownHeightInLiftOffFrame =
-        terrainSignedDistanceFromPositionInWorld(touchDown_.terrainPlane->positionInWorld, *liftOff_.terrainPlane);
-    const scalar_t touchDownVelocityInLiftOffFrame =
-        surfaceNormalInWorld(*liftOff_.terrainPlane).dot(touchDown_.velocity * surfaceNormalInWorld(*touchDown_.terrainPlane));
-    const CubicSpline::Node touchDownInLiftOffFrame{touchDown_.time, touchDownHeightInLiftOffFrame, touchDownVelocityInLiftOffFrame};
-
-    // Midpoint, seen from liftoff
-    const vector3_t touchDownClearancePointInWorld =
-        swingHeight * surfaceNormalInWorld(*touchDown_.terrainPlane) + touchDown_.terrainPlane->positionInWorld;
-    const scalar_t midHeightInLiftOffFrame =
-        std::max(swingHeight, terrainSignedDistanceFromPositionInWorld(touchDownClearancePointInWorld, *liftOff_.terrainPlane));
+    const vector3_t liftoffNormal = surfaceNormalInWorld(*liftOff_.terrainPlane);
+    const CubicSpline::Node liftOffInLiftOffFrame{liftOff_.time, 0.0, liftoffNormal.dot(liftOffVelocityInWorld)};
+    const CubicSpline::Node apexInLiftOffFrame{apexTime,
+                                               terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *liftOff_.terrainPlane),
+                                               liftoffNormal.dot(apexVelocityInWorld)};
+    const CubicSpline::Node touchDownInLiftOffFrame{
+        touchDown_.time, terrainSignedDistanceFromPositionInWorld(touchDownPositionInWorld, *liftOff_.terrainPlane),
+        liftoffNormal.dot(touchDownVelocityInWorld)};
 
     // Create spline in liftOffFrame
-    liftOffMotion_.reset(new SplineCpg(liftOffInLiftOffFrame, midHeightInLiftOffFrame, touchDownInLiftOffFrame));
+    liftOffMotion_.reset(new SplineCpg(liftOffInLiftOffFrame, apexInLiftOffFrame, touchDownInLiftOffFrame));
   }
 
   {  // Touchdown Motion
-    CubicSpline::Node touchDownInTouchDownFrame{touchDown_.time, 0.0, touchDown_.velocity};
-
-    // liftOff seen from touchdown frame
-    const scalar_t liftOffHeightInTouchDownFrame =
-        terrainSignedDistanceFromPositionInWorld(liftOff_.terrainPlane->positionInWorld, *touchDown_.terrainPlane);
-    const scalar_t liftOffVelocityInTouchDownFrame =
-        surfaceNormalInWorld(*touchDown_.terrainPlane).dot(liftOff_.velocity * surfaceNormalInWorld(*liftOff_.terrainPlane));
-    const CubicSpline::Node liftOffInTouchDownFrame{liftOff_.time, liftOffHeightInTouchDownFrame, liftOffVelocityInTouchDownFrame};
-
-    // Midpoint, seen from touchdown
-    const vector3_t liftOffClearancePointInWorld =
-        swingHeight * surfaceNormalInWorld(*liftOff_.terrainPlane) + liftOff_.terrainPlane->positionInWorld;
-    const scalar_t midHeightInTouchDownFrame =
-        std::max(swingHeight, terrainSignedDistanceFromPositionInWorld(liftOffClearancePointInWorld, *touchDown_.terrainPlane));
+    const vector3_t touchDownNormal = surfaceNormalInWorld(*touchDown_.terrainPlane);
+    const CubicSpline::Node liftOffInTouchDownFrame{
+        liftOff_.time, terrainSignedDistanceFromPositionInWorld(liftOffPositionInWorld, *touchDown_.terrainPlane),
+        touchDownNormal.dot(liftOffVelocityInWorld)};
+    const CubicSpline::Node apexInTouchDownFrame{apexTime,
+                                                 terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *touchDown_.terrainPlane),
+                                                 touchDownNormal.dot(apexVelocityInWorld)};
+    CubicSpline::Node touchDownInTouchDownFrame{touchDown_.time, 0.0, touchDownNormal.dot(touchDownVelocityInWorld)};
 
     // Create spline in touchDownFrame
-    touchdownMotion_.reset(new SplineCpg(liftOffInTouchDownFrame, midHeightInTouchDownFrame, touchDownInTouchDownFrame));
+    touchdownMotion_.reset(new SplineCpg(liftOffInTouchDownFrame, apexInTouchDownFrame, touchDownInTouchDownFrame));
   }
 }
 

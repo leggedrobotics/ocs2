@@ -70,6 +70,7 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/FiniteDifferenceMethods.cpp
   src/constraint/ConstraintBase.cpp
   src/constraint/ConstraintBaseAD.cpp
+  src/constraint/ConstraintCollection.cpp
   src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
@@ -286,6 +287,16 @@ catkin_add_gtest(test_cost
   test/cost/testQuadraticCostFunction.cpp
 )
 target_link_libraries(test_cost
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_constraint
+  test/constraint/testConstraintCollection.cpp
+)
+target_link_libraries(test_constraint
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

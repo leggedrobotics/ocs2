@@ -9,6 +9,7 @@
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/ConstraintBaseAD.h>
+#include <ocs2_core/constraint/ConstraintCollection.h>
 #include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>

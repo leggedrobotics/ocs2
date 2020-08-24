@@ -22,6 +22,7 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
+#include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/CostFunctionBaseAD.h>

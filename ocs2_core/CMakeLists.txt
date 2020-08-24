@@ -251,20 +251,14 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
   gtest_main
 )
 
-catkin_add_gtest(test_LinearAlgebra
+catkin_add_gtest(${PROJECT_NAME}_test_misc
+  test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
-)
-target_link_libraries(test_LinearAlgebra
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(test_lookup
+  test/misc/testLockable.cpp
   test/misc/testLookup.cpp
+  test/misc/testThreadPool.cpp
 )
-target_link_libraries(test_lookup
+target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
@@ -276,16 +270,6 @@ catkin_add_gtest(test_dynamics
 )
 target_link_libraries(test_dynamics
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(test_ThreadPool
-  test/misc/testThreadPool.cpp
-)
-target_link_libraries(test_ThreadPool
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main
 )

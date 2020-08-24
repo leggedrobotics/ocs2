@@ -100,7 +100,7 @@ class MRT_BASE {
    * Gets a reference to current optimized policy.
    * @return constant reference to the policy data.
    */
-  const PrimalSolution& getPolicy() const { return *currentPrimalSolution_; };
+  const PrimalSolution& getPolicy() const;
 
   /**
    * @brief Initializes rollout class to roll out a feedback policy

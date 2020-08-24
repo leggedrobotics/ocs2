@@ -36,12 +36,12 @@ class B : public A {
 TEST(testLockable, defaultConstruction) {
   // default
   ocs2::Synchronized<double> defaultObj;
-  ASSERT_FALSE(defaultObj);
+  ASSERT_FALSE(defaultObj.lock());
 
   // from pointer
   std::unique_ptr<double> doublePtr(new double(1.0));
   ocs2::Synchronized<double> nonDefaultObj(std::move(doublePtr));
-  ASSERT_TRUE(nonDefaultObj);
+  ASSERT_TRUE(nonDefaultObj.lock());
 }
 
 TEST(testLockable, polymorphic) {
@@ -93,6 +93,7 @@ TEST(testLockable, synchronize) {
 
   // Mutex is released
   ASSERT_TRUE(synchronized.getMutex().try_lock());
+  synchronized.getMutex().unlock();
 }
 
 TEST(testLockable, synchronizeConst) {

@@ -13,6 +13,7 @@ template <typename T>
 class LockedPtr {
  public:
   LockedPtr(std::unique_ptr<T>& p, std::mutex& m) : p_(p), lk_(m) {}
+  LockedPtr(std::unique_ptr<T>& p, std::mutex& m, std::adopt_lock_t) : p_(p), lk_(m, std::adopt_lock) {}
 
   /// Access
   T* operator->() { return p_.get(); }
@@ -20,8 +21,11 @@ class LockedPtr {
   T& operator*() { return *p_; }
   const T& operator*() const { return *p_; }
 
-  /// Resets the unique ptr within the SynchronizedPtr.
+  /// Resets the unique ptr within the Synchronized<>.
   void reset(std::unique_ptr<T> p) noexcept { p_ = std::move(p); }
+
+  /// Swaps the unique ptr within the Synchronized<>.
+  void swap(std::unique_ptr<T>& p) noexcept { p_.swap(p); }
 
   explicit operator bool() const noexcept { return p_ != nullptr; }
 
@@ -38,6 +42,7 @@ template <typename T>
 class LockedConstPtr {
  public:
   LockedConstPtr(const T* p, std::mutex& m) : p_(p), lk_(m) {}
+  LockedConstPtr(const T* p, std::mutex& m, std::adopt_lock_t) : p_(p), lk_(m, std::adopt_lock) {}
 
   /// const access
   const T* operator->() const { return p_; }
@@ -86,29 +91,51 @@ class Synchronized {
     return *this;
   }
 
-  /// reset the wrapped object. The object is reseated while holding the lock.
+  /// Reset the wrapped object. The object is reseated while holding the lock.
   void reset(std::unique_ptr<T> p) noexcept {
     std::unique_lock<std::mutex> lk(m_);
     p_ = std::move(p);
+  }
+
+  /// Swaps the wrapped object. The object is swapped while holding the lock.
+  void swap(std::unique_ptr<T>& p) noexcept {
+    std::unique_lock<std::mutex> lk(m_);
+    p_.swap(p);
   }
 
   /// Returns a pointer that holds the lock to the wrapped object. Lifetime of the LockedPtr<> determines the lifetime of the lock.
   LockedPtr<T> lock() { return {p_, m_}; }
   LockedConstPtr<T> lock() const { return {p_.get(), m_}; }
 
+  /// Returns a pointer that adopts and holds the lock to the wrapped object. Lifetime of the LockedPtr<> determines the lifetime of the
+  /// lock.
+  LockedPtr<T> adopt_lock() { return {p_, m_, std::adopt_lock}; }
+  LockedConstPtr<T> adopt_lock() const { return {p_.get(), m_, std::adopt_lock}; }
+
   /// Apply operations directly on the held object. Holds the lock for the duration of the call.
   LockedPtr<T> operator->() { return this->lock(); }
   LockedConstPtr<T> operator->() const { return this->lock(); }
 
   /// Get direct access to the wrapped value. NOT thread safe.
-  T* getUnsafe() { return p_.get(); }
+  T* getUnsafe() noexcept { return p_.get(); }
 
   /// Get direct access to the internal mutex.
-  std::mutex& getMutex() { return m_; }
+  std::mutex& getMutex() const noexcept { return m_; }
 
  private:
   mutable std::mutex m_;
   std::unique_ptr<T> p_;
 };
+
+/**
+ * Helper function to lock multiple synchronized<T> objects simultaneously, preventing deadlocks.
+ * @return a tuple of LockedPtr<T> / LockedConstPtr<T>.
+ */
+template <typename... SV>
+auto synchronizeLock(SV&... sv) -> std::tuple<decltype(sv.adopt_lock())...> {
+  std::lock(sv.getMutex()...);
+  using tuple_t = std::tuple<decltype(sv.adopt_lock())...>;
+  return tuple_t(sv.adopt_lock()...);
+}
 
 }  // namespace ocs2

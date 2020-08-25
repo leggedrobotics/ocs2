@@ -45,7 +45,6 @@ TEST(testLockable, defaultConstruction) {
 }
 
 TEST(testLockable, polymorphic) {
-  // from pointer
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
@@ -61,7 +60,6 @@ TEST(testLockable, polymorphic) {
 }
 
 TEST(testLockable, lockedWhileDirectCalling) {
-  // from pointer
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
@@ -79,7 +77,6 @@ TEST(testLockable, lockedWhileDirectCalling) {
 }
 
 TEST(testLockable, synchronize) {
-  // from pointer
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
@@ -97,7 +94,6 @@ TEST(testLockable, synchronize) {
 }
 
 TEST(testLockable, synchronizeConst) {
-  // from pointer
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
@@ -114,7 +110,6 @@ TEST(testLockable, synchronizeConst) {
 }
 
 TEST(testLockable, resetWhileSynchronized) {
-  // from pointer
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
@@ -130,7 +125,7 @@ TEST(testLockable, resetWhileSynchronized) {
 
     // Reset
     std::unique_ptr<A> objA(new A());
-    lockedPtr.reset(std::unique_ptr<A>(new A()));
+    lockedPtr.reset(std::move(objA));
 
     ASSERT_TRUE(lockedPtr);
     ASSERT_FALSE(synchronized.getMutex().try_lock());
@@ -140,4 +135,49 @@ TEST(testLockable, resetWhileSynchronized) {
 
   // Direct access, double check
   ASSERT_EQ(synchronized->getId(), ClassId::A);
+}
+
+TEST(testLockable, swap) {
+  std::unique_ptr<A> objBefore(new A());
+  std::unique_ptr<A> objAfter(new B());
+
+  // Construct with objBefore
+  ocs2::Synchronized<A> synchronized(std::move(objBefore));
+  ASSERT_EQ(synchronized->getId(), ClassId::A);
+
+  // Swap objBefore for objAfter
+  synchronized.swap(objAfter);
+
+  // Check the swap
+  ASSERT_EQ(synchronized->getId(), ClassId::B);
+  ASSERT_EQ(objAfter->getId(), ClassId::A);
+}
+
+TEST(testLockable, lockMultiple) {
+  // Mix of types, const, and ref
+  ocs2::Synchronized<A> synchronizedA(std::unique_ptr<A>(new A()));
+  const ocs2::Synchronized<B> synchronizedB(std::unique_ptr<B>(new B()));
+  ocs2::Synchronized<double> synchronizedDouble(std::unique_ptr<double>(new double(0.0)));
+  auto& synchronizedDoubleRef = synchronizedDouble;
+
+  {
+    auto lockedPtrTuple = synchronizeLock(synchronizedA, synchronizedB, synchronizedDoubleRef);
+    // Check that the returned lockedPtr is of the same type as if a regular lock was called
+    ASSERT_EQ(typeid(std::get<0>(lockedPtrTuple)), typeid(decltype(synchronizedA.lock())));
+    ASSERT_EQ(typeid(std::get<1>(lockedPtrTuple)), typeid(decltype(synchronizedB.lock())));
+    ASSERT_EQ(typeid(std::get<2>(lockedPtrTuple)), typeid(decltype(synchronizedDoubleRef.lock())));
+
+    // Check that all mutexes are locked
+    ASSERT_FALSE(synchronizedA.getMutex().try_lock());
+    ASSERT_FALSE(synchronizedB.getMutex().try_lock());
+    ASSERT_FALSE(synchronizedDouble.getMutex().try_lock());
+  }
+
+  // Check that all mutexes are released
+  ASSERT_TRUE(synchronizedA.getMutex().try_lock());
+  ASSERT_TRUE(synchronizedB.getMutex().try_lock());
+  ASSERT_TRUE(synchronizedDouble.getMutex().try_lock());
+  synchronizedA.getMutex().unlock();
+  synchronizedB.getMutex().unlock();
+  synchronizedDouble.getMutex().unlock();
 }

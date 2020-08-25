@@ -14,32 +14,32 @@ namespace switched_model {
  * Manages the ModeSchedule for switched model.
  */
 class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager {
- public:
   using Base = ocs2::ModeScheduleManager;
-  using LockableGaitSchedule = ocs2::Lockable<GaitSchedule>;
-  using LockableTerrainModelPtr = ocs2::LockablePtr<TerrainModel>;
-
-  SwitchedModelModeScheduleManager(GaitSchedule gaitSchedule, SwingTrajectoryPlanner swingTrajectory,
+ public:
+  SwitchedModelModeScheduleManager(std::unique_ptr<GaitSchedule> gaitSchedule,
+                                   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectory,
                                    std::unique_ptr<TerrainModel> terrainModel);
 
   ~SwitchedModelModeScheduleManager() override = default;
 
   contact_flag_t getContactFlags(scalar_t time) const;
 
-  const std::shared_ptr<LockableGaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
+  ocs2::Synchronized<GaitSchedule>& getGaitSchedule() { return gaitSchedule_; }
+  const ocs2::Synchronized<GaitSchedule>& getGaitSchedule() const { return gaitSchedule_; }
 
-  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
+  const SwingTrajectoryPlanner& getSwingTrajectoryPlanner() const { return *swingTrajectoryPtr_; }
 
-  LockableTerrainModelPtr& getTerrainPtr() { return terrainPtr_; }
+  ocs2::Synchronized<TerrainModel>& getTerrainPtr() { return terrainModel_; }
+  const ocs2::Synchronized<TerrainModel>& getTerrainPtr() const { return terrainModel_; }
 
  private:
   void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
 
  private:
-  std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
-  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
-  LockableTerrainModelPtr terrainPtr_;
+  ocs2::Synchronized<GaitSchedule> gaitSchedule_;
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
+  ocs2::Synchronized<TerrainModel> terrainModel_;
 };
 
 }  // namespace switched_model

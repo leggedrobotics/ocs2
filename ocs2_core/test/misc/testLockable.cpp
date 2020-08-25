@@ -19,7 +19,7 @@ class A {
   A& operator=(const A&) = delete;
   virtual ClassId getId() const { return ClassId::A; }
   virtual int getVal() { return 0; }
-  void run(const std::function<void()>& f) { f(); }
+  static void run(const std::function<void()>& f) { f(); }
 };
 
 // Derived class
@@ -33,7 +33,7 @@ class B : public A {
   int getVal() override { return 1; };
 };
 
-TEST(testLockable, defaultConstruction) {
+TEST(testLockable, construction) {
   // default
   ocs2::Synchronized<double> defaultObj;
   ASSERT_FALSE(defaultObj.lock());
@@ -64,19 +64,19 @@ TEST(testLockable, lockedWhileDirectCalling) {
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
   // Direct call
-  synchronized->run([&](){
+  synchronized->run([&]() {
     // Check that the mutex is locked while inside A::run()
     ASSERT_FALSE(synchronized.getMutex().try_lock());
   });
 
   // Chained direct call
-  synchronized.lock()->run([&](){
+  synchronized.lock()->run([&]() {
     // Check that the mutex is locked while inside A::run()
     ASSERT_FALSE(synchronized.getMutex().try_lock());
   });
 }
 
-TEST(testLockable, synchronize) {
+TEST(testLockable, scopedLocking) {
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
@@ -93,7 +93,7 @@ TEST(testLockable, synchronize) {
   synchronized.getMutex().unlock();
 }
 
-TEST(testLockable, synchronizeConst) {
+TEST(testLockable, scopedLockingConst) {
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 
@@ -109,7 +109,7 @@ TEST(testLockable, synchronizeConst) {
   }
 }
 
-TEST(testLockable, resetWhileSynchronized) {
+TEST(testLockable, resetWhileScopedLocking) {
   std::unique_ptr<A> objB(new B());
   ocs2::Synchronized<A> synchronized(std::move(objB));
 

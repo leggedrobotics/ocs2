@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <iomanip>
+#include <memory>
 #include <unordered_map>
 
 #include <boost/log/core.hpp>
@@ -59,42 +60,54 @@ static boost::shared_ptr<file_sink_t> file_sink_;
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", SeverityLevel);
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 const std::string& toString(const SeverityLevel lvl) {
   static const std::unordered_map<SeverityLevel, std::string> severityMap = {
-      {DEBUG, "DEBUG"}, {INFO, "INFO"}, {WARNING, "WARNING"}, {ERROR, "ERROR"}};
+      {SeverityLevel::DEBUG, "DEBUG"}, {SeverityLevel::INFO, "INFO"}, {SeverityLevel::WARNING, "WARNING"}, {SeverityLevel::ERROR, "ERROR"}};
   return severityMap.at(lvl);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 SeverityLevel fromString(const std::string& severity) {
   static const std::unordered_map<std::string, SeverityLevel> severityMap = {
-      {"DEBUG", DEBUG}, {"INFO", INFO}, {"WARNING", WARNING}, {"ERROR", ERROR}};
+      {"DEBUG", SeverityLevel::DEBUG}, {"INFO", SeverityLevel::INFO}, {"WARNING", SeverityLevel::WARNING}, {"ERROR", SeverityLevel::ERROR}};
   return severityMap.at(severity);
 }
 
-Settings loadSettings(const std::string& filename, const std::string& fieldName) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Settings loadSettings(const std::string& fileName, const std::string& fieldName) {
   Settings settings;
   boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
+  boost::property_tree::read_info(fileName, pt);
 
-  loadData::loadPtreeValue(pt, settings.console_, fieldName + ".console", false);
+  loadData::loadPtreeValue(pt, settings.useConsole, fieldName + ".useConsole", false);
 
-  std::string consoleSeverity = toString(settings.consoleSeverity_);  // keep default
+  std::string consoleSeverity = toString(settings.consoleSeverity);  // keep default
   loadData::loadPtreeValue(pt, consoleSeverity, fieldName + ".consoleSeverity", false);
-  settings.consoleSeverity_ = fromString(consoleSeverity);
+  settings.consoleSeverity = fromString(consoleSeverity);
 
-  loadData::loadPtreeValue(pt, settings.file_, fieldName + ".file", false);
+  loadData::loadPtreeValue(pt, settings.useLogFile, fieldName + ".useLogFile", false);
 
-  std::string fileSeverity = toString(settings.fileSeverity_);  // keep default
-  loadData::loadPtreeValue(pt, fileSeverity, fieldName + ".fileSeverity", false);
-  settings.fileSeverity_ = fromString(fileSeverity);
+  std::string logFileSeverity = toString(settings.logFileSeverity);  // keep default
+  loadData::loadPtreeValue(pt, logFileSeverity, fieldName + ".logFileSeverity", false);
+  settings.logFileSeverity = fromString(logFileSeverity);
 
-  loadData::loadPtreeValue(pt, settings.fileName_, fieldName + ".fileName", false);
+  loadData::loadPtreeValue(pt, settings.logFileName, fieldName + ".logFileName", false);
 
   return settings;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename T>
-static inline void printOption(std::ostream& stream, const T& value, const std::string& name, bool updated = true, long printWidth = 80) {
+static void printOption(std::ostream& stream, const T& value, const std::string& name, bool updated = true, long printWidth = 80) {
   const std::string nameString = " #### '" + name + "'";
   stream << nameString;
 
@@ -111,43 +124,50 @@ static inline void printOption(std::ostream& stream, const T& value, const std::
   stream.fill(fill);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::ostream& operator<<(std::ostream& stream, const Settings& settings) {
   stream << "\n #### Log Settings:\n";
   stream << " #### =============================================================================\n";
 
-  printOption(stream, settings.console_, "console");
-  printOption(stream, settings.consoleSeverity_, "consoleSeverity");
-  printOption(stream, settings.file_, "file");
-  printOption(stream, settings.fileSeverity_, "fileSeverity");
-  printOption(stream, settings.fileName_, "fileName");
+  printOption(stream, settings.useConsole, "useConsole");
+  printOption(stream, settings.consoleSeverity, "consoleSeverity");
+  printOption(stream, settings.useLogFile, "useLogFile");
+  printOption(stream, settings.logFileSeverity, "logFileSeverity");
+  printOption(stream, settings.logFileName, "logFileName");
 
   stream << " #### =============================================================================\n";
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void init(const Settings& settings, std::ostream* console_stream) {
   auto core = boost::log::core::get();
 
-  if (settings.console_) {
+  if (settings.useConsole) {
     auto backend = boost::make_shared<boost::log::sinks::text_ostream_backend>();
     backend->add_stream(boost::shared_ptr<std::ostream>(console_stream, boost::null_deleter()));
+    // disable auto flush for performance concerns
     backend->auto_flush(false);
     auto sink = boost::make_shared<text_sink_t>(backend);
     sink->set_formatter(boost::log::expressions::stream << "[ " << std::setw(7) << std::setfill(' ') << ocs2::log::severity << " ] "
                                                         << boost::log::expressions::smessage);
-    sink->set_filter(ocs2::log::severity >= settings.consoleSeverity_);
+    sink->set_filter(ocs2::log::severity >= settings.consoleSeverity);
     core->add_sink(sink);
     console_sink_ = sink;
   }
 
-  if (settings.file_) {
-    auto backend = boost::make_shared<boost::log::sinks::text_file_backend>(boost::log::keywords::file_name = settings.fileName_,
+  if (settings.useLogFile) {
+    auto backend = boost::make_shared<boost::log::sinks::text_file_backend>(boost::log::keywords::file_name = settings.logFileName,
                                                                             boost::log::keywords::auto_flush = true,
                                                                             boost::log::keywords::open_mode = std::ios::out);
     auto sink = boost::make_shared<file_sink_t>(backend);
     sink->set_formatter(boost::log::expressions::stream
                         << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << " [ "
                         << std::setw(7) << std::setfill(' ') << ocs2::log::severity << " ] " << boost::log::expressions::smessage);
-    sink->set_filter(ocs2::log::severity >= settings.fileSeverity_);
+    sink->set_filter(ocs2::log::severity >= settings.logFileSeverity);
     core->add_sink(sink);
     file_sink_ = sink;
   }
@@ -155,20 +175,26 @@ void init(const Settings& settings, std::ostream* console_stream) {
   boost::log::add_common_attributes();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void reset() {
   auto core = boost::log::core::get();
 
-  if (console_sink_) {
+  if (console_sink_ != nullptr) {
     core->remove_sink(console_sink_);
     console_sink_.reset();
   }
 
-  if (file_sink_) {
+  if (file_sink_ != nullptr) {
     core->remove_sink(file_sink_);
     file_sink_.reset();
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 logger_t& getLogger() {
   static logger_t logger;
   return logger;

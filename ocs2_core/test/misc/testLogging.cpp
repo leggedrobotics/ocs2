@@ -1,9 +1,38 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <gtest/gtest.h>
 
+#include <array>
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <array>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -12,9 +41,9 @@
 TEST(testLogging, canPrintMessage) {
   ocs2::log::Settings settings;
 
-  settings.file_ = false;
-  settings.console_ = true;
-  settings.consoleSeverity_ = ocs2::log::DEBUG;
+  settings.useLogFile = false;
+  settings.useConsole = true;
+  settings.consoleSeverity = ocs2::log::SeverityLevel::DEBUG;
 
   ocs2::log::init(settings);
 
@@ -30,10 +59,10 @@ TEST(testLogging, canPrintMessage) {
 TEST(testLogging, canWriteLogFile) {
   ocs2::log::Settings settings;
 
-  settings.console_ = false;
-  settings.file_ = true;
-  settings.fileSeverity_ = ocs2::log::DEBUG;
-  settings.fileName_ = "log/ocs2_test.log";
+  settings.useConsole = false;
+  settings.useLogFile = true;
+  settings.logFileSeverity = ocs2::log::SeverityLevel::DEBUG;
+  settings.logFileName = "log/testLogging.log";
 
   ocs2::log::init(settings);
 
@@ -44,9 +73,9 @@ TEST(testLogging, canWriteLogFile) {
 
   ocs2::log::reset();
 
-  std::ifstream file(settings.fileName_);
+  std::ifstream file(settings.logFileName);
   std::array<std::string, 4> expected = {"[   DEBUG ] A debug severity message", "[    INFO ] An informational severity message",
-                                       "[ WARNING ] A warning severity message", "[   ERROR ] An error severity message"};
+                                         "[ WARNING ] A warning severity message", "[   ERROR ] An error severity message"};
 
   for (const auto& end : expected) {
     std::string line;
@@ -58,9 +87,9 @@ TEST(testLogging, canWriteLogFile) {
 TEST(testLogging, writesCorrectMessageToConsole) {
   ocs2::log::Settings settings;
 
-  settings.file_ = false;
-  settings.console_ = true;
-  settings.consoleSeverity_ = ocs2::log::DEBUG;
+  settings.useLogFile = false;
+  settings.useConsole = true;
+  settings.consoleSeverity = ocs2::log::SeverityLevel::DEBUG;
 
   std::ostringstream console_stream;
   ocs2::log::init(settings, &console_stream);
@@ -84,9 +113,9 @@ TEST(testLogging, writesCorrectMessageToConsole) {
 TEST(testLogging, canFilterSeverity) {
   ocs2::log::Settings settings;
 
-  settings.file_ = false;
-  settings.console_ = true;
-  settings.consoleSeverity_ = ocs2::log::ERROR;
+  settings.useLogFile = false;
+  settings.useConsole = true;
+  settings.consoleSeverity = ocs2::log::SeverityLevel::ERROR;
 
   std::ostringstream console_stream;
   ocs2::log::init(settings, &console_stream);
@@ -109,20 +138,20 @@ TEST(testLogging, canLoadSettings) {
 ; logging settings
 log
 {
-  console         1         ; enable console log
-  consoleSeverity INFO      ; console severity level
-  file            1         ; enable file log
-  fileSeverity    WARNING   ; file severity level
-  fileName        ocs2.log  ; log file name
+  useConsole        1         ; enable console log
+  consoleSeverity   INFO      ; console severity level
+  useLogFile        1         ; enable file log
+  logFileSeverity   WARNING   ; file severity level
+  logFileName       ocs2.log  ; log file name
 }
 )";
   file.close();
 
   ocs2::log::Settings settings = ocs2::log::loadSettings(settingsFileName, "log");
 
-  EXPECT_EQ(settings.console_, true);
-  EXPECT_EQ(settings.consoleSeverity_, ocs2::log::INFO);
-  EXPECT_EQ(settings.file_, true);
-  EXPECT_EQ(settings.fileSeverity_, ocs2::log::WARNING);
-  EXPECT_EQ(settings.fileName_, "ocs2.log");
+  EXPECT_EQ(settings.useConsole, true);
+  EXPECT_EQ(settings.consoleSeverity, ocs2::log::SeverityLevel::INFO);
+  EXPECT_EQ(settings.useLogFile, true);
+  EXPECT_EQ(settings.logFileSeverity, ocs2::log::SeverityLevel::WARNING);
+  EXPECT_EQ(settings.logFileName, "ocs2.log");
 }

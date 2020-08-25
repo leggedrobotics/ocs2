@@ -109,15 +109,12 @@ class Synchronized {
 
   /// Returns a pointer that adopts and holds the lock to the wrapped object. Lifetime of the LockedPtr<> determines the lifetime of the
   /// lock.
-  LockedPtr<T> adopt_lock() { return {p_, m_, std::adopt_lock}; }
-  LockedConstPtr<T> adopt_lock() const { return {p_.get(), m_, std::adopt_lock}; }
+  LockedPtr<T> adoptLock() { return {p_, m_, std::adopt_lock}; }
+  LockedConstPtr<T> adoptLock() const { return {p_.get(), m_, std::adopt_lock}; }
 
   /// Apply operations directly on the held object. Holds the lock for the duration of the call.
   LockedPtr<T> operator->() { return this->lock(); }
   LockedConstPtr<T> operator->() const { return this->lock(); }
-
-  /// Get direct access to the wrapped value. NOT thread safe.
-  T* getUnsafe() noexcept { return p_.get(); }
 
   /// Get direct access to the internal mutex.
   std::mutex& getMutex() const noexcept { return m_; }
@@ -132,10 +129,10 @@ class Synchronized {
  * @return a tuple of LockedPtr<T> / LockedConstPtr<T>.
  */
 template <typename... SV>
-auto synchronizeLock(SV&... sv) -> std::tuple<decltype(sv.adopt_lock())...> {
+auto synchronizeLock(SV&... sv) -> std::tuple<decltype(sv.adoptLock())...> {
   std::lock(sv.getMutex()...);
-  using tuple_t = std::tuple<decltype(sv.adopt_lock())...>;
-  return tuple_t(sv.adopt_lock()...);
+  using tuple_t = std::tuple<decltype(sv.adoptLock())...>;
+  return tuple_t(sv.adoptLock()...);
 }
 
 }  // namespace ocs2

@@ -139,9 +139,9 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
   if (signedDistanceField_ != nullptr) {
     const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOff_.terrainPlane->positionInWorld), 0.0);
     const scalar_t sdfEndClearance_ = std::min(signedDistanceField_->value(touchDown_.terrainPlane->positionInWorld), 0.0);
-    CubicSpline::Node startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, 0.75 * liftOffInLiftOffFrame.velocity};
+    CubicSpline::Node startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
     CubicSpline::Node apexNode{apexTime, sdfMidClearance_, 0.0};
-    CubicSpline::Node endNode{touchDown_.time, sdfEndClearance_ - startEndMargin_, 0.75 * touchDownInTouchDownFrame.velocity};
+    CubicSpline::Node endNode{touchDown_.time, sdfEndClearance_ - startEndMargin_, touchDownInTouchDownFrame.velocity};
     terrainClearanceMotion_.reset(new SplineCpg(startNode, apexNode, endNode));
   } else {
     terrainClearanceMotion_.reset();
@@ -160,7 +160,7 @@ void SwingPhase::setHalveSwing(scalar_t swingHeight) {
   {  // Terrain clearance
     if (signedDistanceField_ != nullptr) {
       const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOff_.terrainPlane->positionInWorld), 0.0);
-      CubicSpline::Node startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, 0.75 * liftOffInLiftOffFrame.velocity};
+      CubicSpline::Node startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
       CubicSpline::Node endNode{touchDown_.time, sdfMidClearance_, 0.0};
       terrainClearanceMotion_.reset(new SplineCpg(startNode, sdfMidClearance_, endNode));
     } else {

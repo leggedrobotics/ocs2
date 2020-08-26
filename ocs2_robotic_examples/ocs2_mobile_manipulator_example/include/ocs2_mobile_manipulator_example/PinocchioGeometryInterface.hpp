@@ -25,7 +25,6 @@ class PinocchioGeometryInterface {
 
   pinocchio::GeometryModel& getGeometryModel() { return *geometryModel_; }
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModel_; }
-  //  void generateGeometryData();
 
   std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<double, Eigen::Dynamic, 1>& q);
 
@@ -33,7 +32,6 @@ class PinocchioGeometryInterface {
   const std::shared_ptr<PinocchioInterface<double>> pinocchioInterface_;
 
   std::shared_ptr<pinocchio::GeometryModel> geometryModel_;
-  //  std::unique_ptr<pinocchio::GeometryData> geometryData_;
 };
 
 }  // namespace mobile_manipulator

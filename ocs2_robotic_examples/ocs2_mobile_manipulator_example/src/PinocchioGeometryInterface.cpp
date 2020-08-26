@@ -11,15 +11,7 @@
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 #include "pinocchio/algorithm/geometry.hpp"
-
-#include <pinocchio/multibody/model.hpp>
-#include <pinocchio/parsers/urdf.hpp>
-#include "pinocchio/algorithm/geometry.hpp"
-#include "pinocchio/algorithm/joint-configuration.hpp"
-#include "pinocchio/algorithm/kinematics.hpp"
-#include "pinocchio/multibody/data.hpp"
 #include "pinocchio/multibody/fcl.hpp"
-#include "pinocchio/multibody/geometry.hpp"
 
 namespace mobile_manipulator {
 
@@ -30,7 +22,6 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
   geometryModel_ = std::make_shared<pinocchio::GeometryModel>();
   pinocchio::urdf::buildGeom(pinocchioInterface_->getModel(), urdfPath, pinocchio::COLLISION, *geometryModel_);
 
-  //  geometryModel_->addAllCollisionPairs();
   for (const pinocchio::CollisionPair& collisionPair : collisionPairs) {
     geometryModel_->addCollisionPair(collisionPair);
   }

@@ -81,6 +81,8 @@ void jointStateCallback(sensor_msgs::JointStateConstPtr msg) {
     markerArray.markers[numMarkersPerResult * i].points.push_back(mobile_manipulator::getPointMsg(results[i].nearest_points[1]));
     markerArray.markers[numMarkersPerResult * i].id = numMarkersPerResult * i;
     markerArray.markers[numMarkersPerResult * i].scale.x = 0.01;
+    markerArray.markers[numMarkersPerResult * i].scale.y = 0.02;
+    markerArray.markers[numMarkersPerResult * i].scale.z = 0.04;
     markerArray.markers[numMarkersPerResult * i + 1].type = visualization_msgs::Marker::SPHERE_LIST;
     markerArray.markers[numMarkersPerResult * i + 1].points.push_back(mobile_manipulator::getPointMsg(results[i].nearest_points[0]));
     markerArray.markers[numMarkersPerResult * i + 1].points.push_back(mobile_manipulator::getPointMsg(results[i].nearest_points[1]));

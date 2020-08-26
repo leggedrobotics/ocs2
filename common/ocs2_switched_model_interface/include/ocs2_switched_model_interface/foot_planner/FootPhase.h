@@ -117,9 +117,12 @@ class SwingPhase final : public FootPhase {
   SwingEvent touchDown_;
   std::unique_ptr<SplineCpg> liftOffMotion_;
   std::unique_ptr<SplineCpg> touchdownMotion_;
-  const SignedDistanceField* signedDistanceField_;
-  scalar_t sdfClearance_ = 0.05;
   scalar_t positionGain_;
+
+  const SignedDistanceField* signedDistanceField_;
+  std::unique_ptr<SplineCpg> terrainClearanceMotion_;
+  const scalar_t sdfMidClearance_ = 0.05;
+  const scalar_t startEndMargin_ = 0.02;
 };
 
 }  // namespace switched_model

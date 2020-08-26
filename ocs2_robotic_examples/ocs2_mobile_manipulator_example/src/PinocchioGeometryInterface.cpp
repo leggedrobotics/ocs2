@@ -25,8 +25,6 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
   for (const pinocchio::CollisionPair& collisionPair : collisionPairs) {
     geometryModel_->addCollisionPair(collisionPair);
   }
-
-  //   geometryData_.reset(new GeometryData(*geometryModel_));
 }
 
 std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistances(const Eigen::Matrix<double, Eigen::Dynamic, 1>& q) {

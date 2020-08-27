@@ -19,7 +19,7 @@ namespace mobile_manipulator {
 
 class PinocchioGeometryInterface {
  public:
-  PinocchioGeometryInterface(const std::string& urdfPath, std::shared_ptr<PinocchioInterface<double>> pinocchioInterface,
+  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<double> pinocchioInterface,
                              const pinocchio::GeometryModel::CollisionPairVector collisionPairs);
   virtual ~PinocchioGeometryInterface() = default;
 
@@ -29,7 +29,7 @@ class PinocchioGeometryInterface {
   std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<double, Eigen::Dynamic, 1>& q);
 
  private:
-  const std::shared_ptr<PinocchioInterface<double>> pinocchioInterface_;
+  PinocchioInterface<double> pinocchioInterface_;
 
   std::shared_ptr<pinocchio::GeometryModel> geometryModel_;
 };

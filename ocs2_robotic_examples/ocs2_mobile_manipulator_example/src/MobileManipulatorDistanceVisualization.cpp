@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
-std::shared_ptr<mobile_manipulator::PinocchioInterface<double>> pInterface;
+std::unique_ptr<mobile_manipulator::PinocchioInterface<double>> pInterface;
 std::shared_ptr<mobile_manipulator::PinocchioGeometryInterface> gInterface;
 
 sensor_msgs::JointState lastMsg;
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
 
   pInterface.reset(new mobile_manipulator::PinocchioInterface<double>(urdfPath));
   gInterface.reset(
-      new mobile_manipulator::PinocchioGeometryInterface(urdfPath, pInterface, {{0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}}));
+      new mobile_manipulator::PinocchioGeometryInterface(urdfPath, *pInterface, {{0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}}));
 
   for (auto obj : gInterface->getGeometryModel().geometryObjects) {
     std::cout << obj.name << std::endl;

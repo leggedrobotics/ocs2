@@ -155,16 +155,6 @@ class GaussNewtonDDP : public Solver_BASE {
   const ddp::Settings& settings() const { return ddpSettings_; }
 
   /**
-   * Upon activation in the multi-thread Gauss-Newton DDP class (DDP_MT), the parallelization
-   * of the backward pass takes place from the the first iteration which
-   * normally become effective after the first iteration.
-   *
-   * @param [in] flag: If set true, the parallel Riccati solver will be used
-   * from the first iteration.
-   */
-  void useParallelRiccatiSolverFromInitItr(bool flag) { useParallelRiccatiSolverFromInitItr_ = flag; }
-
-  /**
    * Computes the normalized time for Riccati backward pass.
    *
    * @param [in] timeTrajectory: The time trajectory.
@@ -613,7 +603,6 @@ class GaussNewtonDDP : public Solver_BASE {
 
   unsigned long long int rewindCounter_{0};
   unsigned long long int totalNumIterations_{0};
-  bool useParallelRiccatiSolverFromInitItr_{false};
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;

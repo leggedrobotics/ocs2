@@ -113,7 +113,6 @@ TEST(circular_kinematics_slq_test, circular_kinematics_slq_test) {
   // SLQ - multi-thread version
   ddpSettings.nThreads_ = 3;
   SLQ slqMT(&timeTriggeredRollout, &systemDynamics, &systemConstraint, &systemCostFunction, &operatingTrajectories, ddpSettings);
-  slqMT.useParallelRiccatiSolverFromInitItr(false);
 
   // run single core SLQ
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {

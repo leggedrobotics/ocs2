@@ -140,7 +140,7 @@ class GaussNewtonDDP : public Solver_BASE {
 
   void rewindOptimizer(size_t firstIndex) override;
 
-  void printBenchmarkingInfo() const override;
+  std::string getBenchmarkingInfo() const override;
 
   const unsigned long long int& getRewindCounter() const override { return rewindCounter_; }
 
@@ -539,6 +539,17 @@ class GaussNewtonDDP : public Solver_BASE {
    */
   void runIteration();
 
+  /**
+   * Checks convergence of the main loop of DDP.
+   *
+   * @param [in] isInitalControllerEmpty: Whether the initial controller was empty.
+   * @param [in] previousPerformanceIndex: The previous iteration's PerformanceIndex.
+   * @param [in] currentPerformanceIndex: The current iteration's PerformanceIndex.
+   * @return A pair of (isOptimizationConverged, infoString)
+   */
+  std::pair<bool, std::string> checkConvergence(bool isInitalControllerEmpty, const PerformanceIndex& previousPerformanceIndex,
+                                                const PerformanceIndex& currentPerformanceIndex) const;
+
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
@@ -600,14 +611,12 @@ class GaussNewtonDDP : public Solver_BASE {
 
   std::unique_ptr<ThreadPool> threadPoolPtr_;
 
-  unsigned long long int rewindCounter_ = 0;
-
-  bool useParallelRiccatiSolverFromInitItr_ = false;
+  unsigned long long int rewindCounter_{0};
+  unsigned long long int totalNumIterations_{0};
+  bool useParallelRiccatiSolverFromInitItr_{false};
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;
-
-  std::atomic_size_t iteration_{0};
 
   PerformanceIndex performanceIndex_;
 

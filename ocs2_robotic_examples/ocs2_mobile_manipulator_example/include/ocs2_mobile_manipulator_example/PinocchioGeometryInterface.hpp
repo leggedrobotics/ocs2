@@ -19,19 +19,22 @@ namespace mobile_manipulator {
 
 class PinocchioGeometryInterface {
  public:
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<double> pinocchioInterface,
+  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<double>& pinocchioInterface,
                              const pinocchio::GeometryModel::CollisionPairVector collisionPairs);
   virtual ~PinocchioGeometryInterface() = default;
 
-  pinocchio::GeometryModel& getGeometryModel() { return *geometryModel_; }
-  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModel_; }
+  // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)
+  PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
+
+  pinocchio::GeometryModel& getGeometryModel() { return geometryModel_; }
+  const pinocchio::GeometryModel& getGeometryModel() const { return geometryModel_; }
 
   std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<double, Eigen::Dynamic, 1>& q);
 
  private:
   PinocchioInterface<double> pinocchioInterface_;
 
-  std::shared_ptr<pinocchio::GeometryModel> geometryModel_;
+  pinocchio::GeometryModel geometryModel_;
 };
 
 }  // namespace mobile_manipulator

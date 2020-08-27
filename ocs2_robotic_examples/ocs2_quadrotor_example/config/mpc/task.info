@@ -82,7 +82,6 @@ mpc
   initMinStepLength           0.1
   initMaxStepLength           1.0
   coldStart                   false
-  useParallelRiccatiSolver    true    ; use parallel riccati solver in MP case and recedingHorizon fashion
   solutionTimeWindow          0.5     ; [s]
   mpcDesiredFrequency         100     ; [Hz]
   mrtDesiredFrequency         400     ; [Hz]

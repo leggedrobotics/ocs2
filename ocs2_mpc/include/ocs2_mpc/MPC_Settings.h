@@ -63,8 +63,6 @@ struct Settings {
   /** This value determines to initialize the SLQ with the controller from previous call
    * (warm start) or the given operating trajectories (cold start). */
   bool coldStart_ = false;
-  /** If set true, the parallel Riccati solver will be used from the first iteration of DDP solver. */
-  bool useParallelRiccatiSolver_ = false;
 
   /** The time window (in seconds) for retrieving the optimized output (controller and trajectory). */
   scalar_t solutionTimeWindow_ = -1;

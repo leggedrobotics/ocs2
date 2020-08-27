@@ -64,20 +64,24 @@ rollout
 ; MPC settings
 mpc
 {
-  timeHorizon                 2.5
+  timeHorizon                 2.5  ; [s]
   numPartitions               2
-  runtimeMaxNumIterations     1
-  initMaxNumIterations        100
-  runtimeMaxStepLength        1.0
-  runtimeMinStepLength        1.0
+  solutionTimeWindow          -1   ; maximum [s]
+
+  debugPrint                  true
+
+  coldStart                   false
+
+  initMaxNumIterations        10
   initMinStepLength           0.1
   initMaxStepLength           1.0
-  coldStart                   false
-  useParallelRiccatiSolver    false    ; use disjoint riccati solver in MP case and recedingHorizon fashion
-  solutionTimeWindow          -1   ; maximum [s]
+
+  runtimeMaxNumIterations     1
+  runtimeMinStepLength        1.0
+  runtimeMaxStepLength        1.0
+
   mpcDesiredFrequency         100  ; [Hz]
   mrtDesiredFrequency         400  ; [Hz]
-  debugPrint                  true
 }
 
 

@@ -55,8 +55,8 @@ namespace log {
 using text_sink_t = boost::log::sinks::synchronous_sink<boost::log::sinks::text_ostream_backend>;
 using file_sink_t = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
 
-static std::shared_ptr<text_sink_t> console_sink_;
-static std::shared_ptr<file_sink_t> file_sink_;
+static std::shared_ptr<text_sink_t> consoleSink_;
+static std::shared_ptr<file_sink_t> fileSink_;
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", SeverityLevel);
 
@@ -151,28 +151,28 @@ void init(const Settings& settings, std::ostream* console_stream) {
     backend->add_stream(boost::shared_ptr<std::ostream>(console_stream, boost::null_deleter()));
     // disable auto flush for performance concerns
     backend->auto_flush(false);
-    console_sink_ = std::shared_ptr<text_sink_t>(new text_sink_t(backend));
-    console_sink_->set_formatter(boost::log::expressions::stream << "[ " << std::setw(7) << std::setfill(' ') << ocs2::log::severity
-                                                                 << " ] " << boost::log::expressions::smessage);
-    console_sink_->set_filter(ocs2::log::severity >= settings.consoleSeverity);
+    consoleSink_ = std::shared_ptr<text_sink_t>(new text_sink_t(backend));
+    consoleSink_->set_formatter(boost::log::expressions::stream << "[ " << std::setw(7) << std::setfill(' ') << ocs2::log::severity << " ] "
+                                                                << boost::log::expressions::smessage);
+    consoleSink_->set_filter(ocs2::log::severity >= settings.consoleSeverity);
 
-    // connect boost::shared_ptr to global console_sink_
-    core->add_sink(boost::shared_ptr<text_sink_t>(console_sink_.get(), [=](text_sink_t*) { console_sink_.reset(); }));
+    // connect boost::shared_ptr to global consoleSink_
+    core->add_sink(boost::shared_ptr<text_sink_t>(consoleSink_.get(), [=](text_sink_t*) { consoleSink_.reset(); }));
   }
 
   if (settings.useLogFile) {
     auto backend = boost::make_shared<boost::log::sinks::text_file_backend>(boost::log::keywords::file_name = settings.logFileName,
                                                                             boost::log::keywords::auto_flush = true,
                                                                             boost::log::keywords::open_mode = std::ios::out);
-    file_sink_ = std::shared_ptr<file_sink_t>(new file_sink_t(backend));
-    file_sink_->set_formatter(boost::log::expressions::stream
-                              << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
-                              << " [ " << std::setw(7) << std::setfill(' ') << ocs2::log::severity << " ] "
-                              << boost::log::expressions::smessage);
-    file_sink_->set_filter(ocs2::log::severity >= settings.logFileSeverity);
+    fileSink_ = std::shared_ptr<file_sink_t>(new file_sink_t(backend));
+    fileSink_->set_formatter(boost::log::expressions::stream
+                             << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
+                             << " [ " << std::setw(7) << std::setfill(' ') << ocs2::log::severity << " ] "
+                             << boost::log::expressions::smessage);
+    fileSink_->set_filter(ocs2::log::severity >= settings.logFileSeverity);
 
-    // connect boost::shared_ptr to global file_sink_
-    core->add_sink(boost::shared_ptr<file_sink_t>(file_sink_.get(), [=](file_sink_t*) { file_sink_.reset(); }));
+    // connect boost::shared_ptr to global fileSink_
+    core->add_sink(boost::shared_ptr<file_sink_t>(fileSink_.get(), [=](file_sink_t*) { fileSink_.reset(); }));
   }
 
   boost::log::add_common_attributes();
@@ -184,14 +184,14 @@ void init(const Settings& settings, std::ostream* console_stream) {
 void reset() {
   auto core = boost::log::core::get();
 
-  if (console_sink_ != nullptr) {
-    core->remove_sink(boost::shared_ptr<text_sink_t>(console_sink_.get(), boost::null_deleter()));
-    console_sink_.reset();
+  if (consoleSink_ != nullptr) {
+    core->remove_sink(boost::shared_ptr<text_sink_t>(consoleSink_.get(), boost::null_deleter()));
+    consoleSink_.reset();
   }
 
-  if (file_sink_ != nullptr) {
-    core->remove_sink(boost::shared_ptr<file_sink_t>(file_sink_.get(), boost::null_deleter()));
-    file_sink_.reset();
+  if (fileSink_ != nullptr) {
+    core->remove_sink(boost::shared_ptr<file_sink_t>(fileSink_.get(), boost::null_deleter()));
+    fileSink_.reset();
   }
 }
 

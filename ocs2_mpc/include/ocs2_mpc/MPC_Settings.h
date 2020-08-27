@@ -41,11 +41,14 @@ namespace mpc {
  * This structure holds all setting parameters for the MPC class.
  */
 struct Settings {
-  /** MPC time horizon lenght. */
+  /** MPC time horizon length in seconds. */
   scalar_t timeHorizon_ = 1.0;
   /** Number of data partitions over the time horizon. */
   size_t numPartitions_ = 2;
-  /** The time window (in seconds) for retrieving the optimized output (controller and trajectory). */
+  /**
+   * The time window (in seconds) for retrieving the optimized outputs (controller and state-input
+   * trajectories). Any negative number will be interpreted as the whole time horizon.
+   * */
   scalar_t solutionTimeWindow_ = -1;
 
   /** This value determines to display the log output of MPC. */
@@ -73,15 +76,15 @@ struct Settings {
   bool useParallelRiccatiSolver_ = false;
 
   /**
-   * MPC loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
-   * If set to a positive number, MPC loop of test will be simulated to run by this
-   * frequency. Note that this might not be the MPC's realtime frequency.
+   * MPC loop frequency in Hz. This setting is only used in Dummy_Loop for testing. If set to a
+   * positive number, THe MPC loop will be simulated to run by the given frequency (note that this
+   * might not be the MPC's real-time frequency). Any negative number will cause the MPC loop to run
+   * by its maximum possible frequency.
    */
   scalar_t mpcDesiredFrequency_ = -1;
   /**
-   * MRT loop frequency in Hz. This setting is only used in Dummy_Loop for testing.
-   * This should always set to a positive number which can be interpreted as the
-   * tracking controller's frequency.
+   * MRT loop frequency in Hz. This setting is only used in Dummy_Loop for testing. This should always
+   * set to a positive number which can be interpreted as the tracking controller's frequency.
    */
   scalar_t mrtDesiredFrequency_ = 100.0;
 };

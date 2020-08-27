@@ -227,7 +227,7 @@ class Solver_BASE {
   /**
    * Gets benchmarking information.
    */
-  virtual std::string getBenchmarkingInfo() const {}
+  virtual std::string getBenchmarkingInfo() const { return {}; }
 
   /**
    * Prints to output.

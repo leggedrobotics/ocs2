@@ -55,6 +55,20 @@ class LockedConstPtr {
   std::unique_lock<std::mutex> lk_;
 };
 
+/**
+ * This class wraps a std::unique_ptr<T> with a mutex and provides an interface that automatically locks the mutex.
+ *
+ * - Calling the wrapped object:
+ * 1) The operator->() of this class can be used to directly call a member function of T while holding the lock.
+ * 2) lock() will return a custom pointer (LockedPtr/LockedConstPtr) to the wrapped object that holds the lock for the lifetime of that
+ * pointer. This is useful if the lock should be held during multiple member function calls.
+ *
+ * - Wrapping a new object:
+ * The wrapped object can be swapped or reset either directly through the Synchronized<T> or through a LockedPtr.
+ *
+ * - Locking multiple objects:
+ * A helper function "synchronizeLock" is available to lock multiple Synchronized<T>s at the same time, similar to std::lock(.., ..)
+ */
 template <typename T>
 class Synchronized {
  public:

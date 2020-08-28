@@ -254,7 +254,7 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
 catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
-  test/misc/testLockable.cpp
+  test/misc/testSynchronized.cpp
   test/misc/testLookup.cpp
   test/misc/testThreadPool.cpp
 )

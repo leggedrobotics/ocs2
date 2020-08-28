@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/misc/Lockable.h>
+#include <ocs2_core/misc/Synchronized.h>
 
 #include <functional>
 

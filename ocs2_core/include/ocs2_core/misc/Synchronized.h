@@ -77,7 +77,7 @@ class Synchronized {
   /// Move construction
   Synchronized(Synchronized&& other) noexcept {
     // Current object is being created, no need to lock this->m_
-    std::unique_lock<std::mutex> lkOther(other.m_);
+    std::lock_guard<std::mutex> lkOther(other.m_);
     p_ = std::move(other.p_);
   }
 
@@ -93,13 +93,13 @@ class Synchronized {
 
   /// Reset the wrapped object. The object is reseated while holding the lock.
   void reset(std::unique_ptr<T> p) noexcept {
-    std::unique_lock<std::mutex> lk(m_);
+    std::lock_guard<std::mutex> lk(m_);
     p_ = std::move(p);
   }
 
   /// Swaps the wrapped object. The object is swapped while holding the lock.
   void swap(std::unique_ptr<T>& p) noexcept {
-    std::unique_lock<std::mutex> lk(m_);
+    std::lock_guard<std::mutex> lk(m_);
     p_.swap(p);
   }
 

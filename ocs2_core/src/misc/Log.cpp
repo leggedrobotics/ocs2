@@ -138,6 +138,7 @@ std::ostream& operator<<(std::ostream& stream, const Settings& settings) {
   printOption(stream, settings.logFileName, "logFileName");
 
   stream << " #### =============================================================================\n";
+  return stream;
 }
 
 /******************************************************************************************************/

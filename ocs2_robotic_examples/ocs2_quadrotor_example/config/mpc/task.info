@@ -73,36 +73,24 @@ rollout
 ; MPC settings
 mpc
 {
-  timeHorizon                 2.0
+  timeHorizon                 2.0     ; [s]
   numPartitions               2
-  runtimeMaxNumIterations     1
+  solutionTimeWindow          0.5     ; [s]
+
+  debugPrint                  true
+
+  coldStart                   false
+
   initMaxNumIterations        10
-  runtimeMaxStepLength        1.0
-  runtimeMinStepLength        1.0
   initMinStepLength           0.1
   initMaxStepLength           1.0
-  coldStart                   false
-  solutionTimeWindow          0.5     ; [s]
+
+  runtimeMaxNumIterations     1
+  runtimeMinStepLength        1.0
+  runtimeMaxStepLength        1.0
+
   mpcDesiredFrequency         100     ; [Hz]
   mrtDesiredFrequency         400     ; [Hz]
-  debugPrint                  true
-}
-
-
-pathIntegral
-{
-  gamma 1e-5 ; temperature/level of noise
-  numSamples 1000 ; how many trajectories to sample
-  debugPrint 1
-  useFeedbackPolicy 0
-
-  rollout_settings
-  {
-    minTimeStep 0.01; will be used as time step in PI
-    integratorType EULER; must be Euler (0) for PI to function
-    checkNumericalStability 0
-    reconstructInputTrajectory false; must be false for PI to function
-  }
 }
 
 ; initial state

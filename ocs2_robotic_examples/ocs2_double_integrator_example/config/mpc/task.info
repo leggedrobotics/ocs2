@@ -24,7 +24,7 @@ ddp
   constraintTolerance          1e-3
 
   displayInfo                  false
-  displayShortSummary          true
+  displayShortSummary          false
   debugPrintRollout            false
   checkNumericalStability      true
 
@@ -64,19 +64,24 @@ rollout
 ; MPC settings
 mpc
 {
-  timeHorizon                 2.5
+  timeHorizon                 2.5  ; [s]
   numPartitions               2
-  runtimeMaxNumIterations     1
-  initMaxNumIterations        100
-  runtimeMaxStepLength        1.0
-  runtimeMinStepLength        1.0
+  solutionTimeWindow          -1   ; maximum [s]
+
+  debugPrint                  false
+
+  coldStart                   false
+
+  initMaxNumIterations        10
   initMinStepLength           0.1
   initMaxStepLength           1.0
-  coldStart                   false
-  solutionTimeWindow          -1   ; maximum [s]
+
+  runtimeMaxNumIterations     1
+  runtimeMinStepLength        1.0
+  runtimeMaxStepLength        1.0
+
   mpcDesiredFrequency         100  ; [Hz]
   mrtDesiredFrequency         400  ; [Hz]
-  debugPrint                  true
 }
 
 
@@ -114,7 +119,7 @@ Q_final
 }
 
 ; final goal
-x_final
+finalGoal
 {
   (0,0) 2.0    ; x1
   (1,0) 0.0    ; x2

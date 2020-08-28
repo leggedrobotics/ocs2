@@ -54,8 +54,8 @@ ddp
 ; Rollout settings
 rollout
 {
-  AbsTolODE                     1e-5    ;1e-6
-  RelTolODE                     1e-3    ;1e-4
+  AbsTolODE                     1e-5
+  RelTolODE                     1e-3
   minTimeStep                   1e-3
   maxNumStepsPerSecond          100000
   checkNumericalStability       false
@@ -64,20 +64,24 @@ rollout
 ; MPC settings
 mpc
 {
-  timeHorizon                    1.0
+  timeHorizon                    1.0   ; [s]
   numPartitions                  4
-  runtimeMaxNumIterations        1
+  solutionTimeWindow             0.2   ; [s]
+
+  debugPrint                     true
+
+  coldStart                      false
+
   initMaxNumIterations           10
+  initMinStepLength              0.1
+  initMaxStepLength              1.0
+
+  runtimeMaxNumIterations        1
   runtimeMinStepLength           1.0
   runtimeMaxStepLength           1.0
-  initMaxStepLength              1.0
-  initMinStepLength              0.1
-  coldStart                      false
-  useParallelRiccatiSolver       true  ; use disjoint riccati solver in MP case and recedingHorizon fashion
-  solutionTimeWindow             0.2   ; [s]
+
   mpcDesiredFrequency            100   ; [Hz]
   mrtDesiredFrequency            400   ; [Hz]
-  debugPrint                     true
 }
 
 ; ballbot interface settings

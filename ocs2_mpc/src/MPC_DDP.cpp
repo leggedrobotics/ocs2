@@ -59,7 +59,7 @@ MPC_DDP::MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* system
 /******************************************************************************************************/
 void MPC_DDP::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   // updating real-time iteration settings
-  if (MPC_BASE::initRun_) {
+  if (MPC_BASE::initRun_ && ddpPtr_->settings().strategy_ == ddp_strategy::type::LINE_SEARCH) {
     ddpPtr_->settings().maxNumIterations_ = this->settings().initMaxNumIterations_;
     ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
     ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;
@@ -70,13 +70,16 @@ void MPC_DDP::calculateController(scalar_t initTime, const vector_t& initState, 
   }
 
   // calculate controller
-  if (this->settings().coldStart_ || MPC_BASE::initRun_) {
-    if (this->settings().debugPrint_) {
-      std::cerr << "### Using cold initialization.\n";
-    }
+  if (this->settings().coldStart_) {
+    ddpPtr_->reset();
     ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
+
   } else {
-    ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
+    if (MPC_BASE::initRun_) {
+      ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
+    } else {
+      ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
+    }
   }
 }
 

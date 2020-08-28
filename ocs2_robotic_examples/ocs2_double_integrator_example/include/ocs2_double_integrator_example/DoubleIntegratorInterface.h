@@ -57,23 +57,22 @@ class DoubleIntegratorInterface final : public RobotInterface {
   /**
    * Constructor
    * @param [in] taskFileFolderName: The name of the folder containing task file
+   * @param [in] verbose: Load the settings verbose.
    */
-  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName);
+  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName, bool verbose = true);
 
   /** Destructor */
   ~DoubleIntegratorInterface() override = default;
 
   const vector_t& getInitialState() { return initialState_; }
 
-  const vector_t& getInitialTarget() { return xFinal_; }
+  const vector_t& getInitialTarget() { return finalGoal_; }
 
   ddp::Settings& ddpSettings() { return ddpSettings_; }
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<ocs2::MPC_DDP> getMpc();
-
-  const vector_t& getXFinal() { return xFinal_; }
+  std::unique_ptr<ocs2::MPC_DDP> getMpc(bool warmStart = true);
 
   const DoubleIntegratorDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
 
@@ -89,7 +88,7 @@ class DoubleIntegratorInterface final : public RobotInterface {
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile);
+  void loadSettings(const std::string& taskFile, bool verbose);
 
   /**************
    * Variables
@@ -107,13 +106,8 @@ class DoubleIntegratorInterface final : public RobotInterface {
   std::unique_ptr<ConstraintBase> linearSystemConstraintPtr_;
   std::unique_ptr<OperatingPoints> linearSystemOperatingPointPtr_;
 
-  // cost parameters
-  matrix_t Q_{STATE_DIM, STATE_DIM};
-  matrix_t R_{INPUT_DIM, INPUT_DIM};
-  matrix_t QFinal_{STATE_DIM, STATE_DIM};
-
   vector_t initialState_{STATE_DIM};
-  vector_t xFinal_{STATE_DIM};
+  vector_t finalGoal_{STATE_DIM};
 };
 
 }  // namespace double_integrator

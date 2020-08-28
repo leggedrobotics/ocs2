@@ -78,7 +78,7 @@ void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
 /******************************************************************************************************/
 void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    const auto footName = feetNames[i];
+    const auto& footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
     const bool inContact = footPhase.contactFlag();
 
@@ -109,7 +109,7 @@ void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar
 /******************************************************************************************************/
 void AnymalWheelsComKinoConstraintAd::updateInequalityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    const auto footName = feetNames[i];
+    const auto& footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
     const bool inContact = footPhase.contactFlag();
 

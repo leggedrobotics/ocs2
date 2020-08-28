@@ -75,7 +75,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
 /******************************************************************************************************/
 void ComKinoConstraintBaseAd::updateStateInputEqualityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    const auto footName = feetNames[i];
+    const auto& footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
     const bool inContact = footPhase.contactFlag();
 
@@ -104,7 +104,7 @@ void ComKinoConstraintBaseAd::updateStateInputEqualityConstraints(scalar_t t) {
 /******************************************************************************************************/
 void ComKinoConstraintBaseAd::updateInequalityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    const auto footName = feetNames[i];
+    const auto& footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
     const bool inContact = footPhase.contactFlag();
 

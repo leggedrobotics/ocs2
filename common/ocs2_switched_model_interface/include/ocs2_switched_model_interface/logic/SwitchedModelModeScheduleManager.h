@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ocs2_core/misc/Lockable.h>
+#include <ocs2_core/misc/Synchronized.h>
 #include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"

@@ -10,7 +10,7 @@
 
 #include <ocs2_msgs/mode_schedule.h>
 
-#include <ocs2_core/misc/Lockable.h>
+#include <ocs2_core/misc/Synchronized.h>
 
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 

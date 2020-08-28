@@ -24,7 +24,7 @@ ddp
   constraintTolerance          1e-3
 
   displayInfo                  false
-  displayShortSummary          true
+  displayShortSummary          false
   debugPrintRollout            false
   checkNumericalStability      true
 
@@ -68,7 +68,7 @@ mpc
   numPartitions               2
   solutionTimeWindow          -1   ; maximum [s]
 
-  debugPrint                  true
+  debugPrint                  false
 
   coldStart                   false
 
@@ -119,7 +119,7 @@ Q_final
 }
 
 ; final goal
-x_final
+finalGoal
 {
   (0,0) 2.0    ; x1
   (1,0) 0.0    ; x2

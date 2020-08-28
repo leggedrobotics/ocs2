@@ -7,7 +7,7 @@ namespace ocs2 {
 
 /**
  * Grants access to the object T and the unique_ptr that holds it.
- * Holds the SynchronizedPtr's mutex for the lifetime of the object.
+ * Holds the Synchronized<T>'s mutex for the lifetime of the object.
  */
 template <typename T>
 class LockedPtr {
@@ -36,7 +36,7 @@ class LockedPtr {
 
 /**
  * Grants const access to the wrapped object T.
- * Holds the SynchronizedPtr's mutex for the lifetime of the object.
+ * Holds the Synchronized<T>'s mutex for the lifetime of the object.
  */
 template <typename T>
 class LockedConstPtr {

@@ -8,18 +8,16 @@
 
 namespace switched_model {
 
-AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(
-    const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-    std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-    std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr, ModelSettings options)
+AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel,
+                                                                 const ad_com_model_t& adComModel,
+                                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner,
+                                                                 ModelSettings options)
     : adKinematicModelPtr_(adKinematicModel.clone()),
       adComModelPtr_(adComModel.clone()),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
-      swingTrajectoryPlannerPtr_(std::move(swingTrajectoryPlannerPtr)),
+      modeScheduleManagerPtr_(&modeScheduleManager),
+      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       options_(std::move(options)) {
-  if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
-    throw std::runtime_error("[AnymalWheelsComKinoConstraintAd] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
-  }
   initializeConstraintTerms();
 }
 
@@ -27,7 +25,7 @@ AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(
 /******************************************************************************************************/
 /******************************************************************************************************/
 AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const AnymalWheelsComKinoConstraintAd& rhs)
-    : Base(rhs),
+    : ocs2::ConstraintBase(rhs),
       adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
       adComModelPtr_(rhs.adComModelPtr_->clone()),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
@@ -47,6 +45,8 @@ AnymalWheelsComKinoConstraintAd* AnymalWheelsComKinoConstraintAd::clone() const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
+  using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
@@ -76,16 +76,14 @@ void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void AnymalWheelsComKinoConstraintAd::timeUpdate(scalar_t t) {
-  numEventTimes_ = modeScheduleManagerPtr_->getModeSchedule().eventTimes.size();
-  stanceLegs_ = modeScheduleManagerPtr_->getContactFlags(t);
-
+void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    auto footName = feetNames[i];
+    const auto footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
+    const bool inContact = footPhase.contactFlag();
 
     // Zero forces active for swing legs
-    equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
+    equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!inContact);
 
     // Foot normal constraint always active
     auto& EENormalConstraint = equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
@@ -95,19 +93,30 @@ void AnymalWheelsComKinoConstraintAd::timeUpdate(scalar_t t) {
     // Rolling InFootFrame Velocity constraint for stance legs
     auto& EEVelInFootFrameConstraint =
         equalityStateInputConstraintCollection_.get<EndEffectorVelocityInFootFrameConstraint>(footName + "_f_EEVel");
-    EEVelInFootFrameConstraint.setActivity(stanceLegs_[i]);
-    if (stanceLegs_[i]) {
+    EEVelInFootFrameConstraint.setActivity(inContact);
+    if (inContact) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
       EndEffectorVelocityInFootFrameConstraintSettings eeVelInFootFrameConSettings(1, 3);
       eeVelInFootFrameConSettings.b << 0;
       eeVelInFootFrameConSettings.A << 0, 1, 0;
       EEVelInFootFrameConstraint.configure(eeVelInFootFrameConSettings);
     }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void AnymalWheelsComKinoConstraintAd::updateInequalityConstraints(scalar_t t) {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+    const auto footName = feetNames[i];
+    const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
+    const bool inContact = footPhase.contactFlag();
 
     // Active friction cone constraint for stanceLegs
     auto& frictionConeConstraint = inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
-    frictionConeConstraint.setActivity(stanceLegs_[i]);
-    if (stanceLegs_[i]) {
+    frictionConeConstraint.setActivity(inContact);
+    if (inContact) {
       frictionConeConstraint.setSurfaceNormalInWorld(footPhase.normalDirectionInWorldFrame(t));
     }
   }
@@ -117,7 +126,7 @@ void AnymalWheelsComKinoConstraintAd::timeUpdate(scalar_t t) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t AnymalWheelsComKinoConstraintAd::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
-  timeUpdate(t);
+  updateStateInputEqualityConstraints(t);
   return equalityStateInputConstraintCollection_.getValueAsVector(t, x, u);
 }
 
@@ -125,7 +134,7 @@ vector_t AnymalWheelsComKinoConstraintAd::stateInputEqualityConstraint(scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t AnymalWheelsComKinoConstraintAd::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
-  timeUpdate(t);
+  updateInequalityConstraints(t);
   return inequalityConstraintCollection_.getValueAsVector(t, x, u);
 }
 
@@ -135,7 +144,7 @@ vector_t AnymalWheelsComKinoConstraintAd::inequalityConstraint(scalar_t t, const
 VectorFunctionLinearApproximation AnymalWheelsComKinoConstraintAd::stateInputEqualityConstraintLinearApproximation(scalar_t t,
                                                                                                                    const vector_t& x,
                                                                                                                    const vector_t& u) {
-  timeUpdate(t);
+  updateStateInputEqualityConstraints(t);
   const size_t numConstraints = equalityStateInputConstraintCollection_.getNumConstraints(t);
   const auto constraintApproximation = equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(t, x, u);
 
@@ -152,7 +161,7 @@ VectorFunctionLinearApproximation AnymalWheelsComKinoConstraintAd::stateInputEqu
 VectorFunctionQuadraticApproximation AnymalWheelsComKinoConstraintAd::inequalityConstraintQuadraticApproximation(scalar_t t,
                                                                                                                  const vector_t& x,
                                                                                                                  const vector_t& u) {
-  timeUpdate(t);
+  updateInequalityConstraints(t);
   const auto constraintApproximation = inequalityConstraintCollection_.getQuadraticApproximation(t, x, u);
   const size_t numConstraints = constraintApproximation.constraintValues.size();
 
@@ -172,20 +181,6 @@ VectorFunctionQuadraticApproximation AnymalWheelsComKinoConstraintAd::inequality
     h.dfdux[i] = constraintApproximation.derivativesInputState[i];
   }
   return h;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void AnymalWheelsComKinoConstraintAd::setStanceLegs(const contact_flag_t& stanceLegs) {
-  stanceLegs_ = stanceLegs;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void AnymalWheelsComKinoConstraintAd::getStanceLegs(contact_flag_t& stanceLegs) {
-  stanceLegs = stanceLegs_;
 }
 
 }  // namespace switched_model

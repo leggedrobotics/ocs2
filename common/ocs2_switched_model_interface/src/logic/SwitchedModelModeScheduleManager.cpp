@@ -11,7 +11,7 @@ namespace switched_model {
 SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::unique_ptr<GaitSchedule> gaitSchedule,
                                                                    std::unique_ptr<SwingTrajectoryPlanner> swingTrajectory,
                                                                    std::unique_ptr<TerrainModel> terrainModel)
-    : Base(ocs2::ModeSchedule()),
+    : ocs2::ModeScheduleManager(ocs2::ModeSchedule()),
       gaitSchedule_(std::move(gaitSchedule)),
       swingTrajectoryPtr_(std::move(swingTrajectory)),
       terrainModel_(std::move(terrainModel)) {}

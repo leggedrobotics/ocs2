@@ -10,8 +10,8 @@
 
 namespace switched_model {
 
-SwingPlanningVisualizer::SwingPlanningVisualizer(std::shared_ptr<const SwingTrajectoryPlanner> swingPlannerPtr, ros::NodeHandle& nodeHandle)
-    : swingPlannerPtr_(std::move(swingPlannerPtr)) {
+SwingPlanningVisualizer::SwingPlanningVisualizer(const SwingTrajectoryPlanner& swingTrajectoryPlanner, ros::NodeHandle& nodeHandle)
+    : swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner) {
   nominalFootholdPublishers_[0] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/swing_planner/nominalFootholds_LF", 1);
   nominalFootholdPublishers_[1] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/swing_planner/nominalFootholds_RF", 1);
   nominalFootholdPublishers_[2] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/swing_planner/nominalFootholds_LH", 1);
@@ -22,7 +22,7 @@ void SwingPlanningVisualizer::preSolverRun(scalar_t initTime, scalar_t finalTime
                                            const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
   const auto timeStamp = ros::Time(initTime);
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
-    const auto nominalFootholds = swingPlannerPtr_->getNominalFootholds(leg);
+    const auto nominalFootholds = swingTrajectoryPlannerPtr_->getNominalFootholds(leg);
 
     // Reserve pose array
     geometry_msgs::PoseArray poseArray;

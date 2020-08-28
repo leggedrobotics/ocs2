@@ -95,14 +95,14 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
 /******************************************************************************************************/
 GaussNewtonDDP::~GaussNewtonDDP() {
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
-    printBenchmarkingInfo();
+    std::cerr << getBenchmarkingInfo() << std::endl;
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::printBenchmarkingInfo() const {
+std::string GaussNewtonDDP::getBenchmarkingInfo() const {
   const auto initializationTotal = initializationTimer_.getTotalInMilliseconds();
   const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   const auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
@@ -112,28 +112,31 @@ void GaussNewtonDDP::printBenchmarkingInfo() const {
   const auto benchmarkTotal =
       initializationTotal + linearQuadraticApproximationTotal + backwardPassTotal + computeControllerTotal + searchStrategyTotal;
 
+  std::stringstream infoStream;
   if (benchmarkTotal > 0.0) {
-    std::cerr << "\n########################################################################\n";
-    std::cerr << "DDP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
-    std::cerr << "\tInitialization     :\t" << initializationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-              << initializationTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-              << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-              << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-              << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
-    std::cerr << "\tSearch Strategy    :\t" << searchStrategyTimer_.getAverageInMilliseconds() << " [ms] \t\t("
-              << searchStrategyTotal / benchmarkTotal * 100 << "%)" << std::endl;
+    infoStream << "\n########################################################################\n";
+    infoStream << "The benchmarking is computed over " << totalNumIterations_ << " iterations. \n";
+    infoStream << "DDP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
+    infoStream << "\tInitialization     :\t" << initializationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << initializationTotal / benchmarkTotal * 100 << "%)\n";
+    infoStream << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << linearQuadraticApproximationTotal / benchmarkTotal * 100 << "%)\n";
+    infoStream << "\tBackward Pass      :\t" << backwardPassTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << backwardPassTotal / benchmarkTotal * 100 << "%)\n";
+    infoStream << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << computeControllerTotal / benchmarkTotal * 100 << "%)\n";
+    infoStream << "\tSearch Strategy    :\t" << searchStrategyTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << searchStrategyTotal / benchmarkTotal * 100 << "%)";
   }
+  return infoStream.str();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::reset() {
-  iteration_ = 0;
   rewindCounter_ = 0;
+  totalNumIterations_ = 0;
 
   performanceIndexHistory_.clear();
 
@@ -176,7 +179,7 @@ void GaussNewtonDDP::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 size_t GaussNewtonDDP::getNumIterations() const {
-  return iteration_;
+  return totalNumIterations_;
 }
 
 /******************************************************************************************************/
@@ -1075,7 +1078,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
   xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
 
   // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
-  if (iteration_ == 0 && !useParallelRiccatiSolverFromInitItr_) {
+  if (totalNumIterations_ == 0 && !useParallelRiccatiSolverFromInitItr_) {
     nextTaskId_ = 0;
     for (int i = 0; i < ddpSettings_.nThreads_; i++) {
       riccatiSolverTask();
@@ -1860,6 +1863,54 @@ void GaussNewtonDDP::runIteration() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+std::pair<bool, std::string> GaussNewtonDDP::checkConvergence(bool isInitalControllerEmpty,
+                                                              const PerformanceIndex& previousPerformanceIndex,
+                                                              const PerformanceIndex& currentPerformanceIndex) const {
+  // loop break variables
+  bool isStepLengthStarZero = false;
+  bool isCostFunctionConverged = false;
+  const scalar_t relCost = std::abs(currentPerformanceIndex.totalCost + currentPerformanceIndex.inequalityConstraintPenalty -
+                                    previousPerformanceIndex.totalCost - previousPerformanceIndex.inequalityConstraintPenalty);
+  switch (ddpSettings_.strategy_) {
+    case ddp_strategy::type::LINE_SEARCH: {
+      isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !isInitalControllerEmpty;
+      isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
+      break;
+    }
+    case ddp_strategy::type::LEVENBERG_MARQUARDT: {
+      if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !isInitalControllerEmpty) {
+        isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
+      }
+      break;
+    }
+  }
+  const bool isConstraintsSatisfied = currentPerformanceIndex.stateInputEqConstraintISE <= ddpSettings_.constraintTolerance_;
+  const bool isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraintsSatisfied;
+
+  // convergence info
+  std::stringstream infoStream;
+  if (isOptimizationConverged) {
+    infoStream << "The algorithm has successfully terminated as: \n";
+
+    if (isStepLengthStarZero) {
+      infoStream << "    * The step length reduced to zero.\n";
+    }
+
+    if (isCostFunctionConverged) {
+      infoStream << "    * The absolute relative change of cost (i.e., " << relCost << ") has reached to the minimum value ("
+                 << ddpSettings_.minRelCost_ << ").\n";
+    }
+
+    infoStream << "    * The ISE of state-input equality constraint (i.e., " << performanceIndex_.stateInputEqConstraintISE
+               << ") has reached to its minimum value (" << ddpSettings_.constraintTolerance_ << ").";
+  }
+
+  return {isOptimizationConverged, infoStream.str()};
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
   const size_t numPartitions = partitioningTimes.size() - 1;
 
@@ -1942,10 +1993,10 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << this->getModeSchedule() << "\n";
   }
 
-  iteration_ = 0;
   initState_ = initState;
   initTime_ = initTime;
   finalTime_ = finalTime;
+  const auto initIteration = totalNumIterations_;
 
   performanceIndexHistory_.clear();
 
@@ -1957,7 +2008,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::cerr << "\n#### Iteration " << iteration_ << " (Dynamics might have been violated)\n";
+    std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration) << " (Dynamics might have been violated)\n";
   }
 
   // distribution of the sequential tasks (e.g. Riccati solver) in between threads
@@ -1969,21 +2020,18 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // run DDP initializer and update the member variables
   runInit();
 
-  // convergence conditions variables
-  bool isOptimizationConverged = false;
-  bool isCostFunctionConverged = false;
-  bool isStepLengthStarZero = false;
-  bool isConstraintsSatisfied = false;
-  scalar_t relCost = 2.0 * ddpSettings_.minRelCost_;
+  // increment iteration counter
+  totalNumIterations_++;
+
+  // convergence variables of the main loop
+  bool isConverged = false;
+  std::string convergenceInfo;
 
   // DDP main loop
-  while (iteration_ + 1 < ddpSettings_.maxNumIterations_ && !isOptimizationConverged) {
-    // increment iteration counter
-    iteration_++;
-
+  while (!isConverged && (totalNumIterations_ - initIteration) < ddpSettings_.maxNumIterations_) {
     // display the iteration's input update norm (before caching the old nominals)
     if (ddpSettings_.displayInfo_) {
-      std::cerr << "\n#### Iteration " << iteration_ << "\n";
+      std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration) << "\n";
 
       scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
       calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
@@ -1997,28 +2045,13 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     // run the an iteration of the DDP algorithm and update the member variables
     runIteration();
 
-    // loop break variables
-    isCostFunctionConverged = false;
-    isStepLengthStarZero = false;
-    relCost = std::abs(performanceIndex_.totalCost + performanceIndex_.inequalityConstraintPenalty -
-                       performanceIndexHistory_.back().totalCost - performanceIndexHistory_.back().inequalityConstraintPenalty);
-    switch (ddpSettings_.strategy_) {
-      case ddp_strategy::type::LINE_SEARCH: {
-        isStepLengthStarZero = numerics::almost_eq(lineSearchModule_.stepLengthStar.load(), 0.0) && !isInitInternalControllerEmpty;
-        isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
-        break;
-      }
-      case ddp_strategy::type::LEVENBERG_MARQUARDT: {
-        if (levenbergMarquardtModule_.numSuccessiveRejections == 0 && !isInitInternalControllerEmpty) {
-          isCostFunctionConverged = relCost <= ddpSettings_.minRelCost_;
-        }
-        break;
-      }
-    }
-    isConstraintsSatisfied = performanceIndex_.stateInputEqConstraintISE <= ddpSettings_.constraintTolerance_;
-    isOptimizationConverged = (isCostFunctionConverged || isStepLengthStarZero) && isConstraintsSatisfied;
-    isInitInternalControllerEmpty = false;
+    // increment iteration counter
+    totalNumIterations_++;
 
+    // check convergence
+    std::tie(isConverged, convergenceInfo) =
+        checkConvergence(isInitInternalControllerEmpty, performanceIndexHistory_.back(), performanceIndex_);
+    isInitInternalControllerEmpty = false;
   }  // end of while loop
 
   // display the final iteration's input update norm (before caching the old nominals)
@@ -2049,27 +2082,17 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n++++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver has terminated +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-    std::cerr << "Time Period:                [" << initTime_ << " ," << finalTime_ << "]\n";
-    std::cerr << "Number of Iterations:       " << iteration_ + 1 << " out of " << ddpSettings_.maxNumIterations_ << "\n";
+    std::cerr << "Time Period:          [" << initTime_ << " ," << finalTime_ << "]\n";
+    std::cerr << "Number of Iterations: " << (totalNumIterations_ - initIteration) << " out of " << ddpSettings_.maxNumIterations_ << "\n";
 
     printRolloutInfo();
 
-    if (isOptimizationConverged) {
-      if (isStepLengthStarZero) {
-        std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " successfully terminates as step length reduced to zero.\n";
-      }
-      if (isCostFunctionConverged) {
-        std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " successfully terminates as cost relative change (relCost=" << relCost
-                  << ") reached to the minimum value.\n";
-      }
-      if (isConstraintsSatisfied) {
-        std::cerr << "State-input equality constraint absolute ISE (absConstraint1ISE=" << performanceIndex_.stateInputEqConstraintISE
-                  << ") reached to its minimum value.\n";
-      }
+    if (isConverged) {
+      std::cerr << convergenceInfo << std::endl;
     } else {
-      std::cerr << "Maximum number of iterations has reached.\n";
+      std::cerr << "The algorithm has terminated as: \n";
+      std::cerr << "    * The maximum number of iterations (i.e., " << ddpSettings_.maxNumIterations_ << ") has reached." << std::endl;
     }
-    std::cerr << std::endl;
   }
 }
 

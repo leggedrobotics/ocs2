@@ -59,7 +59,7 @@ struct PrimalSolution {
         stateTrajectory_(other.stateTrajectory_),
         inputTrajectory_(other.inputTrajectory_),
         modeSchedule_(other.modeSchedule_),
-        controllerPtr_(other.controllerPtr_->clone()) {}
+        controllerPtr_(other.controllerPtr_ ? other.controllerPtr_->clone() : nullptr) {}
 
   /**
    * Copy Assignment
@@ -69,7 +69,11 @@ struct PrimalSolution {
     stateTrajectory_ = other.stateTrajectory_;
     inputTrajectory_ = other.inputTrajectory_;
     modeSchedule_ = other.modeSchedule_;
-    controllerPtr_.reset(other.controllerPtr_->clone());
+    if (other.controllerPtr_) {
+      controllerPtr_.reset(other.controllerPtr_->clone());
+    } else {
+      controllerPtr_.reset();
+    }
     return *this;
   }
 

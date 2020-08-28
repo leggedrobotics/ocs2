@@ -1,2 +1,8 @@
 library 'continuous_integration_pipeline'
 ciPipeline("--publish-doxygen")
+
+node {
+    stage('Artifacts') {
+        archiveArtifacts artifacts: 'build/ocs2_**/log/*.log', allowEmptyArchive: true
+    }
+}

@@ -71,6 +71,7 @@ link_directories(
 add_library(${PROJECT_NAME}
   src/cost/MobileManipulatorCost.cpp
   src/cost/EndEffectorCost.cpp
+  src/cost/SelfCollisionCost.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
   src/PinocchioInterface.cpp

@@ -61,6 +61,8 @@ class PinocchioInterface {
   using PinocchioModel = pinocchio::ModelTpl<SCALAR>;
   using PinocchioData = typename PinocchioModel::Data;
 
+  using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+
   /**
    * Load pinocchio model from URDF
    * @param[in] urdfFile Path to URDF
@@ -90,6 +92,12 @@ class PinocchioInterface {
    * TODO(perry) make this const by caching or mutabling the robotData_
    */
   Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+
+  void computeAllJacobians(const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+
+  MatrixX getJacobianOfJoint(pinocchio::JointIndex jointIndex);
+
+  Pose<SCALAR> getJointPose(pinocchio::JointIndex jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
   /**
    * Prints some debug info of the pinocchio model.

@@ -3,6 +3,7 @@
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 
 #include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
@@ -50,6 +51,30 @@ Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::stri
   Pose<SCALAR> pose;
   pose.position = robotData_.oMf[bodyId].translation();
   pose.orientation = matrixToQuaternion(robotData_.oMf[bodyId].rotation());
+
+  return pose;
+}
+
+template <typename SCALAR>
+void PinocchioInterface<SCALAR>::computeAllJacobians(const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::computeJointJacobians(*robotModel_, robotData_, q);
+}
+
+template <typename SCALAR>
+typename PinocchioInterface<SCALAR>::MatrixX PinocchioInterface<SCALAR>::getJacobianOfJoint(pinocchio::JointIndex jointIndex) {
+  MatrixX jointJacobian = MatrixX::Zero(6, robotModel_->nv);
+  pinocchio::getJointJacobian(*robotModel_, robotData_, jointIndex, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jointJacobian);
+  return jointJacobian;
+}
+
+template <typename SCALAR>
+Pose<SCALAR> PinocchioInterface<SCALAR>::getJointPose(pinocchio::JointIndex jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
+  pinocchio::updateGlobalPlacements(*robotModel_, robotData_);
+
+  Pose<SCALAR> pose;
+  pose.position = robotData_.oMi[jointIndex].translation();
+  pose.orientation = matrixToQuaternion(robotData_.oMi[jointIndex].rotation());
 
   return pose;
 }

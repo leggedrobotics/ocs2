@@ -146,8 +146,6 @@ void GaussNewtonDDP::reset() {
   // initialize Augmented Lagrangian parameters
   initializeConstraintPenalties();
 
-  useParallelRiccatiSolverFromInitItr_ = false;
-
   for (size_t i = 0; i < numPartitions_; i++) {
     // very important, these are variables that are carried in between iterations
     nominalControllersStock_[i].clear();
@@ -1077,13 +1075,13 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
   sFinalStock_[finalActivePartition_] = sFinal;
   xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
 
-  // solve it sequentially for the first time when useParallelRiccatiSolverFromInitItr_ is false
-  if (totalNumIterations_ == 0 && !useParallelRiccatiSolverFromInitItr_) {
+  // solve it sequentially for the first iteration
+  if (totalNumIterations_ == 0) {
     nextTaskId_ = 0;
     for (int i = 0; i < ddpSettings_.nThreads_; i++) {
       riccatiSolverTask();
     }
-  } else {  // solve it in parallel if useParallelRiccatiSolverFromInitItr_ is true
+  } else {  // solve it in parallel
     nextTaskId_ = 0;
     std::function<void(void)> task = [this] { riccatiSolverTask(); };
     runParallel(task, ddpSettings_.nThreads_);

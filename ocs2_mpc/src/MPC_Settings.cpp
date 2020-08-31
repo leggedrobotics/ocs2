@@ -64,8 +64,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.runtimeMinStepLength_, fieldName + ".runtimeMinStepLength", verbose);
   loadData::loadPtreeValue(pt, settings.runtimeMaxStepLength_, fieldName + ".runtimeMaxStepLength", verbose);
 
-  loadData::loadPtreeValue(pt, settings.useParallelRiccatiSolver_, fieldName + ".useParallelRiccatiSolver", verbose);
-
   loadData::loadPtreeValue(pt, settings.mpcDesiredFrequency_, fieldName + ".mpcDesiredFrequency", verbose);
   loadData::loadPtreeValue(pt, settings.mrtDesiredFrequency_, fieldName + ".mrtDesiredFrequency", verbose);
 

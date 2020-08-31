@@ -72,9 +72,6 @@ struct Settings {
   /** Maximum step length which will be used during an intermediate run of MPC. */
   scalar_t runtimeMaxStepLength_ = 1.0;
 
-  /** If set true, the parallel Riccati solver will be used from the first iteration of DDP solver. */
-  bool useParallelRiccatiSolver_ = false;
-
   /**
    * MPC loop frequency in Hz. This setting is only used in Dummy_Loop for testing. If set to a
    * positive number, THe MPC loop will be simulated to run by the given frequency (note that this

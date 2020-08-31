@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <mutex>
+
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
-
-#include <ocs2_core/misc/Lockable.h>
 
 #include <ocs2_msgs/mpc_observation.h>
 #include <ocs2_msgs/mpc_state.h>

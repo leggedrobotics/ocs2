@@ -8,12 +8,13 @@
 
 namespace switched_model {
 
-SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(GaitSchedule gaitSchedule, SwingTrajectoryPlanner swingTrajectory,
+SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::unique_ptr<GaitSchedule> gaitSchedule,
+                                                                   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectory,
                                                                    std::unique_ptr<TerrainModel> terrainModel)
-    : Base(ocs2::ModeSchedule()),
-      gaitSchedulePtr_(std::make_shared<LockableGaitSchedule>(std::move(gaitSchedule))),
-      swingTrajectoryPtr_(std::make_shared<SwingTrajectoryPlanner>(std::move(swingTrajectory))),
-      terrainPtr_(std::move(terrainModel)) {}
+    : ocs2::ModeScheduleManager(ocs2::ModeSchedule()),
+      gaitSchedule_(std::move(gaitSchedule)),
+      swingTrajectoryPtr_(std::move(swingTrajectory)),
+      terrainModel_(std::move(terrainModel)) {}
 
 contact_flag_t SwitchedModelModeScheduleManager::getContactFlags(scalar_t time) const {
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
@@ -24,15 +25,15 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
                                                         ocs2::ModeSchedule& modeSchedule) {
   const auto timeHorizon = finalTime - initTime;
   {
-    std::lock_guard<LockableGaitSchedule> lock(*gaitSchedulePtr_);
-    gaitSchedulePtr_->advanceToTime(initTime);
-    modeSchedule = gaitSchedulePtr_->getModeSchedule(2.0 * timeHorizon);
+    auto lockedGaitSchedulePtr = gaitSchedule_.lock();
+    lockedGaitSchedulePtr->advanceToTime(initTime);
+    modeSchedule = lockedGaitSchedulePtr->getModeSchedule(2.0 * timeHorizon);
   }
 
   {
-    std::lock_guard<LockableTerrainModelPtr> lock(terrainPtr_);
+    auto lockedTerrainPtr = terrainModel_.lock();
     swingTrajectoryPtr_->update(initTime, finalTime, currentState, costDesiredTrajectory, extractContactTimingsPerLeg(modeSchedule),
-                                *terrainPtr_);
+                                *lockedTerrainPtr);
   }
 }
 

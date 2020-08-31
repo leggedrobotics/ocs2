@@ -28,7 +28,7 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
 
   // Terrain
   auto terrainVisualizer = std::make_shared<TerrainPlaneVisualizerSynchronizedModule>(
-      quadrupedInterface.getModeScheduleManagerPtr()->getTerrainPtr(), nodeHandle);
+      quadrupedInterface.getModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
   solverModules.push_back(terrainVisualizer);
 
   // Swing planner

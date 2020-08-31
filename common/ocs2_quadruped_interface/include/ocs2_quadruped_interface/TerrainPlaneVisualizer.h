@@ -7,7 +7,7 @@
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
 
-#include <ocs2_core/misc/Lockable.h>
+#include <ocs2_core/misc/Synchronized.h>
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
@@ -35,7 +35,7 @@ class TerrainPlaneVisualizer {
 
 class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronizedModule {
  public:
-  TerrainPlaneVisualizerSynchronizedModule(ocs2::LockablePtr<TerrainModel>& terrainPtr, ros::NodeHandle& nodeHandle);
+  TerrainPlaneVisualizerSynchronizedModule(const ocs2::Synchronized<TerrainModel>& terrainModel, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override{};
@@ -43,7 +43,7 @@ class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronized
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override;
 
  private:
-  ocs2::LockablePtr<TerrainModel>* terrainPptr_;
+  const ocs2::Synchronized<TerrainModel>* terrainModelPtr_;
   TerrainPlaneVisualizer planeVisualizer_;
 };
 

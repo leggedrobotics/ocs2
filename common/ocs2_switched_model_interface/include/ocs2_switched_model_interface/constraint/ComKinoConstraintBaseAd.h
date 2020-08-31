@@ -15,28 +15,12 @@ namespace switched_model {
 
 class ComKinoConstraintBaseAd : public ocs2::ConstraintBase {
  public:
-  using Base = ocs2::ConstraintBase;
-
-  using ad_base_t = CppAD::cg::CG<scalar_t>;
-  using ad_scalar_t = CppAD::AD<ad_base_t>;
-  using ad_com_model_t = ComModelBase<ad_scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
-
-  using ConstraintCollection_t = ocs2::ConstraintCollection<STATE_DIM, INPUT_DIM>;
-  using LinearConstraintApproximationAsMatrices_t = ocs2::LinearConstraintApproximationAsMatrices<STATE_DIM, INPUT_DIM>;
-  using QuadraticConstraintApproximation_t = ocs2::QuadraticConstraintApproximation<STATE_DIM, INPUT_DIM>;
-  using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+  using ad_com_model_t = ComModelBase<ocs2::CppAdInterface::ad_scalar_t>;
+  using ad_kinematic_model_t = KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 
   ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                          std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                          std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr, ModelSettings options = ModelSettings());
-
-  ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs);
-
-  /**
-   * Initialize Constraint Terms
-   */
-  void initializeConstraintTerms();
+                          const SwitchedModelModeScheduleManager& modeScheduleManager, const SwingTrajectoryPlanner& swingTrajectoryPlanner,
+                          ModelSettings options = ModelSettings());
 
   ~ComKinoConstraintBaseAd() override = default;
 
@@ -51,35 +35,31 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase {
                                                                                   const vector_t& u) override;
 
   vector_array_t stateInputEqualityConstraintDerivativesEventTimes(scalar_t t, const vector_t& x, const vector_t& u) override;
-  /**
-   * set the stance legs
-   */
-  void setStanceLegs(const contact_flag_t& stanceLegs) { stanceLegs_ = stanceLegs; }
 
-  /**
-   * get the model's stance leg
-   */
-  void getStanceLegs(contact_flag_t& stanceLegs) const { stanceLegs = stanceLegs_; }
+ protected:
+  /** protected copy constructor to implement clone */
+  ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs);
 
  private:
-  void timeUpdate(scalar_t t);
+  /** Initialize Constraint Terms */
+  void initializeConstraintTerms();
 
- private:
-  // state input equality constraints
-  ConstraintCollection_t equalityStateInputConstraintCollection_;
+  /** Sets up the state-input constraints for a query at time t */
+  void updateStateInputEqualityConstraints(scalar_t t);
 
-  // inequality constraints
-  ConstraintCollection_t inequalityConstraintCollection_;
+  /** Sets up the inequality constraints for a query at time t */
+  void updateInequalityConstraints(scalar_t t);
+
+  using ConstraintCollection_t = ocs2::ConstraintCollection<STATE_DIM, INPUT_DIM>;
+  ConstraintCollection_t equalityStateInputConstraintCollection_;  // state input equality constraints
+  ConstraintCollection_t inequalityConstraintCollection_;          // inequality constraints
 
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
   ModelSettings options_;
 
-  size_t numEventTimes_;
-  contact_flag_t stanceLegs_;
-
-  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
-  std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr_;
+  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
 };
 
 }  // end of namespace switched_model

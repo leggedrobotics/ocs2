@@ -14,20 +14,15 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel,
-                                             std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
+SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const SwitchedModelModeScheduleManager& modeScheduleManager,
                                              const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
-    : BASE(Q, R, QFinal), comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
-  if (!modeScheduleManagerPtr_) {
-    throw std::runtime_error("[SwitchedModelCostBase] Mode schedule manager cannot be a nullptr");
-  }
-}
+    : ocs2::QuadraticCostFunction(Q, R, QFinal), comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(&modeScheduleManager) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
-    : BASE(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
+    : ocs2::QuadraticCostFunction(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

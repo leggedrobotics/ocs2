@@ -18,7 +18,7 @@ class SwingPlanningVisualizer : public ocs2::SolverSynchronizedModule {
   /** Visualization settings (publicly available) */
   std::string frameId_ = "world";  // Frame name all messages are published in
 
-  SwingPlanningVisualizer(std::shared_ptr<const SwingTrajectoryPlanner> swingPlannerPtr, ros::NodeHandle& nodeHandle);
+  SwingPlanningVisualizer(const SwingTrajectoryPlanner& swingTrajectoryPlanner, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
@@ -26,8 +26,7 @@ class SwingPlanningVisualizer : public ocs2::SolverSynchronizedModule {
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override{};
 
  private:
-  std::shared_ptr<const SwingTrajectoryPlanner> swingPlannerPtr_;
-
+  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
   feet_array_t<ros::Publisher> nominalFootholdPublishers_;
 };
 

@@ -9,18 +9,16 @@
 namespace switched_model {
 
 ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const com_model_t& comModel,
-                                                       std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr)
-    : comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
-  if (!modeScheduleManagerPtr_) {
-    throw std::runtime_error("[ComKinoOperatingPointsBase] Mode schedule manager cannot be a nullptr");
-  }
-}
+                                                       const SwitchedModelModeScheduleManager& modeScheduleManager)
+    : comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(&modeScheduleManager) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ComKinoOperatingPointsBase::ComKinoOperatingPointsBase(const ComKinoOperatingPointsBase& rhs)
-    : Base(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
+    : ocs2::SystemOperatingTrajectoriesBase(rhs),
+      comModelPtr_(rhs.comModelPtr_->clone()),
+      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

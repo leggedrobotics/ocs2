@@ -17,16 +17,11 @@ namespace switched_model {
 
 class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
  public:
-  using BASE = ocs2::QuadraticCostFunction;
-
   using com_model_t = ComModelBase<scalar_t>;
 
   //! Constructor
-  SwitchedModelCostBase(const com_model_t& comModel, std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                        const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal);
-
-  //! Copy constructor
-  SwitchedModelCostBase(const SwitchedModelCostBase& rhs);
+  SwitchedModelCostBase(const com_model_t& comModel, const SwitchedModelModeScheduleManager& modeScheduleManager, const state_matrix_t& Q,
+                        const input_matrix_t& R, const state_matrix_t& QFinal);
 
   //! Destructor
   ~SwitchedModelCostBase() override = default;
@@ -37,12 +32,15 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
   scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
   ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
+ protected:
+  //! Copy constructor
+  SwitchedModelCostBase(const SwitchedModelCostBase& rhs);
+
  private:
   void inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState, vector_t& inputs);
 
   std::unique_ptr<com_model_t> comModelPtr_;
-
-  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
+  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
 };
 
 }  // end of namespace switched_model

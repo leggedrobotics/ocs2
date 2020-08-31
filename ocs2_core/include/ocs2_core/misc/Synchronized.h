@@ -6,8 +6,12 @@
 namespace ocs2 {
 
 /**
- * Grants access to the object T and the unique_ptr that holds it.
- * Holds the Synchronized<T>'s mutex for the lifetime of the object.
+ * Provides an interface to a unique_ptr<T> and a mutex.
+ * - The mutex is locked during construction and released during destruction.
+ * - The object T can be called directly through this interface.
+ * - The unique_ptr<T> can be swapped or reset.
+ *
+ * The user of this class has to make sure the unique_ptr<T> and the mutex outlive this interface.
  */
 template <typename T>
 class LockedPtr {
@@ -21,12 +25,13 @@ class LockedPtr {
   T& operator*() { return *p_; }
   const T& operator*() const { return *p_; }
 
-  /// Resets the unique ptr within the Synchronized<>.
+  /// Resets the wrapped unique ptr.
   void reset(std::unique_ptr<T> p) noexcept { p_ = std::move(p); }
 
-  /// Swaps the unique ptr within the Synchronized<>.
+  /// Swaps the wrapped unique ptr.
   void swap(std::unique_ptr<T>& p) noexcept { p_.swap(p); }
 
+  /// Returns true if the wrapped unique ptr is not null.
   explicit operator bool() const noexcept { return p_ != nullptr; }
 
  private:
@@ -35,8 +40,11 @@ class LockedPtr {
 };
 
 /**
- * Grants const access to the wrapped object T.
- * Holds the Synchronized<T>'s mutex for the lifetime of the object.
+ * Provides a const interface to a pointer T* and a mutex.
+ * - The mutex is locked during construction and released during destruction.
+ * - const methods on T* can be called directly through this interface.
+ *
+ * The user of this class has to make sure the original object T and the mutex outlive this interface.
  */
 template <typename T>
 class LockedConstPtr {
@@ -48,6 +56,7 @@ class LockedConstPtr {
   const T* operator->() const { return p_; }
   const T& operator*() const { return *p_; }
 
+  /// Returns true if the wrapped pointer is not null.
   explicit operator bool() const noexcept { return p_ != nullptr; }
 
  private:

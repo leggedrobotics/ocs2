@@ -147,7 +147,7 @@ mpc
 
   useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
 
-  solutionTimeWindow              500 ; [ms]
+  solutionTimeWindow              -1  ; [s]
 
   mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]

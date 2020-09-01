@@ -37,6 +37,9 @@ ddp
 }
 \endcode
 
+or you can directly access them through `getBenchmarkingInfo()` method.
+
+
 \section ocs2_doc_profiling_perf linux perf-tools
 
 Overview:
@@ -84,6 +87,7 @@ References:
 
 - [Tutorial wiki.kernel.org](https://perf.wiki.kernel.org/index.php/Tutorial)
 - [perf Examples](http://www.brendangregg.com/perf.html)
+
 
 \section ocs2_doc_profiling_valgrind Valgrind
 

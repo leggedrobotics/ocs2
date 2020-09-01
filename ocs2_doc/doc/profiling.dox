@@ -19,7 +19,7 @@ echo "0" | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 You may also want to build in Release mode and enable architecture specific features:
 
 \code{.sh}
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-march=native -mtune=native -ffast-math"
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-march=native -mtune=native"
 \endcode
 
 \section ocs2_doc_profiling_builtin Use the built-in timers

@@ -74,6 +74,7 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
   src/PinocchioInterface.cpp
+  src/PinocchioGeometryInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -98,6 +99,21 @@ target_link_libraries(mobile_manipulator_mpc_node
   ${catkin_LIBRARIES}
 )
 target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
+
+# DistanceVisualization node
+add_executable(mobile_manipulator_distance_visualization
+  src/MobileManipulatorDistanceVisualization.cpp
+  src/MobileManipulatorVisualizationHelpers.cpp
+)
+add_dependencies(mobile_manipulator_distance_visualization
+  ${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_distance_visualization
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS})
 
 # Dummy node
 add_executable(mobile_manipulator_dummy_mrt_node

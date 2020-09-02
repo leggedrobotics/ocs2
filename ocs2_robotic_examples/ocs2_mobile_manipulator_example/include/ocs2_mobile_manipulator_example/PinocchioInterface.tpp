@@ -17,6 +17,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
+PinocchioInterface<SCALAR>::PinocchioInterface(const PinocchioModel& model) {
+  robotModelPtr_ = std::make_shared<const PinocchioModel>(model);
+  robotDataPtr_ = std::unique_ptr<PinocchioData>(new PinocchioData(*robotModelPtr_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
 PinocchioInterface<SCALAR>::PinocchioInterface(const std::string& urdfPath) {
   pinocchio::ModelTpl<scalar_t> tempModel;
 

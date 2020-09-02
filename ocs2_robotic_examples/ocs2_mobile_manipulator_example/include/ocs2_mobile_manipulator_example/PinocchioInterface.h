@@ -66,15 +66,18 @@ struct Pose {
 template <typename SCALAR>
 class PinocchioInterface final {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   using PinocchioModel = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using PinocchioData = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
 
   /**
+   * Construct from given pinocchio model
+   * @param[in] model pinocchio model
+   */
+  explicit PinocchioInterface(const PinocchioModel& model);
+
+  /**
    * Load pinocchio model from URDF
    * @param[in] urdfFile Path to URDF
-   * @param[out] model pinocchio model
    */
   explicit PinocchioInterface(const std::string& urdfPath);
 
@@ -93,7 +96,10 @@ class PinocchioInterface final {
    */
   PinocchioInterface& operator=(const PinocchioInterface& rhs);
 
+  /** Get the pinocchio model */
   const PinocchioModel& getModel() const { return *robotModelPtr_; }
+
+  /** Get the pinocchio data */
   PinocchioData& getData() { return *robotDataPtr_; }
 
   /**

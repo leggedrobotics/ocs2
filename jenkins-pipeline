@@ -1,2 +1,2 @@
 library 'continuous_integration_pipeline'
-ciPipeline("--publish-doxygen --dependencies git@github.com:leggedrobotics/pinocchio.git;rsl/ocs2_mobile_manipulator_example;git")
+ciPipeline("--publish-doxygen --dependencies git@github.com:leggedrobotics/pinocchio.git;rsl/ocs2_mobile_manipulator_example;git git@github.com:leggedrobotics/hpp-fcl.git;rsl/no_python;git")

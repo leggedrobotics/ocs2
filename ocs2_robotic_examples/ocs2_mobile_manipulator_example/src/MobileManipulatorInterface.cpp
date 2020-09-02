@@ -27,13 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>
+#include <pinocchio/multibody/model.hpp>
+
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
-
-#include <pinocchio/fwd.hpp>
-#include "pinocchio/algorithm/joint-configuration.hpp"
-#include "pinocchio/algorithm/kinematics.hpp"
 
 #include "ocs2_mobile_manipulator_example/MobileManipulatorInterface.h"
 
@@ -60,8 +59,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
-  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(urdfPath_));
-  pinocchioInterface_->display();
+  pinocchioInterfacePtr_.reset(new ocs2::PinocchioInterface<scalar_t>(urdfPath_));
+  pinocchioInterfacePtr_->display();
+
+  // local CppAD copy
+  // ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd(pinocchioInterfacePtr_->getModel().cast<ad_scalar_t>());
+  ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd(urdfPath_);
 
   /*
    * DDP-MPC settings
@@ -75,7 +78,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics
    */
-  dynamicsPtr_.reset(new MobileManipulatorDynamics(*pinocchioInterface_));
+  dynamicsPtr_.reset(new MobileManipulatorDynamics(pinocchioInterfaceAd));
   dynamicsPtr_->initialize("mobile_manipulator_dynamics", libraryFolder_, recompileLibraries, true);
 
   /*
@@ -87,7 +90,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  costPtr_ = getMobileManipulatorCost(*pinocchioInterface_, taskFile, libraryFolder_, recompileLibraries);
+  costPtr_ = getMobileManipulatorCost(pinocchioInterfaceAd, taskFile, libraryFolder_, recompileLibraries);
 
   /*
    * Constraints

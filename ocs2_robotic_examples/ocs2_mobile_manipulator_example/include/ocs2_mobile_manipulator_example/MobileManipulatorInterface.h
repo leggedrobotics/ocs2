@@ -71,6 +71,8 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   const ocs2::OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
   const ocs2::ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
 
+  const ocs2::PinocchioInterface<scalar_t>& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
+
  protected:
   void loadSettings(const std::string& taskFile);
 
@@ -87,7 +89,7 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr_;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointPtr_;
 
-  std::unique_ptr<ocs2::PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
+  std::unique_ptr<ocs2::PinocchioInterface<scalar_t>> pinocchioInterfacePtr_;
 
   vector_t initialState_{STATE_DIM};
 };

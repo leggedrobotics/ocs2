@@ -51,8 +51,8 @@ EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
 ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                                       const ad_vector_t& parameters) const {
   const ad_vector_t eeDesiredPosition(parameters.head<3>());
-  const ad_vector_t q = parameters.tail(4);
-  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
+  eeDesiredOrientation.coeffs() = parameters.tail(4);
   const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
 
   ad_vector_t error(6);
@@ -67,8 +67,8 @@ ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad
 
 ad_vector_t EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
   const ad_vector_t eeDesiredPosition(parameters.head(3));
-  const ad_vector_t q = parameters.tail(4);
-  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
+  eeDesiredOrientation.coeffs() = parameters.tail(4);
   const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
 
   ad_vector_t error(6);

@@ -1,18 +1,24 @@
 #include <iomanip>
 
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <pinocchio/codegen/cppadcg.hpp>
+#include <pinocchio/fwd.hpp>
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/multibody/data.hpp>
+#include <pinocchio/multibody/model.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
 #include "CppAdHelpers.h"
 
-namespace mobile_manipulator {
+namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 PinocchioInterface<SCALAR>::PinocchioInterface(const std::string& urdfPath) {
-  pinocchio::ModelTpl<double> tempModel;
+  pinocchio::ModelTpl<scalar_t> tempModel;
 
   // add 3 DOF for wheelbase
   pinocchio::JointModelComposite jointComposite(3);
@@ -23,37 +29,55 @@ PinocchioInterface<SCALAR>::PinocchioInterface(const std::string& urdfPath) {
   // build robot model and robot data
   pinocchio::urdf::buildModel(urdfPath, jointComposite, tempModel);
 
-  robotModel_ = std::make_shared<const PinocchioModel>(tempModel.cast<SCALAR>());
-  robotData_ = PinocchioData(*robotModel_);
+  robotModelPtr_ = std::make_shared<const PinocchioModel>(tempModel.cast<SCALAR>());
+  robotDataPtr_ = std::unique_ptr<PinocchioData>(new PinocchioData(*robotModelPtr_));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<SCALAR>::~PinocchioInterface() = default;
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 PinocchioInterface<SCALAR>::PinocchioInterface(const PinocchioInterface& other) {
-  robotModel_ = other.robotModel_;
-  robotData_ = other.robotData_;
+  robotModelPtr_ = other.robotModelPtr_;
+  robotDataPtr_.reset(new PinocchioData(*other.robotDataPtr_));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(const PinocchioInterface& rhs) {
-  robotModel_ = rhs.robotModel_;
-  robotData_ = rhs.robotData_;
+  robotModelPtr_ = rhs.robotModelPtr_;
+  robotDataPtr_.reset(new PinocchioData(*rhs.robotDataPtr_));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::string bodyName,
                                                                  const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  const pinocchio::FrameIndex bodyId = robotModel_->getBodyId(bodyName);
+  const pinocchio::FrameIndex bodyId = robotModelPtr_->getBodyId(bodyName);
 
-  pinocchio::forwardKinematics(*robotModel_, robotData_, q);
-  pinocchio::updateFramePlacements(*robotModel_, robotData_);
+  pinocchio::forwardKinematics(*robotModelPtr_, *robotDataPtr_, q);
+  pinocchio::updateFramePlacements(*robotModelPtr_, *robotDataPtr_);
 
   Pose<SCALAR> pose;
-  pose.position = robotData_.oMf[bodyId].translation();
-  pose.orientation = matrixToQuaternion(robotData_.oMf[bodyId].rotation());
+  pose.position = robotDataPtr_->oMf[bodyId].translation();
+  pose.orientation = matrixToQuaternion(robotDataPtr_->oMf[bodyId].rotation());
 
   return pose;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 void PinocchioInterface<SCALAR>::display() {
   const auto& model = getModel();
@@ -97,4 +121,4 @@ void PinocchioInterface<SCALAR>::display() {
   }
 }
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

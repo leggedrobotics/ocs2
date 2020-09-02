@@ -27,25 +27,27 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <cppad/cg/support/cppadcg_eigen.hpp>
+
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 namespace mobile_manipulator {
 
-EndEffectorCost::EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
+EndEffectorCost::EndEffectorCost(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
                                  std::string endEffectorName)
     : ocs2::QuadraticGaussNewtonCostBaseAD(STATE_DIM, INPUT_DIM),
       Q_(std::move(Q)),
       R_(std::move(R)),
       Qf_(std::move(Qf)),
       endEffectorName_(std::move(endEffectorName)) {
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
+  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(pinocchioInterface));
 }
 
 EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
     : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_), endEffectorName_(rhs.endEffectorName_) {
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
+  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
 }
 
 ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,

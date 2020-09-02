@@ -30,9 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.tpp>
 
-namespace mobile_manipulator {
+namespace ocs2 {
 
+// explicit instantiation
 template class PinocchioInterface<scalar_t>;
-template class PinocchioInterface<ad_scalar_t>;
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

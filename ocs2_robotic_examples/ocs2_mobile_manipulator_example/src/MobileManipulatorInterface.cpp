@@ -60,7 +60,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(urdfPath_));
+  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(urdfPath_));
   pinocchioInterface_->display();
 
   /*

@@ -87,7 +87,7 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr_;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointPtr_;
 
-  std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
+  std::unique_ptr<ocs2::PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
 
   vector_t initialState_{STATE_DIM};
 };

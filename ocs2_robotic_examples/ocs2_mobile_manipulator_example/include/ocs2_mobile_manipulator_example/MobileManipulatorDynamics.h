@@ -41,12 +41,12 @@ class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
   using ocs2::SystemDynamicsBaseAD::ad_scalar_t;
   using ocs2::SystemDynamicsBaseAD::ad_vector_t;
 
-  explicit MobileManipulatorDynamics(const PinocchioInterface<ad_scalar_t>& pinocchioInterface);
+  explicit MobileManipulatorDynamics(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface);
   ~MobileManipulatorDynamics() override = default;
 
   /* Copy constructor */
   MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) : ocs2::SystemDynamicsBaseAD(rhs) {
-    pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
+    pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
   }
 
   /* Clone */
@@ -55,7 +55,7 @@ class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
   ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
 
  private:
-  std::unique_ptr<PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
+  std::unique_ptr<ocs2::PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
 };
 
 }  // namespace mobile_manipulator

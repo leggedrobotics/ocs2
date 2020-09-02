@@ -75,6 +75,7 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
   src/PinocchioInterface.cpp
+  src/PinocchioInterfaceAD.cpp
   src/PinocchioGeometryInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}

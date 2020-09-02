@@ -27,18 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_mobile_manipulator_example/TargetTrajectories_IMarker_Mobile_Manipulator.h"
+#include <ocs2_mobile_manipulator_example/TargetTrajectories_IMarker_Mobile_Manipulator.h>
 
-using namespace ocs2;
-using namespace mobile_manipulator;
-void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) {
-  ROS_INFO_STREAM(feedback->marker_name << " is now at " << feedback->pose.position.x << ", " << feedback->pose.position.y << ", "
-                                        << feedback->pose.position.z);
-}
 int main(int argc, char* argv[]) {
   ros::init(argc, argv, "mobile_manipulator_target");
 
-  TargetTrajectories_IMarker_Mobile_Manipulator targetPoseCommand(argc, argv, "mobile_manipulator");
+  mobile_manipulator::TargetTrajectories_IMarker_Mobile_Manipulator targetPoseCommand(argc, argv, "mobile_manipulator");
 
   targetPoseCommand.launchNodes();
 

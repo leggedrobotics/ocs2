@@ -43,7 +43,7 @@ TargetTrajectories_IMarker_Mobile_Manipulator::TargetTrajectories_IMarker_Mobile
 
   // create a non-interactive control which contains the box
   visualization_msgs::InteractiveMarkerControl box_control;
-  box_control.always_visible = true;
+  box_control.always_visible = 1;
   box_control.markers.push_back(box_marker);
   box_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
 

@@ -16,7 +16,7 @@ namespace mobile_manipulator {
 class TargetTrajectories_IMarker_Mobile_Manipulator : public ocs2::TargetTrajectories_ROS_Interface {
  public:
   TargetTrajectories_IMarker_Mobile_Manipulator(int argc, char* argv[], std::string robotName = "robot");
-  virtual ~TargetTrajectories_IMarker_Mobile_Manipulator() = default;
+  ~TargetTrajectories_IMarker_Mobile_Manipulator() override = default;
 
  private:
   void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);

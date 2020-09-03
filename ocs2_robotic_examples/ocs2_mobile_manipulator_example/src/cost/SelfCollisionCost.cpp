@@ -48,10 +48,11 @@ SelfCollisionCost::SelfCollisionCost(PinocchioInterface<double>& pinocchioInterf
 SelfCollisionCost::SelfCollisionCost(const SelfCollisionCost& rhs)
     : pinocchioInterface_(rhs.pinocchioInterface_),
       pinocchioGeometrySelfCollisions_(rhs.pinocchioGeometrySelfCollisions_),
-      minimumDistance_(minimumDistance_),
-      relaxedBarrierPenalty_(relaxedBarrierPenalty_) {}
+      minimumDistance_(rhs.minimumDistance_),
+      relaxedBarrierPenalty_(rhs.relaxedBarrierPenalty_) {}
 
 scalar_t SelfCollisionCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
+  //  std::cout << "Cost called" << std::endl;
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
   vector_t violations = vector_t::Zero(results.size());
@@ -60,6 +61,8 @@ scalar_t SelfCollisionCost::cost(scalar_t t, const vector_t& x, const vector_t& 
     violations[i] = result.min_distance - minimumDistance_;
   }
 
+  //  std::cout << "Final cost = " << relaxedBarrierPenalty_.penaltyCost(violations) << std::endl;
+
   return relaxedBarrierPenalty_.penaltyCost(violations);
 }
 scalar_t SelfCollisionCost::finalCost(scalar_t t, const vector_t& x) {
@@ -67,13 +70,16 @@ scalar_t SelfCollisionCost::finalCost(scalar_t t, const vector_t& x) {
 }
 
 ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  //  std::cout << "costQuadraticApproximation " << std::endl;
+
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
   VectorFunctionQuadraticApproximation distanceQuadraticApproximation;
   distanceQuadraticApproximation.f = vector_t(results.size());
   distanceQuadraticApproximation.dfdx.resize(results.size(), x.size());
   distanceQuadraticApproximation.dfdu = matrix_t::Zero(results.size(), u.size());
-  distanceQuadraticApproximation.dfdxx = matrix_array_t(results.size(), matrix_t::Identity(x.size(), x.size()));
+  distanceQuadraticApproximation.dfdxx =
+      matrix_array_t(results.size(), matrix_t::Zero(x.size(), x.size()));  //-matrix_t::Identity(x.size(), x.size()));
   distanceQuadraticApproximation.dfdux = matrix_array_t(results.size(), matrix_t::Zero(x.size(), u.size()));
   distanceQuadraticApproximation.dfduu = matrix_array_t(results.size(), matrix_t::Zero(u.size(), u.size()));
 
@@ -109,6 +115,20 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
     const Eigen::Vector3d distanceVector = (result.nearest_points[1] - result.nearest_points[0]).normalized();
     distanceQuadraticApproximation.dfdx.row(i) = distanceVector.transpose() * differenceJacobian;
   }
+
+  //  std::cout << "distanceApproximation " << distanceQuadraticApproximation.f.transpose() << std::endl;
+  //  std::cout << "distanceApproximation dfdx " << std::endl << distanceQuadraticApproximation.dfdx << std::endl;
+  //  std::cout << "distanceApproximation dfdu " << std::endl << distanceQuadraticApproximation.dfdu << std::endl;
+
+  ScalarFunctionQuadraticApproximation returnvalue =
+      relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
+
+  //  std::cout << "returnvalue " << returnvalue.f << std::endl;
+  //  std::cout << "returnvalue dfdx " << std::endl << returnvalue.dfdx << std::endl;
+  //  std::cout << "returnvalue dfdu " << std::endl << returnvalue.dfdu << std::endl;
+  //  std::cout << "returnvalue dfdxx " << std::endl << returnvalue.dfdxx << std::endl;
+  //  std::cout << "returnvalue dfdux " << std::endl << returnvalue.dfdux << std::endl;
+  //  std::cout << "returnvalue dfduu " << std::endl << returnvalue.dfduu << std::endl;
 
   return relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
 }

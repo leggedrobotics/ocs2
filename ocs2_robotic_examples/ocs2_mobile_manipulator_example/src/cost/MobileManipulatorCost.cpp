@@ -31,7 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
+#include <ocs2_mobile_manipulator_example/cost/SelfCollisionCost.h>
 
+#include <ros/package.h>
 namespace mobile_manipulator {
 
 std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface,
@@ -60,7 +62,15 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const PinocchioI
   eeCostPtr->setCostDesiredTrajectoriesPtr(&initCostDesiredTrajectory);  // required for CppAD initialization pass
   eeCostPtr->initialize("EndEffectorCost", libraryFolder, recompileLibraries, verbose);
 
+  std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
+
+  PinocchioInterface<scalar_t> pinocchioInterfaceDouble(urdfPath_);
+  PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, {{1, 6}});
+
+  auto colCost = std::make_shared<SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, 0.1, 0.01, 1e-3);
+
   costs.emplace_back(WeightedCost{eeCostWeight, std::move(eeCostPtr)});
+  costs.emplace_back(WeightedCost{0.01, std::move(colCost)});
 
   // TODO(mspieler): use make_unique after switch to C++14
   return std::unique_ptr<MobileManipulatorCost>(new MobileManipulatorCost(std::move(costs)));

@@ -65,7 +65,7 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const PinocchioI
   std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
   PinocchioInterface<scalar_t> pinocchioInterfaceDouble(urdfPath_);
-  PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, {{1, 6}});
+  PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, {{1, 4}, {1, 6}});
 
   auto colCost = std::make_shared<SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, 0.1, 0.01, 1e-3);
 

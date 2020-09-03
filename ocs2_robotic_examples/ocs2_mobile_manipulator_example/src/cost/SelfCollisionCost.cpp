@@ -78,8 +78,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
   distanceQuadraticApproximation.f = vector_t(results.size());
   distanceQuadraticApproximation.dfdx.resize(results.size(), x.size());
   distanceQuadraticApproximation.dfdu = matrix_t::Zero(results.size(), u.size());
-  distanceQuadraticApproximation.dfdxx =
-      matrix_array_t(results.size(), matrix_t::Zero(x.size(), x.size()));  //-matrix_t::Identity(x.size(), x.size()));
+  distanceQuadraticApproximation.dfdxx = matrix_array_t(results.size(), -10000 * matrix_t::Identity(x.size(), x.size()));
   distanceQuadraticApproximation.dfdux = matrix_array_t(results.size(), matrix_t::Zero(x.size(), u.size()));
   distanceQuadraticApproximation.dfduu = matrix_array_t(results.size(), matrix_t::Zero(u.size(), u.size()));
 
@@ -116,19 +115,8 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
     distanceQuadraticApproximation.dfdx.row(i) = distanceVector.transpose() * differenceJacobian;
   }
 
-  //  std::cout << "distanceApproximation " << distanceQuadraticApproximation.f.transpose() << std::endl;
-  //  std::cout << "distanceApproximation dfdx " << std::endl << distanceQuadraticApproximation.dfdx << std::endl;
-  //  std::cout << "distanceApproximation dfdu " << std::endl << distanceQuadraticApproximation.dfdu << std::endl;
-
   ScalarFunctionQuadraticApproximation returnvalue =
       relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
-
-  //  std::cout << "returnvalue " << returnvalue.f << std::endl;
-  //  std::cout << "returnvalue dfdx " << std::endl << returnvalue.dfdx << std::endl;
-  //  std::cout << "returnvalue dfdu " << std::endl << returnvalue.dfdu << std::endl;
-  //  std::cout << "returnvalue dfdxx " << std::endl << returnvalue.dfdxx << std::endl;
-  //  std::cout << "returnvalue dfdux " << std::endl << returnvalue.dfdux << std::endl;
-  //  std::cout << "returnvalue dfduu " << std::endl << returnvalue.dfduu << std::endl;
 
   return relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
 }
@@ -136,11 +124,11 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
 ScalarFunctionQuadraticApproximation SelfCollisionCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   ScalarFunctionQuadraticApproximation approximation;
   approximation.f = 0.0;
-  approximation.dfdx = vector_t::Zero(9);
-  approximation.dfdu = vector_t::Zero(8);
-  approximation.dfdxx = vector_t::Zero(9, 9);
-  approximation.dfdux = vector_t::Zero(9, 8);
-  approximation.dfduu = vector_t::Zero(8, 8);
+  approximation.dfdx.setZero(9);
+  approximation.dfdu.setZero(8);
+  approximation.dfdxx.setZero(9, 9);
+  approximation.dfdux.setZero(9, 8);
+  approximation.dfduu.setZero(8, 8);
   return approximation;
 }
 

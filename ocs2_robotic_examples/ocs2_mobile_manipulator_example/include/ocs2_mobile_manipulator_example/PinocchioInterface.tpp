@@ -88,6 +88,14 @@ Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::stri
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
+PinocchioInterface<ad_scalar_t> PinocchioInterface<SCALAR>::castToCppAd(const PinocchioInterface<scalar_t>& interface) {
+  return PinocchioInterface<ad_scalar_t>(interface.getModel().template cast<ad_scalar_t>());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
 void PinocchioInterface<SCALAR>::display() {
   const auto& model = getModel();
   std::cout << "model.nv = " << model.nv << '\n';

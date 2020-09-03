@@ -51,6 +51,9 @@ struct JointModelCompositeTpl;
 
 namespace ocs2 {
 
+using ad_base_t = CppAD::cg::CG<scalar_t>;
+using ad_scalar_t = CppAD::AD<ad_base_t>;
+
 template <typename SCALAR>
 struct Pose {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -112,9 +115,10 @@ class PinocchioInterface final {
    */
   Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
-  /**
-   * Prints some debug info of the pinocchio model.
-   */
+  /** Cast pinocchio interface to CppAD scalar type. */
+  static PinocchioInterface<ad_scalar_t> castToCppAd(const PinocchioInterface<scalar_t>& interface);
+
+  /** Prints some debug info of the pinocchio model. */
   void display();
 
  private:
@@ -123,6 +127,6 @@ class PinocchioInterface final {
 };
 
 extern template class PinocchioInterface<scalar_t>;
-extern template class PinocchioInterface<CppAD::AD<CppAD::cg::CG<scalar_t>>>;
+extern template class PinocchioInterface<ad_scalar_t>;
 
 }  // namespace ocs2

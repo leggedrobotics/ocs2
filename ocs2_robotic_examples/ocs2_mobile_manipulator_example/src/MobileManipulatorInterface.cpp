@@ -63,8 +63,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   pinocchioInterfacePtr_->display();
 
   // local CppAD copy
-  // ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd(pinocchioInterfacePtr_->getModel().cast<ad_scalar_t>());
-  ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd(urdfPath_);
+  ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd(ocs2::PinocchioInterface<scalar_t>::castToCppAd(*pinocchioInterfacePtr_));
 
   /*
    * DDP-MPC settings

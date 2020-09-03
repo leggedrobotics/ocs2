@@ -32,9 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-using ad_base_t = CppAD::cg::CG<scalar_t>;
-using ad_scalar_t = CppAD::AD<ad_base_t>;
-
 // explicit instantiation
 template class PinocchioInterface<ad_scalar_t>;
 

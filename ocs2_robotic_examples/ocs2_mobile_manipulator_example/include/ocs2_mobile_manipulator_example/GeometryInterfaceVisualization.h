@@ -1,0 +1,43 @@
+/*
+ * GeometryInterfaceVisualization.h
+ *
+ *  Created on: 4 Sep 2020
+ *      Author: perry
+ */
+
+#pragma once
+
+#include <ros/ros.h>
+
+#include <visualization_msgs/MarkerArray.h>
+
+#include <ocs2_mobile_manipulator_example/PinocchioGeometryInterface.hpp>
+
+namespace hpp {
+namespace fcl {
+class DistanceResult;
+}
+}  // namespace hpp
+
+namespace ocs2 {
+
+// TODO(perry) remove when PinocchioGeometryInterface belongs to ocs2
+using namespace mobile_manipulator;
+
+class GeometryInterfaceVisualization {
+ public:
+  GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
+                                 const std::string& pinocchioWorldFrame = "world");
+  virtual ~GeometryInterfaceVisualization() = default;
+
+  void publishDistances(const ocs2::state_vector_t&);
+
+ private:
+  PinocchioGeometryInterface geometryInterface_;
+
+  ros::Publisher markerPublisher_;
+
+  std::string pinocchioWorldFrame_;
+};
+
+}  // namespace ocs2

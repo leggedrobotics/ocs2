@@ -51,8 +51,8 @@ EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
 ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                                       const ad_vector_t& parameters) const {
   const ad_vector_t eeDesiredPosition(parameters.head<3>());
-  const ad_vector_t q = parameters.tail(4);
-  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
+  eeDesiredOrientation.coeffs() = parameters.tail(4);
   const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
 
   ad_vector_t error(6);
@@ -67,8 +67,8 @@ ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad
 
 ad_vector_t EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
   const ad_vector_t eeDesiredPosition(parameters.head(3));
-  const ad_vector_t q = parameters.tail(4);
-  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
+  eeDesiredOrientation.coeffs() = parameters.tail(4);
   const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
 
   ad_vector_t error(6);
@@ -99,11 +99,11 @@ vector_t EndEffectorCost::interpolateReference(scalar_t time) const {
   } else {
     // interpolation
     double tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
-    const Eigen::Quaterniond quatA(desiredStateTrajectory[timeAIdx].head<4>());
-    const Eigen::Quaterniond quatB(desiredStateTrajectory[timeAIdx + 1].head<4>());
+    const Eigen::Quaterniond quatA(desiredStateTrajectory[timeAIdx].tail<4>());
+    const Eigen::Quaterniond quatB(desiredStateTrajectory[timeAIdx + 1].tail<4>());
 
-    reference.head<4>() = quatA.slerp(tau, quatB).coeffs();
-    reference.tail<3>() = (1 - tau) * desiredStateTrajectory[timeAIdx].tail<3>() + tau * desiredStateTrajectory[timeAIdx + 1].tail<3>();
+    reference.tail<4>() = quatA.slerp(tau, quatB).coeffs();
+    reference.head<3>() = (1 - tau) * desiredStateTrajectory[timeAIdx].head<3>() + tau * desiredStateTrajectory[timeAIdx + 1].head<3>();
   }
 
   return reference;

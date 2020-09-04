@@ -92,8 +92,8 @@ void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Ti
                                                                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
   // publish command transform
   const Eigen::Vector3d eeDesiredPosition = costDesiredTrajectory.desiredStateTrajectory().back().head(3);
-  const auto q = Eigen::Vector4d(costDesiredTrajectory.desiredStateTrajectory().back().tail(4));
-  const Eigen::Quaterniond eeDesiredOrientation = Eigen::Quaterniond(q(0), q(1), q(2), q(3));
+  Eigen::Quaterniond eeDesiredOrientation;
+  eeDesiredOrientation.coeffs() = costDesiredTrajectory.desiredStateTrajectory().back().tail(4);
   geometry_msgs::TransformStamped command_tf;
   command_tf.header.stamp = timeStamp;
   command_tf.header.frame_id = "world";

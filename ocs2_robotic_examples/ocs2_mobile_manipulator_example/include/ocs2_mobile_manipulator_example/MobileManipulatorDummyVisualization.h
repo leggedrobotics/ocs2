@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
+#include <ocs2_mobile_manipulator_example/GeometryInterfaceVisualization.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 
 namespace mobile_manipulator {
@@ -63,6 +64,8 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
 
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher stateOptimizedPosePublisher_;
+
+  std::unique_ptr<ocs2::GeometryInterfaceVisualization> geometryVisualization_;
 };
 
 }  // namespace mobile_manipulator

@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <ros/package.h>
 #include <tf/tf.h>
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
@@ -57,6 +58,12 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
 
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
+
+  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
+  ocs2::PinocchioInterface<double> pinocchioInterface(urdfPath);
+  ocs2::PinocchioGeometryInterface geomInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}});
+
+  geometryVisualization_.reset(new ocs2::GeometryInterfaceVisualization(geomInterface, nodeHandle));
 }
 
 void MobileManipulatorDummyVisualization::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& policy,
@@ -66,6 +73,7 @@ void MobileManipulatorDummyVisualization::update(const ocs2::SystemObservation& 
   publishObservation(timeStamp, observation);
   publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
   publishOptimizedTrajectory(timeStamp, policy);
+  geometryVisualization_->publishDistances(observation.state);
 }
 
 void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const ocs2::SystemObservation& observation) {

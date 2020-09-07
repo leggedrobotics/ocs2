@@ -27,24 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
+#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator_example/PinocchioInterface.tpp>
 
-#include "pinocchio/algorithm/joint-configuration.hpp"
+namespace ocs2 {
 
-namespace mobile_manipulator {
+// explicit instantiation
+template class PinocchioInterface<ad_scalar_t>;
 
-MobileManipulatorDynamics::MobileManipulatorDynamics(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface)
-    : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
-  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(pinocchioInterface));
-}
-
-MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
-                                                                                const ad_vector_t& input) const {
-  ad_vector_t dxdt(STATE_DIM);
-  const auto theta = state(2);
-  const auto v = input(0);  // forward velocity in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
-  return dxdt;
-}
-
-}  // namespace mobile_manipulator
+}  // namespace ocs2

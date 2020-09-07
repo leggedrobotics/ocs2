@@ -34,11 +34,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
+#include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
+
 namespace mobile_manipulator {
 
 class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
  public:
-  explicit MobileManipulatorDummyVisualization(ros::NodeHandle& nodeHandle) { launchVisualizerNode(nodeHandle); }
+  MobileManipulatorDummyVisualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
+      : pinocchioInterface_(interface.getPinocchioInterface()) {
+    launchVisualizerNode(nodeHandle);
+  }
 
   ~MobileManipulatorDummyVisualization() override = default;
 
@@ -50,6 +55,8 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
   void publishObservation(const ros::Time& timeStamp, const ocs2::SystemObservation& observation);
   void publishDesiredTrajectory(const ros::Time& timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory);
   void publishOptimizedTrajectory(const ros::Time& timeStamp, const ocs2::PrimalSolution& policy);
+
+  ocs2::PinocchioInterface<scalar_t> pinocchioInterface_;
 
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   tf::TransformBroadcaster tfBroadcaster_;

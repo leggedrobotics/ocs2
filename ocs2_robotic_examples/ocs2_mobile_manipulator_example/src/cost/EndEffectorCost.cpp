@@ -27,32 +27,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <cppad/cg/support/cppadcg_eigen.hpp>
+
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 namespace mobile_manipulator {
 
-EndEffectorCost::EndEffectorCost(const PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
+EndEffectorCost::EndEffectorCost(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
                                  std::string endEffectorName)
     : ocs2::QuadraticGaussNewtonCostBaseAD(STATE_DIM, INPUT_DIM),
       Q_(std::move(Q)),
       R_(std::move(R)),
       Qf_(std::move(Qf)),
       endEffectorName_(std::move(endEffectorName)) {
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(pinocchioInterface));
+  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(pinocchioInterface));
 }
 
 EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
     : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_), endEffectorName_(rhs.endEffectorName_) {
-  pinocchioInterface_.reset(new PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
+  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
 }
 
 ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                                       const ad_vector_t& parameters) const {
   const ad_vector_t eeDesiredPosition(parameters.head<3>());
-  const ad_vector_t q = parameters.tail(4);
-  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
+  eeDesiredOrientation.coeffs() = parameters.tail(4);
   const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
 
   ad_vector_t error(6);
@@ -67,8 +69,8 @@ ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad
 
 ad_vector_t EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
   const ad_vector_t eeDesiredPosition(parameters.head(3));
-  const ad_vector_t q = parameters.tail(4);
-  const Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation(q(0), q(1), q(2), q(3));
+  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
+  eeDesiredOrientation.coeffs() = parameters.tail(4);
   const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
 
   ad_vector_t error(6);
@@ -99,11 +101,11 @@ vector_t EndEffectorCost::interpolateReference(scalar_t time) const {
   } else {
     // interpolation
     double tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
-    const Eigen::Quaterniond quatA(desiredStateTrajectory[timeAIdx].head<4>());
-    const Eigen::Quaterniond quatB(desiredStateTrajectory[timeAIdx + 1].head<4>());
+    const Eigen::Quaterniond quatA(desiredStateTrajectory[timeAIdx].tail<4>());
+    const Eigen::Quaterniond quatB(desiredStateTrajectory[timeAIdx + 1].tail<4>());
 
-    reference.head<4>() = quatA.slerp(tau, quatB).coeffs();
-    reference.tail<3>() = (1 - tau) * desiredStateTrajectory[timeAIdx].tail<3>() + tau * desiredStateTrajectory[timeAIdx + 1].tail<3>();
+    reference.tail<4>() = quatA.slerp(tau, quatB).coeffs();
+    reference.head<3>() = (1 - tau) * desiredStateTrajectory[timeAIdx].head<3>() + tau * desiredStateTrajectory[timeAIdx + 1].head<3>();
   }
 
   return reference;

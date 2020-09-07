@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 
   // Visualization
   std::shared_ptr<mobile_manipulator::MobileManipulatorDummyVisualization> dummyVisualization(
-      new mobile_manipulator::MobileManipulatorDummyVisualization(nodeHandle));
+      new mobile_manipulator::MobileManipulatorDummyVisualization(nodeHandle, interface));
 
   // Dummy MRT
   ocs2::MRT_ROS_Dummy_Loop dummy(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
   // initial command
   ocs2::vector_t initTarget(7);
   initTarget.head(3) << 0, 1, 1;
-  initTarget.tail(4) << 1, 0, 0, 0;
+  initTarget.tail(4) << Eigen::Quaternion<ocs2::scalar_t>(1, 0, 0, 0).coeffs();
   ocs2::vector_t zeroInput = ocs2::vector_t::Zero(mobile_manipulator::INPUT_DIM);
   const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 

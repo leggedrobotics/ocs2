@@ -1,10 +1,14 @@
 #pragma once
 
+#include <cppad/cg.hpp>
 #include <cppad/cg/math.hpp>
 
-#include "definitions.h"
+#include <ocs2_core/Types.h>
 
-namespace mobile_manipulator {
+namespace ocs2 {
+
+using ad_base_t = CppAD::cg::CG<scalar_t>;
+using ad_scalar_t = CppAD::AD<ad_base_t>;
 
 /**
  * CppAD compatible transform of rotation matrix to quaternion
@@ -64,4 +68,4 @@ inline Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix(Eigen::Matrix<SCALAR, 3, 
   return skewSymmetricMatrix;
 }
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

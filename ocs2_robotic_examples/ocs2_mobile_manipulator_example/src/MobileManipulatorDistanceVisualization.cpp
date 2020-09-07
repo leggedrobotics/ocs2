@@ -27,7 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>
+// needs to be included before boost
+#include <pinocchio/multibody/geometry.hpp>
 
 #include <ocs2_mobile_manipulator_example/GeometryInterfaceVisualization.h>
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
@@ -69,9 +70,8 @@ int main(int argc, char** argv) {
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
-  pInterface.reset(new mobile_manipulator::PinocchioInterface<double>(urdfPath));
-  gInterface.reset(
-      new mobile_manipulator::PinocchioGeometryInterface(urdfPath, *pInterface, {{1, 4}, {1, 5}, {1, 6}, {1, 7}, {1, 8}, {1, 9}}));
+  pInterface.reset(new ocs2::PinocchioInterface<double>(urdfPath));
+  gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, {{0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}}));
 
   for (auto obj : gInterface->getGeometryModel().geometryObjects) {
     std::cout << obj.name << std::endl;

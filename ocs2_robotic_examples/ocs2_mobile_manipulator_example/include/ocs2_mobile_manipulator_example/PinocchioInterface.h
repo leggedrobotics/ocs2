@@ -29,17 +29,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <pinocchio/codegen/cppadcg.hpp>
-
-#include <pinocchio/fwd.hpp>
-#include <pinocchio/multibody/data.hpp>
-#include <pinocchio/multibody/model.hpp>
-
+#include <Eigen/Dense>
+// #include <Eigen/Geometry>
+#include <memory>
 #include <string>
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
+#include <ocs2_core/Types.h>
+#include <cppad/cg.hpp>
 
-namespace mobile_manipulator {
+/* Forward declaration of main pinocchio types */
+namespace pinocchio {
+template <typename Scalar, int Options>
+struct JointCollectionDefaultTpl;
+template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
+struct ModelTpl;
+template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
+struct DataTpl;
+template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
+struct JointModelCompositeTpl;
+}  // namespace pinocchio
+
+namespace ocs2 {
+
+using ad_base_t = CppAD::cg::CG<scalar_t>;
+using ad_scalar_t = CppAD::AD<ad_base_t>;
 
 template <typename SCALAR>
 struct Pose {
@@ -54,21 +67,25 @@ struct Pose {
  * The robot model can be shared between interface instances.
  */
 template <typename SCALAR>
-class PinocchioInterface {
+class PinocchioInterface final {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using PinocchioModel = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
+  using PinocchioData = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
 
-  using PinocchioModel = pinocchio::ModelTpl<SCALAR>;
-  using PinocchioData = typename PinocchioModel::Data;
-
-  using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+  /**
+   * Construct from given pinocchio model
+   * @param[in] model pinocchio model
+   */
+  explicit PinocchioInterface(const PinocchioModel& model);
 
   /**
    * Load pinocchio model from URDF
    * @param[in] urdfFile Path to URDF
-   * @param[out] model pinocchio model
    */
   explicit PinocchioInterface(const std::string& urdfPath);
+
+  /** Destructor */
+  ~PinocchioInterface();
 
   /**
    * Copy constructor
@@ -82,14 +99,19 @@ class PinocchioInterface {
    */
   PinocchioInterface& operator=(const PinocchioInterface& rhs);
 
-  const PinocchioModel& getModel() const { return *robotModel_; }
-  PinocchioData& getData() { return robotData_; }
+  /** Get the pinocchio model */
+  const PinocchioModel& getModel() const { return *robotModelPtr_; }
+
+  /** Get the pinocchio data */
+  PinocchioData& getData() { return *robotDataPtr_; }
 
   /**
    * Gets the pose of a body in the (pinocchio) world frame
-   * @param[in] name of the body (corresponds to the pinocchio name, which is usually the URDF link name)
-   * @param[out] the body pose
-   * TODO(perry) make this const by caching or mutabling the robotData_
+   *
+   * @param[in] bodyName name of the body (corresponds to the pinocchio name, which is usually the URDF link name)
+   * @param[in] q joint configuration
+   * @return the body pose
+   * TODO(perry) make this const by caching or mutabling the robotDataPtr_
    */
   Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
@@ -99,17 +121,18 @@ class PinocchioInterface {
 
   Pose<SCALAR> getJointPose(pinocchio::JointIndex jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
-  /**
-   * Prints some debug info of the pinocchio model.
-   */
+  /** Cast pinocchio interface to CppAD scalar type. */
+  static PinocchioInterface<ad_scalar_t> castToCppAd(const PinocchioInterface<scalar_t>& interface);
+
+  /** Prints some debug info of the pinocchio model. */
   void display();
 
  private:
-  std::shared_ptr<const PinocchioModel> robotModel_;
-  PinocchioData robotData_;
+  std::shared_ptr<const PinocchioModel> robotModelPtr_;
+  std::unique_ptr<PinocchioData> robotDataPtr_;
 };
 
 extern template class PinocchioInterface<scalar_t>;
 extern template class PinocchioInterface<ad_scalar_t>;
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

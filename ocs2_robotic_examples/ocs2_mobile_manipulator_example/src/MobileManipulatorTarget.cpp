@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,26 +25,19 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+ ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
+#include <ocs2_mobile_manipulator_example/TargetTrajectories_IMarker_Mobile_Manipulator.h>
 
-#include "pinocchio/algorithm/joint-configuration.hpp"
+int main(int argc, char* argv[]) {
+  ros::init(argc, argv, "mobile_manipulator_target");
 
-namespace mobile_manipulator {
+  mobile_manipulator::TargetTrajectories_IMarker_Mobile_Manipulator targetPoseCommand(argc, argv, "mobile_manipulator");
 
-MobileManipulatorDynamics::MobileManipulatorDynamics(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface)
-    : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
-  pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(pinocchioInterface));
+  targetPoseCommand.launchNodes();
+
+  // start the ROS main loop
+  ros::spin();
+  // Successful exit
+  return 0;
 }
-
-MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
-                                                                                const ad_vector_t& input) const {
-  ad_vector_t dxdt(STATE_DIM);
-  const auto theta = state(2);
-  const auto v = input(0);  // forward velocity in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
-  return dxdt;
-}
-
-}  // namespace mobile_manipulator

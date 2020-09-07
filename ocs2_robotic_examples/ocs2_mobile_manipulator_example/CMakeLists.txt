@@ -11,6 +11,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   robot_state_publisher
   visualization_msgs
   geometry_msgs
+  interactive_markers
   ocs2_ros_interfaces
   ocs2_core
   ocs2_ddp
@@ -75,6 +76,7 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
   src/PinocchioInterface.cpp
+  src/PinocchioInterfaceAD.cpp
   src/PinocchioGeometryInterface.cpp
   src/GeometryInterfaceVisualization.cpp
   src/MobileManipulatorVisualizationHelpers.cpp
@@ -131,6 +133,21 @@ target_link_libraries(mobile_manipulator_dummy_mrt_node
   ${catkin_LIBRARIES}
 )
 target_compile_options(mobile_manipulator_dummy_mrt_node PUBLIC ${FLAGS})
+
+# Interactive Marker node
+add_executable(mobile_manipulator_target
+  src/TargetTrajectories_IMarker_Mobile_Manipulator.cpp
+  src/MobileManipulatorTarget.cpp
+)
+add_dependencies(mobile_manipulator_target
+  ${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_target
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_target PUBLIC ${FLAGS})
 
 ####################
 ## Clang tooling ###

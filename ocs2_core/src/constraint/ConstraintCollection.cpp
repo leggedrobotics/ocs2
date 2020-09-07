@@ -54,6 +54,22 @@ ConstraintCollection<CONSTRAINT>::ConstraintCollection(ConstraintCollection<CONS
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename CONSTRAINT>
+ConstraintCollection<CONSTRAINT>& ConstraintCollection<CONSTRAINT>::operator=(const ConstraintCollection<CONSTRAINT>& rhs) {
+  *this = ConstraintCollection<CONSTRAINT>(rhs);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename CONSTRAINT>
+ConstraintCollection<CONSTRAINT>& ConstraintCollection<CONSTRAINT>::operator=(ConstraintCollection<CONSTRAINT>&& rhs) {
+  std::swap(constraintTermMap_, rhs.constraintTermMap_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename CONSTRAINT>
 void ConstraintCollection<CONSTRAINT>::add(std::string name, std::unique_ptr<CONSTRAINT> constraintTerm) {
   auto info = constraintTermMap_.emplace(std::move(name), std::move(constraintTerm));
   if (!info.second) {

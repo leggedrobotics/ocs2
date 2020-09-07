@@ -43,16 +43,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 template <typename COST>
-class CostCollection {
+class CostCollection final {
  public:
   CostCollection() = default;
   ~CostCollection() = default;
 
   /** Copy constructor */
-  CostCollection(const CostCollection& rhs);
+  CostCollection(const CostCollection<COST>& rhs);
 
   /** Move constructor */
-  CostCollection(CostCollection&& rhs) noexcept;
+  CostCollection(CostCollection<COST>&& rhs) noexcept;
+
+  /** Copy assignment */
+  CostCollection<COST>& operator=(const CostCollection<COST>& rhs);
+
+  /** Move assignment */
+  CostCollection<COST>& operator=(CostCollection<COST>&& rhs);
 
   /**
    * Adds a cost term to the collection, and transfer ownership to the collection

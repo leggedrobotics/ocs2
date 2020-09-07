@@ -75,6 +75,29 @@ TEST(TestConstraintCollection, activatingConstraints) {
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);
 }
 
+TEST(TestConstraintCollection, moveConstrut) {
+  ocs2::ConstraintCollection<ocs2::StateInputConstraint> constraintCollection;
+  std::unique_ptr<TestLinearConstraint> constraintTerm(new TestLinearConstraint());
+  const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
+  constraintCollection.add("Constraint1", std::move(constraintTerm));
+
+  // move construct
+  ocs2::ConstraintCollection<ocs2::StateInputConstraint> newColleciton(std::move(constraintCollection));
+  EXPECT_EQ(newColleciton.getNumConstraints(0.0), addedConstraints);
+}
+
+TEST(TestConstraintCollection, moveAssign) {
+  ocs2::ConstraintCollection<ocs2::StateInputConstraint> constraintCollection;
+  std::unique_ptr<TestLinearConstraint> constraintTerm(new TestLinearConstraint());
+  const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
+  constraintCollection.add("Constraint1", std::move(constraintTerm));
+
+  ocs2::ConstraintCollection<ocs2::StateInputConstraint> newColleciton;
+  // move assign
+  newColleciton = std::move(constraintCollection);
+  EXPECT_EQ(newColleciton.getNumConstraints(0.0), addedConstraints);
+}
+
 TEST(TestConstraintCollection, getValue) {
   using collection_t = ocs2::ConstraintCollection<ocs2::StateInputConstraint>;
   collection_t constraintCollection;

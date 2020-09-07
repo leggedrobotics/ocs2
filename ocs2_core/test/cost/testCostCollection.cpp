@@ -139,6 +139,19 @@ TEST_F(StateInputCost_TestFixture, canDeactivateCost) {
   EXPECT_EQ(cost, 0.0);
 }
 
+TEST_F(StateInputCost_TestFixture, moveConstrut) {
+  ocs2::CostCollection<ocs2::StateInputCost> newColleciton(std::move(costCollection));
+  const auto cost = newColleciton.getValue(t, x, u, desiredTrajectory);
+  EXPECT_NEAR(cost, expectedCost, 1e-6);
+}
+
+TEST_F(StateInputCost_TestFixture, moveAssign) {
+  ocs2::CostCollection<ocs2::StateInputCost> newColleciton;
+  newColleciton = std::move(costCollection);
+  const auto cost = newColleciton.getValue(t, x, u, desiredTrajectory);
+  EXPECT_NEAR(cost, expectedCost, 1e-6);
+}
+
 class SimpleQuadraticFinalCost final : public ocs2::StateCost {
  public:
   SimpleQuadraticFinalCost(ocs2::matrix_t Q) : Q_(std::move(Q)) {}

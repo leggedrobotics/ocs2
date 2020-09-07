@@ -49,20 +49,25 @@ namespace ocs2 {
  * @tparam CONSTRAINT the constraint type: StateInputConstraint or StateConstraint
  */
 template <typename CONSTRAINT>
-class ConstraintCollection {
+class ConstraintCollection final {
  public:
   using LinearApproximation_t = VectorFunctionLinearApproximation;
   using QuadraticApproximation_t = VectorFunctionQuadraticApproximation;
 
   ConstraintCollection() = default;
   ~ConstraintCollection() = default;
-  ConstraintCollection& operator=(const ConstraintCollection&) = delete;
 
   /** Copy constructor */
-  ConstraintCollection(const ConstraintCollection& rhs);
+  ConstraintCollection(const ConstraintCollection<CONSTRAINT>& rhs);
 
   /** Move constructor */
-  ConstraintCollection(ConstraintCollection&& rhs) noexcept;
+  ConstraintCollection(ConstraintCollection<CONSTRAINT>&& rhs) noexcept;
+
+  /** Copy assignment */
+  ConstraintCollection<CONSTRAINT>& operator=(const ConstraintCollection<CONSTRAINT>& rhs);
+
+  /** Move assignment */
+  ConstraintCollection<CONSTRAINT>& operator=(ConstraintCollection<CONSTRAINT>&& rhs);
 
   /**
    * Adds a constraint to the collection, and transfer ownership to the collection

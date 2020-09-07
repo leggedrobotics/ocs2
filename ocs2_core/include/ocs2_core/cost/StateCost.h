@@ -36,17 +36,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-// State-only cost
+/** State-only cost term */
 class StateCost {
  public:
   StateCost() = default;
   virtual ~StateCost() = default;
   virtual StateCost* clone() const = 0;
 
+  /** Set cost term activity */
   void setActivity(bool activity) { active_ = activity; }
+
+  /** Check if cost term is active */
   bool isActive() const { return active_; }
 
+  /** Get cost term value */
   virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const = 0;
+
+  /** Get cost term quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                          const CostDesiredTrajectories& desiredTrajectory) const = 0;
 

@@ -36,18 +36,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-// State-input cost
+/** State-input cost term */
 class StateInputCost {
  public:
   StateInputCost() = default;
   virtual ~StateInputCost() = default;
   virtual StateInputCost* clone() const = 0;
 
+  /** Set cost term activity */
   void setActivity(bool activity) { active_ = activity; }
+
+  /** Check if cost term is active */
   bool isActive() const { return active_; }
 
+  /** Get cost term value */
   virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
                             const CostDesiredTrajectories& desiredTrajectory) const = 0;
+
+  /** Get cost term quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                          const CostDesiredTrajectories& desiredTrajectory) const = 0;
 

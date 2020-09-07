@@ -37,7 +37,7 @@ TEST(TestConstraintCollection, add) {
 
   // Add after construction
   std::unique_ptr<TestEmptyConstraint> constraintTerm(new TestEmptyConstraint());
-  constraintCollection.add("Constraint1", std::move(constraintTerm));
+  ASSERT_NO_THROW({ constraintCollection.add("Constraint1", std::move(constraintTerm)); });
 }
 
 TEST(TestConstraintCollection, numberOfConstraints) {

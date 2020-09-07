@@ -52,10 +52,15 @@ PinocchioInterface<SCALAR>::~PinocchioInterface() = default;
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-PinocchioInterface<SCALAR>::PinocchioInterface(const PinocchioInterface& other) {
-  robotModelPtr_ = other.robotModelPtr_;
-  robotDataPtr_.reset(new PinocchioData(*other.robotDataPtr_));
-}
+PinocchioInterface<SCALAR>::PinocchioInterface(const PinocchioInterface& rhs)
+    : robotModelPtr_(rhs.robotModelPtr_), robotDataPtr_(new PinocchioData(*rhs.robotDataPtr_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<SCALAR>::PinocchioInterface(PinocchioInterface&& rhs)
+    : robotModelPtr_(std::move(rhs.robotModelPtr_)), robotDataPtr_(std::move(rhs.robotDataPtr_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -64,6 +69,15 @@ template <typename SCALAR>
 PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(const PinocchioInterface& rhs) {
   robotModelPtr_ = rhs.robotModelPtr_;
   robotDataPtr_.reset(new PinocchioData(*rhs.robotDataPtr_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(PinocchioInterface&& rhs) {
+  std::swap(robotModelPtr_, rhs.robotModelPtr_);
+  std::swap(robotDataPtr_, rhs.robotDataPtr_);
 }
 
 /******************************************************************************************************/

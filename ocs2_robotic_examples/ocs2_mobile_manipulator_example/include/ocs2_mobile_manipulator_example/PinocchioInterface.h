@@ -64,7 +64,7 @@ struct Pose {
 
 /**
  * Pinocchio interface class contatining robot model and data.
- * The robot model can be shared between interface instances.
+ * The robot model is shared between interface instances.
  */
 template <typename SCALAR>
 class PinocchioInterface final {
@@ -87,17 +87,17 @@ class PinocchioInterface final {
   /** Destructor */
   ~PinocchioInterface();
 
-  /**
-   * Copy constructor
-   * Keeps a pointer to the shared robot model.
-   */
-  PinocchioInterface(const PinocchioInterface& other);
+  /** Copy constructor */
+  PinocchioInterface(const PinocchioInterface& rhs);
 
-  /**
-   * Copy assignment operator
-   * Keeps a pointer to the shared robot model.
-   */
+  /** Move constructor */
+  PinocchioInterface(PinocchioInterface&& rhs);
+
+  /** Copy assignment operator */
   PinocchioInterface& operator=(const PinocchioInterface& rhs);
+
+  /** Move assignment */
+  PinocchioInterface<SCALAR>& operator=(PinocchioInterface&& rhs);
 
   /** Get the pinocchio model */
   const PinocchioModel& getModel() const { return *robotModelPtr_; }

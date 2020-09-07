@@ -70,6 +70,7 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/FiniteDifferenceMethods.cpp
   src/constraint/ConstraintBase.cpp
   src/constraint/ConstraintBaseAD.cpp
+  src/constraint/ConstraintCollection.cpp
   src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
@@ -77,6 +78,7 @@ add_library(${PROJECT_NAME}
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
+  src/cost/CostCollection.cpp
   src/cost/CostFunctionBase.cpp
   src/cost/CostFunctionBaseAD.cpp
   src/cost/CostDesiredTrajectories.cpp
@@ -279,11 +281,22 @@ target_link_libraries(test_dynamics
 )
 
 catkin_add_gtest(test_cost
+  test/cost/testCostCollection.cpp
   test/cost/testRelaxedBarrierCost.cpp
   test/cost/testCostFunctionLinearCombination.cpp
   test/cost/testQuadraticCostFunction.cpp
 )
 target_link_libraries(test_cost
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_constraint
+  test/constraint/testConstraintCollection.cpp
+)
+target_link_libraries(test_constraint
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

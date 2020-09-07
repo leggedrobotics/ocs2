@@ -5,7 +5,7 @@
  *      Author: perry
  */
 
-#include <pinocchio/fwd.hpp>
+#include <pinocchio/multibody/geometry.hpp>
 
 #include <ocs2_mobile_manipulator_example/GeometryInterfaceVisualization.h>
 
@@ -19,7 +19,7 @@ GeometryInterfaceVisualization::GeometryInterfaceVisualization(const PinocchioGe
       markerPublisher_(nh.advertise<visualization_msgs::MarkerArray>("distance_markers", 1, true)),
       pinocchioWorldFrame_(pinocchioWorldFrame) {}
 
-void GeometryInterfaceVisualization::publishDistances(const ocs2::state_vector_t& q) {
+void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q) {
   std::vector<hpp::fcl::DistanceResult> results = geometryInterface_.computeDistances(q);
 
   visualization_msgs::MarkerArray markerArray;
@@ -35,6 +35,13 @@ void GeometryInterfaceVisualization::publishDistances(const ocs2::state_vector_t
 
   for (size_t i = 0; i < results.size(); ++i) {
     // I apologize for the magic numbers, it's mostly just visualization numbers(so 0.02 scale corresponds rougly to 0.02 cm)
+
+    for (size_t j = 0; j < numMarkersPerResult; ++j) {
+      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(geometryInterface_.getGeometryModel().collisionPairs[i].first) +
+                                                            " - " +
+                                                            std::to_string(geometryInterface_.getGeometryModel().collisionPairs[i].second);
+    }
+
     // The actual distance line, also denoting direction of the distance
     markerArray.markers[numMarkersPerResult * i].type = visualization_msgs::Marker::ARROW;
     markerArray.markers[numMarkersPerResult * i].points.push_back(mobile_manipulator::getPointMsg(results[i].nearest_points[0]));

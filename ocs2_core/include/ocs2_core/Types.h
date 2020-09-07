@@ -98,6 +98,12 @@ struct ScalarFunctionQuadraticApproximation {
   /** Constant term */
   scalar_t f = 0.;
 
+  /** Default constructor */
+  ScalarFunctionQuadraticApproximation() = default;
+
+  /** Construct and resize the members to given size. */
+  ScalarFunctionQuadraticApproximation(size_t nx, size_t nu);
+
   /** Compound additinon assignment opeartor */
   ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);
 
@@ -137,6 +143,12 @@ struct VectorFunctionLinearApproximation {
   matrix_t dfdu;
   /** Constant term */
   vector_t f;
+
+  /** Default constructor */
+  VectorFunctionLinearApproximation() = default;
+
+  /** Construct and resize the members to given size. */
+  VectorFunctionLinearApproximation(size_t nv, size_t nx, size_t nu);
 
   /**
    * Resize the members to the given size
@@ -183,6 +195,12 @@ struct VectorFunctionQuadraticApproximation {
   matrix_t dfdu;
   /** Constant term */
   vector_t f;
+
+  /** Default constructor */
+  VectorFunctionQuadraticApproximation() = default;
+
+  /** Construct and resize the members to given size. */
+  VectorFunctionQuadraticApproximation(size_t nv, size_t nx, size_t nu);
 
   /**
    * Resize the members to the given size

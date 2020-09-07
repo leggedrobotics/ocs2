@@ -56,7 +56,7 @@ template <typename COST>
 void CostCollection<COST>::add(std::string name, std::unique_ptr<COST> costTerm) {
   auto info = costTermMap_.emplace(std::move(name), std::move(costTerm));
   if (!info.second) {
-    throw std::runtime_error("[CostCollection::add] Cost name already exists");
+    throw std::runtime_error(std::string("[CostCollection::add] Cost term with name \"") + info.first->first + "\" already exists");
   }
 }
 

@@ -57,7 +57,8 @@ template <typename CONSTRAINT>
 void ConstraintCollection<CONSTRAINT>::add(std::string name, std::unique_ptr<CONSTRAINT> constraintTerm) {
   auto info = constraintTermMap_.emplace(std::move(name), std::move(constraintTerm));
   if (!info.second) {
-    throw std::runtime_error("[ConstraintCollection::add] Constraint name already exists");
+    throw std::runtime_error(std::string("[ConstraintCollection::add] Constraint term with name \"") + info.first->first +
+                             "\" already exists");
   }
 }
 

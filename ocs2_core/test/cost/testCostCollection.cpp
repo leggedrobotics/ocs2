@@ -122,6 +122,16 @@ TEST_F(StateInputCost_TestFixture, throwsIfCostdoesNotExist) {
       std::out_of_range);
 }
 
+TEST_F(StateInputCost_TestFixture, throwsWhenAddExistingCost) {
+  std::unique_ptr<ocs2::StateInputCost> copy(costCollection.get("Simple quadratic cost").clone());
+  EXPECT_THROW(
+      {
+        costCollection.add("Simple quadratic cost", std::move(copy));
+        // Should not reach this
+      },
+      std::runtime_error);
+}
+
 TEST_F(StateInputCost_TestFixture, canDeactivateCost) {
   auto& costFunction = costCollection.get("Simple quadratic cost");
   costFunction.setActivity(false);

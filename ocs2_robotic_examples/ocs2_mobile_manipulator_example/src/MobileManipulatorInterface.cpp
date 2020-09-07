@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/multibody/model.hpp>
+#include "pinocchio/multibody/joint/joint-composite.hpp"
 
 #include <ocs2_core/misc/LoadData.h>
 
@@ -59,11 +60,19 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
-  pinocchioInterfacePtr_.reset(new ocs2::PinocchioInterface<scalar_t>(urdfPath_));
+
+  // add 3 DOF for wheelbase
+  pinocchio::JointModelComposite rootJoint(3);
+  rootJoint.addJoint(pinocchio::JointModelPX());
+  rootJoint.addJoint(pinocchio::JointModelPY());
+  rootJoint.addJoint(pinocchio::JointModelRZ());
+
+  using PinocchioInterface = ocs2::PinocchioInterface<scalar_t>;
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(PinocchioInterface::buildFromUrdf(urdfPath_, rootJoint)));
   pinocchioInterfacePtr_->display();
 
   // local CppAD copy
-  ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd(ocs2::PinocchioInterface<scalar_t>::castToCppAd(*pinocchioInterfacePtr_));
+  auto pinocchioInterfaceAd = PinocchioInterface::castToCppAd(*pinocchioInterfacePtr_);
 
   /*
    * DDP-MPC settings

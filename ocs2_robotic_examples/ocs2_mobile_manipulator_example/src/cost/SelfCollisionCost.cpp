@@ -34,10 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Todo(perry) why does this header need to come after the SelfCollisionCost.h?
 #include <ocs2_mobile_manipulator_example/CppAdHelpers.h>
 
-namespace mobile_manipulator {
+#include <pinocchio/multibody/geometry.hpp>
 
-SelfCollisionCost::SelfCollisionCost(PinocchioInterface<double>& pinocchioInterface,
-                                     const PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance,
+namespace ocs2 {
+
+SelfCollisionCost::SelfCollisionCost(ocs2::PinocchioInterface<double>& pinocchioInterface,
+                                     const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance,
                                      scalar_t mu, scalar_t delta)
     : pinocchioInterface_(pinocchioInterface),
       pinocchioGeometrySelfCollisions_(geometryInterfaceSelfCollision),
@@ -94,7 +96,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
     const pinocchio::GeometryObject& geometryObject1 =
         pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.first];
 
-    const Pose<double> joint1Pose = pinocchioInterface_.getJointPose(geometryObject1.parentJoint, x);
+    const ocs2::Pose<double> joint1Pose = pinocchioInterface_.getJointPose(geometryObject1.parentJoint, x);
     const Eigen::Vector3d pt1Offset = result.nearest_points[0] - joint1Pose.position;
     const Eigen::MatrixXd joint1Jacobian = pinocchioInterface_.getJacobianOfJoint(geometryObject1.parentJoint);
     // Jacobians from pinocchio are given as
@@ -132,4 +134,4 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::finalCostQuadraticApprox
   return approximation;
 }
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

@@ -21,16 +21,13 @@ class DistanceResult;
 
 namespace ocs2 {
 
-// TODO(perry) remove when PinocchioGeometryInterface belongs to ocs2
-using namespace mobile_manipulator;
-
 class GeometryInterfaceVisualization {
  public:
   GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
                                  const std::string& pinocchioWorldFrame = "world");
   virtual ~GeometryInterfaceVisualization() = default;
 
-  void publishDistances(const ocs2::state_vector_t&);
+  void publishDistances(const ocs2::vector_t&);
 
  private:
   PinocchioGeometryInterface geometryInterface_;

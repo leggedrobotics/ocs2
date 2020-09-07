@@ -40,8 +40,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
-std::unique_ptr<mobile_manipulator::PinocchioInterface<double>> pInterface;
-std::shared_ptr<mobile_manipulator::PinocchioGeometryInterface> gInterface;
+std::unique_ptr<ocs2::PinocchioInterface<double>> pInterface;
+std::shared_ptr<ocs2::PinocchioGeometryInterface> gInterface;
 std::unique_ptr<ocs2::GeometryInterfaceVisualization> vInterface;
 
 sensor_msgs::JointState lastMsg;

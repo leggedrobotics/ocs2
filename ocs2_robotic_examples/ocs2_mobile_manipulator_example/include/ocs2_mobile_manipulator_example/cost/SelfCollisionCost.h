@@ -36,12 +36,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 
-namespace mobile_manipulator {
+namespace ocs2 {
 
 class SelfCollisionCost final : public ocs2::CostFunctionBase {
  public:
-  SelfCollisionCost(PinocchioInterface<double>& pinocchioInterface, const PinocchioGeometryInterface& geometryInterfaceSelfCollision,
-                    scalar_t minimumDistance, scalar_t mu, scalar_t delta);
+  SelfCollisionCost(ocs2::PinocchioInterface<double>& pinocchioInterface,
+                    const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
+                    scalar_t delta);
   ~SelfCollisionCost() override = default;
 
   /* Copy constructor */
@@ -57,12 +58,12 @@ class SelfCollisionCost final : public ocs2::CostFunctionBase {
   ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  private:
-  PinocchioInterface<double> pinocchioInterface_;
-  PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
+  ocs2::PinocchioInterface<double> pinocchioInterface_;
+  ocs2::PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
   scalar_t minimumDistance_;
 
   const ocs2::RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

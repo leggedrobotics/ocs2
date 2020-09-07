@@ -72,6 +72,8 @@ class PinocchioInterface final {
   using PinocchioModel = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using PinocchioData = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
 
+  using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+
   /**
    * Construct from given pinocchio model
    * @param[in] model pinocchio model
@@ -117,9 +119,9 @@ class PinocchioInterface final {
 
   void computeAllJacobians(const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
-  MatrixX getJacobianOfJoint(pinocchio::JointIndex jointIndex);
+  MatrixX getJacobianOfJoint(size_t jointIndex);
 
-  Pose<SCALAR> getJointPose(pinocchio::JointIndex jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  Pose<SCALAR> getJointPose(size_t jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
   /** Cast pinocchio interface to CppAD scalar type. */
   static PinocchioInterface<ad_scalar_t> castToCppAd(const PinocchioInterface<scalar_t>& interface);

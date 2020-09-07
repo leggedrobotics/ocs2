@@ -44,7 +44,7 @@ template <typename COST>
 CostCollection<COST>::CostCollection(const CostCollection& rhs) {
   // Loop through all costs by name and clone into the new object
   costTermMap_.clear();
-  for (auto& costPair : rhs.costTermMap_) {
+  for (const auto& costPair : rhs.costTermMap_) {
     add(costPair.first, std::unique_ptr<COST>(costPair.second->clone()));
   }
 }
@@ -70,7 +70,7 @@ scalar_t CostCollection<StateInputCost>::getValue(scalar_t time, const vector_t&
   scalar_t cost = 0.0;
 
   // append vectors of cost values from each costTerm
-  for (auto& costPair : costTermMap_) {
+  for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       cost += costPair.second->getValue(time, state, input, desiredTrajectory);
     }
@@ -89,7 +89,7 @@ ScalarFunctionQuadraticApproximation CostCollection<StateInputCost>::getQuadrati
   ScalarFunctionQuadraticApproximation cost;
   cost.setZero(state.rows(), input.rows());
 
-  for (auto& costPair : costTermMap_) {
+  for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory);
     }
@@ -107,7 +107,7 @@ scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& stat
   scalar_t cost = 0.0;
 
   // append vectors of cost values from each costTerm
-  for (auto& costPair : costTermMap_) {
+  for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       cost += costPair.second->getValue(time, state, desiredTrajectory);
     }
@@ -129,7 +129,7 @@ ScalarFunctionQuadraticApproximation CostCollection<StateCost>::getQuadraticAppr
   cost.dfdxx.setZero(state.rows(), state.rows());
   // input derivatives are left empty initialized
 
-  for (auto& costPair : costTermMap_) {
+  for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory);
       cost.f += costTermApproximation.f;

@@ -38,7 +38,7 @@ template <typename CONSTRAINT>
 ConstraintCollection<CONSTRAINT>::ConstraintCollection(const ConstraintCollection<CONSTRAINT>& rhs) {
   // Loop through all constraints by name and clone into the new object
   constraintTermMap_.clear();
-  for (auto& constraintPair : rhs.constraintTermMap_) {
+  for (const auto& constraintPair : rhs.constraintTermMap_) {
     add(constraintPair.first, std::unique_ptr<CONSTRAINT>(constraintPair.second->clone()));
   }
 }
@@ -69,7 +69,7 @@ size_t ConstraintCollection<CONSTRAINT>::getNumConstraints(scalar_t time) const 
   size_t numConstraints = 0;
 
   // accumulate number of constraints for each constraintTerm
-  for (auto& constraintPair : constraintTermMap_) {
+  for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       numConstraints += constraintPair.second->getNumConstraints(time);
     }
@@ -89,7 +89,7 @@ vector_t ConstraintCollection<StateInputConstraint>::getValue(scalar_t time, con
 
   // append vectors of constraint values from each constraintTerm
   size_t i = 0;
-  for (auto& constraintPair : constraintTermMap_) {
+  for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       const auto constraintTermValues = constraintPair.second->getValue(time, state, input);
       constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
@@ -112,7 +112,7 @@ auto ConstraintCollection<StateInputConstraint>::getLinearApproximation(scalar_t
 
   // append linearApproximation each constraintTerm
   size_t i = 0;
-  for (auto& constraintPair : constraintTermMap_) {
+  for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state, input);
       const size_t nc = constraintTermApproximation.f.rows();
@@ -145,7 +145,7 @@ auto ConstraintCollection<StateInputConstraint>::getQuadraticApproximation(scala
 
   // append quadraticApproximation each constraintTerm
   size_t i = 0;
-  for (auto& constraintPair : constraintTermMap_) {
+  for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state, input);
       const size_t nc = constraintTermApproximation.f.rows();
@@ -173,7 +173,7 @@ vector_t ConstraintCollection<StateConstraint>::getValue(scalar_t time, const ve
 
   // append vectors of constraint values from each constraintTerm
   size_t i = 0;
-  for (auto& constraintPair : constraintTermMap_) {
+  for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       const auto constraintTermValues = constraintPair.second->getValue(time, state);
       constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
@@ -195,7 +195,7 @@ auto ConstraintCollection<StateConstraint>::getLinearApproximation(scalar_t time
 
   // append linearApproximation each constraintTerm
   size_t i = 0;
-  for (auto& constraintPair : constraintTermMap_) {
+  for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state);
       const size_t nc = constraintTermApproximation.f.rows();
@@ -224,7 +224,7 @@ auto ConstraintCollection<StateConstraint>::getQuadraticApproximation(scalar_t t
 
   // append quadraticApproximation each constraintTerm
   size_t i = 0;
-  for (auto& constraintPair : constraintTermMap_) {
+  for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state);
       const size_t nc = constraintTermApproximation.f.rows();

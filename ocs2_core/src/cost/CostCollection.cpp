@@ -69,7 +69,7 @@ scalar_t CostCollection<StateInputCost>::getValue(scalar_t time, const vector_t&
                                                   const CostDesiredTrajectories& desiredTrajectory) const {
   scalar_t cost = 0.0;
 
-  // append vectors of cost values from each costTerm
+  // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       cost += costPair.second->getValue(time, state, input, desiredTrajectory);
@@ -86,9 +86,9 @@ template <>
 template <>
 ScalarFunctionQuadraticApproximation CostCollection<StateInputCost>::getQuadraticApproximation(
     scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
-  ScalarFunctionQuadraticApproximation cost;
-  cost.setZero(state.rows(), input.rows());
+  auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
 
+  // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory);
@@ -106,7 +106,7 @@ template <>
 scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
   scalar_t cost = 0.0;
 
-  // append vectors of cost values from each costTerm
+  // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       cost += costPair.second->getValue(time, state, desiredTrajectory);
@@ -123,12 +123,9 @@ template <>
 template <>
 ScalarFunctionQuadraticApproximation CostCollection<StateCost>::getQuadraticApproximation(
     scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
-  ScalarFunctionQuadraticApproximation cost;
-  cost.f = 0.0;
-  cost.dfdx.setZero(state.rows());
-  cost.dfdxx.setZero(state.rows(), state.rows());
-  // input derivatives are left empty initialized
+  auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
 
+  // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
       const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory);

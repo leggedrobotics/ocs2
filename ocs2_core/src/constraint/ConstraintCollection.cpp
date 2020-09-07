@@ -108,18 +108,17 @@ template <>
 template <>
 auto ConstraintCollection<StateInputConstraint>::getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const
     -> LinearApproximation_t {
-  LinearApproximation_t linearApproximation;
-  linearApproximation.resize(getNumConstraints(time), state.rows(), input.rows());
+  LinearApproximation_t linearApproximation(getNumConstraints(time), state.rows(), input.rows());
 
-  // append linearApproximation each constraintTerm
+  // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state, input);
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
-      linearApproximation.dfdx.block(i, 0, nc, state.rows()) = constraintTermApproximation.dfdx;
-      linearApproximation.dfdu.block(i, 0, nc, input.rows()) = constraintTermApproximation.dfdu;
+      linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
+      linearApproximation.dfdu.middleRows(i, nc) = constraintTermApproximation.dfdu;
       i += nc;
     }
   }
@@ -140,19 +139,19 @@ auto ConstraintCollection<StateInputConstraint>::getQuadraticApproximation(scala
   quadraticApproximation.f.resize(numConstraints);
   quadraticApproximation.dfdx.resize(numConstraints, state.rows());
   quadraticApproximation.dfdu.resize(numConstraints, input.rows());
-  quadraticApproximation.dfdxx.reserve(numConstraints);
+  quadraticApproximation.dfdxx.reserve(numConstraints);  // Use reserve instead of resize to avoid unnecessary allocations.
   quadraticApproximation.dfdux.reserve(numConstraints);
   quadraticApproximation.dfduu.reserve(numConstraints);
 
-  // append quadraticApproximation each constraintTerm
+  // append quadraticApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state, input);
       const size_t nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
-      quadraticApproximation.dfdx.block(i, 0, nc, state.rows()) = constraintTermApproximation.dfdx;
-      quadraticApproximation.dfdu.block(i, 0, nc, input.rows()) = constraintTermApproximation.dfdu;
+      quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
+      quadraticApproximation.dfdu.middleRows(i, nc) = constraintTermApproximation.dfdu;
       appendVectorToVectorByMoving(quadraticApproximation.dfdxx, constraintTermApproximation.dfdxx);
       appendVectorToVectorByMoving(quadraticApproximation.dfdux, constraintTermApproximation.dfdux);
       appendVectorToVectorByMoving(quadraticApproximation.dfduu, constraintTermApproximation.dfduu);
@@ -191,17 +190,16 @@ vector_t ConstraintCollection<StateConstraint>::getValue(scalar_t time, const ve
 template <>
 template <>
 auto ConstraintCollection<StateConstraint>::getLinearApproximation(scalar_t time, const vector_t& state) const -> LinearApproximation_t {
-  LinearApproximation_t linearApproximation;
-  linearApproximation.resize(getNumConstraints(time), state.rows(), 0);
+  LinearApproximation_t linearApproximation(getNumConstraints(time), state.rows(), 0);
 
-  // append linearApproximation each constraintTerm
+  // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state);
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
-      linearApproximation.dfdx.block(i, 0, nc, state.rows()) = constraintTermApproximation.dfdx;
+      linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
       i += nc;
     }
   }
@@ -221,16 +219,16 @@ auto ConstraintCollection<StateConstraint>::getQuadraticApproximation(scalar_t t
   QuadraticApproximation_t quadraticApproximation;
   quadraticApproximation.f.resize(numConstraints);
   quadraticApproximation.dfdx.resize(numConstraints, state.rows());
-  quadraticApproximation.dfdxx.reserve(numConstraints);
+  quadraticApproximation.dfdxx.reserve(numConstraints);  // Use reserve instead of resize to avoid unnecessary allocations.
 
-  // append quadraticApproximation each constraintTerm
+  // append quadraticApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
       auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state);
       const size_t nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
-      quadraticApproximation.dfdx.block(i, 0, nc, state.rows()) = constraintTermApproximation.dfdx;
+      quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
       appendVectorToVectorByMoving(quadraticApproximation.dfdxx, constraintTermApproximation.dfdxx);
       i += nc;
     }

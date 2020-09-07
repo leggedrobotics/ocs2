@@ -117,16 +117,16 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   geometry_msgs::PoseArray poseArray;
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
-  // // End effector trajectory
-  // std::vector<geometry_msgs::Point> endEffectorTrajectory;
-  // endEffectorTrajectory.reserve(mpcStateTrajectory.size());
-  // std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
-  //   const auto basePosition = getEndEffectorPosition(state, pinocchioInterface);
-  //   endEffectorTrajectory.push_back(getPointMsg(basePosition));
-  // });
+  // End effector trajectory
+  std::vector<geometry_msgs::Point> endEffectorTrajectory;
+  endEffectorTrajectory.reserve(mpcStateTrajectory.size());
+  std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
+    const auto pose = pinocchioInterface_.getBodyPoseInWorldFrame("WRIST_2", state);
+    endEffectorTrajectory.push_back(getPointMsg(pose.position));
+  });
 
-  // markerArray.markers.emplace_back(getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
-  // markerArray.markers.back().ns = "EE Trajectory";
+  markerArray.markers.emplace_back(getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
+  markerArray.markers.back().ns = "EE Trajectory";
 
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {

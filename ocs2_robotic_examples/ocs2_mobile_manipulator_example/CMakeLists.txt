@@ -43,6 +43,7 @@ catkin_package(
     include
   LIBRARIES
     ${PROJECT_NAME}
+    ${PROJECT_NAME}_pinocchio
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
@@ -68,6 +69,24 @@ link_directories(
   ${pinocchio_LIBRARY_DIRS}
 )
 
+# pinocchio precompile library
+add_library(${PROJECT_NAME}_pinocchio
+  src/pinocchio_lib/frames.cpp
+  src/pinocchio_lib/kinematics.cpp
+  src/pinocchio_lib/jacobian.cpp
+  src/pinocchio_lib/types.cpp
+  src/pinocchio_lib/urdf.cpp
+)
+add_dependencies(${PROJECT_NAME}_pinocchio
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}_pinocchio
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${pinocchio_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME}_pinocchio PUBLIC ${FLAGS})
+
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
   src/cost/MobileManipulatorCost.cpp
@@ -87,7 +106,7 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
-  ${pinocchio_LIBRARIES}
+  ${PROJECT_NAME}_pinocchio
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 

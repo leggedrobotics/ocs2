@@ -28,6 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+
+#include <ocs2_mobile_manipulator_example/pinocchio_lib.h>
+
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.tpp>
 
 namespace ocs2 {

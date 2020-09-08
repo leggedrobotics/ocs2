@@ -73,6 +73,9 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
 
   const ocs2::PinocchioInterface<scalar_t>& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
+  /** MobileManipulator PinocchioInterface factory */
+  static ocs2::PinocchioInterface<scalar_t> buildPinocchioInterface(const std::string& urdfPath);
+
  protected:
   void loadSettings(const std::string& taskFile);
 

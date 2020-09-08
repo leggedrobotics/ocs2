@@ -46,7 +46,7 @@ struct ModelTpl;
 template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
 struct DataTpl;
 template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
-struct JointModelCompositeTpl;
+struct JointModelTpl;
 }  // namespace pinocchio
 
 namespace ocs2 {
@@ -64,13 +64,14 @@ struct Pose {
 
 /**
  * Pinocchio interface class contatining robot model and data.
- * The robot model can be shared between interface instances.
+ * The robot model is shared between interface instances.
  */
 template <typename SCALAR>
 class PinocchioInterface final {
  public:
   using PinocchioModel = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using PinocchioData = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
+  using PinocchioJointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
   using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -80,26 +81,20 @@ class PinocchioInterface final {
    */
   explicit PinocchioInterface(const PinocchioModel& model);
 
-  /**
-   * Load pinocchio model from URDF
-   * @param[in] urdfFile Path to URDF
-   */
-  explicit PinocchioInterface(const std::string& urdfPath);
-
   /** Destructor */
   ~PinocchioInterface();
 
-  /**
-   * Copy constructor
-   * Keeps a pointer to the shared robot model.
-   */
-  PinocchioInterface(const PinocchioInterface& other);
+  /** Copy constructor */
+  PinocchioInterface(const PinocchioInterface& rhs);
 
-  /**
-   * Copy assignment operator
-   * Keeps a pointer to the shared robot model.
-   */
+  /** Move constructor */
+  PinocchioInterface(PinocchioInterface&& rhs);
+
+  /** Copy assignment operator */
   PinocchioInterface& operator=(const PinocchioInterface& rhs);
+
+  /** Move assignment */
+  PinocchioInterface<SCALAR>& operator=(PinocchioInterface&& rhs);
 
   /** Get the pinocchio model */
   const PinocchioModel& getModel() const { return *robotModelPtr_; }
@@ -125,6 +120,14 @@ class PinocchioInterface final {
 
   /** Cast pinocchio interface to CppAD scalar type. */
   static PinocchioInterface<ad_scalar_t> castToCppAd(const PinocchioInterface<scalar_t>& interface);
+
+  /** Factory function from URDF */
+  static PinocchioInterface<scalar_t> buildFromUrdf(const std::string& urdfPath);
+  static PinocchioInterface<scalar_t> buildFromUrdf(const std::string& urdfPath, const PinocchioJointModel& rootJoint);
+
+  /** Factory function from URDF XML stream */
+  static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream);
+  static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream, const PinocchioJointModel& rootJoint);
 
   /** Prints some debug info of the pinocchio model. */
   void display();

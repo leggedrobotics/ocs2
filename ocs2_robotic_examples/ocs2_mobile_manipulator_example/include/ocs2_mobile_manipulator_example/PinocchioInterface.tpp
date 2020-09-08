@@ -27,36 +27,21 @@ PinocchioInterface<SCALAR>::PinocchioInterface(const PinocchioModel& model) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-PinocchioInterface<SCALAR>::PinocchioInterface(const std::string& urdfPath) {
-  pinocchio::ModelTpl<scalar_t> tempModel;
-
-  // add 3 DOF for wheelbase
-  pinocchio::JointModelComposite jointComposite(3);
-  jointComposite.addJoint(pinocchio::JointModelPX());
-  jointComposite.addJoint(pinocchio::JointModelPY());
-  jointComposite.addJoint(pinocchio::JointModelRZ());
-
-  // build robot model and robot data
-  pinocchio::urdf::buildModel(urdfPath, jointComposite, tempModel);
-
-  robotModelPtr_ = std::make_shared<const PinocchioModel>(tempModel.cast<SCALAR>());
-  robotDataPtr_ = std::unique_ptr<PinocchioData>(new PinocchioData(*robotModelPtr_));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
 PinocchioInterface<SCALAR>::~PinocchioInterface() = default;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-PinocchioInterface<SCALAR>::PinocchioInterface(const PinocchioInterface& other) {
-  robotModelPtr_ = other.robotModelPtr_;
-  robotDataPtr_.reset(new PinocchioData(*other.robotDataPtr_));
-}
+PinocchioInterface<SCALAR>::PinocchioInterface(const PinocchioInterface& rhs)
+    : robotModelPtr_(rhs.robotModelPtr_), robotDataPtr_(new PinocchioData(*rhs.robotDataPtr_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<SCALAR>::PinocchioInterface(PinocchioInterface&& rhs)
+    : robotModelPtr_(std::move(rhs.robotModelPtr_)), robotDataPtr_(std::move(rhs.robotDataPtr_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -65,6 +50,15 @@ template <typename SCALAR>
 PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(const PinocchioInterface& rhs) {
   robotModelPtr_ = rhs.robotModelPtr_;
   robotDataPtr_.reset(new PinocchioData(*rhs.robotDataPtr_));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(PinocchioInterface&& rhs) {
+  std::swap(robotModelPtr_, rhs.robotModelPtr_);
+  std::swap(robotDataPtr_, rhs.robotDataPtr_);
 }
 
 /******************************************************************************************************/
@@ -120,6 +114,61 @@ Pose<SCALAR> PinocchioInterface<SCALAR>::getJointPose(pinocchio::JointIndex join
   return pose;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<scalar_t> PinocchioInterface<SCALAR>::buildFromUrdf(const std::string& urdfPath) {
+  pinocchio::ModelTpl<scalar_t> model;
+
+  // build robot model and robot data
+  pinocchio::urdf::buildModel(urdfPath, model);
+
+  return PinocchioInterface<scalar_t>(model);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<scalar_t> PinocchioInterface<SCALAR>::buildFromUrdf(const std::string& urdfPath, const PinocchioJointModel& rootJoint) {
+  pinocchio::ModelTpl<scalar_t> model;
+
+  // build robot model and robot data
+  pinocchio::urdf::buildModel(urdfPath, rootJoint, model);
+
+  return PinocchioInterface<scalar_t>(model);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<scalar_t> PinocchioInterface<SCALAR>::buildFromXml(const std::string& xmlStream) {
+  pinocchio::ModelTpl<scalar_t> model;
+
+  // build robot model and robot data
+  pinocchio::urdf::buildModelFromXML(xmlStream, model);
+
+  return PinocchioInterface<scalar_t>(model);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+PinocchioInterface<scalar_t> PinocchioInterface<SCALAR>::buildFromXml(const std::string& xmlStream, const PinocchioJointModel& rootJoint) {
+  pinocchio::ModelTpl<scalar_t> model;
+
+  // build robot model and robot data
+  pinocchio::urdf::buildModelFromXML(xmlStream, rootJoint, model);
+
+  return PinocchioInterface<scalar_t>(model);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 void PinocchioInterface<SCALAR>::display() {
   const auto& model = getModel();

@@ -77,7 +77,7 @@ initialState
   (0,0)  0.0  ; position x
   (1,0)  0.0  ; position y
   (2,0)  0.0  ; heading
-  (3,0)  2.0  ; SH_ROT
+  (3,0)  2.5  ; SH_ROT
   (4,0) -1.0  ; SH_FLE
   (5,0)  1.5  ; EL_FLE
   (6,0)  0.0  ; EL_ROT
@@ -129,4 +129,33 @@ endEffectorCost
     (4,4) 1.0  ; end effector pitch
     (5,5) 1.0  ; end effector yaw
   }
+}
+
+
+selfCollisionCost
+{
+  weight  1.00
+
+  ; Self Collision pairs
+  pairs
+  {
+    scaling 1e+0
+    default -1 ; this is a hack to allow a huge matrix that can take a lot of pairs
+
+    (0,0) 1 ; large side block
+    (0,1) 4 ; upper arm long cylinder
+    (1,0) 1 ; large side block
+    (1,1) 6 ; upper arm long cylinder
+    (1,0) 1 ; large side block
+    (1,1) 6 ; upper arm long cylinder
+  }
+
+  ; minimum distance allowed between the pairs
+  minimumDistance  0.1
+
+  ; relaxed log barrier mu
+  mu  0.01
+
+  ; relaxed log barrier delta
+  delta  1e-3
 }

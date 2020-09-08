@@ -56,6 +56,7 @@ ConstraintCollection<CONSTRAINT>::ConstraintCollection(ConstraintCollection<CONS
 template <typename CONSTRAINT>
 ConstraintCollection<CONSTRAINT>& ConstraintCollection<CONSTRAINT>::operator=(const ConstraintCollection<CONSTRAINT>& rhs) {
   *this = ConstraintCollection<CONSTRAINT>(rhs);
+  return *this;
 }
 
 /******************************************************************************************************/
@@ -64,6 +65,7 @@ ConstraintCollection<CONSTRAINT>& ConstraintCollection<CONSTRAINT>::operator=(co
 template <typename CONSTRAINT>
 ConstraintCollection<CONSTRAINT>& ConstraintCollection<CONSTRAINT>::operator=(ConstraintCollection<CONSTRAINT>&& rhs) {
   std::swap(constraintTermMap_, rhs.constraintTermMap_);
+  return *this;
 }
 
 /******************************************************************************************************/

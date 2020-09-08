@@ -55,6 +55,7 @@ CostCollection<COST>::CostCollection(CostCollection<COST>&& rhs) noexcept : cost
 template <typename COST>
 CostCollection<COST>& CostCollection<COST>::operator=(const CostCollection<COST>& rhs) {
   *this = CostCollection<COST>(rhs);
+  return *this;
 }
 
 /******************************************************************************************************/
@@ -63,6 +64,7 @@ CostCollection<COST>& CostCollection<COST>::operator=(const CostCollection<COST>
 template <typename COST>
 CostCollection<COST>& CostCollection<COST>::operator=(CostCollection<COST>&& rhs) {
   std::swap(costTermMap_, rhs.costTermMap_);
+  return *this;
 }
 
 /******************************************************************************************************/

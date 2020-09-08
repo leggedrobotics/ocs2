@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 #include <ocs2_mobile_manipulator_example/PinocchioGeometryInterface.hpp>
 
+#include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorVisualizationHelpers.h>
 
 #include <ros/package.h>
@@ -106,7 +107,8 @@ int main(int argc, char** argv) {
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
-  pInterface.reset(new ocs2::PinocchioInterface<double>(urdfPath));
+  pInterface.reset(
+      new ocs2::PinocchioInterface<ocs2::scalar_t>(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
   gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, {{0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}}));
 
   for (auto obj : gInterface->getGeometryModel().geometryObjects) {

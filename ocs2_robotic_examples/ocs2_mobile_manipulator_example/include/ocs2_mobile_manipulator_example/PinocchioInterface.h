@@ -46,7 +46,7 @@ struct ModelTpl;
 template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
 struct DataTpl;
 template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
-struct JointModelCompositeTpl;
+struct JointModelTpl;
 }  // namespace pinocchio
 
 namespace ocs2 {
@@ -71,18 +71,13 @@ class PinocchioInterface final {
  public:
   using PinocchioModel = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using PinocchioData = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
+  using PinocchioJointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
   /**
    * Construct from given pinocchio model
    * @param[in] model pinocchio model
    */
   explicit PinocchioInterface(const PinocchioModel& model);
-
-  /**
-   * Load pinocchio model from URDF
-   * @param[in] urdfFile Path to URDF
-   */
-  explicit PinocchioInterface(const std::string& urdfPath);
 
   /** Destructor */
   ~PinocchioInterface();
@@ -117,6 +112,14 @@ class PinocchioInterface final {
 
   /** Cast pinocchio interface to CppAD scalar type. */
   static PinocchioInterface<ad_scalar_t> castToCppAd(const PinocchioInterface<scalar_t>& interface);
+
+  /** Factory function from URDF */
+  static PinocchioInterface<scalar_t> buildFromUrdf(const std::string& urdfPath);
+  static PinocchioInterface<scalar_t> buildFromUrdf(const std::string& urdfPath, const PinocchioJointModel& rootJoint);
+
+  /** Factory function from URDF XML stream */
+  static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream);
+  static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream, const PinocchioJointModel& rootJoint);
 
   /** Prints some debug info of the pinocchio model. */
   void display();

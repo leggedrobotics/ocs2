@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "ocs2_mpc/CommandData.h"
+#include "ocs2_mpc/MrtObserver.h"
 #include "ocs2_mpc/SystemObservation.h"
 
 namespace ocs2 {
@@ -147,27 +148,17 @@ class MRT_BASE {
    */
   bool isRolloutSet() const { return rolloutPtr_ != nullptr; }
 
- protected:
   /**
-   * The updatePolicy() method will call this method which allows the user to
-   * customize the in-use policy. Note that this method is already
-   * protected with a mutex which blocks the policy callback. Moreover, this method
-   * may be called in the main thread of the program. Thus, for efficiency and
-   * practical considerations you should avoid computationally expensive operations.
-   * For such operations you may want to use the modifyBufferPolicy()
-   * methods which runs on a separate thread which directly modifies the received
-   * policy messages on the data buffer.
-   *
+   * Adds an Mrt observer to the policy update process
    */
-  virtual void modifyPolicy(const CommandData& command, PrimalSolution& primalSolution) {}
+  void addMrtObserver(std::shared_ptr<MrtObserver> mrtObserver) { mrtObservers_.push_back(std::move(mrtObserver)); };
 
-  /**
-   * This method can be used to modify the policy on the buffer without inputting the main thread.
-   *
-   * @param [in] commandBuffer: buffered command data.
-   * @param primalSolutionBuffer: The primal problem's solution on the buffer.
-   */
-  virtual void modifyBufferPolicy(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) {}
+ protected:
+  /** Calls modifyPolicy on all mrt observers. */
+  void modifyPolicy(const CommandData& command, PrimalSolution& primalSolution);
+
+  /** Calls modifyBufferPolicy on all mrt observers. */
+  void modifyBufferPolicy(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
 
   /**
    * Constructs a partitioningTimes vector with 2 elements: minimum of the already
@@ -202,6 +193,9 @@ class MRT_BASE {
   scalar_array_t partitioningTimes_;
   scalar_array_t partitioningTimesBuffer_;
   SystemObservation initPlanObservation_;  //! The initial observation of the first plan ever received
+
+ private:
+  std::vector<std::shared_ptr<MrtObserver>> mrtObservers_;
 };
 
 }  // namespace ocs2

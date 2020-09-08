@@ -154,6 +154,28 @@ bool MRT_BASE::updatePolicy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void MRT_BASE::modifyPolicy(const CommandData& command, PrimalSolution& primalSolution) {
+  for (auto& mrtObserver : mrtObservers_) {
+    if (mrtObserver) {
+      mrtObserver->modifyPolicy(command, primalSolution);
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_BASE::modifyBufferPolicy(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) {
+  for (auto& mrtObserver : mrtObservers_) {
+    if (mrtObserver) {
+      mrtObserver->modifyBufferPolicy(commandBuffer, primalSolutionBuffer);
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MRT_BASE::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
   partitioningTimes.resize(2);
   partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time : time;

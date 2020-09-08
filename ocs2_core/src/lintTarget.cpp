@@ -9,6 +9,7 @@
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/ConstraintBaseAD.h>
+#include <ocs2_core/constraint/ConstraintCollection.h>
 #include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
@@ -22,6 +23,7 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
+#include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/CostFunctionBaseAD.h>

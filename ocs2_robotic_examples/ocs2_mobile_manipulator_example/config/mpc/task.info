@@ -146,8 +146,8 @@ selfCollisionCost
     (0,1) 4 ; upper arm long cylinder
     (1,0) 1 ; large side block
     (1,1) 6 ; upper arm long cylinder
-    (1,0) 1 ; large side block
-    (1,1) 6 ; upper arm long cylinder
+    (2,0) 1 ; large side block
+    (2,1) 9 ; end effector
   }
 
   ; minimum distance allowed between the pairs

@@ -63,8 +63,6 @@ scalar_t SelfCollisionCost::cost(scalar_t t, const vector_t& x, const vector_t& 
     violations[i] = result.min_distance - minimumDistance_;
   }
 
-  //  std::cout << "Final cost = " << relaxedBarrierPenalty_.penaltyCost(violations) << std::endl;
-
   return relaxedBarrierPenalty_.penaltyCost(violations);
 }
 scalar_t SelfCollisionCost::finalCost(scalar_t t, const vector_t& x) {
@@ -72,15 +70,13 @@ scalar_t SelfCollisionCost::finalCost(scalar_t t, const vector_t& x) {
 }
 
 ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  //  std::cout << "costQuadraticApproximation " << std::endl;
-
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
   VectorFunctionQuadraticApproximation distanceQuadraticApproximation;
   distanceQuadraticApproximation.f = vector_t(results.size());
   distanceQuadraticApproximation.dfdx.resize(results.size(), x.size());
   distanceQuadraticApproximation.dfdu = matrix_t::Zero(results.size(), u.size());
-  distanceQuadraticApproximation.dfdxx = matrix_array_t(results.size(), -10000 * matrix_t::Identity(x.size(), x.size()));
+  distanceQuadraticApproximation.dfdxx = matrix_array_t(results.size(), matrix_t::Zero(x.size(), x.size()));
   distanceQuadraticApproximation.dfdux = matrix_array_t(results.size(), matrix_t::Zero(x.size(), u.size()));
   distanceQuadraticApproximation.dfduu = matrix_array_t(results.size(), matrix_t::Zero(u.size(), u.size()));
 
@@ -96,6 +92,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
     const pinocchio::GeometryObject& geometryObject1 =
         pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.first];
 
+    // We need to get the jacobian of the point on the first object; use the joint jacobian translated to the point
     const ocs2::Pose<double> joint1Pose = pinocchioInterface_.getJointPose(geometryObject1.parentJoint, x);
     const Eigen::Vector3d pt1Offset = result.nearest_points[0] - joint1Pose.position;
     const Eigen::MatrixXd joint1Jacobian = pinocchioInterface_.getJacobianOfJoint(geometryObject1.parentJoint);
@@ -107,11 +104,14 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
     const pinocchio::GeometryObject& geometryObject2 =
         pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.second];
 
+    // We need to get the jacobian of the point on the second object; use the joint jacobian translated to the point
     const Pose<double> joint2Pose = pinocchioInterface_.getJointPose(geometryObject2.parentJoint, x);
     const Eigen::Vector3d pt2Offset = result.nearest_points[0] - joint2Pose.position;
     const Eigen::MatrixXd joint2Jacobian = pinocchioInterface_.getJacobianOfJoint(geometryObject2.parentJoint);
     const Eigen::MatrixXd pt2Jacobian = joint2Jacobian.topRows(3) - skewSymmetricMatrix(pt2Offset) * joint2Jacobian.bottomRows(3);
 
+    // To get the (approximate) jacobian of the distance, get the difference between the two nearest point jacobians, then multiply by the
+    // vector from point to point
     const Eigen::MatrixXd differenceJacobian = pt2Jacobian - pt1Jacobian;
     const Eigen::Vector3d distanceVector = (result.nearest_points[1] - result.nearest_points[0]).normalized();
     distanceQuadraticApproximation.dfdx.row(i) = distanceVector.transpose() * differenceJacobian;

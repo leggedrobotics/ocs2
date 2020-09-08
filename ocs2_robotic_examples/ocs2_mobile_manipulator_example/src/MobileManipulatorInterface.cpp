@@ -58,21 +58,27 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
-  std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
-
+ocs2::PinocchioInterface<scalar_t> MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfPath) {
   // add 3 DOF for wheelbase
   pinocchio::JointModelComposite rootJoint(3);
   rootJoint.addJoint(pinocchio::JointModelPX());
   rootJoint.addJoint(pinocchio::JointModelPY());
   rootJoint.addJoint(pinocchio::JointModelRZ());
 
-  using PinocchioInterface = ocs2::PinocchioInterface<scalar_t>;
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(PinocchioInterface::buildFromUrdf(urdfPath_, rootJoint)));
+  return ocs2::PinocchioInterface<scalar_t>::buildFromUrdf(urdfPath, rootJoint);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
+  std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
+
+  pinocchioInterfacePtr_.reset(new ocs2::PinocchioInterface<scalar_t>(buildPinocchioInterface(urdfPath_)));
   pinocchioInterfacePtr_->display();
 
   // local CppAD copy
-  auto pinocchioInterfaceAd = PinocchioInterface::castToCppAd(*pinocchioInterfacePtr_);
+  auto pinocchioInterfaceAd = ocs2::PinocchioInterface<scalar_t>::castToCppAd(*pinocchioInterfacePtr_);
 
   /*
    * DDP-MPC settings

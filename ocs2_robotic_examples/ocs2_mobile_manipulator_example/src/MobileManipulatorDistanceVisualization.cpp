@@ -71,7 +71,9 @@ int main(int argc, char** argv) {
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
   pInterface.reset(new ocs2::PinocchioInterface<double>(urdfPath));
-  gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, {{0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}}));
+  gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, {}));
+  // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
+  gInterface->getGeometryModel().addAllCollisionPairs();
 
   for (auto obj : gInterface->getGeometryModel().geometryObjects) {
     std::cout << obj.name << std::endl;

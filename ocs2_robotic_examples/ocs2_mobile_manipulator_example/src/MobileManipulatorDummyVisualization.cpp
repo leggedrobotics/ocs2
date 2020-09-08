@@ -61,6 +61,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
   ocs2::PinocchioInterface<double> pinocchioInterface(urdfPath);
+  // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
   ocs2::PinocchioGeometryInterface geomInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}});
 
   geometryVisualization_.reset(new ocs2::GeometryInterfaceVisualization(geomInterface, nodeHandle));

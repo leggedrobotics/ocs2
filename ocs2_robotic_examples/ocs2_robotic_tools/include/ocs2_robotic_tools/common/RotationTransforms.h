@@ -137,11 +137,23 @@ void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   }
 }
 
+/**
+ * Compute a quaternion from a matrix
+ *
+ * @param [in] R: Rotation Matrix.
+ * @return A quaternion representing an equivalent rotation to R.
+ */
 template <typename SCALAR_T>
 inline Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR_T, 3, 3>& R) {
   return Eigen::Quaternion<SCALAR_T>(R);
 }
 
+/**
+ * Compute a quaternion from a matrix, specialized for CppAd (the default Eigen implementation uses branches)
+ *
+ * @param [in] R: Rotation Matrix templated on ad_scalar_t.
+ * @return A quaternion representing an equivalent rotation to R.
+ */
 template <>
 inline Eigen::Quaternion<CppAdInterface::ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<CppAdInterface::ad_scalar_t, 3, 3>& R) {
   using ad_scalar_t = CppAdInterface::ad_scalar_t;

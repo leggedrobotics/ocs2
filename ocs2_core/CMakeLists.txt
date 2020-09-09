@@ -70,6 +70,7 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/FiniteDifferenceMethods.cpp
   src/constraint/ConstraintBase.cpp
   src/constraint/ConstraintBaseAD.cpp
+  src/constraint/ConstraintCollection.cpp
   src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
@@ -77,6 +78,7 @@ add_library(${PROJECT_NAME}
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
+  src/cost/CostCollection.cpp
   src/cost/CostFunctionBase.cpp
   src/cost/CostFunctionBaseAD.cpp
   src/cost/CostDesiredTrajectories.cpp
@@ -255,20 +257,14 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
   gtest_main
 )
 
-catkin_add_gtest(test_LinearAlgebra
+catkin_add_gtest(${PROJECT_NAME}_test_misc
+  test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
-)
-target_link_libraries(test_LinearAlgebra
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(test_lookup
+  test/misc/testSynchronized.cpp
   test/misc/testLookup.cpp
+  test/misc/testThreadPool.cpp
 )
-target_link_libraries(test_lookup
+target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
@@ -284,22 +280,23 @@ target_link_libraries(test_dynamics
   gtest_main
 )
 
-catkin_add_gtest(test_ThreadPool
-  test/misc/testThreadPool.cpp
+catkin_add_gtest(test_cost
+  test/cost/testCostCollection.cpp
+  test/cost/testRelaxedBarrierCost.cpp
+  test/cost/testCostFunctionLinearCombination.cpp
+  test/cost/testQuadraticCostFunction.cpp
 )
-target_link_libraries(test_ThreadPool
+target_link_libraries(test_cost
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main
 )
 
-catkin_add_gtest(test_cost
-  test/cost/testRelaxedBarrierCost.cpp
-  test/cost/testCostFunctionLinearCombination.cpp
-  test/cost/testQuadraticCostFunction.cpp
+catkin_add_gtest(test_constraint
+  test/constraint/testConstraintCollection.cpp
 )
-target_link_libraries(test_cost
+target_link_libraries(test_constraint
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

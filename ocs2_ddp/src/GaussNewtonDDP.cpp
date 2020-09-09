@@ -1046,8 +1046,7 @@ void GaussNewtonDDP::calculateRolloutMerit(PerformanceIndex& performanceIndex) c
   performanceIndex.merit += constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff * std::sqrt(performanceIndex.stateEqConstraintISE);
 
   // final state-only equality constraints
-  performanceIndex.merit +=
-      constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff * std::sqrt(performanceIndex.stateEqFinalConstraintSSE);
+  performanceIndex.merit += constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff * performanceIndex.stateEqFinalConstraintSSE;
 
   // intermediate state-input equality constraints
   performanceIndex.merit +=

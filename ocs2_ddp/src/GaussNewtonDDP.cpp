@@ -1060,7 +1060,7 @@ void GaussNewtonDDP::calculateRolloutMerit(PerformanceIndex& performanceIndex) c
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarquardtModule) {
-  const size_t taskId = 0;
+  constexpr size_t taskId = 0;
 
   // local levenberg marquardt forward simulation's variables
   PerformanceIndex performanceIndex;
@@ -1069,14 +1069,30 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
   vector_array2_t stateTrajectoriesStock(numPartitions_);
   vector_array2_t inputTrajectoriesStock(numPartitions_);
   std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock(numPartitions_);
+  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock(numPartitions_);
 
   // do a full step rollout
   const scalar_t stepLength = isInitInternalControllerEmpty_ ? 0.0 : 1.0;
-  scalar_t avgTimeStepFP = performFullRollout(taskId, stepLength, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock,
-                                              stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, performanceIndex);
+  scalar_t heuristicsValue = 0.0;
+  const bool isStable =
+      performFullRollout(taskId, stepLength, nominalControllersStock_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                         inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
 
-  // compute average time step of forward rollout
-  avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStepFP;
+  if (isStable) {
+    performanceIndex =
+        calculateRolloutPerformanceIndex(timeTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+    // display
+    if (ddpSettings_.displayInfo_) {
+      std::stringstream infoDisplay;
+      infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
+      infoDisplay << std::setw(4) << performanceIndex << '\n';
+      Solver_BASE::printString(infoDisplay.str());
+    }
+
+  } else {
+    performanceIndex.merit = std::numeric_limits<scalar_t>::max();
+    performanceIndex.totalCost = std::numeric_limits<scalar_t>::max();
+  }
 
   // alias for the Levenberg_Marquardt settings
   const auto& lvSettings = ddpSettings_.levenbergMarquardt_;
@@ -1141,6 +1157,7 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
     nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
     nominalInputTrajectoriesStock_.swap(inputTrajectoriesStock);
     modelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock);
+    modelDataEventTimesStock_.swap(modelDataEventTimesStock);
     // update nominal controller: just clear the feedforward increments
     for (auto& controller : nominalControllersStock_) {
       controller.deltaBiasArray_.clear();
@@ -1152,33 +1169,32 @@ void GaussNewtonDDP::levenbergMarquardt(LevenbergMarquardtModule& levenbergMarqu
 
     // swap back the cached nominal trajectories
     swapDataToCache();
-    // update nominal controller
+    // use the cached one as the nominal.
     std::swap(nominalControllerUpdateIS_, cachedControllerUpdateIS_);
-    nominalControllersStock_.swap(cachedControllersStock_);
+    swap(nominalControllersStock_, cachedControllersStock_);
   }
 
   // display
   if (ddpSettings_.displayInfo_) {
-    std::string levenbergMarquardtDisplay;
+    std::stringstream displayInfo;
     if (levenbergMarquardtModule_.numSuccessiveRejections == 0) {
-      levenbergMarquardtDisplay = "The step is accepted with pho: " + std::to_string(levenbergMarquardtModule_.pho) + ". ";
+      displayInfo << "The step is accepted with pho: " << levenbergMarquardtModule_.pho << ". ";
     } else {
-      levenbergMarquardtDisplay = "The step is rejected with pho: " + std::to_string(levenbergMarquardtModule_.pho) + " (" +
-                                  std::to_string(levenbergMarquardtModule_.numSuccessiveRejections) + " out of " +
-                                  std::to_string(lvSettings.maxNumSuccessiveRejections_) + "). ";
+      displayInfo << "The step is rejected with pho: " << levenbergMarquardtModule_.pho << " ("
+                  << levenbergMarquardtModule_.numSuccessiveRejections << " out of " << lvSettings.maxNumSuccessiveRejections_ << "). ";
     }
 
     if (numerics::almost_eq(levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio, 1.0)) {
-      levenbergMarquardtDisplay += "The Riccati multiple is kept constant: ";
+      displayInfo << "The Riccati multiple is kept constant: ";
     } else if (levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio < 1.0) {
-      levenbergMarquardtDisplay += "The Riccati multiple is decreased to: ";
+      displayInfo << "The Riccati multiple is decreased to: ";
     } else {
-      levenbergMarquardtDisplay += "The Riccati multiple is increased to: ";
+      displayInfo << "The Riccati multiple is increased to: ";
     }
-    levenbergMarquardtDisplay += std::to_string(levenbergMarquardtModule_.riccatiMultiple) +
-                                 ", with ratio: " + std::to_string(levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio) + ".";
+    displayInfo << levenbergMarquardtModule_.riccatiMultiple << ", with ratio: " << levenbergMarquardtModule_.riccatiMultipleAdaptiveRatio
+                << ".";
 
-    Solver_BASE::printString(levenbergMarquardtDisplay);
+    Solver_BASE::printString(displayInfo.str());
   }
 
   // max accepted number of successive rejections
@@ -2169,7 +2185,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
     // check convergence
     std::tie(isConverged, convergenceInfo) =
-        checkConvergence(isInitInternalControllerEmpty, performanceIndexHistory_.back(), performanceIndex_);
+        checkConvergence(isInitInternalControllerEmpty_, performanceIndexHistory_.back(), performanceIndex_);
     isInitInternalControllerEmpty_ = false;
   }  // end of while loop
 

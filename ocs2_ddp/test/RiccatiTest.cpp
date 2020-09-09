@@ -93,7 +93,7 @@ class RiccatiInitializer {
   }
 };
 
-TEST(riccati_ode_test, compareImplementations) {
+TEST(RiccatiTest, compareImplementations) {
   constexpr int STATE_DIM = 48;
   constexpr int INPUT_DIM = 10;
 
@@ -113,7 +113,7 @@ TEST(riccati_ode_test, compareImplementations) {
   EXPECT_LE((dSdz_precompute - dSdz_noPrecompute).array().abs().maxCoeff(), 1e-9);
 }
 
-TEST(riccati_ode_test, testFlattenSMatrix) {
+TEST(RiccatiTest, testFlattenSMatrix) {
   const int stateDim = 4;
   using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
@@ -139,7 +139,7 @@ TEST(riccati_ode_test, testFlattenSMatrix) {
   EXPECT_EQ(allSs, allSs_expect);
 }
 
-TEST(riccati_ode_test, testFlattenAndUnflatten) {
+TEST(RiccatiTest, testFlattenAndUnflatten) {
   const int stateDim = 42;
   using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 

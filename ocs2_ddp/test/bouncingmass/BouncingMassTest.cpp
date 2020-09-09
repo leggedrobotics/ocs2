@@ -65,7 +65,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * (1) No penetration of Guard Surfaces
  * (2) Check of cost function compared against cost calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, BouncingMassTest) {
+TEST(BouncingMassTest, state_rollout_slq) {
   using scalar_t = ocs2::scalar_t;
   using vector_t = ocs2::vector_t;
   using matrix_t = ocs2::matrix_t;

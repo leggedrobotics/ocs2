@@ -246,8 +246,6 @@ TEST_F(Exp0Test, ddp_feedback_policy) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
-  ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -257,10 +255,11 @@ TEST_F(Exp0Test, ddp_feedback_policy) {
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
-  const auto ctrlFinalTime = dynamic_cast<ocs2::LinearController*>(solution.controllerPtr_.get())->timeStamp_.back();
+  const auto* ctrlPtr = dynamic_cast<ocs2::LinearController*>(solution.controllerPtr_.get());
 
+  EXPECT_TRUE(ctrlPtr != nullptr) << "MESSAGE: SLQ solution does not contain a linear feedback policy!";
+  EXPECT_DOUBLE_EQ(ctrlPtr->timeStamp_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
   EXPECT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
-  EXPECT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
 }
 
 /******************************************************************************************************/
@@ -270,8 +269,6 @@ TEST_F(Exp0Test, ddp_feedforward_policy) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = false;
-  ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -281,10 +278,11 @@ TEST_F(Exp0Test, ddp_feedforward_policy) {
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
-  const auto ctrlFinalTime = dynamic_cast<ocs2::FeedforwardController*>(solution.controllerPtr_.get())->timeStamp_.back();
+  const auto* ctrlPtr = dynamic_cast<ocs2::FeedforwardController*>(solution.controllerPtr_.get());
 
+  EXPECT_TRUE(ctrlPtr != nullptr) << "MESSAGE: SLQ solution does not contain a feedforward policy!";
+  EXPECT_DOUBLE_EQ(ctrlPtr->timeStamp_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
   EXPECT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
-  EXPECT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
 }
 
 /******************************************************************************************************/
@@ -294,7 +292,6 @@ TEST_F(Exp0Test, ddp_caching) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
   ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
 
   // event times
   const ocs2::scalar_array_t eventTimes{1.0};

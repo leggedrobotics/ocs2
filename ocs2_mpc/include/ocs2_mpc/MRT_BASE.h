@@ -63,7 +63,7 @@ class MRT_BASE {
   /**
    * @brief Default destructor
    */
-  ~MRT_BASE() = default;
+  virtual ~MRT_BASE() = default;
 
   /**
    * Resets the class to its instantiated state.
@@ -100,7 +100,7 @@ class MRT_BASE {
    * Gets a reference to current optimized policy.
    * @return constant reference to the policy data.
    */
-  const PrimalSolution& getPolicy() const { return *currentPrimalSolution_; };
+  const PrimalSolution& getPolicy() const;
 
   /**
    * @brief Initializes rollout class to roll out a feedback policy

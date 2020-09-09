@@ -27,137 +27,137 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_mpc/MRT_BASE.h"
-
-#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_core/cost/CostCollection.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_BASE::MRT_BASE()
-    : currentPrimalSolution_(new PrimalSolution),
-      primalSolutionBuffer_(new PrimalSolution),
-      currentCommand_(new CommandData),
-      commandBuffer_(new CommandData) {
-  reset();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MRT_BASE::reset() {
-  std::lock_guard<std::mutex> lock(policyBufferMutex_);
-
-  policyReceivedEver_ = false;
-  newPolicyInBuffer_ = false;
-
-  policyUpdated_ = false;
-  policyUpdatedBuffer_ = false;
-
-  partitioningTimesUpdate(0.0, partitioningTimes_);
-  partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const PrimalSolution& MRT_BASE::getPolicy() const {
-  if (!initialPolicyReceived()) {
-    throw std::runtime_error("[MRT_BASE::getPolicy] The policy was never received");
+template <typename COST>
+CostCollection<COST>::CostCollection(const CostCollection<COST>& rhs) {
+  // Loop through all costs by name and clone into the new object
+  costTermMap_.clear();
+  for (const auto& costPair : rhs.costTermMap_) {
+    add(costPair.first, std::unique_ptr<COST>(costPair.second->clone()));
   }
-  return *currentPrimalSolution_;
-};
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MRT_BASE::initRollout(const RolloutBase* rolloutPtr) {
-  rolloutPtr_.reset(rolloutPtr->clone());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState, vector_t& mpcState, vector_t& mpcInput, size_t& mode) {
-  if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
-    std::cerr << "The requested currentTime is greater than the received plan: " << std::to_string(currentTime) << ">"
-              << std::to_string(currentPrimalSolution_->timeTrajectory_.back()) << "\n";
+template <typename COST>
+CostCollection<COST>::CostCollection(CostCollection<COST>&& rhs) noexcept : costTermMap_(std::move(rhs.costTermMap_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename COST>
+CostCollection<COST>& CostCollection<COST>::operator=(const CostCollection<COST>& rhs) {
+  *this = CostCollection<COST>(rhs);
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename COST>
+CostCollection<COST>& CostCollection<COST>::operator=(CostCollection<COST>&& rhs) {
+  std::swap(costTermMap_, rhs.costTermMap_);
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename COST>
+void CostCollection<COST>::add(std::string name, std::unique_ptr<COST> costTerm) {
+  auto info = costTermMap_.emplace(std::move(name), std::move(costTerm));
+  if (!info.second) {
+    throw std::runtime_error(std::string("[CostCollection::add] Cost term with name \"") + info.first->first + "\" already exists");
   }
-
-  mpcInput = currentPrimalSolution_->controllerPtr_->computeInput(currentTime, currentState);
-  LinearInterpolation::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
-                                   &currentPrimalSolution_->stateTrajectory_);
-
-  mode = currentPrimalSolution_->modeSchedule_.modeAtTime(currentTime);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState, const scalar_t& timeStep, vector_t& mpcState,
-                             vector_t& mpcInput, size_t& mode) {
-  if (currentTime > currentPrimalSolution_->timeTrajectory_.back()) {
-    std::cerr << "The requested currentTime is greater than the received plan: " << std::to_string(currentTime) << ">"
-              << std::to_string(currentPrimalSolution_->timeTrajectory_.back()) << "\n";
+template <>
+template <>
+scalar_t CostCollection<StateInputCost>::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                                  const CostDesiredTrajectories& desiredTrajectory) const {
+  scalar_t cost = 0.0;
+
+  // accumulate cost terms
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      cost += costPair.second->getValue(time, state, input, desiredTrajectory);
+    }
   }
 
-  if (!rolloutPtr_) {
-    throw std::runtime_error("MRT_ROS_interface: rolloutPtr is not initialized, call initRollout first.");
-  }
-
-  const size_t activePartitionIndex = 0;  // there is only one partition.
-  scalar_t finalTime = currentTime + timeStep;
-  scalar_array_t timeTrajectory;
-  size_array_t postEventIndicesStock;
-  vector_array_t stateTrajectory;
-  vector_array_t inputTrajectory;
-
-  // perform a rollout
-  if (policyUpdated_) {
-    rolloutPtr_->run(currentTime, currentState, finalTime, currentPrimalSolution_->controllerPtr_.get(),
-                     currentPrimalSolution_->modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory,
-                     inputTrajectory);
-  } else {
-    throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
-  }
-
-  mpcState = stateTrajectory.back();
-  mpcInput = inputTrajectory.back();
-
-  mode = currentPrimalSolution_->modeSchedule_.modeAtTime(finalTime);
+  return cost;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MRT_BASE::updatePolicy() {
-  std::lock_guard<std::mutex> lock(policyBufferMutex_);
+template <>
+template <>
+ScalarFunctionQuadraticApproximation CostCollection<StateInputCost>::getQuadraticApproximation(
+    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
+  auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
 
-  if (!policyUpdatedBuffer_ || !newPolicyInBuffer_) {
-    return false;
+  // accumulate cost term quadratic approximation
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory);
+    }
   }
-  newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
 
-  // update the current policy from buffer
-  policyUpdated_ = policyUpdatedBuffer_;
-  currentCommand_.swap(commandBuffer_);
-  currentPrimalSolution_.swap(primalSolutionBuffer_);
-  partitioningTimes_.swap(partitioningTimesBuffer_);
-
-  modifyPolicy(*currentCommand_, *currentPrimalSolution_);
-
-  return true;
+  return cost;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
-  partitioningTimes.resize(2);
-  partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time : time;
-  partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
+template <>
+template <>
+scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+  scalar_t cost = 0.0;
+
+  // accumulate cost terms
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      cost += costPair.second->getValue(time, state, desiredTrajectory);
+    }
+  }
+
+  return cost;
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <>
+template <>
+ScalarFunctionQuadraticApproximation CostCollection<StateCost>::getQuadraticApproximation(
+    scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+  auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
+
+  // accumulate cost term quadratic approximation
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory);
+      cost.f += costTermApproximation.f;
+      cost.dfdx += costTermApproximation.dfdx;
+      cost.dfdxx += costTermApproximation.dfdxx;
+    }
+  }
+
+  return cost;
+}
+
+// explicite template instantiation
+template class CostCollection<StateCost>;
+template class CostCollection<StateInputCost>;
 
 }  // namespace ocs2

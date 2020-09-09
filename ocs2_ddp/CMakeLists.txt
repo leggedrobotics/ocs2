@@ -106,20 +106,20 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_ddp
 
-catkin_add_gtest(exp0_test
+catkin_add_gtest(exp0_ddp_test
   test/Exp0Test.cpp
 )
-target_link_libraries(exp0_test
+target_link_libraries(exp0_ddp_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main
 )
 
-catkin_add_gtest(exp1_test
+catkin_add_gtest(exp1_ddp_test
   test/Exp1Test.cpp
 )
-target_link_libraries(exp1_test
+target_link_libraries(exp1_ddp_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -136,19 +136,19 @@ target_link_libraries(correctness_unconstrained_test
   gtest_main
 )
 
-catkin_add_gtest(riccati_test
+catkin_add_gtest(riccati_ode_test
   test/RiccatiTest.cpp
 )
-target_link_libraries(riccati_test
+target_link_libraries(riccati_ode_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
 )
 
-catkin_add_gtest(circular_kinematics_test
+catkin_add_gtest(circular_kinematics_ddp_test
   test/CircularKinematicsTest.cpp
 )
-target_link_libraries(circular_kinematics_test
+target_link_libraries(circular_kinematics_ddp_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,69 +29,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
+#include <type_traits>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/logic/ModeSchedule.h>
 
 namespace ocs2 {
 
-/**
- * This class contains the primal problem's solution.
- */
-struct PrimalSolution {
-  /**
-   * Constructor
-   */
-  PrimalSolution() = default;
+/** State-only constraint function base class */
+class StateConstraint {
+ public:
+  StateConstraint() = default;
+  virtual ~StateConstraint() = default;
+  virtual StateConstraint* clone() const = 0;
 
-  /**
-   * Destructor
-   */
-  ~PrimalSolution() = default;
+  /** Set constraint activity */
+  void setActivity(bool activity) { active_ = activity; }
 
-  /**
-   * Copy constructor
-   */
-  PrimalSolution(const PrimalSolution& other)
-      : timeTrajectory_(other.timeTrajectory_),
-        stateTrajectory_(other.stateTrajectory_),
-        inputTrajectory_(other.inputTrajectory_),
-        modeSchedule_(other.modeSchedule_),
-        controllerPtr_(other.controllerPtr_ ? other.controllerPtr_->clone() : nullptr) {}
+  /** Check constraint activity */
+  bool isActive() const { return active_; }
 
-  /**
-   * Copy Assignment
-   */
-  PrimalSolution& operator=(const PrimalSolution& other) {
-    timeTrajectory_ = other.timeTrajectory_;
-    stateTrajectory_ = other.stateTrajectory_;
-    inputTrajectory_ = other.inputTrajectory_;
-    modeSchedule_ = other.modeSchedule_;
-    if (other.controllerPtr_) {
-      controllerPtr_.reset(other.controllerPtr_->clone());
-    } else {
-      controllerPtr_.reset();
-    }
-    return *this;
+  /** Get the size of the constraint vector at given time */
+  virtual size_t getNumConstraints(scalar_t time) const = 0;
+
+  /** Get the constraint vector value */
+  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
+
+  /** Get the constraint linear approximation */
+  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
+    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
   }
 
-  /**
-   * Move constructor
-   */
-  PrimalSolution(PrimalSolution&& other) noexcept = default;
+  /** Get the constraint quadratic approximation */
+  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
+    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
+  }
 
-  /**
-   * Move Assignement
-   */
-  PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
+ protected:
+  StateConstraint(const StateConstraint& rhs) = default;
 
-  scalar_array_t timeTrajectory_;
-  vector_array_t stateTrajectory_;
-  vector_array_t inputTrajectory_;
-  ModeSchedule modeSchedule_;
-  std::unique_ptr<ControllerBase> controllerPtr_;
+ private:
+  bool active_ = true;
 };
+
+// Template for conditional compilation using SFINAE
+template <typename T, typename RETURN_TYPE>
+using ifStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, RETURN_TYPE>::type;
 
 }  // namespace ocs2

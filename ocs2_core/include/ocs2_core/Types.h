@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+#include <ostream>
 #include <vector>
 
 namespace ocs2 {
@@ -96,7 +97,40 @@ struct ScalarFunctionQuadraticApproximation {
   vector_t dfdu;
   /** Constant term */
   scalar_t f = 0.;
+
+  /** Default constructor */
+  ScalarFunctionQuadraticApproximation() = default;
+
+  /** Construct and resize the members to given size. */
+  ScalarFunctionQuadraticApproximation(size_t nx, size_t nu);
+
+  /** Compound additinon assignment opeartor */
+  ScalarFunctionQuadraticApproximation& operator+=(const ScalarFunctionQuadraticApproximation& rhs);
+
+  /**
+   * Resize the members to the given size
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  ScalarFunctionQuadraticApproximation& resize(size_t nx, size_t nu);
+
+  /**
+   * Resizes the members to the given size, and sets all coefficients to zero.
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  ScalarFunctionQuadraticApproximation& setZero(size_t nx, size_t nu);
+
+  /**
+   * Factory function with zero initialization
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   * @return Zero initialized object of given size.
+   */
+  static ScalarFunctionQuadraticApproximation Zero(size_t nx, size_t nu);
 };
+
+std::ostream& operator<<(std::ostream& out, const ScalarFunctionQuadraticApproximation& f);
 
 /**
  * Defines the linear model of a vector-valued function
@@ -109,7 +143,40 @@ struct VectorFunctionLinearApproximation {
   matrix_t dfdu;
   /** Constant term */
   vector_t f;
+
+  /** Default constructor */
+  VectorFunctionLinearApproximation() = default;
+
+  /** Construct and resize the members to given size. */
+  VectorFunctionLinearApproximation(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Resize the members to the given size
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionLinearApproximation& resize(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Resizes the members to the given size, and sets all coefficients to zero.
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionLinearApproximation& setZero(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Factory function with zero initialization
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   * @return Zero initialized object of given size.
+   */
+  static VectorFunctionLinearApproximation Zero(size_t nv, size_t nx, size_t nu);
 };
+
+std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximation& f);
 
 /**
  * Defines quadratic approximation of a vector-valued function
@@ -128,6 +195,39 @@ struct VectorFunctionQuadraticApproximation {
   matrix_t dfdu;
   /** Constant term */
   vector_t f;
+
+  /** Default constructor */
+  VectorFunctionQuadraticApproximation() = default;
+
+  /** Construct and resize the members to given size. */
+  VectorFunctionQuadraticApproximation(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Resize the members to the given size
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionQuadraticApproximation& resize(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Resizes the members to the given size, and sets all coefficients to zero.
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   */
+  VectorFunctionQuadraticApproximation& setZero(size_t nv, size_t nx, size_t nu);
+
+  /**
+   * Factory function with zero initialization
+   * @param[in] nv Vector dimension
+   * @param[in] nx State dimension
+   * @param[in] nu Input dimension
+   * @return Zero initialized object of given size.
+   */
+  static VectorFunctionQuadraticApproximation Zero(size_t nv, size_t nx, size_t nu);
 };
+
+std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f);
 
 }  // namespace ocs2

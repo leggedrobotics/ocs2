@@ -119,9 +119,9 @@ std::string ModelDataBase::checkCostProperties() const {
   if (!cost_.dfdxx.isApprox(cost_.dfdxx.transpose())) {
     errorDescription << "Intermediate cost second derivative w.r.t. state is not self-adjoint.\n";
   }
-  if (LinearAlgebra::eigenvalues(cost_.dfdxx).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+  if (LinearAlgebra::symmetricEigenvalues(cost_.dfdxx).minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
     errorDescription << "Q matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                            std::to_string(LinearAlgebra::eigenvalues(cost_.dfdxx).real().minCoeff()) + ".\n";
+                            std::to_string(LinearAlgebra::symmetricEigenvalues(cost_.dfdxx).minCoeff()) + ".\n";
   }
   if (!cost_.dfdu.allFinite()) {
     errorDescription << "Intermediate cost first derivative w.r.t. input is not finite.\n";
@@ -139,9 +139,9 @@ std::string ModelDataBase::checkCostProperties() const {
     errorDescription << "R matrix is not invertible. It's reciprocal condition number is " + std::to_string(cost_.dfduu.ldlt().rcond()) +
                             ".\n";
   }
-  if (LinearAlgebra::eigenvalues(cost_.dfduu).real().minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
+  if (LinearAlgebra::symmetricEigenvalues(cost_.dfduu).minCoeff() < Eigen::NumTraits<scalar_t>::epsilon()) {
     errorDescription << "R matrix is not positive definite. It's smallest eigenvalue is " +
-                            std::to_string(LinearAlgebra::eigenvalues(cost_.dfduu).real().minCoeff()) + ".\n";
+                            std::to_string(LinearAlgebra::symmetricEigenvalues(cost_.dfduu).minCoeff()) + ".\n";
   }
 
   return errorDescription.str();
@@ -215,8 +215,29 @@ std::string ModelDataBase::checkConstraintProperties() const {
       if (!ineqConstr_.dfdxx[i].allFinite()) {
         errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.\n";
       }
+      if (!ineqConstr_.dfdxx[i].isApprox(ineqConstr_.dfdxx[i].transpose())) {
+        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not self-adjoint.\n";
+      }
+      if (LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfdxx[i]).maxCoeff() > Eigen::NumTraits<scalar_t>::epsilon()) {
+        errorDescription
+            << "Inequality constraint " + std::to_string(i) +
+                   " second derivative w.r.t. state is not negative semi-definite. This will lead to a negative-definite penalty Hessian. "
+                   "It's largest eigenvalue is " +
+                   std::to_string(LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfdxx[i]).maxCoeff()) + ".\n";
+        std::cerr << "dfdxx:\n" << ineqConstr_.dfdxx[i] << std::endl;
+      }
       if (!ineqConstr_.dfduu[i].allFinite()) {
-        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. state is not finite.\n";
+        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input is not finite.\n";
+      }
+      if (!ineqConstr_.dfduu[i].isApprox(ineqConstr_.dfduu[i].transpose())) {
+        errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input is not self-adjoint.\n";
+      }
+      if (LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfduu[i]).maxCoeff() > Eigen::NumTraits<scalar_t>::epsilon()) {
+        errorDescription
+            << "Inequality constraint " + std::to_string(i) +
+                   " second derivative w.r.t. input is not negative semi-definite. This will lead to a negative-definite penalty Hessian. "
+                   "It's largest eigenvalue is " +
+                   std::to_string(LinearAlgebra::symmetricEigenvalues(ineqConstr_.dfduu[i]).maxCoeff()) + ".\n";
       }
       if (!ineqConstr_.dfdux[i].allFinite()) {
         errorDescription << "Inequality constraint " + std::to_string(i) + " second derivative w.r.t. input-state is not finite.\n";

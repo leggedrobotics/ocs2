@@ -116,11 +116,11 @@ class Exp0Test : public testing::Test {
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    ASSERT_LT(fabs(performanceIndex.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
+    EXPECT_LT(fabs(performanceIndex.totalCost - expectedCost), 10 * ddpSettings.minRelCost_)
         << "MESSAGE: " << testName << ": failed in the total cost test!";
-    ASSERT_LT(fabs(performanceIndex.stateInputEqConstraintISE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_LT(fabs(performanceIndex.stateInputEqConstraintISE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
-    ASSERT_LT(fabs(performanceIndex.stateEqConstraintISE - expectedStateEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_LT(fabs(performanceIndex.stateEqConstraintISE - expectedStateEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
        << "MESSAGE: " << testName << ": failed in state-only equality constraint ISE test!";
   }
 
@@ -342,8 +342,6 @@ TEST_F(Exp0Test, ddp_feedback_policy) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
-  ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -353,10 +351,11 @@ TEST_F(Exp0Test, ddp_feedback_policy) {
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
-  const auto ctrlFinalTime = dynamic_cast<ocs2::LinearController*>(solution.controllerPtr_.get())->timeStamp_.back();
+  const auto* ctrlPtr = dynamic_cast<ocs2::LinearController*>(solution.controllerPtr_.get());
 
-  ASSERT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
-  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
+  EXPECT_TRUE(ctrlPtr != nullptr) << "MESSAGE: SLQ solution does not contain a linear feedback policy!";
+  EXPECT_DOUBLE_EQ(ctrlPtr->timeStamp_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
+  EXPECT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
 }
 
 /******************************************************************************************************/
@@ -366,8 +365,6 @@ TEST_F(Exp0Test, ddp_feedforward_policy) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = false;
-  ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -377,10 +374,11 @@ TEST_F(Exp0Test, ddp_feedforward_policy) {
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
-  const auto ctrlFinalTime = dynamic_cast<ocs2::FeedforwardController*>(solution.controllerPtr_.get())->timeStamp_.back();
+  const auto* ctrlPtr = dynamic_cast<ocs2::FeedforwardController*>(solution.controllerPtr_.get());
 
-  ASSERT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
-  ASSERT_DOUBLE_EQ(ctrlFinalTime, finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
+  EXPECT_TRUE(ctrlPtr != nullptr) << "MESSAGE: SLQ solution does not contain a feedforward policy!";
+  EXPECT_DOUBLE_EQ(ctrlPtr->timeStamp_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of controller!";
+  EXPECT_DOUBLE_EQ(solution.timeTrajectory_.back(), finalTime) << "MESSAGE: SLQ failed in policy final time of trajectory!";
 }
 
 /******************************************************************************************************/
@@ -390,7 +388,6 @@ TEST_F(Exp0Test, ddp_caching) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 2, ocs2::ddp_strategy::type::LINE_SEARCH);
   ddpSettings.displayInfo_ = false;
-  ddpSettings.displayShortSummary_ = false;
 
   // event times
   const ocs2::scalar_array_t eventTimes{1.0};
@@ -404,25 +401,25 @@ TEST_F(Exp0Test, ddp_caching) {
   // run single core SLQ (no active event)
   ocs2::scalar_t startTime = 0.2;
   ocs2::scalar_t finalTime = 0.7;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes));
 
   // run similar to the MPC setup (a new partition)
   startTime = 0.4;
   finalTime = 0.9;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
 
   // run similar to the MPC setup (one active event)
   startTime = 0.6;
   finalTime = 1.2;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
 
   // run similar to the MPC setup (no active event + a new partition)
   startTime = 1.1;
   finalTime = 1.5;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
 
   // run similar to the MPC setup (no overlap)
   startTime = 1.6;
   finalTime = 2.0;
-  ASSERT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
+  EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
 }

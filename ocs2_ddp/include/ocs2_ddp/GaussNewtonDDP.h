@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
+#include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
@@ -82,14 +82,14 @@ class GaussNewtonDDP : public Solver_BASE {
   };
 
   struct ConstraintPenaltyCoefficients {
-    scalar_t stateEqualityPenaltyTol = 1e-3;
-    scalar_t stateEqualityPenaltyCoeff = 0.0;
+    scalar_t stateEqConstrPenaltyTol = 1e-3;
+    scalar_t stateEqConstrPenaltyCoeff = 0.0;
 
-    scalar_t stateEqualityFinalPenaltyTol = 1e-3;
-    scalar_t stateEqualityFinalPenaltyCoeff = 0.0;
+    scalar_t stateFinalEqConstrPenaltyTol = 1e-3;
+    scalar_t stateFinalEqConstrPenaltyCoeff = 0.0;
 
-    scalar_t stateInputEqualityPenaltyTol = 1e-3;
-    scalar_t stateInputEqualityPenaltyCoeff = 0.0;
+    scalar_t stateInputEqConstrPenaltyTol = 1e-3;
+    scalar_t stateInputEqConstrPenaltyCoeff = 0.0;
   };
 
   /**
@@ -140,7 +140,7 @@ class GaussNewtonDDP : public Solver_BASE {
 
   void rewindOptimizer(size_t firstIndex) override;
 
-  void printBenchmarkingInfo() const override;
+  std::string getBenchmarkingInfo() const override;
 
   const unsigned long long int& getRewindCounter() const override { return rewindCounter_; }
 
@@ -153,16 +153,6 @@ class GaussNewtonDDP : public Solver_BASE {
    * Const access to ddp settings
    */
   const ddp::Settings& settings() const { return ddpSettings_; }
-
-  /**
-   * Upon activation in the multi-thread Gauss-Newton DDP class (DDP_MT), the parallelization
-   * of the backward pass takes place from the the first iteration which
-   * normally become effective after the first iteration.
-   *
-   * @param [in] flag: If set true, the parallel Riccati solver will be used
-   * from the first iteration.
-   */
-  void useParallelRiccatiSolverFromInitItr(bool flag) { useParallelRiccatiSolverFromInitItr_ = flag; }
 
   /**
    * Computes the normalized time for Riccati backward pass.
@@ -309,6 +299,7 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [in] workerIndex: Working thread (default is 0).
    *
    * @return average time step.
@@ -316,7 +307,7 @@ class GaussNewtonDDP : public Solver_BASE {
   scalar_t rolloutTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
                              vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                             size_t workerIndex = 0);
+                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, size_t workerIndex = 0);
 
   /**
    * Display rollout info and scores.
@@ -324,41 +315,37 @@ class GaussNewtonDDP : public Solver_BASE {
   void printRolloutInfo() const;
 
   /**
-   * Calculates constraints ISE (Integral of Square Error).
+   * Evaluates cost and constraints along the given time trajectories.
    *
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] stateInputEqConstraintISE: The state-input equality constraints ISE.
-   * @param [out] stateEqConstraintISE: The state-only equality constraints ISE.
-   * @param [out] stateEqFinalConstraintSSE: The final state equality constraints Sum of Square Error (SSE).
-   * @param [out] inequalityConstraintISE: The inequality constraints ISE.
-   * @param [out] inequalityConstraintPenalty: The inequality constraints penalty.
+   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [out] modelDataEventTimesStock: Array of model data at event times.
+   * @param [out] heuristicsValue: The Heuristics function value.
    * @param [in] workerIndex: Working thread (default is 0).
-   *
-   * @return maximum norm of the constraints.
    */
-  void calculateRolloutConstraintsISE(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                      const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
-                                      scalar_t& stateInputEqConstraintISE, scalar_t& stateEqConstraintISE,
-                                      scalar_t& stateEqFinalConstraintSSE, scalar_t& inequalityConstraintISE,
-                                      scalar_t& inequalityConstraintPenalty, size_t workerIndex = 0);
+  void rolloutCostAndConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                 const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
+                                 std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                 std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue,
+                                 size_t workerIndex = 0);
 
   /**
-   * Calculates cost of the rollout.
+   * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
    *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the time trajectory stamp of a rollout.
-   * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the state trajectory of a rollout.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the control input trajectory of a rollout.
-   * @param [in] workerIndex: Working thread (default is 0).
+   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
+   * @param [in] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
+   * @param [in] modelDataEventTimesStock: Array of model data at event times.
+   * @param [in] heuristicsValue: The Heuristics function value.
    *
-   * @return The total cost of the rollout.
+   * @return The cost, merit function and ISEs of constraints for the trajectory.
    */
-  scalar_t calculateRolloutCost(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
-                                size_t workerIndex = 0);
+  PerformanceIndex calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
+                                                    const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                                    const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
+                                                    scalar_t heuristicsValue) const;
 
   /**
    * Performs a full rollout of dynamics, cost, and constraints with a given step length.
@@ -371,14 +358,16 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] performanceIndex: The cost, merit function and ISEs of constraints for the trajectory.
+   * @param [out] modelDataEventTimesStock: Array of model data at event times.
+   * @param [out] heuristicsValue: The heuristics function value.
    *
-   * @return average time step.
+   * @return true if the rollout was stable.
    */
-  scalar_t performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
-                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                              vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                              std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock, PerformanceIndex& performanceIndex);
+  bool performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
+                          scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                          vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
+                          std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                          std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue);
 
   /**
    * Line search on the feedforward parts of the controller. It chooses the largest acceptable step-size.
@@ -476,11 +465,11 @@ class GaussNewtonDDP : public Solver_BASE {
    * Augments the cost function for the given model data.
    *
    * @param [in] workerIndex: Working agent index.
-   * @param [in] stateEqualityPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
-   * @param [in] stateInputEqualityPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
+   * @param [in] stateEqConstrPenaltyCoeff: The state-only equality penalty coefficient of the Augmented Lagrangian method.
+   * @param [in] stateInputEqConstrPenaltyCoeff: The state-input equality penalty coefficient of the Augmented Lagrangian method.
    * @param modelData: The model data.
    */
-  void augmentCostWorker(size_t workerIndex, scalar_t stateEqualityPenaltyCoeff, scalar_t stateInputEqualityPenaltyCoeff,
+  void augmentCostWorker(size_t workerIndex, scalar_t stateEqConstrPenaltyCoeff, scalar_t stateInputEqConstrPenaltyCoeff,
                          ModelDataBase& modelData) const;
 
   /**
@@ -532,6 +521,17 @@ class GaussNewtonDDP : public Solver_BASE {
    * Runs a single iteration of Gauss-Newton DDP.
    */
   void runIteration();
+
+  /**
+   * Checks convergence of the main loop of DDP.
+   *
+   * @param [in] isInitalControllerEmpty: Whether the initial controller was empty.
+   * @param [in] previousPerformanceIndex: The previous iteration's PerformanceIndex.
+   * @param [in] currentPerformanceIndex: The current iteration's PerformanceIndex.
+   * @return A pair of (isOptimizationConverged, infoString)
+   */
+  std::pair<bool, std::string> checkConvergence(bool isInitalControllerEmpty, const PerformanceIndex& previousPerformanceIndex,
+                                                const PerformanceIndex& currentPerformanceIndex) const;
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
@@ -595,27 +595,24 @@ class GaussNewtonDDP : public Solver_BASE {
 
   std::unique_ptr<ThreadPool> threadPoolPtr_;
 
-  unsigned long long int rewindCounter_ = 0;
-
-  bool useParallelRiccatiSolverFromInitItr_ = false;
+  unsigned long long int rewindCounter_{0};
+  unsigned long long int totalNumIterations_{0};
 
   // trajectory spreading
   TrajectorySpreadingControllerAdjustment trajectorySpreadingController_;
-
-  std::atomic_size_t iteration_{0};
 
   PerformanceIndex performanceIndex_;
 
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
   // forward pass and backward pass average time step
-  scalar_t avgTimeStepFP_ = 0.0;
-  scalar_t avgTimeStepBP_ = 0.0;
+  std::atomic<scalar_t> avgTimeStepFP_{0.0};
+  std::atomic<scalar_t> avgTimeStepBP_{0.0};
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
-  std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrStock_;
+  std::unique_ptr<PenaltyBase> penaltyPtrStock_;
 
   scalar_t nominalControllerUpdateIS_ = 0.0;
 
@@ -648,7 +645,7 @@ class GaussNewtonDDP : public Solver_BASE {
   std::mutex riccatiSolverDataMutex_;
 
   // benchmarking
-  benchmark::RepeatedTimer forwardPassTimer_;
+  benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer backwardPassTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;

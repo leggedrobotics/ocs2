@@ -51,12 +51,7 @@ ScalarFunctionQuadraticApproximation PenaltyBase::penaltyCostQuadraticApproximat
   const auto inputDim = h.dfdu.cols();
 
   ScalarFunctionQuadraticApproximation penalty;
-  penalty.f = 0.0;
-  penalty.dfdx.setZero(stateDim);
-  penalty.dfdu.setZero(inputDim);
-  penalty.dfdxx.setZero(stateDim, stateDim);
-  penalty.dfduu.setZero(inputDim, inputDim);
-  penalty.dfdux.setZero(inputDim, stateDim);
+  penalty.setZero(stateDim, inputDim);
 
   vector_t penaltyDerivative(numInequalityConstraints);
   vector_t penaltySecondDerivative(numInequalityConstraints);

@@ -33,7 +33,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <array>
 #include <cmath>
 
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+// CppAD
+#include <map>
+#include <set>
+#include <vector>
+
+#include <ocs2_core/automatic_differentiation/Types.h>
+
+// #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+
+// // Forward declaration of CppAd types, for specializations
+// namespace CppAd {
+// namespace cg {
+// template <typename BASE>
+// class CG;
+// }
+// template <typename BASE>
+// class AD;
+// }  // namespace CppAd
 
 namespace ocs2 {
 
@@ -144,7 +161,7 @@ void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
  * @return A quaternion representing an equivalent rotation to R.
  */
 template <typename SCALAR_T>
-inline Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR_T, 3, 3>& R) {
+Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR_T, 3, 3>& R) {
   return Eigen::Quaternion<SCALAR_T>(R);
 }
 
@@ -154,44 +171,6 @@ inline Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR
  * @param [in] R: Rotation Matrix templated on ad_scalar_t.
  * @return A quaternion representing an equivalent rotation to R.
  */
-template <>
-inline Eigen::Quaternion<CppAdInterface::ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<CppAdInterface::ad_scalar_t, 3, 3>& R) {
-  using ad_scalar_t = CppAdInterface::ad_scalar_t;
-  ad_scalar_t t1, t2, t;
-  ad_scalar_t x1, x2, x;
-  ad_scalar_t y1, y2, y;
-  ad_scalar_t z1, z2, z;
-  ad_scalar_t w1, w2, w;
+Eigen::Quaternion<ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<ad_scalar_t, 3, 3>& R);
 
-  t1 = CppAD::CondExpGt(R(0, 0), R(1, 1), 1 + R(0, 0) - R(1, 1) - R(2, 2), 1 - R(0, 0) + R(1, 1) - R(2, 2));
-  t2 = CppAD::CondExpLt(R(0, 0), -R(1, 1), 1 - R(0, 0) - R(1, 1) + R(2, 2), 1 + R(0, 0) + R(1, 1) + R(2, 2));
-  t = CppAD::CondExpLt(R(2, 2), ad_scalar_t(0.0), t1, t2);
-
-  x1 = CppAD::CondExpGt(R(0, 0), R(1, 1), t, R(1, 0) + R(0, 1));
-  x2 = CppAD::CondExpLt(R(0, 0), -R(1, 1), R(0, 2) + R(2, 0), R(2, 1) - R(1, 2));
-  x = CppAD::CondExpLt(R(2, 2), ad_scalar_t(0.0), x1, x2);
-
-  y1 = CppAD::CondExpGt(R(0, 0), R(1, 1), R(1, 0) + R(0, 1), t);
-  y2 = CppAD::CondExpLt(R(0, 0), -R(1, 1), R(2, 1) + R(1, 2), R(0, 2) - R(2, 0));
-  y = CppAD::CondExpLt(R(2, 2), ad_scalar_t(0.0), y1, y2);
-
-  z1 = CppAD::CondExpGt(R(0, 0), R(1, 1), R(0, 2) + R(2, 0), R(2, 1) + R(1, 2));
-  z2 = CppAD::CondExpLt(R(0, 0), -R(1, 1), t, R(1, 0) - R(0, 1));
-  z = CppAD::CondExpLt(R(2, 2), ad_scalar_t(0.0), z1, z2);
-
-  w1 = CppAD::CondExpGt(R(0, 0), R(1, 1), R(2, 1) - R(1, 2), R(0, 2) - R(2, 0));
-  w2 = CppAD::CondExpLt(R(0, 0), -R(1, 1), R(1, 0) - R(0, 1), t);
-  w = CppAD::CondExpLt(R(2, 2), ad_scalar_t(0.0), w1, w2);
-
-  Eigen::Matrix<ad_scalar_t, 4, 1> q({x, y, z, w});
-  q *= 0.5 / sqrt(t);
-
-  Eigen::Quaternion<ad_scalar_t> quaternion;
-  quaternion.x() = q(0);
-  quaternion.y() = q(1);
-  quaternion.z() = q(2);
-  quaternion.w() = q(3);
-
-  return quaternion;
-}
 }  // namespace ocs2

@@ -13,12 +13,6 @@
 
 #include <ocs2_mobile_manipulator_example/PinocchioGeometryInterface.hpp>
 
-namespace hpp {
-namespace fcl {
-class DistanceResult;
-}
-}  // namespace hpp
-
 namespace ocs2 {
 
 class GeometryInterfaceVisualization {

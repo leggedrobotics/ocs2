@@ -101,6 +101,7 @@ catkin_add_gtest(rotation_transform_tests
   test/common/TestRotationTransforms.cpp
 )
 target_link_libraries(rotation_transform_tests
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main

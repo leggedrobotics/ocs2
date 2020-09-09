@@ -112,9 +112,9 @@ class CircularKinematicsTest : public testing::Test {
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    ASSERT_LT(performanceIndex.totalCost - expectedCost, 0.0)
+    EXPECT_LT(performanceIndex.totalCost - expectedCost, 0.0)
         << "MESSAGE: " << testName << ": failed in the total cost test!";
-    ASSERT_LT(fabs(performanceIndex.stateInputEqConstraintISE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
+    EXPECT_LT(fabs(performanceIndex.stateInputEqConstraintISE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }
 

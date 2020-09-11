@@ -73,6 +73,8 @@ class PinocchioInterface final {
   using PinocchioData = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using PinocchioJointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
+  using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+
   /**
    * Construct from given pinocchio model
    * @param[in] model pinocchio model
@@ -109,6 +111,12 @@ class PinocchioInterface final {
    * TODO(perry) make this const by caching or mutabling the robotDataPtr_
    */
   Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+
+  void computeAllJacobians(const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+
+  MatrixX getJacobianOfJoint(size_t jointIndex);
+
+  Pose<SCALAR> getJointPose(size_t jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
   /** Cast pinocchio interface to CppAD scalar type. */
   static PinocchioInterface<ad_scalar_t> castToCppAd(const PinocchioInterface<scalar_t>& interface);

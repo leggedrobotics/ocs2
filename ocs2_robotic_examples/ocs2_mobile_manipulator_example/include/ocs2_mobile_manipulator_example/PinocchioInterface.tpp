@@ -4,6 +4,7 @@
 #include <pinocchio/fwd.hpp>
 
 #include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
@@ -84,6 +85,33 @@ Pose<SCALAR> PinocchioInterface<SCALAR>::getBodyPoseInWorldFrame(const std::stri
 template <typename SCALAR>
 PinocchioInterface<ad_scalar_t> PinocchioInterface<SCALAR>::castToCppAd(const PinocchioInterface<scalar_t>& interface) {
   return PinocchioInterface<ad_scalar_t>(interface.getModel().template cast<ad_scalar_t>());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+void PinocchioInterface<SCALAR>::computeAllJacobians(const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::computeJointJacobians(*robotModelPtr_, *robotDataPtr_, q);
+}
+
+template <typename SCALAR>
+typename PinocchioInterface<SCALAR>::MatrixX PinocchioInterface<SCALAR>::getJacobianOfJoint(pinocchio::JointIndex jointIndex) {
+  MatrixX jointJacobian = MatrixX::Zero(6, robotModelPtr_->nv);
+  pinocchio::getJointJacobian(*robotModelPtr_, *robotDataPtr_, jointIndex, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jointJacobian);
+  return jointJacobian;
+}
+
+template <typename SCALAR>
+Pose<SCALAR> PinocchioInterface<SCALAR>::getJointPose(pinocchio::JointIndex jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+  pinocchio::forwardKinematics(*robotModelPtr_, *robotDataPtr_, q);
+  pinocchio::updateGlobalPlacements(*robotModelPtr_, *robotDataPtr_);
+
+  Pose<SCALAR> pose;
+  pose.position = robotDataPtr_->oMi[jointIndex].translation();
+  pose.orientation = matrixToQuaternion(robotDataPtr_->oMi[jointIndex].rotation());
+
+  return pose;
 }
 
 /******************************************************************************************************/

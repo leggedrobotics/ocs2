@@ -113,7 +113,9 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
     // To get the (approximate) jacobian of the distance, get the difference between the two nearest point jacobians, then multiply by the
     // vector from point to point
     const Eigen::MatrixXd differenceJacobian = pt2Jacobian - pt1Jacobian;
-    const Eigen::Vector3d distanceVector = (result.nearest_points[1] - result.nearest_points[0]).normalized();
+    // TODO(perry): is there a way to calculate a correct jacobian for the case of distanceVector = 0?
+    const Eigen::Vector3d distanceVector = result.min_distance > 0 ? (result.nearest_points[1] - result.nearest_points[0]).normalized()
+                                                                   : (result.nearest_points[0] - result.nearest_points[1]).normalized();
     distanceQuadraticApproximation.dfdx.row(i) = distanceVector.transpose() * differenceJacobian;
   }
 

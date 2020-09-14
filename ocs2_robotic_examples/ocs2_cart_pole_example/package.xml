@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>ocs2_cart_pole_example</name>
   <version>0.0.0</version>
   <description>The ocs2_cart_pole_example package</description>
@@ -13,19 +13,13 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>roslib </build_depend>
-  <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_ddp</build_depend>
-  <build_depend>ocs2_ocs2</build_depend>
-  <build_depend>ocs2_mpc</build_depend>
-  <build_depend>ocs2_comm_interfaces</build_depend>
-  <build_depend>ocs2_robotic_tools</build_depend>
+  <build_depend>cmake_clang_tools</build_depend>
 
-  <run_depend>robot_state_publisher</run_depend>
-  <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_ddp</run_depend>
-  <run_depend>ocs2_ocs2</run_depend>
-  <run_depend>ocs2_mpc</run_depend>
-  <run_depend>ocs2_comm_interfaces</run_depend>
-  <run_depend>ocs2_robotic_tools</run_depend>
-
+  <depend>ocs2_core</depend>
+  <depend>ocs2_ddp</depend>
+  <depend>ocs2_mpc</depend>
+  <depend>ocs2_ros_interfaces</depend>
+  <depend>ocs2_robotic_tools</depend>
+  <depend>robot_state_publisher</depend>
+  
 </package>

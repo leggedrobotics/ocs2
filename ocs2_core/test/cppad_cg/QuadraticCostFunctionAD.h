@@ -29,36 +29,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/cost/CostFunctionBaseAD.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/CostFunctionBaseAD.h>
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-class QuadraticCostFunctionAD : public CostFunctionBaseAD<STATE_DIM, INPUT_DIM> {
+class QuadraticCostFunctionAD : public CostFunctionBaseAD {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using typename CostFunctionBaseAD::ad_scalar_t;
+  using typename CostFunctionBaseAD::ad_vector_t;
 
-  using BASE = CostFunctionBaseAD<STATE_DIM, INPUT_DIM>;
-  using typename BASE::ad_dynamic_vector_t;
-  using typename BASE::ad_scalar_t;
-  using typename BASE::dynamic_vector_t;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_array_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::scalar_array_t;
-  using typename BASE::scalar_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_array_t;
-  using typename BASE::state_vector_t;
-
-  QuadraticCostFunctionAD(const state_matrix_t& Q, const input_matrix_t& R, const state_vector_t& xNominal, const input_vector_t& uNominal,
-                          const state_matrix_t& QFinal, const state_vector_t& xFinal,
-                          const input_state_matrix_t& P = input_state_matrix_t::Zero())
-      : BASE(), Q_(Q), R_(R), P_(P), QFinal_(QFinal), xNominal_(xNominal), uNominal_(uNominal), xFinal_(xFinal) {}
+  QuadraticCostFunctionAD(const matrix_t& Q, const matrix_t& R, const vector_t& xNominal, const vector_t& uNominal, const matrix_t& QFinal,
+                          const vector_t& xFinal, const matrix_t& P = matrix_t())
+      : CostFunctionBaseAD(Q.rows(), R.rows()),
+        Q_(Q),
+        R_(R),
+        P_(P),
+        QFinal_(QFinal),
+        xNominal_(xNominal),
+        uNominal_(uNominal),
+        xFinal_(xFinal) {
+    if (P_.size() == 0) {
+      P_ = matrix_t::Zero(R.rows(), Q.rows());
+    }
+  }
 
   QuadraticCostFunctionAD(const QuadraticCostFunctionAD& rhs)
-      : BASE(rhs),
+      : CostFunctionBaseAD(rhs),
         Q_(rhs.Q_),
         R_(rhs.R_),
         P_(rhs.P_),
@@ -72,46 +69,44 @@ class QuadraticCostFunctionAD : public CostFunctionBaseAD<STATE_DIM, INPUT_DIM> 
   QuadraticCostFunctionAD* clone() const override { return new QuadraticCostFunctionAD(*this); }
 
  protected:
-  dynamic_vector_t getIntermediateParameters(scalar_t time) const override {
-    dynamic_vector_t parameters(STATE_DIM + INPUT_DIM);
+  vector_t getIntermediateParameters(scalar_t time) const override {
+    vector_t parameters(stateDim_ + inputDim_);
     parameters << xNominal_, uNominal_;
     return parameters;
   }
 
-  size_t getNumIntermediateParameters() const override { return STATE_DIM + INPUT_DIM; };
+  size_t getNumIntermediateParameters() const override { return stateDim_ + inputDim_; };
 
-  dynamic_vector_t getTerminalParameters(scalar_t time) const override { return xFinal_; }
+  vector_t getFinalParameters(scalar_t time) const override { return xFinal_; }
 
-  size_t getNumTerminalParameters() const override { return STATE_DIM; };
+  size_t getNumFinalParameters() const override { return stateDim_; };
 
-  void intermediateCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& input,
-                                const ad_dynamic_vector_t& parameters, ad_scalar_t& costValue) const {
-    ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
-    ad_dynamic_vector_t inputDesired = parameters.template tail<INPUT_DIM>();
-    ad_dynamic_vector_t xDeviation = state - stateDesired;
-    ad_dynamic_vector_t uDeviation = input - inputDesired;
+  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                       const ad_vector_t& parameters) const override {
+    ad_vector_t stateDesired = parameters.head(stateDim_);
+    ad_vector_t inputDesired = parameters.tail(inputDim_);
+    ad_vector_t xDeviation = state - stateDesired;
+    ad_vector_t uDeviation = input - inputDesired;
 
-    costValue = 0.5 * xDeviation.dot(Q_.template cast<ad_scalar_t>() * xDeviation) +
-                0.5 * uDeviation.dot(R_.template cast<ad_scalar_t>() * uDeviation) +
-                uDeviation.dot(P_.template cast<ad_scalar_t>() * xDeviation);
+    return 0.5 * xDeviation.dot(Q_.template cast<ad_scalar_t>() * xDeviation) +
+           0.5 * uDeviation.dot(R_.template cast<ad_scalar_t>() * uDeviation) + uDeviation.dot(P_.cast<ad_scalar_t>() * xDeviation);
   }
 
-  void terminalCostFunction(ad_scalar_t time, const ad_dynamic_vector_t& state, const ad_dynamic_vector_t& parameters,
-                            ad_scalar_t& costValue) const {
-    ad_dynamic_vector_t stateDesired = parameters.template head<STATE_DIM>();
-    ad_dynamic_vector_t xDeviation = state - stateDesired;
-    costValue = 0.5 * xDeviation.dot(QFinal_.template cast<ad_scalar_t>() * xDeviation);
+  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
+    ad_vector_t stateDesired = parameters.head(stateDim_);
+    ad_vector_t xDeviation = state - stateDesired;
+    return 0.5 * xDeviation.dot(QFinal_.cast<ad_scalar_t>() * xDeviation);
   }
 
  private:
-  state_matrix_t Q_;
-  input_matrix_t R_;
-  input_state_matrix_t P_;
-  state_matrix_t QFinal_;
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t P_;
+  matrix_t QFinal_;
 
-  state_vector_t xNominal_;
-  input_vector_t uNominal_;
-  state_vector_t xFinal_;
+  vector_t xNominal_;
+  vector_t uNominal_;
+  vector_t xFinal_;
 };
 
 }  // namespace ocs2

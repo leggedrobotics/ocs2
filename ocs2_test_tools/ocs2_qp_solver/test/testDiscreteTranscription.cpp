@@ -1,6 +1,31 @@
-//
-// Created by rgrandia on 26.02.20.
-//
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
 
 #include <gtest/gtest.h>
 
@@ -16,28 +41,24 @@ class DiscreteTranscriptionTest : public testing::Test {
   static constexpr size_t numStateOnlyConstraints = 1;
   static constexpr size_t numFinalStateOnlyConstraints = 1;
   static constexpr ocs2::scalar_t dt = 1e-2;
-  using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
-  using costFunction_t = ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using input_vector_t = costFunction_t::input_vector_t;
-  using state_vector_t = costFunction_t::state_vector_t;
 
   DiscreteTranscriptionTest() {
     srand(0);
-    const auto cost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(
-        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-        state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
-    costWrapper.reset(new ocs2::qp_solver::CostWrapper(*cost));
-    const auto system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-    systemWrapper.reset(new ocs2::qp_solver::SystemWrapper(*system));
-    const auto constraint = ocs2::qp_solver::getOcs2Constraints<STATE_DIM, INPUT_DIM>(
-        ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
-        ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
-        ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
-    constraintsWrapper.reset(new ocs2::qp_solver::ConstraintsWrapper(*constraint));
+    cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+    costDesiredTrajectories =
+        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+    constraints =
+        ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
+
     linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
-    unconstrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, nullptr, linearization);
-    constrainedLqr =
-        ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, constraintsWrapper.get(), linearization);
+
+    unconstrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, nullptr, linearization);
+    constrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, constraints.get(), linearization);
   }
 
   void checkSizes(const std::vector<ocs2::qp_solver::LinearQuadraticStage>& lqr, size_t numStateInputConstraints,
@@ -81,9 +102,10 @@ class DiscreteTranscriptionTest : public testing::Test {
     }
   }
 
-  std::unique_ptr<ocs2::qp_solver::CostWrapper> costWrapper;
-  std::unique_ptr<ocs2::qp_solver::SystemWrapper> systemWrapper;
-  std::unique_ptr<ocs2::qp_solver::ConstraintsWrapper> constraintsWrapper;
+  std::unique_ptr<ocs2::CostFunctionBase> cost;
+  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  std::unique_ptr<ocs2::SystemDynamicsBase> system;
+  std::unique_ptr<ocs2::ConstraintBase> constraints;
   ocs2::qp_solver::ContinuousTrajectory linearization;
   std::vector<ocs2::qp_solver::LinearQuadraticStage> unconstrainedLqr;
   std::vector<ocs2::qp_solver::LinearQuadraticStage> constrainedLqr;
@@ -109,8 +131,7 @@ TEST_F(DiscreteTranscriptionTest, linearizationInvariance) {
   auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
   linearization2.timeTrajectory = linearization.timeTrajectory;
 
-  const auto lqp2 =
-      ocs2::qp_solver::getLinearQuadraticApproximation(*costWrapper, *systemWrapper, constraintsWrapper.get(), linearization2);
+  const auto lqp2 = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, constraints.get(), linearization2);
 
   // All matrices should stay the same. The linear and constant parts changes
   for (int k = 0; k < N; ++k) {

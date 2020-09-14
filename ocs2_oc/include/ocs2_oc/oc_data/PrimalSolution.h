@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 
@@ -39,21 +39,8 @@ namespace ocs2 {
 
 /**
  * This class contains the primal problem's solution.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM>
 struct PrimalSolution {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-  using dim_t = Dimensions<STATE_DIM, INPUT_DIM>;
-  using size_array_t = typename dim_t::size_array_t;
-  using scalar_array_t = typename dim_t::scalar_array_t;
-  using state_vector_array_t = typename dim_t::state_vector_array_t;
-  using input_vector_array_t = typename dim_t::input_vector_array_t;
-
   /**
    * Constructor
    */
@@ -72,7 +59,7 @@ struct PrimalSolution {
         stateTrajectory_(other.stateTrajectory_),
         inputTrajectory_(other.inputTrajectory_),
         modeSchedule_(other.modeSchedule_),
-        controllerPtr_(other.controllerPtr_->clone()) {}
+        controllerPtr_(other.controllerPtr_ ? other.controllerPtr_->clone() : nullptr) {}
 
   /**
    * Copy Assignment
@@ -82,7 +69,11 @@ struct PrimalSolution {
     stateTrajectory_ = other.stateTrajectory_;
     inputTrajectory_ = other.inputTrajectory_;
     modeSchedule_ = other.modeSchedule_;
-    controllerPtr_.reset(other.controllerPtr_->clone());
+    if (other.controllerPtr_) {
+      controllerPtr_.reset(other.controllerPtr_->clone());
+    } else {
+      controllerPtr_.reset();
+    }
     return *this;
   }
 
@@ -97,10 +88,10 @@ struct PrimalSolution {
   PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
 
   scalar_array_t timeTrajectory_;
-  state_vector_array_t stateTrajectory_;
-  input_vector_array_t inputTrajectory_;
+  vector_array_t stateTrajectory_;
+  vector_array_t inputTrajectory_;
   ModeSchedule modeSchedule_;
-  std::unique_ptr<controller_t> controllerPtr_;
+  std::unique_ptr<ControllerBase> controllerPtr_;
 };
 
 }  // namespace ocs2

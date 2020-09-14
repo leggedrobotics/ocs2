@@ -27,14 +27,64 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "testLoopshapingConstraint.h"
+#include "testLoopshapingConfigurations.h"
 
 namespace ocs2 {
+
 const std::string TestConfiguration_r_filter::fileName = "loopshaping_r.conf";
+constexpr size_t TestConfiguration_r_filter::FULL_STATE_DIM;
+constexpr size_t TestConfiguration_r_filter::FULL_INPUT_DIM;
+constexpr size_t TestConfiguration_r_filter::SYSTEM_STATE_DIM;
+constexpr size_t TestConfiguration_r_filter::SYSTEM_INPUT_DIM;
+constexpr size_t TestConfiguration_r_filter::FILTER_STATE_DIM;
+constexpr size_t TestConfiguration_r_filter::FILTER_INPUT_DIM;
+
 const std::string TestConfiguration_r_simple_filter::fileName = "loopshaping_r_simple.conf";
+constexpr size_t TestConfiguration_r_simple_filter::FULL_STATE_DIM;
+constexpr size_t TestConfiguration_r_simple_filter::FULL_INPUT_DIM;
+constexpr size_t TestConfiguration_r_simple_filter::SYSTEM_STATE_DIM;
+constexpr size_t TestConfiguration_r_simple_filter::SYSTEM_INPUT_DIM;
+constexpr size_t TestConfiguration_r_simple_filter::FILTER_STATE_DIM;
+constexpr size_t TestConfiguration_r_simple_filter::FILTER_INPUT_DIM;
+
 const std::string TestConfiguration_r_ballbot_filter::fileName = "loopshaping_r_ballbot.conf";
+constexpr size_t TestConfiguration_r_ballbot_filter::FULL_STATE_DIM;
+constexpr size_t TestConfiguration_r_ballbot_filter::FULL_INPUT_DIM;
+constexpr size_t TestConfiguration_r_ballbot_filter::SYSTEM_STATE_DIM;
+constexpr size_t TestConfiguration_r_ballbot_filter::SYSTEM_INPUT_DIM;
+constexpr size_t TestConfiguration_r_ballbot_filter::FILTER_STATE_DIM;
+constexpr size_t TestConfiguration_r_ballbot_filter::FILTER_INPUT_DIM;
+
 const std::string TestConfiguration_s_filter::fileName = "loopshaping_s.conf";
+constexpr size_t TestConfiguration_s_filter::FULL_STATE_DIM;
+constexpr size_t TestConfiguration_s_filter::FULL_INPUT_DIM;
+constexpr size_t TestConfiguration_s_filter::SYSTEM_STATE_DIM;
+constexpr size_t TestConfiguration_s_filter::SYSTEM_INPUT_DIM;
+constexpr size_t TestConfiguration_s_filter::FILTER_STATE_DIM;
+constexpr size_t TestConfiguration_s_filter::FILTER_INPUT_DIM;
+
 const std::string TestConfiguration_s_simple_filter::fileName = "loopshaping_s_simple.conf";
+constexpr size_t TestConfiguration_s_simple_filter::FULL_STATE_DIM;
+constexpr size_t TestConfiguration_s_simple_filter::FULL_INPUT_DIM;
+constexpr size_t TestConfiguration_s_simple_filter::SYSTEM_STATE_DIM;
+constexpr size_t TestConfiguration_s_simple_filter::SYSTEM_INPUT_DIM;
+constexpr size_t TestConfiguration_s_simple_filter::FILTER_STATE_DIM;
+constexpr size_t TestConfiguration_s_simple_filter::FILTER_INPUT_DIM;
+
 const std::string TestConfiguration_s_eliminate_filter::fileName = "loopshaping_s_eliminate.conf";
+constexpr size_t TestConfiguration_s_eliminate_filter::FULL_STATE_DIM;
+constexpr size_t TestConfiguration_s_eliminate_filter::FULL_INPUT_DIM;
+constexpr size_t TestConfiguration_s_eliminate_filter::SYSTEM_STATE_DIM;
+constexpr size_t TestConfiguration_s_eliminate_filter::SYSTEM_INPUT_DIM;
+constexpr size_t TestConfiguration_s_eliminate_filter::FILTER_STATE_DIM;
+constexpr size_t TestConfiguration_s_eliminate_filter::FILTER_INPUT_DIM;
+
 const std::string TestConfiguration_s_simple_eliminate_filter::fileName = "loopshaping_s_simple_eliminate.conf";
+constexpr size_t TestConfiguration_s_simple_eliminate_filter::FULL_STATE_DIM;
+constexpr size_t TestConfiguration_s_simple_eliminate_filter::FULL_INPUT_DIM;
+constexpr size_t TestConfiguration_s_simple_eliminate_filter::SYSTEM_STATE_DIM;
+constexpr size_t TestConfiguration_s_simple_eliminate_filter::SYSTEM_INPUT_DIM;
+constexpr size_t TestConfiguration_s_simple_eliminate_filter::FILTER_STATE_DIM;
+constexpr size_t TestConfiguration_s_simple_eliminate_filter::FILTER_INPUT_DIM;
+
 }  // namespace ocs2

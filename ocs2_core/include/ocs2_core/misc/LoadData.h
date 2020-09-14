@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef OCS2_LOADEIGENMATRIX_H_
-#define OCS2_LOADEIGENMATRIX_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <iostream>
@@ -115,7 +114,7 @@ inline void loadCppDataType(const std::string& filename, const std::string& data
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] matrixName: The key name assigned to the matrix in the config file.
- * @param [out] matrix: The loaded matrix.
+ * @param [out] matrix: The loaded matrix, must have desired size.
  */
 template <typename Derived>
 inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix) {
@@ -124,27 +123,34 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
   size_t rows = matrix.rows();
   size_t cols = matrix.cols();
 
+  if (rows == 0 || cols == 0) {
+    throw std::runtime_error("[loadEigenMatrix] Loading empty matrix \"" + matrixName + "\" is not allowed.");
+  }
+
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
-  double scaling = pt.get<double>(matrixName + ".scaling", 1);
+  const scalar_t scaling = pt.get<scalar_t>(matrixName + ".scaling", 1.0);
+  const scalar_t defaultValue = pt.get<scalar_t>(matrixName + ".default", 0.0);
 
-  scalar_t aij;
-  bool failed = false;
+  size_t numFailed = 0;
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < cols; j++) {
+      scalar_t aij;
       try {
         aij = pt.get<scalar_t>(matrixName + "." + "(" + std::to_string(i) + "," + std::to_string(j) + ")");
-      } catch (const std::exception& e) {
-        aij = 0;
-        failed = true;
+      } catch (const std::exception&) {
+        aij = defaultValue;
+        numFailed++;
       }
       matrix(i, j) = scaling * aij;
     }
   }
 
-  if (failed) {
-    std::cerr << "WARNING: Failed to load matrix type: " + matrixName + "!" << std::endl;
+  if (numFailed == matrix.size()) {
+    throw std::runtime_error("[loadEigenMatrix] Could not load matrix \"" + matrixName + "\" from file \"" + filename + "\".");
+  } else if (numFailed > 0) {
+    std::cerr << "WARNING: Loaded at least one default value in matrix: \"" + matrixName + "\"\n";
   }
 }
 
@@ -184,32 +190,5 @@ inline void loadStdVector(const std::string& filename, const std::string& topicN
   }
 }
 
-template <typename scalar_t>
-void loadPartitioningTimes(const std::string& taskFile, scalar_t& timeHorizon, size_t& numPartitions,
-                           std::vector<scalar_t>& partitioningTimes, bool verbose = false) {
-  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.timehorizon", timeHorizon);
-  loadData::loadCppDataType(taskFile, "mpcTimeHorizon.numPartitions", numPartitions);
-
-  if (verbose) {
-    std::cerr << "Time Horizon Settings: " << std::endl;
-    std::cerr << "=====================================" << std::endl;
-    std::cerr << "Time Horizon .................. " << timeHorizon << std::endl;
-    std::cerr << "Number of Partitions .......... " << numPartitions << std::endl << std::endl;
-  }
-
-  if (numPartitions == 0) {
-    throw std::runtime_error("mpcTimeHorizon field is not defined.");
-  }
-
-  partitioningTimes.resize(numPartitions + 1);
-  partitioningTimes[0] = 0.0;
-  for (size_t i = 0; i < numPartitions; i++) {
-    partitioningTimes[i + 1] = partitioningTimes[i] + timeHorizon / numPartitions;
-  }
-  partitioningTimes[numPartitions] = timeHorizon;
-}
-
 }  // namespace loadData
 }  // namespace ocs2
-
-#endif /* OCS2_LOADEIGENMATRIX_H_ */

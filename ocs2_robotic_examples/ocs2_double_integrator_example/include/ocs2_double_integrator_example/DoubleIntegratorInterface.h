@@ -35,65 +35,52 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 // OCS2
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_mpc/MPC_SLQ.h>
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Double Integrator
-#include "ocs2_double_integrator_example/cost/DoubleIntegratorCost.h"
-#include "ocs2_double_integrator_example/definitions.h"
-#include "ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h"
-#include "ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamicsDerivatives.h"
+#include "cost/DoubleIntegratorCost.h"
+#include "definitions.h"
+#include "dynamics/DoubleIntegratorDynamics.h"
 
 namespace ocs2 {
 namespace double_integrator {
 
-class DoubleIntegratorInterface final : public RobotInterface<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_> {
+class DoubleIntegratorInterface final : public RobotInterface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using dim_t = Dimensions<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-
-  using DoubleIntegratorConstraint = ConstraintBase<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
-  using DoubleIntegratorOperatingPoint = OperatingPoints<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
-
-  using rollout_base_t = RolloutBase<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-  using time_triggered_rollout_t = TimeTriggeredRollout<double_integrator::STATE_DIM_, double_integrator::INPUT_DIM_>;
-
-  using mpc_t = ocs2::MPC_SLQ<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
-
   /**
    * Constructor
    * @param [in] taskFileFolderName: The name of the folder containing task file
+   * @param [in] verbose: Load the settings verbose.
    */
-  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName);
+  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName, bool verbose = true);
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~DoubleIntegratorInterface() override = default;
 
-  const dim_t::state_vector_t& getInitialState() { return initialState_; }
-  SLQ_Settings& slqSettings() { return slqSettings_; };
-  MPC_Settings& mpcSettings() { return mpcSettings_; };
+  const vector_t& getInitialState() { return initialState_; }
 
-  std::unique_ptr<mpc_t> getMpc();
+  const vector_t& getInitialTarget() { return finalGoal_; }
 
-  const dim_t::state_vector_t& getXFinal() { return xFinal_; }
+  ddp::Settings& ddpSettings() { return ddpSettings_; }
+
+  mpc::Settings& mpcSettings() { return mpcSettings_; }
+
+  std::unique_ptr<ocs2::MPC_DDP> getMpc(bool warmStart = true);
 
   const DoubleIntegratorDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
 
-  const DoubleIntegratorDynamicsDerivatives& getDynamicsDerivatives() const override { return *linearSystemDynamicsDerivativesPtr_; }
-
   const DoubleIntegratorCost& getCost() const override { return *linearSystemCostPtr_; }
 
-  const rollout_base_t& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
 
-  const DoubleIntegratorOperatingPoint& getOperatingPoints() const override { return *linearSystemOperatingPointPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *linearSystemOperatingPointPtr_; }
 
  protected:
   /**
@@ -101,7 +88,7 @@ class DoubleIntegratorInterface final : public RobotInterface<double_integrator:
    *
    * @param [in] taskFile: Task's file full path.
    */
-  void loadSettings(const std::string& taskFile);
+  void loadSettings(const std::string& taskFile, bool verbose);
 
   /**************
    * Variables
@@ -109,28 +96,18 @@ class DoubleIntegratorInterface final : public RobotInterface<double_integrator:
   std::string taskFile_;
   std::string libraryFolder_;
 
-  SLQ_Settings slqSettings_;
-  MPC_Settings mpcSettings_;
+  ddp::Settings ddpSettings_;
+  mpc::Settings mpcSettings_;
 
-  std::unique_ptr<rollout_base_t> ddpLinearSystemRolloutPtr_;
+  std::unique_ptr<RolloutBase> ddpLinearSystemRolloutPtr_;
 
   std::unique_ptr<DoubleIntegratorDynamics> linearSystemDynamicsPtr_;
-  std::unique_ptr<DoubleIntegratorDynamicsDerivatives> linearSystemDynamicsDerivativesPtr_;
   std::unique_ptr<DoubleIntegratorCost> linearSystemCostPtr_;
-  std::unique_ptr<DoubleIntegratorConstraint> linearSystemConstraintPtr_;
-  std::unique_ptr<DoubleIntegratorOperatingPoint> linearSystemOperatingPointPtr_;
+  std::unique_ptr<ConstraintBase> linearSystemConstraintPtr_;
+  std::unique_ptr<OperatingPoints> linearSystemOperatingPointPtr_;
 
-  // cost parameters
-  dim_t::state_matrix_t Q_;
-  dim_t::input_matrix_t R_;
-  dim_t::state_matrix_t QFinal_;
-  dim_t::state_vector_t xFinal_;
-  dim_t::state_vector_t xNominal_;
-  dim_t::input_vector_t uNominal_;
-
-  size_t numPartitions_ = 0;
-  dim_t::scalar_array_t partitioningTimes_;
-  dim_t::state_vector_t initialState_;
+  vector_t initialState_{STATE_DIM};
+  vector_t finalGoal_{STATE_DIM};
 };
 
 }  // namespace double_integrator

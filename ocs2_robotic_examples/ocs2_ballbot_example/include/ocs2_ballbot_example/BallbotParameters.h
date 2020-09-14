@@ -30,40 +30,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <iostream>
-#include <string>
-#include <vector>
+
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace ballbot {
 
-template <typename SCALAR_T>
-class BallbotParameters {
- public:
-  /**
-   * Constructor.
-   */
-  BallbotParameters() : ballRadius_(0.125), wheelRadius_(0.064), heightBallCenterToBase_(0.275) {}
-
-  /**
-   * Default destructor.
-   */
-  ~BallbotParameters() = default;
-
-  /**
-   * Displays the ballbot's parameters.
-   */
-  inline void display() {
+struct BallbotParameters {
+  void display() {
     std::cerr << "Ballbot parameters: " << std::endl;
     std::cerr << "ballRadius:   " << ballRadius_ << std::endl;
     std::cerr << "wheelRadius:   " << wheelRadius_ << std::endl;
     std::cerr << "heightBallCenterToBase:   " << heightBallCenterToBase_ << std::endl;
   }
 
- public:
   // For safety, these parameters cannot be modified
-  SCALAR_T ballRadius_;              // [m]
-  SCALAR_T wheelRadius_;             // [m]
-  SCALAR_T heightBallCenterToBase_;  // [m]
+  scalar_t ballRadius_ = 0.125;              // [m]
+  scalar_t wheelRadius_ = 0.064;             // [m]
+  scalar_t heightBallCenterToBase_ = 0.275;  // [m]
 };
 
 }  // namespace ballbot

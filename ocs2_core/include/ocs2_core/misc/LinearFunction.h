@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef LINEARFUNCTION_OCS2_H_
-#define LINEARFUNCTION_OCS2_H_
+#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -43,17 +42,11 @@ namespace ocs2 {
  * @tparam DIM1: \f$ d_1 \f$.
  * @tparam DIM2: \f$ d_2 \f$.
  */
-template <size_t STATE_DIM, int DIM1, int DIM2, typename scalar_t = double>
+template <size_t STATE_DIM, int DIM1, int DIM2, typename SCALAR = double>
 class LinearFunction {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  std::vector<scalar_t> time_;
-  std::vector<Eigen::Matrix<scalar_t, DIM1, DIM2>, Eigen::aligned_allocator<Eigen::Matrix<scalar_t, DIM1, DIM2>>> uff_;
-  std::vector<Eigen::Matrix<scalar_t, DIM1, DIM2>, Eigen::aligned_allocator<Eigen::Matrix<scalar_t, DIM1, DIM2>>> deltaUff_;
-  std::vector<Eigen::Matrix<scalar_t, DIM1, STATE_DIM>, Eigen::aligned_allocator<Eigen::Matrix<scalar_t, DIM1, STATE_DIM>>> k_;
-
- public:
   LinearFunction() : time_(0), uff_(0), deltaUff_(0), k_(0) {}
 
   /**
@@ -71,9 +64,9 @@ class LinearFunction {
    * Sets all the data containers to zero
    */
   void setZero() {
-    std::fill(uff_.begin(), uff_.end(), Eigen::Matrix<scalar_t, DIM1, DIM2>::Zero());
-    std::fill(deltaUff_.begin(), deltaUff_.end(), Eigen::Matrix<scalar_t, DIM1, DIM2>::Zero());
-    std::fill(k_.begin(), k_.end(), Eigen::Matrix<scalar_t, DIM1, STATE_DIM>::Zero());
+    std::fill(uff_.begin(), uff_.end(), Eigen::Matrix<SCALAR, DIM1, DIM2>::Zero());
+    std::fill(deltaUff_.begin(), deltaUff_.end(), Eigen::Matrix<SCALAR, DIM1, DIM2>::Zero());
+    std::fill(k_.begin(), k_.end(), Eigen::Matrix<SCALAR, DIM1, STATE_DIM>::Zero());
   }
 
   /**
@@ -99,8 +92,11 @@ class LinearFunction {
    * @return the size of the controller.
    */
   size_t size() const { return time_.size(); }
+
+  std::vector<SCALAR> time_;
+  std::vector<Eigen::Matrix<SCALAR, DIM1, DIM2>, Eigen::aligned_allocator<Eigen::Matrix<SCALAR, DIM1, DIM2>>> uff_;
+  std::vector<Eigen::Matrix<SCALAR, DIM1, DIM2>, Eigen::aligned_allocator<Eigen::Matrix<SCALAR, DIM1, DIM2>>> deltaUff_;
+  std::vector<Eigen::Matrix<SCALAR, DIM1, STATE_DIM>, Eigen::aligned_allocator<Eigen::Matrix<SCALAR, DIM1, STATE_DIM>>> k_;
 };
 
 }  // namespace ocs2
-
-#endif /* LINEARFUNCTION_OCS2_H_ */

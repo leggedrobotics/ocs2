@@ -39,9 +39,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase& costFunction, SystemDynamicsBase& systemDynamics,
                                                                const ContinuousTrajectory& nominalTrajectory,
-                                                               const dynamic_vector_t& initialState) {
+                                                               const vector_t& initialState) {
   // Approximate
   const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nullptr, nominalTrajectory);
 
@@ -55,10 +55,9 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
   return nominalTrajectory + deltaSolution;
 }
 
-ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
-                                                               ConstraintsWrapper constraints,
-                                                               const ContinuousTrajectory& nominalTrajectory,
-                                                               const dynamic_vector_t& initialState) {
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase& costFunction, SystemDynamicsBase& systemDynamics,
+                                                               ConstraintBase& constraints, const ContinuousTrajectory& nominalTrajectory,
+                                                               const vector_t& initialState) {
   // Approximate
   const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, &constraints, nominalTrajectory);
 

@@ -58,8 +58,8 @@ void FrankWolfeDescentDirection::instantiateGLPK() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FrankWolfeDescentDirection::setupLP(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient,
-                                         const dynamic_vector_t& maxGradientInverse, NLP_Constraints* nlpConstraintsPtr) {
+void FrankWolfeDescentDirection::setupLP(const vector_t& parameter, const vector_t& gradient, const vector_t& maxGradientInverse,
+                                         NLP_Constraints* nlpConstraintsPtr) {
   const size_t parameterDim = parameter.size();
 
   // return if there is no parameter
@@ -72,7 +72,7 @@ void FrankWolfeDescentDirection::setupLP(const dynamic_vector_t& parameter, cons
   for (size_t i = 0; i < parameterDim; i++) glp_set_obj_coef(lpPtr_.get(), i + 1, gradient(i));
 
   // set descent directions reciprocal element-wise max
-  const dynamic_vector_t Ev = maxGradientInverse.cwiseAbs();
+  const vector_t Ev = maxGradientInverse.cwiseAbs();
   for (size_t i = 0; i < parameterDim; i++) {
     // if the gradient is zero in one direction
     if (numerics::almost_eq(gradient(i), 0.0)) {
@@ -93,9 +93,9 @@ void FrankWolfeDescentDirection::setupLP(const dynamic_vector_t& parameter, cons
   nlpConstraintsPtr->setCurrentParameter(parameter);
 
   // get domain equality constraints
-  dynamic_vector_t g;
+  vector_t g;
   nlpConstraintsPtr->getLinearEqualityConstraint(g);
-  dynamic_matrix_t dgdx;
+  matrix_t dgdx;
   nlpConstraintsPtr->getLinearEqualityConstraintDerivative(dgdx);
   if (g.size() > 0 && dgdx.cols() != parameterDim)
     throw std::runtime_error(
@@ -107,9 +107,9 @@ void FrankWolfeDescentDirection::setupLP(const dynamic_vector_t& parameter, cons
         "should be equal to the number of equality constraints.");
 
   // get domain inequality constraints
-  dynamic_vector_t h;
+  vector_t h;
   nlpConstraintsPtr->getLinearInequalityConstraint(h);
-  dynamic_matrix_t dhdx;
+  matrix_t dhdx;
   nlpConstraintsPtr->getLinearInequalityConstraintDerivative(dhdx);
   if (h.size() > 0 && dhdx.cols() != parameterDim)
     throw std::runtime_error(
@@ -157,9 +157,8 @@ void FrankWolfeDescentDirection::setupLP(const dynamic_vector_t& parameter, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void FrankWolfeDescentDirection::run(const dynamic_vector_t& parameter, const dynamic_vector_t& gradient,
-                                     const dynamic_vector_t& maxGradientInverse, NLP_Constraints* nlpConstraintsPtr,
-                                     dynamic_vector_t& fwDescentDirection) {
+void FrankWolfeDescentDirection::run(const vector_t& parameter, const vector_t& gradient, const vector_t& maxGradientInverse,
+                                     NLP_Constraints* nlpConstraintsPtr, vector_t& fwDescentDirection) {
   if (gradient.size() != parameter.size()) throw std::runtime_error("The gradient vector size is incompatible to the parameter size.");
   if (maxGradientInverse.size() != gradient.size())
     throw std::runtime_error("The gradient limit size is incompatible to the gradient size.");

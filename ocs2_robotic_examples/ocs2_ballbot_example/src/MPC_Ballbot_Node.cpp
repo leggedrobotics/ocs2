@@ -27,31 +27,33 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ros/init.h>
+
+#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 
 int main(int argc, char** argv) {
   const std::string robotName = "ballbot";
-  using interface_t = ocs2::ballbot::BallbotInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface<ocs2::ballbot::STATE_DIM_, ocs2::ballbot::INPUT_DIM_>;
 
   // task file
-  if (argc <= 1) {
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(argv[1]);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  std::string taskFileFolderName = std::string(programArgs[1]);
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t ballbotInterface(taskFileFolderName);
+  ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Launch MPC ROS node
   auto mpcPtr = ballbotInterface.getMpc();
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

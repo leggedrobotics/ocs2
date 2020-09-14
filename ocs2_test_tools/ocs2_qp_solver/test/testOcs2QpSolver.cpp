@@ -1,6 +1,31 @@
-//
-// Created by rgrandia on 26.02.20.
-//
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
 
 #include <gtest/gtest.h>
 
@@ -20,44 +45,41 @@ class Ocs2QpSolverTest : public testing::Test {
   static constexpr size_t numFinalStateOnlyConstraints = 2;
   static constexpr ocs2::scalar_t precision = 1e-9;
   static constexpr ocs2::scalar_t dt = 1e-3;
-  using SystemDynamics_t = ocs2::SystemDynamicsBase<STATE_DIM, INPUT_DIM>;
-  using costFunction_t = ocs2::CostFunctionBase<STATE_DIM, INPUT_DIM>;
-  using constraint_t = ocs2::ConstraintBase<STATE_DIM, INPUT_DIM>;
-  using input_vector_t = costFunction_t::input_vector_t;
-  using state_vector_t = costFunction_t::state_vector_t;
-
-  Ocs2QpSolverTest() {
-    srand(0);
-    cost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                                              ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                                              state_vector_t::Random(), input_vector_t::Random(), state_vector_t::Random());
-    system = ocs2::qp_solver::getOcs2Dynamics<STATE_DIM, INPUT_DIM>(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-    constraint = ocs2::qp_solver::getOcs2Constraints<STATE_DIM, INPUT_DIM>(
-        ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
-        ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
-        ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
-    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
-    x0 = state_vector_t::Random();
-    constrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, *constraint, nominalTrajectory, x0);
-    unconstrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
-  }
 
   void checkDyanmics(const ocs2::qp_solver::ContinuousTrajectory& solution) const {
     // Forward integrate with unconstrainedSolution u(t) and check x(t)
-    state_vector_t x = x0;
-    ocs2::qp_solver::SystemWrapper systemWrapper(*system);
+    ocs2::vector_t x = x0;
     for (int k = 0; k < N; ++k) {
       auto dt = solution.timeTrajectory[k + 1] - solution.timeTrajectory[k];
-      x += dt * systemWrapper.getFlowMap(solution.timeTrajectory[k], x, solution.inputTrajectory[k]);
+      x += dt * system->computeFlowMap(solution.timeTrajectory[k], x, solution.inputTrajectory[k]);
       ASSERT_TRUE(x.isApprox(solution.stateTrajectory[k + 1], precision));
     }
   }
 
-  std::unique_ptr<costFunction_t> cost;
-  std::unique_ptr<SystemDynamics_t> system;
-  std::unique_ptr<constraint_t> constraint;
+  Ocs2QpSolverTest() {
+    srand(0);
+    cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+    costDesiredTrajectories =
+        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+    constraint =
+        ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
+    x0 = ocs2::vector_t::Random(STATE_DIM);
+    constrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, *constraint, nominalTrajectory, x0);
+    unconstrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
+  }
+
+  std::unique_ptr<ocs2::CostFunctionBase> cost;
+  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  std::unique_ptr<ocs2::SystemDynamicsBase> system;
+  std::unique_ptr<ocs2::ConstraintBase> constraint;
   ocs2::qp_solver::ContinuousTrajectory nominalTrajectory;
-  state_vector_t x0;
+  ocs2::vector_t x0;
   ocs2::qp_solver::ContinuousTrajectory constrainedSolution;
   ocs2::qp_solver::ContinuousTrajectory unconstrainedSolution;
 };
@@ -82,16 +104,17 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
 }
 
 TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
-  ocs2::qp_solver::ConstraintsWrapper constraintsWrapper(*constraint);
-  const auto g0 = constraintsWrapper.getInitialConstraint(constrainedSolution.timeTrajectory[0], constrainedSolution.stateTrajectory[0],
-                                                          constrainedSolution.inputTrajectory[0]);
+  const auto g0 = constraint->stateInputEqualityConstraint(constrainedSolution.timeTrajectory[0], constrainedSolution.stateTrajectory[0],
+                                                           constrainedSolution.inputTrajectory[0]);
   ASSERT_TRUE(g0.isZero(precision));
   for (int k = 1; k < N; ++k) {
-    const auto g = constraintsWrapper.getConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k],
-                                                    constrainedSolution.inputTrajectory[k]);
+    const auto g = constraint->stateInputEqualityConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k],
+                                                            constrainedSolution.inputTrajectory[k]);
     ASSERT_TRUE(g.isZero(precision));
+    const auto h = constraint->stateEqualityConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k]);
+    ASSERT_TRUE(h.isZero(precision));
   }
-  const auto gf = constraintsWrapper.getTerminalConstraint(constrainedSolution.timeTrajectory[N], constrainedSolution.stateTrajectory[N]);
+  const auto gf = constraint->finalStateEqualityConstraint(constrainedSolution.timeTrajectory[N], constrainedSolution.stateTrajectory[N]);
   ASSERT_TRUE(gf.isZero(precision));
 }
 
@@ -107,17 +130,16 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
 }
 
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
-  // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the unconstrained solution has only zeros.
-  const auto zeroCost = ocs2::qp_solver::getOcs2Cost<STATE_DIM, INPUT_DIM>(
-      ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM), state_vector_t::Zero(),
-      input_vector_t::Zero(), state_vector_t::Zero());
-  const auto zeroX0 = state_vector_t::Zero();
+  // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the solution has only zeros.
+  costDesiredTrajectories = ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
+  cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  const auto zeroX0 = ocs2::vector_t::Zero(STATE_DIM);
 
   // Obtain solution, with non-zero nominalTrajectory
-  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*zeroCost, *system, nominalTrajectory, zeroX0);
+  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, zeroX0);
 
-  ocs2::dynamic_vector_array_t allStatesZero(N + 1, ocs2::dynamic_vector_t::Zero(STATE_DIM));
-  ocs2::dynamic_vector_array_t allInputsZero(N, ocs2::dynamic_vector_t::Zero(INPUT_DIM));
+  ocs2::vector_array_t allStatesZero(N + 1, ocs2::vector_t::Zero(STATE_DIM));
+  ocs2::vector_array_t allInputsZero(N, ocs2::vector_t::Zero(INPUT_DIM));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.stateTrajectory, allStatesZero));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.inputTrajectory, allInputsZero));
 }

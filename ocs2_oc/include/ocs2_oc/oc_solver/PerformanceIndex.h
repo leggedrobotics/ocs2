@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iomanip>
 #include <ostream>
 
 #include <ocs2_core/Types.h>
@@ -56,7 +57,7 @@ struct PerformanceIndex {
 };
 
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
-  const size_t tabSpace = 10;
+  const size_t tabSpace = 12;
   const auto indentation = stream.width();
   stream << std::left;  // fill from left
 

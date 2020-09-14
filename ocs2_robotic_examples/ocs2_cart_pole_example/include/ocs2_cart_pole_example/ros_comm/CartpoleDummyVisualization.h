@@ -32,20 +32,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include "ocs2_cart_pole_example/definitions.h"
 
 namespace ocs2 {
 namespace cartpole {
 
-class CartpoleDummyVisualization : public DummyObserver<cartpole::STATE_DIM_, cartpole::INPUT_DIM_> {
+class CartpoleDummyVisualization : public DummyObserver {
  public:
   explicit CartpoleDummyVisualization(ros::NodeHandle& nodeHandle) { launchVisualizerNode(nodeHandle); }
 
   ~CartpoleDummyVisualization() override = default;
 
-  void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
+  void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
 
  private:
   void launchVisualizerNode(ros::NodeHandle& nodeHandle);

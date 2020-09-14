@@ -38,36 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-/**
- * Defines the quadratic approximation f(x,u) = 1/2 dx' dfdxx dx + du' dfdux dx + 1/2 du' dfduu du + dfdx' dx + dfdu' du + f
- */
-struct ScalarFunctionQuadraticApproximation {
-  /** Second derivative w.r.t state */
-  dynamic_matrix_t dfdxx;
-  /** Second derivative w.r.t input (lhs) and state (rhs) */
-  dynamic_matrix_t dfdux;
-  /** Second derivative w.r.t input */
-  dynamic_matrix_t dfduu;
-  /** First derivative w.r.t state */
-  dynamic_vector_t dfdx;
-  /** First derivative w.r.t input */
-  dynamic_vector_t dfdu;
-  /** Constant term */
-  scalar_t f = 0.;
-};
-
-/**
- * Defines the linear model of a vector function f(x,u) = dfdx * dx + dfdu * du + df
- */
-struct VectorFunctionLinearApproximation {
-  /** Derivative w.r.t state */
-  dynamic_matrix_t dfdx;
-  /** Derivative w.r.t input */
-  dynamic_matrix_t dfdu;
-  /** Constant term */
-  dynamic_vector_t f;
-};
-
 /** Defines the quadratic cost and  linear dynamics at a give stage */
 struct LinearQuadraticStage {
   /** Quadratic approximation of the cost */

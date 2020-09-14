@@ -1,139 +1,191 @@
-#include <gtest/gtest.h>
-#include <ocs2_comm_interfaces/ocs2_interfaces/MPC_MRT_Interface.h>
-#include <ocs2_double_integrator_example/DoubleIntegratorInterface.h>
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+
 #include <cmath>
+
+#include <gtest/gtest.h>
+
+#include <ocs2_double_integrator_example/DoubleIntegratorInterface.h>
+#include <ocs2_mpc/MPC_MRT_Interface.h>
 
 using namespace ocs2;
 using namespace double_integrator;
-using dim_t = ocs2::Dimensions<STATE_DIM_, INPUT_DIM_>;
-using mpc_t = MPC_MRT_Interface<dim_t::STATE_DIM_, dim_t::INPUT_DIM_>;
 
-TEST(DoubleIntegratorIntegrationTest, synchronousTracking) {
-  std::string taskFileFolderName = "mpc";
-  DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  auto mpcPtr = doubleIntegratorInterface.getMpc();
-  mpc_t mpcInterface(*mpcPtr);
+class DoubleIntegratorIntegrationTest : public testing::Test {
+ protected:
+  DoubleIntegratorIntegrationTest() {
+    const bool verbose = false;
+    doubleIntegratorInterfacePtr.reset(new DoubleIntegratorInterface("mpc", verbose));
 
-  double time = 1234.5;  // start from a random time
+    initState = doubleIntegratorInterfacePtr->getInitialState();
+    goalState = doubleIntegratorInterfacePtr->getInitialTarget();
 
-  // initialize observation:
-  mpc_t::system_observation_t observation;
-  observation.state() = doubleIntegratorInterface.getInitialState();
-  observation.time() = time;
+    // initialize reference
+    costDesiredTrajectories.desiredTimeTrajectory().push_back(initTime);
+    costDesiredTrajectories.desiredTimeTrajectory().push_back(initTime + 1.0);
+    costDesiredTrajectories.desiredStateTrajectory().push_back(initState);
+    costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
+    costDesiredTrajectories.desiredInputTrajectory().push_back(vector_t::Zero(INPUT_DIM));
+    costDesiredTrajectories.desiredInputTrajectory().push_back(vector_t::Zero(INPUT_DIM));
+  }
 
-  mpcInterface.setCurrentObservation(observation);
+  const scalar_t tolerance = 2e-2;
+  const scalar_t f_mpc = 10.0;
+  const scalar_t mpcIncrement = 1.0 / f_mpc;
+  const scalar_t initTime = 1234.5;  // start from a random time
+  const scalar_t finalTime = initTime + 5.0;
 
-  // initialize reference:
+  vector_t initState;
+  vector_t goalState;
+  std::unique_ptr<DoubleIntegratorInterface> doubleIntegratorInterfacePtr;
   CostDesiredTrajectories costDesiredTrajectories;
-  costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
-  costDesiredTrajectories.desiredTimeTrajectory().push_back(time + 1);
-  mpc_t::state_vector_t goalState = doubleIntegratorInterface.getXFinal();
-  costDesiredTrajectories.desiredStateTrajectory().push_back(observation.state());
-  costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
-  mpc_t::input_vector_t desiredInput;
-  desiredInput.setZero();
-  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
-  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
+};
+
+TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
+  auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
+  MPC_MRT_Interface mpcInterface(*mpcPtr);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 
-  double f_control = 10;
-  // double f_control = doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_;
-  double T = 5;
+  SystemObservation observation;
+  observation.time = initTime;
+  observation.state = initState;
+  observation.input.setZero(INPUT_DIM);
+  mpcInterface.setCurrentObservation(observation);
 
   // run MPC for N iterations
-  int N = static_cast<int>(f_control * T);
-  for (int i = 0; i < N; i++) {
+  auto time = initTime;
+  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
+  for (size_t i = 0; i < N; i++) {
     // run MPC
     mpcInterface.advanceMpc();
-    time += 1.0 / f_control;
+    time += 1.0 / f_mpc;
 
     if (mpcInterface.initialPolicyReceived()) {
-      mpc_t::state_vector_t optimalState;
-      mpc_t::input_vector_t optimalInput;
-      size_t subsystem;
+      size_t mode;
+      vector_t optimalState, optimalInput;
 
       mpcInterface.updatePolicy();
-      mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
+      mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
 
       // use optimal state for the next observation:
-      observation.state() = optimalState;
-      observation.time() = time;
+      observation.time = time;
+      observation.state = optimalState;
+      observation.input.setZero(INPUT_DIM);
       mpcInterface.setCurrentObservation(observation);
     }
   }
 
-  ASSERT_NEAR(observation.state()[0], goalState[0], 2e-2);
+  ASSERT_NEAR(observation.state(0), goalState(0), tolerance);
 }
 
-TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
-  // task file
-  std::string taskFileFolderName = "mpc";
-
-  DoubleIntegratorInterface doubleIntegratorInterface(taskFileFolderName);
-  auto mpcPtr = doubleIntegratorInterface.getMpc();
-  mpc_t mpcInterface(*mpcPtr);
-
-  double time = 1234.5;  // start from a random time
-
-  mpc_t::state_vector_t initialState;
-  initialState = doubleIntegratorInterface.getInitialState();
-
-  // initialize reference:
-  CostDesiredTrajectories costDesiredTrajectories;
-  costDesiredTrajectories.desiredTimeTrajectory().push_back(time);
-  costDesiredTrajectories.desiredTimeTrajectory().push_back(time + 1);
-  mpc_t::state_vector_t goalState = doubleIntegratorInterface.getXFinal();
-  costDesiredTrajectories.desiredStateTrajectory().push_back(initialState);
-  costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
-  mpc_t::input_vector_t desiredInput;
-  desiredInput.setZero();
-  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
-  costDesiredTrajectories.desiredInputTrajectory().push_back(desiredInput);
+TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
+  auto mpcPtr = doubleIntegratorInterfacePtr->getMpc(false);
+  MPC_MRT_Interface mpcInterface(*mpcPtr);
   mpcInterface.setTargetTrajectories(costDesiredTrajectories);
 
-  double f_mpc = 10;
-  double mpcIncrement = 1.0 / f_mpc;
-  double f_tracking = 100;
-  double trackingIncrement = 1.0 / f_tracking;
-  // double f_control = doubleIntegratorInterface.mpcSettings().mpcDesiredFrequency_;
-  double T = 5;
+  SystemObservation observation;
+  observation.time = initTime;
+  observation.state = initState;
+  observation.input.setZero(INPUT_DIM);
+  mpcInterface.setCurrentObservation(observation);
 
-  mpc_t::system_observation_t observation;
-  mpc_t::state_vector_t optimalState = initialState;
-  mpc_t::input_vector_t optimalInput;
-  size_t subsystem;
-  std::atomic_bool trackerRunning(true);
+  // run MPC for N iterations
+  auto time = initTime;
+  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
+  for (size_t i = 0; i < N; i++) {
+    // run MPC
+    mpcInterface.advanceMpc();
+    time += 1.0 / f_mpc;
 
+    if (mpcInterface.initialPolicyReceived()) {
+      size_t mode;
+      vector_t optimalState, optimalInput;
+
+      mpcInterface.updatePolicy();
+      mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
+
+      // use optimal state for the next observation:
+      observation.time = time;
+      observation.state = optimalState;
+      observation.input.setZero(INPUT_DIM);
+      mpcInterface.setCurrentObservation(observation);
+    }
+  }
+
+  ASSERT_NEAR(observation.state(0), goalState(0), tolerance);
+}
+
+TEST_F(DoubleIntegratorIntegrationTest, asynchronousTracking) {
+  auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
+  MPC_MRT_Interface mpcInterface(*mpcPtr);
+  mpcInterface.setTargetTrajectories(costDesiredTrajectories);
+
+  const scalar_t f_mrt = 100;
+  const scalar_t mrtTimeIncrement = 1.0 / f_mrt;
+
+  scalar_t time = initTime;
+  size_t mode;
+  vector_t optimalState = initState;
+  vector_t optimalInput;
+
+  // run MRT in a thread
   std::mutex timeStateMutex;
-
+  std::atomic_bool trackerRunning{true};
   auto tracker = [&]() {
     while (trackerRunning) {
       {
         std::lock_guard<std::mutex> lock(timeStateMutex);
-        time += trackingIncrement;
+        time += mrtTimeIncrement;
         if (mpcInterface.initialPolicyReceived()) {
           mpcInterface.updatePolicy();
-          mpcInterface.evaluatePolicy(time, mpc_t::state_vector_t::Zero(), optimalState, optimalInput, subsystem);
+          mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
         }
-        if (std::abs(time - T) < 0.005) {
-          ASSERT_NEAR(optimalState[0], goalState[0], 2e-2);
+        if (std::abs(time - finalTime) < 0.005) {
+          ASSERT_NEAR(optimalState(0), goalState(0), tolerance);
         }
       }
-      usleep(uint(trackingIncrement * 1e6));
+      usleep(uint(mrtTimeIncrement * 1e6));
     }
   };
-
   std::thread trackerThread(tracker);
 
   try {
     // run MPC for N iterations
-    int N = int(f_mpc * T);
-    for (int i = 0; i < N; i++) {
+    SystemObservation observation;
+    const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
+    for (size_t i = 0; i < N; i++) {
       {
         std::lock_guard<std::mutex> lock(timeStateMutex);
         // use optimal state for the next observation:
-        observation.state() = optimalState;
-        observation.time() = time;
+        observation.time = time;
+        observation.state = optimalState;
+        observation.input.setZero(INPUT_DIM);
       }
       mpcInterface.setCurrentObservation(observation);
       mpcInterface.advanceMpc();
@@ -146,9 +198,4 @@ TEST(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   }
   trackerRunning = false;
   trackerThread.join();
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

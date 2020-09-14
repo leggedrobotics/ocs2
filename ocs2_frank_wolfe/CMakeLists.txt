@@ -16,11 +16,11 @@ find_package(GLPK MODULE REQUIRED)
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-   INCLUDE_DIRS 
+   INCLUDE_DIRS
      include
      ${EIGEN3_INCLUDE_DIRS}
-   CATKIN_DEPENDS 
-     ocs2_core 
+   CATKIN_DEPENDS
+     ocs2_core
    LIBRARIES
      ${PROJECT_NAME}
    DEPENDS
@@ -70,29 +70,32 @@ install(TARGETS ${PROJECT_NAME}
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_frank_wolfe
 
-catkin_add_gtest(quadratic_test 
+catkin_add_gtest(quadratic_test
   test/QuadraticTest.cpp
 )
 target_link_libraries(quadratic_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
+  gtest_main
 )
 
-catkin_add_gtest(matyas_test 
+catkin_add_gtest(matyas_test
   test/MatyasTest.cpp
 )
 target_link_libraries(matyas_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
+  gtest_main
 )
 
-catkin_add_gtest(glpk_test 
+catkin_add_gtest(glpk_test
   test/testGLPK.cpp
 )
 target_link_libraries(glpk_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   GLPK::GLPK
+  gtest_main
 )

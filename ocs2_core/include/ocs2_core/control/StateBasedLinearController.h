@@ -29,44 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/control/ControllerBase.h"
-#include "ocs2_core/control/LinearController.h"
-#include "ocs2_core/misc/LinearInterpolation.h"
-
-#include <iomanip>
+#include <ocs2_core/control/ControllerBase.h>
+#include <ocs2_core/control/LinearController.h>
 
 namespace ocs2 {
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-
-class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_DIM> {
+class StateBasedLinearController final : public ControllerBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  /** Default constructor */
+  StateBasedLinearController() = default;
 
-  using Base = ControllerBase<STATE_DIM, INPUT_DIM>;
-
-  using dimensions_t = Dimensions<STATE_DIM, INPUT_DIM>;
-  using size_array_t = typename dimensions_t::size_array_t;
-  using scalar_t = typename dimensions_t::scalar_t;
-  using scalar_array_t = typename dimensions_t::scalar_array_t;
-  using float_array_t = typename Base::float_array_t;
-  using state_vector_t = typename dimensions_t::state_vector_t;
-  using input_vector_t = typename dimensions_t::input_vector_t;
-  using input_vector_array_t = typename dimensions_t::input_vector_array_t;
-  using input_state_matrix_t = typename dimensions_t::input_state_matrix_t;
-  using input_state_matrix_array_t = typename dimensions_t::input_state_matrix_array_t;
-
-  using controller_t = ControllerBase<STATE_DIM, INPUT_DIM>;
-
-  /**
-   * Default constructor.
-   */
-  stateBasedLinearController() = default;
-
-  /**
-   * Default destructor.
-   */
-  ~stateBasedLinearController() override = default;
+  /** Default destructor */
+  ~StateBasedLinearController() override = default;
 
   /**
    * Sets the provided controller pointer which provides the input signal
@@ -74,13 +48,7 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
    *
    * @param[in] ctrlPtr: pointer to the provided controller
    */
-  void setController(controller_t* ctrlPtr) {
-    if (!ctrlPtr) {
-      throw std::runtime_error("The controller pointer is null!");
-    }
-    ctrlPtr_ = ctrlPtr;
-    ctrlEventTimes_ = ctrlPtr->controllerEventTimes();
-  }
+  void setController(ControllerBase* ctrlPtr);
 
   /**
    * Computes the control input based on the trajectory spreading scheme.
@@ -89,71 +57,30 @@ class stateBasedLinearController final : public ControllerBase<STATE_DIM, INPUT_
    * @param [in] x: current state at which input is requested
    * @param [in] ctrlEventTimes: array containing eventTimes around which the controller was designed
    * @param [in] ctrlPtr: Pointer to the actual controller
-   *
-   * @retrun
+   * @retrun control input vector
    */
-  static input_vector_t computeTrajectorySpreadingInput(const scalar_t& t, const state_vector_t& x, const scalar_array_t& ctrlEventTimes,
-                                                        controller_t* ctrlPtr) {
-    size_t currentMode = x.tail(1).value();
-    size_t numEvents = ctrlEventTimes.size();
+  static vector_t computeTrajectorySpreadingInput(scalar_t t, const vector_t& x, const scalar_array_t& ctrlEventTimes,
+                                                  ControllerBase* ctrlPtr);
 
-    if (numEvents == 0)  // Simple case in which the controller does not contain any events
-    {
-      return ctrlPtr->computeInput(t, x);
-    }
+  vector_t computeInput(scalar_t t, const vector_t& x) override;
 
-    scalar_t tauMinus = (numEvents > currentMode) ? ctrlEventTimes[currentMode] : ctrlEventTimes.back();
-    scalar_t tau = (numEvents > currentMode + 1) ? ctrlEventTimes[currentMode + 1] : ctrlEventTimes.back();
-    scalar_t tauPlus = (numEvents > currentMode + 2) ? ctrlEventTimes[currentMode + 2] : ctrlEventTimes.back();
+  void concatenate(const ControllerBase* nextController, int index, int length) override;
 
-    bool pastAllEvents = (currentMode >= numEvents - 1) && (t > tauMinus);
-    const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
+  int size() const override;
 
-    if ((t > tauMinus && t < tau) || pastAllEvents) {  // normal case
-      return ctrlPtr->computeInput(t, x);
-      // return normal input signal
-    } else if (t < tauMinus) {
-      // if event happened before the event time for which the controller was designed
-      return ctrlPtr->computeInput(tauMinus + 2.0 * eps, x);
-      // request input 1 epsilon after the designed event time
-    } else if (t > tau) {
-      // if event has not happened yet at the event time for which the controller was designed
-      return ctrlPtr->computeInput(tau - eps, x);
-      // request input 1 epsilon before the designed event time
-    }
-  }
+  ControllerType getType() const override;
 
-  input_vector_t computeInput(const scalar_t& t, const state_vector_t& x) override {
-    return computeTrajectorySpreadingInput(t, x, ctrlEventTimes_, ctrlPtr_);
-  }
+  void clear() override;
 
-  void flatten(const scalar_array_t& timeArray, const std::vector<float_array_t*>& flatArray2) const override {
-    ctrlPtr_->flatten(timeArray, flatArray2);
-  }
+  bool empty() const override;
 
-  void unFlatten(const scalar_array_t& timeArray, const std::vector<float_array_t const*>& flatArray2) override {
-    ctrlPtr_->unFlatten(timeArray, flatArray2);
-  }
+  void display() const override;
 
-  void concatenate(const Base* nextController, int index, int length) override { ctrlPtr_->concatenate(nextController, index, length); }
-
-  int size() const override { return ctrlPtr_->size(); }
-
-  ControllerType getType() const override { return ctrlPtr_->getType(); }
-
-  void clear() override { ctrlPtr_->clear(); }
-
-  void setZero() override { ctrlPtr_->setZero(); }
-
-  bool empty() const override { return ctrlPtr_->empty(); }
-
-  void display() const override { ctrlPtr_->display(); }
-
-  stateBasedLinearController* clone() const override { return new stateBasedLinearController(*this); }
+  StateBasedLinearController* clone() const override;
 
  private:
-  controller_t* ctrlPtr_ = nullptr;
-  scalar_array_t ctrlEventTimes_;
+  ControllerBase* ctrlPtr_ = nullptr;
+  scalar_array_t ctrlEventTimes_{0};
 };
 
 }  // namespace ocs2

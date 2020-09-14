@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,73 +30,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 // OCS2
-#include <ocs2_core/Dimensions.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include <ocs2_mpc/MPC_ILQR.h>
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Quadrotor
 #include "ocs2_quadrotor_example/QuadrotorParameters.h"
-#include "ocs2_quadrotor_example/cost/QuadrotorCost.h"
 #include "ocs2_quadrotor_example/definitions.h"
-#include "ocs2_quadrotor_example/dynamics/QuadrotorDynamicsDerivatives.h"
 #include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorInterface final : public RobotInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class QuadrotorInterface final : public RobotInterface {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using BASE = RobotInterface<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-
-  using dim_t = Dimensions<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-  using QuadrotorConstraint = ConstraintBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-  using QuadrotorOperatingPoint = OperatingPoints<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-
-  using rollout_base_t = RolloutBase<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-  using time_triggered_rollout_t = TimeTriggeredRollout<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-
-  using mpc_t = MPC_ILQR<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_>;
-
   /**
    * Constructor
    *
    * @param [in] taskFileFolderName: The name of the folder containing task file
    */
-  QuadrotorInterface(const std::string& taskFileFolderName);
+  explicit QuadrotorInterface(const std::string& taskFileFolderName);
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~QuadrotorInterface() override = default;
 
-  /**
-   * Gets ILQR settings.
-   *
-   * @return ILQR settings
-   */
-  ILQR_Settings& ilqrSettings() { return ilqrSettings_; }
+  const vector_t& getInitialState() { return initialState_; }
 
-  const dim_t::state_vector_t& getInitialState() { return initialState_; }
+  ddp::Settings& ddpSettings() { return ddpSettings_; }
 
-  MPC_Settings& mpcSettings() { return mpcSettings_; };
+  mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<mpc_t> getMpc();
+  std::unique_ptr<MPC_DDP> getMpc();
 
   const QuadrotorSystemDynamics& getDynamics() const override { return *quadrotorSystemDynamicsPtr_; }
 
-  const QuadrotorDynamicsDerivatives& getDynamicsDerivatives() const override { return *quadrotorDynamicsDerivativesPtr_; }
+  const QuadraticCostFunction& getCost() const override { return *quadrotorCostPtr_; }
 
-  const QuadrotorCost& getCost() const override { return *quadrotorCostPtr_; }
+  const RolloutBase& getRollout() const { return *ddpQuadrotorRolloutPtr_; }
 
-  const rollout_base_t& getRollout() const { return *ddpQuadrotorRolloutPtr_; }
-
-  const QuadrotorOperatingPoint& getOperatingPoints() const override { return *quadrotorOperatingPointPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *quadrotorOperatingPointPtr_; }
 
  protected:
   /**
@@ -106,34 +83,24 @@ class QuadrotorInterface final : public RobotInterface<quadrotor::STATE_DIM_, qu
    */
   void loadSettings(const std::string& taskFile);
 
-  /**************
-   * Variables
-   **************/
   std::string taskFile_;
   std::string libraryFolder_;
 
-  ILQR_Settings ilqrSettings_;
-  MPC_Settings mpcSettings_;
+  ddp::Settings ddpSettings_;
+  mpc::Settings mpcSettings_;
 
-  std::unique_ptr<rollout_base_t> ddpQuadrotorRolloutPtr_;
+  std::unique_ptr<RolloutBase> ddpQuadrotorRolloutPtr_;
 
   std::unique_ptr<QuadrotorSystemDynamics> quadrotorSystemDynamicsPtr_;
-  std::unique_ptr<QuadrotorDynamicsDerivatives> quadrotorDynamicsDerivativesPtr_;
-  std::unique_ptr<QuadrotorCost> quadrotorCostPtr_;
-  std::unique_ptr<QuadrotorConstraint> quadrotorConstraintPtr_;
-  std::unique_ptr<QuadrotorOperatingPoint> quadrotorOperatingPointPtr_;
+  std::unique_ptr<QuadraticCostFunction> quadrotorCostPtr_;
+  std::unique_ptr<ConstraintBase> quadrotorConstraintPtr_;
+  std::unique_ptr<OperatingPoints> quadrotorOperatingPointPtr_;
 
   // cost parameters
-  dim_t::state_matrix_t Q_;
-  dim_t::input_matrix_t R_;
-  dim_t::state_matrix_t QFinal_;
-  dim_t::state_vector_t xFinal_;
-  dim_t::state_vector_t xNominal_;
-  dim_t::input_vector_t uNominal_;
-
-  size_t numPartitions_ = 0;
-  dim_t::scalar_array_t partitioningTimes_;
-  dim_t::state_vector_t initialState_;
+  matrix_t Q_{STATE_DIM, STATE_DIM};
+  matrix_t R_{INPUT_DIM, INPUT_DIM};
+  matrix_t QFinal_{STATE_DIM, STATE_DIM};
+  vector_t initialState_{STATE_DIM};
 };
 
 }  // namespace quadrotor

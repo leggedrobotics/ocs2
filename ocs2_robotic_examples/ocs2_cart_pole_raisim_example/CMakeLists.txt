@@ -57,7 +57,6 @@ if(cmake_clang_tools_FOUND)
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
-    CT_WERROR
 )
 endif(cmake_clang_tools_FOUND)
 
@@ -87,5 +86,6 @@ catkin_add_gtest(cartpole_raisim_rollout
 )
 target_link_libraries(cartpole_raisim_rollout
   ${catkin_LIBRARIES}
+  gtest_main
 )
 target_compile_options(cartpole_raisim_rollout PRIVATE ${OCS2_CXX_FLAGS})

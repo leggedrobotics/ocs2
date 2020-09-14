@@ -33,11 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
-#include "ocs2_qp_solver/wrappers/ConstraintsWrapper.h"
-#include "ocs2_qp_solver/wrappers/CostWrapper.h"
-#include "ocs2_qp_solver/wrappers/SystemWrapper.h"
 
 namespace ocs2 {
 namespace qp_solver {
@@ -52,9 +53,8 @@ namespace qp_solver {
  * @param initialState : state at the start of the horizon.
  * @return time, state, and input solution.
  */
-ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
-                                                               const ContinuousTrajectory& nominalTrajectory,
-                                                               const dynamic_vector_t& initialState);
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase& costFunction, SystemDynamicsBase& systemDynamics,
+                                                               const ContinuousTrajectory& nominalTrajectory, const vector_t& initialState);
 
 /**
  * Solves a constrained discrete-time linear quadratic control problem around a provided linearization trajectory.
@@ -67,10 +67,9 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costF
  * @param initialState : state at the start of the horizon.
  * @return time, state, and input solution.
  */
-ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostWrapper costFunction, SystemWrapper systemDynamics,
-                                                               ConstraintsWrapper constraints,
-                                                               const ContinuousTrajectory& nominalTrajectory,
-                                                               const dynamic_vector_t& initialState);
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase& costFunction, SystemDynamicsBase& systemDynamics,
+                                                               ConstraintBase& constraints, const ContinuousTrajectory& nominalTrajectory,
+                                                               const vector_t& initialState);
 
 }  // namespace qp_solver
 }  // namespace ocs2

@@ -35,30 +35,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class InitializationTest : public testing::Test {
  protected:
-  static constexpr size_t STATE_DIM = 3;
-  static constexpr size_t INPUT_DIM = 2;
+  static constexpr size_t stateDim_ = 3;
+  static constexpr size_t inputDim_ = 2;
 
-  using operating_points_t = ocs2::OperatingPoints<STATE_DIM, INPUT_DIM>;
-  using scalar_t = operating_points_t::scalar_t;
-  using scalar_array_t = operating_points_t::scalar_array_t;
-  using state_vector_t = operating_points_t::state_vector_t;
-  using state_vector_array_t = operating_points_t::state_vector_array_t;
-  using input_vector_t = operating_points_t::input_vector_t;
-  using input_vector_array_t = operating_points_t::input_vector_array_t;
+  using OperatingPoints = ocs2::OperatingPoints;
+  using scalar_t = ocs2::scalar_t;
+  using scalar_array_t = ocs2::scalar_array_t;
+  using vector_t = ocs2::vector_t;
+  using vector_array_t = ocs2::vector_array_t;
 
   InitializationTest() = default;
 
   scalar_array_t timeTrajectory;
-  state_vector_array_t stateTrajectory;
-  input_vector_array_t inputTrajectory;
+  vector_array_t stateTrajectory;
+  vector_array_t inputTrajectory;
 };
 
 TEST_F(InitializationTest, SingleOperatingPoint) {
   const scalar_t t0 = 0.0;
   const scalar_t tf = 1.0;
-  const state_vector_array_t xTraj = {state_vector_t::Random()};
-  const input_vector_array_t uTraj = {input_vector_t::Random()};
-  operating_points_t operatingPoints({t0}, xTraj, uTraj);
+  const vector_array_t xTraj = {vector_t::Random(stateDim_)};
+  const vector_array_t uTraj = {vector_t::Random(inputDim_)};
+  OperatingPoints operatingPoints({t0}, xTraj, uTraj);
   operatingPoints.getSystemOperatingTrajectories(xTraj[0], t0, tf, timeTrajectory, stateTrajectory, inputTrajectory);
 
   ASSERT_EQ(timeTrajectory.size(), 2);
@@ -76,9 +74,9 @@ TEST_F(InitializationTest, SingleOperatingPoint) {
 
 TEST_F(InitializationTest, ZeroTimeInterval) {
   const scalar_t t0 = 0.0;
-  const state_vector_array_t xTraj {state_vector_t::Random()};
-  const input_vector_array_t uTraj = {input_vector_t::Random()};
-  operating_points_t operatingPoints({t0}, xTraj, uTraj);
+  const vector_array_t xTraj{vector_t::Random(stateDim_)};
+  const vector_array_t uTraj = {vector_t::Random(inputDim_)};
+  OperatingPoints operatingPoints({t0}, xTraj, uTraj);
   operatingPoints.getSystemOperatingTrajectories(xTraj[0], t0, t0, timeTrajectory, stateTrajectory, inputTrajectory);
 
   ASSERT_EQ(timeTrajectory.size(), 1);
@@ -93,10 +91,11 @@ TEST_F(InitializationTest, ZeroTimeInterval) {
 TEST_F(InitializationTest, Trajectory) {
   static constexpr size_t N = 20;
   scalar_array_t tTraj(N);
-  std::generate(tTraj.begin(), tTraj.end(), [n = 0] () mutable { return n++; });
-  const state_vector_array_t xTraj(N, state_vector_t::Random());
-  const input_vector_array_t uTraj(N, input_vector_t::Random());
-  operating_points_t operatingPoints(tTraj, xTraj, uTraj);
+  scalar_t n = 0;
+  std::generate(tTraj.begin(), tTraj.end(), [&n]() mutable { return n++; });
+  const vector_array_t xTraj(N, vector_t::Random(stateDim_));
+  const vector_array_t uTraj(N, vector_t::Random(inputDim_));
+  OperatingPoints operatingPoints(tTraj, xTraj, uTraj);
 
   const size_t i_0 = 1;
   const size_t i_f = 10;

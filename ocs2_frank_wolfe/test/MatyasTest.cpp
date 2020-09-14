@@ -27,8 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
 #include <gtest/gtest.h>
+#include <iostream>
 
 #include "ocs2_frank_wolfe/GradientDescent.h"
 
@@ -37,130 +37,93 @@ using namespace ocs2;
 /*
  * refer to: https://en.wikipedia.org/wiki/Test_functions_for_optimization
  */
-class MatyasCost final : public NLP_Cost
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class MatyasCost final : public NLP_Cost {
+ public:
+  MatyasCost() = default;
+  ~MatyasCost() = default;
 
-	MatyasCost() = default;
-	~MatyasCost() = default;
+  size_t setCurrentParameter(const vector_t& x) override {
+    x_ = x;
+    return 0;
+  }
 
-	size_t setCurrentParameter(const dynamic_vector_t& x) override {
+  bool getCost(size_t id, scalar_t& f) override {
+    f = 0.26 * (pow(x_(0), 2) + pow(x_(1), 2)) - 0.48 * x_(0) * x_(1);
+    return true;
+  }
 
-		x_ = x;
-		return 0;
-	}
+  void getCostDerivative(size_t id, vector_t& g) override {
+    g.resize(2);
+    g(0) = 0.26 * 2.0 * x_(0) - 0.48 * x_(1);
+    g(1) = 0.26 * 2.0 * x_(1) - 0.48 * x_(0);
+  }
 
-	bool getCost(size_t id, scalar_t& f) override {
+  void getCostSecondDerivative(size_t id, matrix_t& H) override { H.setIdentity(2, 2); }
 
-		f = 0.26 * (pow(x_(0),2) + pow(x_(1),2)) - 0.48 * x_(0) * x_(1);
-		return true;
-	}
+  void clearCache() override {}
 
-	void getCostDerivative(size_t id, dynamic_vector_t& g) override {
-
-		g.resize(2);
-		g(0) = 0.26 * 2.0 * x_(0) - 0.48 * x_(1);
-		g(1) = 0.26 * 2.0 * x_(1) - 0.48 * x_(0);
-	}
-
-	void getCostSecondDerivative(size_t id, dynamic_matrix_t& H) override {
-
-		H.setIdentity(2, 2);
-	}
-
-	void clearCache() override {}
-
-private:
-	dynamic_vector_t x_;
+ private:
+  vector_t x_;
 };
 
+class MatyasConstraints final : public NLP_Constraints {
+ public:
+  MatyasConstraints(vector_t minX, vector_t maxX) {
+    size_t numParameters = maxX.size();
 
-class MatyasConstraints final : public NLP_Constraints
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    Cm_.resize(2 * numParameters, numParameters);
+    Dv_.resize(2 * numParameters);
 
-	MatyasConstraints(Eigen::VectorXd minX, Eigen::VectorXd maxX) {
+    Cm_.topRows(numParameters) = -Eigen::MatrixXd::Identity(numParameters, numParameters);
+    Cm_.bottomRows(numParameters) = Eigen::MatrixXd::Identity(numParameters, numParameters);
 
-		size_t numParameters = maxX.size();
+    Dv_.head(numParameters) = maxX;
+    Dv_.tail(numParameters) = -minX;
+  }
 
-		Cm_.resize(2*numParameters,numParameters);
-		Dv_.resize(2*numParameters);
+  ~MatyasConstraints() = default;
 
-		Cm_.topRows(numParameters)    = -Eigen::MatrixXd::Identity(numParameters, numParameters);
-		Cm_.bottomRows(numParameters) =  Eigen::MatrixXd::Identity(numParameters, numParameters);
+  void setCurrentParameter(const vector_t& x) override { x_ = x; }
 
-		Dv_.head(numParameters) =  maxX;
-		Dv_.tail(numParameters) = -minX;
-	}
+  void getLinearInequalityConstraint(vector_t& h) override { h = Cm_ * x_ + Dv_; }
 
-	~MatyasConstraints() = default;
+  void getLinearInequalityConstraintDerivative(matrix_t& dhdx) override { dhdx = Cm_; }
 
-	void setCurrentParameter(const dynamic_vector_t& x) override {
-
-		x_ = x;
-	}
-
-	void getLinearInequalityConstraint(dynamic_vector_t& h) override {
-
-		h = Cm_*x_ + Dv_;
-	}
-
-	void getLinearInequalityConstraintDerivative(dynamic_matrix_t& dhdx) override {
-
-		dhdx = Cm_;
-	}
-
-private:
-	dynamic_vector_t x_;
-	dynamic_matrix_t Cm_;
-	dynamic_vector_t Dv_;
+ private:
+  vector_t x_;
+  matrix_t Cm_;
+  vector_t Dv_;
 };
 
+TEST(MatyasTest, MatyasTest) {
+  NLP_Settings nlpSettings;
+  nlpSettings.displayInfo_ = true;
+  nlpSettings.maxIterations_ = 500;
+  nlpSettings.minRelCost_ = 1e-6;
+  nlpSettings.maxLearningRate_ = 1.0;
+  nlpSettings.minLearningRate_ = 1e-4;
+  nlpSettings.useAscendingLineSearchNLP_ = false;
 
-TEST(MatyasTest, MatyasTest)
-{
+  GradientDescent nlpSolver(nlpSettings);
+  std::unique_ptr<MatyasCost> costPtr(new MatyasCost);
 
-	NLP_Settings nlpSettings;
-	nlpSettings.displayInfo_      = true;
-	nlpSettings.maxIterations_ 	  = 500;
-	nlpSettings.minRelCost_    	  = 1e-6;
-	nlpSettings.maxLearningRate_  = 1.0;
-	nlpSettings.minLearningRate_  = 1e-4;
-	nlpSettings.useAscendingLineSearchNLP_ = false;
+  vector_t maxX = Eigen::Vector2d(10.0, 10.0);
+  vector_t minX = Eigen::Vector2d(-10.0, -10.0);
+  std::unique_ptr<MatyasConstraints> constraintsPtr(new MatyasConstraints(minX, maxX));
 
-	GradientDescent nlpSolver(nlpSettings);
-	std::unique_ptr<MatyasCost> costPtr(new MatyasCost);
+  Eigen::Vector2d initParameters = 0.5 * (maxX + minX) + 0.5 * (maxX - minX).cwiseProduct(Eigen::Vector2d::Random());
+  nlpSolver.run(initParameters, 0.01 * Eigen::Vector2d::Ones(), costPtr.get(), constraintsPtr.get());
 
-	Eigen::VectorXd maxX = Eigen::Vector2d(10.0, 10.0);
-	Eigen::VectorXd minX = Eigen::Vector2d(-10.0, -10.0);
-	std::unique_ptr<MatyasConstraints> constraintsPtr(
-			new MatyasConstraints(minX, maxX));
+  double cost;
+  nlpSolver.getCost(cost);
+  vector_t parameters;
+  nlpSolver.getParameters(parameters);
 
-	Eigen::Vector2d initParameters = 0.5*(maxX+minX) +
-			0.5*(maxX-minX).cwiseProduct(Eigen::Vector2d::Random());
-	nlpSolver.run(initParameters, 0.01*Eigen::Vector2d::Ones(), costPtr.get(), constraintsPtr.get());
+  std::cout << "cost: " << cost << std::endl;
+  std::cout << "parameters: " << parameters.transpose() << std::endl;
 
-	double cost;
-	nlpSolver.getCost(cost);
-	Eigen::VectorXd parameters;
-	nlpSolver.getParameters(parameters);
+  const double optimalCost = 0.0;
+  const Eigen::Vector2d optimalParameters = Eigen::Vector2d::Ones();
 
-	std::cout << "cost: " << cost << std::endl;
-	std::cout << "parameters: " << parameters.transpose() << std::endl;
-
-	const double optimalCost = 0.0;
-	const Eigen::Vector2d optimalParameters = Eigen::Vector2d::Ones();
-
-	ASSERT_NEAR(cost, optimalCost, 10*nlpSettings.minRelCost_) <<
-			"MESSAGE: Frank_Wolfe failed in the Quadratic test!";
+  ASSERT_NEAR(cost, optimalCost, 10 * nlpSettings.minRelCost_) << "MESSAGE: Frank_Wolfe failed in the Quadratic test!";
 }
-
-int main(int argc, char** argv)
-{
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
-}
-
-

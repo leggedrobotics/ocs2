@@ -39,13 +39,13 @@ This library consists of the following main modules:
 - Jacobian and Hessian of general functions using Numerical Differentiation, or Automatic-Differentiation with
 code-generation or just-in-time (JIT) compilation.
 
-\subsection ocs2_doc_ocs2_slq SLQ Module
+\subsection ocs2_doc_ocs2_ddp DDP Module
 
-[SLQ Module](\ref ocs2_slq_page) provides the followings features:
-- A continuous-time (un)constrained SLQ/ iLQR algorithm for (non-)switched systems \cite farshidian17a.
+[DDP Module](\ref ocs2_ddp_page) provides the followings features:
+- A (un)constrained SLQ/ iLQR algorithm for (non-)switched systems \cite farshidian17a.
 - A continuous-time Riccati equations solver based on ODE solver.
 - A continuous-time Riccati equations solver based on linearized equation and exponential method.
-- A continuous-time Riccati equations solver using parallel computation instead of of the common sequential
+- A continuous-time Riccati equations solver using parallel computation instead of of the common sequential.
 approach \cite farshidian17d.
 - A general solver for linear, two-point Boundary Value Problem (BVP).
 

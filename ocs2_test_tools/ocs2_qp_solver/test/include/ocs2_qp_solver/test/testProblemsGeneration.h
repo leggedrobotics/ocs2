@@ -45,93 +45,65 @@ namespace qp_solver {
 
 /** Get random positive definite costs of n states and m inputs */
 inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
-  dynamic_matrix_t QPPR = dynamic_matrix_t::Random(n + m, n + m);
+  matrix_t QPPR = matrix_t::Random(n + m, n + m);
   QPPR = QPPR.transpose() * QPPR;
   ScalarFunctionQuadraticApproximation cost;
   cost.dfdxx = QPPR.topLeftCorner(n, n);
   cost.dfdux = QPPR.bottomLeftCorner(m, n);
   cost.dfduu = QPPR.bottomRightCorner(m, m);
-  cost.dfdx = dynamic_vector_t::Random(n);
-  cost.dfdu = dynamic_vector_t::Random(m);
+  cost.dfdx = vector_t::Random(n);
+  cost.dfdu = vector_t::Random(m);
   cost.f = std::rand() / static_cast<scalar_t>(RAND_MAX);
   return cost;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>> getOcs2Cost(const ScalarFunctionQuadraticApproximation& cost,
-                                                                               const ScalarFunctionQuadraticApproximation& costFinal,
-                                                                               const dynamic_vector_t& xNominalIntermediate,
-                                                                               const dynamic_vector_t& uNominalIntermediate,
-                                                                               const dynamic_vector_t& xNominalFinal) {
-  return std::unique_ptr<ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>>(new ocs2::QuadraticCostFunction<STATE_DIM, INPUT_DIM>(
-      cost.dfdxx, cost.dfduu, xNominalIntermediate, uNominalIntermediate, costFinal.dfdxx, xNominalFinal, cost.dfdux));
+inline std::unique_ptr<ocs2::QuadraticCostFunction> getOcs2Cost(const ScalarFunctionQuadraticApproximation& cost,
+                                                                const ScalarFunctionQuadraticApproximation& costFinal) {
+  return std::unique_ptr<ocs2::QuadraticCostFunction>(new ocs2::QuadraticCostFunction(cost.dfdxx, cost.dfduu, costFinal.dfdxx, cost.dfdux));
 }
 
 /** Get random linear dynamics of n states and m inputs */
 inline VectorFunctionLinearApproximation getRandomDynamics(int n, int m) {
   VectorFunctionLinearApproximation dynamics;
-  dynamics.dfdx = dynamic_matrix_t::Random(n, n);
-  dynamics.dfdu = dynamic_matrix_t::Random(n, m);
-  dynamics.f = dynamic_vector_t::Random(n);
+  dynamics.dfdx = matrix_t::Random(n, n);
+  dynamics.dfdu = matrix_t::Random(n, m);
+  dynamics.f = vector_t::Random(n);
   return dynamics;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>> getOcs2Dynamics(const VectorFunctionLinearApproximation& dynamics) {
-  return std::unique_ptr<ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>>(
-      new ocs2::LinearSystemDynamics<STATE_DIM, INPUT_DIM>(dynamics.dfdx, dynamics.dfdu));
+inline std::unique_ptr<ocs2::LinearSystemDynamics> getOcs2Dynamics(const VectorFunctionLinearApproximation& dynamics) {
+  return std::unique_ptr<ocs2::LinearSystemDynamics>(new ocs2::LinearSystemDynamics(dynamics.dfdx, dynamics.dfdu));
 }
 
 /** Get random nc linear constraints of n states, and m inputs */
 inline VectorFunctionLinearApproximation getRandomConstraints(int n, int m, int nc) {
   VectorFunctionLinearApproximation constraints;
-  constraints.dfdx = dynamic_matrix_t::Random(nc, n);
-  constraints.dfdu = dynamic_matrix_t::Random(nc, m);
-  constraints.f = dynamic_vector_t::Random(nc);
+  constraints.dfdx = matrix_t::Random(nc, n);
+  constraints.dfdu = matrix_t::Random(nc, m);
+  constraints.f = vector_t::Random(nc);
   return constraints;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM>
-std::unique_ptr<ocs2::LinearConstraint<STATE_DIM, INPUT_DIM>> getOcs2Constraints(
-    const VectorFunctionLinearApproximation& stateInputConstraints, const VectorFunctionLinearApproximation& stateOnlyConstraints,
-    const VectorFunctionLinearApproximation& finalStateOnlyConstraints) {
-  using constraint_t = ocs2::LinearConstraint<STATE_DIM, INPUT_DIM>;
-
-  const auto numStateInputConstraint = stateInputConstraints.f.size();
-  typename constraint_t::constraint1_vector_t e;
-  e.head(numStateInputConstraint) = stateInputConstraints.f;
-  typename constraint_t::constraint1_state_matrix_t C;
-  C.topRows(numStateInputConstraint) = stateInputConstraints.dfdx;
-  typename constraint_t::constraint1_input_matrix_t D;
-  D.topRows(numStateInputConstraint) = stateInputConstraints.dfdu;
-
-  const auto numStateOnlyConstraint = stateOnlyConstraints.f.size();
-  typename constraint_t::constraint2_vector_t h;
-  h.head(numStateOnlyConstraint) = stateOnlyConstraints.f;
-  typename constraint_t::constraint2_state_matrix_t F;
-  F.topRows(numStateOnlyConstraint) = stateOnlyConstraints.dfdx;
-
-  const auto numStateOnlyFinalConstraint = finalStateOnlyConstraints.f.size();
-  typename constraint_t::constraint2_vector_t h_f;
-  h_f.head(numStateOnlyFinalConstraint) = finalStateOnlyConstraints.f;
-  typename constraint_t::constraint2_state_matrix_t F_f;
-  F_f.topRows(numStateOnlyFinalConstraint) = finalStateOnlyConstraints.dfdx;
-
-  return std::unique_ptr<constraint_t>(
-      new constraint_t(numStateInputConstraint, e, C, D, numStateOnlyConstraint, h, F, numStateOnlyFinalConstraint, h_f, F_f));
+inline std::unique_ptr<ocs2::LinearConstraint> getOcs2Constraints(const VectorFunctionLinearApproximation& stateInputConstraints,
+                                                                  const VectorFunctionLinearApproximation& stateOnlyConstraints,
+                                                                  const VectorFunctionLinearApproximation& finalStateOnlyConstraints) {
+  return std::unique_ptr<ocs2::LinearConstraint>(
+      new ocs2::LinearConstraint(stateInputConstraints.f, stateInputConstraints.dfdx, stateInputConstraints.dfdu, stateOnlyConstraints.f,
+                                 stateOnlyConstraints.dfdx, finalStateOnlyConstraints.f, finalStateOnlyConstraints.dfdx));
 }
 
 inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt) {
-  ContinuousTrajectory trajectory = {.timeTrajectory = scalar_array_t(N + 1),
-                                     .stateTrajectory = dynamic_vector_array_t(N + 1),
-                                     .inputTrajectory = dynamic_vector_array_t(N)};
+  ContinuousTrajectory trajectory;
+  trajectory.timeTrajectory = scalar_array_t(N + 1);
+  trajectory.stateTrajectory = vector_array_t(N + 1);
+  trajectory.inputTrajectory = vector_array_t(N);
   auto t = -dt;
   std::generate(trajectory.timeTrajectory.begin(), trajectory.timeTrajectory.end(), [&t, dt]() {
     t += dt;
     return t;
   });
-  std::generate(trajectory.stateTrajectory.begin(), trajectory.stateTrajectory.end(), [n]() { return dynamic_vector_t::Random(n); });
-  std::generate(trajectory.inputTrajectory.begin(), trajectory.inputTrajectory.end(), [m]() { return dynamic_vector_t::Random(m); });
+  std::generate(trajectory.stateTrajectory.begin(), trajectory.stateTrajectory.end(), [n]() { return vector_t::Random(n); });
+  std::generate(trajectory.inputTrajectory.begin(), trajectory.inputTrajectory.end(), [m]() { return vector_t::Random(m); });
   return trajectory;
 }
 
@@ -153,8 +125,7 @@ inline std::vector<LinearQuadraticStage> generateRandomLqProblem(int N, int nx, 
  * Compares to Eigen vectors on equality.
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  */
-inline bool isEqual(const dynamic_vector_t& lhs, const dynamic_vector_t& rhs,
-                    scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+inline bool isEqual(const vector_t& lhs, const vector_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   if (lhs.norm() > tol && rhs.norm() > tol) {
     return lhs.isApprox(rhs, tol);
   } else {
@@ -167,11 +138,9 @@ inline bool isEqual(const dynamic_vector_t& lhs, const dynamic_vector_t& rhs,
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  * @return Vectors are of equal length and equal values.
  */
-inline bool isEqual(const dynamic_vector_array_t& v0, const dynamic_vector_array_t& v1,
-                    scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+inline bool isEqual(const vector_array_t& v0, const vector_array_t& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   return (v0.size() == v1.size()) &&
-         std::equal(v0.begin(), v0.end(), v1.begin(),
-                    [tol](const dynamic_vector_t& lhs, const dynamic_vector_t& rhs) { return isEqual(lhs, rhs, tol); });
+         std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const vector_t& lhs, const vector_t& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
 }  // namespace qp_solver

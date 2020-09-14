@@ -31,18 +31,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <tf/transform_broadcaster.h>
 
-#include <ocs2_comm_interfaces/ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include "ocs2_quadrotor_example/definitions.h"
 
 namespace ocs2 {
 namespace quadrotor {
 
-class QuadrotorDummyVisualization final : public DummyObserver<quadrotor::STATE_DIM_, quadrotor::INPUT_DIM_> {
+class QuadrotorDummyVisualization final : public DummyObserver {
  public:
   ~QuadrotorDummyVisualization() override = default;
 
-  void update(const system_observation_t& observation, const primal_solution_t& policy, const command_data_t& command) override;
+  void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
 
  private:
   tf::TransformBroadcaster tfBroadcaster_;

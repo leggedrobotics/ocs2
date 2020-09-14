@@ -37,6 +37,46 @@ TEST(testLookup, findIndexInTimeArray)
   ASSERT_EQ(findIndexInTimeArray(timeArrayEmpty,  1.0), 0);
 }
 
+TEST(testLookup, findIndexInTimeArray_precision_lowNumbers)
+{
+  std::vector<double> timeArray{0.0};
+  double tQuery = timeArray.front();
+
+  // Test next representable number in both directions
+  double tQueryMinus = std::nextafter(tQuery, std::numeric_limits<double>::lowest());
+  double tQueryPlus = std::nextafter(tQuery, std::numeric_limits<double>::max());
+
+  // Make sure the tested values have the correct ordering
+  ASSERT_TRUE(tQueryMinus <= timeArray.front());
+  ASSERT_TRUE(tQuery <= timeArray.front());
+  ASSERT_TRUE(tQueryPlus > timeArray.front());
+
+  // Test lookup
+  ASSERT_EQ(findIndexInTimeArray(timeArray, tQuery), 0);
+  ASSERT_EQ(findIndexInTimeArray(timeArray, tQueryMinus), 0);
+  ASSERT_EQ(findIndexInTimeArray(timeArray, tQueryPlus), 1);
+}
+
+TEST(testLookup, findIndexInTimeArray_precision_highNumbers)
+{
+  std::vector<double> timeArray{10000.0};
+  double tQuery = timeArray.front();
+
+  // Test next representable number in both directions
+  double tQueryMinus = std::nextafter(tQuery, std::numeric_limits<double>::lowest());
+  double tQueryPlus = std::nextafter(tQuery, std::numeric_limits<double>::max());
+
+  // Make sure the tested values have the correct ordering
+  ASSERT_TRUE(tQueryMinus <= timeArray.front());
+  ASSERT_TRUE(tQuery <= timeArray.front());
+  ASSERT_TRUE(tQueryPlus > timeArray.front());
+
+  // Test lookup
+  ASSERT_EQ(findIndexInTimeArray(timeArray, tQuery), 0);
+  ASSERT_EQ(findIndexInTimeArray(timeArray, tQueryMinus), 0);
+  ASSERT_EQ(findIndexInTimeArray(timeArray, tQueryPlus), 1);
+}
+
 TEST(testLookup, findIntervalInTimeArray)
 {
   // Normal case
@@ -128,11 +168,4 @@ TEST(testLookup, findBoundedActiveIntervalInTimeArray)
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty, -1.0));
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  0.0));
   ASSERT_ANY_THROW(findBoundedActiveIntervalInTimeArray(timeArrayEmpty,  1.0));
-}
-
-
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

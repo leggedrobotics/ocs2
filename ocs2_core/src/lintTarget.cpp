@@ -1,13 +1,15 @@
-#include <ocs2_core/Dimensions.h>
 #include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/Types.h>
 
 // Automatic Differentation
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
+#include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/ConstraintBaseAD.h>
+#include <ocs2_core/constraint/ConstraintCollection.h>
 #include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
@@ -21,6 +23,7 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
+#include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/CostFunctionBaseAD.h>
@@ -31,7 +34,6 @@
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
-#include <ocs2_core/dynamics/DerivativesBase.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
@@ -60,13 +62,17 @@
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/misc/LTI_Equations.h>
-#include <ocs2_core/misc/LinearFunction.h>
+// #include <ocs2_core/misc/LTI_Equations.h>
+// #include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/randomMatrices.h>
+
+// model_data
+#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 // dummy target for clang toolchain
 int main() {

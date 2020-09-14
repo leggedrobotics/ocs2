@@ -27,81 +27,73 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef SYSTEMDYNAMICSBASE_OCS2_H_
-#define SYSTEMDYNAMICSBASE_OCS2_H_
+#pragma once
 
-#include "ocs2_core/Dimensions.h"
-#include "ocs2_core/dynamics/ControlledSystemBase.h"
-#include "ocs2_core/dynamics/DerivativesBase.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_core/dynamics/ControlledSystemBase.h>
 
 namespace ocs2 {
 
 /**
- * The system dynamics interface.
+ * The system dynamics and linearization class.
  * The linearized system flow map is defined as: \n
  * \f$ dx/dt = A(t) \delta x + B(t) \delta u \f$ \n
  * The linearized system jump map is defined as: \n
  * \f$ x^+ = G \delta x + H \delta u \f$ \n
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t NUM_MODES = 1>
-class SystemDynamicsBase : public DerivativesBase<STATE_DIM, INPUT_DIM>, public ControlledSystemBase<STATE_DIM, INPUT_DIM> {
+class SystemDynamicsBase : public ControlledSystemBase {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  /** Default Constructor */
+  SystemDynamicsBase() = default;
 
-  using Ptr = std::shared_ptr<SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
-  using ConstPtr = std::shared_ptr<const SystemDynamicsBase<STATE_DIM, INPUT_DIM> >;
-
-  using DEV_BASE = DerivativesBase<STATE_DIM, INPUT_DIM>;
-  using DYN_BASE = ControlledSystemBase<STATE_DIM, INPUT_DIM>;
-
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename DIMENSIONS::scalar_t;
-  using state_vector_t = typename DIMENSIONS::state_vector_t;
-  using input_vector_t = typename DIMENSIONS::input_vector_t;
-  using state_matrix_t = typename DIMENSIONS::state_matrix_t;
-  using state_input_matrix_t = typename DIMENSIONS::state_input_matrix_t;
-  using dynamic_vector_t = typename DIMENSIONS::dynamic_vector_t;
-  using dynamic_state_matrix_t = typename DIMENSIONS::dynamic_state_matrix_t;
-  using dynamic_input_matrix_t = typename DIMENSIONS::dynamic_input_matrix_t;
-
-  /**
-   * Default constructor
-   */
-  SystemDynamicsBase() {
-    if (NUM_MODES == 0) {
-      throw std::runtime_error("The system should have at least one mode.");
-    }
-  }
-
-  /**
-   * Copy constructor
-   */
-  SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
-
-  /**
-   * Default destructor
-   */
+  /** Default destructor */
   ~SystemDynamicsBase() override = default;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual SystemDynamicsBase<STATE_DIM, INPUT_DIM>* clone() const = 0;
+  /** Clone. */
+  SystemDynamicsBase* clone() const override = 0;
+
+  /** Computes the linear approximation */
+  virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) = 0;
+
+  /** Computes the jump map linear approximation */
+  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /** Computes the guard surfaces linear approximation */
+  virtual VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
 
   /**
-   * Gets the number of the modes in the hybrid system.
-   * The minimum is one.
+   * Get partial time derivative of the system flow map.
+   * \f$ \frac{\partial f}{\partial t}  \f$.
    *
-   * @return Number of the modes in the hybrid system.
+   * @return \f$ \frac{\partial f}{\partial t} \f$ matrix, size \f$ n_x \f$.
    */
-  size_t getNumModes() const { return NUM_MODES; }
+  virtual vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Get partial time derivative of the system jump map.
+   * \f$ \frac{\partial g}{\partial t}  \f$.
+   *
+   * @return \f$ \frac{\partial g}{\partial t} \f$ matrix.
+   */
+  virtual vector_t jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Get at a given operating point the derivative of the guard surfaces w.r.t. input vector.
+   *
+   * @return Derivative of the guard surfaces w.r.t. time.
+   */
+  virtual vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Get at a given operating point the covariance of the dynamics.
+   *
+   * @return The covariance of the dynamics.
+   */
+  virtual matrix_t dynamicsCovariance(scalar_t t, const vector_t& x, const vector_t& u);
+
+ protected:
+  /**Copy constructor */
+  SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
 };
 
 }  // namespace ocs2
-
-#endif /* SYSTEMDYNAMICSBASE_OCS2_H_ */

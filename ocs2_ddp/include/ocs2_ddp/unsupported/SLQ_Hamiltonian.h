@@ -154,12 +154,12 @@ class SLQ_Hamiltonian : public DDP_BASE<STATE_DIM, INPUT_DIM> {
    * @param [in] systemDynamicsPtr: The system dynamics which possibly includes some subsystems.
    * @param [in] systemDerivativesPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
+   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
    * @param [in] settings: Structure containing the settings for the SLQ algorithm.
    * @param [in] logicRulesPtr: The logic rules used for implementing mixed-logic dynamical systems.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
-   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   * defined, we will use the final cost function defined in costFunctionPtr.
    */
   SLQ_Hamiltonian(const controlled_system_base_t* systemDynamicsPtr, const derivatives_base_t* systemDerivativesPtr,
                   const constraint_base_t* systemConstraintsPtr, const cost_function_base_t* costFunctionPtr,

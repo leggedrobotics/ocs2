@@ -58,7 +58,6 @@ void MPC_ROS_Interface::set() {
   terminateThread_ = false;
   readyToPublish_ = false;
 
-  initialCall_ = false;
   resetRequestedEver_ = false;
   mpcTimer_.reset();
 
@@ -76,7 +75,6 @@ void MPC_ROS_Interface::reset(const CostDesiredTrajectories& initCostDesiredTraj
 
   mpc_.reset();
 
-  initialCall_ = true;
   resetRequestedEver_ = true;
 
   mpc_.getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
@@ -115,11 +113,9 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(bool controllerIsUpdated, const PrimalSolution& primalSolution,
+ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const PrimalSolution& primalSolution,
                                                                           const CommandData& commandData) {
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
-
-  mpcPolicyMsg.controllerIsUpdated = static_cast<uint8_t>(controllerIsUpdated);
 
   ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
   ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
@@ -207,7 +203,7 @@ void MPC_ROS_Interface::publisherWorkerThread() {
       currentCommand_.swap(commandBuffer_);
     }
 
-    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(true, *currentPrimalSolution_, *currentCommand_);
+    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*currentPrimalSolution_, *currentCommand_);
 
     // publish the message
     mpcPolicyPublisher_.publish(mpcPolicyMsg);
@@ -254,11 +250,6 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();
-
-  // after each reset, perform user defined operation if specialized
-  if (initialCall_) {
-    initCall(currentObservation);
-  }
 
   // Set latest cost desired trajectories
   if (costDesiredTrajectoriesBufferUpdated_) {
@@ -307,12 +298,9 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   msgReady_.notify_one();
 
 #else
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(true, *primalSolutionBuffer_, *commandBuffer_);
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*primalSolutionBuffer_, *commandBuffer_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
-
-  // set the initialCall flag to false
-  initialCall_ = false;
 }
 
 /******************************************************************************************************/
@@ -353,23 +341,10 @@ void MPC_ROS_Interface::shutdownNode() {
 /******************************************************************************************************/
 void MPC_ROS_Interface::spin() {
   ROS_INFO_STREAM("Start spinning now ...");
-
-#ifdef NDEBUG
-  try {
-#endif
-    // Equivalent to ros::spin() + check if master is alive
-    while (::ros::ok() && ::ros::master::check()) {
-      ::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
-    }
-#ifdef NDEBUG
-  } catch (...) {
-    // declaring that MPC is not updated anymore
-    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
-    mpcPolicyMsg.controllerIsUpdated = static_cast<uint8_t>(false);
-    mpcPolicyPublisher_.publish(mpcPolicyMsg);
-    throw;
+  // Equivalent to ros::spin() + check if master is alive
+  while (::ros::ok() && ::ros::master::check()) {
+    ::ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
   }
-#endif
 }
 
 /******************************************************************************************************/

@@ -52,12 +52,7 @@ void MRT_BASE::reset() {
 
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
-
   policyUpdated_ = false;
-  policyUpdatedBuffer_ = false;
-
-  partitioningTimesUpdate(0.0, partitioningTimes_);
-  partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
 }
 
 /******************************************************************************************************/
@@ -67,7 +62,7 @@ const PrimalSolution& MRT_BASE::getPolicy() const {
   if (policyUpdated_) {
     return *currentPrimalSolution_;
   } else {
-    throw std::runtime_error("[MRT_BASE::getPolicy] The policy was never received or not updated");
+    throw std::runtime_error("[MRT_BASE::getPolicy]  updatePolicy() should be called first!");
   }
 };
 
@@ -121,7 +116,7 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
                      currentPrimalSolution_->modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory,
                      inputTrajectory);
   } else {
-    throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
+    throw std::runtime_error("[MRT_BASE::rolloutPolicy] updatePolicy() should be called first!");
   }
 
   mpcState = stateTrajectory.back();
@@ -134,18 +129,19 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool MRT_BASE::updatePolicy() {
-  std::lock_guard<std::mutex> lock(policyBufferMutex_);
+  {
+    std::lock_guard<std::mutex> lock(policyBufferMutex_);
 
-  if (!policyUpdatedBuffer_ || !newPolicyInBuffer_) {
-    return false;
+    if (!newPolicyInBuffer_) {
+      return false;
+    }
+    newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
+
+    // update the current policy from buffer
+    policyUpdated_ = true;
+    currentCommand_.swap(commandBuffer_);
+    currentPrimalSolution_.swap(primalSolutionBuffer_);
   }
-  newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
-
-  // update the current policy from buffer
-  policyUpdated_ = policyUpdatedBuffer_;
-  currentCommand_.swap(commandBuffer_);
-  currentPrimalSolution_.swap(primalSolutionBuffer_);
-  partitioningTimes_.swap(partitioningTimesBuffer_);
 
   modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
 
@@ -172,15 +168,6 @@ void MRT_BASE::modifyBufferedSolution(const CommandData& commandBuffer, PrimalSo
       mrtObserver->modifyBufferedSolution(commandBuffer, primalSolutionBuffer);
     }
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MRT_BASE::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
-  partitioningTimes.resize(2);
-  partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time : time;
-  partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
 }
 
 }  // namespace ocs2

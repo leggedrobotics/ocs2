@@ -113,21 +113,6 @@ class MPC_ROS_Interface {
    */
   void launchNodes(ros::NodeHandle& nodeHandle);
 
-  /**
-   * This method will be called either after the very fist call of the class or after a call to reset().
-   * Users can use this function for any sort of initialization that they may need in the first call.
-   *
-   * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-   */
-  virtual void initCall(const SystemObservation& initObservation) {}
-
-  /**
-   * Provides the initial mode sequence for time-triggered hybrid systems.
-   *
-   * @param [in] initObservation: The observation after the very fist call of the class or after call to reset().
-   */
-  virtual void initModeSequence(const SystemObservation& initObservation) {}
-
  protected:
   /**
    * Callback to reset MPC.
@@ -140,13 +125,11 @@ class MPC_ROS_Interface {
   /**
    * Creates MPC Policy message.
    *
-   * @param [in] controllerIsUpdated: Whether the policy is updated.
    * @param [in] primalSolution: The policy data of the MPC.
    * @param [in] commandData: The command data of the MPC.
    * @return MPC policy message.
    */
-  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(bool controllerIsUpdated, const PrimalSolution& primalSolution,
-                                                                const CommandData& commandData);
+  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData);
 
   /**
    * Handles ROS publishing thread.
@@ -208,7 +191,6 @@ class MPC_ROS_Interface {
   benchmark::RepeatedTimer mpcTimer_;
 
   // MPC reset
-  bool initialCall_;
   std::mutex resetMutex_;
   std::atomic<bool> resetRequestedEver_;
 

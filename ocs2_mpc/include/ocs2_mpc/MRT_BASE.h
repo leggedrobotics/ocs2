@@ -160,24 +160,13 @@ class MRT_BASE {
   /** Calls modifyBufferedSolution on all mrt observers. */
   void modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
 
-  /**
-   * Constructs a partitioningTimes vector with 2 elements: minimum of the already
-   * received times and the maximum value of the numeric type scalar_t. This prevents
-   * the frequent update of the logicRules.
-   *
-   * @param [in] time: The current time.
-   * @param [out] partitioningTimes: Partitioning time.
-   */
-  void partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const;
-
  protected:
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;
-  bool newPolicyInBuffer_;  //! Whether a new policy is waiting to be swapped in
+  bool newPolicyInBuffer_;          // whether a new policy is waiting to be swapped in
+  std::atomic_bool policyUpdated_;  // whether the policy was updated by MPC (i.e., MPC succeeded)
 
   // variables related to the MPC output
-  std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
-  bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
   std::unique_ptr<PrimalSolution> currentPrimalSolution_;
   std::unique_ptr<PrimalSolution> primalSolutionBuffer_;
   std::unique_ptr<CommandData> currentCommand_;
@@ -188,11 +177,6 @@ class MRT_BASE {
 
   // variables needed for policy evaluation
   std::unique_ptr<RolloutBase> rolloutPtr_;
-
-  // variables
-  scalar_array_t partitioningTimes_;
-  scalar_array_t partitioningTimesBuffer_;
-  SystemObservation initPlanObservation_;  //! The initial observation of the first plan ever received
 
  private:
   std::vector<std::shared_ptr<MrtObserver>> observerPtrArray_;

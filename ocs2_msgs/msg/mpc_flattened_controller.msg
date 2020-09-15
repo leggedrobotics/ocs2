@@ -15,6 +15,4 @@ mpc_input[]             inputTrajectory        # optimized input trajectory from
 float32[]               timeTrajectory         # time trajectory for stateTrajectory and inputTrajectory
 mode_schedule           modeSchedule           # Optimal/Predefined MPC mode sequence and event times
 
-bool                    controllerIsUpdated
-
 controller_data[]       data                   # the actual payload from flatten method: one vector of data per time step

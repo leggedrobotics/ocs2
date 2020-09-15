@@ -147,7 +147,7 @@ bool MRT_BASE::updatePolicy() {
   currentPrimalSolution_.swap(primalSolutionBuffer_);
   partitioningTimes_.swap(partitioningTimesBuffer_);
 
-  modifyPolicy(*currentCommand_, *currentPrimalSolution_);
+  modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
 
   return true;
 }
@@ -155,10 +155,10 @@ bool MRT_BASE::updatePolicy() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::modifyPolicy(const CommandData& command, PrimalSolution& primalSolution) {
-  for (auto& mrtObserver : mrtObservers_) {
+void MRT_BASE::modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution) {
+  for (auto& mrtObserver : observerPtrArray_) {
     if (mrtObserver) {
-      mrtObserver->modifyPolicy(command, primalSolution);
+      mrtObserver->modifyActiveSolution(command, primalSolution);
     }
   }
 }
@@ -166,10 +166,10 @@ void MRT_BASE::modifyPolicy(const CommandData& command, PrimalSolution& primalSo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::modifyBufferPolicy(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) {
-  for (auto& mrtObserver : mrtObservers_) {
+void MRT_BASE::modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) {
+  for (auto& mrtObserver : observerPtrArray_) {
     if (mrtObserver) {
-      mrtObserver->modifyBufferPolicy(commandBuffer, primalSolutionBuffer);
+      mrtObserver->modifyBufferedSolution(commandBuffer, primalSolutionBuffer);
     }
   }
 }

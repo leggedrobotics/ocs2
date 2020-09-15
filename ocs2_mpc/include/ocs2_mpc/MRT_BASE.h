@@ -136,7 +136,7 @@ class MRT_BASE {
   /**
    * Checks the data buffer for an update of the MPC policy. If a new policy
    * is available on the buffer this method will load it to the in-use policy.
-   * This method also calls the modifyPolicy() method.
+   * This method also calls the modifyActiveSolution() method.
    *
    * @return True if the policy is updated.
    */
@@ -149,16 +149,16 @@ class MRT_BASE {
   bool isRolloutSet() const { return rolloutPtr_ != nullptr; }
 
   /**
-   * Adds an Mrt observer to the policy update process
+   * Adds an MRT observer to the policy update process
    */
-  void addMrtObserver(std::shared_ptr<MrtObserver> mrtObserver) { mrtObservers_.push_back(std::move(mrtObserver)); };
+  void addMrtObserver(std::shared_ptr<MrtObserver> mrtObserver) { observerPtrArray_.push_back(std::move(mrtObserver)); };
 
  protected:
-  /** Calls modifyPolicy on all mrt observers. */
-  void modifyPolicy(const CommandData& command, PrimalSolution& primalSolution);
+  /** Calls modifyActiveSolution on all mrt observers. */
+  void modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution);
 
-  /** Calls modifyBufferPolicy on all mrt observers. */
-  void modifyBufferPolicy(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
+  /** Calls modifyBufferedSolution on all mrt observers. */
+  void modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
 
   /**
    * Constructs a partitioningTimes vector with 2 elements: minimum of the already
@@ -195,7 +195,7 @@ class MRT_BASE {
   SystemObservation initPlanObservation_;  //! The initial observation of the first plan ever received
 
  private:
-  std::vector<std::shared_ptr<MrtObserver>> mrtObservers_;
+  std::vector<std::shared_ptr<MrtObserver>> observerPtrArray_;
 };
 
 }  // namespace ocs2

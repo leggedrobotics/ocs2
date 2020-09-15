@@ -83,8 +83,8 @@ class Exp1Test : public testing::Test {
     operatingPointsPtr.reset(new ocs2::OperatingPoints(stateOperatingPoint, inputOperatingPoint));
   }
 
-  ocs2::ddp::Settings getSettings(ocs2::ddp::algorithm algorithmType, size_t numThreads,
-                                  ocs2::ddp_strategy::type strategy, bool display = false) const {
+  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads,
+                                  ocs2::ddp_strategy::Type strategy, bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = algorithmType;
     ddpSettings.nThreads_ = numThreads;
@@ -147,7 +147,7 @@ constexpr ocs2::scalar_t Exp1Test::expectedStateEqConstraintISE;
 /******************************************************************************************************/
 TEST_F(Exp1Test, slq_single_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 1, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -171,7 +171,7 @@ TEST_F(Exp1Test, slq_single_thread_linesearch) {
 /******************************************************************************************************/
 TEST_F(Exp1Test, slq_multi_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 3, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 3, ocs2::ddp_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -195,7 +195,7 @@ TEST_F(Exp1Test, slq_multi_thread_linesearch) {
 /******************************************************************************************************/
 TEST_F(Exp1Test, ilqr_single_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 1, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -219,7 +219,7 @@ TEST_F(Exp1Test, ilqr_single_thread_linesearch) {
 /******************************************************************************************************/
 TEST_F(Exp1Test, ilqr_multi_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 3, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 3, ocs2::ddp_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -243,7 +243,7 @@ TEST_F(Exp1Test, ilqr_multi_thread_linesearch) {
 /******************************************************************************************************/
 TEST_F(Exp1Test, slq_single_thread_levenberg_marquardt) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 1, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -267,7 +267,7 @@ TEST_F(Exp1Test, slq_single_thread_levenberg_marquardt) {
 /******************************************************************************************************/
 TEST_F(Exp1Test, slq_multi_thread_levenberg_marquardt) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, 3, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 3, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -291,7 +291,7 @@ TEST_F(Exp1Test, slq_multi_thread_levenberg_marquardt) {
 /******************************************************************************************************/
 TEST_F(Exp1Test, ilqr_single_thread_levenberg_marquardt) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 1, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 1, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -315,7 +315,7 @@ TEST_F(Exp1Test, ilqr_single_thread_levenberg_marquardt) {
 /******************************************************************************************************/
 TEST_F(Exp1Test, ilqr_multi_thread_levenberg_marquardt) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, 3, ocs2::ddp_strategy::type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 3, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);

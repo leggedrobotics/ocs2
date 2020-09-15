@@ -166,6 +166,7 @@ class Solver_BASE {
 
   /** gets mode schedule */
   const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
+  ModeSchedule& getModeSchedule() { return modeSchedule_; }
 
   /**
    * @brief Returns the optimized policy data.

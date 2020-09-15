@@ -49,16 +49,19 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/ContinuousTimeRiccatiEquations.cpp
-  src/DiscreteTimeRiccatiEquations.cpp
+  src/riccati_equations/ContinuousTimeRiccatiEquations.cpp
+  src/riccati_equations/DiscreteTimeRiccatiEquations.cpp
+  src/riccati_equations/RiccatiModification.cpp
+  src/strategy/LevenbergMarquardtStrategy.cpp
+  src/strategy/LineSearchStrategy.cpp
+  src/strategy/StrategyBase.cpp
+  src/strategy/StrategySettings.cpp
   src/DDP_DataCollector.cpp
   src/GaussNewtonDDP.cpp
   src/HessianCorrection.cpp
   src/ILQR.cpp
-  src/RiccatiModification.cpp
   src/SLQ.cpp
   src/DDP_Settings.cpp
-  src/StrategySettings.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

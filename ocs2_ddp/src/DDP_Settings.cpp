@@ -41,13 +41,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ddp {
 
-std::string toAlgorithmName(algorithm type) {
-  static const std::unordered_map<algorithm, std::string> strategyMap{{algorithm::SLQ, "SLQ"}, {algorithm::ILQR, "ILQR"}};
+std::string toAlgorithmName(Algorithm type) {
+  static const std::unordered_map<Algorithm, std::string> strategyMap{{Algorithm::SLQ, "SLQ"}, {Algorithm::ILQR, "ILQR"}};
   return strategyMap.at(type);
 }
 
-algorithm fromAlgorithmName(std::string name) {
-  static const std::unordered_map<std::string, algorithm> strategyMap{{"SLQ", algorithm::SLQ}, {"ILQR", algorithm::ILQR}};
+Algorithm fromAlgorithmName(std::string name) {
+  static const std::unordered_map<std::string, Algorithm> strategyMap{{"SLQ", Algorithm::SLQ}, {"ILQR", Algorithm::ILQR}};
   std::transform(name.begin(), name.end(), name.begin(), ::toupper);
   return strategyMap.at(name);
 }
@@ -105,11 +105,11 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   settings.strategy_ = ddp_strategy::fromString(strategyName);
 
   switch (settings.strategy_) {
-    case ddp_strategy::type::LINE_SEARCH: {
+    case ddp_strategy::Type::LINE_SEARCH: {
       settings.lineSearch_ = line_search::load(filename, fieldName + ".lineSearch", verbose);
       break;
     }
-    case ddp_strategy::type::LEVENBERG_MARQUARDT: {
+    case ddp_strategy::Type::LEVENBERG_MARQUARDT: {
       settings.levenbergMarquardt_ = levenberg_marquardt::load(filename, fieldName + ".levenbergMarquardt", verbose);
       break;
     }

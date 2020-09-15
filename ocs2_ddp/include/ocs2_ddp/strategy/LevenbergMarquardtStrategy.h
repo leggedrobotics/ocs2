@@ -1,0 +1,120 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#pragma once
+
+#include <functional>
+#include <utility>
+#include <vector>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/PenaltyBase.h>
+#include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/misc/ThreadPool.h>
+#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_oc/oc_solver/PerformanceIndex.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
+
+#include "StrategyBase.h"
+#include "StrategySettings.h"
+
+namespace ocs2 {
+
+/**
+ * Levenberg Marquardt strategy: The class computes the nominal controller and the nominal trajectories
+ * as well the corresponding performance indices.
+ */
+class LevenbergMarquardtStrategy final : public StrategyBase {
+ public:
+  /**
+   * constructor.
+   *
+   * @param [in] baseSettings: The basic settings for the search strategy algorithms.
+   * @param [in] settings: The Levenberg Marquardt settings.
+   * @param [in] rolloutRef: A reference to the rollout class.
+   * @param [in] constraintsRef: A reference to the constraint class.
+   * @param [in] heuristicsFunctionsRef: A reference to the heuristics function.
+   * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
+   * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
+   */
+  LevenbergMarquardtStrategy(ddp_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
+                             ConstraintBase& constraintsRef, CostFunctionBase& costFunctionRef, CostFunctionBase& heuristicsFunctionsRef,
+                             PenaltyBase& ineqConstrPenalty, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+
+  /**
+   * Default destructor.
+   */
+  ~LevenbergMarquardtStrategy() override = default;
+
+  LevenbergMarquardtStrategy(const LevenbergMarquardtStrategy&) = delete;
+  LevenbergMarquardtStrategy& operator=(const LevenbergMarquardtStrategy&) = delete;
+
+  void reset() override;
+
+  bool run(scalar_t expectedCost, ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
+           PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+           vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
+           std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+           std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) override;
+
+  std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
+                                                const PerformanceIndex& currentPerformanceIndex) const override;
+
+  void computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
+                                  matrix_t& deltaGm) const override;
+
+  matrix_t augmentHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Hm) const override;
+
+ private:
+  // Levenberg-Marquardt
+  struct LevenbergMarquardtModule {
+    scalar_t pho = 1.0;                           // the ratio between actual reduction and predicted reduction
+    scalar_t riccatiMultiple = 0.0;               // the Riccati multiple for Tikhonov regularization.
+    scalar_t riccatiMultipleAdaptiveRatio = 1.0;  // the adaptive ratio of geometric progression for Riccati multiple.
+    size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
+  };
+
+  levenberg_marquardt::Settings settings_;
+  LevenbergMarquardtModule levenbergMarquardtModule_;
+
+  RolloutBase& rolloutRef_;
+  ConstraintBase& constraintsRef_;
+  CostFunctionBase& costFunctionRef_;
+  CostFunctionBase& heuristicsFunctionsRef_;
+  PenaltyBase& ineqConstrPenaltyRef_;
+  std::function<scalar_t(PerformanceIndex)> meritFunc_;
+
+  scalar_t avgTimeStepFP_ = 0.0;
+};
+
+}  // namespace ocs2

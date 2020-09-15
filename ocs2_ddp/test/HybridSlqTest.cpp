@@ -38,7 +38,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   const size_t inputDim = INPUT_DIM;
 
   ddp::Settings ddpSettings;
-  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
   ddpSettings.displayInfo_ = true;
   ddpSettings.displayShortSummary_ = true;
   ddpSettings.maxNumIterations_ = 30;
@@ -52,7 +52,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.useNominalTimeForBackwardPass_ = true;
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
-  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.strategy_ = ddp_strategy::Type::LINE_SEARCH;
 
   rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;

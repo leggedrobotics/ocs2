@@ -40,18 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/automatic_differentiation/Types.h>
 
-// #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-
-// // Forward declaration of CppAd types, for specializations
-// namespace CppAd {
-// namespace cg {
-// template <typename BASE>
-// class CG;
-// }
-// template <typename BASE>
-// class AD;
-// }  // namespace CppAd
-
 namespace ocs2 {
 
 /**

@@ -85,7 +85,7 @@ class LineSearchStrategy final : public StrategyBase {
 
   void reset() override {}
 
-  bool run(scalar_t expectedCost, ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
+  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
            PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
            vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
            std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
@@ -112,7 +112,7 @@ class LineSearchStrategy final : public StrategyBase {
   struct LineSearchModule {
     scalar_t baselineMerit = 0.0;           // the merit of the rollout for zero learning rate
     scalar_t initControllerUpdateIS = 0.0;  // integral of the squared (IS) norm of the controller update.
-    ModeSchedule initModeSchedule;
+    const ModeSchedule* modeSchedulePtr;
     std::vector<LinearController> initControllersStock;
 
     std::atomic_size_t alphaExpNext{0};

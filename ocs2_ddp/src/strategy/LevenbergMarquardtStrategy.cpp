@@ -61,10 +61,10 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-                                     PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock,
-                                     size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                                     vector_array2_t& inputTrajectoriesStock,
+bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule,
+                                     std::vector<LinearController>& controllersStock, PerformanceIndex& performanceIndex,
+                                     scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
+                                     vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
                                      std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                                      std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
   constexpr size_t taskId = 0;
@@ -84,7 +84,7 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, ModeSchedule& modeSc
   try {
     // perform a rollout
     const auto avgTimeStep =
-        rolloutTrajectory(rolloutRef_, controllersStock, modeSchedule, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+        rolloutTrajectory(rolloutRef_, modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
                           inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
     scalar_t heuristicsValue = 0.0;
     rolloutCostAndConstraints(constraintsRef_, costFunctionRef_, heuristicsFunctionsRef_, timeTrajectoriesStock, postEventIndicesStock,

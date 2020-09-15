@@ -89,8 +89,7 @@ class StrategyBase {
    * Finds the optimal trajectories, controller, and performance index based on the given controller and its increment.
    *
    * @param [in] expectedCost: The expected cost based on the LQ model optimization.
-   * @param [in,out] modeSchedule: The mode schedule. For time-triggered rollots it is only an input and will not be modified, however,
-   * for state-triggered rollout it is only an output.
+   * @param [in] modeSchedule: The mode schedule.
    * @param [in,out] controllersStock: Array of control policies.
    * @param [in, out] performanceIndex: The current performanceIndex which will be updated to the optimal one.
    * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
@@ -101,7 +100,7 @@ class StrategyBase {
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
    */
-  virtual bool run(scalar_t expectedCost, ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
+  virtual bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                    PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                    vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
                    std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
@@ -184,8 +183,8 @@ class StrategyBase {
    * in time period [initTime, finalTime].
    *
    * @param [in] rollout: A reference to the rollout class.
+   * @param [in] modeSchedule: The mode schedule
    * @param [in] controllersStock: Array of control policies.
-   * @param [in, out] modeSchedule: The mode schedule
    * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [out] postEventIndicesStock: Array of the post-event indices.
    * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
@@ -195,7 +194,7 @@ class StrategyBase {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(RolloutBase& rollout, std::vector<LinearController>& controllersStock, ModeSchedule& modeSchedule,
+  scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                              vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
                              std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,

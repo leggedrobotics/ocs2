@@ -56,7 +56,7 @@ LineSearchStrategy::LineSearchStrategy(ddp_strategy::Settings baseSettings, line
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LineSearchStrategy::run(scalar_t expectedCost, ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
+bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                              PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
                              vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
@@ -79,7 +79,7 @@ bool LineSearchStrategy::run(scalar_t expectedCost, ModeSchedule& modeSchedule, 
   try {
     // perform a rollout
     const auto avgTimeStep =
-        rolloutTrajectory(rolloutRefStock_[taskId], controllersStock, modeSchedule, timeTrajectoriesStock, postEventIndicesStock,
+        rolloutTrajectory(rolloutRefStock_[taskId], modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock,
                           stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
     scalar_t heuristicsValue = 0.0;
     rolloutCostAndConstraints(constraintsRefStock_[taskId], costFunctionRefStock_[taskId], heuristicsFunctionsRefStock_[taskId],
@@ -113,7 +113,7 @@ bool LineSearchStrategy::run(scalar_t expectedCost, ModeSchedule& modeSchedule, 
   // initialize lineSearchModule
   lineSearchModule_.baselineMerit = performanceIndex.merit;
   lineSearchModule_.initControllerUpdateIS = calculateControllerUpdateIS(controllersStock);
-  lineSearchModule_.initModeSchedule = modeSchedule;
+  lineSearchModule_.modeSchedulePtr = &modeSchedule;
   lineSearchModule_.initControllersStock = controllersStock;  // this will serve to initialize the workers
   lineSearchModule_.alphaExpNext = 0;
   lineSearchModule_.alphaProcessed = std::vector<bool>(maxNumOfLineSearches, false);
@@ -199,14 +199,12 @@ void LineSearchStrategy::lineSearchTask() {
         controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
       }
     }
-    // for hybrid case this should be copied
-    auto modeSchedule = lineSearchModule_.initModeSchedule;
 
     try {
       // perform a rollout
-      const auto avgTimeStep =
-          rolloutTrajectory(rolloutRefStock_[taskId], controllersStock, modeSchedule, timeTrajectoriesStock, postEventIndicesStock,
-                            stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
+      const auto avgTimeStep = rolloutTrajectory(rolloutRefStock_[taskId], *lineSearchModule_.modeSchedulePtr, controllersStock,
+                                                 timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                                                 inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
       scalar_t heuristicsValue = 0.0;
       rolloutCostAndConstraints(constraintsRefStock_[taskId], costFunctionRefStock_[taskId], heuristicsFunctionsRefStock_[taskId],
                                 timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,

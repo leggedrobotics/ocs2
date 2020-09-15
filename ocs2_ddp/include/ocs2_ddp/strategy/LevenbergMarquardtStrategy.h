@@ -81,7 +81,7 @@ class LevenbergMarquardtStrategy final : public StrategyBase {
 
   void reset() override;
 
-  bool run(scalar_t expectedCost, ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
+  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
            PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
            vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
            std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,

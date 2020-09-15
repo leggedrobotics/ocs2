@@ -51,9 +51,10 @@ void StrategyBase::initalize(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StrategyBase::rolloutTrajectory(RolloutBase& rollout, std::vector<LinearController>& controllersStock, ModeSchedule& modeSchedule,
-                                         scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                                         vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
+scalar_t StrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule,
+                                         std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                                         size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
+                                         vector_array2_t& inputTrajectoriesStock,
                                          std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
                                          std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) {
   if (controllersStock.size() != numPartitions_) {

@@ -496,10 +496,6 @@ class GaussNewtonDDP : public Solver_BASE {
 
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
-  // forward pass and backward pass average time step
-  scalar_t avgTimeStepFP_ = 0.0;
-  scalar_t avgTimeStepBP_ = 0.0;
-
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
@@ -531,6 +527,10 @@ class GaussNewtonDDP : public Solver_BASE {
   std::vector<int> endingIndicesRiccatiWorker_;
   // parallel Riccati solver
   std::mutex riccatiSolverDataMutex_;
+
+  // forward pass and backward pass average time step
+  scalar_t avgTimeStepFP_ = 0.0;
+  scalar_t avgTimeStepBP_ = 0.0;
 
   // benchmarking
   benchmark::RepeatedTimer initializationTimer_;

@@ -152,7 +152,7 @@ void init(const Settings& settings, std::ostream* console_stream) {
     backend->add_stream(boost::shared_ptr<std::ostream>(console_stream, boost::null_deleter()));
     // disable auto flush for performance concerns
     backend->auto_flush(false);
-    consoleSink_ = std::shared_ptr<text_sink_t>(new text_sink_t(backend));
+    consoleSink_ = std::make_shared<text_sink_t>(backend);
     consoleSink_->set_formatter(boost::log::expressions::stream << "[ " << std::setw(7) << std::setfill(' ') << ocs2::log::severity << " ] "
                                                                 << boost::log::expressions::smessage);
     consoleSink_->set_filter(ocs2::log::severity >= settings.consoleSeverity);
@@ -165,7 +165,7 @@ void init(const Settings& settings, std::ostream* console_stream) {
     auto backend = boost::make_shared<boost::log::sinks::text_file_backend>(boost::log::keywords::file_name = settings.logFileName,
                                                                             boost::log::keywords::auto_flush = true,
                                                                             boost::log::keywords::open_mode = std::ios::out);
-    fileSink_ = std::shared_ptr<file_sink_t>(new file_sink_t(backend));
+    fileSink_ = std::make_shared<file_sink_t>(backend);
     fileSink_->set_formatter(boost::log::expressions::stream
                              << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
                              << " [ " << std::setw(7) << std::setfill(' ') << ocs2::log::severity << " ] "

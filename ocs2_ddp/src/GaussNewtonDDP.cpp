@@ -1017,7 +1017,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
           // augment cost
           augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff, 0.0,
                             modelDataEventTimesStock_[i][timeIndex]);
-          // shift Hessian
+          // shift Hessian for event times
           if (ddpSettings_.strategy_ == ddp_strategy::Type::LINE_SEARCH) {
             hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_,
                                              modelDataEventTimesStock_[i][timeIndex].cost_.dfdxx,
@@ -1036,7 +1036,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
   heuristics_ = heuristicsFunctionsPtrStock_[0]->finalCostQuadraticApproximation(
       nominalTimeTrajectoriesStock_[finalActivePartition_].back(), nominalStateTrajectoriesStock_[finalActivePartition_].back());
 
-  // shift Hessian
+  // shift Hessian for final time
   if (ddpSettings_.strategy_ == ddp_strategy::Type::LINE_SEARCH) {
     hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, heuristics_.dfdxx,
                                      ddpSettings_.lineSearch_.hessianCorrectionMultiple_);

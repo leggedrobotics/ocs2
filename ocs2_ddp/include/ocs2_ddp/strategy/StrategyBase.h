@@ -198,7 +198,7 @@ class StrategyBase {
                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                              vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
                              std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock);
+                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) const;
 
   /**
    * Calculates the integral of the squared (IS) norm of the controller update.

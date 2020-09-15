@@ -56,7 +56,7 @@ scalar_t StrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedul
                                          size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
                                          vector_array2_t& inputTrajectoriesStock,
                                          std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                         std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) {
+                                         std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) const {
   if (controllersStock.size() != numPartitions_) {
     throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
   }

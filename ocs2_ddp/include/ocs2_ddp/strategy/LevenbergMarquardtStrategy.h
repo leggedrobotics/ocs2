@@ -53,6 +53,7 @@ namespace ocs2 {
 /**
  * Levenberg Marquardt strategy: The class computes the nominal controller and the nominal trajectories
  * as well the corresponding performance indices.
+ * reference: Tassa et al., Synthesis and stabilization of complex behaviors through online trajectory optimization.
  */
 class LevenbergMarquardtStrategy final : public StrategyBase {
  public:

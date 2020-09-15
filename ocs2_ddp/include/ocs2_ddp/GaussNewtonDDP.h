@@ -269,7 +269,7 @@ class GaussNewtonDDP : public Solver_BASE {
 
   /**
    * Forward integrate the system dynamics with given controller and operating trajectories. In general, it uses the
-   * given control policies and initial state, to integrate the system dynamics in time period [initTime, finalTime].
+   * given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
    * However, if the provided controller does not cover the period [initTime, finalTime], it extrapolates (zero-order)
    * the controller until the next event time where after it uses the operating trajectories.
    *

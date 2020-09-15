@@ -106,20 +106,30 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## to see the summary of unit test results run
 ## $ catkin_test_results ../../../build/ocs2_ddp
 
-catkin_add_gtest(exp0_slq_test
-  test/exp0_slq_test.cpp
+catkin_add_gtest(exp0_ddp_test
+  test/Exp0Test.cpp
 )
-target_link_libraries(exp0_slq_test
+target_link_libraries(exp0_ddp_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main
 )
 
-catkin_add_gtest(exp1_slq_test
-  test/exp1_slq_test.cpp
+catkin_add_gtest(exp1_ddp_test
+  test/Exp1Test.cpp
 )
-target_link_libraries(exp1_slq_test
+target_link_libraries(exp1_ddp_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(correctness_unconstrained_test
+  test/CorrectnessUnconstrainedTest.cpp
+)
+target_link_libraries(correctness_unconstrained_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -127,7 +137,7 @@ target_link_libraries(exp1_slq_test
 )
 
 catkin_add_gtest(riccati_ode_test
-  test/riccati_ode_test.cpp
+  test/RiccatiTest.cpp
 )
 target_link_libraries(riccati_ode_test
   ${PROJECT_NAME}
@@ -135,8 +145,18 @@ target_link_libraries(riccati_ode_test
   gtest_main
 )
 
+catkin_add_gtest(circular_kinematics_ddp_test
+  test/CircularKinematicsTest.cpp
+)
+target_link_libraries(circular_kinematics_ddp_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  gtest_main
+)
+
 catkin_add_gtest(hybrid_slq_test
-  test/hybrid_slq_test.cpp
+  test/HybridSlqTest.cpp
 )
 target_link_libraries(hybrid_slq_test
   ${PROJECT_NAME}
@@ -145,62 +165,12 @@ target_link_libraries(hybrid_slq_test
   gtest_main
 )
 
-catkin_add_gtest(exp0_ilqr_test
-  test/exp0_ilqr_test.cpp
-)
-target_link_libraries(exp0_ilqr_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(exp1_ilqr_test
-  test/exp1_ilqr_test.cpp
-)
-target_link_libraries(exp1_ilqr_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
 catkin_add_gtest(bouncing_mass_test
-  test/bouncingmass/BouncingMass.cpp
+  test/bouncingmass/BouncingMassTest.cpp
   test/bouncingmass/OverallReference.cpp
   test/bouncingmass/Reference.cpp
 )
 target_link_libraries(bouncing_mass_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(circular_kinematics_ilqr_test
-  test/circular_kinematics_ilqr_test.cpp
-)
-target_link_libraries(circular_kinematics_ilqr_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(circular_kinematics_slq_test
-  test/circular_kinematics_slq_test.cpp
-)
-target_link_libraries(circular_kinematics_slq_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(ddp_correctness_test
-  test/ddpCorrectnessTest.cpp
-)
-target_link_libraries(ddp_correctness_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

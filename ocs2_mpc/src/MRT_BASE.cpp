@@ -64,7 +64,7 @@ void MRT_BASE::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 const PrimalSolution& MRT_BASE::getPolicy() const {
-  if (initialPolicyReceived() && policyUpdated_) {
+  if (policyUpdated_) {
     return *currentPrimalSolution_;
   } else {
     throw std::runtime_error("[MRT_BASE::getPolicy] The policy was never received or not updated");

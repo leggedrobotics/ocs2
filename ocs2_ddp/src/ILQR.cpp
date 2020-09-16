@@ -52,7 +52,7 @@ ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynami
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
 
   for (size_t i = 0; i < settings().nThreads_; i++) {
-    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == ddp_strategy::Type::LINE_SEARCH);
+    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new DiscreteTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);

@@ -74,8 +74,8 @@ class CircularKinematicsTest : public testing::Test {
     operatingPointsPtr.reset(new ocs2::OperatingPoints(initState, ocs2::vector_t::Zero(INPUT_DIM)));
   }
 
-  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads,
-                                  ocs2::ddp_strategy::Type strategy, bool display = false) const {
+  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
+                                  bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = algorithmType;
     ddpSettings.nThreads_ = numThreads;
@@ -105,15 +105,14 @@ class CircularKinematicsTest : public testing::Test {
     std::string testName;
     testName += "Circular-Kinematics Test { ";
     testName += "Algorithm: " + ocs2::ddp::toAlgorithmName(ddpSettings.algorithm_) + ",  ";
-    testName += "Strategy: " + ocs2::ddp_strategy::toString(ddpSettings.strategy_) + ",  ";
+    testName += "Strategy: " + ocs2::search_strategy::toString(ddpSettings.strategy_) + ",  ";
     testName += "#threads: " + std::to_string(ddpSettings.nThreads_) + " }";
     return testName;
   }
 
   void performanceIndexTest(const ocs2::ddp::Settings& ddpSettings, const ocs2::PerformanceIndex& performanceIndex) const {
     const auto testName = getTestName(ddpSettings);
-    EXPECT_LT(performanceIndex.totalCost - expectedCost, 0.0)
-        << "MESSAGE: " << testName << ": failed in the total cost test!";
+    EXPECT_LT(performanceIndex.totalCost - expectedCost, 0.0) << "MESSAGE: " << testName << ": failed in the total cost test!";
     EXPECT_LT(fabs(performanceIndex.stateInputEqConstraintISE - expectedStateInputEqConstraintISE), 10 * ddpSettings.constraintTolerance_)
         << "MESSAGE: " << testName << ": failed in state-input equality constraint ISE test!";
   }
@@ -140,7 +139,7 @@ constexpr ocs2::scalar_t CircularKinematicsTest::expectedStateInputEqConstraintI
 /******************************************************************************************************/
 TEST_F(CircularKinematicsTest, slq_single_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -163,7 +162,7 @@ TEST_F(CircularKinematicsTest, slq_single_thread_linesearch) {
 /******************************************************************************************************/
 TEST_F(CircularKinematicsTest, slq_multi_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 3, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 3, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -186,7 +185,7 @@ TEST_F(CircularKinematicsTest, slq_multi_thread_linesearch) {
 /******************************************************************************************************/
 TEST_F(CircularKinematicsTest, ilqr_single_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -209,7 +208,7 @@ TEST_F(CircularKinematicsTest, ilqr_single_thread_linesearch) {
 /******************************************************************************************************/
 TEST_F(CircularKinematicsTest, ilqr_multi_thread_linesearch) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 3, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 3, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);

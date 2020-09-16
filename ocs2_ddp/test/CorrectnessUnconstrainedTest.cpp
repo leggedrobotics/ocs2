@@ -56,7 +56,7 @@ class CorrectnessUnconstrainedTest : public testing::Test {
 
     // cost
     costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+                                           ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
     costDesiredTrajectories =
         ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
     costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
@@ -93,8 +93,8 @@ class CorrectnessUnconstrainedTest : public testing::Test {
     finalTime = nominalTrajectory.timeTrajectory.back();
   }
 
-  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numPartitions,
-                                  ocs2::ddp_strategy::Type strategy, bool display = false) const {
+  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numPartitions, ocs2::search_strategy::Type strategy,
+                                  bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = algorithmType;
     ddpSettings.displayInfo_ = false;
@@ -125,7 +125,7 @@ class CorrectnessUnconstrainedTest : public testing::Test {
     std::string testName;
     testName += "Correctness Test { ";
     testName += "Algorithm: " + ocs2::ddp::toAlgorithmName(ddpSettings.algorithm_) + ",  ";
-    testName += "Strategy: " + ocs2::ddp_strategy::toString(ddpSettings.strategy_) + ",  ";
+    testName += "Strategy: " + ocs2::search_strategy::toString(ddpSettings.strategy_) + ",  ";
     testName += "#threads: " + std::to_string(ddpSettings.nThreads_) + " }";
     return testName;
   }
@@ -136,14 +136,12 @@ class CorrectnessUnconstrainedTest : public testing::Test {
     EXPECT_LT(fabs(performanceIndex.totalCost - qpCost), 10 * ddpSettings.minRelCost_)
         << "MESSAGE: " << testName << ": failed in the optimal cost test!";
     EXPECT_LT(relError(ddpSolution.stateTrajectory_.back(), qpSolution.stateTrajectory.back()), solutionPrecision)
-       << "MESSAGE: " << testName << ": failed in the optimal final state test!";
+        << "MESSAGE: " << testName << ": failed in the optimal final state test!";
     EXPECT_LT(relError(ddpSolution.inputTrajectory_.front(), qpSolution.inputTrajectory.front()), solutionPrecision)
-       << "MESSAGE: " << testName << ": failed in the optimal initial input test!";
+        << "MESSAGE: " << testName << ": failed in the optimal initial input test!";
   }
 
-  ocs2::scalar_t relError(ocs2::vector_t ddpSol, const ocs2::vector_t& qpSol) const {
-    return (ddpSol - qpSol).norm() / ddpSol.norm();
-  }
+  ocs2::scalar_t relError(ocs2::vector_t ddpSol, const ocs2::vector_t& qpSol) const { return (ddpSol - qpSol).norm() / ddpSol.norm(); }
 
   ocs2::vector_t initState;
   ocs2::scalar_t startTime;
@@ -166,14 +164,13 @@ constexpr size_t CorrectnessUnconstrainedTest::STATE_DIM;
 constexpr size_t CorrectnessUnconstrainedTest::INPUT_DIM;
 constexpr ocs2::scalar_t CorrectnessUnconstrainedTest::solutionPrecision;
 
-
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -191,7 +188,7 @@ TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_linesearch) {
 TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -209,7 +206,7 @@ TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_linesearch) {
 TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -227,7 +224,7 @@ TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_linesearch) {
 TEST_F(CorrectnessUnconstrainedTest, ilqr_multi_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -245,7 +242,8 @@ TEST_F(CorrectnessUnconstrainedTest, ilqr_multi_partition_linesearch) {
 TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_levenberg_marquardt) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings =
+      getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -263,7 +261,8 @@ TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_levenberg_marquardt) {
 TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_levenberg_marquardt) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings =
+      getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -281,7 +280,8 @@ TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_levenberg_marquardt) {
 TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_levenberg_marquardt) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings =
+      getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -299,7 +299,8 @@ TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_levenberg_marquardt) 
 TEST_F(CorrectnessUnconstrainedTest, ilqr_multi_partition_levenberg_marquardt) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::Type::LEVENBERG_MARQUARDT);
+  const auto ddpSettings =
+      getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);

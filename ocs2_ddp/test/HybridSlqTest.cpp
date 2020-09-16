@@ -52,7 +52,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.useNominalTimeForBackwardPass_ = true;
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
-  ddpSettings.strategy_ = ddp_strategy::Type::LINE_SEARCH;
+  ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;
 
   rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;

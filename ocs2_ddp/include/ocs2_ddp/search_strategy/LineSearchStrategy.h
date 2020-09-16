@@ -45,42 +45,45 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
-#include "StrategyBase.h"
+#include "SearchStrategyBase.h"
 #include "StrategySettings.h"
 
 namespace ocs2 {
 
 /**
- * Levenberg Marquardt strategy: The class computes the nominal controller and the nominal trajectories
- * as well the corresponding performance indices.
- * reference: Tassa et al., Synthesis and stabilization of complex behaviors through online trajectory optimization.
+ * Line search strategy: The class computes the nominal controller and the nominal trajectories as well the corresponding performance
+ * indices. It line-searches on the feedforward parts of the controller and chooses the largest acceptable step-size.
  */
-class LevenbergMarquardtStrategy final : public StrategyBase {
+class LineSearchStrategy final : public SearchStrategyBase {
  public:
   /**
    * constructor.
    *
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
-   * @param [in] settings: The Levenberg Marquardt settings.
-   * @param [in] rolloutRef: A reference to the rollout class.
-   * @param [in] constraintsRef: A reference to the constraint class.
-   * @param [in] heuristicsFunctionsRef: A reference to the heuristics function.
+   * @param [in] settings: The line search settings.
+   * @param [in] threadPoolRef: A reference to the thread pool instance.
+   * @param [in] rolloutRef: An array of references to the rollout class.
+   * @param [in] constraintsRef: An array of references to the constraint class.
+   * @param [in] heuristicsFunctionsRef: An array of references to the heuristics function.
    * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
-  LevenbergMarquardtStrategy(ddp_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
-                             ConstraintBase& constraintsRef, CostFunctionBase& costFunctionRef, CostFunctionBase& heuristicsFunctionsRef,
-                             PenaltyBase& ineqConstrPenalty, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+  LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
+                     std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
+                     std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
+                     std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
+                     std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock, PenaltyBase& ineqConstrPenaltyRef,
+                     std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
    */
-  ~LevenbergMarquardtStrategy() override = default;
+  ~LineSearchStrategy() override = default;
 
-  LevenbergMarquardtStrategy(const LevenbergMarquardtStrategy&) = delete;
-  LevenbergMarquardtStrategy& operator=(const LevenbergMarquardtStrategy&) = delete;
+  LineSearchStrategy(const LineSearchStrategy&) = delete;
+  LineSearchStrategy& operator=(const LineSearchStrategy&) = delete;
 
-  void reset() override;
+  void reset() override {}
 
   bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
            PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
@@ -94,28 +97,54 @@ class LevenbergMarquardtStrategy final : public StrategyBase {
   void computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                   matrix_t& deltaGm) const override;
 
-  matrix_t augmentHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Hm) const override;
+  matrix_t augmentHamiltonianHessian(const ModelDataBase& /*modelData*/, const matrix_t& Hm) const override { return Hm; }
 
  private:
-  // Levenberg-Marquardt
-  struct LevenbergMarquardtModule {
-    scalar_t pho = 1.0;                           // the ratio between actual reduction and predicted reduction
-    scalar_t riccatiMultiple = 0.0;               // the Riccati multiple for Tikhonov regularization.
-    scalar_t riccatiMultipleAdaptiveRatio = 1.0;  // the adaptive ratio of geometric progression for Riccati multiple.
-    size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
+  /**
+   * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
+   * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
+   */
+  void lineSearchTask();
+
+  /** Prints to output. */
+  void printString(const std::string& text) const;
+
+  struct LineSearchModule {
+    scalar_t baselineMerit = 0.0;           // the merit of the rollout for zero learning rate
+    scalar_t initControllerUpdateIS = 0.0;  // integral of the squared (IS) norm of the controller update.
+    const ModeSchedule* modeSchedulePtr;
+    std::vector<LinearController> initControllersStock;
+
+    std::atomic_size_t alphaExpNext{0};
+    std::vector<bool> alphaProcessed;
+    std::mutex lineSearchResultMutex;
+
+    std::atomic<scalar_t> stepLengthStar{0.0};
+    PerformanceIndex* performanceIndexPtrStar;
+    std::vector<LinearController>* controllersStockPtrStar;
+    scalar_array2_t* timeTrajectoriesStockPtrStar;
+    size_array2_t* postEventIndicesStockPtrStar;
+    vector_array2_t* stateTrajectoriesStockPtrStar;
+    vector_array2_t* inputTrajectoriesStockPtrStar;
+    std::vector<std::vector<ModelDataBase>>* modelDataTrajectoriesStockPtrStar;
+    std::vector<std::vector<ModelDataBase>>* modelDataEventTimesStockPtrStar;
   };
 
-  levenberg_marquardt::Settings settings_;
-  LevenbergMarquardtModule levenbergMarquardtModule_;
+  line_search::Settings settings_;
+  LineSearchModule lineSearchModule_;
 
-  RolloutBase& rolloutRef_;
-  ConstraintBase& constraintsRef_;
-  CostFunctionBase& costFunctionRef_;
-  CostFunctionBase& heuristicsFunctionsRef_;
+  ThreadPool& threadPoolRef_;
+  std::atomic_size_t nextTaskId_{0};
+  mutable std::mutex outputDisplayGuardMutex_;
+
+  std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
+  std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock_;
+  std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock_;
+  std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock_;
   PenaltyBase& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
-  scalar_t avgTimeStepFP_ = 0.0;
+  std::atomic<scalar_t> avgTimeStepFP_{0.0};
 };
 
 }  // namespace ocs2

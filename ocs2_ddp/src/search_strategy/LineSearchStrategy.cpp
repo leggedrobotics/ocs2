@@ -30,20 +30,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 
 #include <ocs2_ddp/HessianCorrection.h>
-#include <ocs2_ddp/strategy/LineSearchStrategy.h>
+#include <ocs2_ddp/search_strategy/LineSearchStrategy.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LineSearchStrategy::LineSearchStrategy(ddp_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
+LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                                        std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                                        std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
                                        std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
                                        std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
                                        PenaltyBase& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc)
-    : StrategyBase(std::move(baseSettings)),
+    : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
       rolloutRefStock_(std::move(rolloutRefStock)),

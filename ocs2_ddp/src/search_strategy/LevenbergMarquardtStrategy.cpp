@@ -30,19 +30,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 
 #include <ocs2_ddp/HessianCorrection.h>
-#include <ocs2_ddp/strategy/LevenbergMarquardtStrategy.h>
+#include <ocs2_ddp/search_strategy/LevenbergMarquardtStrategy.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(ddp_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
+LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
                                                        RolloutBase& rolloutRef, ConstraintBase& constraintsRef,
                                                        CostFunctionBase& costFunctionRef, CostFunctionBase& heuristicsFunctionsRef,
                                                        PenaltyBase& ineqConstrPenaltyRef,
                                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
-    : StrategyBase(std::move(baseSettings)),
+    : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       rolloutRef_(rolloutRef),
       constraintsRef_(constraintsRef),

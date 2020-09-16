@@ -59,7 +59,7 @@ MPC_DDP::MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* system
 /******************************************************************************************************/
 void MPC_DDP::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   // updating real-time iteration settings
-  if (MPC_BASE::initRun_ && ddpPtr_->settings().strategy_ == ddp_strategy::Type::LINE_SEARCH) {
+  if (MPC_BASE::initRun_ && ddpPtr_->settings().strategy_ == search_strategy::Type::LINE_SEARCH) {
     ddpPtr_->settings().maxNumIterations_ = this->settings().initMaxNumIterations_;
     ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
     ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;

@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_ddp/strategy/StrategySettings.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 #include <algorithm>
 #include <unordered_map>
@@ -39,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-namespace ddp_strategy {
+namespace search_strategy {
 
 std::string toString(Type strategy) {
   static const std::unordered_map<Type, std::string> strategyMap{{Type::LINE_SEARCH, "LINE_SEARCH"},
@@ -54,7 +54,7 @@ Type fromString(std::string name) {
   return strategyMap.at(name);
 }
 
-}  // namespace ddp_strategy
+}  // namespace search_strategy
 
 /******************************************************************************************************/
 /******************************************************************************************************/

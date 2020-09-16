@@ -51,21 +51,21 @@ namespace ocs2 {
 /**
  * This class is an interface class for search strategies such as line-search, trust-region.
  */
-class StrategyBase {
+class SearchStrategyBase {
  public:
   /**
    * Constructor.
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
    */
-  explicit StrategyBase(ddp_strategy::Settings baseSettings) : baseSettings_(std::move(baseSettings)) {}
+  explicit SearchStrategyBase(search_strategy::Settings baseSettings) : baseSettings_(std::move(baseSettings)) {}
 
   /**
    * Default destructor.
    */
-  virtual ~StrategyBase() = default;
+  virtual ~SearchStrategyBase() = default;
 
-  StrategyBase(const StrategyBase&) = delete;
-  StrategyBase& operator=(const StrategyBase&) = delete;
+  SearchStrategyBase(const SearchStrategyBase&) = delete;
+  SearchStrategyBase& operator=(const SearchStrategyBase&) = delete;
 
   /**
    * Initializes the strategy.
@@ -99,6 +99,7 @@ class StrategyBase {
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
+   * @return whether the search was successful or failed.
    */
   virtual bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                    PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
@@ -177,10 +178,10 @@ class StrategyBase {
                                                     const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
                                                     scalar_t heuristicsValue) const;
 
+ protected:
   /**
-   * Forward integrate the system dynamics with given controller. It uses the
-   * given control policies and initial state, to integrate the system dynamics
-   * in time period [initTime, finalTime].
+   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
+   * to integrate the system dynamics in time period [initTime, finalTime].
    *
    * @param [in] rollout: A reference to the rollout class.
    * @param [in] modeSchedule: The mode schedule
@@ -208,8 +209,7 @@ class StrategyBase {
    */
   scalar_t calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const;
 
- protected:
-  ddp_strategy::Settings baseSettings_;
+  search_strategy::Settings baseSettings_;
 
   scalar_t initTime_;
   scalar_t finalTime_;

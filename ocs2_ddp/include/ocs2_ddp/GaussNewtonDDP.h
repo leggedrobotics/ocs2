@@ -53,7 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DDP_Settings.h"
 #include "riccati_equations/RiccatiModification.h"
-#include "strategy/StrategyBase.h"
+#include "search_strategy/SearchStrategyBase.h"
 
 namespace ocs2 {
 
@@ -449,7 +449,7 @@ class GaussNewtonDDP : public Solver_BASE {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
-  std::unique_ptr<StrategyBase> searchStrategyPtr_;
+  std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
   std::vector<std::unique_ptr<LinearQuadraticApproximator>> linearQuadraticApproximatorPtrStock_;
 
   // optimized controller

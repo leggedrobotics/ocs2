@@ -136,7 +136,7 @@ class ThreadPool {
    */
   void enableDebug(std::function<void(const std::string)> debugPrint);
 
-  inline size_t numThreads() const { return workerThreads_.size(); }
+  size_t numThreads() const { return workerThreads_.size(); }
 
  private:
   /**

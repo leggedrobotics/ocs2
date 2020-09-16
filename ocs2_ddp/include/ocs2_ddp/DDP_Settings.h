@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/Integrator.h>
 
-#include "ocs2_ddp/strategy/StrategySettings.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 namespace ocs2 {
 namespace ddp {
@@ -120,7 +120,7 @@ struct Settings {
   scalar_t riskSensitiveCoeff_ = 0.0;
 
   /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
-  ddp_strategy::Type strategy_ = ddp_strategy::Type::LINE_SEARCH;
+  search_strategy::Type strategy_ = search_strategy::Type::LINE_SEARCH;
   /** The line-search strategy settings. */
   line_search::Settings lineSearch_;
   /** The levenberg_marquardt strategy settings. */

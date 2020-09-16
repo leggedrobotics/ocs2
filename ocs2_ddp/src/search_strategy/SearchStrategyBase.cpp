@@ -29,15 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 
-#include "ocs2_ddp/strategy/StrategyBase.h"
+#include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StrategyBase::initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                             size_t initActivePartition, size_t finalActivePartition) {
+void SearchStrategyBase::initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
+                                   const scalar_array_t& partitioningTimes, size_t initActivePartition, size_t finalActivePartition) {
   initTime_ = initTime;
   initState_ = initState;
   finalTime_ = finalTime;
@@ -51,12 +51,12 @@ void StrategyBase::initalize(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule,
-                                         std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
-                                         size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                                         vector_array2_t& inputTrajectoriesStock,
-                                         std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                         std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) const {
+scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule,
+                                               std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                                               size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
+                                               vector_array2_t& inputTrajectoriesStock,
+                                               std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                               std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) const {
   if (controllersStock.size() != numPartitions_) {
     throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
   }
@@ -132,13 +132,11 @@ scalar_t StrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedul
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StrategyBase::rolloutCostAndConstraints(ConstraintBase& constraints, CostFunctionBase& costFunction,
-                                             CostFunctionBase& heuristicsFunction, const scalar_array2_t& timeTrajectoriesStock,
-                                             const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
-                                             const vector_array2_t& inputTrajectoriesStock,
-                                             std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                             scalar_t& heuristicsValue) const {
+void SearchStrategyBase::rolloutCostAndConstraints(
+    ConstraintBase& constraints, CostFunctionBase& costFunction, CostFunctionBase& heuristicsFunction,
+    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
+    const vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+    std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const {
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
@@ -176,11 +174,10 @@ void StrategyBase::rolloutCostAndConstraints(ConstraintBase& constraints, CostFu
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PerformanceIndex StrategyBase::calculateRolloutPerformanceIndex(const PenaltyBase& ineqConstrPenalty,
-                                                                const scalar_array2_t& timeTrajectoriesStock,
-                                                                const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                                                const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                                                scalar_t heuristicsValue) const {
+PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(
+    const PenaltyBase& ineqConstrPenalty, const scalar_array2_t& timeTrajectoriesStock,
+    const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+    const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t heuristicsValue) const {
   PerformanceIndex performanceIndex;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     // total cost
@@ -229,7 +226,7 @@ PerformanceIndex StrategyBase::calculateRolloutPerformanceIndex(const PenaltyBas
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StrategyBase::calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const {
+scalar_t SearchStrategyBase::calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const {
   scalar_t controllerUpdateIS = 0.0;
   for (const auto& controller : controllersStock) {
     scalar_array_t biasArraySquaredNorm(controller.timeStamp_.size());

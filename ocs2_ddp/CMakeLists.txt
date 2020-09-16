@@ -52,10 +52,10 @@ add_library(${PROJECT_NAME}
   src/riccati_equations/ContinuousTimeRiccatiEquations.cpp
   src/riccati_equations/DiscreteTimeRiccatiEquations.cpp
   src/riccati_equations/RiccatiModification.cpp
-  src/strategy/LevenbergMarquardtStrategy.cpp
-  src/strategy/LineSearchStrategy.cpp
-  src/strategy/StrategyBase.cpp
-  src/strategy/StrategySettings.cpp
+  src/search_strategy/LevenbergMarquardtStrategy.cpp
+  src/search_strategy/LineSearchStrategy.cpp
+  src/search_strategy/SearchStrategyBase.cpp
+  src/search_strategy/StrategySettings.cpp
   src/DDP_DataCollector.cpp
   src/GaussNewtonDDP.cpp
   src/HessianCorrection.cpp

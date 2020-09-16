@@ -39,8 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/GaussNewtonDDP.h>
 #include <ocs2_ddp/HessianCorrection.h>
 #include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
-#include <ocs2_ddp/strategy/LevenbergMarquardtStrategy.h>
-#include <ocs2_ddp/strategy/LineSearchStrategy.h>
+#include <ocs2_ddp/search_strategy/LevenbergMarquardtStrategy.h>
+#include <ocs2_ddp/search_strategy/LineSearchStrategy.h>
 
 namespace ocs2 {
 
@@ -94,7 +94,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
 
   // search strategy method
   const auto basicStrategySettings = [&]() {
-    ddp_strategy::Settings s;
+    search_strategy::Settings s;
     s.displayInfo = ddpSettings_.displayInfo_;
     s.debugPrintRollout = ddpSettings_.debugPrintRollout_;
     s.minRelCost = ddpSettings_.minRelCost_;
@@ -102,7 +102,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
     return s;
   }();
   switch (ddpSettings_.strategy_) {
-    case ddp_strategy::Type::LINE_SEARCH: {
+    case search_strategy::Type::LINE_SEARCH: {
       std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock;
       std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock;
       std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock;
@@ -119,7 +119,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
                                                       [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); }));
       break;
     }
-    case ddp_strategy::Type::LEVENBERG_MARQUARDT: {
+    case search_strategy::Type::LEVENBERG_MARQUARDT: {
       constexpr size_t threadID = 0;
       searchStrategyPtr_.reset(new LevenbergMarquardtStrategy(
           basicStrategySettings, ddpSettings_.levenbergMarquardt_, *dynamicsForwardRolloutPtrStock_[threadID],
@@ -1018,7 +1018,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
           augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff, 0.0,
                             modelDataEventTimesStock_[i][timeIndex]);
           // shift Hessian for event times
-          if (ddpSettings_.strategy_ == ddp_strategy::Type::LINE_SEARCH) {
+          if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
             hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_,
                                              modelDataEventTimesStock_[i][timeIndex].cost_.dfdxx,
                                              ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
@@ -1037,7 +1037,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
       nominalTimeTrajectoriesStock_[finalActivePartition_].back(), nominalStateTrajectoriesStock_[finalActivePartition_].back());
 
   // shift Hessian for final time
-  if (ddpSettings_.strategy_ == ddp_strategy::Type::LINE_SEARCH) {
+  if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
     hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, heuristics_.dfdxx,
                                      ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
   }

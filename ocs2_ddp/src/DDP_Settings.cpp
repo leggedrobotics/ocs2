@@ -100,16 +100,16 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
 
   loadData::loadPtreeValue(pt, settings.riskSensitiveCoeff_, fieldName + ".riskSensitiveCoeff", verbose);
 
-  std::string strategyName = ddp_strategy::toString(settings.strategy_);
+  std::string strategyName = search_strategy::toString(settings.strategy_);
   loadData::loadPtreeValue(pt, strategyName, fieldName + ".strategy", verbose);
-  settings.strategy_ = ddp_strategy::fromString(strategyName);
+  settings.strategy_ = search_strategy::fromString(strategyName);
 
   switch (settings.strategy_) {
-    case ddp_strategy::Type::LINE_SEARCH: {
+    case search_strategy::Type::LINE_SEARCH: {
       settings.lineSearch_ = line_search::load(filename, fieldName + ".lineSearch", verbose);
       break;
     }
-    case ddp_strategy::Type::LEVENBERG_MARQUARDT: {
+    case search_strategy::Type::LEVENBERG_MARQUARDT: {
       settings.levenbergMarquardt_ = levenberg_marquardt::load(filename, fieldName + ".levenbergMarquardt", verbose);
       break;
     }

@@ -123,16 +123,15 @@ void MPC_MRT_Interface::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservation) {
+  // get new policy from solver
   auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
-  auto newCommand = std::unique_ptr<CommandData>(new CommandData);
-
-  // get solution
   const scalar_t startTime = mpcInitObservation.time;
   const scalar_t finalTime =
       (mpc_.settings().solutionTimeWindow_ < 0) ? mpc_.getSolverPtr()->getFinalTime() : startTime + mpc_.settings().solutionTimeWindow_;
   mpc_.getSolverPtr()->getPrimalSolution(finalTime, newSolution.get());
 
-  // command
+  // get new command from solver
+  auto newCommand = std::unique_ptr<CommandData>(new CommandData);
   newCommand->mpcInitObservation_ = std::move(mpcInitObservation);
   newCommand->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
 
@@ -144,13 +143,8 @@ void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservatio
   this->primalSolutionBuffer_ = std::move(newSolution);
   this->commandBuffer_ = std::move(newCommand);
 
-  // partition
-  this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);
-
-  // Flags to be set last:
   this->newPolicyInBuffer_ = true;
   this->policyReceivedEver_ = true;
-  this->policyUpdatedBuffer_ = true;
 }
 
 /******************************************************************************************************/

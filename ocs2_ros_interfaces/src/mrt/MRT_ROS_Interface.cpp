@@ -191,40 +191,21 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
-  const auto policyUpdated = static_cast<bool>(msg->controllerIsUpdated);
+  // read new policy and command from msg
+  auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
+  auto newCommand = std::unique_ptr<CommandData>(new CommandData);
+  readPolicyMsg(*msg, *newSolution, *newCommand);
 
-  if (policyUpdated) {
-    // Read new policy from msg
-    auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
-    auto newCommand = std::unique_ptr<CommandData>(new CommandData);
-    readPolicyMsg(*msg, *newSolution, *newCommand);
+  // allow user to modify the buffer
+  this->modifyBufferedSolution(*newCommand, *newSolution);
 
-    // allow user to modify the buffer
-    this->modifyBufferedSolution(*newCommand, *newSolution);
+  // fill the buffer under the mutex
+  std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
+  this->primalSolutionBuffer_ = std::move(newSolution);
+  this->commandBuffer_ = std::move(newCommand);
 
-    // Fill the buffer under the mutex
-    std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
-    this->primalSolutionBuffer_ = std::move(newSolution);
-    this->commandBuffer_ = std::move(newCommand);
-
-    const scalar_t partitionInitMargin = 1e-1;  //! @badcode Is this necessary?
-    this->partitioningTimesUpdate(this->commandBuffer_->mpcInitObservation_.time - partitionInitMargin, this->partitioningTimesBuffer_);
-
-    this->policyUpdatedBuffer_ = true;
-    this->newPolicyInBuffer_ = true;
-
-    if (!this->policyReceivedEver_) {
-      this->policyReceivedEver_ = true;
-      this->initPlanObservation_ = this->commandBuffer_->mpcInitObservation_;
-      this->initCall(this->initPlanObservation_);
-    }
-  } else {
-    std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
-    this->primalSolutionBuffer_ = std::unique_ptr<PrimalSolution>(new PrimalSolution);
-    this->commandBuffer_ = std::unique_ptr<CommandData>(new CommandData);
-    this->policyUpdatedBuffer_ = true;
-    this->newPolicyInBuffer_ = true;
-  }
+  this->newPolicyInBuffer_ = true;
+  this->policyReceivedEver_ = true;
 }
 
 /******************************************************************************************************/

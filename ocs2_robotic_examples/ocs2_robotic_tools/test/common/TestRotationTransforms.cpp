@@ -29,13 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 #include <Eigen/Dense>
 
 TEST(RotationTransforms, quaternionDifferenceJacobian) {
-  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
-  using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
+  using ad_vector_t = ocs2::ad_vector_t;
+  using ad_scalar_t = ocs2::ad_scalar_t;
 
   auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     Eigen::Quaternion<ad_scalar_t> q(x.head<4>());

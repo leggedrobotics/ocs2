@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // CppAD helpers
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
 
 namespace ocs2 {
 
@@ -49,10 +50,10 @@ class CppAdInterface {
  public:
   enum class ApproximationOrder { Zero, First, Second };
 
-  using ad_base_t = CppAD::cg::CG<scalar_t>;
-  using ad_scalar_t = CppAD::AD<ad_base_t>;
+  using ad_base_t = ocs2::ad_base_t;
+  using ad_scalar_t = ocs2::ad_scalar_t;
   using rowMajor_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-  using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
+  using ad_vector_t = ocs2::ad_vector_t;
   using ad_function_t = std::function<void(const ad_vector_t&, ad_vector_t&)>;
   using ad_parameterized_function_t = std::function<void(const ad_vector_t&, const ad_vector_t&, ad_vector_t&)>;
   using ad_fun_t = CppAD::ADFun<ad_base_t>;

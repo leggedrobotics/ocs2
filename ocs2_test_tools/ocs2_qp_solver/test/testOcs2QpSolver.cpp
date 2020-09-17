@@ -46,7 +46,7 @@ class Ocs2QpSolverTest : public testing::Test {
   static constexpr ocs2::scalar_t precision = 1e-9;
   static constexpr ocs2::scalar_t dt = 1e-3;
 
-  void checkDyanmics(const ocs2::qp_solver::ContinuousTrajectory& solution) const {
+  void checkDynamics(const ocs2::qp_solver::ContinuousTrajectory& solution) const {
     // Forward integrate with unconstrainedSolution u(t) and check x(t)
     ocs2::vector_t x = x0;
     for (int k = 0; k < N; ++k) {
@@ -99,8 +99,8 @@ TEST_F(Ocs2QpSolverTest, initialCondition) {
 }
 
 TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
-  checkDyanmics(constrainedSolution);
-  checkDyanmics(unconstrainedSolution);
+  checkDynamics(constrainedSolution);
+  checkDynamics(unconstrainedSolution);
 }
 
 TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {

@@ -60,6 +60,7 @@ std::pair<vector_array_t, vector_array_t> solveLinearQuadraticProblem(const std:
  *       *  *  A  B -I  *
  *       *  *  *  *  C  D  *
  *       *  *  *  *  A  B -I ]
+ *       *  *  *  *  *  *  C ]
  *
  * b = [x0; e[0]; b[0]; ... e[N-1]; b[N-1]; e[N]]
  *
@@ -75,12 +76,13 @@ VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<Linear
 /**
  * Constructs a matrix of stacked cost functions  1/2 w' H w + g' w
  *
- * H = [ Q  P' *
- *       P  R  *
+ * H = [ Q  P'
+ *       P  R
  *             Q  P'
- *             P  R ]
+ *             P  R
+ *                   Qf ]
  *
- * g = [q[0]; r[0]; q[1]; r[1]; ... ]
+ * g = [q[0]; r[0]; q[1]; r[1]; ... qf ]
  *
  * @param lqp
  * @param numDecisionVariables : size of w

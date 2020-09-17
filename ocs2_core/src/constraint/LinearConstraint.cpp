@@ -61,8 +61,8 @@ LinearConstraint::LinearConstraint(vector_t e, matrix_t C, matrix_t D, vector_t 
       h_f_(std::move(h_f)),
       F_f_(std::move(F_f)),
       h0_(0),
-      dhdx_(0, C.cols()),
-      dhdu_(0, D.cols()),
+      dhdx_(0, C_.cols()),
+      dhdu_(0, D_.cols()),
       dhdxx_(0),
       dhduu_(0),
       dhdux_(0) {}

@@ -217,7 +217,10 @@ std::pair<vector_t, vector_t> solveDenseQp(const ScalarFunctionQuadraticApproxim
   kktMatrix << cost.dfdxx, constraints.dfdx.transpose(), constraints.dfdx, matrix_t::Zero(m, m);
   kktRhs << -cost.dfdx, -constraints.f;
 
-  assert(kktMatrix.fullPivLu().rank() == n + m);  // prerequisite for the LU factorization, and the solution would be non-unique.
+  // prerequisite for the LU factorization, and the solution would be non-unique.
+  if (kktMatrix.fullPivLu().rank() != n + m) {
+    throw std::runtime_error("KKT matrix is not full rank");
+  }
   vector_t sol = kktMatrix.lu().solve(kktRhs);
   return {sol.head(n), sol.tail(m)};
 }

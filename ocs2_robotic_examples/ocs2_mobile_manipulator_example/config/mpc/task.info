@@ -137,17 +137,11 @@ selfCollisionCost
   weight  1.00
 
   ; Self Collision pairs
-  pairs
+  collisionPairs
   {
-    scaling 1e+0
-    default -1 ; this is a hack to allow a huge matrix that can take a lot of pairs
-
-    (0,0) 1 ; large side block
-    (0,1) 4 ; upper arm long cylinder
-    (1,0) 1 ; large side block
-    (1,1) 6 ; upper arm long cylinder
-    (2,0) 1 ; large side block
-    (2,1) 9 ; end effector
+    [0] "1, 4"
+    [1] 1,6
+    [2] " 1  , 9"
   }
 
   ; minimum distance allowed between the pairs

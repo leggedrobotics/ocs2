@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/SelfCollisionCost.h>
+#include <ocs2_mobile_manipulator_example/cost/SelfCollisionCostCppAd.h>
+#include <ocs2_mobile_manipulator_example/ExtendedPair.hpp>
 
 #include <ros/package.h>
 namespace mobile_manipulator {
@@ -65,10 +67,10 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
 
   const size_t maxNumPairs = 100;
   // TODO(perry) replace with some nice link parser or something
-  Eigen::MatrixXi selfCollisionPairsMatrix = Eigen::MatrixXi::Constant(maxNumPairs, 2, -1);
+  std::vector<ocs2::ExtendedPair<size_t, size_t>> selfCollisionPairs;
   double selfColWeight, mu, delta, minimumDistance = 1.0;
 
-  ocs2::loadData::loadEigenMatrix(taskFile, "selfCollisionCost.pairs", selfCollisionPairsMatrix);
+  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionPairs", selfCollisionPairs);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.weight", selfColWeight);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.mu", mu);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.delta", delta);
@@ -78,28 +80,16 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   std::cerr << "delta:  " << delta << std::endl;
   std::cerr << "minimumDistance:  " << minimumDistance << std::endl;
 
-  std::cerr << "collisionPairs:  " << std::endl;
-  std::vector<std::pair<size_t, size_t>> selfCollisionPairs;
-  for (size_t i = 0; i < selfCollisionPairsMatrix.rows(); ++i) {
-    if (selfCollisionPairsMatrix(i, 0) < 0 && selfCollisionPairsMatrix(i, 1) < 0) {
-      continue;
-    } else if (selfCollisionPairsMatrix(i, 0) < 0 || selfCollisionPairsMatrix(i, 1) < 0) {
-      std::cerr << "In row " << i << ", you have only listed one valid index (indices are " << selfCollisionPairsMatrix(i, 0) << ", "
-                << selfCollisionPairsMatrix(i, 1) << std::endl;
-    }
-    selfCollisionPairs.emplace_back(selfCollisionPairsMatrix(i, 0), selfCollisionPairsMatrix(i, 1));
-    std::cerr << " <" << selfCollisionPairs.back().first << "," << selfCollisionPairs.back().second << ">";
-  }
-  std::cerr << std::endl;
-
   std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
   ocs2::PinocchioInterface<scalar_t> pinocchioInterfaceDouble = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
   ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, selfCollisionPairs);
-
   auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
+//  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
+//  colCostAd->initialize("ColCostAd", libraryFolder, recompileLibraries, verbose);
 
   costs.emplace_back(WeightedCost{eeCostWeight, std::move(eeCostPtr)});
   costs.emplace_back(WeightedCost{selfColWeight, std::move(colCost)});
+//  costs.emplace_back(WeightedCost{selfColWeight, std::move(colCostAd)});
 
   // TODO(mspieler): use make_unique after switch to C++14
   return std::unique_ptr<MobileManipulatorCost>(new MobileManipulatorCost(std::move(costs)));

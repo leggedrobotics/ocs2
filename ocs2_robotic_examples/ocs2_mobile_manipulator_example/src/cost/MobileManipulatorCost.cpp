@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/SelfCollisionCost.h>
 #include <ocs2_mobile_manipulator_example/cost/SelfCollisionCostCppAd.h>
-#include <ocs2_mobile_manipulator_example/ExtendedPair.hpp>
+#include <ocs2_mobile_manipulator_example/ExtendedPair.h>
 
 #include <ros/package.h>
 namespace mobile_manipulator {
@@ -84,12 +84,12 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   ocs2::PinocchioInterface<scalar_t> pinocchioInterfaceDouble = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
   ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, selfCollisionPairs);
   auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
-//  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
-//  colCostAd->initialize("ColCostAd", libraryFolder, recompileLibraries, verbose);
+  //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu,
+  //  delta); colCostAd->initialize("ColCostAd", libraryFolder, recompileLibraries, verbose);
 
   costs.emplace_back(WeightedCost{eeCostWeight, std::move(eeCostPtr)});
   costs.emplace_back(WeightedCost{selfColWeight, std::move(colCost)});
-//  costs.emplace_back(WeightedCost{selfColWeight, std::move(colCostAd)});
+  //  costs.emplace_back(WeightedCost{selfColWeight, std::move(colCostAd)});
 
   // TODO(mspieler): use make_unique after switch to C++14
   return std::unique_ptr<MobileManipulatorCost>(new MobileManipulatorCost(std::move(costs)));

@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Core>
 
 // STL
-#include <functional>  // missing header in cg.hpp
 #include <string>
 
 // CppAD

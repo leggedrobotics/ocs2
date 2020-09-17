@@ -27,6 +27,7 @@ class SelfCollisionCostCppAd : public CostFunctionBase {
                          const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
                          scalar_t delta);
   virtual ~SelfCollisionCostCppAd() = default;
+  SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs);
 
   SelfCollisionCostCppAd* clone() const override { return new SelfCollisionCostCppAd(*this); }
 
@@ -55,12 +56,17 @@ class SelfCollisionCostCppAd : public CostFunctionBase {
   // Number of params per result = 3 + 3 + 1 (nearest point 1, nearest point 2, sign indicator)
   const size_t numberOfParamsPerResult_ = 7;
 
-  // From the current state of the robot, and the closest points in link frames, calculate the distance jacobians wrt state
+  // From the current state of the robot, and the closest points in world frame, compute the positions of the points in link frame
+  // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
+  // Returns a vector that is of length |3*2*number of collision pairs + 1 (for sign indicator)|
+  ad_vector_t computeLinkPointsAd(ad_vector_t state, ad_vector_t points);
+  // From the current state of the robot, and the closest points in link frames, calculate the distances wrt state
   // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
   // Returns a vector that is of length |collisionPairs|
   ad_vector_t distanceCalculationAd(ad_vector_t state, ad_vector_t points);
 
-  std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
+  std::shared_ptr<ocs2::CppAdInterface> cppAdInterfaceDistanceCalculation_;
+  std::shared_ptr<ocs2::CppAdInterface> cppAdInterfaceLinkPoints_;
 
   ocs2::PinocchioInterface<scalar_t> pinocchioInterface_;
   ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd_;

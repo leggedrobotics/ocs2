@@ -42,14 +42,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 
-class CorrectnessUnconstrainedTest : public testing::Test {
+class CorrectnessConstrainedTest : public testing::Test {
  protected:
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
   static constexpr ocs2::scalar_t solutionPrecision = 2e-3;
+  static constexpr size_t numStateInputConstraints = 1;
+  static constexpr size_t numStateOnlyConstraints = 0;
+  static constexpr size_t numFinalStateOnlyConstraints = 0;
 
-  CorrectnessUnconstrainedTest() {
+  CorrectnessConstrainedTest() {
     srand(0);
     // dynamics
     systemPtr = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
@@ -62,7 +65,10 @@ class CorrectnessUnconstrainedTest : public testing::Test {
     costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
 
     // constraint
-    constraintPtr.reset(new ocs2::ConstraintBase());
+    constraintPtr =
+        ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
 
     // system operating points
     nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
@@ -160,15 +166,18 @@ class CorrectnessUnconstrainedTest : public testing::Test {
   ocs2::qp_solver::ContinuousTrajectory qpSolution;
 };
 
-constexpr size_t CorrectnessUnconstrainedTest::N;
-constexpr size_t CorrectnessUnconstrainedTest::STATE_DIM;
-constexpr size_t CorrectnessUnconstrainedTest::INPUT_DIM;
-constexpr ocs2::scalar_t CorrectnessUnconstrainedTest::solutionPrecision;
+constexpr size_t CorrectnessConstrainedTest::N;
+constexpr size_t CorrectnessConstrainedTest::STATE_DIM;
+constexpr size_t CorrectnessConstrainedTest::INPUT_DIM;
+constexpr size_t CorrectnessConstrainedTest::numStateInputConstraints;
+constexpr size_t CorrectnessConstrainedTest::numStateOnlyConstraints;
+constexpr size_t CorrectnessConstrainedTest::numFinalStateOnlyConstraints;
+constexpr ocs2::scalar_t CorrectnessConstrainedTest::solutionPrecision;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_linesearch) {
+TEST_F(CorrectnessConstrainedTest, slq_single_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);
@@ -186,7 +195,7 @@ TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_linesearch) {
+TEST_F(CorrectnessConstrainedTest, slq_multi_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);
@@ -204,7 +213,7 @@ TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_linesearch) {
+TEST_F(CorrectnessConstrainedTest, ilqr_single_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);
@@ -222,7 +231,7 @@ TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, ilqr_multi_partition_linesearch) {
+TEST_F(CorrectnessConstrainedTest, ilqr_multi_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
   const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);

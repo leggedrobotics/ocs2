@@ -123,31 +123,28 @@ void MPC_MRT_Interface::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservation) {
-  // buffer policy mutex
-  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
+  // get new policy from solver
+  auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
+  const scalar_t startTime = mpcInitObservation.time;
+  const scalar_t finalTime =
+      (mpc_.settings().solutionTimeWindow_ < 0) ? mpc_.getSolverPtr()->getFinalTime() : startTime + mpc_.settings().solutionTimeWindow_;
+  mpc_.getSolverPtr()->getPrimalSolution(finalTime, newSolution.get());
 
-  // get solution
-  scalar_t startTime = mpcInitObservation.time;
-  scalar_t finalTime = startTime + mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) {
-    finalTime = mpc_.getSolverPtr()->getFinalTime();
-  }
-  mpc_.getSolverPtr()->getPrimalSolution(finalTime, this->primalSolutionBuffer_.get());
-
-  // command
-  this->commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
-  this->commandBuffer_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
-
-  // partition
-  this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);
+  // get new command from solver
+  auto newCommand = std::unique_ptr<CommandData>(new CommandData);
+  newCommand->mpcInitObservation_ = std::move(mpcInitObservation);
+  newCommand->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
 
   // allow user to modify the buffer
-  this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
+  this->modifyBufferedSolution(*newCommand, *newSolution);
 
-  // Flags to be set last:
+  // Fill buffer under the policy mutex
+  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
+  this->primalSolutionBuffer_ = std::move(newSolution);
+  this->commandBuffer_ = std::move(newCommand);
+
   this->newPolicyInBuffer_ = true;
   this->policyReceivedEver_ = true;
-  this->policyUpdatedBuffer_ = true;
 }
 
 /******************************************************************************************************/

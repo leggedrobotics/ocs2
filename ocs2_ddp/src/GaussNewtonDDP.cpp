@@ -1551,7 +1551,7 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
     const matrix_t& Fm = modelData.stateEqConstr_.dfdx;
     modelData.cost_.f += 0.5 * stateEqConstrPenaltyCoeff * Hv.dot(Hv);
     modelData.cost_.dfdx.noalias() += stateEqConstrPenaltyCoeff * Fm.transpose() * Hv;
-    modelData.cost_.dfdu.noalias() += stateEqConstrPenaltyCoeff * Fm.transpose() * Fm;
+    modelData.cost_.dfdxx.noalias() += stateEqConstrPenaltyCoeff * Fm.transpose() * Fm;
   }
 
   // state-input equality constraint (type 1) coefficients

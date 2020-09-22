@@ -103,7 +103,6 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
     throw std::runtime_error("MRT_ROS_interface: rolloutPtr is not initialized, call initRollout first.");
   }
 
-  const size_t activePartitionIndex = 0;  // there is only one partition.
   scalar_t finalTime = currentTime + timeStep;
   scalar_array_t timeTrajectory;
   size_array_t postEventIndicesStock;
@@ -141,11 +140,26 @@ bool MRT_BASE::updatePolicy() {
     policyUpdated_ = true;
     currentCommand_.swap(commandBuffer_);
     currentPrimalSolution_.swap(primalSolutionBuffer_);
+
+    modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
   }
 
-  modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
-
   return true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_BASE::fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution) {
+  std::lock_guard<std::mutex> lk(policyBufferMutex_);
+  primalSolutionBuffer_ = std::move(newPrimalSolution);
+  commandBuffer_ = std::move(newCommandData);
+
+  // allow user to modify the buffer
+  modifyBufferedSolution(*commandBuffer_, *primalSolutionBuffer_);
+
+  newPolicyInBuffer_ = true;
+  policyReceivedEver_ = true;
 }
 
 /******************************************************************************************************/

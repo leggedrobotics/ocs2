@@ -135,23 +135,14 @@ void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservatio
   newCommand->mpcInitObservation_ = std::move(mpcInitObservation);
   newCommand->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
 
-  // allow user to modify the buffer
-  this->modifyBufferedSolution(*newCommand, *newSolution);
-
-  // Fill buffer under the policy mutex
-  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
-  this->primalSolutionBuffer_ = std::move(newSolution);
-  this->commandBuffer_ = std::move(newCommand);
-
-  this->newPolicyInBuffer_ = true;
-  this->policyReceivedEver_ = true;
+  this->fillSolutionBuffer(std::move(newCommand), std::move(newSolution));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time, matrix_t& K) {
-  auto controller = dynamic_cast<LinearController*>(this->currentPrimalSolution_->controllerPtr_.get());
+  auto controller = dynamic_cast<LinearController*>(this->getPolicy().controllerPtr_.get());
   if (controller == nullptr) {
     throw std::runtime_error("Feedback gains only available with linear controller");
   }

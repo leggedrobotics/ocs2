@@ -154,13 +154,15 @@ class MRT_BASE {
   void addMrtObserver(std::shared_ptr<MrtObserver> mrtObserver) { observerPtrArray_.push_back(std::move(mrtObserver)); };
 
  protected:
+  void fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution);
+
+ private:
   /** Calls modifyActiveSolution on all mrt observers. */
   void modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution);
 
   /** Calls modifyBufferedSolution on all mrt observers. */
   void modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
 
- protected:
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;
   bool newPolicyInBuffer_;          // whether a new policy is waiting to be swapped in
@@ -178,7 +180,6 @@ class MRT_BASE {
   // variables needed for policy evaluation
   std::unique_ptr<RolloutBase> rolloutPtr_;
 
- private:
   std::vector<std::shared_ptr<MrtObserver>> observerPtrArray_;
 };
 

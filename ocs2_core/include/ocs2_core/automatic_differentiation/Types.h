@@ -29,36 +29,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/automatic_differentiation/Types.h>
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <Eigen/Dense>
+#include <Eigen/StdVector>
+
+// CppAD
+#include <cppad/cg.hpp>
+
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
-class LinearSystemDynamicsAD : public SystemDynamicsBaseAD {
- public:
-  using ad_scalar_t = typename ocs2::ad_scalar_t;
-  using ad_vector_t = typename ocs2::ad_vector_t;
+/** Scalar type. */
+using ad_base_t = CppAD::cg::CG<scalar_t>;
 
-  LinearSystemDynamicsAD(const matrix_t& A, const matrix_t& B, const matrix_t& G)
-      : SystemDynamicsBaseAD(B.rows(), B.cols()), A_(A), B_(B), G_(G) {}
+using ad_scalar_t = CppAD::AD<ad_base_t>;
 
-  LinearSystemDynamicsAD(const LinearSystemDynamicsAD& rhs) : SystemDynamicsBaseAD(rhs), A_(rhs.A_), B_(rhs.B_), G_(rhs.G_) {}
+/** Dynamic-size vector type. */
+using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
 
-  ~LinearSystemDynamicsAD() override = default;
-
-  LinearSystemDynamicsAD* clone() const override { return new LinearSystemDynamicsAD(*this); }
-
- protected:
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override {
-    return A_.cast<ad_scalar_t>() * state + B_.cast<ad_scalar_t>() * input;
-  }
-
-  ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state) const override { return G_.cast<ad_scalar_t>() * state; }
-
- private:
-  matrix_t A_;
-  matrix_t B_;
-  matrix_t G_;
-};
+using ad_matrix_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
 
 }  // namespace ocs2

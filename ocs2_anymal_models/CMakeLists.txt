@@ -37,6 +37,8 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
+  src/bear/AnymalBearCom.cpp
+  src/bear/AnymalBearKinematics.cpp
   src/croc/AnymalCrocCom.cpp
   src/croc/AnymalCrocKinematics.cpp
   src/wheels/AnymalWheelsCom.cpp

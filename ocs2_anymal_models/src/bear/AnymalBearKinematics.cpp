@@ -2,12 +2,12 @@
 // Created by rgrandia on 18.09.19.
 //
 
-#include "ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h"
+#include "ocs2_anymal_models/bear/AnymalBearKinematics.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
 
-#include "ocs2_anymal_bear_switched_model/generated/jacobians.h"
-#include "ocs2_anymal_bear_switched_model/generated/transforms.h"
+#include "ocs2_anymal_models/bear/generated/jacobians.h"
+#include "ocs2_anymal_models/bear/generated/transforms.h"
 
 namespace anymal {
 namespace tpl {
@@ -30,19 +30,19 @@ switched_model::vector3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::positionBa
 
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_trunk_X_fr_LF_foot_;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_trunk_X_fr_LF_foot_;
       return fr_trunk_X_fr_LF_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     case RF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_trunk_X_fr_RF_foot_;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_trunk_X_fr_RF_foot_;
       return fr_trunk_X_fr_RF_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     case LH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_FOOT fr_trunk_X_fr_LH_foot_;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_FOOT fr_trunk_X_fr_LH_foot_;
       return fr_trunk_X_fr_LH_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     case RH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_FOOT fr_trunk_X_fr_RH_foot_;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_FOOT fr_trunk_X_fr_RH_foot_;
       return fr_trunk_X_fr_RH_foot_(jointPositions).template topRightCorner<3, 1>();
     }
     default:
@@ -61,19 +61,19 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::footOrient
 
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_base_X_fr_LF_FOOT;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_FOOT fr_base_X_fr_LF_FOOT;
       return fr_base_X_fr_LF_FOOT(jointPositions).template topLeftCorner<3, 3>();
     }
     case RF: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_base_X_fr_RF_FOOT;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_FOOT fr_base_X_fr_RF_FOOT;
       return fr_base_X_fr_RF_FOOT(jointPositions).template topLeftCorner<3, 3>();
     }
     case LH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_FOOT fr_base_X_fr_LH_FOOT;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_FOOT fr_base_X_fr_LH_FOOT;
       return fr_base_X_fr_LH_FOOT(jointPositions).template topLeftCorner<3, 3>();
     }
     case RH: {
-      typename iit::ANYmal::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_FOOT fr_base_X_fr_RH_FOOT;
+      typename iit::bear::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_FOOT fr_base_X_fr_RH_FOOT;
       return fr_base_X_fr_RH_FOOT(jointPositions).template topLeftCorner<3, 3>();
     }
     default:
@@ -95,22 +95,22 @@ typename AnymalBearKinematics<SCALAR_T>::joint_jacobian_t AnymalBearKinematics<S
 
   switch (footIndex) {
     case LF: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_FOOT fr_trunk_J_fr_LF_foot_;
+      typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_FOOT fr_trunk_J_fr_LF_foot_;
       footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(jointPositions);
       break;
     }
     case RF: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_FOOT fr_trunk_J_fr_RF_foot_;
+      typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_FOOT fr_trunk_J_fr_RF_foot_;
       footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(jointPositions);
       break;
     }
     case LH: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_FOOT fr_trunk_J_fr_LH_foot_;
+      typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_FOOT fr_trunk_J_fr_LH_foot_;
       footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(jointPositions);
       break;
     }
     case RH: {
-      typename iit::ANYmal::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_FOOT fr_trunk_J_fr_RH_foot_;
+      typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_FOOT fr_trunk_J_fr_RH_foot_;
       footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(jointPositions);
       break;
     }

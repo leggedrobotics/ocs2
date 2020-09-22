@@ -5,13 +5,13 @@
  *      Author: farbod
  */
 
-#include "ocs2_anymal_bear_switched_model/core/AnymalBearCom.h"
+#include "ocs2_anymal_models/bear/AnymalBearCom.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
-#include "ocs2_anymal_bear_switched_model/generated/inertia_properties.h"
-#include "ocs2_anymal_bear_switched_model/generated/jsim.h"
-#include "ocs2_anymal_bear_switched_model/generated/miscellaneous.h"
-#include "ocs2_anymal_bear_switched_model/generated/transforms.h"
+#include "ocs2_anymal_models/bear/generated/inertia_properties.h"
+#include "ocs2_anymal_models/bear/generated/jsim.h"
+#include "ocs2_anymal_models/bear/generated/miscellaneous.h"
+#include "ocs2_anymal_models/bear/generated/transforms.h"
 
 #include "ocs2_switched_model_interface/core/Rotations.h"
 
@@ -44,13 +44,13 @@ AnymalBearCom<SCALAR_T>* AnymalBearCom<SCALAR_T>::clone() const {
 template <typename SCALAR_T>
 void AnymalBearCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-  iit::ANYmal::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
-  iit::ANYmal::tpl::HomogeneousTransforms<trait_t> homTransforms_;
-  iit::ANYmal::tpl::ForceTransforms<trait_t> forceTransforms_;
-  iit::ANYmal::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
+  iit::bear::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
+  iit::bear::tpl::HomogeneousTransforms<trait_t> homTransforms_;
+  iit::bear::tpl::ForceTransforms<trait_t> forceTransforms_;
+  iit::bear::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
 
   jointSpaceInertiaMatrix_.update(q);
-  comPositionBaseFrame_ = iit::ANYmal::getWholeBodyCOM(inertiaProperties_, q, homTransforms_);
+  comPositionBaseFrame_ = iit::bear::getWholeBodyCOM(inertiaProperties_, q, homTransforms_);
 
   comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
   SCALAR_T mass = comInertia_(5, 5);

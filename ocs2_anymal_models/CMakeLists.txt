@@ -39,6 +39,8 @@ add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
   src/croc/AnymalCrocCom.cpp
   src/croc/AnymalCrocKinematics.cpp
+  src/wheels/AnymalWheelsCom.cpp
+  src/wheels/AnymalWheelsKinematics.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

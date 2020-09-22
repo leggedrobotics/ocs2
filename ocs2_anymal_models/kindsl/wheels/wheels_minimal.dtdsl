@@ -3,7 +3,7 @@
  * DO NOT EDIT BY HAND
  */
 
-Robot ANYmal
+Robot wheels
 Frames {
 	fr_base, fr_LF_WHEEL_L, fr_LH_WHEEL_L, fr_RF_WHEEL_L, fr_RH_WHEEL_L, fr_LF_WHEEL_L_COM, fr_LH_WHEEL_L_COM, fr_RF_WHEEL_L_COM, fr_RH_WHEEL_L_COM, fr_base_COM, fr_base_inertia
 }

@@ -3,7 +3,7 @@
  * DO NOT EDIT BY HAND
  */
 
-Robot croc
+Robot bear
 Frames {
 	fr_base, fr_LF_FOOT, fr_LH_FOOT, fr_RF_FOOT, fr_RH_FOOT, fr_base_COM, fr_base_inertia
 }

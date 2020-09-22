@@ -1,8 +1,8 @@
 /*
- * AnymalCrocCom.h
+ * AnymalWheelsCom.h
  *
- *  Created on: Aug 11, 2018
- *      Author: farbod
+ *  Created on: Nov 25, 2019
+ *      Author: Marko Bjelonic
  */
 
 #pragma once
@@ -13,21 +13,21 @@ namespace anymal {
 namespace tpl {
 
 template <typename SCALAR_T>
-class AnymalCrocCom : public switched_model::ComModelBase<SCALAR_T> {
+class AnymalWheelsCom : public switched_model::ComModelBase<SCALAR_T> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
    * Constructor needed for initialization
    */
-  AnymalCrocCom();
+  AnymalWheelsCom();
 
   /**
    * Default destructor
    */
-  ~AnymalCrocCom() = default;
+  ~AnymalWheelsCom() = default;
 
-  AnymalCrocCom<SCALAR_T>* clone() const override;
+  AnymalWheelsCom<SCALAR_T>* clone() const override;
 
   void setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) override;
 
@@ -42,17 +42,18 @@ class AnymalCrocCom : public switched_model::ComModelBase<SCALAR_T> {
   switched_model::vector3_s_t<SCALAR_T> comPositionBaseFrame_;
   switched_model::matrix6_s_t<SCALAR_T> comInertia_;
   SCALAR_T totalMass_;
+
 };
 
 }  // namespace tpl
 
-using AnymalCrocCom = tpl::AnymalCrocCom<ocs2::scalar_t>;
-using AnymalCrocComAd = tpl::AnymalCrocCom<ocs2::CppAdInterface::ad_scalar_t>;
+using AnymalWheelsCom = tpl::AnymalWheelsCom<ocs2::scalar_t>;
+using AnymalWheelsComAd = tpl::AnymalWheelsCom<ocs2::CppAdInterface::ad_scalar_t>;
 
 }  // namespace anymal
 
 /**
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
-extern template class anymal::tpl::AnymalCrocCom<ocs2::scalar_t>;
-extern template class anymal::tpl::AnymalCrocCom<ocs2::CppAdInterface::ad_scalar_t>;
+extern template class anymal::tpl::AnymalWheelsCom<ocs2::scalar_t>;
+extern template class anymal::tpl::AnymalWheelsCom<ocs2::CppAdInterface::ad_scalar_t>;

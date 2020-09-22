@@ -3,6 +3,14 @@
   <arg name="robot_name"/>
   <arg name="description_name"/>
 
+  <!-- Load bear description -->
+  <group if="$(eval arg('robot_name') == 'bear')">
+    <include file="$(find rosparam_tools)/launch/load_rosparam.launch">
+      <arg name="parameter"       value="$(arg description_name)"/>
+      <arg name="file"            value="$(find ocs2_anymal_models)/kindsl/bear/cached_anymal_bear.urdf"/>
+    </include>
+  </group>
+
   <!-- Load croc description -->
   <group if="$(eval arg('robot_name') == 'croc')">
     <include file="$(find anymal_croc_rsl)/launch/load_urdf.launch">

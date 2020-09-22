@@ -18,7 +18,7 @@ namespace ocs2 {
 class GeometryInterfaceVisualization {
  public:
   GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
-                                 const std::string& pinocchioWorldFrame = "world");
+                                 std::string pinocchioWorldFrame = "world");
   virtual ~GeometryInterfaceVisualization() = default;
 
   void publishDistances(const ocs2::vector_t&);

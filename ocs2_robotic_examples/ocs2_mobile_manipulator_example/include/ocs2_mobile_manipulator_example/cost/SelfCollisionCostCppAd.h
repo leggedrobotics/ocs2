@@ -26,7 +26,7 @@ class SelfCollisionCostCppAd : public CostFunctionBase {
   SelfCollisionCostCppAd(ocs2::PinocchioInterface<double>& pinocchioInterface,
                          const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
                          scalar_t delta);
-  virtual ~SelfCollisionCostCppAd() = default;
+  ~SelfCollisionCostCppAd() override = default;
   SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs);
 
   SelfCollisionCostCppAd* clone() const override { return new SelfCollisionCostCppAd(*this); }

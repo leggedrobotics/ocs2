@@ -14,10 +14,10 @@
 namespace ocs2 {
 
 GeometryInterfaceVisualization::GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
-                                                               const std::string& pinocchioWorldFrame)
+                                                               std::string pinocchioWorldFrame)
     : geometryInterface_(geometryInterface),
       markerPublisher_(nh.advertise<visualization_msgs::MarkerArray>("distance_markers", 1, true)),
-      pinocchioWorldFrame_(pinocchioWorldFrame) {}
+      pinocchioWorldFrame_(std::move(pinocchioWorldFrame)) {}
 
 void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q) {
   std::vector<hpp::fcl::DistanceResult> results = geometryInterface_.computeDistances(q);

@@ -60,11 +60,11 @@ namespace property_tree {
 template <>
 struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
   struct type {
-    typedef std::string internal_type;
-    typedef ocs2::ExtendedPair<size_t, size_t> external_type;
+    using internal_type = std::string;
+    using external_type = ocs2::ExtendedPair<size_t, size_t>;
     boost::optional<external_type> get_value(const internal_type& str) {
       std::vector<std::string> container;
-      typedef boost::char_separator<char> separator;
+      using separator = boost::char_separator<char>;
       std::cout << "str = " << str << std::endl;
       boost::tokenizer<separator> tokens(str, separator(", "));
       std::copy(tokens.begin(), tokens.end(), std::back_inserter(container));
@@ -77,7 +77,7 @@ struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
         msg << "Expected size 2 for a pair, however got only one value: " << container[0]
             << ". The pair should be written as x,x (no spaces) or \"x, x\"";
         throw std::runtime_error(msg.str());
-      } else if (container.size() == 0) {
+      } else if (container.empty()) {
         std::stringstream msg;
         msg << "Expected size 2 for a pair, however got no values?" << std::endl;
         throw std::runtime_error(msg.str());

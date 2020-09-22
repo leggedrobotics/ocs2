@@ -3,6 +3,7 @@
 
 #include "inertia_properties.h"
 #include "transforms.h"
+#include <iit/rbd/traits/TraitSelector.h>
 
 namespace iit {
 namespace bear {
@@ -23,9 +24,10 @@ namespace bear {
  * \return the position of the Center Of Mass of the whole robot, expressed
  *         in base coordinates
  */
-iit::rbd::Vector3d getWholeBodyCOM(
-    const dyn::InertiaProperties& inertia,
-    const HomogeneousTransforms& transforms);
+template<typename SCALAR_T>
+typename iit::rbd::Core<SCALAR_T>::Vector3 getWholeBodyCOM(
+    const dyn::tpl::InertiaProperties<typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait>& inertia,
+    const tpl::HomogeneousTransforms<typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait>& transforms);
 /**
  * \param inertia the inertia properties of the links of the robot
  * \param q the joint status vector describing the configuration of the robot
@@ -33,13 +35,16 @@ iit::rbd::Vector3d getWholeBodyCOM(
  * \return the position of the Center Of Mass of the whole robot, expressed
  *         in base coordinates
  */
-iit::rbd::Vector3d getWholeBodyCOM(
-    const dyn::InertiaProperties& inertia,
-    const JointState& q,
-    HomogeneousTransforms& transforms);
+template<typename SCALAR_T>
+typename iit::rbd::Core<SCALAR_T>::Vector3 getWholeBodyCOM(
+    const dyn::tpl::InertiaProperties<typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait>& inertia,
+    const tpl::JointState<SCALAR_T>& q,
+    tpl::HomogeneousTransforms<typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait>& transforms);
 ///@}
 
 }
 }
+
+#include "miscellaneous.cpp"
 
 #endif

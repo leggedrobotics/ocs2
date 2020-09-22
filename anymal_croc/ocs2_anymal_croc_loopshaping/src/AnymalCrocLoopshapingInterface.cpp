@@ -6,24 +6,13 @@
 
 #include <ros/package.h>
 
-#include <ocs2_quadruped_interface/QuadrupedPointfootInterface.h>
-
-#include <ocs2_anymal_croc_switched_model/core/AnymalCrocCom.h>
-#include <ocs2_anymal_croc_switched_model/core/AnymalCrocKinematics.h>
+#include <ocs2_anymal_croc/AnymalCrocInterface.h>
 
 namespace anymal {
 
 std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAnymalCrocLoopshapingInterface(
     const std::string& taskFolder) {
-  std::cerr << "Loading task file from: " << taskFolder << std::endl;
-
-  auto kin = AnymalCrocKinematics();
-  auto kinAd = AnymalCrocKinematicsAd();
-  auto com = AnymalCrocCom();
-  auto comAd = AnymalCrocComAd();
-
-  auto quadrupedInterface = std::unique_ptr<switched_model::QuadrupedPointfootInterface>(
-      new switched_model::QuadrupedPointfootInterface(kin, kinAd, com, comAd, taskFolder));
+  auto quadrupedInterface = getAnymalCrocInterface(taskFolder);
 
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(
       new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), taskFolder));

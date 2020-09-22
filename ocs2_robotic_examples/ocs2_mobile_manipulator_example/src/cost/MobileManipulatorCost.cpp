@@ -29,12 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LoadData.h>
 
+#include <ocs2_mobile_manipulator_example/ExtendedPair.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/SelfCollisionCost.h>
 #include <ocs2_mobile_manipulator_example/cost/SelfCollisionCostCppAd.h>
-#include <ocs2_mobile_manipulator_example/ExtendedPair.h>
 
 #include <ros/package.h>
 namespace mobile_manipulator {

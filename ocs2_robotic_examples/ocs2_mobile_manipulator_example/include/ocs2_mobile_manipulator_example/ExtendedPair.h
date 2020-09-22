@@ -42,63 +42,61 @@ namespace ocs2 {
 
 template <typename FirstType, typename SecondType>
 class ExtendedPair {
-public:
+ public:
   FirstType first;
   SecondType second;
 
-  friend std::ostream& operator<<(std::ostream& stream, const ExtendedPair& pair){
-    stream << "["<<pair.first<<", "<<pair.second<<"]";
+  friend std::ostream& operator<<(std::ostream& stream, const ExtendedPair& pair) {
+    stream << "[" << pair.first << ", " << pair.second << "]";
     return stream;
   }
 };
 
-}  // namespace mobile_manipulator
-
+}  // namespace ocs2
 
 namespace boost {
 namespace property_tree {
 
-template<>
-struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>>
-{
+template <>
+struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
   struct type {
     typedef std::string internal_type;
     typedef ocs2::ExtendedPair<size_t, size_t> external_type;
-    boost::optional<external_type> get_value(const internal_type& str){
+    boost::optional<external_type> get_value(const internal_type& str) {
       std::vector<std::string> container;
       typedef boost::char_separator<char> separator;
-      std::cout<<"str = "<<str<<std::endl;
+      std::cout << "str = " << str << std::endl;
       boost::tokenizer<separator> tokens(str, separator(", "));
-      std::copy(tokens.begin(), tokens.end(), std::back_inserter(container)); 
+      std::copy(tokens.begin(), tokens.end(), std::back_inserter(container));
       external_type pair;
-      if (container.size() == 2){
+      if (container.size() == 2) {
         pair.first = std::stoi(container[0]);
         pair.second = std::stoi(container[1]);
-      } else if (container.size() == 1){
+      } else if (container.size() == 1) {
         std::stringstream msg;
-        msg<<"Expected size 2 for a pair, however got only one value: "<<container[0]<<". The pair should be written as x,x (no spaces) or \"x, x\"";
+        msg << "Expected size 2 for a pair, however got only one value: " << container[0]
+            << ". The pair should be written as x,x (no spaces) or \"x, x\"";
         throw std::runtime_error(msg.str());
-      } else if (container.size() == 0){
+      } else if (container.size() == 0) {
         std::stringstream msg;
-        msg<<"Expected size 2 for a pair, however got no values?"<<std::endl;
+        msg << "Expected size 2 for a pair, however got no values?" << std::endl;
         throw std::runtime_error(msg.str());
-      } else{
+      } else {
         std::stringstream msg;
-        msg<<"Expected size 2 for a pair, however got too many values? String was "<<str<<", tokens were "<<std::endl;
-        for (const auto& element : container){
-          msg << element <<", ";
+        msg << "Expected size 2 for a pair, however got too many values? String was " << str << ", tokens were " << std::endl;
+        for (const auto& element : container) {
+          msg << element << ", ";
         }
         throw std::runtime_error(msg.str());
       }
       return boost::optional<external_type>(pair);
     }
-    boost::optional<internal_type> put_value(const external_type& obj){
-      std::string returnval =std::to_string(obj.first) + ", " + std::to_string(obj.second);
+    boost::optional<internal_type> put_value(const external_type& obj) {
+      std::string returnval = std::to_string(obj.first) + ", " + std::to_string(obj.second);
       return boost::optional<internal_type>(returnval);
     }
   };
 };
 
-} // namespace property_tree
-} // namespace boost
-
+}  // namespace property_tree
+}  // namespace boost

@@ -1,10 +1,20 @@
 <launch>
 
+  <arg name="robot_name"/>
   <arg name="description_name"/>
 
-  <!-- Load robot description -->
-  <include file="$(find anymal_croc_rsl)/launch/load_urdf.launch">
-    <arg name="description_name"     value="$(arg description_name)"/>
-  </include>
+  <!-- Load croc description -->
+  <group if="$(eval arg('robot_name') == 'croc')">
+    <include file="$(find anymal_croc_rsl)/launch/load_urdf.launch">
+        <arg name="description_name"     value="$(arg description_name)"/>
+    </include>
+  </group>
+
+  <!-- Load wheels description -->
+  <group if="$(eval arg('robot_name') == 'wheels')">
+      <include file="$(find anymal_wheels_description)/launch/load.launch">
+        <arg name="description_name"   value="$(arg description_name)"/>
+      </include>
+  </group>
 
 </launch>

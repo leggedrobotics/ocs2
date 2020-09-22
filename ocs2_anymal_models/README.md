@@ -5,4 +5,4 @@ in run
 in gen_code/cpp/<robot_name>
 
 copy all but the CMakeLists into the /generated
-Watch the diff for important differences.
+Watch the diff for important differences in miscelaneous.h/.cpp and inertia_properties.h

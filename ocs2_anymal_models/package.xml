@@ -15,6 +15,7 @@
   <depend>ocs2_switched_model_interface</depend>
   <depend>ocs2_robotic_tools</depend>
   <exec_depend>anymal_croc_rsl</exec_depend>
+  <exec_depend>anymal_wheels_description</exec_depend>
   <exec_depend>urdf2robcogen</exec_depend>
 
 </package>

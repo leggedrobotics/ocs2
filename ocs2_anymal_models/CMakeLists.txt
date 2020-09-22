@@ -37,6 +37,8 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
+  src/croc/AnymalCrocCom.cpp
+  src/croc/AnymalCrocKinematics.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

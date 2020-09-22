@@ -28,13 +28,13 @@ Eigen::VectorXd AnymalRaisimConversions::inputToRaisimGeneralizedForce(double, c
     extForceJoint += b_footJacobian.bottomRows<3>().transpose() * input.segment<3>(3 * j);
   }
 
-  iit::ANYmal::dyn::InertiaProperties inertias;
-  iit::ANYmal::ForceTransforms forceTransforms;
-  iit::ANYmal::dyn::JSIM Mm(inertias, forceTransforms);
+  InertiaProperties_t inertias;
+  ForceTransforms_t forceTransforms;
+  JSIM_t Mm(inertias, forceTransforms);
   Mm.update(qJoints);
 
-  iit::ANYmal::MotionTransforms MotionTransforms;
-  iit::ANYmal::dyn::InverseDynamics inverseDynamics(inertias, MotionTransforms);
+  MotionTransforms_t MotionTransforms;
+  InverseDynamics_t inverseDynamics(inertias, MotionTransforms);
   inverseDynamics.setJointStatus(qJoints);
 
   switched_model::generalized_coordinate_t Gv;

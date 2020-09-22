@@ -50,6 +50,7 @@ template <typename SCALAR>
 PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(const PinocchioInterface& rhs) {
   robotModelPtr_ = rhs.robotModelPtr_;
   robotDataPtr_.reset(new PinocchioData(*rhs.robotDataPtr_));
+  return *this;
 }
 
 /******************************************************************************************************/
@@ -59,6 +60,7 @@ template <typename SCALAR>
 PinocchioInterface<SCALAR>& PinocchioInterface<SCALAR>::operator=(PinocchioInterface&& rhs) {
   std::swap(robotModelPtr_, rhs.robotModelPtr_);
   std::swap(robotDataPtr_, rhs.robotDataPtr_);
+  return *this;
 }
 
 /******************************************************************************************************/
@@ -95,6 +97,9 @@ void PinocchioInterface<SCALAR>::computeAllJacobians(const Eigen::Matrix<SCALAR,
   pinocchio::computeJointJacobians(*robotModelPtr_, *robotDataPtr_, q);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 typename PinocchioInterface<SCALAR>::MatrixX PinocchioInterface<SCALAR>::getJacobianOfJoint(pinocchio::JointIndex jointIndex) {
   MatrixX jointJacobian = MatrixX::Zero(6, robotModelPtr_->nv);
@@ -102,6 +107,9 @@ typename PinocchioInterface<SCALAR>::MatrixX PinocchioInterface<SCALAR>::getJaco
   return jointJacobian;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR>
 Pose<SCALAR> PinocchioInterface<SCALAR>::getJointPose(pinocchio::JointIndex jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
   pinocchio::forwardKinematics(*robotModelPtr_, *robotDataPtr_, q);

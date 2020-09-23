@@ -11,7 +11,7 @@ namespace anymal {
 AnymalPyBindings::AnymalPyBindings(std::string varargs) {
   // TODO (jcarius) : Derive this from varargs
   robotName_ = "croc";
-  configName_ = anymal::getTaskFilePath("c_series");
+  configName_ = "c_series";
 
   auto anymalInterface = getAnymalInterface(stringToAnymalModel(robotName_), getConfigFolder(configName_));
   const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePath(configName_));

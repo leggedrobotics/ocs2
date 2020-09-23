@@ -6,17 +6,30 @@
 
 #include <ros/package.h>
 
+#include <ocs2_quadruped_interface/QuadrupedPointfootInterface.h>
+#include <ocs2_quadruped_interface/QuadrupedWheeledInterface.h>
+
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalInterface(AnymalModel model, const std::string& taskFolder) {
+std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalModel model, const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = getAnymalKinematics(model);
   auto kinAd = getAnymalKinematicsAd(model);
   auto com = getAnymalComModel(model);
   auto comAd = getAnymalComModelAd(model);
-  return std::unique_ptr<switched_model::QuadrupedPointfootInterface>(
-      new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, taskFolder));
+
+  switch (model) {
+    case AnymalModel::Bear:
+    case AnymalModel::Croc:
+      return std::unique_ptr<switched_model::QuadrupedInterface>(
+          new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, taskFolder));
+    case AnymalModel::Wheels:
+      return std::unique_ptr<switched_model::QuadrupedInterface>(
+          new switched_model::QuadrupedWheeledInterface(*kin, *kinAd, *com, *comAd, taskFolder));
+    default:
+      throw std::runtime_error("[getAnymalInterface] unkown model");
+  }
 }
 
 std::string getConfigFolder(const std::string& configName) {

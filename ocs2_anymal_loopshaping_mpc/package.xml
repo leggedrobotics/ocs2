@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_anymal_loopshaping_mpc</name>
+  <version>0.0.0</version>
+  <description>ocs2_anymal_loopshaping_mpc</description>
+
+  <maintainer email="rgrandia@ethz.ch">ruben</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roslib</depend>
+  <depend>ocs2_anymal_mpc</depend>
+  <depend>ocs2_quadruped_loopshaping_interface</depend>
+
+</package>

@@ -92,6 +92,17 @@ target_link_libraries(${PROJECT_NAME}_dummy_mrt_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(${PROJECT_NAME}_wheels_dummy_mrt_node
+  src/AnymalWheelsDummyMRT.cpp
+)
+add_dependencies(${PROJECT_NAME}_wheels_dummy_mrt_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}_wheels_dummy_mrt_node
+  ${catkin_LIBRARIES}
+)
+
 # PyBindings library (c++ side)
 add_library(${PROJECT_NAME}_PyBindings_cpp
   src/AnymalPyBindings.cpp

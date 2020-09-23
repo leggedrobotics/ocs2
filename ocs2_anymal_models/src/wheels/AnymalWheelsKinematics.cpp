@@ -120,7 +120,6 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsKinemati
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::wheelAxisOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -153,12 +152,9 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::wheelAxi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
-  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-
   // clang-format off
   switched_model::matrix3_s_t<SCALAR_T> wheelAxis_R_foot;
   wheelAxis_R_foot<< SCALAR_T(1), SCALAR_T(0), SCALAR_T(0),

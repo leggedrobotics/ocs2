@@ -9,7 +9,7 @@
 #include <ros/init.h>
 
 #include <ocs2_mpc/MPC_Settings.h>
-#include "ocs2_anymal_croc/AnymalInterface.h"
+#include "ocs2_anymal_mpc/AnymalInterface.h"
 
 int main(int argc, char* argv[]) {
   std::vector<std::string> programArgs{};
@@ -23,8 +23,8 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_croc_mrt");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalCrocInterface(anymal::getTaskFileFolderCroc(taskName));
-  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
+  auto anymalInterface = anymal::getAnymalInterface(anymal::AnymalModel::Croc, anymal::getConfigFolder(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(taskName));
   quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,
                      mpcSettings.mpcDesiredFrequency_);
 

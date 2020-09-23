@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(ocs2_anymal_croc)
+project(ocs2_anymal_mpc)
 
 # Pybind11 configuration must occur before find_package(catkin)
 option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
@@ -55,7 +55,7 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/AnymalCrocInterface.cpp
+  src/AnymalInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -67,7 +67,7 @@ target_link_libraries(${PROJECT_NAME}
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_mpc_node
-  src/AnymalCrocMpcNode.cpp
+  src/AnymalMpcNode.cpp
 )
 add_dependencies(${PROJECT_NAME}_mpc_node
   ${PROJECT_NAME}
@@ -80,7 +80,7 @@ target_link_libraries(${PROJECT_NAME}_mpc_node
 )
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
-  src/AnymalCrocDummyMRT.cpp
+  src/AnymalDummyMRT.cpp
 )
 add_dependencies(${PROJECT_NAME}_dummy_mrt_node
   ${PROJECT_NAME}
@@ -106,25 +106,25 @@ target_link_libraries(${PROJECT_NAME}_PyBindings_cpp
 )
 
 # Build python bindings
-pybind11_add_module(AnymalCrocPyBindings SHARED
+pybind11_add_module(AnymalPyBindings SHARED
   src/pyBindModule.cpp
 )
-add_dependencies(AnymalCrocPyBindings
+add_dependencies(AnymalPyBindings
   ${PROJECT_NAME}_PyBindings_cpp
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(AnymalCrocPyBindings PRIVATE
+target_link_libraries(AnymalPyBindings PRIVATE
   ${PROJECT_NAME}_PyBindings_cpp
   ${catkin_LIBRARIES}
 )
 
 if(USE_PYBIND_PYTHON_3)
   # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-  set_target_properties(AnymalCrocPyBindings
+  set_target_properties(AnymalPyBindings
     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
   )
 else(USE_PYBIND_PYTHON_3)
-  set_target_properties(AnymalCrocPyBindings
+  set_target_properties(AnymalPyBindings
       PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
   )
 endif(USE_PYBIND_PYTHON_3)
@@ -162,7 +162,7 @@ install(DIRECTORY config launch
 )
 
 # TODO handle python2/3 case properly
-install(TARGETS AnymalCrocPyBindings
+install(TARGETS AnymalPyBindings
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )

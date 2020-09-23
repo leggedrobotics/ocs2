@@ -6,7 +6,7 @@
 
 #include <ros/package.h>
 
-#include <ocs2_anymal_croc/AnymalCrocInterface.h>
+#include <ocs2_anymal_croc/AnymalInterface.h>
 
 namespace anymal {
 

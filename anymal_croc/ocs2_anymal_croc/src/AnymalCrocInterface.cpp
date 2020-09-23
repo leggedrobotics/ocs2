@@ -2,7 +2,7 @@
 // Created by rgrandia on 17.02.20.
 //
 
-#include "ocs2_anymal_croc/AnymalCrocInterface.h"
+#include "ocs2_anymal_croc/AnymalInterface.h"
 
 #include <ros/package.h>
 

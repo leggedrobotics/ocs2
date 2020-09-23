@@ -1,14 +1,14 @@
-#include "ocs2_anymal_croc/AnymalCrocPyBindings.h"
+#include "ocs2_anymal_croc/AnymalPyBindings.h"
 
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 
 #include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
 
-#include "ocs2_anymal_croc/AnymalCrocInterface.h"
+#include "ocs2_anymal_croc/AnymalInterface.h"
 
 namespace anymal {
 
-AnymalCrocPyBindings::AnymalCrocPyBindings(std::string taskName) : taskName_(std::move(taskName)) {
+AnymalPyBindings::AnymalPyBindings(std::string taskName) : taskName_(std::move(taskName)) {
   auto anymalCrocInterface = getAnymalCrocInterface(getTaskFileFolderCroc(taskName_));
   const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePathCroc(taskName_));
   const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePathCroc(taskName_));
@@ -18,7 +18,7 @@ AnymalCrocPyBindings::AnymalCrocPyBindings(std::string taskName) : taskName_(std
   penalty_.reset(new ocs2::RelaxedBarrierPenalty(ddpSettings.inequalityConstraintMu_, ddpSettings.inequalityConstraintDelta_));
 }
 
-void AnymalCrocPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x, const ocs2::vector_array_t& u,
+void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x, const ocs2::vector_array_t& u,
                                                ocs2::scalar_t speed) {
   if (!visualizer_) {
     auto anymalCrocInterface = getAnymalCrocInterface(taskName_);

@@ -8,7 +8,7 @@
 #include <ocs2_quadruped_interface/QuadrupedMpcNode.h>
 #include <ros/init.h>
 
-#include "ocs2_anymal_croc/AnymalInterface.h"
+#include "ocs2_anymal_mpc/AnymalInterface.h"
 
 int main(int argc, char* argv[]) {
   std::vector<std::string> programArgs{};
@@ -22,9 +22,9 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "anymal_croc_mpc");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalCrocInterface(anymal::getTaskFileFolderCroc(taskName));
-  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathCroc(taskName));
-  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathCroc(taskName));
+  auto anymalInterface = anymal::getAnymalInterface(anymal::AnymalModel::Croc, anymal::getConfigFolder(taskName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(taskName));
+  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePath(taskName));
   quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, ddpSettings);
 
   return 0;

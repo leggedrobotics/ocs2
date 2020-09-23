@@ -63,8 +63,8 @@ void AnymalCrocCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_
 }
 
 }  // namespace tpl
-}  // end of namespace anymal
+}  // namespace anymal
 
 // Explicit instantiation
 template class anymal::tpl::AnymalCrocCom<ocs2::scalar_t>;
-template class anymal::tpl::AnymalCrocCom<ocs2::CppAdInterface::ad_scalar_t>;
+template class anymal::tpl::AnymalCrocCom<ocs2::ad_scalar_t>;

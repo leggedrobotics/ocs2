@@ -39,10 +39,13 @@ add_library(${PROJECT_NAME}
   src/AnymalModels.cpp
   src/bear/AnymalBearCom.cpp
   src/bear/AnymalBearKinematics.cpp
+  src/bear/WholebodyDynamicsBear.cpp
   src/croc/AnymalCrocCom.cpp
   src/croc/AnymalCrocKinematics.cpp
+  src/croc/WholebodyDynamicsCroc.cpp
   src/wheels/AnymalWheelsCom.cpp
   src/wheels/AnymalWheelsKinematics.cpp
+  src/wheels/WholebodyDynamicsWheels.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

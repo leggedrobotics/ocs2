@@ -49,7 +49,7 @@ class AnymalWheelsKinematics final : public switched_model::KinematicsModelBase<
 }  // namespace tpl
 
 using AnymalWheelsKinematics = tpl::AnymalWheelsKinematics<ocs2::scalar_t>;
-using AnymalWheelsKinematicsAd = tpl::AnymalWheelsKinematics<ocs2::CppAdInterface::ad_scalar_t>;
+using AnymalWheelsKinematicsAd = tpl::AnymalWheelsKinematics<ocs2::ad_scalar_t>;
 
 }  // namespace anymal
 
@@ -57,4 +57,4 @@ using AnymalWheelsKinematicsAd = tpl::AnymalWheelsKinematics<ocs2::CppAdInterfac
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
 extern template class anymal::tpl::AnymalWheelsKinematics<ocs2::scalar_t>;
-extern template class anymal::tpl::AnymalWheelsKinematics<ocs2::CppAdInterface::ad_scalar_t>;
+extern template class anymal::tpl::AnymalWheelsKinematics<ocs2::ad_scalar_t>;

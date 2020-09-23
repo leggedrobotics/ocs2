@@ -174,4 +174,4 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrie
 
 // Explicit instantiation
 template class anymal::tpl::AnymalWheelsKinematics<ocs2::scalar_t>;
-template class anymal::tpl::AnymalWheelsKinematics<ocs2::CppAdInterface::ad_scalar_t>;
+template class anymal::tpl::AnymalWheelsKinematics<ocs2::ad_scalar_t>;

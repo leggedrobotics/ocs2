@@ -67,4 +67,4 @@ void AnymalBearCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_
 
 // Explicit instantiation
 template class anymal::tpl::AnymalBearCom<ocs2::scalar_t>;
-template class anymal::tpl::AnymalBearCom<ocs2::CppAdInterface::ad_scalar_t>;
+template class anymal::tpl::AnymalBearCom<ocs2::ad_scalar_t>;

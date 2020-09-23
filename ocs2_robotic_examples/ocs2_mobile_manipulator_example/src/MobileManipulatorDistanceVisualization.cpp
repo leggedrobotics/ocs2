@@ -73,15 +73,28 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
+  const std::string taskFileFolder = "mpc";
+  const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator_example") + "/config/" + taskFileFolder + "/task.info";
+
+  std::cerr << "Loading task file: " << taskFile << std::endl;
 
   pInterface.reset(new ocs2::PinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
-  gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, {}));
-  // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
-  gInterface->getGeometryModel().addAllCollisionPairs();
 
-  for (auto obj : gInterface->getGeometryModel().geometryObjects) {
-    std::cout << obj.name << std::endl;
+  std::vector<ocs2::ExtendedPair<size_t, size_t>> selfCollisionObjectPairs;
+  std::vector<ocs2::ExtendedPair<std::string, std::string>> selfCollisionLinkPairs;
+  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
+  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
+  for (const auto& element : selfCollisionObjectPairs) {
+    std::cout << element << "; ";
   }
+  std::cout << std::endl;
+  std::cout << "Loaded collision link pairs: ";
+  for (const auto& element : selfCollisionLinkPairs) {
+    std::cout << element << "; ";
+  }
+  std::cout << std::endl;
+
+  gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
   vInterface.reset(new ocs2::GeometryInterfaceVisualization(*gInterface, nodeHandle, "base"));
 

@@ -136,12 +136,21 @@ selfCollisionCost
 {
   weight  1.00
 
-  ; Self Collision pairs
-  collisionPairs
+  ; Self Collision raw object pairs
+  collisionObjectPairs
   {
     [0] "1, 4"
     [1] 1,6
     [2] " 1  , 9"
+  }
+
+  ; Self Collision pairs
+  collisionLinkPairs
+  {
+    [0] "arm_base, ARM"
+    [1] arm_base,ELBOW
+    [2] "arm_base  , WRIST_1"
+    [3] "link_that_doesnt_exist  , WRIST_1"
   }
 
   ; minimum distance allowed between the pairs

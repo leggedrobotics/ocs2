@@ -52,6 +52,12 @@ class PinocchioGeometryInterface {
  public:
   PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
                              const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs);
+
+  PinocchioGeometryInterface(
+      const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+      const std::vector<ExtendedPair<std::string, std::string>>& collisionLinkPairs,
+      const std::vector<ExtendedPair<size_t, size_t>>& collisionObjectPairs = std::vector<ExtendedPair<size_t, size_t>>());
+
   virtual ~PinocchioGeometryInterface() = default;
 
   // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)

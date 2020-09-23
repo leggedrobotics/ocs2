@@ -45,7 +45,6 @@ add_library(${PROJECT_NAME}
   src/croc/WholebodyDynamicsCroc.cpp
   src/wheels/AnymalWheelsCom.cpp
   src/wheels/AnymalWheelsKinematics.cpp
-  src/wheels/WholebodyDynamicsWheels.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

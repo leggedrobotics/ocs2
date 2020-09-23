@@ -17,6 +17,8 @@ class WholebodyDynamicsBear : public switched_model::WholebodyDynamics<SCALAR_T>
   WholebodyDynamicsBear() = default;
   ~WholebodyDynamicsBear() override = default;
 
+  WholebodyDynamicsBear* clone() const override { return new WholebodyDynamicsBear(); };
+
   virtual DynamicsTerms getDynamicsTerms(const switched_model::rbd_state_s_t<SCALAR_T>& rbdState) const override;
 };
 

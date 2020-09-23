@@ -14,7 +14,6 @@
 #include <ocs2_anymal_models/croc/WholebodyDynamicsCroc.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsCom.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
-#include <ocs2_anymal_models/wheels/WholebodyDynamicsWheels.h>
 
 namespace anymal {
 
@@ -89,7 +88,7 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>> getWholebodyD
     case AnymalModel::Croc:
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCroc());
     case AnymalModel::Wheels:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsWheels());
+      throw std::runtime_error("[getWholebodyDynamics] not implemented for wheels");
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }
@@ -102,7 +101,7 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>> getWholebo
     case AnymalModel::Croc:
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsBearAd());
     case AnymalModel::Wheels:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsBearAd());
+      throw std::runtime_error("[getWholebodyDynamicsAd] not implemented for wheels");
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }

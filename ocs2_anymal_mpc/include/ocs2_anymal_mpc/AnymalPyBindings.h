@@ -19,4 +19,3 @@ class AnymalPyBindings final : public ocs2::PythonInterface {
 };
 
 }  // namespace anymal
-

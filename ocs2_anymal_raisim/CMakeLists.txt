@@ -10,6 +10,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_raisim
   ocs2_raisim_ros
   ocs2_quadruped_interface
+  ocs2_anymal_models
+  ocs2_anymal_mpc
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -57,6 +59,20 @@ if(USE_RAISIM_VISUALIZER)
   )
 endif(USE_RAISIM_VISUALIZER)
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+# Dummy node with raisim rollout
+add_executable(anymal_dummy_raisim
+  src/AnymalRaisimDummyNode.cpp
+  )
+target_link_libraries(anymal_dummy_raisim
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  )
+if(USE_RAISIM_VISUALIZER)
+  target_link_libraries(anymal_dummy_raisim
+    raisim::raisimOgre
+  )
+endif(USE_RAISIM_VISUALIZER)
 
 
 #########################

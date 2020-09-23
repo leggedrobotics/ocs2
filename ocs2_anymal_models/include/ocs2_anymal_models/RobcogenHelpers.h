@@ -13,11 +13,11 @@ namespace robcogen_helpers {
 
 template <typename INVDYN, typename JSIM, typename SCALAR_T>
 typename switched_model::WholebodyDynamics<SCALAR_T>::DynamicsTerms getDynamicsTermsImpl(
-    const INVDYN& inverseDynamics, const JSIM& jsim, const switched_model::rbd_state_s_t<SCALAR_T>& rbdState) {
-  const switched_model::base_coordinate_t qBase = switched_model::getBasePose(rbdState);
-  const switched_model::joint_coordinate_t qJoints = switched_model::getJointPositions(rbdState);
-  const switched_model::base_coordinate_t qdBase = switched_model::getBaseLocalVelocity(rbdState);
-  const switched_model::joint_coordinate_t qdJoints = switched_model::getJointVelocities(rbdState);
+    INVDYN& inverseDynamics, JSIM& jsim, const switched_model::rbd_state_s_t<SCALAR_T>& rbdState) {
+  const switched_model::base_coordinate_s_t<SCALAR_T> qBase = switched_model::getBasePose(rbdState);
+  const switched_model::joint_coordinate_s_t<SCALAR_T> qJoints = switched_model::getJointPositions(rbdState);
+  const switched_model::base_coordinate_s_t<SCALAR_T> qdBase = switched_model::getBaseLocalVelocity(rbdState);
+  const switched_model::joint_coordinate_s_t<SCALAR_T> qdJoints = switched_model::getJointVelocities(rbdState);
 
   typename switched_model::WholebodyDynamics<SCALAR_T>::DynamicsTerms dynamicsTerms;
   dynamicsTerms.M = jsim.update(qJoints);

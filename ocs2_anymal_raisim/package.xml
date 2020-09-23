@@ -20,7 +20,10 @@
   <depend>ocs2_raisim</depend>
   <depend>ocs2_raisim_ros</depend>
   <depend>ocs2_quadruped_interface</depend>
+  <depend>ocs2_anymal_models</depend>
+  <depend>ocs2_anymal_mpc</depend>
 
+  <exec_depend>sim2real_models</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

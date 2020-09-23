@@ -22,8 +22,8 @@ AnymalPyBindings::AnymalPyBindings(std::string varargs) {
   penalty_.reset(new ocs2::RelaxedBarrierPenalty(ddpSettings.inequalityConstraintMu_, ddpSettings.inequalityConstraintDelta_));
 }
 
-void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x,
-                                                  const ocs2::vector_array_t& u, ocs2::scalar_t speed) {
+void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x, const ocs2::vector_array_t& u,
+                                           ocs2::scalar_t speed) {
   if (!visualizer_) {
     auto anymalInterface = getAnymalInterface(stringToAnymalModel(robotName_), getConfigFolder(configName_));
     int fake_argc = 1;
@@ -51,4 +51,3 @@ void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const 
 }
 
 }  // namespace anymal
-

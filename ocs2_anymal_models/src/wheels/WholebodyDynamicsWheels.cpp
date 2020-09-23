@@ -5,7 +5,7 @@
 #include "ocs2_anymal_models/wheels/WholebodyDynamicsWheels.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
-#include <ocs2_anymal_models/robcogenHelper.h>
+#include <ocs2_anymal_models/RobcogenHelpers.h>
 #include <ocs2_anymal_models/wheels/generated/inverse_dynamics.h>
 #include "ocs2_anymal_models/wheels/generated/inertia_properties.h"
 #include "ocs2_anymal_models/wheels/generated/jsim.h"
@@ -23,7 +23,8 @@ auto WholebodyDynamicsWheels<SCALAR_T>::getDynamicsTerms(const switched_model::r
   iit::wheels::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
   iit::wheels::dyn::tpl::InverseDynamics<trait_t> inverseDynamics_(inertiaProperties_, motionTransforms_);
 
-  return anymal::robcogen_helpers::getDynamicsTermsImpl(inertiaProperties_, jointSpaceInertiaMatrix_, rbdState);
+  // TODO (rgrandia) : doesn't work for wheels because of the extra wheel joint.
+  return anymal::robcogen_helpers::getDynamicsTermsImpl(inverseDynamics_, jointSpaceInertiaMatrix_, rbdState);
 }
 
 }  // namespace tpl

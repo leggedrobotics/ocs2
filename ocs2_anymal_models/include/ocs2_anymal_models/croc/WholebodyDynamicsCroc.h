@@ -17,6 +17,8 @@ class WholebodyDynamicsCroc : public switched_model::WholebodyDynamics<SCALAR_T>
   WholebodyDynamicsCroc() = default;
   ~WholebodyDynamicsCroc() override = default;
 
+  WholebodyDynamicsCroc* clone() const override { return new WholebodyDynamicsCroc(); };
+
   virtual DynamicsTerms getDynamicsTerms(const switched_model::rbd_state_s_t<SCALAR_T>& rbdState) const override;
 };
 

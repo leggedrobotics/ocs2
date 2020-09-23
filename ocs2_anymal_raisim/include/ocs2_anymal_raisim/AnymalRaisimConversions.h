@@ -8,6 +8,7 @@
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
+#include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
 
 namespace anymal {
 
@@ -27,12 +28,13 @@ class AnymalRaisimConversions {
 
   using com_model_t = switched_model::ComModelBase<double>;
   using kinematic_model_t = switched_model::KinematicsModelBase<double>;
+  using wholebody_model_t = switched_model::WholebodyDynamics<double>;
 
   /**
    * @brief Constructor
    */
-  AnymalRaisimConversions(const com_model_t& comModel, const kinematic_model_t& kinematicModel)
-      : switchedModelStateEstimator_(comModel), kinematicModelPtr_(kinematicModel.clone()) {}
+  AnymalRaisimConversions(const com_model_t& comModel, const kinematic_model_t& kinematicModel, const wholebody_model_t& wholebodyModel)
+      : switchedModelStateEstimator_(comModel), kinematicModelPtr_(kinematicModel.clone()), wholebodyModelPtr_(wholebodyModel.clone()) {}
 
   /**
    * @brief Convert ocs2 anymal state to generalized coordinate and generalized velocity used by RAIsim
@@ -97,5 +99,6 @@ class AnymalRaisimConversions {
  private:
   const switched_model::SwitchedModelStateEstimator switchedModelStateEstimator_;  // const for thread safety
   std::unique_ptr<const kinematic_model_t> kinematicModelPtr_;
+  std::unique_ptr<const wholebody_model_t> wholebodyModelPtr_;
 };
 }  // namespace anymal

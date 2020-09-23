@@ -5,8 +5,8 @@
 #include "ocs2_anymal_models/croc/WholebodyDynamicsCroc.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
+#include <ocs2_anymal_models/RobcogenHelpers.h>
 #include <ocs2_anymal_models/croc/generated/inverse_dynamics.h>
-#include <ocs2_anymal_models/robcogenHelper.h>
 #include "ocs2_anymal_models/croc/generated/inertia_properties.h"
 #include "ocs2_anymal_models/croc/generated/jsim.h"
 #include "ocs2_anymal_models/croc/generated/transforms.h"
@@ -23,7 +23,7 @@ auto WholebodyDynamicsCroc<SCALAR_T>::getDynamicsTerms(const switched_model::rbd
   iit::croc::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
   iit::croc::dyn::tpl::InverseDynamics<trait_t> inverseDynamics_(inertiaProperties_, motionTransforms_);
 
-  return anymal::robcogen_helpers::getDynamicsTermsImpl(inertiaProperties_, jointSpaceInertiaMatrix_, rbdState);
+  return anymal::robcogen_helpers::getDynamicsTermsImpl(inverseDynamics_, jointSpaceInertiaMatrix_, rbdState);
 }
 
 }  // namespace tpl

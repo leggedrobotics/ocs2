@@ -17,6 +17,8 @@ class WholebodyDynamicsWheels : public switched_model::WholebodyDynamics<SCALAR_
   WholebodyDynamicsWheels() = default;
   ~WholebodyDynamicsWheels() override = default;
 
+  WholebodyDynamicsWheels* clone() const override { return new WholebodyDynamicsWheels(); };
+
   virtual DynamicsTerms getDynamicsTerms(const switched_model::rbd_state_s_t<SCALAR_T>& rbdState) const override;
 };
 

@@ -21,6 +21,8 @@ class WholebodyDynamics {
   WholebodyDynamics() = default;
   virtual ~WholebodyDynamics() = default;
 
+  virtual WholebodyDynamics* clone() const = 0;
+
   WholebodyDynamics(const WholebodyDynamics&) = delete;
   WholebodyDynamics& operator=(const WholebodyDynamics&) = delete;
   WholebodyDynamics(WholebodyDynamics&&) = delete;

@@ -8,10 +8,10 @@
 namespace anymal {
 
 void runAnymalRaisimDummy(ros::NodeHandle& nodeHandle, std::unique_ptr<switched_model::QuadrupedInterface> anymalInterface,
-                          const std::string& urdf, double mrtDesiredFreq, double mpcDesiredFreq,
-                          const ocs2::RaisimRolloutSettings& raisimRolloutSettings) {
+                          const switched_model::WholebodyDynamics<ocs2::scalar_t>& wholebodyDynamics, const std::string& urdf,
+                          double mrtDesiredFreq, double mpcDesiredFreq, const ocs2::RaisimRolloutSettings& raisimRolloutSettings) {
   // Set up Raisim rollout
-  anymal::AnymalRaisimConversions conversions(anymalInterface->getComModel(), anymalInterface->getKinematicModel());
+  anymal::AnymalRaisimConversions conversions(anymalInterface->getComModel(), anymalInterface->getKinematicModel(), wholebodyDynamics);
 
   ocs2::RaisimRollout simRollout(
       urdf,

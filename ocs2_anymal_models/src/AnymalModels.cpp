@@ -4,6 +4,8 @@
 
 #include <ocs2_anymal_models/AnymalModels.h>
 
+#include <unordered_map>
+
 #include <ocs2_anymal_models/bear/AnymalBearCom.h>
 #include <ocs2_anymal_models/bear/AnymalBearKinematics.h>
 #include <ocs2_anymal_models/croc/AnymalCrocCom.h>
@@ -12,6 +14,18 @@
 #include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
 
 namespace anymal {
+
+std::string toString(AnymalModel model) {
+  static const std::unordered_map<AnymalModel, std::string> map{
+      {AnymalModel::Bear, "bear"}, {AnymalModel::Croc, "croc"}, {AnymalModel::Wheels, "wheels"}};
+  return map.at(model);
+}
+
+AnymalModel stringToAnymalModel(const std::string& name) {
+  static const std::unordered_map<std::string, AnymalModel> map{
+      {"bear", AnymalModel::Bear}, {"croc", AnymalModel::Croc}, {"wheels", AnymalModel::Wheels}};
+  return map.at(name);
+}
 
 std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKinematics(AnymalModel model) {
   switch (model) {

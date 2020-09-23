@@ -1,12 +1,12 @@
 #pragma once
 
+#include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_python_interface/PythonInterface.h>
 #include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
-#include <ocs2_anymal_models/AnymalModels.h>
 
 namespace anymal {
 
-template<AnymalModel MODEL>
+template <AnymalModel MODEL>
 class AnymalPyBindings final : public ocs2::PythonInterface {
  public:
   explicit AnymalPyBindings(std::string taskName);

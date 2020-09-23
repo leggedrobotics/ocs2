@@ -14,17 +14,18 @@
 int main(int argc, char* argv[]) {
   std::vector<std::string> programArgs{};
   ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() <= 1) {
-    throw std::runtime_error("No task file specified. Aborting.");
+  if (programArgs.size() < 3) {
+    throw std::runtime_error("No robot name and config folder specified. Aborting.");
   }
-  const std::string taskName(programArgs[1]);
+  const std::string robotName(programArgs[1]);
+  const std::string configName(programArgs[2]);
 
   // Initialize ros node
-  ros::init(argc, argv, "anymal_croc_mrt");
+  ros::init(argc, argv, "anymal_mrt");
   ros::NodeHandle nodeHandle;
 
-  auto anymalInterface = anymal::getAnymalInterface(anymal::AnymalModel::Croc, anymal::getConfigFolder(taskName));
-  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(taskName));
+  auto anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolder(configName));
+  const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
   quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,
                      mpcSettings.mpcDesiredFrequency_);
 

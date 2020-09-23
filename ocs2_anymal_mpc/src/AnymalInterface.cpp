@@ -8,7 +8,7 @@
 
 namespace anymal {
 
-std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalInterface(AnymalModel model, const std::string& taskFolder){
+std::unique_ptr<switched_model::QuadrupedPointfootInterface> getAnymalInterface(AnymalModel model, const std::string& taskFolder) {
   std::cerr << "Loading task file from: " << taskFolder << std::endl;
 
   auto kin = getAnymalKinematics(model);

@@ -128,9 +128,12 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool MRT_BASE::updatePolicy() {
-  {
-    std::lock_guard<std::mutex> lock(policyBufferMutex_);
+  std::unique_lock<std::mutex> lock(policyBufferMutex_, std::try_to_lock);
 
+  // No policy update if the lock cannot be acquired.
+  if (!lock.owns_lock()) {
+    return false;
+  } else {  // Lock is now owned
     if (!newPolicyInBuffer_) {
       return false;
     }
@@ -142,9 +145,9 @@ bool MRT_BASE::updatePolicy() {
     currentPrimalSolution_.swap(primalSolutionBuffer_);
 
     modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
-  }
 
-  return true;
+    return true;
+  }
 }
 
 /******************************************************************************************************/

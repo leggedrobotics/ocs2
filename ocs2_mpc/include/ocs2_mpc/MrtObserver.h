@@ -63,6 +63,9 @@ class MrtObserver {
    * This method is called as part of MRT_BASE::updatePolicy().
    * It allows the user to modify the policy that will become in-use after the updatePolicy function returns.
    *
+   * This function is executed sequentially with updatePolicy and thus blocks the main thread. Computationally expensive modifications
+   * should therefore rather be done in "modifyBufferedSolution".
+   *
    * A call to this function is protected by the same mutex as modifyBufferedSolution.
    */
   virtual void modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution) {}
@@ -70,6 +73,8 @@ class MrtObserver {
   /**
    * This method is called by the MRT when a new policy is loaded into the buffer.
    * It allows the user to modify the buffered solution before it can be swapped during the updatePolicy call.
+   *
+   * When using a multi-threaded MRT, this function does not block the main thread.
    *
    * A call to this function is protected by the same mutex as modifyActiveSolution.
    */

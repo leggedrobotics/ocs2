@@ -134,16 +134,16 @@ bool MRT_BASE::updatePolicy() {
       // update the current policy from buffer
       currentCommand_.swap(commandBuffer_);
       currentPrimalSolution_.swap(primalSolutionBuffer_);
-      newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
       policyUpdated_ = true;
+      newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
 
       modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
       return true;
     } else {
-      return false;  // No policy update the buffer contains nothing new.
+      return false;  // No policy update: the buffer contains nothing new.
     }
   } else {
-    return false;  // No policy update if the lock cannot be acquired.
+    return false;  // No policy update: the lock could not be acquired.
   }
 }
 

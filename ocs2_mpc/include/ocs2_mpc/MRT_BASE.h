@@ -157,10 +157,10 @@ class MRT_BASE {
   void fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution);
 
  private:
-  /** Calls modifyActiveSolution on all mrt observers. */
+  /** Calls modifyActiveSolution on all mrt observers. This function is called while holding a policyBufferMutex lock */
   void modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution);
 
-  /** Calls modifyBufferedSolution on all mrt observers. */
+  /** Calls modifyBufferedSolution on all mrt observers. This function is called while holding a policyBufferMutex lock */
   void modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
 
   // flags on state of the class

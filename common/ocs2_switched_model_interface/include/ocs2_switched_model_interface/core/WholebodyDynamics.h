@@ -18,6 +18,7 @@ class WholebodyDynamics {
     generalized_coordinate_s_t<SCALAR_T> G;
   };
 
+  WholebodyDynamics() = default;
   virtual ~WholebodyDynamics() = default;
 
   WholebodyDynamics(const WholebodyDynamics&) = delete;

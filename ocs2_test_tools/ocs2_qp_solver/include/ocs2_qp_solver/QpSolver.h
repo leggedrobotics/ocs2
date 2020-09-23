@@ -112,5 +112,19 @@ std::pair<vector_t, vector_t> solveDenseQp(const ScalarFunctionQuadraticApproxim
 std::pair<vector_array_t, vector_array_t> getStateAndInputTrajectory(const std::vector<int>& numStates, const std::vector<int>& numInputs,
                                                                      const vector_t& w);
 
+/**
+ * Extracts the problem state and inputs dimensions as well as number of constraints from a linear quadratic approximation
+ * Looks at the size of the flowmap derivatives of the dynamics.
+ * @return { numStatesPerStage, numInputsPerStage, numConstraintsPerStage}
+ */
+std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> getNumStatesInputsConstraints(
+    const std::vector<LinearQuadraticStage>& linearQuadraticApproximation);
+
+/** Counts the number of decision variables in the QP */
+int getNumDecisionVariables(const std::vector<int>& numStates, const std::vector<int>& numInputs);
+
+/** Counts the number of constraints in the QP */
+int getNumConstraints(const std::vector<int>& numStates, const std::vector<int>& numConstraints);
+
 }  // namespace qp_solver
 }  // namespace ocs2

@@ -40,11 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-/**
- * Extracts the problem state and inputs dimensions as well as number of constraints from a linear quadratic approximation
- * Looks at the size of the flowmap derivatives of the dynamics.
- * @return { numStatesPerStage, numInputsPerStage, numConstraintsPerStage}
- */
 std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> getNumStatesInputsConstraints(
     const std::vector<LinearQuadraticStage>& linearQuadraticApproximation) {
   if (linearQuadraticApproximation.empty()) {
@@ -70,14 +65,12 @@ std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> getNumStatesInp
   return {numStates, numInputs, numConstraints};
 }
 
-/** Counts the number of decision variables in the QP */
 int getNumDecisionVariables(const std::vector<int>& numStates, const std::vector<int>& numInputs) {
   const auto totalNumberOfStates = std::accumulate(numStates.begin(), numStates.end(), 0);
   const auto totalNumberOfInputs = std::accumulate(numInputs.begin(), numInputs.end(), 0);
   return totalNumberOfStates + totalNumberOfInputs;
 }
 
-/** Counts the number of constraints in the QP */
 int getNumConstraints(const std::vector<int>& numStates, const std::vector<int>& numConstraints) {
   // Each stage constrains x_{k+1} states, adding the x_0 constraint, all states are constrained exactly once.
   return std::accumulate(numStates.begin(), numStates.end(), 0) + std::accumulate(numConstraints.begin(), numConstraints.end(), 0);

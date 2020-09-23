@@ -8,22 +8,24 @@
 
 namespace anymal {
 
-template <AnymalModel MODEL>
-AnymalPyBindings<MODEL>::AnymalPyBindings(std::string taskName) : taskName_(std::move(taskName)) {
-  auto anymalInterface = getAnymalInterface(MODEL, getTaskFilePath(taskName_));
-  const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePath(taskName_));
-  const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePath(taskName_));
+AnymalPyBindings::AnymalPyBindings(std::string varargs) {
+  // TODO (jcarius) : Derive this from varargs
+  robotName_ = "croc";
+  configName_ = anymal::getTaskFilePath("c_series");
+
+  auto anymalInterface = getAnymalInterface(stringToAnymalModel(robotName_), getConfigFolder(configName_));
+  const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePath(configName_));
+  const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePath(configName_));
 
   init(*anymalInterface, switched_model::getMpc(*anymalInterface, mpcSettings, ddpSettings));
 
   penalty_.reset(new ocs2::RelaxedBarrierPenalty(ddpSettings.inequalityConstraintMu_, ddpSettings.inequalityConstraintDelta_));
 }
 
-template <AnymalModel MODEL>
-void AnymalPyBindings<MODEL>::visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x,
+void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x,
                                                   const ocs2::vector_array_t& u, ocs2::scalar_t speed) {
   if (!visualizer_) {
-    auto anymalInterface = getAnymalInterface(MODEL, getTaskFilePath(taskName_));
+    auto anymalInterface = getAnymalInterface(stringToAnymalModel(robotName_), getConfigFolder(configName_));
     int fake_argc = 1;
     char arg0[] = "no_name";
     char* fake_argv[] = {arg0};
@@ -50,5 +52,3 @@ void AnymalPyBindings<MODEL>::visualizeTrajectory(const ocs2::scalar_array_t& t,
 
 }  // namespace anymal
 
-template class anymal::AnymalPyBindings<anymal::AnymalModel::Bear>;
-template class anymal::AnymalPyBindings<anymal::AnymalModel::Croc>;

@@ -61,7 +61,7 @@ MRT_ROS_Interface::~MRT_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
-  this->policyReceivedEver_ = false;
+  this->reset();
 
   ocs2_msgs::reset resetSrv;
   resetSrv.request.reset = static_cast<uint8_t>(true);
@@ -195,17 +195,7 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
   auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
   auto newCommand = std::unique_ptr<CommandData>(new CommandData);
   readPolicyMsg(*msg, *newSolution, *newCommand);
-
-  // allow user to modify the buffer
-  this->modifyBufferedSolution(*newCommand, *newSolution);
-
-  // fill the buffer under the mutex
-  std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
-  this->primalSolutionBuffer_ = std::move(newSolution);
-  this->commandBuffer_ = std::move(newCommand);
-
-  this->newPolicyInBuffer_ = true;
-  this->policyReceivedEver_ = true;
+  this->fillSolutionBuffer(std::move(newCommand), std::move(newSolution));
 }
 
 /******************************************************************************************************/

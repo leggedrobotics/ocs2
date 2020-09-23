@@ -154,13 +154,15 @@ class MRT_BASE {
   void addMrtObserver(std::shared_ptr<MrtObserver> mrtObserver) { observerPtrArray_.push_back(std::move(mrtObserver)); };
 
  protected:
-  /** Calls modifyActiveSolution on all mrt observers. */
+  void fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution);
+
+ private:
+  /** Calls modifyActiveSolution on all mrt observers. This function is called while holding a policyBufferMutex lock */
   void modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution);
 
-  /** Calls modifyBufferedSolution on all mrt observers. */
+  /** Calls modifyBufferedSolution on all mrt observers. This function is called while holding a policyBufferMutex lock */
   void modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
 
- protected:
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;
   bool newPolicyInBuffer_;          // whether a new policy is waiting to be swapped in
@@ -174,11 +176,12 @@ class MRT_BASE {
 
   // thread safety
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
+  const size_t mrtTrylockWarningThreshold_ = 5;
+  size_t mrtTrylockWarningCount_;
 
   // variables needed for policy evaluation
   std::unique_ptr<RolloutBase> rolloutPtr_;
 
- private:
   std::vector<std::shared_ptr<MrtObserver>> observerPtrArray_;
 };
 

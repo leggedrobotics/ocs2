@@ -176,6 +176,8 @@ class MRT_BASE {
 
   // thread safety
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
+  const size_t mrtTrylockWarningThreshold_ = 5;
+  size_t mrtTrylockWarningCount_;
 
   // variables needed for policy evaluation
   std::unique_ptr<RolloutBase> rolloutPtr_;

@@ -53,6 +53,7 @@ void MRT_BASE::reset() {
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
   policyUpdated_ = false;
+  mrtTrylockWarningCount_ = 0;
 }
 
 /******************************************************************************************************/
@@ -130,6 +131,7 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
 bool MRT_BASE::updatePolicy() {
   std::unique_lock<std::mutex> lock(policyBufferMutex_, std::try_to_lock);
   if (lock.owns_lock()) {
+    mrtTrylockWarningCount_ = 0;
     if (newPolicyInBuffer_) {
       // update the current policy from buffer
       currentCommand_.swap(commandBuffer_);
@@ -143,6 +145,11 @@ bool MRT_BASE::updatePolicy() {
       return false;  // No policy update: the buffer contains nothing new.
     }
   } else {
+    ++mrtTrylockWarningCount_;
+    if (mrtTrylockWarningCount_ > mrtTrylockWarningThreshold_) {
+      std::cerr << "[MRT_BASE::updatePolicy] failed to lock the policyBufferMutex for " << mrtTrylockWarningCount_
+                << " consecutive times.\n";
+    }
     return false;  // No policy update: the lock could not be acquired.
   }
 }

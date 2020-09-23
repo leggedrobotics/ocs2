@@ -75,7 +75,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCostCppAd::costQuadraticApprox
   }
 
   vector_t pointsInLinkFrame = cppAdInterfaceLinkPoints_->getFunctionValue(x, pointsInWorldFrame);
-  //  distanceQuadraticApproximation.f = cppAdInterfaceDistanceCalculation_->getFunctionValue(x, points);
+  distanceQuadraticApproximation.f = cppAdInterfaceDistanceCalculation_->getFunctionValue(x, pointsInLinkFrame);
   distanceQuadraticApproximation.dfdx = cppAdInterfaceDistanceCalculation_->getJacobian(x, pointsInLinkFrame);
   distanceQuadraticApproximation.dfdu = matrix_t::Zero(results.size(), u.size());
   distanceQuadraticApproximation.dfdxx = matrix_array_t(results.size(), matrix_t::Zero(x.size(), x.size()));

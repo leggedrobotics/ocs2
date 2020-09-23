@@ -89,5 +89,13 @@ ScalarFunctionQuadraticApproximation approximateCost(CostFunctionBase& cost, Tra
  */
 VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system, TrajectoryRef start, scalar_t dt);
 
+/**
+ * Computes the equality constraints at given trajectory point
+ * @param constraints : constraints object
+ * @param point : linearization point
+ * @return Linear approximation of the constraints
+ */
+VectorFunctionLinearApproximation approximateConstraints(ConstraintBase& constraints, TrajectoryRef point, bool isInitialTime);
+
 }  // namespace qp_solver
 }  // namespace ocs2

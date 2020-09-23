@@ -55,7 +55,7 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBa
     lqp.emplace_back(approximateStage(cost, system, constraintsPtr, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}, k == 0));
   }
 
-  if (constraintsPtr) {
+  if (constraintsPtr != nullptr) {
     lqp.emplace_back(
         cost.finalCostQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
         constraintsPtr->finalStateEqualityConstraintLinearApproximation(t[N], x[N]));  // Terminal cost and constraints, no dynamics.
@@ -80,24 +80,8 @@ LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase
   // dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k]) - x0[k+1]
   lqStage.dynamics.f -= end.x;
 
-  if (constraintsPtr) {
-    if (isInitialTime) {
-      // only use stat-input constraints for initial time
-      lqStage.constraints = constraintsPtr->stateInputEqualityConstraintLinearApproximation(start.t, start.x, start.u);
-    } else {
-      // concatenate stat-input and state-only constraints
-      const auto stateInputConstraint = constraintsPtr->stateInputEqualityConstraintLinearApproximation(start.t, start.x, start.u);
-      const auto stateConstraint = constraintsPtr->stateEqualityConstraintLinearApproximation(start.t, start.x);
-      const auto numStateInputConstraints = stateInputConstraint.f.size();
-      const auto numStateConstraints = stateConstraint.f.size();
-      lqStage.constraints.resize(numStateConstraints + numStateInputConstraints, start.x.size(), start.u.size());
-      lqStage.constraints.f.head(numStateInputConstraints) = stateInputConstraint.f;
-      lqStage.constraints.dfdx.topRows(numStateInputConstraints) = stateInputConstraint.dfdx;
-      lqStage.constraints.dfdu.topRows(numStateInputConstraints) = stateInputConstraint.dfdu;
-      lqStage.constraints.f.tail(numStateConstraints) = stateConstraint.f;
-      lqStage.constraints.dfdx.bottomRows(numStateConstraints) = stateConstraint.dfdx;
-      lqStage.constraints.dfdu.bottomRows(numStateConstraints).setZero();
-    }
+  if (constraintsPtr != nullptr) {
+    lqStage.constraints = approximateConstraints(*constraintsPtr, start, isInitialTime);
   }
 
   return lqStage;
@@ -130,6 +114,28 @@ VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system
   discreteDynamics.dfdu = continuousDynamics.dfdu * dt;
   discreteDynamics.f = continuousDynamics.f * dt + start.x;
   return discreteDynamics;
+}
+
+VectorFunctionLinearApproximation approximateConstraints(ConstraintBase& constraints, TrajectoryRef point, bool isInitialTime) {
+  VectorFunctionLinearApproximation constraintsApproximation;
+  if (isInitialTime) {
+    // only use stat-input constraints for initial time
+    constraintsApproximation = constraints.stateInputEqualityConstraintLinearApproximation(point.t, point.x, point.u);
+  } else {
+    // concatenate stat-input and state-only constraints
+    const auto stateInputConstraint = constraints.stateInputEqualityConstraintLinearApproximation(point.t, point.x, point.u);
+    const auto stateConstraint = constraints.stateEqualityConstraintLinearApproximation(point.t, point.x);
+    const auto numStateInputConstraints = stateInputConstraint.f.size();
+    const auto numStateConstraints = stateConstraint.f.size();
+    constraintsApproximation.resize(numStateConstraints + numStateInputConstraints, point.x.size(), point.u.size());
+    constraintsApproximation.f.head(numStateInputConstraints) = stateInputConstraint.f;
+    constraintsApproximation.dfdx.topRows(numStateInputConstraints) = stateInputConstraint.dfdx;
+    constraintsApproximation.dfdu.topRows(numStateInputConstraints) = stateInputConstraint.dfdu;
+    constraintsApproximation.f.tail(numStateConstraints) = stateConstraint.f;
+    constraintsApproximation.dfdx.bottomRows(numStateConstraints) = stateConstraint.dfdx;
+    constraintsApproximation.dfdu.bottomRows(numStateConstraints).setZero();
+  }
+  return constraintsApproximation;
 }
 
 }  // namespace qp_solver

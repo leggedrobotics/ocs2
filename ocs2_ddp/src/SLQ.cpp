@@ -41,7 +41,7 @@ SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamics
 
     : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
            heuristicsFunctionPtr) {
-  if (settings().algorithm_ != ddp::algorithm::SLQ) {
+  if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
   }
@@ -59,7 +59,7 @@ SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamics
   }
 
   for (size_t i = 0; i < settings().nThreads_; i++) {
-    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == ddp_strategy::type::LINE_SEARCH);
+    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
@@ -198,7 +198,7 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vec
 
         // get next time index is atomic
         while ((timeIndex = BASE::nextTimeIndex_++) < N) {
-          BASE::computeProjectionAndRiccatiModification(settings().strategy_, BASE::modelDataTrajectoriesStock_[i][timeIndex], SmDummy,
+          BASE::computeProjectionAndRiccatiModification(BASE::modelDataTrajectoriesStock_[i][timeIndex], SmDummy,
                                                         BASE::projectedModelDataTrajectoriesStock_[i][timeIndex],
                                                         BASE::riccatiModificationTrajectoriesStock_[i][timeIndex]);
         }
@@ -213,21 +213,8 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t SLQ::computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const {
-  const auto& Bm = modelData.dynamics_.dfdu;
-  const auto& Rm = modelData.cost_.dfduu;
-  switch (strategy) {
-    case ddp_strategy::type::LINE_SEARCH: {
-      return Rm;
-    }
-    case ddp_strategy::type::LEVENBERG_MARQUARDT: {
-      auto HmAug = Rm;
-      HmAug.noalias() += BASE::levenbergMarquardtModule_.riccatiMultiple * Bm.transpose() * Bm;
-      return HmAug;
-    }
-    default:
-      throw std::runtime_error("unknown ddp strategy");
-  }  // end of switch-case
+matrix_t SLQ::computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const {
+  return searchStrategyPtr_->augmentHamiltonianHessian(modelData, modelData.cost_.dfduu);
 }
 
 /******************************************************************************************************/

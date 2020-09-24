@@ -75,7 +75,7 @@ class ILQR : public GaussNewtonDDP {
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
-  matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const override;
+  matrix_t computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const override;
 
   void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                  const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,

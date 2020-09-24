@@ -44,7 +44,7 @@ class DummyInterface final : public RobotInterface {
 
   std::unique_ptr<ocs2::MPC_DDP> getMpc() {
     ddp::Settings ddpSettings;
-    ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+    ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
     mpc::Settings mpcSettings;
     return std::unique_ptr<MPC_DDP>(new MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
                                                 operatingPointPtr_.get(), ddpSettings, mpcSettings));

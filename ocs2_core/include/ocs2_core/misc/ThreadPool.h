@@ -136,6 +136,8 @@ class ThreadPool {
    */
   void enableDebug(std::function<void(const std::string)> debugPrint);
 
+  size_t numThreads() const { return workerThreads_.size(); }
+
  private:
   /**
    * Push task to ready queue

@@ -57,73 +57,12 @@ class CorrectnessConstrainedTest : public testing::Test {
   CorrectnessConstrainedTest() {
     srand(0);
 
-    for (;;) {
-      // generate random problem
-
-      // dynamics
-      systemPtr = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-
-      // cost
-      costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                             ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
-      costDesiredTrajectories =
-          ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
-      costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
-
-      // constraint
-      constraintPtr =
-          ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
-                                              ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
-                                              ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
-
-      // system operating points
-      nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
-
-      // Approximate
-      const auto lqApproximation = getLinearQuadraticApproximation(*costPtr, *systemPtr, constraintPtr.get(), nominalTrajectory);
-
-      // Extract sizes
-      std::vector<int> numStates;
-      std::vector<int> numInputs;
-      std::vector<int> numConstraints;
-      std::tie(numStates, numInputs, numConstraints) = ocs2::qp_solver::getNumStatesInputsConstraints(lqApproximation);
-      const auto numDecisionVariables = ocs2::qp_solver::getNumDecisionVariables(numStates, numInputs);
-      const auto numQpConstraints = ocs2::qp_solver::getNumConstraints(numStates, numConstraints);
-
-      initState = ocs2::vector_t::Random(STATE_DIM);
-      const ocs2::vector_t dx0 = initState - nominalTrajectory.stateTrajectory.front();
-
-      // Construct QP
-      const auto qpCosts = getCostMatrices(lqApproximation, numDecisionVariables);
-      const auto qpConstraints = getConstraintMatrices(lqApproximation, dx0, numQpConstraints, numDecisionVariables);
-
-      if (!problemIsFeasible(qpCosts, qpConstraints)) {
-        std::cerr << "Random problem was infeasible, retry ...\n";
-        continue;
+    // Try generateing problem
+    for (int retries = 0; !createFeasibleRandomProblem(); retries++) {
+      std::cerr << "Random problem was infeasible, retry ...\n";
+      if (retries > 10) {
+        throw std::runtime_error("Failed generating feasible problem");
       }
-
-      const auto& A = qpConstraints.dfdx;  // A w + b = 0
-      const auto& b = qpConstraints.f;     // b = [x0; e[0]; b[0]; ... e[N-1]; b[N-1]; e[N]]
-      const auto I = ocs2::matrix_t::Identity(numDecisionVariables, numDecisionVariables);
-      const auto& w0 = ocs2::vector_t::Random(numDecisionVariables);  // w = [dx[0], du[0], dx[1],  du[1], ..., dx[N]]
-
-      /* Modify random w0 to satisfy the constraint Aw + b = 0 by solving
-       * min  1/2 || w - w0 ||^2
-       * s.t. A w + b = 0  */
-      const ocs2::matrix_t AATinv = (A * A.transpose()).inverse();
-      const ocs2::vector_t w = (I - A.transpose() * AATinv * A) * w0 - A.transpose() * AATinv * b;
-
-      // make nominal trajectory feasible.
-      int nextIndex = 0;
-      for (int i = 0; i < N; i++) {
-        nominalTrajectory.stateTrajectory[i] += w.segment(nextIndex, numStates[i]);  // dx[i]
-        nextIndex += numStates[i];
-        nominalTrajectory.inputTrajectory[i] += w.segment(nextIndex, numInputs[i]);  // du[i]
-        nextIndex += numInputs[i];
-      }
-      nominalTrajectory.stateTrajectory[N] += w.segment(nextIndex, numStates[N]);  // dx[N]
-
-      break;
     }
 
     qpSolution =
@@ -153,30 +92,74 @@ class CorrectnessConstrainedTest : public testing::Test {
     finalTime = nominalTrajectory.timeTrajectory.back();
   }
 
-  bool problemIsFeasible(const ocs2::ScalarFunctionQuadraticApproximation& qpCost,
-                         const ocs2::VectorFunctionLinearApproximation& qpConstraints) {
-    const auto& H = qpCost.dfdxx;
-    const auto& A = qpConstraints.dfdx;
+  bool createFeasibleRandomProblem() {
+    static_assert(numStateInputConstraints + numStateOnlyConstraints <= INPUT_DIM,
+                  "The number of constraints must be less or equal to INPUT_DIM");
+    static_assert(numFinalStateOnlyConstraints <= STATE_DIM, "The number of final constraints must be less or equal to STATE_DIM");
 
-    // Cost must be convex
-    Eigen::LDLT<ocs2::matrix_t> ldlt(H);
-    if (!(H.ldlt().vectorD().array() > 0.0).all()) {
-      std::cerr << "H is not positive definite\n";
+    // dynamics
+    systemPtr = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+
+    // cost
+    costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+                                           ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+    costDesiredTrajectories =
+        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+
+    // constraint
+    constraintPtr =
+        ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
+
+    // system operating points
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
+    initState = ocs2::vector_t::Random(STATE_DIM);
+
+    // get QP
+    ocs2::ScalarFunctionQuadraticApproximation qpCosts;
+    ocs2::VectorFunctionLinearApproximation qpConstraints;
+    const auto lqApproximation = getLinearQuadraticApproximation(*costPtr, *systemPtr, constraintPtr.get(), nominalTrajectory);
+    const ocs2::vector_t dx0 = initState - nominalTrajectory.stateTrajectory.front();
+    std::tie(qpCosts, qpConstraints) = getDenseQp(lqApproximation, dx0);
+
+    // Check feasibility
+    if (!ocs2::qp_solver::isQpFeasible(qpCosts, qpConstraints)) {
       return false;
     }
 
-    // Constraints feasibility
-    Eigen::JacobiSVD<ocs2::matrix_t> svd(A);
-    const auto conditionNumber = svd.singularValues()(0) / svd.singularValues().tail(1)(0);
-    if (svd.rank() != A.rows()) {
-      std::cerr << "A is not full row-rank\n";
-      return false;
-    } else if (conditionNumber > 1e6) {
-      std::cerr << "A is ill-conditioned\n";
-      return false;
-    }
+    // Correct the nominal trajectory to not violate the constraints.
+    nominalTrajectory = getFeasibleTrajectory(qpConstraints, nominalTrajectory);
 
     return true;
+  }
+
+  /** Modifies given trajectory to satisfy the constraints */
+  ocs2::qp_solver::ContinuousTrajectory getFeasibleTrajectory(const ocs2::VectorFunctionLinearApproximation& qpConstraints,
+                                                              const ocs2::qp_solver::ContinuousTrajectory& trajectory) const {
+    const auto& A = qpConstraints.dfdx;  // A w + b = 0,  A must be full row-rank such that (A A') is invertible
+    const auto& b = qpConstraints.f;     // b = [x0; e[0]; b[0]; ... e[N-1]; b[N-1]; e[N]]
+
+    /* Find the trajectory correction w to satisfy the constraint by solving
+     *   min  1/2 w' w
+     *   s.t. A w + b = 0  */
+    const ocs2::vector_t w = -A.transpose() * (A * A.transpose()).inverse() * b;  // w = [dx[0], du[0], dx[1],  du[1], ..., dx[N]]
+
+    // Make trajectory feasible
+    auto feasibleTrajectory = trajectory;
+    int nextIndex = 0;
+    const auto N = feasibleTrajectory.inputTrajectory.size();
+    for (int k = 0; k < N; k++) {
+      const auto nx = feasibleTrajectory.stateTrajectory[k].size();
+      const auto nu = feasibleTrajectory.inputTrajectory[k].size();
+      feasibleTrajectory.stateTrajectory[k] += w.segment(nextIndex, nx);       // dx[k]
+      feasibleTrajectory.inputTrajectory[k] += w.segment(nextIndex + nx, nu);  // du[k]
+      nextIndex += nx + nu;
+    }
+    feasibleTrajectory.stateTrajectory[N] += w.segment(nextIndex, feasibleTrajectory.stateTrajectory[N].size());  // dx[N]
+
+    return feasibleTrajectory;
   }
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::algorithm algorithmType, size_t numPartitions, ocs2::ddp_strategy::type strategy,

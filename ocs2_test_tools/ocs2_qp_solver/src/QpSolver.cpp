@@ -40,7 +40,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> getNumStatesInputsConstraints(
+/**
+ * Extracts the problem state and inputs dimensions as well as number of constraints from a linear quadratic approximation
+ * Looks at the size of the flowmap derivatives of the dynamics.
+ * @return { numStatesPerStage, numInputsPerStage, numConstraintsPerStage}
+ */
+static std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> getNumStatesInputsConstraints(
     const std::vector<LinearQuadraticStage>& linearQuadraticApproximation) {
   if (linearQuadraticApproximation.empty()) {
     return {std::vector<int>(0), std::vector<int>(0), std::vector<int>(0)};
@@ -65,13 +70,15 @@ std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> getNumStatesInp
   return {numStates, numInputs, numConstraints};
 }
 
-int getNumDecisionVariables(const std::vector<int>& numStates, const std::vector<int>& numInputs) {
+/** Counts the number of decision variables in the QP */
+static int getNumDecisionVariables(const std::vector<int>& numStates, const std::vector<int>& numInputs) {
   const auto totalNumberOfStates = std::accumulate(numStates.begin(), numStates.end(), 0);
   const auto totalNumberOfInputs = std::accumulate(numInputs.begin(), numInputs.end(), 0);
   return totalNumberOfStates + totalNumberOfInputs;
 }
 
-int getNumConstraints(const std::vector<int>& numStates, const std::vector<int>& numConstraints) {
+/** Counts the number of constraints in the QP */
+static int getNumConstraints(const std::vector<int>& numStates, const std::vector<int>& numConstraints) {
   // Each stage constrains x_{k+1} states, adding the x_0 constraint, all states are constrained exactly once.
   return std::accumulate(numStates.begin(), numStates.end(), 0) + std::accumulate(numConstraints.begin(), numConstraints.end(), 0);
 }
@@ -197,6 +204,23 @@ ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQua
   c += cost_N.f;
 
   return qpCost;
+}
+
+std::pair<ScalarFunctionQuadraticApproximation, VectorFunctionLinearApproximation> getDenseQp(const std::vector<LinearQuadraticStage>& lqp,
+                                                                                              const vector_t& dx0) {
+  // Extract sizes
+  std::vector<int> numStates;
+  std::vector<int> numInputs;
+  std::vector<int> numConstraints;
+  std::tie(numStates, numInputs, numConstraints) = getNumStatesInputsConstraints(lqp);
+  const auto numDecisionVariables = getNumDecisionVariables(numStates, numInputs);
+  const auto numQpConstraints = getNumConstraints(numStates, numConstraints);
+
+  // Construct QP
+  const auto qpCosts = getCostMatrices(lqp, numDecisionVariables);
+  const auto qpConstraints = getConstraintMatrices(lqp, dx0, numQpConstraints, numDecisionVariables);
+
+  return {qpCosts, qpConstraints};
 }
 
 std::pair<vector_t, vector_t> solveDenseQp(const ScalarFunctionQuadraticApproximation& cost,

@@ -143,5 +143,32 @@ inline bool isEqual(const vector_array_t& v0, const vector_array_t& v1, scalar_t
          std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const vector_t& lhs, const vector_t& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
+/** Checks QP feasibility and numerical conditioning */
+inline bool isQpFeasible(const ocs2::ScalarFunctionQuadraticApproximation& qpCost,
+                         const ocs2::VectorFunctionLinearApproximation& qpConstraints) {
+  const auto& H = qpCost.dfdxx;
+  const auto& A = qpConstraints.dfdx;
+
+  // Cost must be convex
+  Eigen::LDLT<ocs2::matrix_t> ldlt(H);
+  if (!(H.ldlt().vectorD().array() > 0.0).all()) {
+    std::cerr << "H is not positive definite\n";
+    return false;
+  }
+
+  // Constraints feasibility
+  Eigen::JacobiSVD<ocs2::matrix_t> svd(A);
+  const auto conditionNumber = svd.singularValues()(0) / svd.singularValues().tail(1)(0);
+  if (svd.rank() != A.rows()) {
+    std::cerr << "A is not full row-rank\n";
+    return false;
+  } else if (conditionNumber > 1e6) {
+    std::cerr << "A is ill-conditioned\n";
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace qp_solver
 }  // namespace ocs2

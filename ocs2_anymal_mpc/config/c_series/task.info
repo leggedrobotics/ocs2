@@ -93,7 +93,7 @@ ddp
 
   AbsTolODE                       1e-5
   RelTolODE                       1e-3
-  maxNumStepsPerSecond            1000
+  maxNumStepsPerSecond            50000
   minTimeStep                     1e-2
   backwardPassIntegratorType      ODE45
 
@@ -122,11 +122,11 @@ ddp
 ; Rollout settings
 rollout
 {
-  AbsTolODE                     1e-5
-  RelTolODE                     1e-3
-  minTimeStep                   1e-2
-  maxNumStepsPerSecond          50000
-  checkNumericalStability       false
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  minTimeStep                     1e-2
+  maxNumStepsPerSecond            50000
+  checkNumericalStability         false
 }
 
 mpc
@@ -135,7 +135,7 @@ mpc
   numPartitions                   2
 
   runtimeMaxNumIterations         1
-  initMaxNumIterations            1
+  initMaxNumIterations            10
 
   runtimeMinStepLength            1e-2
   runtimeMaxStepLength            1.0
@@ -156,7 +156,7 @@ mpc
 ; initial state
 initialRobotState
 {
- ; orientation
+   ; orientation
    (0,0) 0.0     ; x
    (1,0) 0.0     ; y
    (2,0) 0.0     ; z
@@ -211,14 +211,14 @@ Q
     scaling 1e+0
 
    ; orientation
-   (0,0) 100.0     ; x
-   (1,1) 200.0     ; y
-   (2,2) 200.0     ; z
+   (0,0) 1000.0     ; x
+   (1,1) 2000.0     ; y
+   (2,2) 2000.0     ; z
 
    ; positon
-   (3,3) 1000.0     ; x
-   (4,4) 1000.0     ; y
-   (5,5) 1500.0     ; z
+   (3,3) 1000.0      ; x
+   (4,4) 1000.0      ; y
+   (5,5) 1500.0      ; z
 
    ; angular velocity
    (6,6)   5.0      ; x
@@ -257,72 +257,73 @@ R
    scaling 1e-3
 
    ; LF contact forces
-   (0,0)      1.0    ; LF_X
-   (1,1)      1.0    ; LF_Y
-   (2,2)      1.0    ; LF_Z
+   (0,0)   1.0    ; LF_X
+   (1,1)   1.0    ; LF_Y
+   (2,2)   1.0    ; LF_Z
 
    ; RF contact forces
-   (3,3)      1.0    ; RF_X
-   (4,4)      1.0    ; RF_Y
-   (5,5)      1.0    ; RF_Z
+   (3,3)   1.0    ; RF_X
+   (4,4)   1.0    ; RF_Y
+   (5,5)   1.0    ; RF_Z
 
    ; LH contact forces
-   (6,6)      1.0    ; LH_X
-   (7,7)      1.0    ; LH_Y
-   (8,8)      1.0    ; LH_Z
+   (6,6)   1.0    ; LH_X
+   (7,7)   1.0    ; LH_Y
+   (8,8)   1.0    ; LH_Z
 
    ; RH contact forces
-   (9,9)      1.0    ; RH_X
-   (10,10)    1.0    ; RH_Y
-   (11,11)    1.0    ; RH_Z
+   (9,9)   1.0    ; RH_X
+   (10,10) 1.0    ; RH_Y
+   (11,11) 1.0    ; RH_Z
+
 
    ; LF joint velocities
    (12,12) 1000   ; LF_HAA
    (13,13) 1000   ; LF_HFE
-   (14,14) 1000   ; LF_KFE
+   (14,14) 100    ; LF_KFE
 
    ; RF joint velocities
    (15,15) 1000    ; RF_HAA
    (16,16) 1000    ; RF_HFE
-   (17,17) 1000    ; RF_KFE
+   (17,17) 100     ; RF_KFE
 
    ; LH joint velocities
    (18,18) 1000    ; LH_HAA
    (19,19) 1000    ; LH_HFE
-   (20,20) 1000    ; LH_KFE
+   (20,20) 100     ; LH_KFE
 
    ; RH joint velocities
    (21,21) 1000    ; RH_HAA
    (22,22) 1000    ; RH_HFE
-   (23,23) 1000    ; RH_KFE
+   (23,23) 100     ; RH_KFE
 }
 
 ; state weighting
 Q_final
 {
-  scaling 1e-0
+    scaling 1e-0
 
-  ; orientation
-  (0,0)   0.0    ; x
-  (1,1)   0.0    ; y
-  (2,2)   0.0    ; z
+   ; orientation
+   (0,0)   0.0    ; x
+   (1,1)   0.0    ; y
+   (2,2)   0.0    ; z
 
-  ; position
-  (3,3)   0.0    ; x
-  (4,4)   0.0    ; y
-  (5,5)   0.0    ; z
+   ; position
+   (3,3)   0.0    ; x
+   (4,4)   0.0    ; y
+   (5,5)   0.0    ; z
 
-  ; angular velocity
-  (6,6)   0.0    ; x
-  (7,7)   0.0    ; y
-  (8,8)   0.0    ; z
+   ; angular velocity
+   (6,6)   0.0    ; x
+   (7,7)   0.0    ; y
+   (8,8)   0.0    ; z
 
-  ; translational velocity
-  (9,9)   0.0    ; x
-  (10,10) 0.0    ; y
-  (11,11) 0.0    ; z
+   ; translational velocity
+   (9,9)   0.0    ; x
+   (10,10) 0.0    ; y
+   (11,11) 0.0    ; z
 
-  ; LF joints
+   ; LF joints
   (12,12) 0.0    ; LF_HAA
   (13,13) 0.0    ; LF_HFE
   (14,14) 0.0    ; LF_KFE

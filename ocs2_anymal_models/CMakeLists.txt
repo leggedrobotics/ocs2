@@ -81,9 +81,9 @@ catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestAnymalBear.cpp
   test/TestAnymalCroc.cpp
   test/TestAnymalWheels.cpp
-  )
+)
 target_link_libraries(${PROJECT_NAME}_switched_model_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
-  )
+)

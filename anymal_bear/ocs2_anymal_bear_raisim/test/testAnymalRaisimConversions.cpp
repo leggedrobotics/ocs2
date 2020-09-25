@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
-#include <ocs2_anymal_bear_switched_model/core/AnymalBearCom.h>
-#include <ocs2_anymal_bear_switched_model/core/AnymalBearKinematics.h>
+#include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
 #include <ros/package.h>
 
@@ -11,9 +10,9 @@ TEST(AnymalRaisim, Conversions) {
   using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;
   using input_vector_t = Eigen::Matrix<double, INPUT_DIM, 1>;
 
-  anymal::AnymalBearCom anymalBearCom;
-  anymal::AnymalBearKinematics anymalBearKinematics;
-  anymal::AnymalRaisimConversions conversions(anymalBearCom, anymalBearKinematics);
+  auto anymalBearCom = anymal::getAnymalComModel(anymal::AnymalModel::Bear);
+  auto anymalBearKinematics = anymal::getAnymalKinematics(anymal::AnymalModel::Bear);
+  anymal::AnymalRaisimConversions conversions(*anymalBearCom, *anymalBearKinematics);
 
   // consistency test ocs2 -> raisim -> ocs2
   for (int i = 0; i < 100; i++) {

@@ -12,7 +12,8 @@ TEST(AnymalRaisim, Conversions) {
 
   auto anymalBearCom = anymal::getAnymalComModel(anymal::AnymalModel::Bear);
   auto anymalBearKinematics = anymal::getAnymalKinematics(anymal::AnymalModel::Bear);
-  anymal::AnymalRaisimConversions conversions(*anymalBearCom, *anymalBearKinematics);
+  auto anymalBearWbd = anymal::getWholebodyDynamics(anymal::AnymalModel::Bear);
+  anymal::AnymalRaisimConversions conversions(*anymalBearCom, *anymalBearKinematics, *anymalBearWbd);
 
   // consistency test ocs2 -> raisim -> ocs2
   for (int i = 0; i < 100; i++) {

@@ -1,61 +1,56 @@
 #include <gtest/gtest.h>
-#include <ocs2_anymal_models/AnymalModels.h>
+
 #include <ocs2_anymal_raisim/AnymalRaisimConversions.h>
-#include <ros/package.h>
+
+#include <ocs2_anymal_models/AnymalModels.h>
 
 TEST(AnymalRaisim, Conversions) {
-  constexpr size_t STATE_DIM = 24;
-  constexpr size_t INPUT_DIM = 24;
+    auto anymalBearCom = anymal::getAnymalComModel(anymal::AnymalModel::Bear);
+    auto anymalBearKinematics = anymal::getAnymalKinematics(anymal::AnymalModel::Bear);
+    auto anymalBearWbd = anymal::getWholebodyDynamics(anymal::AnymalModel::Bear);
+    anymal::AnymalRaisimConversions conversions(*anymalBearCom, *anymalBearKinematics, *anymalBearWbd);
 
-  using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;
-  using input_vector_t = Eigen::Matrix<double, INPUT_DIM, 1>;
+    // consistency test ocs2 -> raisim -> ocs2
+    for (int i = 0; i < 100; i++) {
+      switched_model::comkino_state_t ocs2_state_in;
+      ocs2_state_in.setRandom();
+      switched_model::comkino_input_t ocs2_input_in;
+      ocs2_input_in.setRandom();
 
-  auto anymalBearCom = anymal::getAnymalComModel(anymal::AnymalModel::Bear);
-  auto anymalBearKinematics = anymal::getAnymalKinematics(anymal::AnymalModel::Bear);
-  auto anymalBearWbd = anymal::getWholebodyDynamics(anymal::AnymalModel::Bear);
-  anymal::AnymalRaisimConversions conversions(*anymalBearCom, *anymalBearKinematics, *anymalBearWbd);
+      Eigen::VectorXd raisim_q, raisim_dq;
+      std::tie(raisim_q, raisim_dq) = conversions.stateToRaisimGenCoordGenVel(ocs2_state_in, ocs2_input_in);
 
-  // consistency test ocs2 -> raisim -> ocs2
-  for (int i = 0; i < 100; i++) {
-    state_vector_t ocs2_state_in;
-    ocs2_state_in.setRandom();
-    input_vector_t ocs2_input_in;
-    ocs2_input_in.setRandom();
+      const switched_model::comkino_state_t ocs2_state_out = conversions.raisimGenCoordGenVelToState(raisim_q, raisim_dq);
 
-    Eigen::VectorXd raisim_q, raisim_dq;
-    std::tie(raisim_q, raisim_dq) = conversions.stateToRaisimGenCoordGenVel(ocs2_state_in, ocs2_input_in);
-
-    state_vector_t ocs2_state_out = conversions.raisimGenCoordGenVelToState(raisim_q, raisim_dq);
-
-    bool test = ocs2_state_in.isApprox(ocs2_state_out);
-    EXPECT_TRUE(test);
-  }
-
-  // consistency test raisim -> ocs2 -> raisim
-  for (int i = 0; i < 100; i++) {
-    Eigen::VectorXd raisim_q_in;
-    raisim_q_in.setRandom(19);
-    raisim_q_in.segment<4>(3).normalize();
-
-    Eigen::VectorXd raisim_dq_in;
-    raisim_dq_in.setRandom(18);
-
-    state_vector_t ocs2_state = conversions.raisimGenCoordGenVelToState(raisim_q_in, raisim_dq_in);
-    input_vector_t ocs2_input;
-    ocs2_input.head<12>().setZero();                  // contact forces
-    ocs2_input.tail<12>() = raisim_dq_in.tail<12>();  // joint velocities
-
-    Eigen::VectorXd raisim_q_out, raisim_dq_out;
-    std::tie(raisim_q_out, raisim_dq_out) = conversions.stateToRaisimGenCoordGenVel(ocs2_state, ocs2_input);
-
-    // flip quaternion sign for comparison
-    if (raisim_q_in(3) * raisim_q_out(3) < 0.0) {
-      raisim_q_out.segment<4>(3) *= -1.0;
+      bool test = ocs2_state_in.isApprox(ocs2_state_out);
+      EXPECT_TRUE(test);
     }
 
-    bool test = raisim_q_in.isApprox(raisim_q_out);
-    EXPECT_TRUE(test);
-    test = raisim_dq_in.isApprox(raisim_dq_out);
-    EXPECT_TRUE(test);
-  }
+    // consistency test raisim -> ocs2 -> raisim
+    for (int i = 0; i < 100; i++) {
+      Eigen::VectorXd raisim_q_in;
+      raisim_q_in.setRandom(19);
+      raisim_q_in.segment<4>(3).normalize();
+
+      Eigen::VectorXd raisim_dq_in;
+      raisim_dq_in.setRandom(18);
+
+      switched_model::comkino_state_t ocs2_state = conversions.raisimGenCoordGenVelToState(raisim_q_in, raisim_dq_in);
+      switched_model::comkino_input_t ocs2_input;
+      ocs2_input.head<12>().setZero();                  // contact forces
+      ocs2_input.tail<12>() = raisim_dq_in.tail<12>();  // joint velocities
+
+      Eigen::VectorXd raisim_q_out, raisim_dq_out;
+      std::tie(raisim_q_out, raisim_dq_out) = conversions.stateToRaisimGenCoordGenVel(ocs2_state, ocs2_input);
+
+      // flip quaternion sign for comparison
+      if (raisim_q_in(3) * raisim_q_out(3) < 0.0) {
+        raisim_q_out.segment<4>(3) *= -1.0;
+      }
+
+      bool test = raisim_q_in.isApprox(raisim_q_out);
+      EXPECT_TRUE(test);
+      test = raisim_dq_in.isApprox(raisim_dq_out);
+      EXPECT_TRUE(test);
+    }
 }

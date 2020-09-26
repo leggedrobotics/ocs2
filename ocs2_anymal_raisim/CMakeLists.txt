@@ -113,6 +113,5 @@ catkin_add_gtest(${PROJECT_NAME}_test_conversions
 )
 target_link_libraries(${PROJECT_NAME}_test_conversions
   ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   gtest_main
 )

@@ -112,6 +112,7 @@ catkin_add_gtest(${PROJECT_NAME}_test_conversions
   test/testAnymalRaisimConversions.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test_conversions
-  ${PROJECT_NAME}
   gtest_main
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )

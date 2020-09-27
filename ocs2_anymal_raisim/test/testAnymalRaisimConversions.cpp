@@ -5,10 +5,11 @@
 #include <ocs2_anymal_models/AnymalModels.h>
 
 TEST(AnymalRaisim, Conversions) {
-    auto anymalBearCom = anymal::getAnymalComModel(anymal::AnymalModel::Bear);
-    auto anymalBearKinematics = anymal::getAnymalKinematics(anymal::AnymalModel::Bear);
-    auto anymalBearWbd = anymal::getWholebodyDynamics(anymal::AnymalModel::Bear);
-    anymal::AnymalRaisimConversions conversions(*anymalBearCom, *anymalBearKinematics, *anymalBearWbd);
+  for (auto model : {anymal::AnymalModel::Bear, anymal::AnymalModel::Croc}) {
+    auto anymalCom = anymal::getAnymalComModel(model);
+    auto anymalKinematics = anymal::getAnymalKinematics(model);
+    auto anymalWbd = anymal::getWholebodyDynamics(model);
+    anymal::AnymalRaisimConversions conversions(*anymalCom, *anymalKinematics, *anymalWbd);
 
     // consistency test ocs2 -> raisim -> ocs2
     for (int i = 0; i < 100; i++) {
@@ -53,4 +54,5 @@ TEST(AnymalRaisim, Conversions) {
       test = raisim_dq_in.isApprox(raisim_dq_out);
       EXPECT_TRUE(test);
     }
+  }
 }

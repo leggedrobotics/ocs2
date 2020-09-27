@@ -6,12 +6,34 @@
 
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
+#include <boost/program_options.hpp>
+
 namespace anymal {
 
 AnymalPyBindings::AnymalPyBindings(std::string varargs) {
-  // TODO (jcarius) : Derive this from varargs
-  robotName_ = "croc";
-  configName_ = "c_series";
+  // parsing varargs
+  {
+    namespace po = boost::program_options;
+    auto args = po::split_unix(varargs);
+    po::options_description desc("Options");
+    desc.add_options()("help", "produce help message and quit")("name,n", po::value<std::string>(&robotName_), "robot name (e.g., croc)")(
+        "config,c", po::value<std::string>(&configName_), "configuration name (e.g., c_series)");
+
+    po::command_line_parser parser(args);
+    parser.options(desc);
+    po::parsed_options parsed_options = parser.run();
+
+    po::variables_map vm;
+    po::store(parsed_options, vm);
+    po::notify(vm);
+
+    if (vm.count("name") + vm.count("config") == 0 || vm.count("help") > 0) {
+      std::cerr << desc << std::endl;
+      std::stringstream ss;
+      ss << "Varargs wrong when instantiating AnymalPyBindings:\n" << desc << std::endl;
+      throw std::runtime_error(ss.str());
+    }
+  }
 
   auto anymalInterface = getAnymalInterface(stringToAnymalModel(robotName_), getConfigFolder(configName_));
   const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePath(configName_));

@@ -7,6 +7,6 @@
   </include>
 
   <!-- Wheels dummy tf publisher -->
-  <node pkg="ocs2_anymal_mpc" type="ocs2_anymal_mpc_wheels_dummy_mrt_node" name="ocs2_anymal_mpc_wheels_dummy_mrt_node"/>
+  <node pkg="ocs2_anymal_mpc" type="ocs2_anymal_mpc_wheels_dummy_visualization_node" name="ocs2_anymal_mpc_wheels_dummy_visualization_node"/>
 
 </launch>

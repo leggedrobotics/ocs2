@@ -321,3 +321,20 @@ target_link_libraries(test_Logging
   ${catkin_LIBRARIES}
   gtest_main
 )
+
+find_package(benchmark)
+if(benchmark_FOUND)
+  add_executable(benchInterpolation
+    test/misc/benchInterpolation.cpp
+  )
+  target_include_directories(benchInterpolation PRIVATE
+    ${benchmark_INCLUDE_DIRS}
+  )
+  target_link_libraries(benchInterpolation
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    Eigen3::Eigen
+    benchmark
+    -pthread
+  )
+endif(benchmark_FOUND)

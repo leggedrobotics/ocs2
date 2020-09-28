@@ -2,7 +2,7 @@
 // Created by rgrandia on 20.02.20.
 //
 
-#include "ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h"
+#include "ocs2_switched_model_interface/visualization/VisualizationHelpers.h"
 
 namespace switched_model {
 

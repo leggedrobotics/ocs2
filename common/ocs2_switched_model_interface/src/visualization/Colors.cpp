@@ -2,7 +2,7 @@
 // Created by rgrandia on 20.02.20.
 //
 
-#include "ocs2_quadruped_interface/QuadrupedVisualizationColors.h"
+#include "ocs2_switched_model_interface/visualization/Colors.h"
 
 namespace switched_model {
 

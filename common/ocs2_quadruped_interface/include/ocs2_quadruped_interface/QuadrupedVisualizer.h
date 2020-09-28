@@ -14,7 +14,7 @@
 
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
-#include "ocs2_quadruped_interface/QuadrupedVisualizationColors.h"
+#include "ocs2_switched_model_interface/visualization/Colors.h"
 
 namespace switched_model {
 

@@ -8,7 +8,9 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_msgs
   ocs2_oc
   ocs2_ros_interfaces
-  ocs2_switched_model_msgs
+	visualization_msgs
+	geometry_msgs
+	ocs2_switched_model_msgs
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -60,6 +62,8 @@ add_library(${PROJECT_NAME}
 	src/ros_msg_conversions/RosMsgConversions.cpp
 	src/terrain/PlanarTerrainModel.cpp
 	src/terrain/TerrainPlane.cpp
+	src/visualization/Colors.cpp
+	src/visualization/VisualizationHelpers.cpp
 	src/EndEffectorConstraint.cpp
 	src/FootNormalConstraint.cpp
 	src/ComKinoConstraintBaseAd.cpp

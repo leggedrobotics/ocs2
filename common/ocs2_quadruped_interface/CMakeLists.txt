@@ -14,8 +14,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf
   kdl_parser
   robot_state_publisher
-  visualization_msgs
-  geometry_msgs
+  segmented_planes_terrain_model
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -26,6 +25,10 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Cpp standard version
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ###################################
 ## catkin specific configuration ##
@@ -58,12 +61,11 @@ add_library(${PROJECT_NAME}
   src/QuadrupedMpcNode.cpp
   src/QuadrupedPointfootInterface.cpp
   src/QuadrupedSlqMpc.cpp
-  src/QuadrupedVisualizationColors.cpp
-  src/QuadrupedVisualizationHelpers.cpp
   src/QuadrupedVisualizer.cpp
   src/QuadrupedWheeledInterface.cpp
   src/SwingPlanningVisualizer.cpp
   src/TerrainPlaneVisualizer.cpp
+  src/TerrainReceiver.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "QuadrupedVisualizationColors.h"
+#include "Colors.h"
 
 #include <chrono>
 

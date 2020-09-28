@@ -41,7 +41,7 @@ class AnymalCrocKinematics final : public switched_model::KinematicsModelBase<SC
 }  // namespace tpl
 
 using AnymalCrocKinematics = tpl::AnymalCrocKinematics<ocs2::scalar_t>;
-using AnymalCrocKinematicsAd = tpl::AnymalCrocKinematics<ocs2::CppAdInterface::ad_scalar_t>;
+using AnymalCrocKinematicsAd = tpl::AnymalCrocKinematics<ocs2::ad_scalar_t>;
 
 }  // namespace anymal
 
@@ -49,4 +49,4 @@ using AnymalCrocKinematicsAd = tpl::AnymalCrocKinematics<ocs2::CppAdInterface::a
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
 extern template class anymal::tpl::AnymalCrocKinematics<ocs2::scalar_t>;
-extern template class anymal::tpl::AnymalCrocKinematics<ocs2::CppAdInterface::ad_scalar_t>;
+extern template class anymal::tpl::AnymalCrocKinematics<ocs2::ad_scalar_t>;

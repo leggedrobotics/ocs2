@@ -47,7 +47,7 @@ class AnymalCrocCom : public switched_model::ComModelBase<SCALAR_T> {
 }  // namespace tpl
 
 using AnymalCrocCom = tpl::AnymalCrocCom<ocs2::scalar_t>;
-using AnymalCrocComAd = tpl::AnymalCrocCom<ocs2::CppAdInterface::ad_scalar_t>;
+using AnymalCrocComAd = tpl::AnymalCrocCom<ocs2::ad_scalar_t>;
 
 }  // namespace anymal
 
@@ -55,4 +55,4 @@ using AnymalCrocComAd = tpl::AnymalCrocCom<ocs2::CppAdInterface::ad_scalar_t>;
  *  Explicit instantiation, for instantiation additional types, include the implementation file instead of this one.
  */
 extern template class anymal::tpl::AnymalCrocCom<ocs2::scalar_t>;
-extern template class anymal::tpl::AnymalCrocCom<ocs2::CppAdInterface::ad_scalar_t>;
+extern template class anymal::tpl::AnymalCrocCom<ocs2::ad_scalar_t>;

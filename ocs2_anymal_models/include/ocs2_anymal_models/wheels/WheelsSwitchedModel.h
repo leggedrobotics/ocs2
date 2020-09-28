@@ -9,7 +9,7 @@ namespace wheels {
 template <typename SCALAR_T>
 using extended_joint_coordinate_s_t = Eigen::Matrix<SCALAR_T, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
 using extended_joint_coordinate_t = Eigen::Matrix<ocs2::scalar_t, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
-using extended_joint_coordinate_ad_t = Eigen::Matrix<ocs2::CppAdInterface::ad_scalar_t, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
+using extended_joint_coordinate_ad_t = Eigen::Matrix<ocs2::ad_scalar_t, switched_model::JOINT_COORDINATE_SIZE + 4, 1>;
 
 template <typename SCALAR_T>
 inline extended_joint_coordinate_s_t<SCALAR_T> getExtendedJointCoordinates(

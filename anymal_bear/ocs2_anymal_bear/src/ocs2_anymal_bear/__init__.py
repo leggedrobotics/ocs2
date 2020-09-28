@@ -1,2 +1,0 @@
-from AnymalBearPyBindings import mpc_interface
-from AnymalBearPyBindings import scalar_array, vector_array, matrix_array, CostDesiredTrajectories

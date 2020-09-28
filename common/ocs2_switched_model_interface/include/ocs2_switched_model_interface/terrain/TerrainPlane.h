@@ -15,10 +15,10 @@ namespace switched_model {
  */
 struct TerrainPlane {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  vector3_t positionInWorld = vector3_t::Zero();
-  matrix3_t orientationWorldToTerrain = matrix3_t::Identity();
+  vector3_t positionInWorld;
+  matrix3_t orientationWorldToTerrain;
 
-  TerrainPlane() = default;
+  TerrainPlane() : positionInWorld(vector3_t::Zero()), orientationWorldToTerrain(matrix3_t::Identity()) {}
   TerrainPlane(vector3_t positionInWorld_, matrix3_t orientationWorldToTerrain_)
       : positionInWorld(std::move(positionInWorld_)), orientationWorldToTerrain(std::move(orientationWorldToTerrain_)) {}
 };

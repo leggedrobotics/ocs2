@@ -16,9 +16,26 @@
 
 using namespace convex_plane_decomposition;
 
-int main(int argc, char* argv[]) {
-  // This node publishes wheel angles to be zero
+PlanarRegion createPolygonRegion(const CgalPoint2d& center, double radius, int numberOfVertices) {
+  const double inset = 0.05;
+  radius = std::max(radius, 1.001 * inset);
+  // Center around {0, 0}. Shift of the polygon happens through plane parameters.
+  CgalPolygonWithHoles2d boundary(createRegularPolygon({0.0, 0.0}, radius, numberOfVertices));
+  CgalPolygonWithHoles2d boundaryInset(createRegularPolygon({0.0, 0.0}, radius - inset, numberOfVertices));
 
+  PlanarRegion planarRegion;
+  planarRegion.boundaryWithInset = BoundaryWithInset{boundary, {boundaryInset}};
+  planarRegion.bbox2d = boundary.outer_boundary().bbox();
+  planarRegion.planeParameters = TerrainPlane();
+  planarRegion.planeParameters.positionInWorld.x() = center.x();
+  planarRegion.planeParameters.positionInWorld.y() = center.y();
+
+  std::cout << planarRegion.planeParameters.orientationWorldToTerrain << std::endl << std::endl;
+
+  return planarRegion;
+}
+
+int main(int argc, char* argv[]) {
   // Initialize ros node
   ros::init(argc, argv, "anymal_mpc_test_terrain");
   ros::NodeHandle nodeHandle;
@@ -28,18 +45,17 @@ int main(int argc, char* argv[]) {
   auto boundaryPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("boundaries", 1);
   auto insetPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("insets", 1);
 
-  double radius = 0.5;
-  double inset = 0.05;
-  CgalPolygonWithHoles2d hexagon(createRegularPolygon({0.0, 0.0}, radius, 6));
-  CgalPolygonWithHoles2d hexagon_inset(createRegularPolygon({0.0, 0.0}, radius - inset, 6));
+  const double spacingRadius = 0.5;
+  const double hexRadius = 0.4;
 
-  PlanarRegion planarRegion;
-  planarRegion.boundaryWithInset = BoundaryWithInset{hexagon, {hexagon_inset}};
-  planarRegion.bbox2d = hexagon.outer_boundary().bbox();
-  planarRegion.planeParameters = TerrainPlane();
+  const double hexagon_dy = spacingRadius * std::cos(M_PI / 6.0);
+  const double hexagon_dx = spacingRadius * (1.0 + std::sin(M_PI / 6.0));
 
   PlanarTerrain planarTerrain;
-  planarTerrain.planarRegions = {planarRegion};
+  planarTerrain.planarRegions.emplace_back(createPolygonRegion({hexagon_dx, 0.0}, hexRadius, 6));
+  planarTerrain.planarRegions.emplace_back(createPolygonRegion({-hexagon_dx, 0.0}, hexRadius, 6));
+  planarTerrain.planarRegions.emplace_back(createPolygonRegion({0.0, hexagon_dy}, hexRadius, 6));
+  planarTerrain.planarRegions.emplace_back(createPolygonRegion({0.0, -hexagon_dy}, hexRadius, 6));
   planarTerrain.gridMap.setFrameId("world");
 
   ros::WallRate rate(1.0);

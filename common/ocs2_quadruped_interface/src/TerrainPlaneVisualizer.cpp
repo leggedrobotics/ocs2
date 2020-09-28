@@ -25,18 +25,15 @@ void TerrainPlaneVisualizer::update(scalar_t time, const TerrainPlane& terrainPl
   terrainPublisher_.publish(planeMsg);
 }
 
-TerrainPlaneVisualizerSynchronizedModule::TerrainPlaneVisualizerSynchronizedModule(ocs2::LockablePtr<TerrainModel>& terrainPtr,
+TerrainPlaneVisualizerSynchronizedModule::TerrainPlaneVisualizerSynchronizedModule(const ocs2::Synchronized<TerrainModel>& terrainModel,
                                                                                    ros::NodeHandle& nodeHandle)
-    : terrainPptr_(&terrainPtr), planeVisualizer_(nodeHandle) {}
+    : terrainModelPtr_(&terrainModel), planeVisualizer_(nodeHandle) {}
 
 void TerrainPlaneVisualizerSynchronizedModule::postSolverRun(const ocs2::PrimalSolution& primalSolution) {
   const base_coordinate_t comPose = getComPose(comkino_state_t(primalSolution.stateTrajectory_.front()));
 
   // Obtain local terrain below the base
-  const auto localBaseTerrain = [&] {
-    std::lock_guard<ocs2::LockablePtr<TerrainModel>> lock(*terrainPptr_);
-    return (*terrainPptr_)->getLocalTerrainAtPositionInWorldAlongGravity(getPositionInOrigin(comPose));
-  }();
+  const auto localBaseTerrain = terrainModelPtr_->lock()->getLocalTerrainAtPositionInWorldAlongGravity(getPositionInOrigin(comPose));
 
   planeVisualizer_.update(primalSolution.timeTrajectory_.front(), localBaseTerrain);
 }

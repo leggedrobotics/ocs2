@@ -75,12 +75,12 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
     return gait;
   }();
 
-  GaitSchedule gaitSchedule{0.0, defaultGait};
+  std::unique_ptr<GaitSchedule> gaitSchedule(new GaitSchedule(0.0, defaultGait));
 
   // Swing trajectory planner
   const auto swingTrajectorySettings = loadSwingTrajectorySettings(pathToConfigFile);
-  SwingTrajectoryPlanner swingTrajectoryPlanner{swingTrajectorySettings, getComModel(), getKinematicModel(),
-                                                getJointPositions(initialState_)};
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
+      new SwingTrajectoryPlanner(swingTrajectorySettings, getComModel(), getKinematicModel(), getJointPositions(initialState_)));
 
   // Terrain
   auto loadedTerrain = loadTerrainPlane(pathToConfigFile, true);

@@ -9,17 +9,13 @@
 namespace switched_model {
 
 ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                                 std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                                                 std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
-                                                 ModelSettings options)
+                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings options)
     : adKinematicModelPtr_(adKinematicModel.clone()),
       adComModelPtr_(adComModel.clone()),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
-      swingTrajectoryPlannerPtr_(std::move(swingTrajectoryPlannerPtr)),
+      modeScheduleManagerPtr_(&modeScheduleManager),
+      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       options_(std::move(options)) {
-  if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
-    throw std::runtime_error("[ComKinoConstraintBaseAD] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
-  }
   initializeConstraintTerms();
 }
 
@@ -27,7 +23,7 @@ ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adK
 /******************************************************************************************************/
 /******************************************************************************************************/
 ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
-    : Base(rhs),
+    : ocs2::ConstraintBase(rhs),
       adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
       adComModelPtr_(rhs.adComModelPtr_->clone()),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
@@ -47,6 +43,8 @@ ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ComKinoConstraintBaseAd::initializeConstraintTerms() {
+  using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
@@ -75,16 +73,14 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ComKinoConstraintBaseAd::timeUpdate(scalar_t t) {
-  numEventTimes_ = modeScheduleManagerPtr_->getModeSchedule().eventTimes.size();
-  stanceLegs_ = modeScheduleManagerPtr_->getContactFlags(t);
-
+void ComKinoConstraintBaseAd::updateStateInputEqualityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    auto footName = feetNames[i];
+    const auto& footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
+    const bool inContact = footPhase.contactFlag();
 
     // Zero forces active for swing legs
-    equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
+    equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!inContact);
 
     // Foot normal constraint always active
     auto& EENormalConstraint = equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
@@ -93,18 +89,29 @@ void ComKinoConstraintBaseAd::timeUpdate(scalar_t t) {
 
     // Foot tangential constraints only for stanceLegs
     auto& EEVelConstraint = equalityStateInputConstraintCollection_.get<EndEffectorVelocityConstraint>(footName + "_EEVel");
-    EEVelConstraint.setActivity(stanceLegs_[i]);
-    if (stanceLegs_[i]) {
+    EEVelConstraint.setActivity(inContact);
+    if (inContact) {
       EndEffectorVelocityConstraintSettings eeVelConSettings;
       eeVelConSettings.A = tangentialBasisFromSurfaceNormal(footPhase.normalDirectionInWorldFrame(t));
       eeVelConSettings.b = Eigen::Vector2d::Zero();
       EEVelConstraint.configure(eeVelConSettings);
     }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ComKinoConstraintBaseAd::updateInequalityConstraints(scalar_t t) {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+    const auto& footName = feetNames[i];
+    const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
+    const bool inContact = footPhase.contactFlag();
 
     // Active friction cone constraint for stanceLegs
     auto& frictionConeConstraint = inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
-    frictionConeConstraint.setActivity(stanceLegs_[i]);
-    if (stanceLegs_[i]) {
+    frictionConeConstraint.setActivity(inContact);
+    if (inContact) {
       frictionConeConstraint.setSurfaceNormalInWorld(footPhase.normalDirectionInWorldFrame(t));
     }
   }
@@ -114,7 +121,7 @@ void ComKinoConstraintBaseAd::timeUpdate(scalar_t t) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t ComKinoConstraintBaseAd::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
-  timeUpdate(t);
+  updateStateInputEqualityConstraints(t);
   return equalityStateInputConstraintCollection_.getValueAsVector(t, x, u);
 }
 
@@ -122,7 +129,7 @@ vector_t ComKinoConstraintBaseAd::stateInputEqualityConstraint(scalar_t t, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t ComKinoConstraintBaseAd::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
-  timeUpdate(t);
+  updateInequalityConstraints(t);
   return inequalityConstraintCollection_.getValueAsVector(t, x, u);
 }
 
@@ -131,7 +138,7 @@ vector_t ComKinoConstraintBaseAd::inequalityConstraint(scalar_t t, const vector_
 /******************************************************************************************************/
 VectorFunctionLinearApproximation ComKinoConstraintBaseAd::stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
                                                                                                            const vector_t& u) {
-  timeUpdate(t);
+  updateStateInputEqualityConstraints(t);
   const size_t numConstraints = equalityStateInputConstraintCollection_.getNumConstraints(t);
   const auto constraintApproximation = equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(t, x, u);
 
@@ -147,7 +154,7 @@ VectorFunctionLinearApproximation ComKinoConstraintBaseAd::stateInputEqualityCon
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation ComKinoConstraintBaseAd::inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                          const vector_t& u) {
-  timeUpdate(t);
+  updateInequalityConstraints(t);
   const auto constraintApproximation = inequalityConstraintCollection_.getQuadraticApproximation(t, x, u);
   const size_t numConstraints = constraintApproximation.constraintValues.size();
 
@@ -176,7 +183,7 @@ vector_array_t ComKinoConstraintBaseAd::stateInputEqualityConstraintDerivativesE
                                                                                           const vector_t& u) {
   // set all to zero
   const size_t numConstraints = equalityStateInputConstraintCollection_.getNumConstraints(t);
-  vector_array_t g1DevArray(numEventTimes_);
+  vector_array_t g1DevArray(modeScheduleManagerPtr_->getModeSchedule().eventTimes.size());
   for (auto& g1Dev : g1DevArray) {
     g1Dev.setZero(numConstraints);
   }

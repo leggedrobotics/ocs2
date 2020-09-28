@@ -10,7 +10,7 @@
 
 #include <ocs2_msgs/mode_schedule.h>
 
-#include <ocs2_core/misc/Lockable.h>
+#include <ocs2_core/misc/Synchronized.h>
 
 #include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 
@@ -23,9 +23,7 @@ namespace switched_model {
 
 class GaitReceiver : public ocs2::SolverSynchronizedModule {
  public:
-  using LockableGaitSchedule = ocs2::Lockable<GaitSchedule>;
-
-  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr, const std::string& robotName);
+  GaitReceiver(ros::NodeHandle nodeHandle, ocs2::Synchronized<GaitSchedule>& gaitSchedule, const std::string& robotName);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
@@ -41,7 +39,7 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
   ros::Subscriber mpcScheduledModeSequenceSubscriber_;
   ros::Subscriber mpcGaitSequenceSubscriber_;
 
-  std::shared_ptr<LockableGaitSchedule> gaitSchedulePtr_;
+  ocs2::Synchronized<GaitSchedule>* gaitSchedulePtr_;
 
   std::atomic_bool gaitUpdated_;
 

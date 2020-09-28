@@ -29,9 +29,8 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
 
   //! Constructor
   SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
-                        std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                        std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr, const state_matrix_t& Q,
-                        const input_matrix_t& R, const state_matrix_t& QFinal, bool generateModels);
+                        const SwitchedModelModeScheduleManager& modeScheduleManager, const SwingTrajectoryPlanner& swingTrajectoryPlanner,
+                        const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal, bool generateModels);
 
   //! Destructor
   ~SwitchedModelCostBase() override = default;
@@ -51,13 +50,13 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
 
   void update(scalar_t t, const vector_t& x, const vector_t& u);
 
-  void inputFromContactFlags(const contact_flag_t& contactFlags, const vector_t& nominalState, vector_t& inputs);
+  void inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState, vector_t& inputs) const;
 
   std::unique_ptr<FootPlacementCost> footPlacementCost_;
   std::unique_ptr<com_model_t> comModelPtr_;
 
-  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
-  std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr_;
+  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
 
   // Quadratic cost terms
   state_matrix_t Q_;

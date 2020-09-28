@@ -16,21 +16,16 @@ namespace switched_model {
 /******************************************************************************************************/
 SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel,
                                              const ad_kinematic_model_t& adKinematicsModel,
-                                             std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                                             std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
-                                             const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal,
-                                             bool generateModels)
+                                             const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                             const SwingTrajectoryPlanner& swingTrajectoryPlanner, const state_matrix_t& Q,
+                                             const input_matrix_t& R, const state_matrix_t& QFinal, bool generateModels)
     : comModelPtr_(comModel.clone()),
       footPlacementCost_(new FootPlacementCost(FootPlacementCostParameters(), adComModel, adKinematicsModel, generateModels)),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
-      swingTrajectoryPlannerPtr_(std::move(swingTrajectoryPlannerPtr)),
+      modeScheduleManagerPtr_(&modeScheduleManager),
+      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       Q_(Q),
       R_(R),
-      QFinal_(QFinal) {
-  if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
-    throw std::runtime_error("[SwitchedModelCostBase] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
-  }
-}
+      QFinal_(QFinal) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -120,7 +115,7 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
   L.dfdx = qDeviation + footPlacementCost_->getCostDerivativeState();
   L.dfdu = rDeviation;
   L.dfdxx = Q_ + footPlacementCost_->getCostSecondDerivativeState();
-  L.dfdux.setZero(INPUT_DIM, STATE_DIM);
+  L.dfdux.setZero(u.rows(), x.rows());
   L.dfduu = R_;
   return L;
 }
@@ -161,7 +156,8 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::finalCostQuadraticAp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const vector_t& nominalState, vector_t& inputs) {
+void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState,
+                                                  vector_t& inputs) const {
   // Distribute total mass equally over active stance legs.
   inputs.setZero(INPUT_DIM);
 
@@ -175,7 +171,7 @@ void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactF
   }
 
   if (numStanceLegs > 0) {
-    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(switched_model::comkino_state_t(nominalState))));
+    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(nominalState)));
     const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalMass / numStanceLegs};
 
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {

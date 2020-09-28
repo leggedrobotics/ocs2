@@ -9,7 +9,7 @@
 
 namespace pinocchio {
 
-template void forwardKinematics<double, 0, JointCollectionDefaultTpl>(const Model& model, Data& data,
-                                                                      const Eigen::MatrixBase<Data::ConfigVectorType>& q);
+template void forwardKinematics<scalar_t, 0, JointCollectionDefaultTpl>(const Model& model, Data& data,
+                                                                        const Eigen::MatrixBase<Data::ConfigVectorType>& q);
 
 }  // namespace pinocchio

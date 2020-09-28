@@ -40,7 +40,7 @@ namespace ocs2 {
 
 class SelfCollisionCost final : public ocs2::CostFunctionBase {
  public:
-  SelfCollisionCost(ocs2::PinocchioInterface<double>& pinocchioInterface,
+  SelfCollisionCost(ocs2::PinocchioInterface<scalar_t>& pinocchioInterface,
                     const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
                     scalar_t delta);
   ~SelfCollisionCost() override = default;
@@ -58,7 +58,7 @@ class SelfCollisionCost final : public ocs2::CostFunctionBase {
   ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  private:
-  ocs2::PinocchioInterface<double> pinocchioInterface_;
+  ocs2::PinocchioInterface<scalar_t> pinocchioInterface_;
   ocs2::PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
   scalar_t minimumDistance_;

@@ -23,7 +23,7 @@ using ad_vector_t = mobile_manipulator::ad_vector_t;
 class SelfCollisionCostCppAd : public CostFunctionBase {
  public:
   //  SelfCollisionCostCppAd(PinocchioInterface<scalar_t> pinocchioInterface, );
-  SelfCollisionCostCppAd(ocs2::PinocchioInterface<double>& pinocchioInterface,
+  SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t>& pinocchioInterface,
                          const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
                          scalar_t delta);
   ~SelfCollisionCostCppAd() override = default;

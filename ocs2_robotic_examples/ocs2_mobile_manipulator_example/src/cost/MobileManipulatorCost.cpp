@@ -68,7 +68,7 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   const size_t maxNumPairs = 100;
   // TODO(perry) replace with some nice link parser or something
   std::vector<ocs2::ExtendedPair<size_t, size_t>> selfCollisionPairs;
-  double selfColWeight, mu, delta, minimumDistance = 1.0;
+  scalar_t selfColWeight, mu, delta, minimumDistance = 1.0;
 
   ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionPairs", selfCollisionPairs);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.weight", selfColWeight);
@@ -81,10 +81,10 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   std::cerr << "minimumDistance:  " << minimumDistance << std::endl;
 
   std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-  ocs2::PinocchioInterface<scalar_t> pinocchioInterfaceDouble = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, selfCollisionPairs);
-  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
-  //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu,
+  ocs2::PinocchioInterface<scalar_t> pinocchioInterfaceScalar = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
+  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceScalar, selfCollisionPairs);
+  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu, delta);
+  //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu,
   //  delta); colCostAd->initialize("ColCostAd", libraryFolder, recompileLibraries, verbose);
 
   costs.emplace_back(WeightedCost{eeCostWeight, std::move(eeCostPtr)});

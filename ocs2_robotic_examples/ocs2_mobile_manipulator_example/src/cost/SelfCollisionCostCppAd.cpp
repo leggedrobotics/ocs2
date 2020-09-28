@@ -13,18 +13,18 @@
 
 namespace ocs2 {
 
-SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<double>& pinocchioInterface,
+SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t>& pinocchioInterface,
                                                const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision,
                                                scalar_t minimumDistance, scalar_t mu, scalar_t delta)
     : pinocchioInterface_(pinocchioInterface),
-      pinocchioInterfaceAd_(ocs2::PinocchioInterface<double>::castToCppAd(pinocchioInterface)),
+      pinocchioInterfaceAd_(ocs2::PinocchioInterface<scalar_t>::castToCppAd(pinocchioInterface)),
       pinocchioGeometrySelfCollisions_(geometryInterfaceSelfCollision),
       minimumDistance_(minimumDistance),
       relaxedBarrierPenalty_(mu, delta) {}
 
 SelfCollisionCostCppAd::SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs)
     : pinocchioInterface_(rhs.pinocchioInterface_),
-      pinocchioInterfaceAd_(ocs2::PinocchioInterface<double>::castToCppAd(pinocchioInterface_)),
+      pinocchioInterfaceAd_(ocs2::PinocchioInterface<scalar_t>::castToCppAd(pinocchioInterface_)),
       pinocchioGeometrySelfCollisions_(rhs.pinocchioGeometrySelfCollisions_),
       minimumDistance_(rhs.minimumDistance_),
       relaxedBarrierPenalty_(rhs.relaxedBarrierPenalty_),

@@ -1,0 +1,7 @@
+<launch>
+
+
+  <!-- Test terrain -->
+  <node pkg="ocs2_anymal_mpc" type="ocs2_anymal_mpc_test_terrain_node" name="ocs2_anymal_mpc_test_terrain_node"/>
+
+</launch>

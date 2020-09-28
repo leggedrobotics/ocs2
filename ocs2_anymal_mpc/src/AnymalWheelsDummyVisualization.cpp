@@ -1,4 +1,5 @@
 #include <ros/init.h>
+#include <ros/node_handle.h>
 
 // URDF stuff
 #include <robot_state_publisher/robot_state_publisher.h>

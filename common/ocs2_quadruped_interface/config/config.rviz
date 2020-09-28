@@ -8,8 +8,9 @@ Panels:
         - /Desired Trajectory1
         - /Optimized Trajectory1
         - /Current1
+        - /Terrain1
       Splitter Ratio: 0.7034631967544556
-    Tree Height: 763
+    Tree Height: 856
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -66,7 +67,7 @@ Visualization Manager:
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        LF_ADAPTER:
+        LF_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -90,11 +91,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        LF_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LF_SHANK:
           Alpha: 1
           Show Axes: false
@@ -103,11 +99,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        LF_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LF_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -123,7 +114,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        LH_ADAPTER:
+        LH_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -147,11 +138,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        LH_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LH_SHANK:
           Alpha: 1
           Show Axes: false
@@ -160,11 +146,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        LH_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LH_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -181,7 +162,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
         Link Tree Style: Links in Alphabetic Order
-        RF_ADAPTER:
+        RF_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -205,11 +186,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        RF_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RF_SHANK:
           Alpha: 1
           Show Axes: false
@@ -218,11 +194,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        RF_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RF_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -238,7 +209,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        RH_ADAPTER:
+        RH_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -262,11 +233,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        RH_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RH_SHANK:
           Alpha: 1
           Show Axes: false
@@ -275,11 +241,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        RH_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RH_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -309,25 +270,91 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        blackfly_front_camera:
+        depth_camera_front_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        blackfly_front_camera_parent:
+        depth_camera_front_camera_parent:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        blackfly_rear_camera:
+        depth_camera_front_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_front_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_front_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_left_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        blackfly_rear_camera_parent:
+        depth_camera_left_camera_parent:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        docking_socket:
+        depth_camera_left_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_left_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_left_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_rear_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        depth_camera_rear_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_rear_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_rear_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_rear_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_right_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        depth_camera_right_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_right_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_right_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_right_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        docking_hatch_cover:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -351,57 +378,39 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        realsense_d435_front_camera:
+        lidar:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        realsense_d435_front_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_left_camera:
+        lidar_cage:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        realsense_d435_left_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_rear_camera:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        realsense_d435_rear_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        realsense_d435_right_camera:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        realsense_d435_right_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         shell:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        velodyne:
+        wide_angle_camera_front_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        velodyne_cage:
+        wide_angle_camera_front_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wide_angle_camera_rear_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
+        wide_angle_camera_rear_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Name: "ANYmal "
       Robot Description: /ocs2_anymal_description
       TF Prefix: ""
@@ -550,7 +559,6 @@ Visualization Manager:
           Namespaces:
             CoM Trajectory: true
             EE Trajectories: true
-            Future footholds: true
           Queue Size: 1
           Value: true
         - Class: rviz/Group
@@ -678,6 +686,31 @@ Visualization Manager:
           Value: true
       Enabled: true
       Name: Current
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 1
+          Class: jsk_rviz_plugin/PolygonArray
+          Color: 25; 255; 0
+          Enabled: true
+          Name: Boundaries
+          Topic: /boundaries
+          Unreliable: false
+          Value: true
+          coloring: Auto
+          enable lighting: true
+          normal length: 0.10000000149011612
+          only border: true
+          show normal: true
+        - Alpha: 1
+          Class: rviz/Polygon
+          Color: 25; 255; 0
+          Enabled: true
+          Name: Insets
+          Topic: ""
+          Unreliable: false
+          Value: true
+      Enabled: true
+      Name: Terrain
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -799,10 +832,10 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1052
+  Height: 1145
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001d0000003c2fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000003c2000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004300000432000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000567000003c200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d00000041ffc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000041f000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004300000432000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000005670000041f00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -813,4 +846,4 @@ Window Geometry:
     collapsed: false
   Width: 1853
   X: 1987
-  Y: 0
+  Y: 27

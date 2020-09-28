@@ -3,7 +3,7 @@ project(ocs2_anymal_wheels)
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
-  ocs2_anymal_wheels_switched_model
+  ocs2_anymal_models
   ocs2_quadruped_interface
 )
 
@@ -27,7 +27,7 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
-    ocs2_anymal_wheels_switched_model
+    ocs2_anymal_models
     ocs2_quadruped_interface
   DEPENDS
     Boost

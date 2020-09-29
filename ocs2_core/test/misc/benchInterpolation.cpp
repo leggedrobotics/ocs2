@@ -154,7 +154,7 @@ ocs2::scalar_array_t getLinSpacedTimes(ocs2::scalar_t start, ocs2::scalar_t end,
   return times;
 }
 
-void interploate_Scalar(benchmark::State& state) {
+void interpolate_Scalar(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   ocs2::scalar_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(1)(0); });
@@ -168,9 +168,9 @@ void interploate_Scalar(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_Scalar);
+BENCHMARK(interpolate_Scalar);
 
-void interploate_EigenVector(benchmark::State& state) {
+void interpolate_EigenVector(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   ocs2::vector_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(10); });
@@ -184,9 +184,9 @@ void interploate_EigenVector(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_EigenVector);
+BENCHMARK(interpolate_EigenVector);
 
-void interploate_EigenMatrix(benchmark::State& state) {
+void interpolate_EigenMatrix(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   ocs2::matrix_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::matrix_t::Random(10, 10); });
@@ -200,9 +200,9 @@ void interploate_EigenMatrix(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_EigenMatrix);
+BENCHMARK(interpolate_EigenMatrix);
 
-void interploate_Scalar_AccessFunctor(benchmark::State& state) {
+void interpolate_Scalar_AccessFunctor(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   ocs2::scalar_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(1)(0); });
@@ -216,9 +216,9 @@ void interploate_Scalar_AccessFunctor(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_Scalar_AccessFunctor);
+BENCHMARK(interpolate_Scalar_AccessFunctor);
 
-void interploate_EigenVector_AccessFunctor(benchmark::State& state) {
+void interpolate_EigenVector_AccessFunctor(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   ocs2::vector_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(10); });
@@ -232,9 +232,9 @@ void interploate_EigenVector_AccessFunctor(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_EigenVector_AccessFunctor);
+BENCHMARK(interpolate_EigenVector_AccessFunctor);
 
-void interploate_EigenMatrix_AccessFunctor(benchmark::State& state) {
+void interpolate_EigenMatrix_AccessFunctor(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   ocs2::matrix_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::matrix_t::Random(10, 10); });
@@ -248,9 +248,9 @@ void interploate_EigenMatrix_AccessFunctor(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_EigenMatrix_AccessFunctor);
+BENCHMARK(interpolate_EigenMatrix_AccessFunctor);
 
-void interploate_ModelDataScalar(benchmark::State& state) {
+void interpolate_ModelDataScalar(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   std::vector<ocs2::ModelDataBase> data(times.size());
   std::generate(data.begin(), data.end(), []() {
@@ -268,9 +268,9 @@ void interploate_ModelDataScalar(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_ModelDataScalar);
+BENCHMARK(interpolate_ModelDataScalar);
 
-void interploate_ModelDataVector(benchmark::State& state) {
+void interpolate_ModelDataVector(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   std::vector<ocs2::ModelDataBase> data(times.size());
   std::generate(data.begin(), data.end(), []() {
@@ -288,9 +288,9 @@ void interploate_ModelDataVector(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_ModelDataVector);
+BENCHMARK(interpolate_ModelDataVector);
 
-void interploate_ModelDataMatrix(benchmark::State& state) {
+void interpolate_ModelDataMatrix(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   std::vector<ocs2::ModelDataBase> data(times.size());
   std::generate(data.begin(), data.end(), []() {
@@ -308,9 +308,9 @@ void interploate_ModelDataMatrix(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_ModelDataMatrix);
+BENCHMARK(interpolate_ModelDataMatrix);
 
-void interploate_ModelDataScalar_AccessFunctor(benchmark::State& state) {
+void interpolate_ModelDataScalar_AccessFunctor(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   std::vector<ocs2::ModelDataBase> data(times.size());
   std::generate(data.begin(), data.end(), []() {
@@ -328,9 +328,9 @@ void interploate_ModelDataScalar_AccessFunctor(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_ModelDataScalar_AccessFunctor);
+BENCHMARK(interpolate_ModelDataScalar_AccessFunctor);
 
-void interploate_ModelDataVector_AccessFunctor(benchmark::State& state) {
+void interpolate_ModelDataVector_AccessFunctor(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   std::vector<ocs2::ModelDataBase> data(times.size());
   std::generate(data.begin(), data.end(), []() {
@@ -348,9 +348,9 @@ void interploate_ModelDataVector_AccessFunctor(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_ModelDataVector_AccessFunctor);
+BENCHMARK(interpolate_ModelDataVector_AccessFunctor);
 
-void interploate_ModelDataMatrix_AccessFunctor(benchmark::State& state) {
+void interpolate_ModelDataMatrix_AccessFunctor(benchmark::State& state) {
   ocs2::scalar_array_t times = getLinSpacedTimes(0.0, 1.0, 100);
   std::vector<ocs2::ModelDataBase> data(times.size());
   std::generate(data.begin(), data.end(), []() {
@@ -368,6 +368,6 @@ void interploate_ModelDataMatrix_AccessFunctor(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(interploate_ModelDataMatrix_AccessFunctor);
+BENCHMARK(interpolate_ModelDataMatrix_AccessFunctor);
 
 BENCHMARK_MAIN();

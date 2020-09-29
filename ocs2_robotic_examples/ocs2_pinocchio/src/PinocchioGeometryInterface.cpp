@@ -7,7 +7,7 @@
 
 #include <pinocchio/fwd.hpp>
 
-#include <ocs2_mobile_manipulator_example/PinocchioGeometryInterface.hpp>
+#include <ocs2_pinocchio/PinocchioGeometryInterface.hpp>
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>

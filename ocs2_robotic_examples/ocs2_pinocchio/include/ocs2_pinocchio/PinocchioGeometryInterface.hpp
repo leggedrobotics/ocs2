@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <ocs2_mobile_manipulator_example/ExtendedPair.h>
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+#include <ocs2_pinocchio/ExtendedPair.h>
+#include <ocs2_pinocchio/PinocchioInterface.h>
 
 #include <hpp/fcl/collision_data.h>
 

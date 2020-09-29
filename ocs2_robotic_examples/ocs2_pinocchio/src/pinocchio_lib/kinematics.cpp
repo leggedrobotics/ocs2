@@ -3,7 +3,7 @@
  * Date:   2020-09-08
  */
 
-#include <ocs2_mobile_manipulator_example/pinocchio_lib.h>
+#include <ocs2_pinocchio/pinocchio_lib.h>
 
 #include <pinocchio/algorithm/kinematics.hpp>
 

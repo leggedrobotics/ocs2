@@ -83,8 +83,7 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
   ocs2::PinocchioInterface<scalar_t> pinocchioInterfaceScalar = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
   ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceScalar, selfCollisionPairs);
-  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(ocs2::PinocchioInterface<scalar_t>(pinocchioInterfaceScalar),
-                                                           ocs2::PinocchioGeometryInterface(geometryInterface), minimumDistance, mu, delta);
+  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu, delta);
   //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu,
   //  delta); colCostAd->initialize("ColCostAd", libraryFolder, recompileLibraries, verbose);
 

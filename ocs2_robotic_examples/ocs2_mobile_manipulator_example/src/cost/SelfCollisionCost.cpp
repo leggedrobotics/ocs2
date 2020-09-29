@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-SelfCollisionCost::SelfCollisionCost(ocs2::PinocchioInterface<scalar_t>&& pinocchioInterface,
-                                     ocs2::PinocchioGeometryInterface&& geometryInterfaceSelfCollision, scalar_t minimumDistance,
-                                     scalar_t mu, scalar_t delta)
+SelfCollisionCost::SelfCollisionCost(ocs2::PinocchioInterface<scalar_t> pinocchioInterface,
+                                     ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
+                                     scalar_t delta)
     : pinocchioInterface_(std::move(pinocchioInterface)),
       pinocchioGeometrySelfCollisions_(std::move(geometryInterfaceSelfCollision)),
       minimumDistance_(minimumDistance),

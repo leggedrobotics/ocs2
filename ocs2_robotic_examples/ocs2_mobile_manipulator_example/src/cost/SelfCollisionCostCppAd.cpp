@@ -13,8 +13,8 @@
 
 namespace ocs2 {
 
-SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t>&& pinocchioInterface,
-                                               ocs2::PinocchioGeometryInterface&& geometryInterfaceSelfCollision, scalar_t minimumDistance,
+SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t> pinocchioInterface,
+                                               ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance,
                                                scalar_t mu, scalar_t delta)
     : pinocchioInterface_(std::move(pinocchioInterface)),
       pinocchioInterfaceAd_(ocs2::PinocchioInterface<scalar_t>::castToCppAd(pinocchioInterface_)),

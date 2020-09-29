@@ -6,11 +6,19 @@
     <param name="/anymal_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_bear/2019-03-12/urdf/anymal_minimal.urdf"/>
   </group>
 
+  <!-- Load cerberus description -->
+  <group if="$(eval arg('robot_name') == 'cerberus')">
+    <param name="/anymal_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_cerberus_darpa/2020-09-17/urdf/darpa_model.urdf"/>
+  </group>
+
+  <!-- Load chimera description -->
+  <group if="$(eval arg('robot_name') == 'chimera')">
+    <param name="/anymal_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_chimera/2020-05-20/urdf/anymal_minimal.urdf"/>
+  </group>
+
   <!-- Load croc description -->
   <group if="$(eval arg('robot_name') == 'croc')">
     <param name="/anymal_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_croc/2020-05-11/urdf/anymal_minimal.urdf"/>
   </group>
-
-  <!-- Add others .. -->
 
 </launch>

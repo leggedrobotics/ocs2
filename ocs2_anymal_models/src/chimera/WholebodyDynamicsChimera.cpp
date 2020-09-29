@@ -2,7 +2,7 @@
 // Created by rgrandia on 23.09.20.
 //
 
-#include "ocs2_anymal_models/bear/WholebodyDynamicsChimera.h"
+#include "ocs2_anymal_models/chimera/WholebodyDynamicsChimera.h"
 
 #include <iit/rbd/traits/TraitSelector.h>
 #include <ocs2_anymal_models/RobcogenHelpers.h>

@@ -21,6 +21,8 @@ std::unique_ptr<switched_model::QuadrupedInterface> getAnymalInterface(AnymalMod
 
   switch (model) {
     case AnymalModel::Bear:
+    case AnymalModel::Cerberus:
+    case AnymalModel::Chimera:
     case AnymalModel::Croc:
       return std::unique_ptr<switched_model::QuadrupedInterface>(
           new switched_model::QuadrupedPointfootInterface(*kin, *kinAd, *com, *comAd, taskFolder));

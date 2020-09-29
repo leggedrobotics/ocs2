@@ -174,6 +174,7 @@ void interpolate_EigenVector(benchmark::State& state) {
 
   ocs2::vector_t res;
   for (auto _ : state) {
+    res.resize(0);  // clear internal data
     res = ocs2::LinearInterpolation::interpolate(indexAlpha, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
@@ -190,6 +191,7 @@ void interpolate_EigenMatrix(benchmark::State& state) {
 
   ocs2::matrix_t res;
   for (auto _ : state) {
+    res.resize(0, 0);  // clear internal data
     res = ocs2::LinearInterpolation::interpolate(indexAlpha, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
@@ -222,6 +224,7 @@ void interpolate_EigenVector_AccessFunctor(benchmark::State& state) {
 
   ocs2::vector_t res;
   for (auto _ : state) {
+    res.resize(0);  // clear internal data
     ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::vector_t>>(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
@@ -238,6 +241,7 @@ void interpolate_EigenMatrix_AccessFunctor(benchmark::State& state) {
 
   ocs2::matrix_t res;
   for (auto _ : state) {
+    res.resize(0, 0);  // clear internal data
     ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::matrix_t>>(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
@@ -278,6 +282,7 @@ void interpolate_ModelDataVector(benchmark::State& state) {
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
+    res.cost_.dfdx.resize(0);  // clear internal data
     res.cost_.dfdx = ocs2::LinearInterpolation::interpolate(indexAlpha, data, ocs2::ModelData::cost_dfdx);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
@@ -298,6 +303,7 @@ void interpolate_ModelDataMatrix(benchmark::State& state) {
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
+    res.cost_.dfdxx.resize(0, 0);  // clear internal data
     res.cost_.dfdxx = ocs2::LinearInterpolation::interpolate(indexAlpha, data, ocs2::ModelData::cost_dfdxx);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
@@ -338,6 +344,7 @@ void interpolate_ModelDataVector_AccessFunctor(benchmark::State& state) {
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
+    res.cost_.dfdx.resize(0);  // clear internal data
     ocs2::LinearInterpolation::interpolateField<ModelData_cost_dfdx>(indexAlpha, res.cost_.dfdx, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
@@ -358,6 +365,7 @@ void interpolate_ModelDataMatrix_AccessFunctor(benchmark::State& state) {
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
+    res.cost_.dfdxx.resize(0, 0);  // clear internal data
     ocs2::LinearInterpolation::interpolateField<ModelData_cost_dfdxx>(indexAlpha, res.cost_.dfdxx, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();

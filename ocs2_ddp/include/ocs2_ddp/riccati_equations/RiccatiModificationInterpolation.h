@@ -48,7 +48,7 @@ namespace riccati_modification {
  * possible to write a general interpolate() function with template argument Field_T.
  */
 inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, scalar_t& enquiryData, const std::vector<Data>* dataPtr,
-                        std::function<const scalar_t&(const std::vector<Data>*, size_t)> accessFun) {
+                        const scalar_t& (*accessFun)(const std::vector<Data>*, size_t)) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
@@ -56,7 +56,7 @@ inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, sca
  * Helper specialization of interpolate() of RiccatiModification array types for vector_t subfields.
  */
 inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, vector_t& enquiryData, const std::vector<Data>* dataPtr,
-                        std::function<const vector_t&(const std::vector<Data>*, size_t)> accessFun) {
+                        const vector_t& (*accessFun)(const std::vector<Data>*, size_t)) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 
@@ -64,7 +64,7 @@ inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, vec
  * Helper specialization of interpolate() of RiccatiModification array types for matrix_t subfields.
  */
 inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, matrix_t& enquiryData, const std::vector<Data>* dataPtr,
-                        std::function<const matrix_t&(const std::vector<Data>*, size_t)> accessFun) {
+                        const matrix_t& (*accessFun)(const std::vector<Data>*, size_t)) {
   ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
 }
 

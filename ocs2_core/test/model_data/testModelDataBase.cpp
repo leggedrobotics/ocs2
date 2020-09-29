@@ -52,16 +52,13 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
 
   double time = 5.0;
   // get (index, alpha) pair
-  const auto indexAlpha = ModelData::timeSegment(time, timeArray);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, timeArray);
   // scalar
-  double enquiryScalar;
-  ModelData::interpolate(indexAlpha, enquiryScalar, modelDataBaseArray, ModelData::time);
+  double enquiryScalar = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::time);
   // dynamic vector
-  Eigen::VectorXd enquiryVector;
-  ModelData::interpolate(indexAlpha, enquiryVector, modelDataBaseArray, ModelData::dynamics_f);
+  Eigen::VectorXd enquiryVector = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_f);
   // dynamic matrix
-  Eigen::MatrixXd enquiryMatrix;
-  ModelData::interpolate(indexAlpha, enquiryMatrix, modelDataBaseArray, ModelData::dynamics_dfdx);
+  Eigen::MatrixXd enquiryMatrix = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_dfdx);
 
   ASSERT_TRUE(enquiryScalar == time);
   ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));

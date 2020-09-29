@@ -547,8 +547,7 @@ template <typename Data_T, class Alloc>
 void GaussNewtonDDP::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
                                                  std::vector<Data_T, Alloc>& cachedTrajectory) {
   // adding the fist cashed value
-  Data_T firstCachedValue;
-  LinearInterpolation::interpolate(timeSegment, firstCachedValue, currentTrajectory);
+  Data_T firstCachedValue = LinearInterpolation::interpolate(timeSegment, currentTrajectory);
   cachedTrajectory.emplace_back(firstCachedValue);
 
   // Concatenate the rest

@@ -22,8 +22,8 @@ TEST(testLinearInterpolation, testInterpolation) {
 
   // Test function
   auto test_interpolation = [&](double time, int index, double value) {
-    Data_T v_t;
-    auto indexAlpha = ocs2::LinearInterpolation::interpolate(time, v_t, t, v);
+    const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(time, t);
+    const auto v_t = ocs2::LinearInterpolation::interpolate(indexAlpha, v);
     auto foundIndex = indexAlpha.first;
     std::cout << "time: " << time << " index: " << foundIndex << " v: " << v_t.transpose() << std::endl;
     ASSERT_EQ(foundIndex, index);
@@ -63,8 +63,8 @@ TEST(testLinearInterpolation, testSizeOneTime) {
 
   // Test function
   auto test_interpolation = [&](double time, int index, double value) {
-    Data_T v_t;
-    auto indexAlpha = ocs2::LinearInterpolation::interpolate(time, v_t, t, v);
+    const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(time, t);
+    const auto v_t = ocs2::LinearInterpolation::interpolate(indexAlpha, v);
     auto foundIndex = indexAlpha.first;
     std::cout << "time: " << time << " index: " << foundIndex << " v: " << v_t.transpose() << std::endl;
     ASSERT_EQ(foundIndex, index);
@@ -83,19 +83,19 @@ TEST(testLinearInterpolation, testDifferentEigenSizes) {
   std::vector<Data_T, Eigen::aligned_allocator<Data_T>> data = {Data_T::Zero(2, 3), Data_T::Ones(4, 4)};
 
   Data_T result;
-  ocs2::LinearInterpolation::interpolate(0.4, result, times, data);
+  result = ocs2::LinearInterpolation::interpolate(0.4, times, data);
   bool test = result.isApprox(data[0]);
   ASSERT_TRUE(test);
 
-  ocs2::LinearInterpolation::interpolate(0.6, result, times, data);
+  result = ocs2::LinearInterpolation::interpolate(0.6, times, data);
   test = result.isApprox(data[1]);
   ASSERT_TRUE(test);
 
-  ocs2::LinearInterpolation::interpolate(-0.1, result, times, data);
+  result = ocs2::LinearInterpolation::interpolate(-0.1, times, data);
   test = result.isApprox(data[0]);
   ASSERT_TRUE(test);
 
-  ocs2::LinearInterpolation::interpolate(1.1, result, times, data);
+  result = ocs2::LinearInterpolation::interpolate(1.1, times, data);
   test = result.isApprox(data[1]);
   ASSERT_TRUE(test);
 }

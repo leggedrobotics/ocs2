@@ -158,7 +158,7 @@ void interpolate_Scalar(benchmark::State& state) {
 
   ocs2::scalar_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res, data);
+    res = ocs2::LinearInterpolation::interpolate(indexAlpha, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -174,7 +174,7 @@ void interpolate_EigenVector(benchmark::State& state) {
 
   ocs2::vector_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res, data);
+    res = ocs2::LinearInterpolation::interpolate(indexAlpha, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -190,7 +190,7 @@ void interpolate_EigenMatrix(benchmark::State& state) {
 
   ocs2::matrix_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res, data);
+    res = ocs2::LinearInterpolation::interpolate(indexAlpha, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -258,7 +258,7 @@ void interpolate_ModelDataScalar(benchmark::State& state) {
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.f, data, ocs2::ModelData::cost_f);
+    res.cost_.f = ocs2::LinearInterpolation::interpolate(indexAlpha, data, ocs2::ModelData::cost_f);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -278,7 +278,7 @@ void interpolate_ModelDataVector(benchmark::State& state) {
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.dfdx, data, ocs2::ModelData::cost_dfdx);
+    res.cost_.dfdx = ocs2::LinearInterpolation::interpolate(indexAlpha, data, ocs2::ModelData::cost_dfdx);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -298,7 +298,7 @@ void interpolate_ModelDataMatrix(benchmark::State& state) {
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.dfdxx, data, ocs2::ModelData::cost_dfdxx);
+    res.cost_.dfdxx = ocs2::LinearInterpolation::interpolate(indexAlpha, data, ocs2::ModelData::cost_dfdxx);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }

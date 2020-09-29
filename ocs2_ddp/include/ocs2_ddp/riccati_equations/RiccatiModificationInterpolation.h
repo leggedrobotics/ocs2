@@ -42,32 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace riccati_modification {
 
-/**
- * Helper specialization of interpolate() of RiccatiModification array types for scalar_t subfields.
- * Note that since partial specialization of function templates is not possible, it is not
- * possible to write a general interpolate() function with template argument Field_T.
- */
-inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, scalar_t& enquiryData, const std::vector<Data>& dataArray,
-                        const scalar_t& (*accessFun)(const std::vector<Data>&, size_t)) {
-  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataArray, accessFun);
-}
-
-/**
- * Helper specialization of interpolate() of RiccatiModification array types for vector_t subfields.
- */
-inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, vector_t& enquiryData, const std::vector<Data>& dataArray,
-                        const vector_t& (*accessFun)(const std::vector<Data>&, size_t)) {
-  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataArray, accessFun);
-}
-
-/**
- * Helper specialization of interpolate() of RiccatiModification array types for matrix_t subfields.
- */
-inline void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, matrix_t& enquiryData, const std::vector<Data>& dataArray,
-                        const matrix_t& (*accessFun)(const std::vector<Data>&, size_t)) {
-  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataArray, accessFun);
-}
-
 CREATE_INTERPOLATION_ACCESS_FUNCTION(time)
 
 CREATE_INTERPOLATION_ACCESS_FUNCTION(deltaQm)

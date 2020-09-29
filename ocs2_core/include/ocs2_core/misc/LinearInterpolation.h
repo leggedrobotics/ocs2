@@ -111,7 +111,6 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
  *  - Multiple data points are used for linear interpolation and zero order extrapolation
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
- * @param [out] enquiryData : result of the interpolation
  * @param [in] dataArray: vector of data
  * @param [in] accessFun: Method to access the subfield of Data in vector
  *
@@ -120,8 +119,9 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
  * @tparam Alloc: Specialized allocation class
  */
 template <typename Data, typename Field, class Alloc>
-void interpolate(index_alpha_t indexAlpha, Field& enquiryData, const std::vector<Data, Alloc>& dataArray,
-                 const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t) = stdAccessFun<Data, Alloc>) {
+Field interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray,
+                  const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t)) {
+  assert(dataArray.size() > 0);
   if (dataArray.size() > 1) {
     // Normal interpolation case
     int index = indexAlpha.first;
@@ -129,17 +129,20 @@ void interpolate(index_alpha_t indexAlpha, Field& enquiryData, const std::vector
     auto& lhs = accessFun(dataArray, index);
     auto& rhs = accessFun(dataArray, index + 1);
     if (areSameSize(rhs, lhs)) {
-      enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
+      return alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
     } else {
-      enquiryData = (alpha > 0.5) ? lhs : rhs;
+      return (alpha > 0.5) ? lhs : rhs;
     }
-  } else if (dataArray.size() == 1) {
+  } else {  // dataArray.size() == 1
     // Time vector has only 1 element -> Constant function
-    enquiryData = accessFun(dataArray, 0);
-  } else {
-    // Time empty -> zero function
-    enquiryData *= scalar_t(0.0);
+    return accessFun(dataArray, 0);
   }
+}
+
+/** Default interpolation */
+template <typename Data, class Alloc>
+Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray) {
+  return interpolate<Data, Data, Alloc>(indexAlpha, dataArray, stdAccessFun<Data, Alloc>);
 }
 
 /**
@@ -152,23 +155,25 @@ void interpolate(index_alpha_t indexAlpha, Field& enquiryData, const std::vector
  *  - Multiple data points are used for linear interpolation and zero order extrapolation
  *
  * @param [in] enquiryTime: The enquiry time for interpolation.
- * @param [out] enquiryData: The value of the trajectory at the requested time.
  * @param [in] timeArray: Times vector
  * @param [in] dataArray: Data vector
  * @param [in] accessFun: Subfield data access method
- * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
+ * @return The interpolation result
  *
  * @tparam Data: Data type
  * @tparam Field: Data's subfield type
  * @tparam Alloc: Specialized allocation class
  */
 template <typename Data, typename Field, class Alloc>
-index_alpha_t interpolate(scalar_t enquiryTime, Field& enquiryData, const std::vector<scalar_t>& timeArray,
-                          const std::vector<Data, Alloc>& dataArray,
-                          const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t) = stdAccessFun<Data, Alloc>) {
-  auto indexAlpha = timeSegment(enquiryTime, timeArray);
-  interpolate<Data, Field, Alloc>(indexAlpha, enquiryData, dataArray, accessFun);
-  return indexAlpha;
+Field interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray,
+                  const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t)) {
+  return interpolate(timeSegment(enquiryTime, timeArray), dataArray, accessFun);
+}
+
+/** Default interpolation */
+template <typename Data, class Alloc>
+Data interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray) {
+  return interpolate<Data, Data, Alloc>(enquiryTime, timeArray, dataArray, stdAccessFun<Data, Alloc>);
 }
 
 }  // namespace LinearInterpolation

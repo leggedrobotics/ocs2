@@ -61,22 +61,6 @@ namespace ocs2 {
 namespace ModelData {
 
 /**
- * Define specialization of interpolate() in ModelData namespace.
- */
-template <typename Field>
-void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, Field& enquiryData, const std::vector<ocs2::ModelDataBase>& dataArray,
-                 const Field& (*accessFun)(const std::vector<ModelDataBase>&, size_t)) {
-  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataArray, accessFun);
-}
-
-/**
- * Re-defining the timeSegment() in ModelData namespace.
- */
-inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime, const scalar_array_t& timeArray) {
-  return ocs2::LinearInterpolation::timeSegment(enquiryTime, timeArray);
-}
-
-/**
  * Access method for different subfields of the ModelData.
  */
 

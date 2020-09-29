@@ -41,7 +41,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
-std::unique_ptr<ocs2::PinocchioInterface<double>> pInterface;
+using scalar_t = ocs2::scalar_t;
+
+std::unique_ptr<ocs2::PinocchioInterface<scalar_t>> pInterface;
 std::shared_ptr<ocs2::PinocchioGeometryInterface> gInterface;
 std::unique_ptr<ocs2::GeometryInterfaceVisualization> vInterface;
 

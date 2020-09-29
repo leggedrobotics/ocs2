@@ -9,9 +9,9 @@
 
 namespace pinocchio {
 
-template const Data::Matrix6x& computeJointJacobians<double, 0, JointCollectionDefaultTpl>(
+template const Data::Matrix6x& computeJointJacobians<scalar_t, 0, JointCollectionDefaultTpl>(
     const Model& model, Data& data, const Eigen::MatrixBase<Data::ConfigVectorType>& q);
 
-template const Data::Matrix6x& computeJointJacobians<double, 0, JointCollectionDefaultTpl>(const Model& model, Data& data);
+template const Data::Matrix6x& computeJointJacobians<scalar_t, 0, JointCollectionDefaultTpl>(const Model& model, Data& data);
 
 }  // namespace pinocchio

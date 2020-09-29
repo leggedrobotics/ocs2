@@ -92,6 +92,7 @@ add_library(${PROJECT_NAME}
   src/cost/MobileManipulatorCost.cpp
   src/cost/EndEffectorCost.cpp
   src/cost/SelfCollisionCost.cpp
+  src/cost/SelfCollisionCostCppAd.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
   src/PinocchioInterface.cpp
@@ -187,7 +188,7 @@ endif (cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_pinocchio
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -199,6 +200,23 @@ install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-#############
-## Testing ##
-#############
+############
+# Testing ##
+############
+# Info ==============================
+# to run tests, cd package folder and run
+# $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
+# $ catkin run_tests --no-deps --this
+# to see the summary of unit test results run
+# $ catkin_test_results ../../../build/ocs2_mobile_manipulator_example
+
+catkin_add_gtest(SelfCollisionTests
+  test/SelfCollisionTests.cpp
+)
+target_link_libraries(SelfCollisionTests
+  gtest_main
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${ocs2_core_LIBRARIES}
+)

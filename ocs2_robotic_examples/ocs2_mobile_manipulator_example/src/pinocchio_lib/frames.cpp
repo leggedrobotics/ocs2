@@ -9,6 +9,6 @@
 
 namespace pinocchio {
 
-template void updateFramePlacements<double, 0, JointCollectionDefaultTpl>(const Model& model, Data& data);
+template void updateFramePlacements<scalar_t, 0, JointCollectionDefaultTpl>(const Model& model, Data& data);
 
 }  // namespace pinocchio

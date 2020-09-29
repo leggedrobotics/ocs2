@@ -100,7 +100,7 @@ vector_t EndEffectorCost::interpolateReference(scalar_t time) const {
 
   } else {
     // interpolation
-    double tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
+    scalar_t tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
     const Eigen::Quaterniond quatA(desiredStateTrajectory[timeAIdx].tail<4>());
     const Eigen::Quaterniond quatB(desiredStateTrajectory[timeAIdx + 1].tail<4>());
 

@@ -61,7 +61,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-  ocs2::PinocchioInterface<double> pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
+  ocs2::PinocchioInterface<scalar_t> pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
   ocs2::PinocchioGeometryInterface geomInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}});
 
@@ -93,8 +93,8 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
 
   // publish joints transforms
   const auto j_arm = getArmJointPositions(observation.state);
-  std::map<std::string, double> jointPositions{{"SH_ROT", j_arm(0)}, {"SH_FLE", j_arm(1)}, {"EL_FLE", j_arm(2)},
-                                               {"EL_ROT", j_arm(3)}, {"WR_FLE", j_arm(4)}, {"WR_ROT", j_arm(5)}};
+  std::map<std::string, scalar_t> jointPositions{{"SH_ROT", j_arm(0)}, {"SH_FLE", j_arm(1)}, {"EL_FLE", j_arm(2)},
+                                                 {"EL_ROT", j_arm(3)}, {"WR_FLE", j_arm(4)}, {"WR_ROT", j_arm(5)}};
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp, "");
 }
 
@@ -114,9 +114,9 @@ void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Ti
 }
 
 void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const ocs2::PrimalSolution& policy) {
-  const double TRAJECTORYLINEWIDTH = 0.005;
-  const std::array<double, 3> red{0.6350, 0.0780, 0.1840};
-  const std::array<double, 3> blue{0, 0.4470, 0.7410};
+  const scalar_t TRAJECTORYLINEWIDTH = 0.005;
+  const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
+  const std::array<scalar_t, 3> blue{0, 0.4470, 0.7410};
   const auto& mpcStateTrajectory = policy.stateTrajectory_;
 
   visualization_msgs::MarkerArray markerArray;

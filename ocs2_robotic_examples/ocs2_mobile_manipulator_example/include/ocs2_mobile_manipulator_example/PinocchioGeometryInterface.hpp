@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <ocs2_mobile_manipulator_example/ExtendedPair.h>
 #include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 
 #include <hpp/fcl/collision_data.h>
@@ -21,7 +22,7 @@ namespace ocs2 {
 class PinocchioGeometryInterface {
  public:
   PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<scalar_t>& pinocchioInterface,
-                             const std::vector<std::pair<size_t, size_t>>& collisionPairs);
+                             const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs);
   virtual ~PinocchioGeometryInterface() = default;
 
   // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)

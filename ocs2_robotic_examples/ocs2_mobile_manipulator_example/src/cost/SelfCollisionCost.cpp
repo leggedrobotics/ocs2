@@ -38,11 +38,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-SelfCollisionCost::SelfCollisionCost(ocs2::PinocchioInterface<double>& pinocchioInterface,
-                                     const ocs2::PinocchioGeometryInterface& geometryInterfaceSelfCollision, scalar_t minimumDistance,
-                                     scalar_t mu, scalar_t delta)
-    : pinocchioInterface_(pinocchioInterface),
-      pinocchioGeometrySelfCollisions_(geometryInterfaceSelfCollision),
+SelfCollisionCost::SelfCollisionCost(ocs2::PinocchioInterface<scalar_t> pinocchioInterface,
+                                     ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
+                                     scalar_t delta)
+    : pinocchioInterface_(std::move(pinocchioInterface)),
+      pinocchioGeometrySelfCollisions_(std::move(geometryInterfaceSelfCollision)),
       minimumDistance_(minimumDistance),
       relaxedBarrierPenalty_(mu, delta) {}
 
@@ -93,7 +93,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
         pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.first];
 
     // We need to get the jacobian of the point on the first object; use the joint jacobian translated to the point
-    const ocs2::Pose<double> joint1Pose = pinocchioInterface_.getJointPose(geometryObject1.parentJoint, x);
+    const ocs2::Pose<scalar_t> joint1Pose = pinocchioInterface_.getJointPose(geometryObject1.parentJoint, x);
     const Eigen::Vector3d pt1Offset = result.nearest_points[0] - joint1Pose.position;
     const Eigen::MatrixXd joint1Jacobian = pinocchioInterface_.getJacobianOfJoint(geometryObject1.parentJoint);
     // Jacobians from pinocchio are given as
@@ -105,7 +105,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
         pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.second];
 
     // We need to get the jacobian of the point on the second object; use the joint jacobian translated to the point
-    const Pose<double> joint2Pose = pinocchioInterface_.getJointPose(geometryObject2.parentJoint, x);
+    const Pose<scalar_t> joint2Pose = pinocchioInterface_.getJointPose(geometryObject2.parentJoint, x);
     const Eigen::Vector3d pt2Offset = result.nearest_points[0] - joint2Pose.position;
     const Eigen::MatrixXd joint2Jacobian = pinocchioInterface_.getJacobianOfJoint(geometryObject2.parentJoint);
     const Eigen::MatrixXd pt2Jacobian = joint2Jacobian.topRows(3) - skewSymmetricMatrix(pt2Offset) * joint2Jacobian.bottomRows(3);

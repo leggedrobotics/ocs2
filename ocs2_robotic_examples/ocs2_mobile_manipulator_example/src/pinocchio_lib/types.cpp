@@ -7,7 +7,7 @@
 
 namespace pinocchio {
 
-template struct ModelTpl<double, 0, JointCollectionDefaultTpl>;
-template struct DataTpl<double, 0, JointCollectionDefaultTpl>;
+template struct ModelTpl<scalar_t, 0, JointCollectionDefaultTpl>;
+template struct DataTpl<scalar_t, 0, JointCollectionDefaultTpl>;
 
 }  // namespace pinocchio

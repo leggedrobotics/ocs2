@@ -43,19 +43,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
  * For example the signature of function for dynamics is:
- * const vector_t& dynamics(const std::vector<ocs2::ModelDataBase>& vec, size_t n) {
- *   return vec[n].dynamic_;
+ * const vector_t& dynamics_f(const ocs2::ModelDataBase& d) {
+ *   return d.dynamics_.f;
  * }
  */
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                \
-  inline auto FIELD(const std::vector<ocs2::ModelDataBase>& vec, size_t ind)->const decltype(vec[ind].FIELD##_)& { \
-    return vec[ind].FIELD##_;                                                                                      \
-  }
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD) \
+  inline auto FIELD(const ocs2::ModelDataBase& d)->decltype(d.FIELD##_) { return d.FIELD##_; }
 
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                                                                   \
-  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelDataBase>& vec, size_t ind)->const decltype(vec[ind].FIELD##_.SUBFIELD)& { \
-    return vec[ind].FIELD##_.SUBFIELD;                                                                                                   \
-  }
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD) \
+  inline auto FIELD##_##SUBFIELD(const ocs2::ModelDataBase& d)->decltype(d.FIELD##_.SUBFIELD) { return d.FIELD##_.SUBFIELD; }
 
 namespace ocs2 {
 namespace ModelData {

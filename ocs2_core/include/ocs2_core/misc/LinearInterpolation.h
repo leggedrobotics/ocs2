@@ -63,33 +63,25 @@ bool areSameSize(const Eigen::EigenBase<Derived>& lhs, const Eigen::EigenBase<De
 }
 
 /**
- * Helper access function for std::vector<Data, Alloc> where Data a simple data structure such as double, Eigen-Type.
- */
-template <typename Data, class Alloc>
-const Data& stdAccessFun(const std::vector<Data, Alloc>& vec, size_t ind) {
-  return vec[ind];
-}
-
-/**
  * Get the interval index and interpolation coefficient alpha.
  * Alpha = 1 at the start of the interval and alpha = 0 at the end.
  *
  * @param [in] enquiryTime: The enquiry time for interpolation.
- * @param [in] timeArray: interpolation time array.
+ * @param [in] times: interpolation time array.
  * @return {index, alpha}
  */
-inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray) {
+inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_t>& times) {
   // corner cases (no time set OR single time element)
-  if (timeArray.size() <= 1) {
+  if (times.size() <= 1) {
     return {0, scalar_t(1.0)};
   }
 
-  int index = lookup::findIntervalInTimeArray(timeArray, enquiryTime);
-  auto lastInterval = static_cast<int>(timeArray.size() - 1);
+  int index = lookup::findIntervalInTimeArray(times, enquiryTime);
+  auto lastInterval = static_cast<int>(times.size() - 1);
   if (index >= 0) {
     if (index < lastInterval) {
       // interpolation : 0 <= index < lastInterval
-      scalar_t alpha = (enquiryTime - timeArray[index + 1]) / (timeArray[index] - timeArray[index + 1]);
+      scalar_t alpha = (enquiryTime - times[index + 1]) / (times[index] - times[index + 1]);
       return {index, alpha};
     } else {
       // upper bound : index >= lastInterval
@@ -111,38 +103,37 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
  *  - Multiple data points are used for linear interpolation and zero order extrapolation
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
- * @param [in] dataArray: vector of data
- * @param [in] accessFun: Method to access the subfield of Data in vector
+ * @param [in] data: vector of data, typically std::vector
+ * @param [in] get: Subfield data access method
+ * @return The interpolation result
  *
- * @tparam Data: Data type
- * @tparam Field: Data's subfield type
- * @tparam Alloc: Specialized allocation class
+ * @tparam Container: Container type
+ * @tparam Func: Subfield data access method
  */
-template <typename Data, typename Field, class Alloc>
-Field interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray,
-                  const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t)) {
-  assert(dataArray.size() > 0);
-  if (dataArray.size() > 1) {
+template <typename Container, typename Func>
+auto interpolate(index_alpha_t indexAlpha, const Container& data, Func get) -> decltype(get(data[0])) {
+  assert(data.size() > 0);
+  if (data.size() > 1) {
     // Normal interpolation case
     int index = indexAlpha.first;
     scalar_t alpha = indexAlpha.second;
-    auto& lhs = accessFun(dataArray, index);
-    auto& rhs = accessFun(dataArray, index + 1);
+    const auto lhs = get(data[index]);
+    const auto rhs = get(data[index + 1]);
     if (areSameSize(rhs, lhs)) {
       return alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
     } else {
       return (alpha > 0.5) ? lhs : rhs;
     }
-  } else {  // dataArray.size() == 1
+  } else {
     // Time vector has only 1 element -> Constant function
-    return accessFun(dataArray, 0);
+    return get(data[0]);
   }
 }
 
 /** Default interpolation */
-template <typename Data, class Alloc>
-Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray) {
-  return interpolate<Data, Data, Alloc>(indexAlpha, dataArray, stdAccessFun<Data, Alloc>);
+template <typename Container>
+auto interpolate(index_alpha_t indexAlpha, const Container& data) -> typename Container::value_type {
+  return interpolate(indexAlpha, data, [](const typename Container::value_type& t) { return t; });
 }
 
 /**
@@ -155,25 +146,23 @@ Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataA
  *  - Multiple data points are used for linear interpolation and zero order extrapolation
  *
  * @param [in] enquiryTime: The enquiry time for interpolation.
- * @param [in] timeArray: Times vector
- * @param [in] dataArray: Data vector
- * @param [in] accessFun: Subfield data access method
+ * @param [in] times: Times vector
+ * @param [in] data: Data vector, typically std::vector
+ * @param [in] get: Subfield data access method
  * @return The interpolation result
  *
- * @tparam Data: Data type
- * @tparam Field: Data's subfield type
- * @tparam Alloc: Specialized allocation class
+ * @tparam Container: Container type
+ * @tparam Func: Subfield data access method
  */
-template <typename Data, typename Field, class Alloc>
-Field interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray,
-                  const Field& (*accessFun)(const std::vector<Data, Alloc>&, size_t)) {
-  return interpolate(timeSegment(enquiryTime, timeArray), dataArray, accessFun);
+template <typename Container, typename Func>
+auto interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& times, const Container& data, Func get) -> decltype(get(data[0])) {
+  return interpolate(timeSegment(enquiryTime, times), data, get);
 }
 
 /** Default interpolation */
-template <typename Data, class Alloc>
-Data interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray) {
-  return interpolate<Data, Data, Alloc>(enquiryTime, timeArray, dataArray, stdAccessFun<Data, Alloc>);
+template <typename Container>
+auto interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& times, const Container& data) -> typename Container::value_type {
+  return interpolate(enquiryTime, times, data, [](const typename Container::value_type& t) { return t; });
 }
 
 }  // namespace LinearInterpolation

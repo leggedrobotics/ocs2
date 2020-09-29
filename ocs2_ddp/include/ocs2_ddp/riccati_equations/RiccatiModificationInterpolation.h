@@ -34,10 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RiccatiModification.h"
 
 // Declares an access function of name FIELD (e.g., time, DmDagger, ...)
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                             \
-  inline auto FIELD(const std::vector<ocs2::riccati_modification::Data>& vec, size_t ind)->const decltype(vec[ind].FIELD##_)& { \
-    return vec[ind].FIELD##_;                                                                                                   \
-  }
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD) \
+  inline auto FIELD(const ocs2::riccati_modification::Data& d)->decltype(d.FIELD##_) { return d.FIELD##_; }
 
 namespace ocs2 {
 namespace riccati_modification {

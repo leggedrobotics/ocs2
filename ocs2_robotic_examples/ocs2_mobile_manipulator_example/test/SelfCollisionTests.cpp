@@ -160,8 +160,8 @@ TEST(testSelfCollision, AnalyticalVsAutoDiff) {
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
    // gInterface->getGeometryModel().addAllCollisionPairs();
 
-  ocs2::SelfCollisionCost selfCollisionCost(pInterface, gInterface, 0.1, 0.01, 1e-3);
-  ocs2::SelfCollisionCostCppAd selfCollisionCostCppAd(pInterface, gInterface, 0.1, 0.01, 1e-3);
+  ocs2::SelfCollisionCost selfCollisionCost(ocs2::PinocchioInterface<ocs2::scalar_t>(pInterface), ocs2::PinocchioGeometryInterface(gInterface), 0.1, 0.01, 1e-3);
+  ocs2::SelfCollisionCostCppAd selfCollisionCostCppAd(ocs2::PinocchioInterface<ocs2::scalar_t>(pInterface), ocs2::PinocchioGeometryInterface(gInterface), 0.1, 0.01, 1e-3);
   auto libraryFolder = ros::package::getPath("ocs2_mobile_manipulator_example") + "/auto_generated";
   selfCollisionCostCppAd.initialize("ColCost", libraryFolder, true, false);
 

@@ -319,16 +319,16 @@ scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) 
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   matrix_t Sm;
-  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, SsTimeTrajectoryStock_[partition], SmTrajectoryStock_[partition]);
 
   vector_t Sv;
-  LinearInterpolation::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
+  LinearInterpolation::interpolate(indexAlpha, Sv, SvTrajectoryStock_[partition]);
 
   scalar_t s;
-  LinearInterpolation::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
+  LinearInterpolation::interpolate(indexAlpha, s, sTrajectoryStock_[partition]);
 
   vector_t xNominal;
-  LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
+  LinearInterpolation::interpolate(time, xNominal, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
 
   vector_t deltaX = state - xNominal;
 
@@ -342,13 +342,13 @@ void GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   matrix_t Sm;
-  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, SsTimeTrajectoryStock_[partition], SmTrajectoryStock_[partition]);
 
   // Sv
-  LinearInterpolation::interpolate(indexAlpha, Vx, &SvTrajectoryStock_[partition]);
+  LinearInterpolation::interpolate(indexAlpha, Vx, SvTrajectoryStock_[partition]);
 
   vector_t xNominal;
-  LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
+  LinearInterpolation::interpolate(time, xNominal, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
 
   vector_t deltaX = state - xNominal;
   Vx += Sm * deltaX;
@@ -360,33 +360,33 @@ void GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector
 void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
   const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, &nominalTimeTrajectoriesStock_[activeSubsystem]);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
 
   vector_t xNominal;
-  LinearInterpolation::interpolate(indexAlpha, xNominal, &nominalStateTrajectoriesStock_[activeSubsystem]);
+  LinearInterpolation::interpolate(indexAlpha, xNominal, nominalStateTrajectoriesStock_[activeSubsystem]);
 
   matrix_t Bm;
-  ModelData::interpolate(indexAlpha, Bm, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
+  ModelData::interpolate(indexAlpha, Bm, modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
 
   matrix_t Pm;
-  ModelData::interpolate(indexAlpha, Pm, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
+  ModelData::interpolate(indexAlpha, Pm, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
 
   vector_t Rv;
-  ModelData::interpolate(indexAlpha, Rv, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
+  ModelData::interpolate(indexAlpha, Rv, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
 
   vector_t EvProjected;
-  ModelData::interpolate(indexAlpha, EvProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem], ModelData::stateInputEqConstr_f);
+  ModelData::interpolate(indexAlpha, EvProjected, projectedModelDataTrajectoriesStock_[activeSubsystem], ModelData::stateInputEqConstr_f);
 
   matrix_t CmProjected;
-  ModelData::interpolate(indexAlpha, CmProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem],
+  ModelData::interpolate(indexAlpha, CmProjected, projectedModelDataTrajectoriesStock_[activeSubsystem],
                          ModelData::stateInputEqConstr_dfdx);
 
   matrix_t Hm;
-  riccati_modification::interpolate(indexAlpha, Hm, &riccatiModificationTrajectoriesStock_[activeSubsystem],
+  riccati_modification::interpolate(indexAlpha, Hm, riccatiModificationTrajectoriesStock_[activeSubsystem],
                                     riccati_modification::hamiltonianHessian);
 
   matrix_t DmDagger;
-  riccati_modification::interpolate(indexAlpha, DmDagger, &riccatiModificationTrajectoriesStock_[activeSubsystem],
+  riccati_modification::interpolate(indexAlpha, DmDagger, riccatiModificationTrajectoriesStock_[activeSubsystem],
                                     riccati_modification::constraintRangeProjector);
 
   vector_t costate;
@@ -951,11 +951,11 @@ void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm,
       maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaBiasArray_[k].norm());
 
       const auto& time = nominalControllersStock_[i].timeStamp_[k];
-      const auto indexAlpha = LinearInterpolation::timeSegment(time, &(nominalTimeTrajectoriesStock_[i]));
+      const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[i]);
       vector_t nominalState;
-      LinearInterpolation::interpolate(indexAlpha, nominalState, &(nominalStateTrajectoriesStock_[i]));
+      LinearInterpolation::interpolate(indexAlpha, nominalState, nominalStateTrajectoriesStock_[i]);
       vector_t nominalInput;
-      LinearInterpolation::interpolate(indexAlpha, nominalInput, &(nominalInputTrajectoriesStock_[i]));
+      LinearInterpolation::interpolate(indexAlpha, nominalInput, nominalInputTrajectoriesStock_[i]);
       vector_t deltaUee =
           nominalInput - nominalControllersStock_[i].gainArray_[k] * nominalState - nominalControllersStock_[i].biasArray_[k];
       maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
@@ -1363,7 +1363,7 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
     } else if (cachedTimeTrajectoriesStock_[i].back() < nominalTimeTrajectoriesStock_[i].back()) {
       // find the time segment
       const scalar_t finalTime = cachedTimeTrajectoriesStock_[i].back() + OCS2NumericTraits<scalar_t>::weakEpsilon();
-      const auto timeSegment = LinearInterpolation::timeSegment(finalTime, &nominalTimeTrajectoriesStock_[i]);
+      const auto timeSegment = LinearInterpolation::timeSegment(finalTime, nominalTimeTrajectoriesStock_[i]);
 
       // post event index
       const int sizeBeforeCorrection = cachedTimeTrajectoriesStock_[i].size();
@@ -1383,16 +1383,16 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
       // debugging checks for the added tail
       if (ddpSettings_.debugCaching_) {
         for (int k = timeSegment.first + 1; k < nominalTimeTrajectoriesStock_[i].size(); k++) {
-          auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], &cachedTimeTrajectoriesStock_[i]);
+          auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], cachedTimeTrajectoriesStock_[i]);
 
           vector_t stateCached;
-          LinearInterpolation::interpolate(indexAlpha, stateCached, &cachedStateTrajectoriesStock_[i]);
+          LinearInterpolation::interpolate(indexAlpha, stateCached, cachedStateTrajectoriesStock_[i]);
           if (!stateCached.isApprox(nominalStateTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached state trajectory is not correctly set.");
           }
 
           vector_t inputCached;
-          LinearInterpolation::interpolate(indexAlpha, inputCached, &cachedInputTrajectoriesStock_[i]);
+          LinearInterpolation::interpolate(indexAlpha, inputCached, cachedInputTrajectoriesStock_[i]);
           if (!inputCached.isApprox(nominalInputTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached input trajectory is not correctly set.");
           }

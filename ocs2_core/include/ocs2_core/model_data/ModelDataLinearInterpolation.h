@@ -43,19 +43,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
  * For example the signature of function for dynamics is:
- * const vector_t& dynamics(const std::vector<ocs2::ModelDataBase>* vec, size_t n) {
- *   return (*vec)[n].dynamic_;
+ * const vector_t& dynamics(const std::vector<ocs2::ModelDataBase>& vec, size_t n) {
+ *   return vec[n].dynamic_;
  * }
  */
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                   \
-  inline auto FIELD(const std::vector<ocs2::ModelDataBase>* vec, size_t ind)->const decltype((*vec)[ind].FIELD##_)& { \
-    return (*vec)[ind].FIELD##_;                                                                                      \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                \
+  inline auto FIELD(const std::vector<ocs2::ModelDataBase>& vec, size_t ind)->const decltype(vec[ind].FIELD##_)& { \
+    return vec[ind].FIELD##_;                                                                                      \
   }
 
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                    \
-  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelDataBase>* vec, size_t ind) \
-      ->const decltype((*vec)[ind].FIELD##_.SUBFIELD)& {                                  \
-    return (*vec)[ind].FIELD##_.SUBFIELD;                                                 \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                                                                   \
+  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelDataBase>& vec, size_t ind)->const decltype(vec[ind].FIELD##_.SUBFIELD)& { \
+    return vec[ind].FIELD##_.SUBFIELD;                                                                                                   \
   }
 
 namespace ocs2 {
@@ -65,16 +64,16 @@ namespace ModelData {
  * Define specialization of interpolate() in ModelData namespace.
  */
 template <typename Field>
-void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, Field& enquiryData, const std::vector<ocs2::ModelDataBase>* dataPtr,
-                 const Field& (*accessFun)(const std::vector<ModelDataBase>*, size_t)) {
-  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataPtr, accessFun);
+void interpolate(ocs2::LinearInterpolation::index_alpha_t indexAlpha, Field& enquiryData, const std::vector<ocs2::ModelDataBase>& dataArray,
+                 const Field& (*accessFun)(const std::vector<ModelDataBase>&, size_t)) {
+  ocs2::LinearInterpolation::interpolate(indexAlpha, enquiryData, dataArray, accessFun);
 }
 
 /**
  * Re-defining the timeSegment() in ModelData namespace.
  */
-inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime, const scalar_array_t* timeArrayPtr) {
-  return ocs2::LinearInterpolation::timeSegment(enquiryTime, timeArrayPtr);
+inline ocs2::LinearInterpolation::index_alpha_t timeSegment(scalar_t enquiryTime, const scalar_array_t& timeArray) {
+  return ocs2::LinearInterpolation::timeSegment(enquiryTime, timeArray);
 }
 
 /**

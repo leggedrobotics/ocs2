@@ -75,37 +75,32 @@ struct Identity {
  *
  * @param [in] indexAlpha : index and interpolation coefficient (alpha) pair
  * @param [out] enquiryData : result of the interpolation
- * @param [in] dataPtr: Pointer to vector of data
+ * @param [in] data: Pointer to vector of data
  *
  * @tparam AccessFun: Subfield data access functor
  * @tparam Data: Data type
- * @tparam Field: Data's subfield type.
+ * @tparam Field: Data's subfield type
  * @tparam Alloc: Specialized allocation class
  */
 template <class AccessFun, typename Data, typename Field, class Alloc>
-void interpolateField(index_alpha_t indexAlpha, Field& enquiryData, const std::vector<Data, Alloc>* dataPtr) {
-  if (dataPtr != nullptr) {
-    AccessFun accessFun;
-    if (dataPtr->size() > 1) {
-      // Normal interpolation case
-      int index = indexAlpha.first;
-      scalar_t alpha = indexAlpha.second;
-      auto& lhs = accessFun((*dataPtr)[index]);
-      auto& rhs = accessFun((*dataPtr)[index + 1]);
-      if (areSameSize(rhs, lhs)) {
-        enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
-      } else {
-        enquiryData = (alpha > 0.5) ? lhs : rhs;
-      }
-    } else if (dataPtr->size() == 1) {
-      // Time vector has only 1 element -> Constant function
-      enquiryData = accessFun((*dataPtr)[0]);
+void interpolateField(index_alpha_t indexAlpha, Field& enquiryData, const std::vector<Data, Alloc>& data) {
+  AccessFun accessFun;
+  if (data.size() > 1) {
+    // Normal interpolation case
+    int index = indexAlpha.first;
+    scalar_t alpha = indexAlpha.second;
+    auto& lhs = accessFun(data[index]);
+    auto& rhs = accessFun(data[index + 1]);
+    if (areSameSize(rhs, lhs)) {
+      enquiryData = alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
     } else {
-      // Time empty -> zero function
-      enquiryData *= scalar_t(0.0);
+      enquiryData = (alpha > 0.5) ? lhs : rhs;
     }
+  } else if (data.size() == 1) {
+    // Time vector has only 1 element -> Constant function
+    enquiryData = accessFun(data[0]);
   } else {
-    // No data set -> zero Function
+    // Time empty -> zero function
     enquiryData *= scalar_t(0.0);
   }
 }
@@ -115,26 +110,26 @@ void interpolateField(index_alpha_t indexAlpha, Field& enquiryData, const std::v
  * Example: t = [0.0, 1.0, 1.0, 2.0]
  * when querying tk = 1.0, the range (0.0, 1.0] is selected
  *
- *  - No data (nullptrs or zero size containers) implies the zero function
+ *  - No data implies the zero function
  *  - Single data point implies a constant function
  *  - Multiple data points are used for linear interpolation and zero order extrapolation
  *
- * @param [in] enquiryTime: The enquiry time for interpolation.
- * @param [out] enquiryData: The value of the trajectory at the requested time.
- * @param [in] timeStampPtr: Pointer to vector of times
- * @param [in] dataPtr: Pointer to vector of data
+ * @param [in] enquiryTime: The enquiry time for interpolation
+ * @param [out] enquiryData: The value of the trajectory at the requested time
+ * @param [in] timeStamp: Pointer to vector of times
+ * @param [in] data: Pointer to vector of data
  * @return {index, alpha}: The greatest smaller time stamp index and the interpolation coefficient [1, 0]
  *
  * @tparam AccessFun: Subfield data access functor
  * @tparam Data: Data type
- * @tparam Field: Data's subfield type.
+ * @tparam Field: Data's subfield type
  * @tparam Alloc: Specialized allocation class
  */
 template <class AccessFun, typename Data, typename Field, class Alloc>
-index_alpha_t interpolateField(scalar_t enquiryTime, Field& enquiryData, const std::vector<scalar_t>* timeStampPtr,
-                               const std::vector<Data, Alloc>* dataPtr) {
-  auto indexAlpha = timeSegment(enquiryTime, timeStampPtr);
-  interpolateField<AccessFun, Data, Field, Alloc>(indexAlpha, enquiryData, dataPtr);
+index_alpha_t interpolateField(scalar_t enquiryTime, Field& enquiryData, const std::vector<scalar_t>& timeStamp,
+                               const std::vector<Data, Alloc>& data) {
+  auto indexAlpha = timeSegment(enquiryTime, timeStamp);
+  interpolateField<AccessFun, Data, Field, Alloc>(indexAlpha, enquiryData, data);
   return indexAlpha;
 }
 
@@ -159,11 +154,11 @@ void interpolate_Scalar(benchmark::State& state) {
   ocs2::scalar_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(1)(0); });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::scalar_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res, &data);
+    ocs2::LinearInterpolation::interpolate(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -175,11 +170,11 @@ void interpolate_EigenVector(benchmark::State& state) {
   ocs2::vector_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(10); });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::vector_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res, &data);
+    ocs2::LinearInterpolation::interpolate(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -191,11 +186,11 @@ void interpolate_EigenMatrix(benchmark::State& state) {
   ocs2::matrix_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::matrix_t::Random(10, 10); });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::matrix_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res, &data);
+    ocs2::LinearInterpolation::interpolate(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -207,11 +202,11 @@ void interpolate_Scalar_AccessFunctor(benchmark::State& state) {
   ocs2::scalar_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(1)(0); });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::scalar_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::scalar_t>>(indexAlpha, res, &data);
+    ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::scalar_t>>(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -223,11 +218,11 @@ void interpolate_EigenVector_AccessFunctor(benchmark::State& state) {
   ocs2::vector_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::vector_t::Random(10); });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::vector_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::vector_t>>(indexAlpha, res, &data);
+    ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::vector_t>>(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -239,11 +234,11 @@ void interpolate_EigenMatrix_AccessFunctor(benchmark::State& state) {
   ocs2::matrix_array_t data(times.size());
   std::generate(data.begin(), data.end(), []() { return ocs2::matrix_t::Random(10, 10); });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::matrix_t res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::matrix_t>>(indexAlpha, res, &data);
+    ocs2::LinearInterpolation::interpolateField<ocs2::LinearInterpolation::Identity<ocs2::matrix_t>>(indexAlpha, res, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -259,11 +254,11 @@ void interpolate_ModelDataScalar(benchmark::State& state) {
     return md;
   });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.f, &data, ocs2::ModelData::cost_f);
+    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.f, data, ocs2::ModelData::cost_f);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -279,11 +274,11 @@ void interpolate_ModelDataVector(benchmark::State& state) {
     return md;
   });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.dfdx, &data, ocs2::ModelData::cost_dfdx);
+    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.dfdx, data, ocs2::ModelData::cost_dfdx);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -299,11 +294,11 @@ void interpolate_ModelDataMatrix(benchmark::State& state) {
     return md;
   });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.dfdxx, &data, ocs2::ModelData::cost_dfdxx);
+    ocs2::LinearInterpolation::interpolate(indexAlpha, res.cost_.dfdxx, data, ocs2::ModelData::cost_dfdxx);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -319,11 +314,11 @@ void interpolate_ModelDataScalar_AccessFunctor(benchmark::State& state) {
     return md;
   });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolateField<ModelData_cost_f>(indexAlpha, res.cost_.f, &data);
+    ocs2::LinearInterpolation::interpolateField<ModelData_cost_f>(indexAlpha, res.cost_.f, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -339,11 +334,11 @@ void interpolate_ModelDataVector_AccessFunctor(benchmark::State& state) {
     return md;
   });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolateField<ModelData_cost_dfdx>(indexAlpha, res.cost_.dfdx, &data);
+    ocs2::LinearInterpolation::interpolateField<ModelData_cost_dfdx>(indexAlpha, res.cost_.dfdx, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }
@@ -359,11 +354,11 @@ void interpolate_ModelDataMatrix_AccessFunctor(benchmark::State& state) {
     return md;
   });
 
-  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, &times);
+  const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(0.5, times);
 
   ocs2::ModelDataBase res;
   for (auto _ : state) {
-    ocs2::LinearInterpolation::interpolateField<ModelData_cost_dfdxx>(indexAlpha, res.cost_.dfdxx, &data);
+    ocs2::LinearInterpolation::interpolateField<ModelData_cost_dfdxx>(indexAlpha, res.cost_.dfdxx, data);
     benchmark::DoNotOptimize(res);
     benchmark::ClobberMemory();
   }

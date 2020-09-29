@@ -84,8 +84,8 @@ void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState
   }
 
   mpcInput = currentPrimalSolution_->controllerPtr_->computeInput(currentTime, currentState);
-  LinearInterpolation::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
-                                   &currentPrimalSolution_->stateTrajectory_);
+  LinearInterpolation::interpolate(currentTime, mpcState, currentPrimalSolution_->timeTrajectory_,
+                                   currentPrimalSolution_->stateTrajectory_);
 
   mode = currentPrimalSolution_->modeSchedule_.modeAtTime(currentTime);
 }

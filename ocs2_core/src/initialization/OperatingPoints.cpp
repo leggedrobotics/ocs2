@@ -74,13 +74,13 @@ void OperatingPoints::getSystemOperatingTrajectories(const vector_t& initialStat
 /******************************************************************************************************/
 void OperatingPoints::getSystemOperatingTrajectoriesImpl(scalar_t startTime, scalar_t finalTime, scalar_array_t& timeTrajectory,
                                                          vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) const {
-  const auto initIndexAlpha = LinearInterpolation::timeSegment(startTime, &timeTrajectory_);
-  const auto finalindexAlpha = LinearInterpolation::timeSegment(finalTime, &timeTrajectory_);
+  const auto initIndexAlpha = LinearInterpolation::timeSegment(startTime, timeTrajectory_);
+  const auto finalindexAlpha = LinearInterpolation::timeSegment(finalTime, timeTrajectory_);
 
   vector_t x0;
-  LinearInterpolation::interpolate(initIndexAlpha, x0, &stateTrajectory_);
+  LinearInterpolation::interpolate(initIndexAlpha, x0, stateTrajectory_);
   vector_t u0;
-  LinearInterpolation::interpolate(initIndexAlpha, u0, &inputTrajectory_);
+  LinearInterpolation::interpolate(initIndexAlpha, u0, inputTrajectory_);
   timeTrajectory.push_back(startTime);
   stateTrajectory.push_back(std::move(x0));
   inputTrajectory.push_back(std::move(u0));
@@ -94,9 +94,9 @@ void OperatingPoints::getSystemOperatingTrajectoriesImpl(scalar_t startTime, sca
     std::copy(inputTrajectory_.begin() + beginIndex, inputTrajectory_.begin() + lastIndex, std::back_inserter(inputTrajectory));
 
     vector_t xf;
-    LinearInterpolation::interpolate(finalindexAlpha, xf, &stateTrajectory_);
+    LinearInterpolation::interpolate(finalindexAlpha, xf, stateTrajectory_);
     vector_t uf;
-    LinearInterpolation::interpolate(finalindexAlpha, uf, &inputTrajectory_);
+    LinearInterpolation::interpolate(finalindexAlpha, uf, inputTrajectory_);
     timeTrajectory.push_back(finalTime);
     stateTrajectory.push_back(std::move(xf));
     inputTrajectory.push_back(std::move(uf));

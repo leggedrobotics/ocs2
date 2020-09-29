@@ -6,12 +6,12 @@ iit::bear::dyn::tpl::InertiaProperties<TRAIT>::InertiaProperties()
         Scalar(18.242905),
         com_base,
         rbd::Utils::buildInertiaTensor(
-                Scalar(0.36630273),
-                Scalar(0.8500992),
-                Scalar(0.6908679),
-                Scalar(0.0015311622),
-                Scalar(-0.009191472),
-                Scalar(6.965144E-4)) );
+                Scalar(0.36630058),
+                Scalar(0.850099),
+                Scalar(0.6908702),
+                Scalar(0.0015292239),
+                Scalar(-0.009191061),
+                Scalar(6.9387874E-4)) );
 
     com_LF_HIP = iit::rbd::Vector3d(1.521844E-4,-0.0037871017,0.06451626).cast<Scalar>();
     tensor_LF_HIP.fill(

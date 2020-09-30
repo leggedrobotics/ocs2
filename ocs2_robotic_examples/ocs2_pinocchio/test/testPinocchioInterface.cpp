@@ -5,5 +5,5 @@
 
 TEST(testPinocchioInterface, buildFromXml) {
   auto pinocchio = ocs2::PinocchioInterface<ocs2::scalar_t>::buildFromXml(cartPoleUrdf);
-  pinocchio.display();
+  std::cout << pinocchio;
 }

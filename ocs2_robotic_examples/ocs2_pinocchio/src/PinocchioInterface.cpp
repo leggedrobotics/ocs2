@@ -26,6 +26,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
+#include <iomanip>
 
 #include <ocs2_pinocchio/PinocchioInterface.h>
 
@@ -37,5 +38,51 @@ namespace ocs2 {
 
 // explicit instantiation
 template class PinocchioInterface<scalar_t>;
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::ostream& operator<<(std::ostream& os, const PinocchioInterface<scalar_t>& p) {
+  const auto& model = p.getModel();
+  os << "model.nv = " << model.nv << '\n';
+  os << "model.nq = " << model.nq << '\n';
+  os << "model.njoints = " << model.njoints << '\n';
+  os << "model.nbodies = " << model.nbodies << '\n';
+  os << "model.nframes = " << model.nframes << '\n';
+
+  os << "\nJoints:\n";
+  for (int k = 0; k < model.njoints; ++k) {
+    os << std::setw(20) << model.names[k] << ":  ";
+    os << " ID = " << k;
+    os << '\n';
+  }
+
+  os << "\nFrames:\n";
+  for (int k = 0; k < model.nframes; ++k) {
+    os << std::setw(20) << model.frames[k].name << ":  ";
+    os << " ID = " << k;
+    os << ", parent = " << model.frames[k].parent;
+    os << ", type = ";
+
+    std::string frameType;
+    if ((model.frames[k].type & pinocchio::FrameType::OP_FRAME) != 0) {
+      frameType += "OP_FRAME ";
+    }
+    if ((model.frames[k].type & pinocchio::FrameType::JOINT) != 0) {
+      frameType += "JOINT ";
+    }
+    if ((model.frames[k].type & pinocchio::FrameType::FIXED_JOINT) != 0) {
+      frameType += "FIXED_JOINT ";
+    }
+    if ((model.frames[k].type & pinocchio::FrameType::BODY) != 0) {
+      frameType += "BODY ";
+    }
+    if ((model.frames[k].type & pinocchio::FrameType::SENSOR) != 0) {
+      frameType += "SENSOR ";
+    }
+    os << "\"" << frameType << "\"\n";
+  }
+  return os;
+}
 
 }  // namespace ocs2

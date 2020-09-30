@@ -20,6 +20,9 @@
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<scalar_t>& pinocchioInterface,
                                                        const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs)
     : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {
@@ -30,8 +33,14 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 PinocchioGeometryInterface::PinocchioGeometryInterface(const PinocchioGeometryInterface& other) = default;
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q) {
   pinocchio::GeometryData geometryData(*geometryModelPtr_);
 

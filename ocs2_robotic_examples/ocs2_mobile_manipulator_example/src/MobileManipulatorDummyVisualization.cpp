@@ -35,13 +35,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include "ocs2_mobile_manipulator_example/MobileManipulatorDummyVisualization.h"
-#include "ocs2_mobile_manipulator_example/MobileManipulatorInterface.h"
-#include "ocs2_mobile_manipulator_example/MobileManipulatorVisualizationHelpers.h"
-#include "ocs2_mobile_manipulator_example/definitions.h"
+#include <ocs2_pinocchio/visualization/VisualizationHelpers.h>
+
+#include <ocs2_mobile_manipulator_example/MobileManipulatorDummyVisualization.h>
+#include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state) {
+  return state.tail(6);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::Vector3d getBasePosition(Eigen::VectorXd state) {
+  Eigen::Vector3d position;
+  position << state(0), state(1), 0.0;
+  return position;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state) {
+  return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
   const std::string urdfName = "robot_description";
@@ -68,6 +95,9 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   geometryVisualization_.reset(new ocs2::GeometryInterfaceVisualization(geomInterface, nodeHandle));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MobileManipulatorDummyVisualization::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& policy,
                                                  const ocs2::CommandData& command) {
   const ros::Time timeStamp = ros::Time::now();
@@ -78,6 +108,9 @@ void MobileManipulatorDummyVisualization::update(const ocs2::SystemObservation& 
   geometryVisualization_->publishDistances(observation.state);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const ocs2::SystemObservation& observation) {
   // publish world -> base transform
   const auto position = getBasePosition(observation.state);
@@ -87,8 +120,8 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
   base_tf.child_frame_id = "base";
-  base_tf.transform.translation = getVectorMsg(position);
-  base_tf.transform.rotation = getOrientationMsg(orientation);
+  base_tf.transform.translation = ocs2::getVectorMsg(position);
+  base_tf.transform.rotation = ocs2::getOrientationMsg(orientation);
   tfBroadcaster_.sendTransform(base_tf);
 
   // publish joints transforms
@@ -98,6 +131,9 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp, "");
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Time& timeStamp,
                                                                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
   // publish command transform
@@ -108,11 +144,14 @@ void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Ti
   command_tf.header.stamp = timeStamp;
   command_tf.header.frame_id = "world";
   command_tf.child_frame_id = "command";
-  command_tf.transform.translation = getVectorMsg(eeDesiredPosition);
-  command_tf.transform.rotation = getOrientationMsg(eeDesiredOrientation);
+  command_tf.transform.translation = ocs2::getVectorMsg(eeDesiredPosition);
+  command_tf.transform.rotation = ocs2::getOrientationMsg(eeDesiredOrientation);
   tfBroadcaster_.sendTransform(command_tf);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const ocs2::PrimalSolution& policy) {
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
@@ -132,27 +171,27 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
     const auto pose = pinocchioInterface_.getBodyPoseInWorldFrame("WRIST_2", state);
-    endEffectorTrajectory.push_back(getPointMsg(pose.position));
+    endEffectorTrajectory.push_back(ocs2::getPointMsg(pose.position));
   });
 
-  markerArray.markers.emplace_back(getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
+  markerArray.markers.emplace_back(ocs2::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "EE Trajectory";
 
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     geometry_msgs::Pose pose;
-    pose.position = getPointMsg(getBasePosition(state));
-    pose.orientation = getOrientationMsg(getBaseOrientation(state));
+    pose.position = ocs2::getPointMsg(getBasePosition(state));
+    pose.orientation = ocs2::getOrientationMsg(getBaseOrientation(state));
     baseTrajectory.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
   });
 
-  markerArray.markers.emplace_back(getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
+  markerArray.markers.emplace_back(ocs2::getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "Base Trajectory";
 
-  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), getHeaderMsg("world", timeStamp));
-  assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
-  poseArray.header = getHeaderMsg("world", timeStamp);
+  ocs2::assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ocs2::getHeaderMsg("world", timeStamp));
+  ocs2::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
+  poseArray.header = ocs2::getHeaderMsg("world", timeStamp);
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);

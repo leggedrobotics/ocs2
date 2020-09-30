@@ -27,23 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_mobile_manipulator_example/MobileManipulatorVisualizationHelpers.h"
-#include "ocs2_mobile_manipulator_example/definitions.h"
+#include <ocs2_pinocchio/visualization/VisualizationHelpers.h>
 
-namespace mobile_manipulator {
-Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state) {
-  return state.tail(6);
-}
-
-Eigen::Vector3d getBasePosition(Eigen::VectorXd state) {
-  Eigen::Vector3d position;
-  position << state(0), state(1), 0.0;
-  return position;
-}
-
-Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state) {
-  return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
-}
+namespace ocs2 {
 
 geometry_msgs::Point getPointMsg(const Eigen::Vector3d& point) {
   geometry_msgs::Point pointMsg;
@@ -96,4 +82,4 @@ std_msgs::ColorRGBA getColor(std::array<double, 3> rgb, double alpha /* = 1.0*/)
   return colorMsg;
 }
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

@@ -17,6 +17,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ddp
   ocs2_mpc
   ocs2_robotic_tools
+  ocs2_pinocchio
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -43,7 +44,6 @@ catkin_package(
     include
   LIBRARIES
     ${PROJECT_NAME}
-    ${PROJECT_NAME}_pinocchio
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
@@ -69,37 +69,12 @@ link_directories(
   ${pinocchio_LIBRARY_DIRS}
 )
 
-# pinocchio precompile library
-add_library(${PROJECT_NAME}_pinocchio
-  src/pinocchio_lib/frames.cpp
-  src/pinocchio_lib/kinematics.cpp
-  src/pinocchio_lib/jacobian.cpp
-  src/pinocchio_lib/types.cpp
-  src/pinocchio_lib/urdf.cpp
-)
-add_dependencies(${PROJECT_NAME}_pinocchio
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(${PROJECT_NAME}_pinocchio
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${pinocchio_LIBRARIES}
-)
-target_compile_options(${PROJECT_NAME}_pinocchio PUBLIC ${FLAGS})
-
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
   src/cost/MobileManipulatorCost.cpp
   src/cost/EndEffectorCost.cpp
-  src/cost/SelfCollisionCost.cpp
-  src/cost/SelfCollisionCostCppAd.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
-  src/PinocchioInterface.cpp
-  src/PinocchioInterfaceAD.cpp
-  src/PinocchioGeometryInterface.cpp
-  src/GeometryInterfaceVisualization.cpp
-  src/MobileManipulatorVisualizationHelpers.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -107,7 +82,7 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
-  ${PROJECT_NAME}_pinocchio
+  ${pinocchio_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
@@ -188,7 +163,7 @@ endif (cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_pinocchio
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -203,12 +178,6 @@ install(DIRECTORY config launch
 ############
 # Testing ##
 ############
-# Info ==============================
-# to run tests, cd package folder and run
-# $ catkin build -DCMAKE_BUILD_TYPE=RelWithDebInfo --this
-# $ catkin run_tests --no-deps --this
-# to see the summary of unit test results run
-# $ catkin_test_results ../../../build/ocs2_mobile_manipulator_example
 
 catkin_add_gtest(SelfCollisionTests
   test/SelfCollisionTests.cpp
@@ -218,5 +187,4 @@ target_link_libraries(SelfCollisionTests
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${ocs2_core_LIBRARIES}
 )

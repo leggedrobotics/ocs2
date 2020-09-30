@@ -75,7 +75,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
 
   pinocchioInterfacePtr_.reset(new ocs2::PinocchioInterface<scalar_t>(buildPinocchioInterface(urdfPath_)));
-  pinocchioInterfacePtr_->display();
+  std::cerr << *pinocchioInterfacePtr_;
 
   // local CppAD copy
   auto pinocchioInterfaceAd = ocs2::PinocchioInterface<scalar_t>::castToCppAd(*pinocchioInterfacePtr_);

@@ -27,35 +27,44 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+/*
+ * PinocchioGeometryInterface.h
+ *
+ *  Created on: 25 Aug 2020
+ *      Author: perry
+ */
+
 #pragma once
 
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
-
-#include <ocs2_mobile_manipulator_example/definitions.h>
+#include <ocs2_pinocchio/ExtendedPair.h>
 #include <ocs2_pinocchio/PinocchioInterface.h>
 
-namespace mobile_manipulator {
+#include <hpp/fcl/collision_data.h>
 
-class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
+/* Forward declaration of pinocchio geometry types */
+namespace pinocchio {
+struct GeometryModel;
+}  // namespace pinocchio
+
+namespace ocs2 {
+
+class PinocchioGeometryInterface {
  public:
-  using ocs2::SystemDynamicsBaseAD::ad_scalar_t;
-  using ocs2::SystemDynamicsBaseAD::ad_vector_t;
+  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<scalar_t>& pinocchioInterface,
+                             const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs);
+  virtual ~PinocchioGeometryInterface() = default;
 
-  explicit MobileManipulatorDynamics(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface);
-  ~MobileManipulatorDynamics() override = default;
+  // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)
+  PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
 
-  /* Copy constructor */
-  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) : ocs2::SystemDynamicsBaseAD(rhs) {
-    pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
-  }
+  pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
+  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
-  /* Clone */
-  MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
+  std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q);
 
  private:
-  std::unique_ptr<ocs2::PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
+  PinocchioInterface<scalar_t> pinocchioInterface_;
+  std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 };
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

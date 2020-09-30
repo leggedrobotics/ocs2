@@ -27,35 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
-
-#include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio/PinocchioInterface.h>
+#include <ocs2_pinocchio/PinocchioInterface.tpp>
 
-namespace mobile_manipulator {
+namespace ocs2 {
 
-class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
- public:
-  using ocs2::SystemDynamicsBaseAD::ad_scalar_t;
-  using ocs2::SystemDynamicsBaseAD::ad_vector_t;
+// explicit instantiation
+template class PinocchioInterface<ad_scalar_t>;
 
-  explicit MobileManipulatorDynamics(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface);
-  ~MobileManipulatorDynamics() override = default;
-
-  /* Copy constructor */
-  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) : ocs2::SystemDynamicsBaseAD(rhs) {
-    pinocchioInterface_.reset(new ocs2::PinocchioInterface<ad_scalar_t>(*rhs.pinocchioInterface_));
-  }
-
-  /* Clone */
-  MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
-
- private:
-  std::unique_ptr<ocs2::PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
-};
-
-}  // namespace mobile_manipulator
+}  // namespace ocs2

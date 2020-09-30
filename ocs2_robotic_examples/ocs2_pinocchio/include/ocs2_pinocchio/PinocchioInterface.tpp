@@ -1,4 +1,31 @@
-#include <iomanip>
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include <pinocchio/codegen/cppadcg.hpp>
 #include <pinocchio/fwd.hpp>
@@ -172,52 +199,6 @@ PinocchioInterface<scalar_t> PinocchioInterface<SCALAR>::buildFromXml(const std:
   pinocchio::urdf::buildModelFromXML(xmlStream, rootJoint, model);
 
   return PinocchioInterface<scalar_t>(model);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
-void PinocchioInterface<SCALAR>::display() {
-  const auto& model = getModel();
-  std::cout << "model.nv = " << model.nv << '\n';
-  std::cout << "model.nq = " << model.nq << '\n';
-  std::cout << "model.njoints = " << model.njoints << '\n';
-  std::cout << "model.nbodies = " << model.nbodies << '\n';
-  std::cout << "model.nframes = " << model.nframes << '\n';
-
-  std::cout << "\nJoints:\n";
-  for (int k = 0; k < model.njoints; ++k) {
-    std::cerr << std::setw(12) << model.names[k] << ":  ";
-    std::cerr << " ID = " << k;
-    std::cerr << '\n';
-  }
-
-  std::cout << "\nFrames:\n";
-  for (int k = 0; k < model.nframes; ++k) {
-    std::cerr << std::setw(12) << model.frames[k].name << ":  ";
-    std::cerr << " ID = " << k;
-    std::cerr << ", parent = " << model.frames[k].parent;
-    std::cerr << ", type = ";
-
-    std::string frameType;
-    if ((model.frames[k].type & pinocchio::FrameType::OP_FRAME) != 0) {
-      frameType += "OP_FRAME ";
-    }
-    if ((model.frames[k].type & pinocchio::FrameType::JOINT) != 0) {
-      frameType += "JOINT ";
-    }
-    if ((model.frames[k].type & pinocchio::FrameType::FIXED_JOINT) != 0) {
-      frameType += "FIXED_JOINT ";
-    }
-    if ((model.frames[k].type & pinocchio::FrameType::BODY) != 0) {
-      frameType += "BODY ";
-    }
-    if ((model.frames[k].type & pinocchio::FrameType::SENSOR) != 0) {
-      frameType += "SENSOR ";
-    }
-    std::cerr << "\"" << frameType << "\"\n";
-  }
 }
 
 }  // namespace ocs2

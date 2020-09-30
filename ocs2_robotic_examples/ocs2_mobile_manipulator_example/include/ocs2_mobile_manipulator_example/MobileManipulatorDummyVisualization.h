@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
-#include <ocs2_mobile_manipulator_example/GeometryInterfaceVisualization.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
+#include <ocs2_pinocchio/visualization/GeometryInterfaceVisualization.h>
 
 namespace mobile_manipulator {
 
@@ -67,5 +67,10 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
 
   std::unique_ptr<ocs2::GeometryInterfaceVisualization> geometryVisualization_;
 };
+
+// TODO(mspieler): move somewhere else
+Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state);
+Eigen::Vector3d getBasePosition(Eigen::VectorXd state);
+Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state);
 
 }  // namespace mobile_manipulator

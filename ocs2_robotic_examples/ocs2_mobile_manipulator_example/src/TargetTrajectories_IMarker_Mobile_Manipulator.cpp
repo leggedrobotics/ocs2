@@ -13,6 +13,9 @@
 
 namespace mobile_manipulator {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 TargetTrajectories_IMarker_Mobile_Manipulator::TargetTrajectories_IMarker_Mobile_Manipulator(int argc, char* argv[], std::string robotName)
     : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName), server("simple_marker") {
   observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
@@ -97,6 +100,9 @@ TargetTrajectories_IMarker_Mobile_Manipulator::TargetTrajectories_IMarker_Mobile
   server.applyChanges();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void TargetTrajectories_IMarker_Mobile_Manipulator::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) {
   ocs2::SystemObservation observation;
   ocs2::ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
@@ -131,6 +137,9 @@ void TargetTrajectories_IMarker_Mobile_Manipulator::processFeedback(const visual
   this->publishTargetTrajectories(costDesiredTrajectories);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void TargetTrajectories_IMarker_Mobile_Manipulator::observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
   latestObservation_ = msg;
 }

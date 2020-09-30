@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
+#include <ocs2_pinocchio/PinocchioInterface.h>
 
 namespace mobile_manipulator {
 

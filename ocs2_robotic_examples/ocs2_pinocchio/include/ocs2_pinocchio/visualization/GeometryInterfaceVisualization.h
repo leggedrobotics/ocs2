@@ -27,15 +27,37 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
+/*
+ * GeometryInterfaceVisualization.h
+ *
+ *  Created on: 4 Sep 2020
+ *      Author: perry
+ */
 
-#include <ocs2_mobile_manipulator_example/pinocchio_lib.h>
+#pragma once
 
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.tpp>
+#include <ros/ros.h>
+
+#include <visualization_msgs/MarkerArray.h>
+
+#include <ocs2_pinocchio/PinocchioGeometryInterface.h>
 
 namespace ocs2 {
 
-// explicit instantiation
-template class PinocchioInterface<scalar_t>;
+class GeometryInterfaceVisualization {
+ public:
+  GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
+                                 std::string pinocchioWorldFrame = "world");
+  virtual ~GeometryInterfaceVisualization() = default;
+
+  void publishDistances(const ocs2::vector_t&);
+
+ private:
+  PinocchioGeometryInterface geometryInterface_;
+
+  ros::Publisher markerPublisher_;
+
+  std::string pinocchioWorldFrame_;
+};
 
 }  // namespace ocs2

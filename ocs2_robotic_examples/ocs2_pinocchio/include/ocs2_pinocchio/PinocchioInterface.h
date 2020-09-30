@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <Eigen/Dense>
-// #include <Eigen/Geometry>
+#include <iosfwd>
 #include <memory>
 #include <string>
 
@@ -51,8 +51,10 @@ struct JointModelTpl;
 
 namespace ocs2 {
 
+// TODO(mspieler): replace these by definitions in ocs2_core
 using ad_base_t = CppAD::cg::CG<scalar_t>;
 using ad_scalar_t = CppAD::AD<ad_base_t>;
+using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
 
 template <typename SCALAR>
 struct Pose {
@@ -129,13 +131,15 @@ class PinocchioInterface final {
   static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream);
   static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream, const PinocchioJointModel& rootJoint);
 
-  /** Prints some debug info of the pinocchio model. */
-  void display();
+  friend std::ostream& operator<<(std::ostream& os, const PinocchioInterface<scalar_t>& p);
 
  private:
   std::shared_ptr<const PinocchioModel> robotModelPtr_;
   std::unique_ptr<PinocchioData> robotDataPtr_;
 };
+
+/** Print PinocchioInterface info to stream */
+std::ostream& operator<<(std::ostream& os, const PinocchioInterface<scalar_t>& p);
 
 extern template class PinocchioInterface<scalar_t>;
 extern template class PinocchioInterface<ad_scalar_t>;

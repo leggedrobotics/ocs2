@@ -32,15 +32,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
-#include <ocs2_mobile_manipulator_example/cost/SelfCollisionCost.h>
-#include <ocs2_mobile_manipulator_example/cost/SelfCollisionCostCppAd.h>
-#include "ocs2_mobile_manipulator_example/MobileManipulatorInterface.h"
-
-using namespace ocs2;
+#include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
+#include <ocs2_pinocchio/cost/SelfCollisionCost.h>
+#include <ocs2_pinocchio/cost/SelfCollisionCostCppAd.h>
 
 // Copied from ocs2_core/test
 // TODO(perry) make not random, move hessian check elsewhere (we don't use the true hessian)
-         // In our functions, the jacobians may be discontinuous. So if you're using a finite differences approximation or something, your mileage may vary
+// In our functions, the jacobians may be discontinuous. So if you're using a finite differences approximation or something, your mileage
+// may vary
 inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, ocs2::CostFunctionBase* cost2, bool& success, size_t stateDim,
                               size_t inputDim) {
   using ocs2::matrix_t;
@@ -150,25 +149,22 @@ inline void checkCostFunction(size_t numTests, ocs2::CostFunctionBase* cost1, oc
   }  // end of for loop
 }
 
-
 TEST(testSelfCollision, AnalyticalVsAutoDiff) {
-
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
   ocs2::PinocchioInterface<ocs2::scalar_t> pInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath));
-  ocs2::PinocchioGeometryInterface gInterface(urdfPath, pInterface, {{1, 4},{1, 6},{1, 9}});
+  ocs2::PinocchioGeometryInterface gInterface(urdfPath, pInterface, {{1, 4}, {1, 6}, {1, 9}});
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
-   // gInterface->getGeometryModel().addAllCollisionPairs();
+  // gInterface->getGeometryModel().addAllCollisionPairs();
 
-  ocs2::SelfCollisionCost selfCollisionCost(ocs2::PinocchioInterface<ocs2::scalar_t>(pInterface), ocs2::PinocchioGeometryInterface(gInterface), 0.1, 0.01, 1e-3);
-  ocs2::SelfCollisionCostCppAd selfCollisionCostCppAd(ocs2::PinocchioInterface<ocs2::scalar_t>(pInterface), ocs2::PinocchioGeometryInterface(gInterface), 0.1, 0.01, 1e-3);
+  ocs2::SelfCollisionCost selfCollisionCost(ocs2::PinocchioInterface<ocs2::scalar_t>(pInterface),
+                                            ocs2::PinocchioGeometryInterface(gInterface), 0.1, 0.01, 1e-3);
+  ocs2::SelfCollisionCostCppAd selfCollisionCostCppAd(ocs2::PinocchioInterface<ocs2::scalar_t>(pInterface),
+                                                      ocs2::PinocchioGeometryInterface(gInterface), 0.1, 0.01, 1e-3);
   auto libraryFolder = ros::package::getPath("ocs2_mobile_manipulator_example") + "/auto_generated";
   selfCollisionCostCppAd.initialize("ColCost", libraryFolder, true, false);
 
   bool success = true;
-  checkCostFunction(100, &selfCollisionCost, &selfCollisionCostCppAd, success, 9,
-                              8);
+  checkCostFunction(100, &selfCollisionCost, &selfCollisionCostCppAd, success, 9, 8);
   ASSERT_TRUE(success);
-
 }
-

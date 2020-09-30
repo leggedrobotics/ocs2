@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
-TEST(testPinocchioInterface, Dummy) {
-  EXPECT_TRUE(true);
+#include <ocs2_pinocchio/PinocchioInterface.h>
+#include "CartPoleUrdf.h"
+
+TEST(testPinocchioInterface, buildFromXml) {
+  auto pinocchio = ocs2::PinocchioInterface<ocs2::scalar_t>::buildFromXml(cartPoleUrdf);
+  pinocchio.display();
 }

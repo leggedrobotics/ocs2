@@ -28,7 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 /*
- * PinocchioGeometryInterface.hpp
+ * PinocchioGeometryInterface.h
  *
  *  Created on: 25 Aug 2020
  *      Author: perry

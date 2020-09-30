@@ -54,6 +54,7 @@ namespace ocs2 {
 // TODO(mspieler): replace these by definitions in ocs2_core
 using ad_base_t = CppAD::cg::CG<scalar_t>;
 using ad_scalar_t = CppAD::AD<ad_base_t>;
+using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
 
 template <typename SCALAR>
 struct Pose {

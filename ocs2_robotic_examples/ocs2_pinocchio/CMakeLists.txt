@@ -6,10 +6,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
+  ocs2_robotic_tools
+
+  # visualization deps
+  roscpp
+  std_msgs
+  geometry_msgs
+  visualization_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
@@ -62,6 +68,10 @@ add_library(${PROJECT_NAME}
   src/PinocchioInterface.cpp
   src/PinocchioInterfaceAD.cpp
   src/PinocchioGeometryInterface.cpp
+  src/cost/SelfCollisionCost.cpp
+  src/cost/SelfCollisionCostCppAd.cpp
+  src/visualization/GeometryInterfaceVisualization.cpp
+  src/visualization/VisualizationHelpers.cpp
 
   # precompile pinocchio functions
   src/pinocchio_lib/frames.cpp
@@ -69,6 +79,7 @@ add_library(${PROJECT_NAME}
   src/pinocchio_lib/jacobian.cpp
   src/pinocchio_lib/types.cpp
   src/pinocchio_lib/urdf.cpp
+
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

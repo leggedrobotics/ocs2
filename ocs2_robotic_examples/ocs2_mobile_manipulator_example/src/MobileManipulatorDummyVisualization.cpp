@@ -42,6 +42,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace mobile_manipulator {
 
+Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state) {
+  return state.tail(6);
+}
+
+Eigen::Vector3d getBasePosition(Eigen::VectorXd state) {
+  Eigen::Vector3d position;
+  position << state(0), state(1), 0.0;
+  return position;
+}
+
+Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state) {
+  return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
+}
+
 void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
   const std::string urdfName = "robot_description";

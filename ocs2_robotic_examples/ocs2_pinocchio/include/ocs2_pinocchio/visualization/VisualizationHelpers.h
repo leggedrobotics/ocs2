@@ -29,40 +29,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_pinocchio/PinocchioInterface.h>
-#include <ocs2_pinocchio/PinocchioGeometryInterface.hpp>
+#include <array>
 
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
+#include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/Vector3.h>
+#include <std_msgs/ColorRGBA.h>
+#include <visualization_msgs/MarkerArray.h>
 
 namespace ocs2 {
 
-class SelfCollisionCost final : public ocs2::CostFunctionBase {
- public:
-  SelfCollisionCost(ocs2::PinocchioInterface<scalar_t> pinocchioInterface, ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision,
-                    scalar_t minimumDistance, scalar_t mu, scalar_t delta);
-  ~SelfCollisionCost() override = default;
+/* Helpers by Ruben Grandia from ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h */
 
-  /* Copy constructor */
-  SelfCollisionCost(const SelfCollisionCost& rhs);
+template <typename It>
+void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
+  for (; firstIt != lastIt; ++firstIt) {
+    firstIt->header = header;
+  }
+}
 
-  SelfCollisionCost* clone() const override { return new SelfCollisionCost(*this); }
+template <typename It>
+void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
+  for (; firstIt != lastIt; ++firstIt) {
+    firstIt->id = startId++;
+  }
+}
 
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+geometry_msgs::Vector3 getVectorMsg(const Eigen::Vector3d& vec);
 
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+geometry_msgs::Point getPointMsg(const Eigen::Vector3d& point);
 
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+geometry_msgs::Quaternion getOrientationMsg(const Eigen::Quaterniond& orientation);
 
- private:
-  ocs2::PinocchioInterface<scalar_t> pinocchioInterface_;
-  ocs2::PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
+std_msgs::Header getHeaderMsg(const std::string& frame_id, const ros::Time& timeStamp);
 
-  scalar_t minimumDistance_;
+visualization_msgs::Marker getLineMsg(std::vector<geometry_msgs::Point>&& points, std::array<double, 3> color, double lineWidth);
 
-  const ocs2::RelaxedBarrierPenalty relaxedBarrierPenalty_;
-};
+std_msgs::ColorRGBA getColor(std::array<double, 3> rgb, double alpha = 1.0);
 
 }  // namespace ocs2

@@ -73,12 +73,8 @@ link_directories(
 add_library(${PROJECT_NAME}
   src/cost/MobileManipulatorCost.cpp
   src/cost/EndEffectorCost.cpp
-  src/cost/SelfCollisionCost.cpp
-  src/cost/SelfCollisionCostCppAd.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
-  src/GeometryInterfaceVisualization.cpp
-  src/MobileManipulatorVisualizationHelpers.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

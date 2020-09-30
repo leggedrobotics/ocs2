@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 /*
  * SelfCollisionCostCppAd.cpp
  *
@@ -5,7 +34,7 @@
  *      Author: perry
  */
 
-#include <ocs2_mobile_manipulator_example/cost/SelfCollisionCostCppAd.h>
+#include <ocs2_pinocchio/cost/SelfCollisionCostCppAd.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
@@ -13,6 +42,9 @@
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t> pinocchioInterface,
                                                ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance,
                                                scalar_t mu, scalar_t delta)
@@ -22,6 +54,9 @@ SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t
       minimumDistance_(minimumDistance),
       relaxedBarrierPenalty_(mu, delta) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 SelfCollisionCostCppAd::SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs)
     : pinocchioInterface_(rhs.pinocchioInterface_),
       pinocchioInterfaceAd_(ocs2::PinocchioInterface<scalar_t>::castToCppAd(pinocchioInterface_)),
@@ -31,6 +66,9 @@ SelfCollisionCostCppAd::SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs
       cppAdInterfaceDistanceCalculation_(rhs.cppAdInterfaceDistanceCalculation_),
       cppAdInterfaceLinkPoints_(rhs.cppAdInterfaceLinkPoints_) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void SelfCollisionCostCppAd::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries,
                                         bool verbose) {
   setADInterfaces(modelName, modelFolder);
@@ -41,7 +79,9 @@ void SelfCollisionCostCppAd::initialize(const std::string& modelName, const std:
   }
 }
 
-/** Evaluate the cost */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t SelfCollisionCostCppAd::cost(scalar_t t, const vector_t& x, const vector_t& u) {
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
@@ -54,12 +94,16 @@ scalar_t SelfCollisionCostCppAd::cost(scalar_t t, const vector_t& x, const vecto
   return relaxedBarrierPenalty_.penaltyCost(violations);
 }
 
-/** Evaluate the final cost */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t SelfCollisionCostCppAd::finalCost(scalar_t t, const vector_t& x) {
   return 0;
 }
 
-/** Evaluate the cost quadratic approximation */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SelfCollisionCostCppAd::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
@@ -85,18 +129,21 @@ ScalarFunctionQuadraticApproximation SelfCollisionCostCppAd::costQuadraticApprox
   return relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
 }
 
-/** Evaluate the final cost quadratic approximation */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SelfCollisionCostCppAd::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   ScalarFunctionQuadraticApproximation approximation;
   approximation.f = 0.0;
-  approximation.dfdx.setZero(9);
-  approximation.dfdu.setZero(8);
-  approximation.dfdxx.setZero(9, 9);
-  approximation.dfdux.setZero(9, 8);
-  approximation.dfduu.setZero(8, 8);
+  approximation.dfdx.setZero(x.rows());
+  approximation.dfdxx.setZero(x.rows(), x.rows());
   return approximation;
+  // return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0); // TODO(mspieler)
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ad_vector_t SelfCollisionCostCppAd::computeLinkPointsAd(ad_vector_t state, ad_vector_t points) {
   ad_vector_t pointsInLinkFrames = ad_vector_t::Zero(points.size());
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
@@ -125,6 +172,9 @@ ad_vector_t SelfCollisionCostCppAd::computeLinkPointsAd(ad_vector_t state, ad_ve
   return pointsInLinkFrames;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ad_vector_t SelfCollisionCostCppAd::distanceCalculationAd(ad_vector_t state, ad_vector_t points) {
   ad_vector_t results = ad_vector_t::Zero(points.size() / numberOfParamsPerResult_);
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
@@ -150,18 +200,22 @@ ad_vector_t SelfCollisionCostCppAd::distanceCalculationAd(ad_vector_t state, ad_
   return results;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void SelfCollisionCostCppAd::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
   using ad_interface = CppAdInterface;
   using ad_dynamic_vector_t = ad_interface::ad_vector_t;
   using ad_scalar_t = ad_interface::ad_scalar_t;
 
+  const size_t stateDim = pinocchioInterface_.getModel().nq;
   const size_t numDistanceResults = this->pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs.size();
 
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = distanceCalculationAd(x, p);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
-  cppAdInterfaceDistanceCalculation_.reset(new CppAdInterface(stateAndClosestPointsToDistance, mobile_manipulator::STATE_DIM,
+  cppAdInterfaceDistanceCalculation_.reset(new CppAdInterface(stateAndClosestPointsToDistance, stateDim,
                                                               numDistanceResults * numberOfParamsPerResult_,
                                                               modelName + "_distance_intermediate", modelFolder));
 
@@ -169,16 +223,22 @@ void SelfCollisionCostCppAd::setADInterfaces(const std::string& modelName, const
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = computeLinkPointsAd(x, p);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
-  cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, mobile_manipulator::STATE_DIM,
+  cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, stateDim,
                                                      numDistanceResults * numberOfParamsPerResult_, modelName + "_links_intermediate",
                                                      modelFolder));
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void SelfCollisionCostCppAd::createModels(bool verbose) {
   cppAdInterfaceDistanceCalculation_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
   cppAdInterfaceLinkPoints_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void SelfCollisionCostCppAd::loadModelsIfAvailable(bool verbose) {
   cppAdInterfaceDistanceCalculation_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   cppAdInterfaceLinkPoints_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);

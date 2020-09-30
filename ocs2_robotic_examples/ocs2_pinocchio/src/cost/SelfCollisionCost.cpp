@@ -27,10 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/cost/SelfCollisionCost.h>
-
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
+#include <ocs2_pinocchio/cost/SelfCollisionCost.h>
 // Todo(perry) why does this header need to come after the SelfCollisionCost.h?
 #include <ocs2_pinocchio/CppAdHelpers.h>
 
@@ -38,6 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 SelfCollisionCost::SelfCollisionCost(ocs2::PinocchioInterface<scalar_t> pinocchioInterface,
                                      ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
                                      scalar_t delta)
@@ -46,13 +48,18 @@ SelfCollisionCost::SelfCollisionCost(ocs2::PinocchioInterface<scalar_t> pinocchi
       minimumDistance_(minimumDistance),
       relaxedBarrierPenalty_(mu, delta) {}
 
-/* Copy constructor */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 SelfCollisionCost::SelfCollisionCost(const SelfCollisionCost& rhs)
     : pinocchioInterface_(rhs.pinocchioInterface_),
       pinocchioGeometrySelfCollisions_(rhs.pinocchioGeometrySelfCollisions_),
       minimumDistance_(rhs.minimumDistance_),
       relaxedBarrierPenalty_(rhs.relaxedBarrierPenalty_) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t SelfCollisionCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
   //  std::cout << "Cost called" << std::endl;
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
@@ -65,10 +72,17 @@ scalar_t SelfCollisionCost::cost(scalar_t t, const vector_t& x, const vector_t& 
 
   return relaxedBarrierPenalty_.penaltyCost(violations);
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t SelfCollisionCost::finalCost(scalar_t t, const vector_t& x) {
   return scalar_t(0);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
@@ -125,6 +139,9 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
   return relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SelfCollisionCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   ScalarFunctionQuadraticApproximation approximation;
   approximation.f = 0.0;

@@ -68,4 +68,9 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
   std::unique_ptr<ocs2::GeometryInterfaceVisualization> geometryVisualization_;
 };
 
+// TODO(mspieler): move somewhere else
+Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state);
+Eigen::Vector3d getBasePosition(Eigen::VectorXd state);
+Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state);
+
 }  // namespace mobile_manipulator

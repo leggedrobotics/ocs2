@@ -11,7 +11,7 @@
 
 #include <visualization_msgs/MarkerArray.h>
 
-#include <ocs2_mobile_manipulator_example/PinocchioGeometryInterface.hpp>
+#include <ocs2_pinocchio/PinocchioGeometryInterface.hpp>
 
 namespace ocs2 {
 

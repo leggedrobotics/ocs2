@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/geometry.hpp>
 
 #include <ocs2_mobile_manipulator_example/GeometryInterfaceVisualization.h>
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
-#include <ocs2_mobile_manipulator_example/PinocchioGeometryInterface.hpp>
+#include <ocs2_pinocchio/PinocchioInterface.h>
+#include <ocs2_pinocchio/PinocchioGeometryInterface.hpp>
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorVisualizationHelpers.h>

@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_mobile_manipulator_example/PinocchioGeometryInterface.hpp>
+#include <ocs2_pinocchio/PinocchioInterface.h>
+#include <ocs2_pinocchio/PinocchioGeometryInterface.hpp>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>

@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_mobile_manipulator_example/PinocchioInterface.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
+#include <ocs2_pinocchio/PinocchioInterface.h>
 
 #include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
 

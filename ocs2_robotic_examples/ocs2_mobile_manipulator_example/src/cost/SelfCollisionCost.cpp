@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 // Todo(perry) why does this header need to come after the SelfCollisionCost.h?
-#include <ocs2_mobile_manipulator_example/CppAdHelpers.h>
+#include <ocs2_pinocchio/CppAdHelpers.h>
 
 #include <pinocchio/multibody/geometry.hpp>
 

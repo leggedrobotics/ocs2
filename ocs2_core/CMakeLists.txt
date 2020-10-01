@@ -5,9 +5,12 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_thirdparty
 )
+
 find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
+  log_setup
+  log
 )
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -61,11 +64,13 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
+  src/Types.cpp
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/automatic_differentation/FiniteDifferenceMethods.cpp
   src/constraint/ConstraintBase.cpp
   src/constraint/ConstraintBaseAD.cpp
+  src/constraint/ConstraintCollection.cpp
   src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
@@ -73,6 +78,7 @@ add_library(${PROJECT_NAME}
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
+  src/cost/CostCollection.cpp
   src/cost/CostFunctionBase.cpp
   src/cost/CostFunctionBaseAD.cpp
   src/cost/CostDesiredTrajectories.cpp
@@ -113,6 +119,7 @@ add_library(${PROJECT_NAME}
   src/model_data/ModelDataBase.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
+  src/misc/Log.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -250,20 +257,14 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
   gtest_main
 )
 
-catkin_add_gtest(test_LinearAlgebra
+catkin_add_gtest(${PROJECT_NAME}_test_misc
+  test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
-)
-target_link_libraries(test_LinearAlgebra
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(test_lookup
+  test/misc/testSynchronized.cpp
   test/misc/testLookup.cpp
+  test/misc/testThreadPool.cpp
 )
-target_link_libraries(test_lookup
+target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
@@ -279,17 +280,8 @@ target_link_libraries(test_dynamics
   gtest_main
 )
 
-catkin_add_gtest(test_ThreadPool
-  test/misc/testThreadPool.cpp
-)
-target_link_libraries(test_ThreadPool
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
 catkin_add_gtest(test_cost
+  test/cost/testCostCollection.cpp
   test/cost/testRelaxedBarrierCost.cpp
   test/cost/testCostFunctionLinearCombination.cpp
   test/cost/testQuadraticCostFunction.cpp
@@ -301,11 +293,31 @@ target_link_libraries(test_cost
   gtest_main
 )
 
+catkin_add_gtest(test_constraint
+  test/constraint/testConstraintCollection.cpp
+)
+target_link_libraries(test_constraint
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
 catkin_add_gtest(test_ModelDataBase
   test/model_data/testModelDataBase.cpp
 )
 target_link_libraries(test_ModelDataBase
   ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_Logging
+  test/misc/testLogging.cpp
+)
+target_link_libraries(test_Logging
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   gtest_main
 )

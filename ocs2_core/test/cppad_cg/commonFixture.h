@@ -3,13 +3,14 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/CppAdSparsity.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
 
 namespace ocs2 {
 
 class CommonCppAdNoParameterFixture : public ::testing::Test {
  public:
-  using ad_fun_t = ocs2::CppAdInterface::ad_fun_t;
-  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
+  using ad_fun_t = CppAdInterface::ad_fun_t;
+  using ad_vector_t = ocs2::ad_vector_t;
 
   const size_t variableDim_ = 3;
   const size_t rangeDim_ = 1;
@@ -67,8 +68,8 @@ class CommonCppAdNoParameterFixture : public ::testing::Test {
 
 class CommonCppAdParameterizedFixture : public ::testing::Test {
  public:
-  using ad_fun_t = ocs2::CppAdInterface::ad_fun_t;
-  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
+  using ad_fun_t = CppAdInterface::ad_fun_t;
+  using ad_vector_t = ocs2::ad_vector_t;
 
   const size_t variableDim_ = 2;
   const size_t rangeDim_ = 2;

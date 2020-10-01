@@ -84,6 +84,8 @@ void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, cons
     std::string err = modelData.checkDynamicsDerivativsProperties();
     if (!err.empty()) {
       std::cerr << "what(): " << err << " at time " << time << " [sec]." << std::endl;
+      std::cerr << "x: " << state.transpose() << '\n';
+      std::cerr << "u: " << input.transpose() << '\n';
       std::cerr << "Am: \n" << modelData.dynamics_.dfdx << std::endl;
       std::cerr << "Bm: \n" << modelData.dynamics_.dfdu << std::endl;
       throw std::runtime_error(err);
@@ -115,6 +117,8 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
     std::string err = modelData.checkConstraintProperties();
     if (!err.empty()) {
       std::cerr << "what(): " << err << " at time " << time << " [sec]." << std::endl;
+      std::cerr << "x: " << state.transpose() << '\n';
+      std::cerr << "u: " << input.transpose() << '\n';
       std::cerr << "Ev: " << modelData.stateInputEqConstr_.f.transpose() << std::endl;
       std::cerr << "Cm: \n" << modelData.stateInputEqConstr_.dfdx << std::endl;
       std::cerr << "Dm: \n" << modelData.stateInputEqConstr_.dfdu << std::endl;

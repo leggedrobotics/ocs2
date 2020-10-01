@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "ocs2_mpc/CommandData.h"
+#include "ocs2_mpc/MrtObserver.h"
 #include "ocs2_mpc/SystemObservation.h"
 
 namespace ocs2 {
@@ -63,7 +64,7 @@ class MRT_BASE {
   /**
    * @brief Default destructor
    */
-  ~MRT_BASE() = default;
+  virtual ~MRT_BASE() = default;
 
   /**
    * Resets the class to its instantiated state.
@@ -100,7 +101,7 @@ class MRT_BASE {
    * Gets a reference to current optimized policy.
    * @return constant reference to the policy data.
    */
-  const PrimalSolution& getPolicy() const { return *currentPrimalSolution_; };
+  const PrimalSolution& getPolicy() const;
 
   /**
    * @brief Initializes rollout class to roll out a feedback policy
@@ -135,7 +136,7 @@ class MRT_BASE {
   /**
    * Checks the data buffer for an update of the MPC policy. If a new policy
    * is available on the buffer this method will load it to the in-use policy.
-   * This method also calls the modifyPolicy() method.
+   * This method also calls the modifyActiveSolution() method.
    *
    * @return True if the policy is updated.
    */
@@ -147,46 +148,27 @@ class MRT_BASE {
    */
   bool isRolloutSet() const { return rolloutPtr_ != nullptr; }
 
- protected:
   /**
-   * The updatePolicy() method will call this method which allows the user to
-   * customize the in-use policy. Note that this method is already
-   * protected with a mutex which blocks the policy callback. Moreover, this method
-   * may be called in the main thread of the program. Thus, for efficiency and
-   * practical considerations you should avoid computationally expensive operations.
-   * For such operations you may want to use the modifyBufferPolicy()
-   * methods which runs on a separate thread which directly modifies the received
-   * policy messages on the data buffer.
-   *
+   * Adds an MRT observer to the policy update process
    */
-  virtual void modifyPolicy(const CommandData& command, PrimalSolution& primalSolution) {}
-
-  /**
-   * This method can be used to modify the policy on the buffer without inputting the main thread.
-   *
-   * @param [in] commandBuffer: buffered command data.
-   * @param primalSolutionBuffer: The primal problem's solution on the buffer.
-   */
-  virtual void modifyBufferPolicy(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) {}
-
-  /**
-   * Constructs a partitioningTimes vector with 2 elements: minimum of the already
-   * received times and the maximum value of the numeric type scalar_t. This prevents
-   * the frequent update of the logicRules.
-   *
-   * @param [in] time: The current time.
-   * @param [out] partitioningTimes: Partitioning time.
-   */
-  void partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const;
+  void addMrtObserver(std::shared_ptr<MrtObserver> mrtObserver) { observerPtrArray_.push_back(std::move(mrtObserver)); };
 
  protected:
+  void fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution);
+
+ private:
+  /** Calls modifyActiveSolution on all mrt observers. This function is called while holding a policyBufferMutex lock */
+  void modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution);
+
+  /** Calls modifyBufferedSolution on all mrt observers. This function is called while holding a policyBufferMutex lock */
+  void modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer);
+
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;
-  bool newPolicyInBuffer_;  //! Whether a new policy is waiting to be swapped in
+  bool newPolicyInBuffer_;          // whether a new policy is waiting to be swapped in
+  std::atomic_bool policyUpdated_;  // whether the policy was updated by MPC (i.e., MPC succeeded)
 
   // variables related to the MPC output
-  std::atomic_bool policyUpdated_;  //! Whether the policy was updated by MPC (i.e., MPC succeeded)
-  bool policyUpdatedBuffer_;        //! Whether the policy in buffer was upated by MPC (i.e., MPC succeeded)
   std::unique_ptr<PrimalSolution> currentPrimalSolution_;
   std::unique_ptr<PrimalSolution> primalSolutionBuffer_;
   std::unique_ptr<CommandData> currentCommand_;
@@ -194,14 +176,13 @@ class MRT_BASE {
 
   // thread safety
   mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
+  const size_t mrtTrylockWarningThreshold_ = 5;
+  size_t mrtTrylockWarningCount_;
 
   // variables needed for policy evaluation
   std::unique_ptr<RolloutBase> rolloutPtr_;
 
-  // variables
-  scalar_array_t partitioningTimes_;
-  scalar_array_t partitioningTimesBuffer_;
-  SystemObservation initPlanObservation_;  //! The initial observation of the first plan ever received
+  std::vector<std::shared_ptr<MrtObserver>> observerPtrArray_;
 };
 
 }  // namespace ocs2

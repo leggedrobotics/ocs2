@@ -40,27 +40,41 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-namespace ddp_strategy {
+namespace search_strategy {
 
 /**
  * @brief The DDP strategy enum
  * Enum used in selecting either LINE_SEARCH, LEVENBERG_MARQUARDT, or TRUST_REGION strategies.
  */
-enum class type { LINE_SEARCH, LEVENBERG_MARQUARDT };
+enum class Type { LINE_SEARCH, LEVENBERG_MARQUARDT };
 
 /**
  * Get string name of DDP_Strategy type
  * @param [in] strategy: DDP_Strategy type enum
  */
-std::string toString(type strategy);
+std::string toString(Type strategy);
 
 /**
  * Get DDP_Strategy type from string name, useful for reading config file
  * @param [in] name: DDP_Strategy name
  */
-type fromString(std::string name);
+Type fromString(std::string name);
 
-}  // namespace ddp_strategy
+/**
+ * This structure contains the settings for the Line-Search strategy.
+ */
+struct Settings {
+  /** This value determines to display the log output DDP. */
+  bool displayInfo = false;
+  /** Printing rollout trajectory for debugging. */
+  bool debugPrintRollout = false;
+  /** This value determines the termination condition based on the minimum relative changes of the cost. */
+  scalar_t minRelCost = 1e-3;
+  /** This value determines the tolerance of constraint's ISE (Integral of Square Error). */
+  scalar_t constraintTolerance = 1e-3;
+};  // end of Settings
+
+}  // namespace search_strategy
 
 /******************************************************************************************************/
 /******************************************************************************************************/

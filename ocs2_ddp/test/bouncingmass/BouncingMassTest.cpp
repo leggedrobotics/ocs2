@@ -65,7 +65,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * (1) No penetration of Guard Surfaces
  * (2) Check of cost function compared against cost calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, BouncingMassTest) {
+TEST(BouncingMassTest, state_rollout_slq) {
   using scalar_t = ocs2::scalar_t;
   using vector_t = ocs2::vector_t;
   using matrix_t = ocs2::matrix_t;
@@ -74,7 +74,7 @@ TEST(testStateRollOut_SLQ, BouncingMassTest) {
   using matrix_array_t = ocs2::matrix_array_t;
 
   ocs2::ddp::Settings ddpSettings;
-  ddpSettings.algorithm_ = ocs2::ddp::algorithm::SLQ;
+  ddpSettings.algorithm_ = ocs2::ddp::Algorithm::SLQ;
   ddpSettings.displayInfo_ = false;
   ddpSettings.displayShortSummary_ = true;
   ddpSettings.maxNumIterations_ = 30;

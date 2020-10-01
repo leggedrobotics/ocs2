@@ -64,22 +64,15 @@ class MRT_ROS_Interface : public MRT_BASE {
    * @param [in] robotName: The robot's name.
    * @param [in] mrtTransportHints: ROS transmission protocol.
    */
-  explicit MRT_ROS_Interface(std::string robotName = "robot", ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
+  explicit MRT_ROS_Interface(std::string robotName = "robot",
+                             ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
   /**
    * Destructor
    */
-  virtual ~MRT_ROS_Interface();
+  ~MRT_ROS_Interface() override;
 
   void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override;
-
-  /**
-   * This method will be called either after the very fist call of the class or after a call to reset().
-   * Users can use this function for any sort of initialization that they may need in the first call.
-   *
-   * @param [in] planObservation: The observation of the policy.
-   */
-  virtual void initCall(const SystemObservation& planObservation) {}
 
   /**
    * Shut down the ROS nodes.
@@ -100,7 +93,7 @@ class MRT_ROS_Interface : public MRT_BASE {
    * Launches the ROS publishers and subscribers to communicate with the MPC node.
    * @param nodeHandle
    */
-  void launchNodes(ros::NodeHandle& nodeHandle);
+  void launchNodes(::ros::NodeHandle& nodeHandle);
 
   void setCurrentObservation(const SystemObservation& currentObservation) override;
 

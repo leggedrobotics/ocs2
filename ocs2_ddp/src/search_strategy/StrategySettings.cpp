@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_ddp/StrategySettings.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 #include <algorithm>
 #include <unordered_map>
@@ -39,22 +39,22 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-namespace ddp_strategy {
+namespace search_strategy {
 
-std::string toString(type strategy) {
-  static const std::unordered_map<type, std::string> strategyMap{{type::LINE_SEARCH, "LINE_SEARCH"},
-                                                                 {type::LEVENBERG_MARQUARDT, "LEVENBERG_MARQUARDT"}};
+std::string toString(Type strategy) {
+  static const std::unordered_map<Type, std::string> strategyMap{{Type::LINE_SEARCH, "LINE_SEARCH"},
+                                                                 {Type::LEVENBERG_MARQUARDT, "LEVENBERG_MARQUARDT"}};
   return strategyMap.at(strategy);
 }
 
-type fromString(std::string name) {
-  static const std::unordered_map<std::string, type> strategyMap{{"LINE_SEARCH", type::LINE_SEARCH},
-                                                                 {"LEVENBERG_MARQUARDT", type::LEVENBERG_MARQUARDT}};
+Type fromString(std::string name) {
+  static const std::unordered_map<std::string, Type> strategyMap{{"LINE_SEARCH", Type::LINE_SEARCH},
+                                                                 {"LEVENBERG_MARQUARDT", Type::LEVENBERG_MARQUARDT}};
   std::transform(name.begin(), name.end(), name.begin(), ::toupper);
   return strategyMap.at(name);
 }
 
-}  // namespace ddp_strategy
+}  // namespace search_strategy
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -65,7 +65,7 @@ Settings load(const std::string& filename, const std::string& fieldName, bool ve
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
   if (verbose) {
-    std::cerr << " #### LINE_SEARCH Settings: {" << std::endl;
+    std::cerr << " #### LINE_SEARCH Settings: {\n";
   }
 
   Settings settings;
@@ -99,7 +99,7 @@ Settings load(const std::string& filename, const std::string& fieldName, bool ve
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
   if (verbose) {
-    std::cerr << " #### LEVENBERG_MARQUARDT Settings: {" << std::endl;
+    std::cerr << " #### LEVENBERG_MARQUARDT Settings: {\n";
   }
 
   Settings settings;

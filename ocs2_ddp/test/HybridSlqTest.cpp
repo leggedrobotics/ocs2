@@ -31,14 +31,14 @@
  * (2) Constraint compliance
  * (3) Check of cost function compared against cost calculated during trusted run of SLQ
  */
-TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
+TEST(HybridSlqTest, state_rollout_slq) {
   using namespace ocs2;
 
   const size_t stateDim = STATE_DIM;
   const size_t inputDim = INPUT_DIM;
 
   ddp::Settings ddpSettings;
-  ddpSettings.algorithm_ = ddp::algorithm::SLQ;
+  ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
   ddpSettings.displayInfo_ = true;
   ddpSettings.displayShortSummary_ = true;
   ddpSettings.maxNumIterations_ = 30;
@@ -52,7 +52,7 @@ TEST(testStateRollOut_SLQ, HybridSystemSLQTest) {
   ddpSettings.useNominalTimeForBackwardPass_ = true;
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
-  ddpSettings.strategy_ = ddp_strategy::type::LINE_SEARCH;
+  ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;
 
   rollout::Settings rolloutSettings;
   rolloutSettings.absTolODE_ = 1e-10;

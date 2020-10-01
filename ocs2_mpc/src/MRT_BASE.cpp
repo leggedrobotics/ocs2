@@ -52,13 +52,20 @@ void MRT_BASE::reset() {
 
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
-
   policyUpdated_ = false;
-  policyUpdatedBuffer_ = false;
-
-  partitioningTimesUpdate(0.0, partitioningTimes_);
-  partitioningTimesUpdate(0.0, partitioningTimesBuffer_);
+  mrtTrylockWarningCount_ = 0;
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+const PrimalSolution& MRT_BASE::getPolicy() const {
+  if (policyUpdated_) {
+    return *currentPrimalSolution_;
+  } else {
+    throw std::runtime_error("[MRT_BASE::getPolicy]  updatePolicy() should be called first!");
+  }
+};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -97,7 +104,6 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
     throw std::runtime_error("MRT_ROS_interface: rolloutPtr is not initialized, call initRollout first.");
   }
 
-  const size_t activePartitionIndex = 0;  // there is only one partition.
   scalar_t finalTime = currentTime + timeStep;
   scalar_array_t timeTrajectory;
   size_array_t postEventIndicesStock;
@@ -110,7 +116,7 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
                      currentPrimalSolution_->modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock, stateTrajectory,
                      inputTrajectory);
   } else {
-    throw std::runtime_error("MRT_ROS_interface: policy should be updated before rollout.");
+    throw std::runtime_error("[MRT_BASE::rolloutPolicy] updatePolicy() should be called first!");
   }
 
   mpcState = stateTrajectory.back();
@@ -123,31 +129,66 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool MRT_BASE::updatePolicy() {
-  std::lock_guard<std::mutex> lock(policyBufferMutex_);
+  std::unique_lock<std::mutex> lock(policyBufferMutex_, std::try_to_lock);
+  if (lock.owns_lock()) {
+    mrtTrylockWarningCount_ = 0;
+    if (newPolicyInBuffer_) {
+      // update the current policy from buffer
+      currentCommand_.swap(commandBuffer_);
+      currentPrimalSolution_.swap(primalSolutionBuffer_);
+      policyUpdated_ = true;
+      newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
 
-  if (!policyUpdatedBuffer_ || !newPolicyInBuffer_) {
-    return false;
+      modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
+      return true;
+    } else {
+      return false;  // No policy update: the buffer contains nothing new.
+    }
+  } else {
+    ++mrtTrylockWarningCount_;
+    if (mrtTrylockWarningCount_ > mrtTrylockWarningThreshold_) {
+      std::cerr << "[MRT_BASE::updatePolicy] failed to lock the policyBufferMutex for " << mrtTrylockWarningCount_
+                << " consecutive times.\n";
+    }
+    return false;  // No policy update: the lock could not be acquired.
   }
-  newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
-
-  // update the current policy from buffer
-  policyUpdated_ = policyUpdatedBuffer_;
-  currentCommand_.swap(commandBuffer_);
-  currentPrimalSolution_.swap(primalSolutionBuffer_);
-  partitioningTimes_.swap(partitioningTimesBuffer_);
-
-  modifyPolicy(*currentCommand_, *currentPrimalSolution_);
-
-  return true;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::partitioningTimesUpdate(scalar_t time, scalar_array_t& partitioningTimes) const {
-  partitioningTimes.resize(2);
-  partitioningTimes[0] = (policyReceivedEver_) ? initPlanObservation_.time : time;
-  partitioningTimes[1] = std::numeric_limits<scalar_t>::max();
+void MRT_BASE::fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution) {
+  std::lock_guard<std::mutex> lk(policyBufferMutex_);
+  primalSolutionBuffer_ = std::move(newPrimalSolution);
+  commandBuffer_ = std::move(newCommandData);
+
+  // allow user to modify the buffer
+  modifyBufferedSolution(*commandBuffer_, *primalSolutionBuffer_);
+
+  newPolicyInBuffer_ = true;
+  policyReceivedEver_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_BASE::modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution) {
+  for (auto& mrtObserver : observerPtrArray_) {
+    if (mrtObserver) {
+      mrtObserver->modifyActiveSolution(command, primalSolution);
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_BASE::modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) {
+  for (auto& mrtObserver : observerPtrArray_) {
+    if (mrtObserver) {
+      mrtObserver->modifyBufferedSolution(commandBuffer, primalSolutionBuffer);
+    }
+  }
 }
 
 }  // namespace ocs2

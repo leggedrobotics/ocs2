@@ -123,38 +123,26 @@ void MPC_MRT_Interface::advanceMpc() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_MRT_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservation) {
-  // buffer policy mutex
-  std::lock_guard<std::mutex> policyBufferLock(this->policyBufferMutex_);
+  // get new policy from solver
+  auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
+  const scalar_t startTime = mpcInitObservation.time;
+  const scalar_t finalTime =
+      (mpc_.settings().solutionTimeWindow_ < 0) ? mpc_.getSolverPtr()->getFinalTime() : startTime + mpc_.settings().solutionTimeWindow_;
+  mpc_.getSolverPtr()->getPrimalSolution(finalTime, newSolution.get());
 
-  // get solution
-  scalar_t startTime = mpcInitObservation.time;
-  scalar_t finalTime = startTime + mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) {
-    finalTime = mpc_.getSolverPtr()->getFinalTime();
-  }
-  mpc_.getSolverPtr()->getPrimalSolution(finalTime, this->primalSolutionBuffer_.get());
+  // get new command from solver
+  auto newCommand = std::unique_ptr<CommandData>(new CommandData);
+  newCommand->mpcInitObservation_ = std::move(mpcInitObservation);
+  newCommand->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
 
-  // command
-  this->commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
-  this->commandBuffer_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
-
-  // partition
-  this->partitioningTimesUpdate(startTime, this->partitioningTimesBuffer_);
-
-  // allow user to modify the buffer
-  this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
-
-  // Flags to be set last:
-  this->newPolicyInBuffer_ = true;
-  this->policyReceivedEver_ = true;
-  this->policyUpdatedBuffer_ = true;
+  this->fillSolutionBuffer(std::move(newCommand), std::move(newSolution));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time, matrix_t& K) {
-  auto controller = dynamic_cast<LinearController*>(this->currentPrimalSolution_->controllerPtr_.get());
+  auto controller = dynamic_cast<LinearController*>(this->getPolicy().controllerPtr_.get());
   if (controller == nullptr) {
     throw std::runtime_error("Feedback gains only available with linear controller");
   }

@@ -46,10 +46,6 @@ void makePsdCholesky(matrix_t& A, double minEigenvalue);
 void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT, matrix_t& DmDagger, matrix_t& DmDaggerTRmDmDaggerUUT,
                                  matrix_t& RmInvConstrainedUUT);
 
-int rank(const matrix_t& A);
-
-Eigen::VectorXcd eigenvalues(const matrix_t& A);
-
 /**
  * Makes the input matrix PSD using a eigenvalue decomposition.
  *
@@ -150,25 +146,28 @@ void computeConstraintProjection(const matrix_t& Dm, const DerivedInputMatrix& R
   computeConstraintProjection(Dm, matrix_t(RmInvUmUmT), DmDagger, DmDaggerTRmDmDaggerUUT, RmInvConstrainedUUT);
 }
 
-/**
- * Compute the rank of a matrix
- * @param [in] A: Matrix
- * @return rank of A
- */
+/** Computes the rank of a matrix */
 template <typename Derived>
 int rank(const Derived& A) {
-  return rank(matrix_t(A));
+  return A.colPivHouseholderQr().rank();
 }
 
-/**
- * Compute the eigenvalues of A
- * @param [in] A: Matrix
- * @return Vector of complex eigenvalues
- */
+/** Computes the complex eigenvalues of A */
 template <typename Derived>
 Eigen::VectorXcd eigenvalues(const Derived& A) {
-  return eigenvalues(matrix_t(A));
+  return A.eigenvalues();
 }
+
+/** Computes the eigenvalues for a symmetric matrix A */
+template <typename Derived>
+vector_t symmetricEigenvalues(const Derived& A) {
+  return A.template selfadjointView<Eigen::Lower>().eigenvalues();
+}
+
+// Declaring explicit instantiations for dynamic sized matrices
+extern template int rank(const matrix_t& A);
+extern template Eigen::VectorXcd eigenvalues(const matrix_t& A);
+extern template vector_t symmetricEigenvalues(const matrix_t& A);
 
 }  // namespace LinearAlgebra
 }  // namespace ocs2

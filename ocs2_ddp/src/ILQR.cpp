@@ -42,7 +42,7 @@ ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynami
 
     : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
            heuristicsFunctionPtr) {
-  if (settings().algorithm_ != ddp::algorithm::ILQR) {
+  if (settings().algorithm_ != ddp::Algorithm::ILQR) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");
   }
@@ -52,7 +52,7 @@ ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynami
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
 
   for (size_t i = 0; i < settings().nThreads_; i++) {
-    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == ddp_strategy::type::LINE_SEARCH);
+    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new DiscreteTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
@@ -197,21 +197,11 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t ILQR::computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const {
-  const auto& Bm = modelData.dynamics_.dfdu;
-  const auto& Rm = modelData.cost_.dfduu;
-  switch (strategy) {
-    case ddp_strategy::type::LINE_SEARCH: {
-      return (Rm + Bm.transpose() * Sm * Bm);
-    }
-    case ddp_strategy::type::LEVENBERG_MARQUARDT: {
-      auto SmPlus = Sm;
-      SmPlus.diagonal() += vector_t::Constant(Sm.rows(), BASE::levenbergMarquardtModule_.riccatiMultiple);
-      return (Rm + Bm.transpose() * SmPlus * Bm);
-    }
-    default:
-      throw std::runtime_error("unknown ddp strategy");
-  }  // end of switch-case
+matrix_t ILQR::computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const {
+  const matrix_t BmTransSm = modelData.dynamics_.dfdu.transpose() * Sm;
+  matrix_t Hm = modelData.cost_.dfduu;
+  Hm.noalias() += BmTransSm * modelData.dynamics_.dfdu;
+  return searchStrategyPtr_->augmentHamiltonianHessian(modelData, Hm);
 }
 
 /******************************************************************************************************/
@@ -280,8 +270,7 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
     auto& projectedKmFinal = projectedKmTrajectoryStock_[partitionIndex][endTimeItr - 1];
 
     const auto SmDummy = matrix_t::Zero(modelDataFinal.stateDim_, modelDataFinal.stateDim_);
-    BASE::computeProjectionAndRiccatiModification(settings().strategy_, modelDataFinal, SmDummy, projectedModelDataFinal,
-                                                  riccatiModificationFinal);
+    BASE::computeProjectionAndRiccatiModification(modelDataFinal, SmDummy, projectedModelDataFinal, riccatiModificationFinal);
 
     // projected feedforward
     projectedLvFinal = -projectedModelDataFinal.cost_.dfdu - riccatiModificationFinal.deltaGv_;
@@ -299,7 +288,7 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, con
     for (int k = endTimeItr - 2; k >= beginTimeItr; k--) {
       // project
       BASE::computeProjectionAndRiccatiModification(
-          settings().strategy_, BASE::modelDataTrajectoriesStock_[partitionIndex][k], BASE::SmTrajectoryStock_[partitionIndex][k + 1],
+          BASE::modelDataTrajectoriesStock_[partitionIndex][k], BASE::SmTrajectoryStock_[partitionIndex][k + 1],
           BASE::projectedModelDataTrajectoriesStock_[partitionIndex][k], BASE::riccatiModificationTrajectoriesStock_[partitionIndex][k]);
 
       // compute one step of Riccati difference equations

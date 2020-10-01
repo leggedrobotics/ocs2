@@ -61,7 +61,7 @@ MRT_ROS_Interface::~MRT_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
-  this->policyReceivedEver_ = false;
+  this->reset();
 
   ocs2_msgs::reset resetSrv;
   resetSrv.request.reset = static_cast<uint8_t>(true);
@@ -191,43 +191,11 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
-  std::lock_guard<std::mutex> lk(this->policyBufferMutex_);
-  auto& timeBuffer = this->primalSolutionBuffer_->timeTrajectory_;
-  auto& stateBuffer = this->primalSolutionBuffer_->stateTrajectory_;
-  auto& inputBuffer = this->primalSolutionBuffer_->inputTrajectory_;
-  auto& controlBuffer = this->primalSolutionBuffer_->controllerPtr_;
-  auto& modeScheduleBuffer = this->primalSolutionBuffer_->modeSchedule_;
-  auto& primalSolutionBuffer = *this->primalSolutionBuffer_;
-  auto& commandBuffer = *this->commandBuffer_;
-
-  this->policyUpdatedBuffer_ = static_cast<bool>(msg->controllerIsUpdated);
-
-  // if MPC did not update the policy
-  if (!this->policyUpdatedBuffer_) {
-    timeBuffer.clear();
-    stateBuffer.clear();
-    inputBuffer.clear();
-    controlBuffer.reset(nullptr);
-    modeScheduleBuffer = ModeSchedule({}, {0});
-    commandBuffer.mpcInitObservation_ = SystemObservation();
-    commandBuffer.mpcCostDesiredTrajectories_.clear();
-  } else {
-    readPolicyMsg(*msg, primalSolutionBuffer, commandBuffer);
-
-    const scalar_t partitionInitMargin = 1e-1;  //! @badcode Is this necessary?
-    this->partitioningTimesUpdate(commandBuffer.mpcInitObservation_.time - partitionInitMargin, this->partitioningTimesBuffer_);
-
-    // allow user to modify the buffer
-    this->modifyBufferPolicy(*this->commandBuffer_, *this->primalSolutionBuffer_);
-
-    if (!this->policyReceivedEver_) {
-      this->policyReceivedEver_ = true;
-      this->initPlanObservation_ = commandBuffer.mpcInitObservation_;
-      this->initCall(this->initPlanObservation_);
-    }
-  }
-
-  this->newPolicyInBuffer_ = true;
+  // read new policy and command from msg
+  auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
+  auto newCommand = std::unique_ptr<CommandData>(new CommandData);
+  readPolicyMsg(*msg, *newSolution, *newCommand);
+  this->fillSolutionBuffer(std::move(newCommand), std::move(newSolution));
 }
 
 /******************************************************************************************************/

@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/model.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
-#include "CppAdHelpers.h"
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 namespace ocs2 {
 

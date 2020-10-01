@@ -60,8 +60,4 @@ using state_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>;
 using input_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM>;
 using input_state_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM>;
 
-using ad_base_t = CppAD::cg::CG<scalar_t>;
-using ad_scalar_t = CppAD::AD<ad_base_t>;
-using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
-
 }  // namespace mobile_manipulator

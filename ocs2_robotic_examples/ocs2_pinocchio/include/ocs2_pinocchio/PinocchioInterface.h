@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
 #include <cppad/cg.hpp>
 
 /* Forward declaration of main pinocchio types */
@@ -50,11 +51,6 @@ struct JointModelTpl;
 }  // namespace pinocchio
 
 namespace ocs2 {
-
-// TODO(mspieler): replace these by definitions in ocs2_core
-using ad_base_t = CppAD::cg::CG<scalar_t>;
-using ad_scalar_t = CppAD::AD<ad_base_t>;
-using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
 
 template <typename SCALAR>
 class PinocchioInterfaceTpl;

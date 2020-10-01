@@ -32,12 +32,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio/PinocchioInterface.h>
 
+#include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
 
 namespace mobile_manipulator {
 
 class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
  public:
+  using ad_scalar_t = ocs2::ad_scalar_t;
+  using ad_vector_t = ocs2::ad_vector_t;
+
   EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
                   std::string endEffectorName = "WRIST_2");
   ~EndEffectorCost() override = default;

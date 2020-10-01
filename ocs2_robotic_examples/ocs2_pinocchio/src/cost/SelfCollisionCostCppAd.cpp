@@ -204,10 +204,6 @@ ad_vector_t SelfCollisionCostCppAd::distanceCalculationAd(ad_vector_t state, ad_
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SelfCollisionCostCppAd::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
-  using ad_interface = CppAdInterface;
-  using ad_dynamic_vector_t = ad_interface::ad_vector_t;
-  using ad_scalar_t = ad_interface::ad_scalar_t;
-
   const size_t stateDim = pinocchioInterface_.getModel().nq;
   const size_t numDistanceResults = this->pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs.size();
 

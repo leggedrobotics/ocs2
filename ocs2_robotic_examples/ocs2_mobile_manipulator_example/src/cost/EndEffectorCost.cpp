@@ -50,8 +50,8 @@ EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
   pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(*rhs.pinocchioInterface_));
 }
 
-ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                                      const ad_vector_t& parameters) const {
+auto EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                               const ad_vector_t& parameters) const -> ad_vector_t {
   const ad_vector_t eeDesiredPosition(parameters.head<3>());
   Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
   eeDesiredOrientation.coeffs() = parameters.tail(4);
@@ -67,7 +67,7 @@ ad_vector_t EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad
   return cost;
 }
 
-ad_vector_t EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const {
+auto EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const -> ad_vector_t {
   const ad_vector_t eeDesiredPosition(parameters.head(3));
   Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
   eeDesiredOrientation.coeffs() = parameters.tail(4);

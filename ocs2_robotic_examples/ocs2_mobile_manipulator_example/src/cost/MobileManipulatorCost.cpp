@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/package.h>
 namespace mobile_manipulator {
 
-std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface,
+std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface,
                                                                 const std::string& taskFile, const std::string& libraryFolder,
                                                                 bool recompileLibraries) {
   using WeightedCost = ocs2::CostFunctionLinearCombination::WeightedCost;
@@ -81,7 +81,7 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   std::cerr << "minimumDistance:  " << minimumDistance << std::endl;
 
   std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-  ocs2::PinocchioInterface<scalar_t> pinocchioInterfaceScalar = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
+  ocs2::PinocchioInterface pinocchioInterfaceScalar = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
   ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceScalar, selfCollisionPairs);
   auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu, delta);
   //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu,

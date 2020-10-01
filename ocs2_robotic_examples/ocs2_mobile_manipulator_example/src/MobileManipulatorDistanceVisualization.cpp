@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using scalar_t = ocs2::scalar_t;
 
-std::unique_ptr<ocs2::PinocchioInterface<scalar_t>> pInterface;
+std::unique_ptr<ocs2::PinocchioInterface> pInterface;
 std::shared_ptr<ocs2::PinocchioGeometryInterface> gInterface;
 std::unique_ptr<ocs2::GeometryInterfaceVisualization> vInterface;
 
@@ -74,8 +74,7 @@ int main(int argc, char** argv) {
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
-  pInterface.reset(
-      new ocs2::PinocchioInterface<ocs2::scalar_t>(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
+  pInterface.reset(new ocs2::PinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
   gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, {}));
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
   gInterface->getGeometryModel().addAllCollisionPairs();

@@ -57,7 +57,7 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
   void publishDesiredTrajectory(const ros::Time& timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory);
   void publishOptimizedTrajectory(const ros::Time& timeStamp, const ocs2::PrimalSolution& policy);
 
-  ocs2::PinocchioInterface<scalar_t> pinocchioInterface_;
+  ocs2::PinocchioInterface pinocchioInterface_;
 
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   tf::TransformBroadcaster tfBroadcaster_;

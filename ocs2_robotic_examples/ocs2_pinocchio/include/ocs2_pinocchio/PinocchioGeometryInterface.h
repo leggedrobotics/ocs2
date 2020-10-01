@@ -50,7 +50,7 @@ namespace ocs2 {
 
 class PinocchioGeometryInterface {
  public:
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<scalar_t>& pinocchioInterface,
+  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
                              const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs);
   virtual ~PinocchioGeometryInterface() = default;
 
@@ -63,7 +63,7 @@ class PinocchioGeometryInterface {
   std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q);
 
  private:
-  PinocchioInterface<scalar_t> pinocchioInterface_;
+  PinocchioInterface pinocchioInterface_;
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 };
 

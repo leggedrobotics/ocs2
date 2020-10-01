@@ -71,10 +71,10 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   const ocs2::OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
   const ocs2::ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
 
-  const ocs2::PinocchioInterface<scalar_t>& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
+  const ocs2::PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
   /** MobileManipulator PinocchioInterface factory */
-  static ocs2::PinocchioInterface<scalar_t> buildPinocchioInterface(const std::string& urdfPath);
+  static ocs2::PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
 
  protected:
   void loadSettings(const std::string& taskFile);
@@ -92,7 +92,7 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr_;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointPtr_;
 
-  std::unique_ptr<ocs2::PinocchioInterface<scalar_t>> pinocchioInterfacePtr_;
+  std::unique_ptr<ocs2::PinocchioInterface> pinocchioInterfacePtr_;
 
   vector_t initialState_{STATE_DIM};
 };

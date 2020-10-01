@@ -45,11 +45,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t> pinocchioInterface,
-                                               ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance,
+SelfCollisionCostCppAd::SelfCollisionCostCppAd(PinocchioInterface pinocchioInterface,
+                                               PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance,
                                                scalar_t mu, scalar_t delta)
     : pinocchioInterface_(std::move(pinocchioInterface)),
-      pinocchioInterfaceAd_(ocs2::PinocchioInterface<scalar_t>::castToCppAd(pinocchioInterface_)),
+      pinocchioInterfaceAd_(castToCppAd(pinocchioInterface_)),
       pinocchioGeometrySelfCollisions_(geometryInterfaceSelfCollision),
       minimumDistance_(minimumDistance),
       relaxedBarrierPenalty_(mu, delta) {}
@@ -59,11 +59,11 @@ SelfCollisionCostCppAd::SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t
 /******************************************************************************************************/
 SelfCollisionCostCppAd::SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs)
     : pinocchioInterface_(rhs.pinocchioInterface_),
-      pinocchioInterfaceAd_(ocs2::PinocchioInterface<scalar_t>::castToCppAd(pinocchioInterface_)),
+      pinocchioInterfaceAd_(castToCppAd(pinocchioInterface_)),
       pinocchioGeometrySelfCollisions_(rhs.pinocchioGeometrySelfCollisions_),
       minimumDistance_(rhs.minimumDistance_),
       relaxedBarrierPenalty_(rhs.relaxedBarrierPenalty_),
-      cppAdInterfaceDistanceCalculation_(rhs.cppAdInterfaceDistanceCalculation_),
+      cppAdInterfaceDistanceCalculation_(rhs.cppAdInterfaceDistanceCalculation_),  // TODO(mspieler): CppAdInterface can't be shared
       cppAdInterfaceLinkPoints_(rhs.cppAdInterfaceLinkPoints_) {}
 
 /******************************************************************************************************/

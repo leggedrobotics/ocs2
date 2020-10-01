@@ -38,7 +38,7 @@ namespace mobile_manipulator {
 
 class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
  public:
-  EndEffectorCost(const ocs2::PinocchioInterface<ad_scalar_t>& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
+  EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
                   std::string endEffectorName = "WRIST_2");
   ~EndEffectorCost() override = default;
 
@@ -62,7 +62,7 @@ class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
  private:
   vector_t interpolateReference(scalar_t time) const;
 
-  std::unique_ptr<ocs2::PinocchioInterface<ad_scalar_t>> pinocchioInterface_;
+  std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;
 
   /* Quadratic cost */
   matrix_t Q_;

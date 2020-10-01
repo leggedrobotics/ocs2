@@ -33,6 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 // explicit instantiation
-template class PinocchioInterface<ad_scalar_t>;
+template class PinocchioInterfaceTpl<ad_scalar_t>;
 
 }  // namespace ocs2

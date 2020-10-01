@@ -52,7 +52,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface<scalar_t>& pinocchioInterface,
+PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
                                                        const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs)
     : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {
   pinocchio::urdf::buildGeom(pinocchioInterface_.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);

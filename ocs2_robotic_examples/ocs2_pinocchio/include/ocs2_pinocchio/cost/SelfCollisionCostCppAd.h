@@ -48,10 +48,8 @@ namespace ocs2 {
 
 class SelfCollisionCostCppAd : public CostFunctionBase {
  public:
-  //  SelfCollisionCostCppAd(PinocchioInterface<scalar_t> pinocchioInterface, );
-  SelfCollisionCostCppAd(ocs2::PinocchioInterface<scalar_t> pinocchioInterface,
-                         ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimumDistance, scalar_t mu,
-                         scalar_t delta);
+  SelfCollisionCostCppAd(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
+                         scalar_t minimumDistance, scalar_t mu, scalar_t delta);
   ~SelfCollisionCostCppAd() override = default;
   SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs);
 
@@ -91,16 +89,17 @@ class SelfCollisionCostCppAd : public CostFunctionBase {
   // Returns a vector that is of length |collisionPairs|
   ad_vector_t distanceCalculationAd(ad_vector_t state, ad_vector_t points);
 
-  std::shared_ptr<ocs2::CppAdInterface> cppAdInterfaceDistanceCalculation_;
-  std::shared_ptr<ocs2::CppAdInterface> cppAdInterfaceLinkPoints_;
+  // TODO(mspieler): use unique_ptr
+  std::shared_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
+  std::shared_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
-  ocs2::PinocchioInterface<scalar_t> pinocchioInterface_;
-  ocs2::PinocchioInterface<ad_scalar_t> pinocchioInterfaceAd_;
-  ocs2::PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
+  PinocchioInterface pinocchioInterface_;
+  PinocchioInterfaceCppAd pinocchioInterfaceAd_;
+  PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
   scalar_t minimumDistance_;
 
-  const ocs2::RelaxedBarrierPenalty relaxedBarrierPenalty_;
+  const RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };
 
 } /* namespace ocs2 */

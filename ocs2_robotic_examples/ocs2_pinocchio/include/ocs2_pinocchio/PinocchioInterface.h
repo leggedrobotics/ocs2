@@ -57,6 +57,16 @@ using ad_scalar_t = CppAD::AD<ad_base_t>;
 using ad_vector_t = Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1>;
 
 template <typename SCALAR>
+class PinocchioInterfaceTpl;
+
+using PinocchioInterface = PinocchioInterfaceTpl<scalar_t>;
+using PinocchioInterfaceCppAd = PinocchioInterfaceTpl<ad_scalar_t>;
+
+/**
+ * Pose conatining position vector and orientation quaternion
+ * @tparam SCALAR: scalar type
+ */
+template <typename SCALAR>
 struct Pose {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -69,11 +79,11 @@ struct Pose {
  * The robot model is shared between interface instances.
  */
 template <typename SCALAR>
-class PinocchioInterface final {
+class PinocchioInterfaceTpl final {
  public:
-  using PinocchioModel = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
-  using PinocchioData = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
-  using PinocchioJointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
+  using Model = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
+  using Data = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
+  using JointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
   using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -81,28 +91,28 @@ class PinocchioInterface final {
    * Construct from given pinocchio model
    * @param[in] model pinocchio model
    */
-  explicit PinocchioInterface(const PinocchioModel& model);
+  explicit PinocchioInterfaceTpl(const Model& model);
 
   /** Destructor */
-  ~PinocchioInterface();
+  ~PinocchioInterfaceTpl();
 
   /** Copy constructor */
-  PinocchioInterface(const PinocchioInterface& rhs);
+  PinocchioInterfaceTpl(const PinocchioInterfaceTpl& rhs);
 
   /** Move constructor */
-  PinocchioInterface(PinocchioInterface&& rhs);
+  PinocchioInterfaceTpl(PinocchioInterfaceTpl&& rhs);
 
   /** Copy assignment operator */
-  PinocchioInterface& operator=(const PinocchioInterface& rhs);
+  PinocchioInterfaceTpl& operator=(const PinocchioInterfaceTpl& rhs);
 
   /** Move assignment */
-  PinocchioInterface<SCALAR>& operator=(PinocchioInterface&& rhs);
+  PinocchioInterfaceTpl<SCALAR>& operator=(PinocchioInterfaceTpl&& rhs);
 
   /** Get the pinocchio model */
-  const PinocchioModel& getModel() const { return *robotModelPtr_; }
+  const Model& getModel() const { return *robotModelPtr_; }
 
   /** Get the pinocchio data */
-  PinocchioData& getData() { return *robotDataPtr_; }
+  Data& getData() { return *robotDataPtr_; }
 
   /**
    * Gets the pose of a body in the (pinocchio) world frame
@@ -120,28 +130,33 @@ class PinocchioInterface final {
 
   Pose<SCALAR> getJointPose(size_t jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
 
-  /** Cast pinocchio interface to CppAD scalar type. */
-  static PinocchioInterface<ad_scalar_t> castToCppAd(const PinocchioInterface<scalar_t>& interface);
-
-  /** Factory function from URDF */
-  static PinocchioInterface<scalar_t> buildFromUrdf(const std::string& urdfPath);
-  static PinocchioInterface<scalar_t> buildFromUrdf(const std::string& urdfPath, const PinocchioJointModel& rootJoint);
-
-  /** Factory function from URDF XML stream */
-  static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream);
-  static PinocchioInterface<scalar_t> buildFromXml(const std::string& xmlStream, const PinocchioJointModel& rootJoint);
-
-  friend std::ostream& operator<<(std::ostream& os, const PinocchioInterface<scalar_t>& p);
+  friend std::ostream& operator<<(std::ostream& os, const PinocchioInterfaceTpl<scalar_t>& p);
 
  private:
-  std::shared_ptr<const PinocchioModel> robotModelPtr_;
-  std::unique_ptr<PinocchioData> robotDataPtr_;
+  std::shared_ptr<const Model> robotModelPtr_;
+  std::unique_ptr<Data> robotDataPtr_;
 };
 
-/** Print PinocchioInterface info to stream */
-std::ostream& operator<<(std::ostream& os, const PinocchioInterface<scalar_t>& p);
+/** Print PinocchioInterfaceTpl info to stream */
+std::ostream& operator<<(std::ostream& os, const PinocchioInterface& p);
 
-extern template class PinocchioInterface<scalar_t>;
-extern template class PinocchioInterface<ad_scalar_t>;
+/** Factory function from URDF file */
+PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile);
+
+/** Factory function from URDF file with root joint */
+PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile, const PinocchioInterface::JointModel& rootJoint);
+
+/** Factory function from URDF string */
+PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString);
+
+/** Factory function from URDF string with root joint */
+PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString, const PinocchioInterface::JointModel& rootJoint);
+
+/** Cast pinocchio interface to CppAD scalar type. */
+PinocchioInterfaceCppAd castToCppAd(const PinocchioInterface& interface);
+
+/* Explicit template instantiation for scalar_t and ad_scalar_t */
+extern template class PinocchioInterfaceTpl<scalar_t>;
+extern template class PinocchioInterfaceTpl<ad_scalar_t>;
 
 }  // namespace ocs2

@@ -37,9 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class SelfCollisionCost final : public ocs2::CostFunctionBase {
+class SelfCollisionCost final : public CostFunctionBase {
  public:
-  SelfCollisionCost(ocs2::PinocchioInterface<scalar_t> pinocchioInterface, ocs2::PinocchioGeometryInterface geometryInterfaceSelfCollision,
+  SelfCollisionCost(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
                     scalar_t minimumDistance, scalar_t mu, scalar_t delta);
   ~SelfCollisionCost() override = default;
 
@@ -56,12 +56,12 @@ class SelfCollisionCost final : public ocs2::CostFunctionBase {
   ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  private:
-  ocs2::PinocchioInterface<scalar_t> pinocchioInterface_;
-  ocs2::PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
+  PinocchioInterface pinocchioInterface_;
+  PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
   scalar_t minimumDistance_;
 
-  const ocs2::RelaxedBarrierPenalty relaxedBarrierPenalty_;
+  const RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };
 
 }  // namespace ocs2

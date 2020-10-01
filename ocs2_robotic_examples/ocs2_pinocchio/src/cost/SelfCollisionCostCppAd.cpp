@@ -63,8 +63,8 @@ SelfCollisionCostCppAd::SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs
       pinocchioGeometrySelfCollisions_(rhs.pinocchioGeometrySelfCollisions_),
       minimumDistance_(rhs.minimumDistance_),
       relaxedBarrierPenalty_(rhs.relaxedBarrierPenalty_),
-      cppAdInterfaceDistanceCalculation_(rhs.cppAdInterfaceDistanceCalculation_),  // TODO(mspieler): CppAdInterface can't be shared
-      cppAdInterfaceLinkPoints_(rhs.cppAdInterfaceLinkPoints_) {}
+      cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
+      cppAdInterfaceLinkPoints_(new CppAdInterface(*rhs.cppAdInterfaceLinkPoints_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

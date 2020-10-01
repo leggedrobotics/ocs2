@@ -89,9 +89,8 @@ class SelfCollisionCostCppAd : public CostFunctionBase {
   // Returns a vector that is of length |collisionPairs|
   ad_vector_t distanceCalculationAd(ad_vector_t state, ad_vector_t points);
 
-  // TODO(mspieler): use unique_ptr
-  std::shared_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
-  std::shared_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
+  std::unique_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
+  std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
   PinocchioInterface pinocchioInterface_;
   PinocchioInterfaceCppAd pinocchioInterfaceAd_;

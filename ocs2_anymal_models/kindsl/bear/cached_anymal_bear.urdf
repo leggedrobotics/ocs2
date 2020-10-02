@@ -32,6 +32,14 @@
   <material name="white">
     <color rgba="1.0 1.0 1.0 1.0"/>
   </material>
+  <gazebo>
+    <plugin filename="libanymal_gazebo.so" name="gazebo_ros_control">
+      <robotNamespace>anymal</robotNamespace>
+      <!-- Currently unused -->
+      <robotDescription>anymal_description</robotDescription>
+      <robotBaseLink>base</robotBaseLink>
+    </plugin>
+  </gazebo>
   <!-- Material for the visual primitives -->
   <material name="anymal_material">
     <color rgba="0.7 0.7 0.7 1.0"/>
@@ -114,6 +122,13 @@
         <box size="0.02 0.27 0.09"/>
       </geometry>
     </collision>
+    <!-- Shell self filtering -->
+    <self_filter>
+      <origin rpy="0 0 0" xyz="0 0 0.15"/>
+      <geometry>
+        <box size="0.86 0.4 0.28"/>
+      </geometry>
+    </self_filter>
   </link>
   <!-- Fixed joint to add dummy inertia link -->
   <joint name="base_to_base_inertia" type="fixed">
@@ -838,24 +853,42 @@
     <child link="imu_link"/>
     <origin rpy="0 3.14159265359 0" xyz="0.038 0.06245 0.1837"/>
   </joint>
+  <gazebo reference="imu_link">
+    <material>Gazebo/Orange</material>
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+  </gazebo>
+  <gazebo reference="imu_joint">
+      </gazebo>
+  <gazebo>
+    <plugin filename="libany_hector_gazebo_ros_imu.so" name="imu_plugin">
+      <robotNamespace>sensors</robotNamespace>
+      <bodyName>imu_link</bodyName>
+      <frameId>imu_link</frameId>
+      <topicName>imu</topicName>
+      <biasTopicName>imu/bias</biasTopicName>
+      <serviceName>imu/calibrate</serviceName>
+      <updateRate>400</updateRate>
+    </plugin>
+  </gazebo>
   <!-- base to mount joint -->
-  <joint name="base_to_velodyne_mount" type="fixed">
+  <joint name="base_to_lidar_mount" type="fixed">
     <parent link="base"/>
-    <child link="velodyne_mount"/>
+    <child link="lidar_mount"/>
     <origin rpy="0 0 0" xyz="-0.102 0.0 0.2896"/>
   </joint>
-  <link name="velodyne_mount">
+  <link name="lidar_mount">
     <visual>
       <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       <geometry>
-        <mesh filename="package://anymal_b/urdf/modules/velodyne_mount/anymal_velodyne_mount_cage.dae" scale=".001 .001 .001"/>
+        <mesh filename="package://anymal_b/urdf/modules/lidar_mount/anymal_velodyne_mount_cage.dae" scale=".001 .001 .001"/>
       </geometry>
     </visual>
     <material name="anymal_material"/>
     <collision>
       <origin rpy="0.0 0.0 0.0" xyz="-0.015 0.0 -0.025"/>
       <geometry>
-        <box size="0.09 0.215 0.05"/>
+        <cylinder length="0.15" radius="0.10"/>
       </geometry>
       <material name="anymal_material"/>
     </collision>
@@ -866,12 +899,19 @@
       <inertia ixx="0.002023718043706" ixy="0.000007237377195" ixz="0.000088125050002" iyy="0.001843825349439" iyz="-0.000005839762850" izz="0.002035845574943"/>
     </inertial>
   </link>
-  <joint name="velodyne_mount_to_velodyne_axis_aligned" type="fixed">
+  <!-- Mount self filtering -->
+  <self_filter>
+    <origin rpy="0.0 0.0 0.0" xyz="-0.015 0.0 -0.025"/>
+    <geometry>
+      <cylinder length="0.17" radius="0.13"/>
+    </geometry>
+  </self_filter>
+  <joint name="lidar_mount_to_lidar_axis_aligned" type="fixed">
     <origin rpy="0.0 0.0 -2.443460953" xyz="0.0 0.0 0.0"/>
-    <parent link="velodyne_mount"/>
-    <child link="velodyne_axis_aligned"/>
+    <parent link="lidar_mount"/>
+    <child link="lidar_axis_aligned"/>
   </joint>
-  <link name="velodyne_axis_aligned">
+  <link name="lidar_axis_aligned">
     <!--inertial>
         <mass value="0.590"/>
         <origin xyz="0 0 0.03585"/>
@@ -903,12 +943,12 @@
       </geometry>
     </collision>
   </link>
-  <joint name="velodyne_axis_aligned_to_velodyne" type="fixed">
+  <joint name="lidar_axis_aligned_to_velodyne" type="fixed">
     <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
-    <parent link="velodyne_axis_aligned"/>
-    <child link="velodyne"/>
+    <parent link="lidar_axis_aligned"/>
+    <child link="lidar"/>
   </joint>
-  <link name="velodyne">
+  <link name="lidar">
     <inertial>
       <mass value="0.01"/>
       <origin xyz="0 0 0"/>
@@ -922,8 +962,8 @@
     </visual>
   </link>
   <!-- Gazebo requires the velodyne_gazebo_plugins package -->
-  <gazebo reference="velodyne">
-    <sensor name="velodyne-VLP16" type="ray">
+  <gazebo reference="lidar">
+    <sensor name="lidar-VLP16" type="ray">
       <pose>0 0 0 0 0 0</pose>
       <visualize>false</visualize>
       <update_rate>10</update_rate>
@@ -954,8 +994,8 @@
         </noise>
       </ray>
       <plugin filename="libgazebo_ros_velodyne_laser.so" name="gazebo_ros_laser_controller">
-        <topicName>/velodyne/point_cloud</topicName>
-        <frameName>velodyne</frameName>
+        <topicName>/lidar/point_cloud</topicName>
+        <frameName>lidar</frameName>
         <min_range>0.9</min_range>
         <max_range>130.0</max_range>
         <gaussianNoise>0.008</gaussianNoise>
@@ -997,13 +1037,13 @@
   </joint>
   <link name="handle_mount_front_sensor_mount_axis_aligned"/>
   <!-- Mount calibration joint -->
-  <joint name="handle_mount_front_sensor_mount_axis_aligned_to_realsense_d435_front_mount" type="fixed">
+  <joint name="handle_mount_front_sensor_mount_axis_aligned_to_depth_camera_front_mount" type="fixed">
     <parent link="handle_mount_front_sensor_mount_axis_aligned"/>
-    <child link="realsense_d435_front_mount"/>
+    <child link="depth_camera_front_mount"/>
     <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
   </joint>
   <!-- Mount link -->
-  <link name="realsense_d435_front_mount">
+  <link name="depth_camera_front_mount">
     <inertial>
       <origin rpy="0 0 0" xyz="0.054218447194                     -0.000000283793                      0.020065663731"/>
       <mass value="0.243898067"/>
@@ -1011,18 +1051,18 @@
     </inertial>
   </link>
   <!-- Mount tilting joint -->
-  <joint name="realsense_d435_front_mount_to_realsense_d435_front_mount_tilted" type="fixed">
-    <parent link="realsense_d435_front_mount"/>
-    <child link="realsense_d435_front_mount_tilted"/>
+  <joint name="depth_camera_front_mount_to_depth_camera_front_mount_tilted" type="fixed">
+    <parent link="depth_camera_front_mount"/>
+    <child link="depth_camera_front_mount_tilted"/>
     <origin rpy="0.0532019989239 0.614793974344 0.0" xyz="0 0 0"/>
   </joint>
   <!-- zr300 -->
   <!-- Mount tilted link -->
-  <link name="realsense_d435_front_mount_tilted">
+  <link name="depth_camera_front_mount_tilted">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://anymal_b/urdf/modules/realsense_mount/anymal_realsense_mount_d435.dae" scale=".001 .001 .001"/>
+        <mesh filename="package://anymal_b/urdf/modules/depth_camera_mount/anymal_realsense_mount_d435.dae" scale=".001 .001 .001"/>
       </geometry>
       <material name="anymal_material"/>
     </visual>
@@ -1042,25 +1082,25 @@
   <!-- d435 -->
   <!-- Camera joint -->
   <!-- Is located between the two back screw holes at ground level. -->
-  <joint name="realsense_d435_front_mount_tilted_to_realsense_d435_front_camera_axis_aligned" type="fixed">
-    <parent link="realsense_d435_front_mount_tilted"/>
-    <child link="realsense_d435_front_camera_axis_aligned"/>
+  <joint name="depth_camera_front_mount_tilted_to_depth_camera_front_camera_axis_aligned" type="fixed">
+    <parent link="depth_camera_front_mount_tilted"/>
+    <child link="depth_camera_front_camera_axis_aligned"/>
     <origin rpy="0 0 0" xyz="0.013 0.0 -0.02362"/>
   </joint>
   <!-- Camera axis aligned link -->
-  <link name="realsense_d435_front_camera_axis_aligned"/>
+  <link name="depth_camera_front_camera_axis_aligned"/>
   <!-- Camera calibration joint -->
-  <joint name="realsense_d435_front_camera_axis_aligned_to_camera" type="fixed">
-    <parent link="realsense_d435_front_camera_axis_aligned"/>
-    <child link="realsense_d435_front_camera"/>
+  <joint name="depth_camera_front_camera_axis_aligned_to_camera" type="fixed">
+    <parent link="depth_camera_front_camera_axis_aligned"/>
+    <child link="depth_camera_front_camera"/>
     <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
   </joint>
   <!-- Camera link -->
-  <link name="realsense_d435_front_camera">
+  <link name="depth_camera_front_camera">
     <visual>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
       <geometry>
-        <mesh filename="package://any_description/urdf/sensors/realsense/d435/realsense_d435.dae" scale=".001 .001 .001"/>
+        <mesh filename="package://any_description/urdf/sensors/depth_camera/realsense_d435/realsense_d435.dae" scale=".001 .001 .001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -1079,14 +1119,67 @@
   </link>
   <!-- Camera parent joint -->
   <!-- Frame lies on the left ir camera according to any_realsense2_camera urdf. -->
-  <joint name="realsense_d435_front_camera_to_camera_parent" type="fixed">
-    <parent link="realsense_d435_front_camera"/>
-    <child link="realsense_d435_front_camera_parent"/>
+  <joint name="depth_camera_front_camera_to_camera_parent" type="fixed">
+    <parent link="depth_camera_front_camera"/>
+    <child link="depth_camera_front_camera_parent"/>
     <origin rpy="0.0 0.0 0.0" xyz="0.02505 0.015 0.0125"/>
   </joint>
   <!-- Camera parent link -->
-  <link name="realsense_d435_front_camera_parent"/>
+  <link name="depth_camera_front_camera_parent"/>
+  <!-- Depth optical frame joint -->
+  <joint name="depth_camera_front_camera_parent_to_depth_optical_frame" type="fixed">
+    <parent link="depth_camera_front_camera_parent"/>
+    <child link="depth_camera_front_depth_optical_frame"/>
+    <origin rpy="-1.57079632679 0.0 -1.57079632679" xyz="0.0 0.0 0.0"/>
+  </joint>
+  <!-- Depth optical frame link -->
+  <link name="depth_camera_front_depth_optical_frame"/>
   <!-- simulation or bagfile_is_played -->
+  <!-- Gazebo plugin -->
+  <gazebo reference="depth_camera_front_camera_parent">
+    <sensor name="depth_camera_front_camera" type="depth">
+      <always_on>1</always_on>
+      <visualize>true</visualize>
+      <update_rate>6</update_rate>
+      <camera>
+        <horizontal_fov>1.5917</horizontal_fov>
+        <!-- 91.2 degrees -->
+        <image>
+          <width>424</width>
+          <height>240</height>
+          <format>R8G8B8</format>
+        </image>
+        <depth_camera>
+
+            </depth_camera>
+        <clip>
+          <near>0.1</near>
+          <far>10.0</far>
+        </clip>
+      </camera>
+      <plugin filename="libgazebo_ros_openni_kinect.so" name="camera_controller">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>depth_camera_front</cameraName>
+        <frameName>depth_camera_front_depth_optical_frame</frameName>
+        <imageTopicName>rgb/image_raw</imageTopicName>
+        <depthImageTopicName>depth/image_raw</depthImageTopicName>
+        <pointCloudTopicName>depth/color/points</pointCloudTopicName>
+        <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+        <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
+        <pointCloudCutoff>0.0</pointCloudCutoff>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+        <CxPrime>0.0</CxPrime>
+        <Cx>0.0</Cx>
+        <Cy>0.0</Cy>
+        <focalLength>0.0</focalLength>
+      </plugin>
+    </sensor>
+  </gazebo>
   <!-- simulation -->
 </robot>
-

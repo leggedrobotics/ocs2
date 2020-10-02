@@ -40,6 +40,12 @@ add_library(${PROJECT_NAME}
   src/bear/AnymalBearCom.cpp
   src/bear/AnymalBearKinematics.cpp
   src/bear/WholebodyDynamicsBear.cpp
+  src/cerberus/AnymalCerberusCom.cpp
+  src/cerberus/AnymalCerberusKinematics.cpp
+  src/cerberus/WholebodyDynamicsCerberus.cpp
+  src/chimera/AnymalChimeraCom.cpp
+  src/chimera/AnymalChimeraKinematics.cpp
+  src/chimera/WholebodyDynamicsChimera.cpp
   src/croc/AnymalCrocCom.cpp
   src/croc/AnymalCrocKinematics.cpp
   src/croc/WholebodyDynamicsCroc.cpp
@@ -79,6 +85,8 @@ install(DIRECTORY kindsl launch
 # Build unit tests
 catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestAnymalBear.cpp
+  test/TestAnymalCerberus.cpp
+  test/TestAnymalChimera.cpp
   test/TestAnymalCroc.cpp
   test/TestAnymalWheels.cpp
 )

@@ -11,6 +11,20 @@
     </include>
   </group>
 
+  <!-- Load cerberus description -->
+  <group if="$(eval arg('robot_name') == 'cerberus')">
+    <include file="$(find anymal_cerberus_rsl)/launch/load_urdf.launch">
+        <arg name="description_name"     value="$(arg description_name)"/>
+    </include>
+  </group>
+
+  <!-- Load chimera description -->
+  <group if="$(eval arg('robot_name') == 'chimera')">
+    <include file="$(find anymal_chimera_rsl)/launch/load_urdf.launch">
+        <arg name="description_name"     value="$(arg description_name)"/>
+    </include>
+  </group>
+
   <!-- Load croc description -->
   <group if="$(eval arg('robot_name') == 'croc')">
     <include file="$(find anymal_croc_rsl)/launch/load_urdf.launch">

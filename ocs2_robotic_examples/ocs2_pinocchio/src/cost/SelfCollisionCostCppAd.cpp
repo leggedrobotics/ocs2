@@ -133,12 +133,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCostCppAd::costQuadraticApprox
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SelfCollisionCostCppAd::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
-  ScalarFunctionQuadraticApproximation approximation;
-  approximation.f = 0.0;
-  approximation.dfdx.setZero(x.rows());
-  approximation.dfdxx.setZero(x.rows(), x.rows());
-  return approximation;
-  // return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0); // TODO(mspieler)
+  return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0);
 }
 
 /******************************************************************************************************/

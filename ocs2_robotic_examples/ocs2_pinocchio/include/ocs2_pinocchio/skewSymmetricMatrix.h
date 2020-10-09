@@ -27,50 +27,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*
- * PinocchioGeometryInterface.h
- *
- *  Created on: 25 Aug 2020
- *      Author: perry
- */
-
 #pragma once
 
-#include <utility>
-
-#include <ocs2_pinocchio/PinocchioInterface.h>
-
-#include <hpp/fcl/collision_data.h>
-
-/* Forward declaration of pinocchio geometry types */
-namespace pinocchio {
-struct GeometryModel;
-}  // namespace pinocchio
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
-class PinocchioGeometryInterface {
- public:
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::pair<size_t, size_t>>& collisionPairs);
-
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
-                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
-
-  virtual ~PinocchioGeometryInterface() = default;
-
-  // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)
-  PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
-
-  pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
-  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
-
-  std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q);
-
- private:
-  PinocchioInterface pinocchioInterface_;
-  std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
-};
+template <typename SCALAR>
+Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix(Eigen::Matrix<SCALAR, 3, 1> v) {
+  Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix;
+  // clang-format off
+  skewSymmetricMatrix <<    0, -v(2),  v(1),
+                         v(2),     0, -v(0),
+                        -v(1),  v(0),     0;
+  // clan-format on
+  return skewSymmetricMatrix;
+}
 
 }  // namespace ocs2

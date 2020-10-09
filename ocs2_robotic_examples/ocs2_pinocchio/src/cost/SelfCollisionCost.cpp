@@ -29,9 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
+#include <ocs2_pinocchio/skewSymmetricMatrix.h>
+
 #include <ocs2_pinocchio/cost/SelfCollisionCost.h>
-// Todo(perry) why does this header need to come after the SelfCollisionCost.h?
-#include <ocs2_pinocchio/CppAdHelpers.h>
 
 #include <pinocchio/multibody/geometry.hpp>
 
@@ -61,7 +61,6 @@ SelfCollisionCost::SelfCollisionCost(const SelfCollisionCost& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t SelfCollisionCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  //  std::cout << "Cost called" << std::endl;
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
   vector_t violations = vector_t::Zero(results.size());
@@ -143,14 +142,7 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SelfCollisionCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
-  ScalarFunctionQuadraticApproximation approximation;
-  approximation.f = 0.0;
-  approximation.dfdx.setZero(9);
-  approximation.dfdu.setZero(8);
-  approximation.dfdxx.setZero(9, 9);
-  approximation.dfdux.setZero(9, 8);
-  approximation.dfduu.setZero(8, 8);
-  return approximation;
+  return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0);
 }
 
 }  // namespace ocs2

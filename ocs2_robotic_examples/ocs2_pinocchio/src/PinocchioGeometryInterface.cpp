@@ -53,12 +53,48 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
-                                                       const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs)
+                                                       const std::vector<std::pair<size_t, size_t>>& collisionPairs)
     : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {
   pinocchio::urdf::buildGeom(pinocchioInterface_.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
 
   for (const auto& pair : collisionPairs) {
     geometryModelPtr_->addCollisionPair(pinocchio::CollisionPair{pair.first, pair.second});
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+                                                       const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                                                       const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
+    : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {
+  pinocchio::urdf::buildGeom(pinocchioInterface_.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
+
+  for (const auto& pair : collisionObjectPairs) {
+    geometryModelPtr_->addCollisionPair(pinocchio::CollisionPair{pair.first, pair.second});
+  }
+
+  for (const auto& linkPair : collisionLinkPairs) {
+    bool addedPair = false;
+    for (size_t i = 0; i < geometryModelPtr_->geometryObjects.size(); ++i) {
+      const pinocchio::GeometryObject& object1 = geometryModelPtr_->geometryObjects[i];
+      const std::string parentFrameName1 = pinocchioInterface_.getModel().frames[object1.parentFrame].name;
+      if (parentFrameName1 == linkPair.first) {
+        for (size_t j = 0; j < geometryModelPtr_->geometryObjects.size(); ++j) {
+          const pinocchio::GeometryObject& object2 = geometryModelPtr_->geometryObjects[j];
+          const std::string parentFrameName2 = pinocchioInterface_.getModel().frames[object2.parentFrame].name;
+          if (parentFrameName2 == linkPair.second) {
+            geometryModelPtr_->addCollisionPair(pinocchio::CollisionPair{i, j});
+            addedPair = true;
+          }
+        }
+      }
+    }
+    if (!addedPair) {
+      std::cerr << "WARNING: in collision link pair [" << linkPair.first << ", " << linkPair.second
+                << "], one or both of the links don't exist in the pinocchio/urdf model\n";
+    }
   }
 }
 

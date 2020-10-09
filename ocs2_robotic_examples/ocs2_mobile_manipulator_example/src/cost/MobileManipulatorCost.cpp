@@ -32,11 +32,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
-#include <ocs2_pinocchio/ExtendedPair.h>
+
 #include <ocs2_pinocchio/cost/SelfCollisionCost.h>
 #include <ocs2_pinocchio/cost/SelfCollisionCostCppAd.h>
+#include <ocs2_pinocchio/loadStdVectorOfPair.h>
 
 #include <ros/package.h>
+
+#include <pinocchio/multibody/geometry.hpp>
+
 namespace mobile_manipulator {
 
 std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface,
@@ -67,10 +71,12 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
 
   const size_t maxNumPairs = 100;
   // TODO(perry) replace with some nice link parser or something
-  std::vector<ocs2::ExtendedPair<size_t, size_t>> selfCollisionPairs;
-  scalar_t selfColWeight, mu, delta, minimumDistance = 1.0;
+  std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
+  double selfColWeight, mu, delta, minimumDistance = 1.0;
 
-  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionPairs", selfCollisionPairs);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.weight", selfColWeight);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.mu", mu);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.delta", delta);
@@ -79,12 +85,29 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   std::cerr << "mu:  " << mu << std::endl;
   std::cerr << "delta:  " << delta << std::endl;
   std::cerr << "minimumDistance:  " << minimumDistance << std::endl;
+  std::cout << "Loaded collision object pairs: ";
+  for (const auto& element : selfCollisionObjectPairs) {
+    std::cout << "[" << element.first << ", " << element.second << "]; ";
+  }
+  std::cout << std::endl;
+  std::cout << "Loaded collision link pairs: ";
+  for (const auto& element : selfCollisionLinkPairs) {
+    std::cout << "[" << element.first << ", " << element.second << "]; ";
+  }
+  std::cout << std::endl;
 
   std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-  ocs2::PinocchioInterface pinocchioInterfaceScalar = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceScalar, selfCollisionPairs);
-  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu, delta);
-  //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceScalar, geometryInterface, minimumDistance, mu,
+  ocs2::PinocchioInterface pinocchioInterfaceDouble = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
+  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, selfCollisionLinkPairs, selfCollisionObjectPairs);
+
+  std::cout << "Pinocchio Geometry collision object list: ";
+  for (const auto& element : geometryInterface.getGeometryModel().collisionPairs) {
+    std::cout << "[" << element.first << "," << element.second << "]; ";
+  }
+  std::cout << std::endl;
+
+  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
+  //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu,
   //  delta); colCostAd->initialize("ColCostAd", libraryFolder, recompileLibraries, verbose);
 
   costs.emplace_back(WeightedCost{eeCostWeight, std::move(eeCostPtr)});

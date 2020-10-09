@@ -25,23 +25,22 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+ ******************************************************************************/
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ocs2 {
+namespace loadData {
 
-template <typename SCALAR>
-inline Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix(Eigen::Matrix<SCALAR, 3, 1> v) {
-  Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix;
-  // clang-format off
-  skewSymmetricMatrix <<    0, -v(2),  v(1),
-                         v(2),     0,  -v(0),
-                        -v(1),  v(0),     0;
-  // clan-format on
-  return skewSymmetricMatrix;
-}
+extern void loadStdVectorOfPair(const std::string& filename, const std::string& topicName,
+                                std::vector<std::pair<std::string, std::string>>& loadVector, bool verbose = true);
 
+extern void loadStdVectorOfPair(const std::string& filename, const std::string& topicName,
+                                std::vector<std::pair<size_t, size_t>>& loadVector, bool verbose = true);
+
+}  // namespace loadData
 }  // namespace ocs2

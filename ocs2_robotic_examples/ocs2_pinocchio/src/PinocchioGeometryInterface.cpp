@@ -53,7 +53,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
-                                                       const std::vector<ExtendedPair<size_t, size_t>>& collisionPairs)
+                                                       const std::vector<std::pair<size_t, size_t>>& collisionPairs)
     : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {
   pinocchio::urdf::buildGeom(pinocchioInterface_.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
 
@@ -66,8 +66,8 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
-                                                       const std::vector<ExtendedPair<std::string, std::string>>& collisionLinkPairs,
-                                                       const std::vector<ExtendedPair<size_t, size_t>>& collisionObjectPairs)
+                                                       const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                                                       const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
     : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {
   pinocchio::urdf::buildGeom(pinocchioInterface_.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
 
@@ -92,7 +92,8 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
       }
     }
     if (!addedPair) {
-      std::cerr << "WARNING: in collision link pair " << linkPair << ", one or both of the links don't exist in the pinocchio/urdf model\n";
+      std::cerr << "WARNING: in collision link pair [" << linkPair.first << ", " << linkPair.second
+                << "], one or both of the links don't exist in the pinocchio/urdf model\n";
     }
   }
 }

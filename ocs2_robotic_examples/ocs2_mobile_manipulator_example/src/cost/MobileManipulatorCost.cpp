@@ -33,9 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 
-#include <ocs2_pinocchio/ExtendedPair.h>
 #include <ocs2_pinocchio/cost/SelfCollisionCost.h>
 #include <ocs2_pinocchio/cost/SelfCollisionCostCppAd.h>
+#include <ocs2_pinocchio/loadStdVectorOfPair.h>
 
 #include <ros/package.h>
 
@@ -71,12 +71,12 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
 
   const size_t maxNumPairs = 100;
   // TODO(perry) replace with some nice link parser or something
-  std::vector<ocs2::ExtendedPair<size_t, size_t>> selfCollisionObjectPairs;
-  std::vector<ocs2::ExtendedPair<std::string, std::string>> selfCollisionLinkPairs;
+  std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
   double selfColWeight, mu, delta, minimumDistance = 1.0;
 
-  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
-  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.weight", selfColWeight);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.mu", mu);
   ocs2::loadData::loadCppDataType(taskFile, "selfCollisionCost.delta", delta);
@@ -87,12 +87,12 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   std::cerr << "minimumDistance:  " << minimumDistance << std::endl;
   std::cout << "Loaded collision object pairs: ";
   for (const auto& element : selfCollisionObjectPairs) {
-    std::cout << element << "; ";
+    std::cout << "[" << element.first << ", " << element.second << "]; ";
   }
   std::cout << std::endl;
   std::cout << "Loaded collision link pairs: ";
   for (const auto& element : selfCollisionLinkPairs) {
-    std::cout << element << "; ";
+    std::cout << "[" << element.first << ", " << element.second << "]; ";
   }
   std::cout << std::endl;
 

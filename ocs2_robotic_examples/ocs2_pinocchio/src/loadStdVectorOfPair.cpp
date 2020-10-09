@@ -27,24 +27,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#pragma once
-
-#include <cstddef>
-
-#include <cppad/cg.hpp>
+#include <algorithm>
+#include <string>
+#include <type_traits>
+#include <utility>
 
 #include <ocs2_core/Types.h>
-
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_pinocchio/loadStdVectorOfPair.h>
+
 #include <boost/tokenizer.hpp>
 
 namespace ocs2 {
 
-template <typename FirstType, typename SecondType>
+template <typename First, typename Second>
 class ExtendedPair {
  public:
-  FirstType first;
-  SecondType second;
+  First first;
+  Second second;
+
+  using stdPair = std::pair<First, Second>;
+
+  // conversion operator to std::pair
+  explicit operator stdPair() const { return std::pair<First, Second>(first, second); }
 
   friend std::ostream& operator<<(std::ostream& stream, const ExtendedPair& pair) {
     stream << "[" << pair.first << ", " << pair.second << "]";
@@ -62,35 +67,23 @@ struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
   struct type {
     using internal_type = std::string;
     using external_type = ocs2::ExtendedPair<size_t, size_t>;
+    using separator = boost::char_separator<char>;
+
     boost::optional<external_type> get_value(const internal_type& str) {
       std::vector<std::string> container;
-      using separator = boost::char_separator<char>;
-      std::cout << "str = " << str << std::endl;
       boost::tokenizer<separator> tokens(str, separator(", "));
       std::copy(tokens.begin(), tokens.end(), std::back_inserter(container));
-      external_type pair;
-      if (container.size() == 2) {
-        pair.first = std::stoi(container[0]);
-        pair.second = std::stoi(container[1]);
-      } else if (container.size() == 1) {
-        std::stringstream msg;
-        msg << "Expected size 2 for a pair, however got only one value: " << container[0]
-            << ". The pair should be written as x,x (no spaces) or \"x, x\"";
-        throw std::runtime_error(msg.str());
-      } else if (container.empty()) {
-        std::stringstream msg;
-        msg << "Expected size 2 for a pair, however got no values?" << std::endl;
-        throw std::runtime_error(msg.str());
+      if (container.size() != 2) {
+        const std::string msg = "Failed parsing pair: \"" + str + R"(". Expected: x,x (no spaces) or "x, x")";
+        throw std::runtime_error(msg);
       } else {
-        std::stringstream msg;
-        msg << "Expected size 2 for a pair, however got too many values? String was " << str << ", tokens were " << std::endl;
-        for (const auto& element : container) {
-          msg << element << ", ";
-        }
-        throw std::runtime_error(msg.str());
+        external_type pair;
+        pair.first = std::stoul(container[0]);
+        pair.second = std::stoul(container[1]);
+        return boost::optional<external_type>(pair);
       }
-      return boost::optional<external_type>(pair);
     }
+
     boost::optional<internal_type> put_value(const external_type& obj) {
       std::string returnval = std::to_string(obj.first) + ", " + std::to_string(obj.second);
       return boost::optional<internal_type>(returnval);
@@ -101,37 +94,25 @@ struct translator_between<std::string, ocs2::ExtendedPair<size_t, size_t>> {
 template <>
 struct translator_between<std::string, ocs2::ExtendedPair<std::string, std::string>> {
   struct type {
-    typedef std::string internal_type;
-    typedef ocs2::ExtendedPair<std::string, std::string> external_type;
+    using internal_type = std::string;
+    using external_type = ocs2::ExtendedPair<std::string, std::string>;
+    using separator = boost::char_separator<char>;
+
     boost::optional<external_type> get_value(const internal_type& str) {
       std::vector<std::string> container;
-      typedef boost::char_separator<char> separator;
-      std::cout << "str = " << str << std::endl;
       boost::tokenizer<separator> tokens(str, separator(", "));
       std::copy(tokens.begin(), tokens.end(), std::back_inserter(container));
-      external_type pair;
-      if (container.size() == 2) {
+      if (container.size() != 2) {
+        const std::string msg = "Failed parsing pair: \"" + str + R"(". Expected: x,x (no spaces) or "x, x")";
+        throw std::runtime_error(msg);
+      } else {
+        external_type pair;
         pair.first = container[0];
         pair.second = container[1];
-      } else if (container.size() == 1) {
-        std::stringstream msg;
-        msg << "Expected size 2 for a pair, however got only one value: " << container[0]
-            << ". The pair should be written as x,x (no spaces) or \"x, x\"";
-        throw std::runtime_error(msg.str());
-      } else if (container.size() == 0) {
-        std::stringstream msg;
-        msg << "Expected size 2 for a pair, however got no values?" << std::endl;
-        throw std::runtime_error(msg.str());
-      } else {
-        std::stringstream msg;
-        msg << "Expected size 2 for a pair, however got too many values? String was " << str << ", tokens were " << std::endl;
-        for (const auto& element : container) {
-          msg << element << ", ";
-        }
-        throw std::runtime_error(msg.str());
+        return boost::optional<external_type>(pair);
       }
-      return boost::optional<external_type>(pair);
     }
+
     boost::optional<internal_type> put_value(const external_type& obj) {
       std::string returnval = obj.first + ", " + obj.second;
       return boost::optional<internal_type>(returnval);
@@ -141,3 +122,31 @@ struct translator_between<std::string, ocs2::ExtendedPair<std::string, std::stri
 
 }  // namespace property_tree
 }  // namespace boost
+
+namespace ocs2 {
+namespace loadData {
+
+template <typename First, typename Second>
+void loadStdVectorOfPairImpl(const std::string& filename, const std::string& topicName, std::vector<std::pair<First, Second>>& loadVector,
+                             bool verbose = true) {
+  std::vector<ExtendedPair<First, Second>> extendedPairVector;
+  loadStdVector(filename, topicName, extendedPairVector, verbose);
+  if (!extendedPairVector.empty()) {
+    loadVector.clear();
+    auto toStdPair = [](const ExtendedPair<First, Second>& p) { return std::pair<First, Second>(p); };
+    std::transform(extendedPairVector.begin(), extendedPairVector.end(), std::back_inserter(loadVector), toStdPair);
+  }
+}
+
+void loadStdVectorOfPair(const std::string& filename, const std::string& topicName,
+                         std::vector<std::pair<std::string, std::string>>& loadVector, bool verbose) {
+  loadStdVectorOfPairImpl(filename, topicName, loadVector, verbose);
+}
+
+void loadStdVectorOfPair(const std::string& filename, const std::string& topicName, std::vector<std::pair<size_t, size_t>>& loadVector,
+                         bool verbose) {
+  loadStdVectorOfPairImpl(filename, topicName, loadVector, verbose);
+}
+
+}  // namespace loadData
+}  // namespace ocs2

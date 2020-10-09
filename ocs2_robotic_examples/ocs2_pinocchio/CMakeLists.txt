@@ -72,6 +72,7 @@ add_library(${PROJECT_NAME}
   src/cost/SelfCollisionCostCppAd.cpp
   src/visualization/GeometryInterfaceVisualization.cpp
   src/visualization/VisualizationHelpers.cpp
+  src/loadStdVectorOfPair.cpp
 
   # precompile pinocchio functions
   src/pinocchio_lib/frames.cpp
@@ -79,7 +80,6 @@ add_library(${PROJECT_NAME}
   src/pinocchio_lib/jacobian.cpp
   src/pinocchio_lib/types.cpp
   src/pinocchio_lib/urdf.cpp
-
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

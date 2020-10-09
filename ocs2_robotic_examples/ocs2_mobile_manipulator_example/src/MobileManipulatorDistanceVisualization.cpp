@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio/PinocchioGeometryInterface.h>
 #include <ocs2_pinocchio/PinocchioInterface.h>
+#include <ocs2_pinocchio/loadStdVectorOfPair.h>
 
 #include <ocs2_pinocchio/visualization/GeometryInterfaceVisualization.h>
 #include <ocs2_pinocchio/visualization/VisualizationHelpers.h>
@@ -80,17 +81,17 @@ int main(int argc, char** argv) {
 
   pInterface.reset(new ocs2::PinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
 
-  std::vector<ocs2::ExtendedPair<size_t, size_t>> selfCollisionObjectPairs;
-  std::vector<ocs2::ExtendedPair<std::string, std::string>> selfCollisionLinkPairs;
-  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
-  ocs2::loadData::loadStdVector(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
+  std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
+  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
   for (const auto& element : selfCollisionObjectPairs) {
-    std::cout << element << "; ";
+    std::cout << "[" << element.first << ", " << element.second << "]; ";
   }
   std::cout << std::endl;
   std::cout << "Loaded collision link pairs: ";
   for (const auto& element : selfCollisionLinkPairs) {
-    std::cout << element << "; ";
+    std::cout << "[" << element.first << ", " << element.second << "]; ";
   }
   std::cout << std::endl;
 

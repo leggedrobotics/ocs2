@@ -85,20 +85,14 @@ scalar_t SelfCollisionCost::finalCost(scalar_t t, const vector_t& x) {
 ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
-  VectorFunctionQuadraticApproximation distanceQuadraticApproximation;
-  distanceQuadraticApproximation.f = vector_t(results.size());
-  distanceQuadraticApproximation.dfdx.resize(results.size(), x.size());
-  distanceQuadraticApproximation.dfdu = matrix_t::Zero(results.size(), u.size());
-  distanceQuadraticApproximation.dfdxx = matrix_array_t(results.size(), matrix_t::Zero(x.size(), x.size()));
-  distanceQuadraticApproximation.dfdux = matrix_array_t(results.size(), matrix_t::Zero(x.size(), u.size()));
-  distanceQuadraticApproximation.dfduu = matrix_array_t(results.size(), matrix_t::Zero(u.size(), u.size()));
+  auto distanceApproximation = VectorFunctionQuadraticApproximation::Zero(results.size(), x.rows(), u.rows());
 
   pinocchioInterface_.computeAllJacobians(x);
 
   for (size_t i = 0; i < results.size(); ++i) {
     // Distance violation
     const hpp::fcl::DistanceResult& result = results[i];
-    distanceQuadraticApproximation.f[i] = result.min_distance - minimumDistance_;
+    distanceApproximation.f[i] = result.min_distance - minimumDistance_;
 
     // Jacobian calculation
     pinocchio::CollisionPair collisionPair = pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs[i];
@@ -129,13 +123,12 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
     // TODO(perry): is there a way to calculate a correct jacobian for the case of distanceVector = 0?
     const Eigen::Vector3d distanceVector = result.min_distance > 0 ? (result.nearest_points[1] - result.nearest_points[0]).normalized()
                                                                    : (result.nearest_points[0] - result.nearest_points[1]).normalized();
-    distanceQuadraticApproximation.dfdx.row(i) = distanceVector.transpose() * differenceJacobian;
+    distanceApproximation.dfdx.row(i) = distanceVector.transpose() * differenceJacobian;
   }
 
-  ScalarFunctionQuadraticApproximation returnvalue =
-      relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
+  ScalarFunctionQuadraticApproximation returnvalue = relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceApproximation);
 
-  return relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceQuadraticApproximation);
+  return relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceApproximation);
 }
 
 /******************************************************************************************************/

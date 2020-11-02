@@ -36,17 +36,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace mobile_manipulator {
 
 EndEffectorCost::EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
-                                 std::string endEffectorName)
+                                 const std::string& endEffectorName)
     : ocs2::QuadraticGaussNewtonCostBaseAD(STATE_DIM, INPUT_DIM),
       Q_(std::move(Q)),
       R_(std::move(R)),
       Qf_(std::move(Qf)),
-      endEffectorName_(std::move(endEffectorName)) {
+      endEffectorIndex_(pinocchioInterface.getBodyId(endEffectorName)) {
   pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(pinocchioInterface));
 }
 
 EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
-    : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_), endEffectorName_(rhs.endEffectorName_) {
+    : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_), endEffectorIndex_(rhs.endEffectorIndex_) {
   pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(*rhs.pinocchioInterface_));
 }
 
@@ -55,11 +55,14 @@ auto EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector
   const ad_vector_t eeDesiredPosition(parameters.head<3>());
   Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
   eeDesiredOrientation.coeffs() = parameters.tail(4);
-  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
+  pinocchioInterface_->forwardKinematics(state);
+  pinocchioInterface_->updateFramePlacements();
+  const auto eePosition = pinocchioInterface_->getBodyPosition(endEffectorIndex_);
+  const auto eeOrientation = pinocchioInterface_->getBodyOrientation(endEffectorIndex_);
 
   ad_vector_t error(6);
-  error.head(3) = eePose.position - eeDesiredPosition;                                 // position error
-  error.tail(3) = ocs2::quaternionDistance(eePose.orientation, eeDesiredOrientation);  // orientation error
+  error.head(3) = eePosition - eeDesiredPosition;                                 // position error
+  error.tail(3) = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation);  // orientation error
 
   ad_vector_t cost(INPUT_DIM + 6);
   cost.head(INPUT_DIM) = R_.array().sqrt().matrix() * input;
@@ -71,11 +74,14 @@ auto EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& sta
   const ad_vector_t eeDesiredPosition(parameters.head(3));
   Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
   eeDesiredOrientation.coeffs() = parameters.tail(4);
-  const auto eePose = pinocchioInterface_->getBodyPoseInWorldFrame(endEffectorName_, state);
+  pinocchioInterface_->forwardKinematics(state);
+  pinocchioInterface_->updateFramePlacements();
+  const auto eePosition = pinocchioInterface_->getBodyPosition(endEffectorIndex_);
+  const auto eeOrientation = pinocchioInterface_->getBodyOrientation(endEffectorIndex_);
 
   ad_vector_t error(6);
-  error.head(3) = eePose.position - eeDesiredPosition;                                 // position error
-  error.tail(3) = ocs2::quaternionDistance(eePose.orientation, eeDesiredOrientation);  // orientation error
+  error.head(3) = eePosition - eeDesiredPosition;                                 // position error
+  error.tail(3) = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation);  // orientation error
 
   return Qf_.array().sqrt().matrix() * error;
 }
@@ -100,9 +106,9 @@ vector_t EndEffectorCost::interpolateReference(scalar_t time) const {
 
   } else {
     // interpolation
-    scalar_t tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
-    const Eigen::Quaterniond quatA(desiredStateTrajectory[timeAIdx].tail<4>());
-    const Eigen::Quaterniond quatB(desiredStateTrajectory[timeAIdx + 1].tail<4>());
+    const scalar_t tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
+    const Eigen::Quaternion<scalar_t> quatA(desiredStateTrajectory[timeAIdx].tail<4>());
+    const Eigen::Quaternion<scalar_t> quatB(desiredStateTrajectory[timeAIdx + 1].tail<4>());
 
     reference.tail<4>() = quatA.slerp(tau, quatB).coeffs();
     reference.head<3>() = (1 - tau) * desiredStateTrajectory[timeAIdx].head<3>() + tau * desiredStateTrajectory[timeAIdx + 1].head<3>();

@@ -65,7 +65,7 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
   ocs2::loadData::loadCppDataType(taskFile, "endEffectorCost.weight", eeCostWeight);
   std::cerr << "EndEffectorCost weight: " << eeCostWeight << std::endl;
 
-  auto eeCostPtr = std::make_shared<EndEffectorCost>(pinocchioInterface, std::move(Q), std::move(R), std::move(Qf));
+  auto eeCostPtr = std::make_shared<EndEffectorCost>(pinocchioInterface, std::move(Q), std::move(R), std::move(Qf), "WRIST_2");
   eeCostPtr->setCostDesiredTrajectoriesPtr(&initCostDesiredTrajectory);  // required for CppAD initialization pass
   eeCostPtr->initialize("EndEffectorCost", libraryFolder, recompileLibraries, verbose);
 

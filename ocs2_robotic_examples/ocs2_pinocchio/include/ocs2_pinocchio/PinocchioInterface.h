@@ -39,16 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cppad/cg.hpp>
 
 /* Forward declaration of main pinocchio types */
-namespace pinocchio {
-template <typename Scalar, int Options>
-struct JointCollectionDefaultTpl;
-template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
-struct ModelTpl;
-template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
-struct DataTpl;
-template <typename Scalar, int Options, template <typename S, int O> class JointCollectionTpl>
-struct JointModelTpl;
-}  // namespace pinocchio
+#include <ocs2_pinocchio/pinocchio_forward_declaration.h>
 
 namespace ocs2 {
 
@@ -57,18 +48,6 @@ class PinocchioInterfaceTpl;
 
 using PinocchioInterface = PinocchioInterfaceTpl<scalar_t>;
 using PinocchioInterfaceCppAd = PinocchioInterfaceTpl<ad_scalar_t>;
-
-/**
- * Pose conatining position vector and orientation quaternion
- * @tparam SCALAR: scalar type
- */
-template <typename SCALAR>
-struct Pose {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  Eigen::Matrix<SCALAR, 3, 1> position;
-  Eigen::Quaternion<SCALAR> orientation;
-};
 
 /**
  * Pinocchio interface class contatining robot model and data.
@@ -82,6 +61,9 @@ class PinocchioInterfaceTpl final {
   using JointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
   using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+  using VectorX = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
+  using Vector3 = Eigen::Matrix<SCALAR, 3, 1>;
+  using Quaternion = Eigen::Quaternion<SCALAR>;
 
   /**
    * Construct from given pinocchio model
@@ -109,22 +91,56 @@ class PinocchioInterfaceTpl final {
 
   /** Get the pinocchio data */
   Data& getData() { return *robotDataPtr_; }
+  const Data& getData() const { return *robotDataPtr_; }
 
   /**
-   * Gets the pose of a body in the (pinocchio) world frame
+   * Get the position of a body in the (pinocchio) world frame
+   * Requires forwardKinematics and updateFramePlacements
    *
-   * @param[in] bodyName name of the body (corresponds to the pinocchio name, which is usually the URDF link name)
-   * @param[in] q joint configuration
-   * @return the body pose
-   * TODO(perry) make this const by caching or mutabling the robotDataPtr_
+   * @param[in] bodyId pinocchio body index
+   * @return the body position
    */
-  Pose<SCALAR> getBodyPoseInWorldFrame(const std::string bodyName, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  Vector3 getBodyPosition(size_t bodyId) const;
 
-  void computeAllJacobians(const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  /**
+   * Get the orientation of a body in the (pinocchio) world frame
+   * Requires forwardKinematics and updateFramePlacements
+   *
+   * @param[in] bodyId pinocchio body index
+   * @return the body orientation
+   */
+  Quaternion getBodyOrientation(size_t bodyId) const;
 
-  MatrixX getJacobianOfJoint(size_t jointIndex);
+  /**
+   * Get the joint position in the (pinocchio) world frame
+   * Requires forwardKinematics and updateGlobalPlacements
+   *
+   * @param[in] jointIndex pinocchio joint index
+   * @return the joint position
+   */
+  Vector3 getJointPosition(size_t jointIndex) const;
 
-  Pose<SCALAR> getJointPose(size_t jointIndex, const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q);
+  /**
+   * Get the joint orientation in the (pinocchio) world frame
+   * Requires forwardKinematics and updateGlobalPlacements
+   *
+   * @param[in] jointIndex pinocchio joint index
+   * @return the joint orientation
+   */
+  Quaternion getJointOrientation(size_t jointIndex) const;
+
+  /** Get the joint jacobian wrt. the generalized coordinates. */
+  MatrixX getJointJacobian(size_t jointIndex) const;
+
+  /**
+   * @param[in] bodyName name of the body (corresponds to the pinocchio name, which is usually the URDF link name)
+   * @return body index
+   */
+  size_t getBodyId(const std::string& bodyName) const;
+  void forwardKinematics(const VectorX& q);
+  void updateFramePlacements();
+  void updateGlobalPlacements();
+  void computeJointJacobians(const VectorX& q);
 
   friend std::ostream& operator<<(std::ostream& os, const PinocchioInterfaceTpl<scalar_t>& p);
 

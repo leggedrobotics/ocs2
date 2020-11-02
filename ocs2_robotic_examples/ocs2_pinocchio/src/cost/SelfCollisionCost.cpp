@@ -83,11 +83,15 @@ scalar_t SelfCollisionCost::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  using Vector3 = Eigen::Matrix<scalar_t, 3, 1>;
+
   const std::vector<hpp::fcl::DistanceResult> results = pinocchioGeometrySelfCollisions_.computeDistances(x);
 
   auto distanceApproximation = VectorFunctionQuadraticApproximation::Zero(results.size(), x.rows(), u.rows());
 
-  pinocchioInterface_.computeAllJacobians(x);
+  pinocchioInterface_.forwardKinematics(x);
+  pinocchioInterface_.updateGlobalPlacements();
+  pinocchioInterface_.computeJointJacobians(x);
 
   for (size_t i = 0; i < results.size(); ++i) {
     // Distance violation
@@ -100,33 +104,31 @@ ScalarFunctionQuadraticApproximation SelfCollisionCost::costQuadraticApproximati
         pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.first];
 
     // We need to get the jacobian of the point on the first object; use the joint jacobian translated to the point
-    const ocs2::Pose<scalar_t> joint1Pose = pinocchioInterface_.getJointPose(geometryObject1.parentJoint, x);
-    const Eigen::Vector3d pt1Offset = result.nearest_points[0] - joint1Pose.position;
-    const Eigen::MatrixXd joint1Jacobian = pinocchioInterface_.getJacobianOfJoint(geometryObject1.parentJoint);
+    const Vector3 joint1Position = pinocchioInterface_.getJointPosition(geometryObject1.parentJoint);
+    const Vector3 pt1Offset = result.nearest_points[0] - joint1Position;
+    const matrix_t joint1Jacobian = pinocchioInterface_.getJointJacobian(geometryObject1.parentJoint);
     // Jacobians from pinocchio are given as
     // [ position jacobian ]
     // [ rotation jacobian ]
-    const Eigen::MatrixXd pt1Jacobian = joint1Jacobian.topRows(3) - skewSymmetricMatrix(pt1Offset) * joint1Jacobian.bottomRows(3);
+    const matrix_t pt1Jacobian = joint1Jacobian.topRows(3) - skewSymmetricMatrix(pt1Offset) * joint1Jacobian.bottomRows(3);
 
     const pinocchio::GeometryObject& geometryObject2 =
         pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.second];
 
     // We need to get the jacobian of the point on the second object; use the joint jacobian translated to the point
-    const Pose<scalar_t> joint2Pose = pinocchioInterface_.getJointPose(geometryObject2.parentJoint, x);
-    const Eigen::Vector3d pt2Offset = result.nearest_points[0] - joint2Pose.position;
-    const Eigen::MatrixXd joint2Jacobian = pinocchioInterface_.getJacobianOfJoint(geometryObject2.parentJoint);
-    const Eigen::MatrixXd pt2Jacobian = joint2Jacobian.topRows(3) - skewSymmetricMatrix(pt2Offset) * joint2Jacobian.bottomRows(3);
+    const Vector3 joint2Position = pinocchioInterface_.getJointPosition(geometryObject2.parentJoint);
+    const Vector3 pt2Offset = result.nearest_points[0] - joint2Position;
+    const matrix_t joint2Jacobian = pinocchioInterface_.getJointJacobian(geometryObject2.parentJoint);
+    const matrix_t pt2Jacobian = joint2Jacobian.topRows(3) - skewSymmetricMatrix(pt2Offset) * joint2Jacobian.bottomRows(3);
 
     // To get the (approximate) jacobian of the distance, get the difference between the two nearest point jacobians, then multiply by the
     // vector from point to point
-    const Eigen::MatrixXd differenceJacobian = pt2Jacobian - pt1Jacobian;
+    const matrix_t differenceJacobian = pt2Jacobian - pt1Jacobian;
     // TODO(perry): is there a way to calculate a correct jacobian for the case of distanceVector = 0?
-    const Eigen::Vector3d distanceVector = result.min_distance > 0 ? (result.nearest_points[1] - result.nearest_points[0]).normalized()
-                                                                   : (result.nearest_points[0] - result.nearest_points[1]).normalized();
+    const Vector3 distanceVector = result.min_distance > 0 ? (result.nearest_points[1] - result.nearest_points[0]).normalized()
+                                                           : (result.nearest_points[0] - result.nearest_points[1]).normalized();
     distanceApproximation.dfdx.row(i) = distanceVector.transpose() * differenceJacobian;
   }
-
-  ScalarFunctionQuadraticApproximation returnvalue = relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceApproximation);
 
   return relaxedBarrierPenalty_.penaltyCostQuadraticApproximation(distanceApproximation);
 }

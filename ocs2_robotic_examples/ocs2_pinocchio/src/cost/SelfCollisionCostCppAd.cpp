@@ -140,27 +140,33 @@ ScalarFunctionQuadraticApproximation SelfCollisionCostCppAd::finalCostQuadraticA
 /******************************************************************************************************/
 /******************************************************************************************************/
 ad_vector_t SelfCollisionCostCppAd::computeLinkPointsAd(ad_vector_t state, ad_vector_t points) {
+  using Vector3 = Eigen::Matrix<ad_scalar_t, 3, 1>;
+  using Quaternion = Eigen::Quaternion<ad_scalar_t>;
+
+  pinocchioInterfaceAd_.forwardKinematics(state);
+  pinocchioInterfaceAd_.updateGlobalPlacements();
+
   ad_vector_t pointsInLinkFrames = ad_vector_t::Zero(points.size());
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
-    std::pair<size_t, size_t> currentCollisionPair = pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs[i];
+    const auto collisionPair = pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs[i];
     const pinocchio::GeometryObject& geometryObject1 =
-        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[currentCollisionPair.first];
-    Pose<ad_scalar_t> poseJoint1 = pinocchioInterfaceAd_.getJointPose(geometryObject1.parentJoint, state);
-    Pose<ad_scalar_t> inversePoseJoint1;
-    inversePoseJoint1.position = poseJoint1.orientation.conjugate() * -poseJoint1.position;
-    inversePoseJoint1.orientation = poseJoint1.orientation.conjugate();
+        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.first];
+    const auto joint1Position = pinocchioInterfaceAd_.getJointPosition(geometryObject1.parentJoint);
+    const auto joint1Orientation = pinocchioInterfaceAd_.getJointOrientation(geometryObject1.parentJoint);
+    const Vector3 joint1PositionInverse = joint1Orientation.conjugate() * -joint1Position;
+    const Quaternion joint1OrientationInverse = joint1Orientation.conjugate();
     const pinocchio::GeometryObject& geometryObject2 =
-        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[currentCollisionPair.second];
-    Pose<ad_scalar_t> poseJoint2 = pinocchioInterfaceAd_.getJointPose(geometryObject2.parentJoint, state);
-    Pose<ad_scalar_t> inversePoseJoint2;
-    inversePoseJoint2.position = poseJoint2.orientation.conjugate() * -poseJoint2.position;
-    inversePoseJoint2.orientation = poseJoint2.orientation.conjugate();
+        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.second];
+    const auto joint2Position = pinocchioInterfaceAd_.getJointPosition(geometryObject2.parentJoint);
+    const auto joint2Orientation = pinocchioInterfaceAd_.getJointOrientation(geometryObject2.parentJoint);
+    const Vector3 joint2PositionInverse = joint2Orientation.conjugate() * -joint2Position;
+    const Quaternion joint2OrientationInverse = joint2Orientation.conjugate();
 
     ad_vector_t point1 = points.segment(i * numberOfParamsPerResult_, 3);
     ad_vector_t point2 = points.segment(i * numberOfParamsPerResult_ + 3, 3);
 
-    pointsInLinkFrames.segment(i * numberOfParamsPerResult_, 3) = inversePoseJoint1.position + inversePoseJoint1.orientation * point1;
-    pointsInLinkFrames.segment(i * numberOfParamsPerResult_ + 3, 3) = inversePoseJoint2.position + inversePoseJoint2.orientation * point2;
+    pointsInLinkFrames.segment(i * numberOfParamsPerResult_, 3) = joint1PositionInverse + joint1OrientationInverse * point1;
+    pointsInLinkFrames.segment(i * numberOfParamsPerResult_ + 3, 3) = joint2PositionInverse + joint2OrientationInverse * point2;
     pointsInLinkFrames[i * numberOfParamsPerResult_ + 6] =
         CppAD::CondExpGt(points[i * numberOfParamsPerResult_ + 6], ad_scalar_t(0.0), ad_scalar_t(1.0), ad_scalar_t(-1.0));
   }
@@ -173,22 +179,25 @@ ad_vector_t SelfCollisionCostCppAd::computeLinkPointsAd(ad_vector_t state, ad_ve
 ad_vector_t SelfCollisionCostCppAd::distanceCalculationAd(ad_vector_t state, ad_vector_t points) {
   ad_vector_t results = ad_vector_t::Zero(points.size() / numberOfParamsPerResult_);
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
-    std::pair<size_t, size_t> currentCollisionPair = pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs[i];
+    const auto collisionPair = pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs[i];
     ad_vector_t point1 = points.segment(i * numberOfParamsPerResult_, 3);
 
     const pinocchio::GeometryObject& geometryObject1 =
-        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[currentCollisionPair.first];
-    Pose<ad_scalar_t> poseJoint1 = pinocchioInterfaceAd_.getJointPose(geometryObject1.parentJoint, state);
+        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.first];
 
-    ad_vector_t point1InWorld = poseJoint1.position + poseJoint1.orientation * point1;
+    const auto joint1Position = pinocchioInterfaceAd_.getJointPosition(geometryObject1.parentJoint);
+    const auto joint1Orientation = pinocchioInterfaceAd_.getJointOrientation(geometryObject1.parentJoint);
+    ad_vector_t point1InWorld = joint1Position + joint1Orientation * point1;
 
     ad_vector_t point2 = points.segment(i * numberOfParamsPerResult_ + 3, 3);
 
     const pinocchio::GeometryObject& geometryObject2 =
-        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[currentCollisionPair.second];
-    Pose<ad_scalar_t> poseJoint2 = pinocchioInterfaceAd_.getJointPose(geometryObject2.parentJoint, state);
+        pinocchioGeometrySelfCollisions_.getGeometryModel().geometryObjects[collisionPair.second];
 
-    ad_vector_t point2InWorld = poseJoint2.position + poseJoint2.orientation * point2;
+    const auto joint2Position = pinocchioInterfaceAd_.getJointPosition(geometryObject2.parentJoint);
+    const auto joint2Orientation = pinocchioInterfaceAd_.getJointOrientation(geometryObject2.parentJoint);
+
+    ad_vector_t point2InWorld = joint2Position + joint2Orientation * point2;
 
     results[i] = points[i * numberOfParamsPerResult_ + 6] * (point2InWorld - point1InWorld).norm() - minimumDistance_;
   }

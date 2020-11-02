@@ -94,25 +94,55 @@ PinocchioInterfaceTpl<SCALAR>& PinocchioInterfaceTpl<SCALAR>::operator=(Pinocchi
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-Pose<SCALAR> PinocchioInterfaceTpl<SCALAR>::getBodyPoseInWorldFrame(const std::string bodyName,
-                                                                    const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  const pinocchio::FrameIndex bodyId = robotModelPtr_->getBodyId(bodyName);
-
-  pinocchio::forwardKinematics(*robotModelPtr_, *robotDataPtr_, q);
-  pinocchio::updateFramePlacements(*robotModelPtr_, *robotDataPtr_);
-
-  Pose<SCALAR> pose;
-  pose.position = robotDataPtr_->oMf[bodyId].translation();
-  pose.orientation = matrixToQuaternion(robotDataPtr_->oMf[bodyId].rotation());
-
-  return pose;
+auto PinocchioInterfaceTpl<SCALAR>::getBodyPosition(pinocchio::FrameIndex bodyId) const -> Vector3 {
+  return robotDataPtr_->oMf[bodyId].translation();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-void PinocchioInterfaceTpl<SCALAR>::computeAllJacobians(const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
+auto PinocchioInterfaceTpl<SCALAR>::getBodyOrientation(pinocchio::FrameIndex bodyId) const -> Quaternion {
+  return matrixToQuaternion(robotDataPtr_->oMf[bodyId].rotation());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+size_t PinocchioInterfaceTpl<SCALAR>::getBodyId(const std::string& bodyName) const {
+  return robotModelPtr_->getBodyId(bodyName);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+void PinocchioInterfaceTpl<SCALAR>::forwardKinematics(const VectorX& q) {
+  pinocchio::forwardKinematics(*robotModelPtr_, *robotDataPtr_, q);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+void PinocchioInterfaceTpl<SCALAR>::updateFramePlacements() {
+  pinocchio::updateFramePlacements(*robotModelPtr_, *robotDataPtr_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+void PinocchioInterfaceTpl<SCALAR>::updateGlobalPlacements() {
+  pinocchio::updateGlobalPlacements(*robotModelPtr_, *robotDataPtr_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+void PinocchioInterfaceTpl<SCALAR>::computeJointJacobians(const VectorX& q) {
   pinocchio::computeJointJacobians(*robotModelPtr_, *robotDataPtr_, q);
 }
 
@@ -120,7 +150,7 @@ void PinocchioInterfaceTpl<SCALAR>::computeAllJacobians(const Eigen::Matrix<SCAL
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-typename PinocchioInterfaceTpl<SCALAR>::MatrixX PinocchioInterfaceTpl<SCALAR>::getJacobianOfJoint(pinocchio::JointIndex jointIndex) {
+auto PinocchioInterfaceTpl<SCALAR>::getJointJacobian(pinocchio::JointIndex jointIndex) const -> MatrixX {
   MatrixX jointJacobian = MatrixX::Zero(6, robotModelPtr_->nv);
   pinocchio::getJointJacobian(*robotModelPtr_, *robotDataPtr_, jointIndex, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jointJacobian);
   return jointJacobian;
@@ -130,16 +160,16 @@ typename PinocchioInterfaceTpl<SCALAR>::MatrixX PinocchioInterfaceTpl<SCALAR>::g
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-Pose<SCALAR> PinocchioInterfaceTpl<SCALAR>::getJointPose(pinocchio::JointIndex jointIndex,
-                                                         const Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>& q) {
-  pinocchio::forwardKinematics(*robotModelPtr_, *robotDataPtr_, q);
-  pinocchio::updateGlobalPlacements(*robotModelPtr_, *robotDataPtr_);
+auto PinocchioInterfaceTpl<SCALAR>::getJointPosition(pinocchio::JointIndex jointIndex) const -> Vector3 {
+  return robotDataPtr_->oMi[jointIndex].translation();
+}
 
-  Pose<SCALAR> pose;
-  pose.position = robotDataPtr_->oMi[jointIndex].translation();
-  pose.orientation = matrixToQuaternion(robotDataPtr_->oMi[jointIndex].rotation());
-
-  return pose;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+auto PinocchioInterfaceTpl<SCALAR>::getJointOrientation(pinocchio::JointIndex jointIndex) const -> Quaternion {
+  return matrixToQuaternion(robotDataPtr_->oMi[jointIndex].rotation());
 }
 
 }  // namespace ocs2

@@ -70,7 +70,7 @@ class SelfCollisionCostCppAd : public CostFunctionBase {
   /** Evaluate the final cost quadratic approximation */
   ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
-  Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, 1> getCollisionObjectJointPoses();
+  ad_vector_t getCollisionObjectJointPoses();
 
  private:
   void setADInterfaces(const std::string& modelName, const std::string& modelFolder);

@@ -43,7 +43,7 @@ class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
   using ad_vector_t = ocs2::ad_vector_t;
 
   EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
-                  std::string endEffectorName = "WRIST_2");
+                  const std::string& endEffectorName);
   ~EndEffectorCost() override = default;
 
   /* Copy constructor */
@@ -73,7 +73,7 @@ class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
   matrix_t R_;
   matrix_t Qf_;
 
-  std::string endEffectorName_;
+  size_t endEffectorIndex_;
 };
 
 }  // namespace mobile_manipulator

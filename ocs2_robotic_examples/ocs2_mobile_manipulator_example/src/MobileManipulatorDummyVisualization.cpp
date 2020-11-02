@@ -170,8 +170,11 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   std::vector<geometry_msgs::Point> endEffectorTrajectory;
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
-    const auto pose = pinocchioInterface_.getBodyPoseInWorldFrame("WRIST_2", state);
-    endEffectorTrajectory.push_back(ocs2::getPointMsg(pose.position));
+    pinocchioInterface_.forwardKinematics(state);
+    pinocchioInterface_.updateFramePlacements();
+    const auto eeIndex = pinocchioInterface_.getBodyId("WRIST_2");
+    const auto eePosition = pinocchioInterface_.getBodyPosition(eeIndex);
+    endEffectorTrajectory.push_back(ocs2::getPointMsg(eePosition));
   });
 
   markerArray.markers.emplace_back(ocs2::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));

@@ -73,7 +73,7 @@ class StateInputConstraint {
 };
 
 // Template for conditional compilation using SFINAE
-template <typename T, typename RETURN_TYPE>
-using ifStateInputConstraint_t = typename std::enable_if<std::is_same<T, StateInputConstraint>::value, RETURN_TYPE>::type;
+template <typename T>
+using EnableIfStateInputConstraint_t = typename std::enable_if<std::is_same<T, StateInputConstraint>::value, bool>::type;
 
 }  // namespace ocs2

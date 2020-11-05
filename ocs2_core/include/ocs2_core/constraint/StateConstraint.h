@@ -72,7 +72,7 @@ class StateConstraint {
 };
 
 // Template for conditional compilation using SFINAE
-template <typename T, typename RETURN_TYPE>
-using ifStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, RETURN_TYPE>::type;
+template <typename T>
+using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
 
 }  // namespace ocs2

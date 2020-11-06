@@ -15,8 +15,8 @@ library versions as provided in the package sources.
   \code{.sh}
   sudo apt install libglpk-dev
   \endcode
-- `catkin-pkg` package for python 2 (and 3, if python3 bindings are required). Install with `pip install catkin-pkg`
-- `pybind11_catkin` ROS package, installable via `sudo apt install ros-melodic-pybind11-catkin`
+- `catkin-pkg` package for python3. Install with `sudo apt install python3-catkin-tools`
+- `pybind11_catkin` ROS package, installable via `sudo apt install ros-noetic-pybind11-catkin`
 
 \subsection ocs2_doc_dep_optinal Optional Dependencies
 - [RAISIM](http://raisim.com) simulator can be used as a provider for rollouts. The corresponding `ocs2_raisim` package has additional requirements:

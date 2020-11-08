@@ -1,0 +1,15 @@
+README file for ocs2_sqp package 
+
+0. this package requires external library installation hpipm and blasefo. All should reside in /opt 
+
+1. right now, the package depends on ocs2_ballbot_example package. One may run "rosrun ocs2_sqp ocs2_sqp_node mpc"
+
+2. now the cost matrices Q, R are hardcoded, should be get from ocs2::ScalarFunctionQuadraticApproximation dfdxx dfduu 
+but now I bump into the following bug:
+std::runtime error "[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()"
+
+3. Another really werid thing is that the hpipm solver always return "Solver failed! Minimum step length reached". 
+I have checked this link https://github.com/giaf/hpipm/issues/56 and adjust a few parameters, but still no fixing 
+If I set the Q_final matrix to be zero, then hpipm will always return reasonable solutions but if I set Q_final, then "Solver failed! Minimum step length reached"
+I think Q_final is important otherwise we will end up with extremely large ending states 
+I also print out the residual information of hpipm but still finds nothing 

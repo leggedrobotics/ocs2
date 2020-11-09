@@ -8,20 +8,20 @@
 
 namespace ocs2 {
 
-MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr, const CostFunctionBase* costFunctionPtr) : Solver_BASE(),
-        settings_(std::move(settings)),
-                                                                                                                                                                                systemDynamicsPtr_(systemDynamicsPtr->clone()),
-                                                                                                                                                                                costFunctionPtr_(costFunctionPtr->clone())
-{
-
-}
+MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
+                                               const CostFunctionBase* costFunctionPtr)
+    : Solver_BASE(),
+      settings_(std::move(settings)),
+      systemDynamicsPtr_(systemDynamicsPtr->clone()),
+      costFunctionPtr_(costFunctionPtr->clone()) {}
 
 void MultipleShootingSolver::reset() {
   Solver_BASE::reset();
   // additional reset
 }
 
-void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
+void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
+                                     const scalar_array_t& partitioningTimes) {
   // ignore partitioningTimes
 
   // Initialize cost
@@ -34,4 +34,4 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory, primalSolution_.inputTrajectory);
 }
 
-}
+}  // namespace ocs2

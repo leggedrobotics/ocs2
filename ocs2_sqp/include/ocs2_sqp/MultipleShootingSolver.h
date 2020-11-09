@@ -10,6 +10,7 @@ namespace ocs2 {
 
 struct MultipleShootingSolverSettings {
   int N = 10;
+  int nx
 };
 
 class MultipleShootingSolver : public Solver_BASE {

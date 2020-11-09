@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
   // Launch MPC ROS node
 //  auto mpcPtr = ballbotInterface.getMpc();
   // Set this one up.
-  std::unique_ptr<MultipleShootingSolver> solver;
+  std::unique_ptr<MultipleShootingSolver> solver(settings, ballbotInterface.getDynamics(), );
   MultipleShootingMpc mpc(settings, solver);
 
   ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);

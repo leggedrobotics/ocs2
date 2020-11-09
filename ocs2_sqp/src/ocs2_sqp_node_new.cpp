@@ -40,8 +40,8 @@ void rounding(Eigen::MatrixXd &input)
 	}
 }
 
-std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd> qp_solution(ocs2::ballbot::BallbotSystemDynamics ballbotDynamics,
-																		  ocs2::QuadraticCostFunction ballbotCostFunction,
+std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd> qp_solution(ocs2::ballbot::BallbotSystemDynamics &ballbotDynamics,
+																		  ocs2::QuadraticCostFunction &ballbotCostFunction,
 																		  double delta_t_,
 																		  Eigen::MatrixXd x, Eigen::MatrixXd u, Eigen::MatrixXd pi, Eigen::VectorXd x_init)
 {
@@ -110,53 +110,56 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd> qp_solution(ocs2::
 	double *qq[N + 1];
 	double *rr[N];
 
+	std::vector<Eigen::MatrixXd> A_data;
+	std::vector<Eigen::MatrixXd> B_data;
+	std::vector<Eigen::MatrixXd> b_data;
+	std::vector<Eigen::MatrixXd> Q_data;
+	std::vector<Eigen::MatrixXd> R_data;
+	std::vector<Eigen::MatrixXd> S_data;
+	std::vector<Eigen::MatrixXd> q_data;
+	std::vector<Eigen::MatrixXd> r_data;
+	A_data.resize(N);
+	B_data.resize(N);
+	b_data.resize(N);
+	Q_data.resize(N + 1);
+	R_data.resize(N);
+	S_data.resize(N);
+	q_data.resize(N + 1);
+	r_data.resize(N);
+
 	for (int i = 0; i < N; i++)
 	{
 		std::cout << "================" << i << "==========\n";
 		ocs2::VectorFunctionLinearApproximation derivative_result = ballbotDynamics.linearApproximation(time_, x.col(i), u.col(i));
-		Eigen::MatrixXd A_i = delta_t_ * derivative_result.dfdx + Eigen::MatrixXd::Identity(n_state, n_state);
-		AA[i] = A_i.data();
-		Eigen::MatrixXd B_i = delta_t_ * derivative_result.dfdu;
-		BB[i] = B_i.data();
-		Eigen::VectorXd b_i = x.col(i) + delta_t_ * derivative_result.f - x.col(i + 1);
-		bb[i] = b_i.data();
+		A_data[i] = delta_t_ * derivative_result.dfdx + Eigen::MatrixXd::Identity(n_state, n_state);
+		AA[i] = A_data[i].data();
+		B_data[i] = delta_t_ * derivative_result.dfdu;
+		BB[i] = B_data[i].data();
+		b_data[i] = x.col(i) + delta_t_ * derivative_result.f - x.col(i + 1);
+		bb[i] = b_data[i].data();
 
 		ocs2::ScalarFunctionQuadraticApproximation costfunction_approx = ballbotCostFunction.costQuadraticApproximation(time_, x.col(i), u.col(i));
-		Eigen::MatrixXd Q_i = costfunction_approx.dfdxx; // delta_t_ ?
-		QQ[i] = Q_i.data();
-		Eigen::MatrixXd R_i = costfunction_approx.dfduu;
-		RR[i] = R_i.data();
-		Eigen::MatrixXd S_i = costfunction_approx.dfdux;
-		SS[i] = S_i.data();
-		std::cout << Q_i << std::endl;
-		std::cout << R_i << std::endl;
-		std::cout << S_i << std::endl;
-		// Eigen::VectorXd q_i = costfunction_approx.dfdx;
-		Eigen::VectorXd q_i = Q_i * x.col(i);
-		std::cout << "state org\n";
-		std::cout << x.col(i) << std::endl;
-		std::cout << "1st derivative false\n";
+		Q_data[i] = costfunction_approx.dfdxx; // delta_t_ ?
+		QQ[i] = Q_data[i].data();
+		R_data[i] = costfunction_approx.dfduu;
+		RR[i] = R_data[i].data();
+		S_data[i] = costfunction_approx.dfdux;
+		SS[i] = S_data[i].data();
+		// q_data[i] = costfunction_approx.dfdx;
+		q_data[i] = Q_data[i] * x.col(i);
+		qq[i] = q_data[i].data();
+		std::cout << "true: \n";
+		std::cout << Q_data[i] * x.col(i) << std::endl;
+		std::cout << "false: \n";
 		std::cout << costfunction_approx.dfdx << std::endl;
-		std::cout << "1st derivative true\n";
-		std::cout << Q_i * x.col(i) << std::endl;
-		qq[i] = q_i.data();
-		
-		Eigen::VectorXd r_i = costfunction_approx.dfdu;
-		std::cout << "input org\n";
-		std::cout << u.col(i) << std::endl;
-		std::cout << "1st derivative true\n";
-		std::cout << r_i << std::endl;
-		rr[i] = r_i.data();
+		r_data[i] = costfunction_approx.dfdu;
+		rr[i] = r_data[i].data();
 	}
 	ocs2::ScalarFunctionQuadraticApproximation costfunction_approx = ballbotCostFunction.costQuadraticApproximation(time_, x.col(N), u.col(N - 1));
-	Eigen::MatrixXd Q_N = costfunction_approx.dfdxx;
-	// Eigen::VectorXd q_N = costfunction_approx.dfdx;
-	Eigen::VectorXd q_N = Q_N * x.col(N);
-	std::cout << "N\n";
-	std::cout << Q_N << std::endl;
-	std::cout << q_N << std::endl;
-	QQ[N] = Q_N.data();
-	qq[N] = q_N.data();
+	Q_data[N] = 1000 * costfunction_approx.dfdxx;
+	q_data[N] = 1000 * costfunction_approx.dfdx;
+	QQ[N] = Q_data[N].data();
+	qq[N] = q_data[N].data();
 
 	Eigen::VectorXd init_l = x_init - x.col(0);
 	Eigen::VectorXd init_u = x_init - x.col(0);
@@ -308,7 +311,7 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd> qp_solution(ocs2::
 	struct d_ocp_qp_ipm_arg arg;
 	d_ocp_qp_ipm_arg_create(&dim, &arg, ipm_arg_mem);
 
-	::hpipm_mode mode = ::hpipm_mode::ROBUST;
+	::hpipm_mode mode = ::hpipm_mode::SPEED;
 
 	d_ocp_qp_ipm_arg_set_default(mode, &arg);
 
@@ -461,14 +464,14 @@ int main(int argc, char **argv)
 
 	int nx = 10;			 // number of state x
 	int nu = 3;				 // number of input u
-	int N = 10;				 // number of horizon
-	double total_time = 0.2; // in seconds
+	int N = 20;				 // number of horizon
+	double total_time = 2.0; // in seconds
 	double delta_t_ = total_time / N;
 	Eigen::VectorXd zero_input(nu);
 	zero_input.setZero();
 	Eigen::VectorXd zero_state(nx);
 	zero_state.setZero();
-	ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {zero_input}, {zero_state});
+	ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {zero_state}, {zero_input});
 	ballbotCostFunction.setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
 
 	// desired initial state
@@ -476,7 +479,7 @@ int main(int argc, char **argv)
 	x_init << 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 
 	std::cout << "random initial state" << std::endl;
-	Eigen::MatrixXd x = Eigen::MatrixXd::Random(nx, N + 1);
+	Eigen::MatrixXd x = 0.1 * Eigen::MatrixXd::Random(nx, N + 1);
 	std::cout << x << std::endl;
 	std::cout << "random initial input" << std::endl;
 	Eigen::MatrixXd u = Eigen::MatrixXd::Random(nu, N);

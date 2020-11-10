@@ -36,9 +36,6 @@ namespace ocs2 {
 
 class LinearSystemDynamicsAD : public SystemDynamicsBaseAD {
  public:
-  using ad_scalar_t = typename ocs2::ad_scalar_t;
-  using ad_vector_t = typename ocs2::ad_vector_t;
-
   LinearSystemDynamicsAD(const matrix_t& A, const matrix_t& B, const matrix_t& G)
       : SystemDynamicsBaseAD(B.rows(), B.cols()), A_(A), B_(B), G_(G) {}
 

@@ -55,6 +55,12 @@ class RobotInterface {
   virtual ~RobotInterface() = default;
 
   /**
+   * @brief getModeScheduleManagerPtr
+   * @return a shared pointer to the mode-schedule manager.
+   */
+  virtual std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const { return nullptr; }
+
+  /**
    * @brief getDynamics
    * @return a reference to the internal system dynamics
    */

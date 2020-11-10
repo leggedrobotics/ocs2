@@ -46,6 +46,7 @@ add_library(${PROJECT_NAME}
   src/command/TargetTrajectoriesJoystickInterface.cpp
   src/command/TargetTrajectoriesKeyboardInterface.cpp
   src/common/RotationTransforms.cpp
+  src/common/LoopshapingRobotInterface.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

@@ -10,6 +10,7 @@
 
 // synchronized_module
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/LoopshapingModeScheduleManager.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 // rollout

@@ -2,16 +2,18 @@ README file for ocs2_sqp package
 
 0. this package requires external library installation hpipm and blasefo. All should reside in /opt 
 
-1. right now, the package depends on ocs2_ballbot_example package. 
-One may run 
-"rosrun ocs2_sqp ocs2_sqp_node mpc 1 " --> command 1 
-"rosrun ocs2_sqp ocs2_sqp_node_new mpc 1 " --> command 2 
+Update on 2020-11-10 night: 
 
-2. command 1&2 basiclly set the same hpipm solver. their only difference is that 2 uses cost approximation and 1 uses hardcoded ones. 
-However, they return different results .............
+1. The current code can be compiled with both 
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Debug and
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release. But it only runs in Debug mode, not in the Release mode. 
+I am still looking for the reason. 
+In debug mode, one can run "roslaunch ocs2_sqp ballbot.launch"
 
-2. Another really werid thing is that the hpipm solver always return "Solver failed! Minimum step length reached" in command 1. 
-I have checked this link https://github.com/giaf/hpipm/issues/56 and adjust a few parameters, but still no fixing 
-If I set the Q_final matrix to be zero, then hpipm will always return reasonable solutions but if I set Q_final, then "Solver failed! Minimum step length reached"
-I think Q_final is important otherwise we will end up with extremely large ending states 
-I also print out the residual information of hpipm but still finds nothing 
+2. I don't know how to access the user-defined desired final state of ballbot x_g = (x_pos, y_pos, yaw).
+I suppose L = 1/2 (x-x_g)' * Q * (x-x_g), so the linearization of L should return Q*(x-x_g), but it seems not to be the case now. 
+So I manually add a term in the hpipm setting "qq". It can somehow move to the goal (1,1) manually set by me. 
+However, I still add a final state cost x'Qx which plays against it. So it will diverge after a while. 
+
+3. How to use the final stage cost? The Q_final is typically zero. Shall I just ignore it? 
+Do the final stage cost also have linearization version? 

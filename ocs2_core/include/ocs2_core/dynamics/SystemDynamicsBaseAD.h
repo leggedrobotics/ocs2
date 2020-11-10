@@ -85,6 +85,9 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   /** @note: Requires guard surfaces linear approximation to be called before */
   vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
+  /** Clone. */
+  SystemDynamicsBaseAD* clone() const override = 0;
+
  protected:
   /** Copy constructor */
   SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs);

@@ -42,27 +42,70 @@ catkin_package(
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/ocs2_hpipm.cpp
-# )
+add_library(${PROJECT_NAME}
+  src/MultipleShootingSolver.cpp
+)
+add_dependencies(${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_include_directories(${PROJECT_NAME} INTERFACE
+  ${blasfeo_INCLUDE_DIRS}
+  ${hpipm_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
+  target_link_libraries(${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HPIPM_LIBS}
+    dl
+  )
+else()
+  target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${HPIPM_LIBS}
+  dl
+  m
+  )
+endif()
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# SQP node
+add_executable(ballbot_sqp
+  src/MultipleShootingBallbotNode.cpp
+)
+add_dependencies(ballbot_sqp
+  ${catkin_EXPORTED_TARGETS}
+)
+target_include_directories(ballbot_sqp INTERFACE
+  ${blasfeo_INCLUDE_DIRS}
+  ${hpipm_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
+  target_link_libraries(ballbot_sqp
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${HPIPM_LIBS}
+  )
+else()
+  target_link_libraries(ballbot_sqp
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${HPIPM_LIBS}
+  m
+  )
+endif()
+target_compile_options(ballbot_sqp PRIVATE ${OCS2_CXX_FLAGS})
 
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
+
 add_executable(${PROJECT_NAME}_node src/ocs2_sqp_node.cpp)
 target_include_directories(${PROJECT_NAME}_node INTERFACE
   ${blasfeo_INCLUDE_DIRS}

@@ -256,6 +256,7 @@ const std::vector<PerformanceIndex>& GaussNewtonDDP::getIterationsLog() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const {
+  std::cout << "=======================================getting primal solution \n";
   // total number of nodes
   int N = 0;
   for (const scalar_array_t& timeTrajectory_i : nominalTimeTrajectoriesStock_) {

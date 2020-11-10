@@ -4,7 +4,6 @@
 #include <sys/time.h>
 
 #include <blasfeo_d_aux_ext_dep.h>
-
 extern "C"
 {
 #include <hpipm_d_ocp_qp_ipm.h>
@@ -145,8 +144,8 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd> qp_solution(ocs2::
 		RR[i] = R_data[i].data();
 		S_data[i] = costfunction_approx.dfdux;
 		SS[i] = S_data[i].data();
-		// q_data[i] = costfunction_approx.dfdx;
-		q_data[i] = Q_data[i] * x.col(i);
+		q_data[i] = costfunction_approx.dfdx;
+		// q_data[i] = Q_data[i] * x.col(i);
 		qq[i] = q_data[i].data();
 		std::cout << "true: \n";
 		std::cout << Q_data[i] * x.col(i) << std::endl;
@@ -464,8 +463,8 @@ int main(int argc, char **argv)
 
 	int nx = 10;			 // number of state x
 	int nu = 3;				 // number of input u
-	int N = 20;				 // number of horizon
-	double total_time = 2.0; // in seconds
+	int N = 10;				 // number of horizon
+	double total_time = 1.0; // in seconds
 	double delta_t_ = total_time / N;
 	Eigen::VectorXd zero_input(nu);
 	zero_input.setZero();

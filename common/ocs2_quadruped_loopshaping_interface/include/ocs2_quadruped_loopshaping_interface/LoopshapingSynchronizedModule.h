@@ -5,7 +5,7 @@
 #pragma once
 
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 #include "ocs2_quadruped_loopshaping_interface/LoopshapingDimensions.h"

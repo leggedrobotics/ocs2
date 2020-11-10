@@ -1,5 +1,5 @@
 /*
- * TargetTrajectories_Keyboard_Quadruped.h
+ * TargetTrajectoriesKeyboardQuadruped.h
  *
  *  Created on: Aug 15, 2018
  *      Author: farbod
@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <mutex>
 
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
@@ -19,7 +19,7 @@ namespace switched_model {
 /**
  * This class implements TargetTrajectories communication using ROS.
  */
-class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Keyboard_Interface {
+class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeyboardInterface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -27,7 +27,7 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
 
   enum class COMMAND_MODE { POSITION, VELOCITY };
 
-  using BASE = ocs2::TargetTrajectories_Keyboard_Interface;
+  using BASE = ocs2::TargetTrajectoriesKeyboardInterface;
   using joint_coordinates_t = Eigen::Matrix<scalar_t, 12, 1>;
 
   /**
@@ -53,11 +53,11 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
    * goalPoseLimit(10): \omega_Y
    * goalPoseLimit(11): \omega_Z
    */
-  TargetTrajectories_Keyboard_Quadruped(int argc, char* argv[], const std::string& robotName, scalar_t initZHeight,
-                                        const joint_coordinates_t& defaultJointCoordinates, scalar_t targetDisplacementVelocity,
-                                        scalar_t targetRotationVelocity,
-                                        const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 2.0, 2.0,
-                                                                                             2.0, 2.0, 2.0, 2.0},
+  TargetTrajectoriesKeyboardQuadruped(int argc, char* argv[], const std::string& robotName, scalar_t initZHeight,
+                                      const joint_coordinates_t& defaultJointCoordinates, scalar_t targetDisplacementVelocity,
+                                      scalar_t targetRotationVelocity,
+                                      const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 2.0, 2.0,
+                                                                                           2.0, 2.0, 2.0, 2.0},
                                         const COMMAND_MODE command_mode = COMMAND_MODE::POSITION)
       : BASE(argc, argv, robotName, command_dim_, goalPoseLimit),
         command_mode_(command_mode),
@@ -66,13 +66,13 @@ class TargetTrajectories_Keyboard_Quadruped : public ocs2::TargetTrajectories_Ke
         targetDisplacementVelocity_(targetDisplacementVelocity),
         targetRotationVelocity_(targetRotationVelocity) {
     observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
-                                                          &TargetTrajectories_Keyboard_Quadruped::observationCallback, this);
+                                                          &TargetTrajectoriesKeyboardQuadruped::observationCallback, this);
   }
 
   /**
    * Default destructor
    */
-  ~TargetTrajectories_Keyboard_Quadruped() = default;
+  ~TargetTrajectoriesKeyboardQuadruped() = default;
 
   /**
    * From command line loaded command to desired time, state, and input.

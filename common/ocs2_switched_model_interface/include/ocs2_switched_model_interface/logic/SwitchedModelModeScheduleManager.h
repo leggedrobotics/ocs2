@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ocs2_core/misc/Synchronized.h>
-#include <ocs2_oc/oc_solver/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"

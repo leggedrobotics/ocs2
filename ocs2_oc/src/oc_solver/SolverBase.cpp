@@ -33,14 +33,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Numerics.h>
 
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/SolverBase.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime, partitioningTimes);
   postRun();
@@ -49,8 +49,8 @@ void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t fin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                      const std::vector<ControllerBase*>& controllersPtrStock) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
+                     const std::vector<ControllerBase*>& controllersPtrStock) {
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime, partitioningTimes, controllersPtrStock);
   postRun();
@@ -59,7 +59,7 @@ void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t fin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PrimalSolution Solver_BASE::primalSolution(scalar_t finalTime) const {
+PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const {
   PrimalSolution primalSolution;
   getPrimalSolution(finalTime, &primalSolution);
   return primalSolution;
@@ -68,7 +68,7 @@ PrimalSolution Solver_BASE::primalSolution(scalar_t finalTime) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::printString(const std::string& text) const {
+void SolverBase::printString(const std::string& text) const {
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text << '\n';
 }
@@ -76,7 +76,7 @@ void Solver_BASE::printString(const std::string& text) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (modeScheduleManager_) {
     modeScheduleManager_->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
     modeSchedule_ = modeScheduleManager_->getModeSchedule();
@@ -89,7 +89,7 @@ void Solver_BASE::preRun(scalar_t initTime, const vector_t& initState, scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::postRun() {
+void SolverBase::postRun() {
   if (modeScheduleManager_ || !synchronizedModules_.empty()) {
     const auto solution = primalSolution(getFinalTime());
     if (modeScheduleManager_) {

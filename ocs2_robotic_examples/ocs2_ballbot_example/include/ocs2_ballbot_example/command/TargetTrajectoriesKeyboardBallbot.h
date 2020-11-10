@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ballbot_example/definitions.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
 namespace ocs2 {
@@ -45,7 +45,7 @@ namespace ballbot {
 /**
  * This class implements TargetTrajectories communication using ROS.
  */
-class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyboard_Interface {
+class TargetTrajectoriesKeyboardBallbot final : public TargetTrajectoriesKeyboardInterface {
  public:
   enum { COMMAND_DIM = 6 };
 
@@ -63,17 +63,17 @@ class TargetTrajectories_Keyboard_Ballbot final : public TargetTrajectories_Keyb
    * goalPoseLimit(4): v_Y
    * goalPoseLimit(5): \omega_Z
    */
-  TargetTrajectories_Keyboard_Ballbot(int argc, char* argv[], const std::string& robotName = "robot",
-                                      const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 2.0, 360.0, 2.0, 2.0, 2.0})
-      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {
+  TargetTrajectoriesKeyboardBallbot(int argc, char* argv[], const std::string& robotName = "robot",
+                                    const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 2.0, 360.0, 2.0, 2.0, 2.0})
+      : TargetTrajectoriesKeyboardInterface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {
     observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
-                                                          &TargetTrajectories_Keyboard_Ballbot::observationCallback, this);
+                                                          &TargetTrajectoriesKeyboardBallbot::observationCallback, this);
   }
 
   /**
    * Default destructor
    */
-  ~TargetTrajectories_Keyboard_Ballbot() override = default;
+  ~TargetTrajectoriesKeyboardBallbot() override = default;
 
   CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) override {
     auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };

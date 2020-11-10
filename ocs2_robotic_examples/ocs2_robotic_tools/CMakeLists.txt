@@ -43,8 +43,8 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/command/TargetTrajectories_Joystick_Interface.cpp
-  src/command/TargetTrajectories_Keyboard_Interface.cpp
+  src/command/TargetTrajectoriesJoystickInterface.cpp
+  src/command/TargetTrajectoriesKeyboardInterface.cpp
   src/common/RotationTransforms.cpp
 )
 target_link_libraries(${PROJECT_NAME}

@@ -27,13 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_double_integrator_example/command/TargetTrajectories_Keyboard_Double_Integrator.h"
+#include "ocs2_double_integrator_example/command/TargetTrajectoriesKeyboardDoubleIntegrator.h"
 
 using namespace ocs2;
 using namespace double_integrator;
 
 int main(int argc, char* argv[]) {
-  TargetTrajectories_Keyboard_Double_Integrator targetPoseCommand(argc, argv, "double_integrator");
+  TargetTrajectoriesKeyboardDoubleIntegrator targetPoseCommand(argc, argv, "double_integrator");
   targetPoseCommand.launchNodes();
 
   const std::string commadMsg = "Enter displacement and velocity for the double-integrator, separated by spaces";

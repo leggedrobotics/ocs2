@@ -29,11 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
 namespace ocs2 {
 
@@ -45,14 +48,15 @@ namespace ocs2 {
  */
 class RobotInterface {
  public:
-  /**
-   * Destructor
-   */
+  /** Constructor */
+  RobotInterface() = default;
+
+  /** Destructor */
   virtual ~RobotInterface() = default;
 
   /**
    * @brief getDynamics
-   * @return a reference to the interal system dynamics
+   * @return a reference to the internal system dynamics
    */
   virtual const SystemDynamicsBase& getDynamics() const = 0;
 

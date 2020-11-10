@@ -1,6 +1,33 @@
 README file for ocs2_sqp package 
 
-0. this package requires external library installation hpipm and blasefo. All should reside in /opt 
+0. this package requires external library installation hpipm and blasefo. All should reside in /opt/, which is the default place. 
+
+BLASEFO: 
+cd ~
+git clone https://github.com/giaf/blasfeo
+cd ~/blasefo
+set BUILD_SHARED_LIBS to be ON & TARGET to be X64_AUTOMATIC in ~/blasefo/CMakeLists.txt
+mkdir build 
+cd ~/blasefo/build
+cmake ..
+make 
+sudo make install 
+installed in /opt/blasefo/, having folders /lib, /include, /cmake 
+
+HPIPM: 
+cd ~ 
+git clone https://github.com/giaf/hpipm
+cd ~/hpipm
+set BUILD_SHARED_LIBS to be ON in cd ~/hpipm/CMakeLists.txt
+mkdir build 
+cd ~/hpipm/build
+cmake ..
+make 
+sudo make install 
+installed in /opt/hpipm/, having folders /lib, /include, /cmake 
+
+you may need to set the variable 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/blasfeo/lib
 
 Update on 2020-11-10 night: 
 

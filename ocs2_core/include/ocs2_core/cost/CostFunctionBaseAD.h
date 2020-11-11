@@ -40,9 +40,6 @@ namespace ocs2 {
  */
 class CostFunctionBaseAD : public CostFunctionBase {
  public:
-  using ad_scalar_t = typename ocs2::ad_scalar_t;
-  using ad_vector_t = typename ocs2::ad_vector_t;
-
   /** Default constructor */
   CostFunctionBaseAD(size_t stateDim, size_t inputDim);
 

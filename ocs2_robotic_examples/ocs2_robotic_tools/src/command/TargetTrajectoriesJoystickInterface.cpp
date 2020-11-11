@@ -27,33 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_robotic_tools/command/TargetTrajectories_Joystick_Interface.h>
+#include <ocs2_robotic_tools/command/TargetTrajectoriesJoystickInterface.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectories_Joystick_Interface::TargetTrajectories_Joystick_Interface(
-    int argc, char* argv[], const std::string& robotName /*= "robot"*/, const size_t targetCommandSize /*= 0*/,
-    const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
+TargetTrajectoriesJoystickInterface::TargetTrajectoriesJoystickInterface(int argc, char* argv[], const std::string& robotName /*= "robot"*/,
+                                                                         const size_t targetCommandSize /*= 0*/,
+                                                                         const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
     : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
       targetCommandSize_(targetCommandSize),
       targetCommandLimits_(targetCommandLimits) {
-  if (targetCommandLimits.size() != targetCommandSize) throw std::runtime_error("Target command limits are not set properly");
+  if (targetCommandLimits.size() != targetCommandSize) {
+    throw std::runtime_error("Target command limits are not set properly");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t& TargetTrajectories_Joystick_Interface::targetCommandSize() {
+size_t& TargetTrajectoriesJoystickInterface::targetCommandSize() {
   return targetCommandSize_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectories_Joystick_Interface::publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories) {
+void TargetTrajectoriesJoystickInterface::publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories) {
   // publish cost desired trajectories
   ocs2::TargetTrajectories_ROS_Interface::publishTargetTrajectories(costDesiredTrajectories);
 }

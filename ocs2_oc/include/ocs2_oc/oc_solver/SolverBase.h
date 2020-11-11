@@ -38,26 +38,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/ModeSchedule.h>
 
 #include <ocs2_oc/oc_data/PrimalSolution.h>
-#include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
  * This class is an interface class for the single-thread and multi-thread SLQ.
  */
-class Solver_BASE {
+class SolverBase {
  public:
   /**
    * Constructor.
    */
-  Solver_BASE() = default;
+  SolverBase() = default;
 
   /**
    * Default destructor.
    */
-  virtual ~Solver_BASE() = default;
+  virtual ~SolverBase() = default;
 
   /**
    * Resets the class to its state after construction.

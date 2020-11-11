@@ -33,16 +33,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 // #include <vector>
 
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectories_Keyboard_Interface::TargetTrajectories_Keyboard_Interface(
-    int argc, char* argv[], const std::string& robotName /*= "robot"*/, const size_t targetCommandSize /*= 0*/,
-    const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
+TargetTrajectoriesKeyboardInterface::TargetTrajectoriesKeyboardInterface(int argc, char* argv[], const std::string& robotName /*= "robot"*/,
+                                                                         const size_t targetCommandSize /*= 0*/,
+                                                                         const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
     : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
       targetCommandSize_(targetCommandSize),
       targetCommandLimits_(targetCommandLimits) {
@@ -54,15 +54,15 @@ TargetTrajectories_Keyboard_Interface::TargetTrajectories_Keyboard_Interface(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t& TargetTrajectories_Keyboard_Interface::targetCommandSize() {
+size_t& TargetTrajectoriesKeyboardInterface::targetCommandSize() {
   return targetCommandSize_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectories_Keyboard_Interface::toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime,
-                                                                        vector_t& desiredState, vector_t& desiredInput) {
+void TargetTrajectoriesKeyboardInterface::toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime,
+                                                                      vector_t& desiredState, vector_t& desiredInput) {
   // time
   desiredTime = -1.0;
   // state
@@ -74,7 +74,7 @@ void TargetTrajectories_Keyboard_Interface::toCostDesiredTimeStateInput(const sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostDesiredTrajectories TargetTrajectories_Keyboard_Interface::toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) {
+CostDesiredTrajectories TargetTrajectoriesKeyboardInterface::toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) {
   CostDesiredTrajectories costDesiredTrajectories(1);
   toCostDesiredTimeStateInput(commadLineTarget, costDesiredTrajectories.desiredTimeTrajectory()[0],
                               costDesiredTrajectories.desiredStateTrajectory()[0], costDesiredTrajectories.desiredInputTrajectory()[0]);
@@ -84,7 +84,7 @@ CostDesiredTrajectories TargetTrajectories_Keyboard_Interface::toCostDesiredTraj
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectories_Keyboard_Interface::getKeyboardCommand(const std::string& commadMsg /*= "Enter command, separated by spaces"*/) {
+void TargetTrajectoriesKeyboardInterface::getKeyboardCommand(const std::string& commadMsg /*= "Enter command, separated by spaces"*/) {
   while (ros::ok() && ros::master::check()) {
     // get command line
     std::cout << commadMsg << ": ";
@@ -112,7 +112,7 @@ void TargetTrajectories_Keyboard_Interface::getKeyboardCommand(const std::string
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_array_t TargetTrajectories_Keyboard_Interface::getCommandLine() {
+scalar_array_t TargetTrajectoriesKeyboardInterface::getCommandLine() {
   scalar_array_t targetCommand(0);
 
   // Set up a thread to read user inputs

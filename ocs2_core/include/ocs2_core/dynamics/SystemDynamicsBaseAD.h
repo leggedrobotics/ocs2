@@ -44,9 +44,6 @@ namespace ocs2 {
  */
 class SystemDynamicsBaseAD : public SystemDynamicsBase {
  public:
-  using ad_scalar_t = typename ocs2::ad_scalar_t;
-  using ad_vector_t = typename ocs2::ad_vector_t;
-
   SystemDynamicsBaseAD(size_t stateDim, size_t inputDim);
 
   /** Default destructor */

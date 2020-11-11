@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/misc/Benchmark.h>
 
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include "ocs2_mpc/MPC_Settings.h"
 
@@ -69,10 +69,10 @@ class MPC_BASE {
   virtual bool run(scalar_t currentTime, const vector_t& currentState);
 
   /** Gets a pointer to the underlying solver used in the MPC. */
-  virtual Solver_BASE* getSolverPtr() = 0;
+  virtual SolverBase* getSolverPtr() = 0;
 
   /** Gets a const pointer to the underlying solver used in the MPC. */
-  virtual const Solver_BASE* getSolverPtr() const = 0;
+  virtual const SolverBase* getSolverPtr() const = 0;
 
   /** Returns the time horizon for which the optimizer is called. */
   scalar_t getTimeHorizon() const { return mpcSettings_.timeHorizon_; }

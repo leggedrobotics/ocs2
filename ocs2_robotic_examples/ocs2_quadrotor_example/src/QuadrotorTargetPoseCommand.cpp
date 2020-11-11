@@ -27,13 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_quadrotor_example/command/TargetTrajectories_Keyboard_Quadrotor.h"
+#include "ocs2_quadrotor_example/command/TargetTrajectoriesKeyboardQuadrotor.h"
 
 using namespace ocs2;
 using namespace quadrotor;
 
 int main(int argc, char* argv[]) {
-  TargetTrajectories_Keyboard_Quadrotor targetPoseCommand(argc, argv, "quadrotor");
+  TargetTrajectoriesKeyboardQuadrotor targetPoseCommand(argc, argv, "quadrotor");
 
   targetPoseCommand.launchNodes();
 

@@ -36,9 +36,6 @@ namespace ocs2 {
 
 class QuadraticCostFunctionAD : public CostFunctionBaseAD {
  public:
-  using typename CostFunctionBaseAD::ad_scalar_t;
-  using typename CostFunctionBaseAD::ad_vector_t;
-
   QuadraticCostFunctionAD(const matrix_t& Q, const matrix_t& R, const vector_t& xNominal, const vector_t& uNominal, const matrix_t& QFinal,
                           const vector_t& xFinal, const matrix_t& P = matrix_t())
       : CostFunctionBaseAD(Q.rows(), R.rows()),

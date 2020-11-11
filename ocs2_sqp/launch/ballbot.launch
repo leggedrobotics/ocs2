@@ -7,7 +7,7 @@
     </group>
 
     <node pkg="ocs2_sqp" type="ballbot_sqp" name="ballbot_sqp"
-          output="screen" args="$(arg task_name)" launch-prefix="gdb -ex run --args"/>
+          output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_ballbot_example" type="ballbot_dummy_test" name="ballbot_dummy_test"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>

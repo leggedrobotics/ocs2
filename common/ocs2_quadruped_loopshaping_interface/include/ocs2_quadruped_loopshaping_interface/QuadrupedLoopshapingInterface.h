@@ -34,24 +34,24 @@ class QuadrupedLoopshapingInterface : public ocs2::LoopshapingRobotInterface {
 
   ~QuadrupedLoopshapingInterface() override = default;
 
-  const switched_model::QuadrupedInterface* getQuadrupedInterfacePtr() const { return this->get<switched_model::QuadrupedInterface>(); }
+  const switched_model::QuadrupedInterface& getQuadrupedInterface() const { return this->get<switched_model::QuadrupedInterface>(); }
 
   std::shared_ptr<LoopshapingSynchronizedModule> getLoopshapingSynchronizedModule() const { return loopshapingSynchronizedModule_; };
 
   /** Gets kinematic model */
-  const kinematic_model_t& getKinematicModel() const { return getQuadrupedInterfacePtr()->getKinematicModel(); }
+  const kinematic_model_t& getKinematicModel() const { return getQuadrupedInterface().getKinematicModel(); }
 
   /** Gets center of mass model */
-  const com_model_t& getComModel() const { return getQuadrupedInterfacePtr()->getComModel(); }
+  const com_model_t& getComModel() const { return getQuadrupedInterface().getComModel(); }
 
   /** Gets the loaded initial state */
   const vector_t& getInitialState() const { return initialState_; }
 
   /** Gets the loaded initial partition times */
-  const scalar_array_t& getInitialPartitionTimes() const { return getQuadrupedInterfacePtr()->getInitialPartitionTimes(); }
+  const scalar_array_t& getInitialPartitionTimes() const { return getQuadrupedInterface().getInitialPartitionTimes(); }
 
   /** Access to model settings */
-  const switched_model::ModelSettings& modelSettings() const { return getQuadrupedInterfacePtr()->modelSettings(); };
+  const switched_model::ModelSettings& modelSettings() const { return getQuadrupedInterface().modelSettings(); };
 
   /** Gets the rollout class */
   const ocs2::RolloutBase& getRollout() const { return *timeTriggeredRolloutPtr_; }

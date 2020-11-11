@@ -11,7 +11,7 @@ QuadrupedLoopshapingInterface::QuadrupedLoopshapingInterface(std::unique_ptr<swi
                                                              std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition)
     : ocs2::LoopshapingRobotInterface(std::move(quadrupedPtr), std::move(loopshapingDefinition)) {
   // initialize state including filter state
-  const auto totalWeight = getQuadrupedInterfacePtr()->getComModel().totalMass() * 9.81;
+  const auto totalWeight = getQuadrupedInterface().getComModel().totalMass() * 9.81;
   vector_t uSystemForWeightCompensation = vector_t::Zero(SYSTEM_INPUT_DIM);
   const size_t numLegs = 4;
   for (size_t i = 0; i < numLegs; i++) {
@@ -22,12 +22,12 @@ QuadrupedLoopshapingInterface::QuadrupedLoopshapingInterface(std::unique_ptr<swi
   ocs2::vector_t initialFilterInput;
   this->getLoopshapingDefinition()->getFilterEquilibrium(uSystemForWeightCompensation, initialFilterState, initialFilterInput);
   initialState_ =
-      this->getLoopshapingDefinition()->concatenateSystemAndFilterState(getQuadrupedInterfacePtr()->getInitialState(), initialFilterState);
+      this->getLoopshapingDefinition()->concatenateSystemAndFilterState(getQuadrupedInterface().getInitialState(), initialFilterState);
 
   // wrap with loopshaping
-  timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(getDynamics(), getQuadrupedInterfacePtr()->rolloutSettings()));
-  loopshapingSynchronizedModule_ = std::make_shared<LoopshapingSynchronizedModule>(getQuadrupedInterfacePtr()->getSynchronizedModules(),
-                                                                                   this->getLoopshapingDefinition());
+  timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(getDynamics(), getQuadrupedInterface().rolloutSettings()));
+  loopshapingSynchronizedModule_ =
+      std::make_shared<LoopshapingSynchronizedModule>(getQuadrupedInterface().getSynchronizedModules(), this->getLoopshapingDefinition());
 }
 
 }  // namespace switched_model_loopshaping

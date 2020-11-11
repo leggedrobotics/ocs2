@@ -25,8 +25,8 @@ namespace ocs2
 
     ~MultipleShootingMpc() override = default;
 
-    MultipleShootingSolver *getSolverPtr() override { solverPtr_.get(); }
-    const MultipleShootingSolver *getSolverPtr() const override { solverPtr_.get(); }
+    MultipleShootingSolver *getSolverPtr() override { return solverPtr_.get(); }
+    const MultipleShootingSolver *getSolverPtr() const override { return solverPtr_.get(); }
 
   protected:
     void calculateController(scalar_t initTime, const vector_t &initState, scalar_t finalTime)

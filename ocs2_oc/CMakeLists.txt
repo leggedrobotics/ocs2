@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_solver/SolverBase.cpp
   src/synchronized_module/ModeScheduleManager.cpp
+  src/synchronized_module/LoopshapingModeScheduleManager.cpp
   src/rollout/OperatingTrajectoriesRollout.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp

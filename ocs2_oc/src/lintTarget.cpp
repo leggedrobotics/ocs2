@@ -9,6 +9,7 @@
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 // synchronized_module
+#include <ocs2_oc/synchronized_module/LoopshapingModeScheduleManager.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 

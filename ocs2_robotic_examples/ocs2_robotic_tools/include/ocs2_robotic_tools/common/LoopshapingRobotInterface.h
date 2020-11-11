@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <typeinfo>
+
 #include <ocs2_core/loopshaping/Loopshaping.h>
 
 #include <ocs2_oc/synchronized_module/LoopshapingModeScheduleManager.h>
@@ -57,13 +59,18 @@ class LoopshapingRobotInterface : public RobotInterface {
   std::shared_ptr<LoopshapingDefinition> getLoopshapingDefinition() const { return loopshapingDefinitionPtr_; };
 
   /**
-   * @brief Gets a raw pointer the underlying robot interface.
+   * @brief Gets a const reference to the underlying robot interface.
    * @tparam Derived: Derived class type (default: RobotInterface)
-   * @return a const raw pointer the underlying robot interface.
+   * @return a const reference to the underlying robot interface.
    */
   template <class Derived = RobotInterface>
-  const Derived* get() const {
-    return dynamic_cast<Derived*>(robotInterfacePtr_.get());
+  const Derived& get() const {
+    static_assert(std::is_base_of<RobotInterface, Derived>::value, "Template argument must derive from RobotInterface");
+    const auto* p = dynamic_cast<Derived*>(robotInterfacePtr_.get());
+    if (p == nullptr) {
+      throw std::runtime_error("Loopshaping does not wrap a RobotInterface of type " + std::string(typeid(Derived).name()));
+    }
+    return *p;
   }
 
   std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return loopshapingModeScheduleManager_; }

@@ -493,8 +493,8 @@ int main(int argc, char **argv)
 	std::cout << u << std::endl;
 	Eigen::MatrixXd pi = Eigen::MatrixXd::Random(nx, N);
 
-	int sqp_iteration = std::stoi(programArgs[2]);
-	for (int i = 0; i < sqp_iteration; i++)
+	int sqpIteration = std::stoi(programArgs[2]);
+	for (int i = 0; i < sqpIteration; i++)
 	{
 		std::cout << "\n---------------sqp iteration " << i << "----------\n";
 		Eigen::MatrixXd delta_x, delta_u, new_pi;

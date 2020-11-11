@@ -35,7 +35,10 @@ int main(int argc, char **argv)
   settings.N = 10;
   settings.nx = 10;
   settings.nu = 3;
-  settings.sqp_iteration = 10;
+  settings.sqpIteration = 10;
+  settings.printPrimalSol = false;
+  settings.printSolverStatistics = false;
+  settings.printSolverStatus = false;
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
   ocs2::MultipleShootingMpc mpc(mpcSettings, settings, &ballbotInterface.getDynamics(), &ballbotInterface.getCost());

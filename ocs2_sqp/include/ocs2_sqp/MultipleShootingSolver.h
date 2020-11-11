@@ -27,7 +27,10 @@ namespace ocs2
     size_t N;
     size_t nx;
     size_t nu;
-    size_t sqp_iteration;
+    size_t sqpIteration;
+    bool printSolverStatus;
+    bool printSolverStatistics;
+    bool printPrimalSol;
   };
 
   class MultipleShootingSolver : public Solver_BASE
@@ -47,13 +50,16 @@ namespace ocs2
     void getPrimalSolution(scalar_t finalTime, PrimalSolution *primalSolutionPtr) const override
     {
       primalSolutionPtr->operator=(primalSolution_);
-      std::cout << "getting primal solution \n";
-      for (int i = 0; i < settings_.N; i++)
+      if (settings_.printPrimalSol)
       {
-        std::cout << "time: " << primalSolutionPtr->timeTrajectory_[i]
-                  << " state: " << primalSolutionPtr->stateTrajectory_[i].transpose()
-                  << " input: " << primalSolutionPtr->inputTrajectory_[i].transpose()
-                  << std::endl;
+        std::cout << "getting primal solution \n";
+        for (int i = 0; i < settings_.N; i++)
+        {
+          std::cout << "time: " << primalSolutionPtr->timeTrajectory_[i]
+                    << " state: " << primalSolutionPtr->stateTrajectory_[i].transpose()
+                    << " input: " << primalSolutionPtr->inputTrajectory_[i].transpose()
+                    << std::endl;
+        }
       }
     }
 
@@ -77,11 +83,11 @@ namespace ocs2
     std::tuple<matrix_t, matrix_t, matrix_t> runSingleIter(SystemDynamicsBaseAD &systemDynamicsPtr,
                                                            CostFunctionBase &costFunctionPtr,
                                                            scalar_t delta_t_,
-                                                           matrix_t x,
-                                                           matrix_t u,
-                                                           matrix_t pi,
-                                                           const vector_t &initState, 
-                                                           const vector_t &refState);
+                                                           scalar_t initTime,
+                                                           const matrix_t &x,
+                                                           const matrix_t &u,
+                                                           const matrix_t &pi, // <-- this is not used now, but may be in the future
+                                                           const vector_t &initState);
 
     MultipleShootingSolverSettings settings_;
     std::unique_ptr<SystemDynamicsBaseAD> systemDynamicsPtr_;

@@ -14,7 +14,10 @@ namespace ocs2
       : Solver_BASE(),
         systemDynamicsPtr_(systemDynamicsPtr->clone()),
         costFunctionPtr_(costFunctionPtr->clone()),
-        settings_(std::move(settings)) {}
+        settings_(std::move(settings))
+  {
+    std::cout << "creating multiple shooting solver\n";
+  }
 
   void MultipleShootingSolver::reset()
   {
@@ -28,6 +31,7 @@ namespace ocs2
                                        const scalar_array_t &partitioningTimes)
   {
     // ignore partitioningTimes
+    std::cout << "in runImpl\n";
 
     // Initialize cost
     costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
@@ -38,22 +42,14 @@ namespace ocs2
     matrix_t u = matrix_t::Random(settings_.nu, settings_.N);
     matrix_t pi = matrix_t::Random(settings_.nx, settings_.N);
 
-    vector_t refState(settings_.nx);
-    refState.setZero();
-    refState(0) = 1.0;
-    refState(1) = 1.0;
-    for (int i = 0; i < settings_.sqp_iteration; i++)
+    for (int i = 0; i < settings_.sqpIteration; i++)
     {
       std::cout << "\n---------------sqp iteration " << i << "----------\n";
       matrix_t delta_x, delta_u, new_pi;
-      std::tie(delta_x, delta_u, new_pi) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, delta_t_, x, u, pi, initState, refState);
+      std::tie(delta_x, delta_u, new_pi) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, delta_t_, initTime, x, u, pi, initState);
       x += delta_x;
       u += delta_u;
       pi = new_pi;
-      // std::cout << "new x: \n";
-      // std::cout << x << std::endl;
-      // std::cout << "new u: \n";
-      // std::cout << u << std::endl;
     }
 
     // Fill PrimalSolution. time, state , input
@@ -76,14 +72,14 @@ namespace ocs2
     primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
   }
 
-  std::tuple<matrix_t, matrix_t, matrix_t> MultipleShootingSolver::runSingleIter(SystemDynamicsBaseAD &systemDynamicsPtr,
-                                                                                 CostFunctionBase &costFunctionPtr,
+  std::tuple<matrix_t, matrix_t, matrix_t> MultipleShootingSolver::runSingleIter(SystemDynamicsBaseAD &systemDynamicsObj,
+                                                                                 CostFunctionBase &costFunctionObj,
                                                                                  scalar_t delta_t_,
-                                                                                 matrix_t x,
-                                                                                 matrix_t u,
-                                                                                 matrix_t pi,
-                                                                                 const vector_t &initState,
-                                                                                 const vector_t &refState)
+                                                                                 scalar_t initTime,
+                                                                                 const matrix_t &x,
+                                                                                 const matrix_t &u,
+                                                                                 const matrix_t &pi,
+                                                                                 const vector_t &initState)
   {
     // Matrix x of shape (nx, N+1)
     // Matrix u of shape (nu, N)
@@ -91,55 +87,91 @@ namespace ocs2
     // N is the horizon length
     // Vector x_init of shape (nx, 1)
 
-    scalar_t time_ = 0.0; //  this is used in linearization. Since our system dynamics is time-invariant, this does not matter.
-
     int N = u.cols();
     int n_state = x.rows();
     int n_input = u.rows();
 
     // number of input
-    Eigen::VectorXi nnu_eigen(N + 1);
-    nnu_eigen.setOnes();
-    nnu_eigen *= n_input;
-    nnu_eigen(N) = 0;
-    int *nnu = nnu_eigen.data();
-
+    int nnuData[N + 1];
     // number of states
-    Eigen::VectorXi nnx_eigen(N + 1);
-    nnx_eigen.setOnes();
-    nnx_eigen *= n_state;
-    int *nnx = nnx_eigen.data();
-
+    int nnxData[N + 1];
     // number of input box constraints
-    Eigen::VectorXi nnbu_eigen(N + 1);
-    nnbu_eigen.setZero();
-    int *nnbu = nnbu_eigen.data();
-
+    int nnbuData[N + 1];
     // number of states box constraints
-    Eigen::VectorXi nnbx_eigen(N + 1);
-    nnbx_eigen.setZero();
-    nnbx_eigen(0) = n_state;
-    int *nnbx = nnbx_eigen.data();
-
+    int nnbxData[N + 1];
     // number of general constraints
-    Eigen::VectorXi nng_eigen(N + 1);
-    nng_eigen.setZero();
-    int *nng = nng_eigen.data();
-
+    int nngData[N + 1];
     // number of softed constraints on state box constraints
-    Eigen::VectorXi nnsbx_eigen(N + 1);
-    nnsbx_eigen.setZero();
-    int *nnsbx = nnsbx_eigen.data();
-
+    int nnsbxData[N + 1];
     // number of softed constraints on input box constraints
-    Eigen::VectorXi nnsbu_eigen(N + 1);
-    nnsbu_eigen.setZero();
-    int *nnsbu = nnsbu_eigen.data();
-
+    int nnsbuData[N + 1];
     // number of softed constraints on general constraints
-    Eigen::VectorXi nnsg_eigen(N + 1);
-    nnsg_eigen.setZero();
-    int *nnsg = nnsg_eigen.data();
+    int nnsgData[N + 1];
+
+    int *iidxbx[N + 1];
+    scalar_t *llbx[N + 1];
+    scalar_t *uubx[N + 1];
+
+    scalar_t *uu_guess[N + 1];
+    scalar_t *xx_guess[N + 1];
+    scalar_t *ssl_guess[N + 1];
+    scalar_t *ssu_guess[N + 1];
+
+    vector_t init_l = initState - x.col(0);
+    vector_t init_u = initState - x.col(0);
+    scalar_t *lbx0 = init_l.data();
+    scalar_t *ubx0 = init_u.data();
+
+    int idxbx0Data[n_state];
+    scalar_t x_guessData[n_state];
+    scalar_t u_guessData[n_input];
+    for (int i = 0; i < n_state; i++)
+    {
+      x_guessData[i] = 0.0;
+      idxbx0Data[i] = i;
+    }
+    for (int i = 0; i < n_input; i++)
+    {
+      u_guessData[i] = 0.0;
+    }
+
+    int *idxbx0 = idxbx0Data;
+    scalar_t *x_guess = x_guessData;
+    scalar_t *u_guess = u_guessData;
+    scalar_t sl_guess[] = {};
+    scalar_t su_guess[] = {};
+
+    for (int i = 0; i < N + 1; i++)
+    {
+      nnuData[i] = n_input;
+      nnxData[i] = n_state;
+      nnbuData[i] = 0;
+      nnbxData[i] = 0;
+      nngData[i] = 0;
+      nnsbxData[i] = 0;
+      nnsbuData[i] = 0;
+      nnsgData[i] = 0;
+      iidxbx[i] = NULL;
+      llbx[i] = NULL;
+      uubx[i] = NULL;
+      uu_guess[i] = u_guess;
+      xx_guess[i] = x_guess;
+      ssl_guess[i] = sl_guess;
+      ssu_guess[i] = su_guess;
+    }
+    nnuData[N] = 0;
+    nnbxData[0] = n_state;
+    iidxbx[0] = idxbx0;
+    llbx[0] = lbx0;
+    uubx[0] = ubx0;
+    int *nu = nnuData;
+    int *nx = nnxData;
+    int *nbu = nnbuData;
+    int *nbx = nnbxData;
+    int *ng = nngData;
+    int *nsbx = nnsbxData;
+    int *nsbu = nnsbuData;
+    int *nsg = nnsgData;
 
     scalar_t *AA[N + 1];
     scalar_t *BB[N];
@@ -167,67 +199,41 @@ namespace ocs2
     q_data.resize(N + 1);
     r_data.resize(N);
 
+    scalar_t operTime = initTime;
+
     for (int i = 0; i < N; i++)
     {
-      ocs2::VectorFunctionLinearApproximation derivative_result = systemDynamicsPtr.linearApproximation(time_, x.col(i), u.col(i));
-      A_data[i] = delta_t_ * derivative_result.dfdx + matrix_t::Identity(n_state, n_state);
+      ocs2::VectorFunctionLinearApproximation systemDynamicApprox = systemDynamicsObj.linearApproximation(operTime, x.col(i), u.col(i));
+      A_data[i] = delta_t_ * systemDynamicApprox.dfdx + matrix_t::Identity(n_state, n_state);
       AA[i] = A_data[i].data();
-      B_data[i] = delta_t_ * derivative_result.dfdu;
+      B_data[i] = delta_t_ * systemDynamicApprox.dfdu;
       BB[i] = B_data[i].data();
-      b_data[i] = x.col(i) + delta_t_ * derivative_result.f - x.col(i + 1);
+      b_data[i] = x.col(i) + delta_t_ * systemDynamicApprox.f - x.col(i + 1);
       bb[i] = b_data[i].data();
 
-      ocs2::ScalarFunctionQuadraticApproximation costfunction_approx = costFunctionPtr.costQuadraticApproximation(time_, x.col(i), u.col(i));
-      Q_data[i] = delta_t_ * costfunction_approx.dfdxx;
+      ocs2::ScalarFunctionQuadraticApproximation costFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(i), u.col(i));
+      Q_data[i] = delta_t_ * costFunctionApprox.dfdxx;
       QQ[i] = Q_data[i].data();
-      R_data[i] = delta_t_ * costfunction_approx.dfduu;
+      R_data[i] = delta_t_ * costFunctionApprox.dfduu;
       RR[i] = R_data[i].data();
-      S_data[i] = delta_t_ * costfunction_approx.dfdux;
+      S_data[i] = delta_t_ * costFunctionApprox.dfdux;
       SS[i] = S_data[i].data();
-      q_data[i] = delta_t_ * (costfunction_approx.dfdx - costfunction_approx.dfdxx * refState);
+      q_data[i] = delta_t_ * costFunctionApprox.dfdx;
       qq[i] = q_data[i].data();
-      r_data[i] = delta_t_ * costfunction_approx.dfdu;
+      r_data[i] = delta_t_ * costFunctionApprox.dfdu;
       rr[i] = r_data[i].data();
+
+      operTime += delta_t_;
     }
-    ocs2::ScalarFunctionQuadraticApproximation costfunction_approx = costFunctionPtr.costQuadraticApproximation(time_, x.col(N), u.col(N - 1));
-    Q_data[N] = delta_t_ * costfunction_approx.dfdxx;
-    q_data[N] = delta_t_ * (costfunction_approx.dfdx - costfunction_approx.dfdxx * refState);
+
+    // we should have used the finalCostQuadraticApproximation defined by Q_final matrix, but in this case, it is zero, which leads to diverging ending states
+    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
+    // so I temporarily used costQuadraticApproximation with a random linearization point of input u
+    ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(N), u.col(N - 1));
+    Q_data[N] = delta_t_ * finalCostFunctionApprox.dfdxx;
+    q_data[N] = delta_t_ * finalCostFunctionApprox.dfdx;
     QQ[N] = Q_data[N].data();
     qq[N] = q_data[N].data();
-
-    vector_t init_l = initState - x.col(0);
-    vector_t init_u = initState - x.col(0);
-
-    scalar_t *lbx0 = init_l.data();
-    scalar_t *ubx0 = init_u.data();
-
-    Eigen::VectorXi idxbx0_const(n_state);
-    idxbx0_const << 0, 1, 2, 3, 4, 5, 6, 7, 8, 9;
-    int *idxbx0 = idxbx0_const.data();
-
-    vector_t u_guess_eigen(n_input);
-    u_guess_eigen.setZero();
-    scalar_t *u_guess = u_guess_eigen.data();
-
-    vector_t x_guess_eigen(n_state);
-    x_guess_eigen.setZero();
-    scalar_t *x_guess = x_guess_eigen.data();
-
-    scalar_t sl_guess[] = {};
-    scalar_t su_guess[] = {};
-
-    int *iidxbx[N + 1];
-    scalar_t *llbx[N + 1];
-    scalar_t *uubx[N + 1];
-    iidxbx[0] = idxbx0;
-    llbx[0] = lbx0;
-    uubx[0] = ubx0;
-    for (int i = 1; i < N + 1; i++)
-    {
-      iidxbx[i] = NULL;
-      llbx[i] = NULL;
-      uubx[i] = NULL;
-    }
 
     int *iidxbu[N + 1] = {};
     scalar_t *llbu[N + 1] = {};
@@ -243,27 +249,6 @@ namespace ocs2
     int *iidxs[N + 1] = {};
     scalar_t *llls[N + 1] = {};
     scalar_t *llus[N + 1] = {};
-
-    scalar_t *uu_guess[N + 1];
-    scalar_t *xx_guess[N + 1];
-    scalar_t *ssl_guess[N + 1];
-    scalar_t *ssu_guess[N + 1];
-    for (int i = 0; i < N + 1; i++)
-    {
-      uu_guess[i] = u_guess;
-      xx_guess[i] = x_guess;
-      ssl_guess[i] = sl_guess;
-      ssu_guess[i] = su_guess;
-    }
-
-    int *nu = nnu;
-    int *nx = nnx;
-    int *nbu = nnbu;
-    int *nbx = nnbx;
-    int *ng = nng;
-    int *nsbx = nnsbx;
-    int *nsbu = nnsbu;
-    int *nsg = nnsg;
 
     scalar_t **hA = AA;
     scalar_t **hB = BB;
@@ -308,14 +293,8 @@ namespace ocs2
     int pred_corr = 1;
     int ric_alg = 0;
 
-    int ii, jj;
-
     int hpipm_status;
-
-    int rep;
     int nrep = 10;
-
-    struct timeval tv0, tv1;
 
     int dim_size = d_ocp_qp_dim_memsize(N);
     void *dim_mem = malloc(dim_size);
@@ -371,102 +350,97 @@ namespace ocs2
     hpipm_timer timer;
     hpipm_tic(&timer);
 
-    for (rep = 0; rep < nrep; rep++)
+    for (int rep = 0; rep < nrep; rep++)
     {
-      // call solver
       d_ocp_qp_ipm_solve(&qp, &qp_sol, &arg, &workspace);
       d_ocp_qp_ipm_get_status(&workspace, &hpipm_status);
     }
 
     scalar_t time_ipm = hpipm_toc(&timer) / nrep;
 
-    printf("\nHPIPM returned with flag %i.\n", hpipm_status);
-    if (hpipm_status == 0)
+    if (settings_.printSolverStatus)
     {
-      printf("\n -> QP solved!\n");
+      printf("\nHPIPM returned with flag %i.\n", hpipm_status);
+      if (hpipm_status == 0)
+      {
+        printf("\n -> QP solved!\n");
+      }
+      else if (hpipm_status == 1)
+      {
+        printf("\n -> Solver failed! Maximum number of iterations reached\n");
+      }
+      else if (hpipm_status == 2)
+      {
+        printf("\n -> Solver failed! Minimum step length reached\n");
+      }
+      else if (hpipm_status == 3)
+      {
+        printf("\n -> Solver failed! NaN in computations\n");
+      }
+      else
+      {
+        printf("\n -> Solver failed! Unknown return flag\n");
+      }
+      printf("\nAverage solution time over %i runs: %e [s]\n", nrep, time_ipm);
+      printf("\n\n");
     }
-    else if (hpipm_status == 1)
+
+    if (settings_.printSolverStatistics)
     {
-      printf("\n -> Solver failed! Maximum number of iterations reached\n");
+      int iter;
+      d_ocp_qp_ipm_get_iter(&workspace, &iter);
+      scalar_t res_stat;
+      d_ocp_qp_ipm_get_max_res_stat(&workspace, &res_stat);
+      scalar_t res_eq;
+      d_ocp_qp_ipm_get_max_res_eq(&workspace, &res_eq);
+      scalar_t res_ineq;
+      d_ocp_qp_ipm_get_max_res_ineq(&workspace, &res_ineq);
+      scalar_t res_comp;
+      d_ocp_qp_ipm_get_max_res_comp(&workspace, &res_comp);
+      scalar_t *stat;
+      d_ocp_qp_ipm_get_stat(&workspace, &stat);
+      int stat_m;
+      d_ocp_qp_ipm_get_stat_m(&workspace, &stat_m);
+
+      printf("\nipm return = %d\n", hpipm_status);
+      printf("\nipm residuals max: res_g = %e, res_b = %e, res_d = %e, res_m = %e\n", res_stat, res_eq, res_ineq, res_comp);
+
+      printf("\nipm iter = %d\n", iter);
+      printf("\nalpha_aff\tmu_aff\t\tsigma\t\talpha_prim\talpha_dual\tmu\t\tres_stat\tres_eq\t\tres_ineq\tres_comp\tlq fact\t\titref pred\titref corr\tlin res stat\tlin res eq\tlin res ineq\tlin res comp\n");
+      d_print_exp_tran_mat(stat_m, iter + 1, stat, stat_m);
+
+      printf("\nocp ipm time = %e [s]\n\n", time_ipm);
     }
-    else if (hpipm_status == 2)
+
+    // getting deltaX, deltaU, newPi
+    matrix_t deltaU(n_input, N);
+    matrix_t deltaX(n_state, N + 1);
+    matrix_t newPi(n_state, N);
+
+    scalar_t uTemp[n_input];
+    scalar_t xTemp[n_state];
+    scalar_t piTemp[n_state];
+
+    for (int ii = 0; ii < N; ii++)
     {
-      printf("\n -> Solver failed! Minimum step length reached\n");
-    }
-    else if (hpipm_status == 3)
-    {
-      printf("\n -> Solver failed! NaN in computations\n");
-    }
-    else
-    {
-      printf("\n -> Solver failed! Unknown return flag\n");
-    }
-    printf("\nAverage solution time over %i runs: %e [s]\n", nrep, time_ipm);
-    printf("\n\n");
-
-    // int iter;
-    // d_ocp_qp_ipm_get_iter(&workspace, &iter);
-    // scalar_t res_stat;
-    // d_ocp_qp_ipm_get_max_res_stat(&workspace, &res_stat);
-    // scalar_t res_eq;
-    // d_ocp_qp_ipm_get_max_res_eq(&workspace, &res_eq);
-    // scalar_t res_ineq;
-    // d_ocp_qp_ipm_get_max_res_ineq(&workspace, &res_ineq);
-    // scalar_t res_comp;
-    // d_ocp_qp_ipm_get_max_res_comp(&workspace, &res_comp);
-    // scalar_t *stat;
-    // d_ocp_qp_ipm_get_stat(&workspace, &stat);
-    // int stat_m;
-    // d_ocp_qp_ipm_get_stat_m(&workspace, &stat_m);
-
-    // printf("\nipm return = %d\n", hpipm_status);
-    // printf("\nipm residuals max: res_g = %e, res_b = %e, res_d = %e, res_m = %e\n", res_stat, res_eq, res_ineq, res_comp);
-
-    // printf("\nipm iter = %d\n", iter);
-    // printf("\nalpha_aff\tmu_aff\t\tsigma\t\talpha_prim\talpha_dual\tmu\t\tres_stat\tres_eq\t\tres_ineq\tres_comp\tlq fact\t\titref pred\titref corr\tlin res stat\tlin res eq\tlin res ineq\tlin res comp\n");
-    // d_print_exp_tran_mat(stat_m, iter + 1, stat, stat_m);
-
-    // printf("\nocp ipm time = %e [s]\n\n", time_ipm);
-
-    matrix_t u_sol(n_input, N);
-    matrix_t x_sol(n_state, N + 1);
-    matrix_t pi_sol(n_state, N);
-    scalar_t u_carray[n_input];
-    for (ii = 0; ii < N; ii++)
-    {
-      d_ocp_qp_sol_get_u(ii, &qp_sol, u_carray);
+      d_ocp_qp_sol_get_x(ii, &qp_sol, xTemp);
+      d_ocp_qp_sol_get_pi(ii, &qp_sol, piTemp);
+      d_ocp_qp_sol_get_u(ii, &qp_sol, uTemp);
       for (int j = 0; j < n_input; j++)
       {
-        u_sol(j, ii) = u_carray[j];
+        deltaU(j, ii) = uTemp[j];
       }
-    }
-
-    scalar_t x_carray[n_state];
-    for (ii = 0; ii <= N; ii++)
-    {
-      d_ocp_qp_sol_get_x(ii, &qp_sol, x_carray);
       for (int j = 0; j < n_state; j++)
       {
-        x_sol(j, ii) = x_carray[j];
+        newPi(j, ii) = piTemp[j];
+        deltaX(j, ii) = xTemp[j];
       }
     }
-
-    scalar_t pi_carray[n_state];
-    for (ii = 0; ii < N; ii++)
+    d_ocp_qp_sol_get_x(N, &qp_sol, xTemp);
+    for (int j = 0; j < n_state; j++)
     {
-      d_ocp_qp_sol_get_pi(ii, &qp_sol, pi_carray);
-      for (int j = 0; j < n_state; j++)
-      {
-        pi_sol(j, ii) = pi_carray[j];
-      }
+      deltaX(j, N) = xTemp[j];
     }
-    // printf("\ndelta u = \n");
-    // std::cout << u_sol << std::endl;
-    // printf("\ndelta x = \n");
-    // std::cout << x_sol << std::endl;
-    // printf("\npi = \n");
-    // std::cout << pi_sol << std::endl;
-    printf("one iteration ends. \n");
 
     free(dim_mem);
     free(qp_mem);
@@ -474,7 +448,7 @@ namespace ocs2
     free(ipm_arg_mem);
     free(ipm_mem);
 
-    return std::make_tuple(x_sol, u_sol, pi_sol);
+    return std::make_tuple(deltaX, deltaU, newPi);
   }
 
 } // namespace ocs2

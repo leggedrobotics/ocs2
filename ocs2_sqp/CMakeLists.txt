@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_sqp)
 
-set(CMAKE_CXX_FLAGS "-std=c++11")
+# set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
@@ -12,11 +12,16 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
+  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+)
+
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 list(APPEND CMAKE_PREFIX_PATH "/opt")
 find_package(blasfeo QUIET)
@@ -30,12 +35,16 @@ else()
     message(WARNING "Could not find HPIPM or BLASFEO")
 endif()
 
-catkin_package(  
+catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+  LIBRARIES
+    ${PROJECT_NAME}
+  DEPENDS
+    Boost
 )
 
 ###########
@@ -44,10 +53,12 @@ catkin_package(
 
 include_directories(
   include
+  ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
+# Multiple shooting solver library
 add_library(${PROJECT_NAME}
   src/MultipleShootingSolver.cpp
 )

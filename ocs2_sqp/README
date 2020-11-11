@@ -33,7 +33,7 @@ Update on 2020-11-10 night:
 
 1. The current code can be compiled with both 
 catkin config --cmake-args -DCMAKE_BUILD_TYPE=Debug and
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release. But it only runs in Debug mode, not in the Release mode. 
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release But it only runs in Debug mode, not in the Release mode. 
 I am still looking for the reason. 
 In debug mode, one can run "roslaunch ocs2_sqp ballbot.launch"
 

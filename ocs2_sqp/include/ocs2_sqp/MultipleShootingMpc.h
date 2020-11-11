@@ -20,6 +20,7 @@ namespace ocs2
         : MPC_BASE(std::move(mpcSettings))
     {
       solverPtr_.reset(new ocs2::MultipleShootingSolver(settings, systemDynamicsPtr, costFunctionPtr));
+      std::cout << "creating multiple shooting mpc\n";
     };
 
     ~MultipleShootingMpc() override = default;

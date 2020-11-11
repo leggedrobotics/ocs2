@@ -46,9 +46,6 @@ namespace ocs2 {
  */
 class ConstraintBaseAD : public ConstraintBase {
  public:
-  using ad_scalar_t = typename ocs2::ad_scalar_t;
-  using ad_vector_t = typename ocs2::ad_vector_t;
-
   /**
    * Constructor.
    *

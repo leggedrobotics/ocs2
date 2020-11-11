@@ -39,7 +39,7 @@ namespace ocs2 {
 /**
  * This class lets the user to insert robot command form joystick.
  */
-class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_ROS_Interface {
+class TargetTrajectoriesJoystickInterface : public ocs2::TargetTrajectories_ROS_Interface {
  public:
   /**
    * Constructor
@@ -49,13 +49,13 @@ class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_RO
    * @param [in] targetCommandLimits: The limits of the loaded command from
    * command-line (for safety purposes).
    */
-  TargetTrajectories_Joystick_Interface(int argc, char* argv[], const std::string& robotName = "robot", const size_t targetCommandSize = 0,
-                                        const scalar_array_t& targetCommandLimits = scalar_array_t());
+  TargetTrajectoriesJoystickInterface(int argc, char* argv[], const std::string& robotName = "robot", const size_t targetCommandSize = 0,
+                                      const scalar_array_t& targetCommandLimits = scalar_array_t());
 
   /**
    * Default destructor
    */
-  ~TargetTrajectories_Joystick_Interface() override = default;
+  ~TargetTrajectoriesJoystickInterface() override = default;
 
   /**
    * Gets the command vector size.

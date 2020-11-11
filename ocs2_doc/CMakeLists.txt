@@ -43,7 +43,7 @@ else()
 endif()
 
 # find ocs2_oc
-find_path(SOURCE_OCS2_OC_DIR NAMES ocs2_oc/oc_solver/Solver_BASE.h PATHS ${ocs2_oc_INCLUDE_DIRS}... NO_DEFAULT_PATH)
+find_path(SOURCE_OCS2_OC_DIR NAMES ocs2_oc/oc_solver/SolverBase.h PATHS ${ocs2_oc_INCLUDE_DIRS}... NO_DEFAULT_PATH)
 if(EXISTS "${SOURCE_OCS2_OC_DIR}")
   set(SOURCE_OCS2_OC_DIR "${SOURCE_OCS2_OC_DIR}/ocs2_oc/")
   message(STATUS "Found ocs2_oc at: ${SOURCE_OCS2_OC_DIR}")

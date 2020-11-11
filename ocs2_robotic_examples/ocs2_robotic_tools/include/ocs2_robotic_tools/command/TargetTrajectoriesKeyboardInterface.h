@@ -39,7 +39,7 @@ namespace ocs2 {
 /**
  * This class lets the user to insert robot command form command line.
  */
-class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_ROS_Interface {
+class TargetTrajectoriesKeyboardInterface : public ocs2::TargetTrajectories_ROS_Interface {
  public:
   /**
    * Constructor
@@ -52,13 +52,13 @@ class TargetTrajectories_Keyboard_Interface : public ocs2::TargetTrajectories_RO
    * @param [in] targetCommandLimits: The limits of the loaded command from
    * command-line (for safety purposes).
    */
-  TargetTrajectories_Keyboard_Interface(int argc, char* argv[], const std::string& robotName = "robot", const size_t targetCommandSize = 0,
-                                        const scalar_array_t& targetCommandLimits = scalar_array_t());
+  TargetTrajectoriesKeyboardInterface(int argc, char* argv[], const std::string& robotName = "robot", const size_t targetCommandSize = 0,
+                                      const scalar_array_t& targetCommandLimits = scalar_array_t());
 
   /**
    * Default destructor
    */
-  ~TargetTrajectories_Keyboard_Interface() override = default;
+  ~TargetTrajectoriesKeyboardInterface() override = default;
 
   /**
    * Gets the command vector size.

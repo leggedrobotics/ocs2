@@ -51,7 +51,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
                                const CostFunctionBase* heuristicsFunctionPtr)
-    : Solver_BASE(), ddpSettings_(std::move(ddpSettings)) {
+    : SolverBase(), ddpSettings_(std::move(ddpSettings)) {
   // thread-pool
   threadPoolPtr_.reset(new ThreadPool(ddpSettings_.nThreads_, ddpSettings_.threadPriority_));
 
@@ -1072,7 +1072,7 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
     if (ddpSettings_.checkNumericalStability_) {
       if (LinearAlgebra::rank(Dm) != Dm.rows()) {
         std::string msg = ">>> WARNING: The state-input constraints are rank deficient!";
-        Solver_BASE::printString(msg);
+        this->printString(msg);
       }
     }
     // constraint projectors are obtained at once
@@ -1318,7 +1318,7 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t stateEqConstraintISE, sc
     displayText += "    State-Input Equality:";
     displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol);
     displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff) + ".\n";
-    Solver_BASE::printString(displayText);
+    this->printString(displayText);
   }
 }
 

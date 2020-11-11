@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
@@ -55,8 +55,11 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Destructor */
   ~QuadrupedInterface() override = default;
 
+  /** Gets the switched-model mode schedule manager */
+  std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
+
   /** Gets the mode schedule manager */
-  std::shared_ptr<SwitchedModelModeScheduleManager> getModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
+  std::shared_ptr<ocs2::ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }

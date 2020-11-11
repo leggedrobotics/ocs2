@@ -191,7 +191,7 @@ namespace ocs2
     }
     ocs2::ScalarFunctionQuadraticApproximation costfunction_approx = costFunctionPtr.costQuadraticApproximation(time_, x.col(N), u.col(N - 1));
     Q_data[N] = delta_t_ * costfunction_approx.dfdxx;
-    q_data[N] = delta_t_ * costfunction_approx.dfdx;
+    q_data[N] = delta_t_ * (costfunction_approx.dfdx - costfunction_approx.dfdxx * refState);
     QQ[N] = Q_data[N].data();
     qq[N] = q_data[N].data();
 

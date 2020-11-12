@@ -14,8 +14,12 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
                                                                                                          const std::string& configFolder) {
   auto quadrupedInterface = getAnymalInterface(model, configFolder);
 
+  // load loopshaping
+  auto loopshapingDefinition = ocs2::loopshaping_property_tree::load(configFolder + "/loopshaping.info");
+  loopshapingDefinition->print();
+
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(
-      new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), configFolder));
+      new switched_model_loopshaping::QuadrupedLoopshapingInterface(std::move(quadrupedInterface), std::move(loopshapingDefinition)));
 }
 
 std::string getConfigFolderLoopshaping(const std::string& configName) {

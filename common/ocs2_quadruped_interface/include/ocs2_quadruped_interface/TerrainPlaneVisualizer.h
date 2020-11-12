@@ -8,7 +8,7 @@
 #include <ros/publisher.h>
 
 #include <ocs2_core/misc/Synchronized.h>
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>

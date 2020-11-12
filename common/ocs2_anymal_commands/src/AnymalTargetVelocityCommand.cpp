@@ -10,7 +10,7 @@
 
 #include <ocs2_core/misc/LoadData.h>
 
-#include "ocs2_anymal_commands/TargetTrajectories_Keyboard_Quadruped.h"
+#include "ocs2_anymal_commands/TargetTrajectoriesKeyboardQuadruped.h"
 
 int main(int argc, char* argv[]) {
   using scalar_t = ocs2::scalar_t;
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
   Eigen::Matrix<scalar_t, 12, 1> initJoints;
   ocs2::loadData::loadEigenMatrix(filename, "defaultJointState", initJoints);
 
-  using quadrupedKeyboard = switched_model::TargetTrajectories_Keyboard_Quadruped;
+  using quadrupedKeyboard = switched_model::TargetTrajectoriesKeyboardQuadruped;
   auto command_mode = quadrupedKeyboard::COMMAND_MODE::VELOCITY;
   std::vector<scalar_t> command_limits{2.0, 2.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0, 40.0, 40.0, 360.0};
 

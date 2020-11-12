@@ -7,7 +7,7 @@
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
 
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 

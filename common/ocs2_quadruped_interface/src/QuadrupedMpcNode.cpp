@@ -24,22 +24,22 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
 
   // Gait
   auto gaitReceiver =
-      std::make_shared<GaitReceiver>(nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->getGaitSchedule(), robotName);
+      std::make_shared<GaitReceiver>(nodeHandle, quadrupedInterface.getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
   solverModules.push_back(gaitReceiver);
 
   // Terrain Receiver
-  auto terrainReceiver =
-      std::make_shared<TerrainReceiverSynchronizedModule>(quadrupedInterface.getModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
+  auto terrainReceiver = std::make_shared<TerrainReceiverSynchronizedModule>(
+      quadrupedInterface.getSwitchedModelModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
   solverModules.push_back(terrainReceiver);
 
   // Terrain plane visualization
   auto terrainVisualizer = std::make_shared<TerrainPlaneVisualizerSynchronizedModule>(
-      quadrupedInterface.getModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
+      quadrupedInterface.getSwitchedModelModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
   solverModules.push_back(terrainVisualizer);
 
   // Swing planner
-  auto swingPlanningVisualizer =
-      std::make_shared<SwingPlanningVisualizer>(quadrupedInterface.getModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
+  auto swingPlanningVisualizer = std::make_shared<SwingPlanningVisualizer>(
+      quadrupedInterface.getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
   solverModules.push_back(swingPlanningVisualizer);
 
   // launch MPC nodes

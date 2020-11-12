@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 namespace ocs2 {
 
@@ -40,7 +40,7 @@ namespace ocs2 {
 class LoopshapingDummyObserver : public ocs2::DummyObserver {
  public:
   LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-  std::vector<std::shared_ptr<DummyObserver>> observers);
+                           std::vector<std::shared_ptr<DummyObserver>> observers);
 
   ~LoopshapingDummyObserver() override = default;
 

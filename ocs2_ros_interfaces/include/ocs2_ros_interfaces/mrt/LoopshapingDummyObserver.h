@@ -37,7 +37,7 @@ namespace ocs2 {
 /**
  * This wraps dummy observers and applies the loopshaping conversion before forwarding the update call.
  */
-class LoopshapingDummyObserver : public ocs2::DummyObserver {
+class LoopshapingDummyObserver : public DummyObserver {
  public:
   LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
                            std::vector<std::shared_ptr<DummyObserver>> observers);

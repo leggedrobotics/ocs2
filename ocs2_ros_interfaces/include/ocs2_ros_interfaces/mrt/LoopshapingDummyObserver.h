@@ -39,16 +39,16 @@ namespace ocs2 {
  */
 class LoopshapingDummyObserver : public DummyObserver {
  public:
-  LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                           std::vector<std::shared_ptr<DummyObserver>> observers);
+  LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
+                           std::vector<std::shared_ptr<DummyObserver>> observersPtrArray);
 
   ~LoopshapingDummyObserver() override = default;
 
   void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) override;
 
  private:
-  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
-  std::vector<std::shared_ptr<DummyObserver>> observers_;
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
+  std::vector<std::shared_ptr<DummyObserver>> observersPtrArray_;
 };
 
 }  // namespace ocs2

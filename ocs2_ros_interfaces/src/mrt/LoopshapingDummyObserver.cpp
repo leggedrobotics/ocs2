@@ -31,17 +31,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-LoopshapingDummyObserver::LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                                                   std::vector<std::shared_ptr<DummyObserver>> observers)
-    : loopshapingDefinition_(std::move(loopshapingDefinition)), observers_(std::move(observers)) {}
+LoopshapingDummyObserver::LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
+                                                   std::vector<std::shared_ptr<DummyObserver>> observersPtrArray)
+    : loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)), observersPtrArray_(std::move(observersPtrArray)) {}
 
 void LoopshapingDummyObserver::update(const SystemObservation& observation, const PrimalSolution& primalSolution,
                                       const CommandData& command) {
-  if (!observers_.empty()) {
+  if (!observersPtrArray_.empty()) {
     SystemObservation systemObservation;
     systemObservation.time = observation.time;
-    systemObservation.state = loopshapingDefinition_->getSystemState(observation.state);
-    systemObservation.input = loopshapingDefinition_->getSystemInput(observation.state, observation.input);
+    systemObservation.state = loopshapingDefinitionPtr_->getSystemState(observation.state);
+    systemObservation.input = loopshapingDefinitionPtr_->getSystemInput(observation.state, observation.input);
     systemObservation.mode = observation.mode;
 
     PrimalSolution systemPrimalSolution;
@@ -50,13 +50,13 @@ void LoopshapingDummyObserver::update(const SystemObservation& observation, cons
     systemPrimalSolution.stateTrajectory_.reserve(primalSolution.stateTrajectory_.size());
     systemPrimalSolution.inputTrajectory_.reserve(primalSolution.inputTrajectory_.size());
     for (size_t k = 0; k < primalSolution.stateTrajectory_.size(); ++k) {
-      const auto systemState = loopshapingDefinition_->getSystemState(primalSolution.stateTrajectory_[k]);
-      const auto systemInput = loopshapingDefinition_->getSystemInput(systemState, primalSolution.inputTrajectory_[k]);
+      const auto systemState = loopshapingDefinitionPtr_->getSystemState(primalSolution.stateTrajectory_[k]);
+      const auto systemInput = loopshapingDefinitionPtr_->getSystemInput(systemState, primalSolution.inputTrajectory_[k]);
       systemPrimalSolution.stateTrajectory_.push_back(std::move(systemState));
       systemPrimalSolution.inputTrajectory_.push_back(std::move(systemInput));
     }
 
-    for (auto& observer : observers_) {
+    for (auto& observer : observersPtrArray_) {
       observer->update(systemObservation, systemPrimalSolution, command);
     }
   }

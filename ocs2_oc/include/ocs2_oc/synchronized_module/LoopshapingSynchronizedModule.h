@@ -39,8 +39,8 @@ namespace ocs2 {
  */
 class LoopshapingSynchronizedModule : public SolverSynchronizedModule {
  public:
-  LoopshapingSynchronizedModule(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                                std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules);
+  LoopshapingSynchronizedModule(std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
+                                std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray);
 
   ~LoopshapingSynchronizedModule() override = default;
 
@@ -50,8 +50,8 @@ class LoopshapingSynchronizedModule : public SolverSynchronizedModule {
   void postSolverRun(const PrimalSolution& primalSolution) override;
 
  private:
-  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
-  std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
+  std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray_;
 };
 
 }  // namespace ocs2

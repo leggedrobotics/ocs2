@@ -73,6 +73,12 @@ class RobotInterface {
   virtual const CostFunctionBase& getCost() const = 0;
 
   /**
+   * @brief getTerminalCostPtr
+   * @return pointer to internal cost function applied at the end of the horizon
+   */
+  virtual const CostFunctionBase* getTerminalCostPtr() const { return nullptr; }
+
+  /**
    * @brief getConstraintPtr
    * @return pointer to internal constraint object. Can be nullptr in case of zero constraints
    */

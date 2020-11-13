@@ -40,6 +40,9 @@ LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterf
   // wrap with loopshaping
   dynamicsPtr_ = ocs2::LoopshapingDynamics::create(robotInterfacePtr_->getDynamics(), loopshapingDefinitionPtr_);
   costFunctionPtr_ = ocs2::LoopshapingCost::create(robotInterfacePtr_->getCost(), loopshapingDefinitionPtr_);
+  if (robotInterfacePtr_->getTerminalCostPtr() != nullptr) {
+    terminalCostFunctionPtr_ = ocs2::LoopshapingCost::create(*robotInterfacePtr_->getTerminalCostPtr(), loopshapingDefinitionPtr_);
+  }
   operatingPointsPtr_.reset(new ocs2::LoopshapingOperatingPoint(robotInterfacePtr_->getOperatingPoints(), loopshapingDefinitionPtr_));
   if (robotInterfacePtr_->getConstraintPtr() != nullptr) {
     constraintsPtr_ = ocs2::LoopshapingConstraint::create(*robotInterfacePtr_->getConstraintPtr(), loopshapingDefinitionPtr_);

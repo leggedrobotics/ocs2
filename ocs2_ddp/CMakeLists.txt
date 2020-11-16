@@ -130,8 +130,7 @@ target_link_libraries(exp1_ddp_test
 )
 
 catkin_add_gtest(correctness_test
-  test/CorrectnessUnconstrainedTest.cpp
-  test/CorrectnessConstrainedTest.cpp
+  test/CorrectnessTest.cpp
 )
 target_link_libraries(correctness_test
   ${PROJECT_NAME}

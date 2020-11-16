@@ -27,37 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/synchronized_module/LoopshapingSynchronizedModule.h"
-
-#include "ocs2_oc/oc_data/LoopshapingPrimalSolution.h"
+#include "ocs2_mpc/LoopshapingSystemObservation.h"
 
 namespace ocs2 {
 
-LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
-    std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-    std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray)
-    : loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)),
-      synchronizedModulesPtrArray_(std::move(synchronizedModulesPtrArray)) {}
-
-void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                                 const CostDesiredTrajectories& costDesiredTrajectory) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemState = loopshapingDefinitionPtr_->getSystemState(currentState);
-
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->preSolverRun(initTime, finalTime, systemState, costDesiredTrajectory);
-    }
-  }
-}
-
-void LoopshapingSynchronizedModule::postSolverRun(const PrimalSolution& primalSolution) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemPrimalSolution = loopshapingToSystemPrimalSolution(primalSolution, *loopshapingDefinitionPtr_);
-
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->postSolverRun(systemPrimalSolution);
-    }
-  }
+SystemObservation loopshapingToSystemObservation(const SystemObservation& observation, const LoopshapingDefinition& loopshapingDefinition) {
+  SystemObservation systemObservation;
+  systemObservation.time = observation.time;
+  systemObservation.state = loopshapingDefinition.getSystemState(observation.state);
+  systemObservation.input = loopshapingDefinition.getSystemInput(observation.state, observation.input);
+  systemObservation.mode = observation.mode;
+  return systemObservation;
 }
 
 }  // namespace ocs2

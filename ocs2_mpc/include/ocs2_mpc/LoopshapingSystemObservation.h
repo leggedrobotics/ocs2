@@ -27,37 +27,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/synchronized_module/LoopshapingSynchronizedModule.h"
+#pragma once
 
-#include "ocs2_oc/oc_data/LoopshapingPrimalSolution.h"
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+
+#include "ocs2_mpc/SystemObservation.h"
 
 namespace ocs2 {
 
-LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
-    std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-    std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray)
-    : loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)),
-      synchronizedModulesPtrArray_(std::move(synchronizedModulesPtrArray)) {}
-
-void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                                 const CostDesiredTrajectories& costDesiredTrajectory) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemState = loopshapingDefinitionPtr_->getSystemState(currentState);
-
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->preSolverRun(initTime, finalTime, systemState, costDesiredTrajectory);
-    }
-  }
-}
-
-void LoopshapingSynchronizedModule::postSolverRun(const PrimalSolution& primalSolution) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemPrimalSolution = loopshapingToSystemPrimalSolution(primalSolution, *loopshapingDefinitionPtr_);
-
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->postSolverRun(systemPrimalSolution);
-    }
-  }
-}
+/**
+ * Converts a systemObservation obtained for loopshaping wrapped system to the systemObservation of the original system.
+ *
+ * @param observation : SystemObservation for the augmented (=loopshaped) system
+ * @param loopshapingDefinition : loopshaping filter definition
+ * @return SystemObservation of the original system
+ */
+SystemObservation loopshapingToSystemObservation(const SystemObservation& observation, const LoopshapingDefinition& loopshapingDefinition);
 
 }  // namespace ocs2

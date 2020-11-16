@@ -29,6 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/mrt/LoopshapingDummyObserver.h"
 
+#include <ocs2_mpc/LoopshapingSystemObservation.h>
+#include <ocs2_oc/oc_data/LoopshapingPrimalSolution.h>
+
 namespace ocs2 {
 
 LoopshapingDummyObserver::LoopshapingDummyObserver(std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
@@ -38,23 +41,8 @@ LoopshapingDummyObserver::LoopshapingDummyObserver(std::shared_ptr<LoopshapingDe
 void LoopshapingDummyObserver::update(const SystemObservation& observation, const PrimalSolution& primalSolution,
                                       const CommandData& command) {
   if (!observersPtrArray_.empty()) {
-    SystemObservation systemObservation;
-    systemObservation.time = observation.time;
-    systemObservation.state = loopshapingDefinitionPtr_->getSystemState(observation.state);
-    systemObservation.input = loopshapingDefinitionPtr_->getSystemInput(observation.state, observation.input);
-    systemObservation.mode = observation.mode;
-
-    PrimalSolution systemPrimalSolution;
-    systemPrimalSolution.timeTrajectory_ = primalSolution.timeTrajectory_;
-    systemPrimalSolution.modeSchedule_ = primalSolution.modeSchedule_;
-    systemPrimalSolution.stateTrajectory_.reserve(primalSolution.stateTrajectory_.size());
-    systemPrimalSolution.inputTrajectory_.reserve(primalSolution.inputTrajectory_.size());
-    for (size_t k = 0; k < primalSolution.stateTrajectory_.size(); ++k) {
-      const auto systemState = loopshapingDefinitionPtr_->getSystemState(primalSolution.stateTrajectory_[k]);
-      const auto systemInput = loopshapingDefinitionPtr_->getSystemInput(systemState, primalSolution.inputTrajectory_[k]);
-      systemPrimalSolution.stateTrajectory_.push_back(std::move(systemState));
-      systemPrimalSolution.inputTrajectory_.push_back(std::move(systemInput));
-    }
+    const auto systemObservation = loopshapingToSystemObservation(observation, *loopshapingDefinitionPtr_);
+    const auto systemPrimalSolution = loopshapingToSystemPrimalSolution(primalSolution, *loopshapingDefinitionPtr_);
 
     for (auto& observer : observersPtrArray_) {
       observer->update(systemObservation, systemPrimalSolution, command);

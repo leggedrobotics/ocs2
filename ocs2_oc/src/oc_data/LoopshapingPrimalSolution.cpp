@@ -27,37 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/synchronized_module/LoopshapingSynchronizedModule.h"
-
 #include "ocs2_oc/oc_data/LoopshapingPrimalSolution.h"
 
 namespace ocs2 {
 
-LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
-    std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-    std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray)
-    : loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)),
-      synchronizedModulesPtrArray_(std::move(synchronizedModulesPtrArray)) {}
-
-void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                                 const CostDesiredTrajectories& costDesiredTrajectory) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemState = loopshapingDefinitionPtr_->getSystemState(currentState);
-
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->preSolverRun(initTime, finalTime, systemState, costDesiredTrajectory);
-    }
+PrimalSolution loopshapingToSystemPrimalSolution(const PrimalSolution& primalSolution, const LoopshapingDefinition& loopshapingDefinition) {
+  PrimalSolution systemPrimalSolution;
+  systemPrimalSolution.controllerPtr_ = nullptr;
+  systemPrimalSolution.timeTrajectory_ = primalSolution.timeTrajectory_;
+  systemPrimalSolution.modeSchedule_ = primalSolution.modeSchedule_;
+  systemPrimalSolution.stateTrajectory_.reserve(primalSolution.stateTrajectory_.size());
+  systemPrimalSolution.inputTrajectory_.reserve(primalSolution.inputTrajectory_.size());
+  for (size_t k = 0; k < primalSolution.stateTrajectory_.size(); ++k) {
+    const auto systemState = loopshapingDefinition.getSystemState(primalSolution.stateTrajectory_[k]);
+    const auto systemInput = loopshapingDefinition.getSystemInput(systemState, primalSolution.inputTrajectory_[k]);
+    systemPrimalSolution.stateTrajectory_.push_back(std::move(systemState));
+    systemPrimalSolution.inputTrajectory_.push_back(std::move(systemInput));
   }
-}
-
-void LoopshapingSynchronizedModule::postSolverRun(const PrimalSolution& primalSolution) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemPrimalSolution = loopshapingToSystemPrimalSolution(primalSolution, *loopshapingDefinitionPtr_);
-
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->postSolverRun(systemPrimalSolution);
-    }
-  }
+  return systemPrimalSolution;
 }
 
 }  // namespace ocs2

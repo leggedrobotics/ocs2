@@ -41,7 +41,7 @@ SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamics
 
     : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
            heuristicsFunctionPtr) {
-  if (settings().algorithm_ != ddp::algorithm::SLQ) {
+  if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
   }
@@ -59,7 +59,7 @@ SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamics
   }
 
   for (size_t i = 0; i < settings().nThreads_; i++) {
-    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == ddp_strategy::type::LINE_SEARCH);
+    bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
@@ -100,46 +100,36 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   const auto k = timeIndex;
   const auto time = BASE::SsTimeTrajectoryStock_[i][k];
 
-  // local variables
-  vector_t nominalState;
-  vector_t nominalInput;
-
-  matrix_t projectedBm;
-  matrix_t projectedPm;
-  vector_t projectedRv;
-
-  matrix_t projectedKm;  // projected feedback
-  vector_t projectedLv;  // projected feedforward
-
-  matrix_t Qu;  // projector
-  matrix_t CmProjected;
-  vector_t EvProjected;
-
   // interpolate
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, &(BASE::nominalTimeTrajectoriesStock_[i]));
-  LinearInterpolation::interpolate(indexAlpha, nominalState, &(BASE::nominalStateTrajectoriesStock_[i]));
-  LinearInterpolation::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, BASE::nominalTimeTrajectoriesStock_[i]);
+  const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, BASE::nominalStateTrajectoriesStock_[i]);
+  const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, BASE::nominalInputTrajectoriesStock_[i]);
 
   // BmProjected
-  ModelData::interpolate(indexAlpha, projectedBm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::dynamics_dfdu);
+  const matrix_t projectedBm =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::dynamics_dfdu);
   // PmProjected
-  ModelData::interpolate(indexAlpha, projectedPm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdux);
+  const matrix_t projectedPm =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdux);
   // RvProjected
-  ModelData::interpolate(indexAlpha, projectedRv, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdu);
+  const vector_t projectedRv =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdu);
   // EvProjected
-  ModelData::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_f);
+  const vector_t EvProjected =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_f);
   // CmProjected
-  ModelData::interpolate(indexAlpha, CmProjected, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_dfdx);
+  const matrix_t CmProjected =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_dfdx);
 
-  // Qu
-  riccati_modification::interpolate(indexAlpha, Qu, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                    riccati_modification::constraintNullProjector);
-  // deltaGm
-  riccati_modification::interpolate(indexAlpha, projectedKm, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                    riccati_modification::deltaGm);
-  // deltaGv
-  riccati_modification::interpolate(indexAlpha, projectedLv, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                    riccati_modification::deltaGv);
+  // projector
+  const matrix_t Qu = LinearInterpolation::interpolate(indexAlpha, BASE::riccatiModificationTrajectoriesStock_[i],
+                                                       riccati_modification::constraintNullProjector);
+  // deltaGm, projected feedback
+  matrix_t projectedKm =
+      LinearInterpolation::interpolate(indexAlpha, BASE::riccatiModificationTrajectoriesStock_[i], riccati_modification::deltaGm);
+  // deltaGv, projected feedforward
+  vector_t projectedLv =
+      LinearInterpolation::interpolate(indexAlpha, BASE::riccatiModificationTrajectoriesStock_[i], riccati_modification::deltaGv);
 
   // projectedKm = projectedPm + projectedBm^t * Sm
   projectedKm = -(projectedKm + projectedPm);
@@ -198,7 +188,7 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vec
 
         // get next time index is atomic
         while ((timeIndex = BASE::nextTimeIndex_++) < N) {
-          BASE::computeProjectionAndRiccatiModification(settings().strategy_, BASE::modelDataTrajectoriesStock_[i][timeIndex], SmDummy,
+          BASE::computeProjectionAndRiccatiModification(BASE::modelDataTrajectoriesStock_[i][timeIndex], SmDummy,
                                                         BASE::projectedModelDataTrajectoriesStock_[i][timeIndex],
                                                         BASE::riccatiModificationTrajectoriesStock_[i][timeIndex]);
         }
@@ -213,21 +203,8 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t SLQ::computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const {
-  const auto& Bm = modelData.dynamics_.dfdu;
-  const auto& Rm = modelData.cost_.dfduu;
-  switch (strategy) {
-    case ddp_strategy::type::LINE_SEARCH: {
-      return Rm;
-    }
-    case ddp_strategy::type::LEVENBERG_MARQUARDT: {
-      auto HmAug = Rm;
-      HmAug.noalias() += BASE::levenbergMarquardtModule_.riccatiMultiple * Bm.transpose() * Bm;
-      return HmAug;
-    }
-    default:
-      throw std::runtime_error("unknown ddp strategy");
-  }  // end of switch-case
+matrix_t SLQ::computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const {
+  return searchStrategyPtr_->augmentHamiltonianHessian(modelData, modelData.cost_.dfduu);
 }
 
 /******************************************************************************************************/

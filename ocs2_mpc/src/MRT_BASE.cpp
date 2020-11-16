@@ -53,6 +53,7 @@ void MRT_BASE::reset() {
   policyReceivedEver_ = false;
   newPolicyInBuffer_ = false;
   policyUpdated_ = false;
+  mrtTrylockWarningCount_ = 0;
 }
 
 /******************************************************************************************************/
@@ -83,8 +84,8 @@ void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState
   }
 
   mpcInput = currentPrimalSolution_->controllerPtr_->computeInput(currentTime, currentState);
-  LinearInterpolation::interpolate(currentTime, mpcState, &currentPrimalSolution_->timeTrajectory_,
-                                   &currentPrimalSolution_->stateTrajectory_);
+  mpcState =
+      LinearInterpolation::interpolate(currentTime, currentPrimalSolution_->timeTrajectory_, currentPrimalSolution_->stateTrajectory_);
 
   mode = currentPrimalSolution_->modeSchedule_.modeAtTime(currentTime);
 }
@@ -103,7 +104,6 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
     throw std::runtime_error("MRT_ROS_interface: rolloutPtr is not initialized, call initRollout first.");
   }
 
-  const size_t activePartitionIndex = 0;  // there is only one partition.
   scalar_t finalTime = currentTime + timeStep;
   scalar_array_t timeTrajectory;
   size_array_t postEventIndicesStock;
@@ -129,23 +129,44 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool MRT_BASE::updatePolicy() {
-  {
-    std::lock_guard<std::mutex> lock(policyBufferMutex_);
+  std::unique_lock<std::mutex> lock(policyBufferMutex_, std::try_to_lock);
+  if (lock.owns_lock()) {
+    mrtTrylockWarningCount_ = 0;
+    if (newPolicyInBuffer_) {
+      // update the current policy from buffer
+      currentCommand_.swap(commandBuffer_);
+      currentPrimalSolution_.swap(primalSolutionBuffer_);
+      policyUpdated_ = true;
+      newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
 
-    if (!newPolicyInBuffer_) {
-      return false;
+      modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
+      return true;
+    } else {
+      return false;  // No policy update: the buffer contains nothing new.
     }
-    newPolicyInBuffer_ = false;  // make sure we don't swap in the old policy again
-
-    // update the current policy from buffer
-    policyUpdated_ = true;
-    currentCommand_.swap(commandBuffer_);
-    currentPrimalSolution_.swap(primalSolutionBuffer_);
+  } else {
+    ++mrtTrylockWarningCount_;
+    if (mrtTrylockWarningCount_ > mrtTrylockWarningThreshold_) {
+      std::cerr << "[MRT_BASE::updatePolicy] failed to lock the policyBufferMutex for " << mrtTrylockWarningCount_
+                << " consecutive times.\n";
+    }
+    return false;  // No policy update: the lock could not be acquired.
   }
+}
 
-  modifyActiveSolution(*currentCommand_, *currentPrimalSolution_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_BASE::fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution) {
+  std::lock_guard<std::mutex> lk(policyBufferMutex_);
+  primalSolutionBuffer_ = std::move(newPrimalSolution);
+  commandBuffer_ = std::move(newCommandData);
 
-  return true;
+  // allow user to modify the buffer
+  modifyBufferedSolution(*commandBuffer_, *primalSolutionBuffer_);
+
+  newPolicyInBuffer_ = true;
+  policyReceivedEver_ = true;
 }
 
 /******************************************************************************************************/

@@ -33,6 +33,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <array>
 #include <cmath>
 
+// CppAD
+#include <map>
+#include <set>
+#include <vector>
+
+#include <ocs2_core/automatic_differentiation/Types.h>
+
 namespace ocs2 {
 
 /**
@@ -134,5 +141,24 @@ void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
     }
   }
 }
+
+/**
+ * Compute a quaternion from a matrix
+ *
+ * @param [in] R: Rotation Matrix.
+ * @return A quaternion representing an equivalent rotation to R.
+ */
+template <typename SCALAR_T>
+Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR_T, 3, 3>& R) {
+  return Eigen::Quaternion<SCALAR_T>(R);
+}
+
+/**
+ * Compute a quaternion from a matrix, specialized for CppAd (the default Eigen implementation uses branches)
+ *
+ * @param [in] R: Rotation Matrix templated on ad_scalar_t.
+ * @return A quaternion representing an equivalent rotation to R.
+ */
+Eigen::Quaternion<ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<ad_scalar_t, 3, 3>& R);
 
 }  // namespace ocs2

@@ -43,8 +43,10 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/command/TargetTrajectories_Joystick_Interface.cpp
-  src/command/TargetTrajectories_Keyboard_Interface.cpp
+  src/command/TargetTrajectoriesJoystickInterface.cpp
+  src/command/TargetTrajectoriesKeyboardInterface.cpp
+  src/common/RotationTransforms.cpp
+  src/common/LoopshapingRobotInterface.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -100,6 +102,7 @@ catkin_add_gtest(rotation_transform_tests
   test/common/TestRotationTransforms.cpp
 )
 target_link_libraries(rotation_transform_tests
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   gtest_main

@@ -74,7 +74,7 @@ TEST(BouncingMassTest, state_rollout_slq) {
   using matrix_array_t = ocs2::matrix_array_t;
 
   ocs2::ddp::Settings ddpSettings;
-  ddpSettings.algorithm_ = ocs2::ddp::algorithm::SLQ;
+  ddpSettings.algorithm_ = ocs2::ddp::Algorithm::SLQ;
   ddpSettings.displayInfo_ = false;
   ddpSettings.displayShortSummary_ = true;
   ddpSettings.maxNumIterations_ = 30;

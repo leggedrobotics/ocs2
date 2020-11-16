@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/Integrator.h>
 
-#include "StrategySettings.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 namespace ocs2 {
 namespace ddp {
@@ -43,26 +43,26 @@ namespace ddp {
  * @brief The DDP algorithm enum
  * Enum used in selecting either SLQ, ILQR algorithms.
  */
-enum class algorithm { SLQ, ILQR };
+enum class Algorithm { SLQ, ILQR };
 
 /**
  * Get string name of DDP algorithm type
  * @param [in] type: DDP algorithm type enum
  */
-std::string toAlgorithmName(algorithm type);
+std::string toAlgorithmName(Algorithm type);
 
 /**
  * Get DDP algorithm type from string name, useful for reading config file
  * @param [in] name: DDP algorithm name
  */
-algorithm fromAlgorithmName(std::string name);
+Algorithm fromAlgorithmName(std::string name);
 
 /**
  * This structure contains the settings for the DDP algorithm.
  */
 struct Settings {
   /** It should be either SLQ or ILQR */
-  algorithm algorithm_ = algorithm::SLQ;
+  Algorithm algorithm_ = Algorithm::SLQ;
 
   /** Number of threads used in the multi-threading scheme. */
   size_t nThreads_ = 1;
@@ -120,7 +120,7 @@ struct Settings {
   scalar_t riskSensitiveCoeff_ = 0.0;
 
   /** Determines the strategy for solving the subproblem. There are two choices line-search strategy and levenberg_marquardt strategy. */
-  ddp_strategy::type strategy_ = ddp_strategy::type::LINE_SEARCH;
+  search_strategy::Type strategy_ = search_strategy::Type::LINE_SEARCH;
   /** The line-search strategy settings. */
   line_search::Settings lineSearch_;
   /** The levenberg_marquardt strategy settings. */

@@ -47,8 +47,9 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticApproximator.cpp
-  src/oc_solver/ModeScheduleManager.cpp
-  src/oc_solver/Solver_BASE.cpp
+  src/oc_solver/SolverBase.cpp
+  src/synchronized_module/ModeScheduleManager.cpp
+  src/synchronized_module/LoopshapingModeScheduleManager.cpp
   src/rollout/OperatingTrajectoriesRollout.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp

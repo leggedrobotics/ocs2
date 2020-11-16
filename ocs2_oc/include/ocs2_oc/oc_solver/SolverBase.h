@@ -38,26 +38,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/logic/ModeSchedule.h>
 
 #include <ocs2_oc/oc_data/PrimalSolution.h>
-#include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
+#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
  * This class is an interface class for the single-thread and multi-thread SLQ.
  */
-class Solver_BASE {
+class SolverBase {
  public:
   /**
    * Constructor.
    */
-  Solver_BASE() = default;
+  SolverBase() = default;
 
   /**
    * Default destructor.
    */
-  virtual ~Solver_BASE() = default;
+  virtual ~SolverBase() = default;
 
   /**
    * Resets the class to its state after construction.
@@ -197,9 +197,9 @@ class Solver_BASE {
    *
    * @param [in] time: The inquiry time
    * @param [in] state: The inquiry state.
-   * @param [out] Vx: value function at the inquiry time and state.
+   * @return value function derivative wrt. state at the inquiry time and state.
    */
-  virtual void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const = 0;
+  virtual vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const = 0;
 
   /**
    * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.

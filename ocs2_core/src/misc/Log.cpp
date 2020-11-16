@@ -106,36 +106,15 @@ Settings loadSettings(const std::string& fileName, const std::string& fieldName)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename T>
-static void printOption(std::ostream& stream, const T& value, const std::string& name, bool updated = true, long printWidth = 80) {
-  const std::string nameString = " #### '" + name + "'";
-  stream << nameString;
-
-  printWidth = std::max<long>(printWidth, nameString.size() + 15);
-  stream.width(printWidth - nameString.size());
-  const char fill = stream.fill('.');
-
-  if (updated) {
-    stream << value << '\n';
-  } else {
-    stream << value << " (default)\n";
-  }
-
-  stream.fill(fill);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 std::ostream& operator<<(std::ostream& stream, const Settings& settings) {
   stream << "\n #### Log Settings:\n";
   stream << " #### =============================================================================\n";
 
-  printOption(stream, settings.useConsole, "useConsole");
-  printOption(stream, settings.consoleSeverity, "consoleSeverity");
-  printOption(stream, settings.useLogFile, "useLogFile");
-  printOption(stream, settings.logFileSeverity, "logFileSeverity");
-  printOption(stream, settings.logFileName, "logFileName");
+  loadData::printValue(stream, settings.useConsole, "useConsole");
+  loadData::printValue(stream, settings.consoleSeverity, "consoleSeverity");
+  loadData::printValue(stream, settings.useLogFile, "useLogFile");
+  loadData::printValue(stream, settings.logFileSeverity, "logFileSeverity");
+  loadData::printValue(stream, settings.logFileName, "logFileName");
 
   stream << " #### =============================================================================\n";
   return stream;

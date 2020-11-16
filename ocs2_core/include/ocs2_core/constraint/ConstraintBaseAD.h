@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 
 namespace ocs2 {
@@ -45,9 +46,6 @@ namespace ocs2 {
  */
 class ConstraintBaseAD : public ConstraintBase {
  public:
-  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
-  using ad_vector_t = typename CppAdInterface::ad_vector_t;
-
   /**
    * Constructor.
    *

@@ -162,7 +162,7 @@ class CorrectnessConstrainedTest : public testing::Test {
     return feasibleTrajectory;
   }
 
-  ocs2::ddp::Settings getSettings(ocs2::ddp::algorithm algorithmType, size_t numPartitions, ocs2::ddp_strategy::type strategy,
+  ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numPartitions, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = algorithmType;
@@ -194,7 +194,7 @@ class CorrectnessConstrainedTest : public testing::Test {
     std::string testName;
     testName += "Correctness Test { ";
     testName += "Algorithm: " + ocs2::ddp::toAlgorithmName(ddpSettings.algorithm_) + ",  ";
-    testName += "Strategy: " + ocs2::ddp_strategy::toString(ddpSettings.strategy_) + ",  ";
+    testName += "Strategy: " + ocs2::search_strategy::toString(ddpSettings.strategy_) + ",  ";
     testName += "#threads: " + std::to_string(ddpSettings.nThreads_) + " }";
     return testName;
   }
@@ -242,7 +242,7 @@ constexpr ocs2::scalar_t CorrectnessConstrainedTest::solutionPrecision;
 TEST_F(CorrectnessConstrainedTest, slq_single_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -260,7 +260,7 @@ TEST_F(CorrectnessConstrainedTest, slq_single_partition_linesearch) {
 TEST_F(CorrectnessConstrainedTest, slq_multi_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::SLQ, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -278,7 +278,7 @@ TEST_F(CorrectnessConstrainedTest, slq_multi_partition_linesearch) {
 TEST_F(CorrectnessConstrainedTest, ilqr_single_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -296,7 +296,7 @@ TEST_F(CorrectnessConstrainedTest, ilqr_single_partition_linesearch) {
 TEST_F(CorrectnessConstrainedTest, ilqr_multi_partition_linesearch) {
   // settings
   ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::algorithm::ILQR, partitioningTimes.size() - 1, ocs2::ddp_strategy::type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);

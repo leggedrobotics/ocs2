@@ -29,15 +29,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 
 namespace ocs2 {
 
 class LinearSystemDynamicsAD : public SystemDynamicsBaseAD {
  public:
-  using ad_scalar_t = typename CppAdInterface::ad_scalar_t;
-  using ad_vector_t = typename CppAdInterface::ad_vector_t;
-
   LinearSystemDynamicsAD(const matrix_t& A, const matrix_t& B, const matrix_t& G)
       : SystemDynamicsBaseAD(B.rows(), B.cols()), A_(A), B_(B), G_(G) {}
 

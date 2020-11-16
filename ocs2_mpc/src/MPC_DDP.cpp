@@ -43,11 +43,11 @@ MPC_DDP::MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* system
 
     : MPC_BASE(std::move(mpcSettings)) {
   switch (ddpSettings.algorithm_) {
-    case ddp::algorithm::SLQ:
+    case ddp::Algorithm::SLQ:
       ddpPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                             std::move(ddpSettings), heuristicsFunctionPtr));
       break;
-    case ddp::algorithm::ILQR:
+    case ddp::Algorithm::ILQR:
       ddpPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr,
                              std::move(ddpSettings), heuristicsFunctionPtr));
       break;
@@ -59,7 +59,7 @@ MPC_DDP::MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* system
 /******************************************************************************************************/
 void MPC_DDP::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   // updating real-time iteration settings
-  if (MPC_BASE::initRun_ && ddpPtr_->settings().strategy_ == ddp_strategy::type::LINE_SEARCH) {
+  if (MPC_BASE::initRun_ && ddpPtr_->settings().strategy_ == search_strategy::Type::LINE_SEARCH) {
     ddpPtr_->settings().maxNumIterations_ = this->settings().initMaxNumIterations_;
     ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
     ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;

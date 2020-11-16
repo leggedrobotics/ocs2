@@ -29,11 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
 namespace ocs2 {
 
@@ -45,14 +48,21 @@ namespace ocs2 {
  */
 class RobotInterface {
  public:
-  /**
-   * Destructor
-   */
+  /** Constructor */
+  RobotInterface() = default;
+
+  /** Destructor */
   virtual ~RobotInterface() = default;
 
   /**
+   * @brief getModeScheduleManagerPtr
+   * @return a shared pointer to the mode-schedule manager.
+   */
+  virtual std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const { return nullptr; }
+
+  /**
    * @brief getDynamics
-   * @return a reference to the interal system dynamics
+   * @return a reference to the internal system dynamics
    */
   virtual const SystemDynamicsBase& getDynamics() const = 0;
 
@@ -61,6 +71,12 @@ class RobotInterface {
    * @return reference to internal cost function
    */
   virtual const CostFunctionBase& getCost() const = 0;
+
+  /**
+   * @brief getTerminalCostPtr
+   * @return pointer to internal cost function applied at the end of the horizon
+   */
+  virtual const CostFunctionBase* getTerminalCostPtr() const { return nullptr; }
 
   /**
    * @brief getConstraintPtr

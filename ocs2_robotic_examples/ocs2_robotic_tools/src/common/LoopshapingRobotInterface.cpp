@@ -27,34 +27,30 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_robotic_tools/command/TargetTrajectories_Joystick_Interface.h>
+#include "ocs2_robotic_tools/common/LoopshapingRobotInterface.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectories_Joystick_Interface::TargetTrajectories_Joystick_Interface(
-    int argc, char* argv[], const std::string& robotName /*= "robot"*/, const size_t targetCommandSize /*= 0*/,
-    const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-    : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
-      targetCommandSize_(targetCommandSize),
-      targetCommandLimits_(targetCommandLimits) {
-  if (targetCommandLimits.size() != targetCommandSize) throw std::runtime_error("Target command limits are not set properly");
+LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterface> robotInterfacePtr,
+                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
+    : robotInterfacePtr_(std::move(robotInterfacePtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {
+  // wrap with loopshaping
+  dynamicsPtr_ = ocs2::LoopshapingDynamics::create(robotInterfacePtr_->getDynamics(), loopshapingDefinitionPtr_);
+  costFunctionPtr_ = ocs2::LoopshapingCost::create(robotInterfacePtr_->getCost(), loopshapingDefinitionPtr_);
+  if (robotInterfacePtr_->getTerminalCostPtr() != nullptr) {
+    terminalCostFunctionPtr_ = ocs2::LoopshapingCost::create(*robotInterfacePtr_->getTerminalCostPtr(), loopshapingDefinitionPtr_);
+  }
+  operatingPointsPtr_.reset(new ocs2::LoopshapingOperatingPoint(robotInterfacePtr_->getOperatingPoints(), loopshapingDefinitionPtr_));
+  if (robotInterfacePtr_->getConstraintPtr() != nullptr) {
+    constraintsPtr_ = ocs2::LoopshapingConstraint::create(*robotInterfacePtr_->getConstraintPtr(), loopshapingDefinitionPtr_);
+  }
+  if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
+    loopshapingModeScheduleManager_ =
+        std::make_shared<LoopshapingModeScheduleManager>(robotInterfacePtr_->getModeScheduleManagerPtr(), loopshapingDefinitionPtr_);
+  }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t& TargetTrajectories_Joystick_Interface::targetCommandSize() {
-  return targetCommandSize_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void TargetTrajectories_Joystick_Interface::publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories) {
-  // publish cost desired trajectories
-  ocs2::TargetTrajectories_ROS_Interface::publishTargetTrajectories(costDesiredTrajectories);
-}
 }  // namespace ocs2

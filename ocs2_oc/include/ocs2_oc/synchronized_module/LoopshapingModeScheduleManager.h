@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,54 +29,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
+#include <memory>
 
-#include <ocs2_core/Types.h>
-#include <ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+
+#include "ocs2_oc/synchronized_module/ModeScheduleManager.h"
 
 namespace ocs2 {
 
-/**
- * This class lets the user to insert robot command form joystick.
- */
-class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_ROS_Interface {
+class LoopshapingModeScheduleManager : public ModeScheduleManager {
  public:
   /**
-   * Constructor
-   *
-   * @param [in] robotName: robot's name.
-   * @param [in] targetCommandSize: command expected length
-   * @param [in] targetCommandLimits: The limits of the loaded command from
-   * command-line (for safety purposes).
+   * Constructor.
+   * @param [in] modeScheduleManagerPtr: A shared pointer to the original ModeScheduleManager.
+   * @param [in] loopshapingDefinitionPtr: A shared pointer to the loopshaping definition.
    */
-  TargetTrajectories_Joystick_Interface(int argc, char* argv[], const std::string& robotName = "robot", const size_t targetCommandSize = 0,
-                                        const scalar_array_t& targetCommandLimits = scalar_array_t());
+  LoopshapingModeScheduleManager(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr,
+                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr);
 
-  /**
-   * Default destructor
-   */
-  ~TargetTrajectories_Joystick_Interface() override = default;
+  /** Destructor */
+  ~LoopshapingModeScheduleManager() override = default;
 
-  /**
-   * Gets the command vector size.
-   *
-   * @return The command vector size.
-   */
-  size_t& targetCommandSize();
+ private:
+  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
+                        const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) override;
 
-  /**
-   * Sets cost trajectories from input desired state, and publishes cost desired trajectories
-   */
-  void publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories);
-
- protected:
-  /******
-   * Variables
-   ******/
-  size_t targetCommandSize_;
-  scalar_array_t targetCommandLimits_;
-
-  scalar_array_t targetCommand_;
+  std::shared_ptr<ocs2::ModeScheduleManager> modeScheduleManagerPtr_;
+  std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinitionPtr_;
 };
 
 }  // namespace ocs2

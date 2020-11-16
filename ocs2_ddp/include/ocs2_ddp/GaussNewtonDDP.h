@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
-#include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
@@ -46,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/Rollout_Settings.h>
@@ -54,33 +53,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DDP_Settings.h"
 #include "riccati_equations/RiccatiModification.h"
+#include "search_strategy/SearchStrategyBase.h"
 
 namespace ocs2 {
 
 /**
  * This class is an interface class for the Gauss-Newton DDP based methods.
  */
-class GaussNewtonDDP : public Solver_BASE {
+class GaussNewtonDDP : public SolverBase {
  public:
-  // Line-Search
-  struct LineSearchModule {
-    scalar_t baselineMerit = 0.0;                        // the merit of the rollout for zero learning rate
-    std::atomic<scalar_t> stepLengthStar{0.0};           // the optimal step length.
-    std::vector<LinearController> initControllersStock;  // needed for lineSearch
-
-    std::atomic_size_t alphaExpNext{0};
-    std::vector<bool> alphaProcessed;
-    std::mutex lineSearchResultMutex;
-  };
-
-  // Levenberg-Marquardt
-  struct LevenbergMarquardtModule {
-    scalar_t pho = 1.0;                           // the ratio between actual reduction and predicted reduction
-    scalar_t riccatiMultiple = 0.0;               // the Riccati multiple for Tikhonov regularization.
-    scalar_t riccatiMultipleAdaptiveRatio = 1.0;  // the adaptive ratio of geometric progression for Riccati multiple.
-    size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
-  };
-
   struct ConstraintPenaltyCoefficients {
     scalar_t stateEqConstrPenaltyTol = 1e-3;
     scalar_t stateEqConstrPenaltyCoeff = 0.0;
@@ -134,7 +115,7 @@ class GaussNewtonDDP : public Solver_BASE {
 
   scalar_t getValueFunction(scalar_t time, const vector_t& state) const override;
 
-  void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const override;
+  vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const override;
 
   void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const override;
 
@@ -195,24 +176,22 @@ class GaussNewtonDDP : public Solver_BASE {
    * projections, defines the projected LQ model. (4) Finally, defines the Riccati equation modifiers based on the
    * search strategy.
    *
-   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
    * @param [in] modelData: The model data.
    * @param [in] Sm: The Riccati matrix.
    * @param [out] projectedModelData: The projected model data.
    * @param [out] riccatiModification: The Riccati equation modifier.
    */
-  void computeProjectionAndRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm,
-                                               ModelDataBase& projectedModelData, riccati_modification::Data& riccatiModification) const;
+  void computeProjectionAndRiccatiModification(const ModelDataBase& modelData, const matrix_t& Sm, ModelDataBase& projectedModelData,
+                                               riccati_modification::Data& riccatiModification) const;
 
   /**
-   * Computes Hessian of the Hamiltonian.
+   * Computes the Hessian of Hamiltonian based on the search strategy and algorithm.
    *
-   * @param [in] strategy: The search strategy e.g., LINE_SEARCH.
    * @param [in] modelData: The model data.
    * @param [in] Sm: The Riccati matrix.
    * @return The Hessian matrix of the Hamiltonian.
    */
-  virtual matrix_t computeHamiltonianHessian(ddp_strategy::type strategy, const ModelDataBase& modelData, const matrix_t& Sm) const = 0;
+  virtual matrix_t computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const = 0;
 
   /**
    * Calculates an LQ approximate of the optimal control problem for the nodes.
@@ -289,9 +268,10 @@ class GaussNewtonDDP : public Solver_BASE {
   void distributeWork();
 
   /**
-   * Forward integrate the system dynamics with given controller. It uses the
-   * given control policies and initial state, to integrate the system dynamics
-   * in time period [initTime, finalTime].
+   * Forward integrate the system dynamics with given controller and operating trajectories. In general, it uses the
+   * given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
+   * However, if the provided controller does not cover the period [initTime, finalTime], it extrapolates (zero-order)
+   * the controller until the next event time where after it uses the operating trajectories.
    *
    * @param [in] controllersStock: Array of control policies.
    * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
@@ -304,10 +284,11 @@ class GaussNewtonDDP : public Solver_BASE {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
-                             size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                             vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, size_t workerIndex = 0);
+  scalar_t rolloutInitialTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
+                                    size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
+                                    vector_array2_t& inputTrajectoriesStock,
+                                    std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
+                                    std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, size_t workerIndex = 0);
 
   /**
    * Display rollout info and scores.
@@ -315,97 +296,17 @@ class GaussNewtonDDP : public Solver_BASE {
   void printRolloutInfo() const;
 
   /**
-   * Evaluates cost and constraints along the given time trajectories.
-   *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
-   * @param [out] heuristicsValue: The Heuristics function value.
-   * @param [in] workerIndex: Working thread (default is 0).
-   */
-  void rolloutCostAndConstraints(const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                 const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
-                                 std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                 std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue,
-                                 size_t workerIndex = 0);
-
-  /**
-   * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
-   *
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [in] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [in] modelDataEventTimesStock: Array of model data at event times.
-   * @param [in] heuristicsValue: The Heuristics function value.
-   *
-   * @return The cost, merit function and ISEs of constraints for the trajectory.
-   */
-  PerformanceIndex calculateRolloutPerformanceIndex(const scalar_array2_t& timeTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
-                                                    scalar_t heuristicsValue) const;
-
-  /**
-   * Performs a full rollout of dynamics, cost, and constraints with a given step length.
-   *
-   * @param [in] workerIndex: The index of the worker.
-   * @param [in] stepLength: The step length for which the controller is updated based on the Gauss-Newton DDP solution.
-   * @param [out] controllersStock: The updated array of control policies based on the step length.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
-   * @param [out] heuristicsValue: The heuristics function value.
-   *
-   * @return true if the rollout was stable.
-   */
-  bool performFullRollout(size_t workerIndex, scalar_t stepLength, std::vector<LinearController>& controllersStock,
-                          scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                          vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                          std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                          std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue);
-
-  /**
-   * Line search on the feedforward parts of the controller. It chooses the largest acceptable step-size.
-   * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
-   */
-  void lineSearch(LineSearchModule& lineSearchModule);
-
-  /**
-   * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
-   * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
-   */
-  void lineSearchTask(LineSearchModule& lineSearchModule);
-
-  /**
    * Calculates the merit function based on the performance index .
    *
-   * @param The performance index which includes the merit, cost, and ISEs of constraints.
+   * @param [in] The performance index which includes the uninitialized merit, cost, and ISEs of constraints.
+   * @return The merit function
    */
-  void calculateRolloutMerit(PerformanceIndex& performanceIndex) const;
-
-  /**
-   * Levenberg Marquardt strategy.
-   * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
-   */
-  void levenbergMarquardt(LevenbergMarquardtModule& levenbergMarquardtModule);
+  scalar_t calculateRolloutMerit(const PerformanceIndex& performanceIndex) const;
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread.
    */
   void riccatiSolverTask();
-
-  /**
-   * Calculates the integral of the squared (IS) norm of the controller update.
-   *
-   * @param [in] controllersStock: An array of controllers.
-   * @retuen The integral of the squared (IS) norm of the controller update.
-   */
-  scalar_t calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const;
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -439,18 +340,6 @@ class GaussNewtonDDP : public Solver_BASE {
                           matrix_t& constraintNullProjector) const;
 
   /**
-   * Computes the Riccati modification based on the strategy.
-   *
-   * @param [in] strategy: The search strategy e.g., LINE_SEARCH
-   * @param [in] projectedModelData: The projected data model
-   * @param [out] deltaQm: The Riccati modifier to cost 2nd derivative w.r.t. state.
-   * @param [out] deltaGv: The Riccati modifier to cost derivative w.r.t. input.
-   * @param [out] deltaGm: The Riccati modifier to cost input-state derivative.
-   */
-  void computeRiccatiModification(ddp_strategy::type strategy, const ModelDataBase& projectedModelData, matrix_t& deltaQm,
-                                  vector_t& deltaGv, matrix_t& deltaGm) const;
-
-  /**
    * Projects the unconstrained LQ coefficients to constrained ones.
    *
    * @param [in] modelData: The model data.
@@ -460,13 +349,6 @@ class GaussNewtonDDP : public Solver_BASE {
    */
   void projectLQ(const ModelDataBase& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
                  ModelDataBase& projectedModelData) const;
-
-  /**
-   * Shifts the Hessian based on the strategy defined by Line_Search::hessianCorrectionStrategy_.
-   *
-   * @param matrix: The Hessian matrix.
-   */
-  void shiftHessian(matrix_t& matrix) const;
 
   /**
    * Augments the cost function for the given model data.
@@ -491,6 +373,12 @@ class GaussNewtonDDP : public Solver_BASE {
    * @param [in] stateInputEqConstraintISE: ISE of the intermediate state-input equality constraints.
    */
   void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE, scalar_t stateInputEqConstraintISE);
+
+  /**
+   * Runs the search strategy. It ony updates the controller or nominal trajectories is search was successful.
+   * @param [in] expectedCost: The expected cost based on the LQ model optimization.
+   */
+  void runSearchStrategy(scalar_t expectedCost);
 
   /**
    * Caches the iteration's data.
@@ -526,8 +414,10 @@ class GaussNewtonDDP : public Solver_BASE {
 
   /**
    * Runs a single iteration of Gauss-Newton DDP.
+   * @param [in] unreliableControllerIncrement: True if the controller is designed based on an unreliable LQ approximation
+   * such as operating trajectories.
    */
-  void runIteration();
+  void runIteration(bool unreliableControllerIncrement);
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -559,6 +449,7 @@ class GaussNewtonDDP : public Solver_BASE {
   size_t numPartitions_ = 0;
   scalar_array_t partitioningTimes_;
 
+  std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
   std::vector<std::unique_ptr<LinearQuadraticApproximator>> linearQuadraticApproximatorPtrStock_;
 
   // optimized controller
@@ -590,12 +481,6 @@ class GaussNewtonDDP : public Solver_BASE {
   vector_array2_t SvTrajectoryStock_;
   matrix_array2_t SmTrajectoryStock_;
 
-  // Line-Search
-  LineSearchModule lineSearchModule_;
-
-  // Levenberg-Marquardt
-  LevenbergMarquardtModule levenbergMarquardtModule_;
-
  private:
   ddp::Settings ddpSettings_;
 
@@ -611,20 +496,13 @@ class GaussNewtonDDP : public Solver_BASE {
 
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
-  // forward pass and backward pass average time step
-  std::atomic<scalar_t> avgTimeStepFP_{0.0};
-  std::atomic<scalar_t> avgTimeStepBP_{0.0};
-
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
-  std::unique_ptr<PenaltyBase> penaltyPtrStock_;
-
-  scalar_t nominalControllerUpdateIS_ = 0.0;
+  std::unique_ptr<PenaltyBase> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
-  scalar_t cachedControllerUpdateIS_ = 0.0;
   std::vector<LinearController> cachedControllersStock_;
   scalar_array2_t cachedTimeTrajectoriesStock_;
   size_array2_t cachedPostEventIndicesStock_;
@@ -650,6 +528,10 @@ class GaussNewtonDDP : public Solver_BASE {
   // parallel Riccati solver
   std::mutex riccatiSolverDataMutex_;
 
+  // forward pass and backward pass average time step
+  scalar_t avgTimeStepFP_ = 0.0;
+  scalar_t avgTimeStepBP_ = 0.0;
+
   // benchmarking
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
@@ -665,9 +547,8 @@ template <typename Data_T, class Alloc>
 void GaussNewtonDDP::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
                                                  std::vector<Data_T, Alloc>& cachedTrajectory) {
   // adding the fist cashed value
-  Data_T firstCachedValue;
-  LinearInterpolation::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
-  cachedTrajectory.emplace_back(firstCachedValue);
+  Data_T firstCachedValue = LinearInterpolation::interpolate(timeSegment, currentTrajectory);
+  cachedTrajectory.emplace_back(std::move(firstCachedValue));
 
   // Concatenate the rest
   const int ignoredSizeOfNominal = timeSegment.first + 1;

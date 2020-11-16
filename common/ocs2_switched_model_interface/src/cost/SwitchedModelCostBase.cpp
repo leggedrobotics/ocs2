@@ -62,7 +62,8 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
 
   const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
   vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
-  inputFromContactFlags(contactFlags, xNominal, uNominal);
+  // If the input has non-zero values, don't overwrite it.
+  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
   if (uNominal.isZero()) {
     inputFromContactFlags(contactFlags, xNominal, uNominal);
   }

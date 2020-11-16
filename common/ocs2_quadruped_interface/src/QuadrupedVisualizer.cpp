@@ -292,8 +292,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   for (int event = 0; event < eventTimes.size(); ++event) {
     if (tStart < eventTimes[event] && eventTimes[event] < tEnd) {  // Only publish future footholds within the optimized horizon
       const auto postEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event + 1]);
-      vector_t postEventState;
-      ocs2::LinearInterpolation::interpolate(eventTimes[event], postEventState, &mpcTimeTrajectory, &mpcStateTrajectory);
+      const vector_t postEventState = ocs2::LinearInterpolation::interpolate(eventTimes[event], mpcTimeTrajectory, mpcStateTrajectory);
       const base_coordinate_t comPose = getComPose(state_vector_t(postEventState));
       const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
       const joint_coordinate_t qJoints = getJointPositions(state_vector_t(postEventState));

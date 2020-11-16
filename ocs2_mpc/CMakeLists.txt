@@ -47,6 +47,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/LoopshapingSystemObservation.cpp
   src/MPC_BASE.cpp
   src/MPC_DDP.cpp
   src/MPC_Settings.cpp

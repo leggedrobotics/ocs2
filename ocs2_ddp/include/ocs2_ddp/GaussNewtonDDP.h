@@ -264,8 +264,10 @@ class GaussNewtonDDP : public SolverBase {
  private:
   /**
    * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
+   * @param [in] numThreads: Number of threads.
+   * @return The pair of the initial and final Indices for solving Riccati equations in parallel
    */
-  void distributeWork();
+  std::vector<std::pair<int, int>> distributeWork(int numThreads) const;
 
   /**
    * Forward integrate the system dynamics with given controller and operating trajectories. In general, it uses the
@@ -305,8 +307,14 @@ class GaussNewtonDDP : public SolverBase {
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread.
+   * @param [in] taskId: Thread ID
+   * @param [in] indexPeriod: The pair of initial and final partitions which indicates the partitions assigned to the thread.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
    */
-  void riccatiSolverTask();
+  void solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& indexPeriod, matrix_t SmFinal, vector_t SvFinal,
+                                          scalar_t sFinal);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -522,11 +530,6 @@ class GaussNewtonDDP : public SolverBase {
   ScalarFunctionQuadraticApproximation heuristics_;
 
   ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;
-
-  std::vector<int> startingIndicesRiccatiWorker_;
-  std::vector<int> endingIndicesRiccatiWorker_;
-  // parallel Riccati solver
-  std::mutex riccatiSolverDataMutex_;
 
   // forward pass and backward pass average time step
   scalar_t avgTimeStepFP_ = 0.0;

@@ -5,6 +5,7 @@
 #include "ocs2_sqp/MultipleShootingSolver.h"
 #include <ocs2_core/control/FeedforwardController.h>
 #include <iostream>
+#include <chrono>
 
 namespace ocs2
 {
@@ -31,27 +32,48 @@ namespace ocs2
                                        const scalar_array_t &partitioningTimes)
   {
     // ignore partitioningTimes
-    std::cout << "in runImpl\n";
 
     // Initialize cost
     costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
 
     // Solve the problem.
     scalar_t delta_t_ = (finalTime - initTime) / settings_.N;
-    matrix_t x = matrix_t::Random(settings_.nx, settings_.N + 1);
-    matrix_t u = matrix_t::Random(settings_.nu, settings_.N);
-    matrix_t pi = matrix_t::Random(settings_.nx, settings_.N);
+    matrix_t x(settings_.nx, settings_.N + 1);
+    matrix_t u(settings_.nu, settings_.N);
+    if (!settings_.initPrimalSol)
+    {
+      x = matrix_t::Random(settings_.nx, settings_.N + 1);
+      u = matrix_t::Random(settings_.nu, settings_.N);
+      std::cout << "using random init\n";
+    }
+    else
+    {
+      for (int i = 0; i < settings_.N; i++)
+      {
+        x.col(i) = primalSolution_.stateTrajectory_[i];
+        u.col(i) = primalSolution_.inputTrajectory_[i];
+      }
+      std::cout << "using past primal sol init\n";
+    }
+    settings_.initPrimalSol = true;
 
+    scalar_t sqpTimeAll = 0.0;
     for (int i = 0; i < settings_.sqpIteration; i++)
     {
       std::cout << "\n---------------sqp iteration " << i << "----------\n";
-      matrix_t delta_x, delta_u, new_pi;
-      std::tie(delta_x, delta_u, new_pi) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, delta_t_, initTime, x, u, pi, initState);
+      auto startSqpTime = std::chrono::steady_clock::now();
+      matrix_t delta_x, delta_u;
+      std::tie(delta_x, delta_u) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, delta_t_, initTime, x, u, initState);
       x += delta_x;
       u += delta_u;
-      pi = new_pi;
+      auto endSqpTime = std::chrono::steady_clock::now();
+      auto sqpIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSqpTime - startSqpTime);
+      scalar_t sqpTime = std::chrono::duration<scalar_t, std::milli>(sqpIntervalTime).count();
+      sqpTimeAll += sqpTime;
+      std::cout << "SQP time one iter: " << sqpTime << "[ms]." << std::endl;
     }
 
+    std::cout << "SQP time total: " << sqpTimeAll << "[ms]." << std::endl;
     // Fill PrimalSolution. time, state , input
     scalar_array_t timeTrajectory;
     vector_array_t stateTrajectory;
@@ -72,14 +94,13 @@ namespace ocs2
     primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
   }
 
-  std::tuple<matrix_t, matrix_t, matrix_t> MultipleShootingSolver::runSingleIter(SystemDynamicsBaseAD &systemDynamicsObj,
-                                                                                 CostFunctionBase &costFunctionObj,
-                                                                                 scalar_t delta_t_,
-                                                                                 scalar_t initTime,
-                                                                                 const matrix_t &x,
-                                                                                 const matrix_t &u,
-                                                                                 const matrix_t &pi,
-                                                                                 const vector_t &initState)
+  std::tuple<matrix_t, matrix_t> MultipleShootingSolver::runSingleIter(SystemDynamicsBaseAD &systemDynamicsObj,
+                                                                       CostFunctionBase &costFunctionObj,
+                                                                       scalar_t delta_t_,
+                                                                       scalar_t initTime,
+                                                                       const matrix_t &x,
+                                                                       const matrix_t &u,
+                                                                       const vector_t &initState)
   {
     // Matrix x of shape (nx, N+1)
     // Matrix u of shape (nu, N)
@@ -87,6 +108,7 @@ namespace ocs2
     // N is the horizon length
     // Vector x_init of shape (nx, 1)
 
+    auto startAllocTime = std::chrono::steady_clock::now();
     int N = u.cols();
     int n_state = x.rows();
     int n_input = u.rows();
@@ -227,8 +249,8 @@ namespace ocs2
     }
 
     // we should have used the finalCostQuadraticApproximation defined by Q_final matrix, but in this case, it is zero, which leads to diverging ending states
-    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
     // so I temporarily used costQuadraticApproximation with a random linearization point of input u
+    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
     ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(N), u.col(N - 1));
     Q_data[N] = delta_t_ * finalCostFunctionApprox.dfdxx;
     q_data[N] = delta_t_ * finalCostFunctionApprox.dfdx;
@@ -294,7 +316,7 @@ namespace ocs2
     int ric_alg = 0;
 
     int hpipm_status;
-    int nrep = 10;
+    int nrep = 5;
 
     int dim_size = d_ocp_qp_dim_memsize(N);
     void *dim_mem = malloc(dim_size);
@@ -347,16 +369,26 @@ namespace ocs2
     struct d_ocp_qp_ipm_ws workspace;
     d_ocp_qp_ipm_ws_create(&dim, &arg, &workspace, ipm_mem);
 
+    auto endAllocTime = std::chrono::steady_clock::now();
+    auto allocIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endAllocTime - startAllocTime);
+    scalar_t allocTime = std::chrono::duration<scalar_t, std::milli>(allocIntervalTime).count();
+    std::cout << "Alloc time usage: " << allocTime << "[ms]." << std::endl;
+
+    auto startSolveTime = std::chrono::steady_clock::now();
+
     hpipm_timer timer;
     hpipm_tic(&timer);
-
     for (int rep = 0; rep < nrep; rep++)
     {
       d_ocp_qp_ipm_solve(&qp, &qp_sol, &arg, &workspace);
       d_ocp_qp_ipm_get_status(&workspace, &hpipm_status);
     }
-
     scalar_t time_ipm = hpipm_toc(&timer) / nrep;
+
+    auto endSolveTime = std::chrono::steady_clock::now();
+    auto solveIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSolveTime - startSolveTime);
+    scalar_t solveTime = std::chrono::duration<scalar_t, std::milli>(solveIntervalTime).count();
+    std::cout << "Solve time usage: " << solveTime << "[ms]." << std::endl;
 
     if (settings_.printSolverStatus)
     {
@@ -412,19 +444,16 @@ namespace ocs2
       printf("\nocp ipm time = %e [s]\n\n", time_ipm);
     }
 
-    // getting deltaX, deltaU, newPi
+    // getting deltaX, deltaU
+    auto startFillTime = std::chrono::steady_clock::now();
     matrix_t deltaU(n_input, N);
     matrix_t deltaX(n_state, N + 1);
-    matrix_t newPi(n_state, N);
-
     scalar_t uTemp[n_input];
     scalar_t xTemp[n_state];
-    scalar_t piTemp[n_state];
 
     for (int ii = 0; ii < N; ii++)
     {
       d_ocp_qp_sol_get_x(ii, &qp_sol, xTemp);
-      d_ocp_qp_sol_get_pi(ii, &qp_sol, piTemp);
       d_ocp_qp_sol_get_u(ii, &qp_sol, uTemp);
       for (int j = 0; j < n_input; j++)
       {
@@ -432,7 +461,6 @@ namespace ocs2
       }
       for (int j = 0; j < n_state; j++)
       {
-        newPi(j, ii) = piTemp[j];
         deltaX(j, ii) = xTemp[j];
       }
     }
@@ -441,6 +469,10 @@ namespace ocs2
     {
       deltaX(j, N) = xTemp[j];
     }
+    auto endFillTime = std::chrono::steady_clock::now();
+    auto fillIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endFillTime - startFillTime);
+    scalar_t fillTime = std::chrono::duration<scalar_t, std::milli>(fillIntervalTime).count();
+    std::cout << "Fill time usage: " << fillTime << "[ms]." << std::endl;
 
     free(dim_mem);
     free(qp_mem);
@@ -448,7 +480,7 @@ namespace ocs2
     free(ipm_arg_mem);
     free(ipm_mem);
 
-    return std::make_tuple(deltaX, deltaU, newPi);
+    return std::make_tuple(deltaX, deltaU);
   }
 
 } // namespace ocs2

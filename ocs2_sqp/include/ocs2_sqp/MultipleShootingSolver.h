@@ -31,6 +31,7 @@ namespace ocs2
     bool printSolverStatus;
     bool printSolverStatistics;
     bool printPrimalSol;
+    bool initPrimalSol; // if false, use random matrix as init; if true, use the last PrimalSolution as init.
   };
 
   class MultipleShootingSolver : public Solver_BASE
@@ -80,14 +81,13 @@ namespace ocs2
     void runImpl(scalar_t initTime, const vector_t &initState, scalar_t finalTime, const scalar_array_t &partitioningTimes,
                  const std::vector<ControllerBase *> &controllersPtrStock) override { runImpl(initTime, initState, finalTime, partitioningTimes); }
 
-    std::tuple<matrix_t, matrix_t, matrix_t> runSingleIter(SystemDynamicsBaseAD &systemDynamicsPtr,
-                                                           CostFunctionBase &costFunctionPtr,
-                                                           scalar_t delta_t_,
-                                                           scalar_t initTime,
-                                                           const matrix_t &x,
-                                                           const matrix_t &u,
-                                                           const matrix_t &pi, // <-- this is not used now, but may be in the future
-                                                           const vector_t &initState);
+    std::tuple<matrix_t, matrix_t> runSingleIter(SystemDynamicsBaseAD &systemDynamicsPtr,
+                                                 CostFunctionBase &costFunctionPtr,
+                                                 scalar_t delta_t_,
+                                                 scalar_t initTime,
+                                                 const matrix_t &x,
+                                                 const matrix_t &u,
+                                                 const vector_t &initState);
 
     MultipleShootingSolverSettings settings_;
     std::unique_ptr<SystemDynamicsBaseAD> systemDynamicsPtr_;

@@ -10,13 +10,15 @@
 #include "ocs2_sqp/MultipleShootingMpc.h"
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   const std::string robotName = "ballbot";
 
   // task file
   std::vector<std::string> programArgs{};
   ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() <= 1) {
+  if (programArgs.size() <= 1)
+  {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(programArgs[1]);
@@ -30,13 +32,14 @@ int main(int argc, char** argv) {
 
   // Set this one up.
   ocs2::MultipleShootingSolverSettings settings;
-  settings.N = 10;
+  settings.N = 15;
   settings.nx = 10;
   settings.nu = 3;
-  settings.sqpIteration = 10;
+  settings.sqpIteration = 5;
   settings.printPrimalSol = false;
   settings.printSolverStatistics = false;
   settings.printSolverStatus = false;
+  settings.initPrimalSol = false;
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
   std::unique_ptr<ocs2::MultipleShootingMpc> mpc(

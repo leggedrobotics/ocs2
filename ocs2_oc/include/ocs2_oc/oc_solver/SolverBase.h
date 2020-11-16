@@ -197,9 +197,9 @@ class SolverBase {
    *
    * @param [in] time: The inquiry time
    * @param [in] state: The inquiry state.
-   * @param [out] Vx: value function at the inquiry time and state.
+   * @return value function derivative wrt. state at the inquiry time and state.
    */
-  virtual void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const = 0;
+  virtual vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const = 0;
 
   /**
    * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.

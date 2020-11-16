@@ -37,6 +37,7 @@ namespace ocs2 {
 namespace qp_solver {
 
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBase& cost, SystemDynamicsBase& system,
+                                                                  ConstraintBase* constraintsPtr,
                                                                   const ContinuousTrajectory& nominalTrajectory) {
   if (nominalTrajectory.timeTrajectory.empty()) {
     return {};
@@ -51,15 +52,23 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBa
   std::vector<LinearQuadraticStage> lqp;
   lqp.reserve(N + 1);
   for (int k = 0; k < N; ++k) {  // Intermediate stages
-    lqp.emplace_back(approximateStage(cost, system, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}));
+    lqp.emplace_back(approximateStage(cost, system, constraintsPtr, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}, k == 0));
   }
-  lqp.emplace_back(cost.finalCostQuadraticApproximation(t[N], x[N]),
-                   VectorFunctionLinearApproximation());  // Terminal cost, no dynamics.
+
+  if (constraintsPtr != nullptr) {
+    lqp.emplace_back(
+        cost.finalCostQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
+        constraintsPtr->finalStateEqualityConstraintLinearApproximation(t[N], x[N]));  // Terminal cost and constraints, no dynamics.
+  } else {
+    lqp.emplace_back(cost.finalCostQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
+                     VectorFunctionLinearApproximation());  // Terminal cost, no dynamics and constraints.
+  }
 
   return lqp;
 }
 
-LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, TrajectoryRef start, StateTrajectoryRef end) {
+LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, ConstraintBase* constraintsPtr,
+                                      TrajectoryRef start, StateTrajectoryRef end, bool isInitialTime) {
   LinearQuadraticStage lqStage;
   auto dt = end.t - start.t;
 
@@ -70,6 +79,10 @@ LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase
   // Adapt the offset to account for discretization and the nominal trajectory :
   // dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k]) - x0[k+1]
   lqStage.dynamics.f -= end.x;
+
+  if (constraintsPtr != nullptr) {
+    lqStage.constraints = approximateConstraints(*constraintsPtr, start, isInitialTime);
+  }
 
   return lqStage;
 }
@@ -101,6 +114,28 @@ VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system
   discreteDynamics.dfdu = continuousDynamics.dfdu * dt;
   discreteDynamics.f = continuousDynamics.f * dt + start.x;
   return discreteDynamics;
+}
+
+VectorFunctionLinearApproximation approximateConstraints(ConstraintBase& constraints, TrajectoryRef point, bool isInitialTime) {
+  VectorFunctionLinearApproximation constraintsApproximation;
+  if (isInitialTime) {
+    // only use stat-input constraints for initial time
+    constraintsApproximation = constraints.stateInputEqualityConstraintLinearApproximation(point.t, point.x, point.u);
+  } else {
+    // concatenate stat-input and state-only constraints
+    const auto stateInputConstraint = constraints.stateInputEqualityConstraintLinearApproximation(point.t, point.x, point.u);
+    const auto stateConstraint = constraints.stateEqualityConstraintLinearApproximation(point.t, point.x);
+    const auto numStateInputConstraints = stateInputConstraint.f.size();
+    const auto numStateConstraints = stateConstraint.f.size();
+    constraintsApproximation.resize(numStateConstraints + numStateInputConstraints, point.x.size(), point.u.size());
+    constraintsApproximation.f.head(numStateInputConstraints) = stateInputConstraint.f;
+    constraintsApproximation.dfdx.topRows(numStateInputConstraints) = stateInputConstraint.dfdx;
+    constraintsApproximation.dfdu.topRows(numStateInputConstraints) = stateInputConstraint.dfdu;
+    constraintsApproximation.f.tail(numStateConstraints) = stateConstraint.f;
+    constraintsApproximation.dfdx.bottomRows(numStateConstraints) = stateConstraint.dfdx;
+    constraintsApproximation.dfdu.bottomRows(numStateConstraints).setZero();
+  }
+  return constraintsApproximation;
 }
 
 }  // namespace qp_solver

@@ -77,11 +77,10 @@ void LinearController::setController(const scalar_array_t& controllerTime, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t LinearController::computeInput(scalar_t t, const vector_t& x) {
-  vector_t uff;
-  const auto indexAlpha = LinearInterpolation::interpolate(t, uff, &timeStamp_, &biasArray_);
+  const auto indexAlpha = LinearInterpolation::timeSegment(t, timeStamp_);
 
-  matrix_t k;
-  LinearInterpolation::interpolate(indexAlpha, k, &gainArray_);
+  vector_t uff = LinearInterpolation::interpolate(indexAlpha, biasArray_);
+  const matrix_t k = LinearInterpolation::interpolate(indexAlpha, gainArray_);
 
   uff.noalias() += k * x;
   return uff;
@@ -129,11 +128,9 @@ void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArra
    * ]
    */
 
-  vector_t uff;
-  const auto indexAlpha = LinearInterpolation::interpolate(time, uff, &timeStamp_, &biasArray_);
-
-  matrix_t k;
-  LinearInterpolation::interpolate(indexAlpha, k, &gainArray_);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, timeStamp_);
+  const vector_t uff = LinearInterpolation::interpolate(indexAlpha, biasArray_);
+  const matrix_t k = LinearInterpolation::interpolate(indexAlpha, gainArray_);
 
   const size_t stateDim = k.cols();
   const size_t inputDim = k.rows();
@@ -237,14 +234,14 @@ void LinearController::display() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearController::getFeedbackGain(scalar_t time, matrix_t& gain) const {
-  LinearInterpolation::interpolate(time, gain, &timeStamp_, &gainArray_);
+  gain = LinearInterpolation::interpolate(time, timeStamp_, gainArray_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearController::getBias(scalar_t time, vector_t& bias) const {
-  LinearInterpolation::interpolate(time, bias, &timeStamp_, &biasArray_);
+  bias = LinearInterpolation::interpolate(time, timeStamp_, biasArray_);
 }
 
 /******************************************************************************************************/

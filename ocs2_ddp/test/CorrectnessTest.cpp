@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include <ocs2_qp_solver/Ocs2QpSolver.h>
+#include <ocs2_qp_solver/QpDiscreteTranscription.h>
+#include <ocs2_qp_solver/QpSolver.h>
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
 
 #include <ocs2_core/initialization/OperatingPoints.h>
@@ -42,40 +44,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 
-class CorrectnessUnconstrainedTest : public testing::Test {
+enum class Partitioning { SINGLE, MULTI };
+enum class Constraining { CONSTARINED, UNCONSTRAINED };
+
+class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Type, Constraining, Partitioning>> {
  protected:
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
   static constexpr ocs2::scalar_t solutionPrecision = 2e-3;
+  static constexpr size_t numStateInputConstraints = 2;
+  static constexpr size_t numStateOnlyConstraints = 0;
+  static constexpr size_t numFinalStateOnlyConstraints = 0;
 
-  CorrectnessUnconstrainedTest() {
+  DDPCorrectness() {
     srand(0);
-    // dynamics
-    systemPtr = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
 
-    // cost
-    costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                           ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
-    costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    // Try generateing problem
+    for (int retries = 0; !createFeasibleRandomProblem(); retries++) {
+      std::cerr << "Random problem was infeasible, retry ...\n";
+      if (retries > 10) {
+        throw std::runtime_error("Failed generating feasible problem");
+      }
+    }
 
-    // constraint
-    constraintPtr.reset(new ocs2::ConstraintBase());
+    qpSolution =
+        ocs2::qp_solver::solveLinearQuadraticOptimalControlProblem(*costPtr, *systemPtr, *constraintPtr, nominalTrajectory, initState);
+    qpCost = getQpCost(qpSolution);
 
     // system operating points
-    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
     ocs2::vector_array_t stateTrajectoryTemp(N + 1);
     std::copy(nominalTrajectory.stateTrajectory.begin(), nominalTrajectory.stateTrajectory.end(), stateTrajectoryTemp.begin());
     ocs2::vector_array_t inputTrajectoryTemp(N);
     std::copy(nominalTrajectory.inputTrajectory.begin(), nominalTrajectory.inputTrajectory.end(), inputTrajectoryTemp.begin());
     inputTrajectoryTemp.emplace_back(inputTrajectoryTemp.back());
     operatingPointsPtr.reset(new ocs2::OperatingPoints(nominalTrajectory.timeTrajectory, stateTrajectoryTemp, inputTrajectoryTemp));
-
-    initState = ocs2::vector_t::Random(STATE_DIM);
-    qpSolution = ocs2::qp_solver::solveLinearQuadraticOptimalControlProblem(*costPtr, *systemPtr, nominalTrajectory, initState);
-    qpCost = getQpCost(qpSolution);
 
     // rollout settings
     const ocs2::rollout::Settings rolloutSettings = []() {
@@ -91,6 +94,91 @@ class CorrectnessUnconstrainedTest : public testing::Test {
 
     startTime = nominalTrajectory.timeTrajectory.front();
     finalTime = nominalTrajectory.timeTrajectory.back();
+  }
+
+  bool createFeasibleRandomProblem() {
+    static_assert(numStateInputConstraints + numStateOnlyConstraints <= INPUT_DIM,
+                  "The number of constraints must be less or equal to INPUT_DIM");
+    static_assert(numFinalStateOnlyConstraints <= STATE_DIM, "The number of final constraints must be less or equal to STATE_DIM");
+
+    // dynamics
+    systemPtr = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+
+    // cost
+    costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
+                                           ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+    costDesiredTrajectories =
+        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+
+    // constraint
+    if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
+      constraintPtr =
+          ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
+                                              ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
+                                              ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
+    } else {
+      constraintPtr.reset(new ocs2::ConstraintBase());
+    }
+
+    // system operating points
+    nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, 1e-3);
+    initState = ocs2::vector_t::Random(STATE_DIM);
+
+    // get QP
+    ocs2::ScalarFunctionQuadraticApproximation qpCosts;
+    ocs2::VectorFunctionLinearApproximation qpConstraints;
+    const auto lqApproximation = getLinearQuadraticApproximation(*costPtr, *systemPtr, constraintPtr.get(), nominalTrajectory);
+    const ocs2::vector_t dx0 = initState - nominalTrajectory.stateTrajectory.front();
+    std::tie(qpCosts, qpConstraints) = getDenseQp(lqApproximation, dx0);
+
+    // Check feasibility
+    if (!ocs2::qp_solver::isQpFeasible(qpCosts, qpConstraints)) {
+      return false;
+    }
+
+    // Correct the nominal trajectory to not violate the constraints.
+    nominalTrajectory = getFeasibleTrajectory(qpConstraints, nominalTrajectory);
+
+    return true;
+  }
+
+  /** Modifies given trajectory to satisfy the constraints */
+  ocs2::qp_solver::ContinuousTrajectory getFeasibleTrajectory(const ocs2::VectorFunctionLinearApproximation& qpConstraints,
+                                                              const ocs2::qp_solver::ContinuousTrajectory& trajectory) const {
+    const auto& A = qpConstraints.dfdx;  // A w + b = 0,  A must be full row-rank such that (A A') is invertible
+    const auto& b = qpConstraints.f;     // b = [x0; e[0]; b[0]; ... e[N-1]; b[N-1]; e[N]]
+
+    /* Find the trajectory correction w to satisfy the constraint by solving
+     *   min  1/2 w' w
+     *   s.t. A w + b = 0  */
+    const ocs2::vector_t w = -A.transpose() * (A * A.transpose()).inverse() * b;  // w = [dx[0], du[0], dx[1],  du[1], ..., dx[N]]
+
+    // Make trajectory feasible
+    auto feasibleTrajectory = trajectory;
+    int nextIndex = 0;
+    const auto N = feasibleTrajectory.inputTrajectory.size();
+    for (int k = 0; k < N; k++) {
+      const auto nx = feasibleTrajectory.stateTrajectory[k].size();
+      const auto nu = feasibleTrajectory.inputTrajectory[k].size();
+      feasibleTrajectory.stateTrajectory[k] += w.segment(nextIndex, nx);       // dx[k]
+      feasibleTrajectory.inputTrajectory[k] += w.segment(nextIndex + nx, nu);  // du[k]
+      nextIndex += nx + nu;
+    }
+    feasibleTrajectory.stateTrajectory[N] += w.segment(nextIndex, feasibleTrajectory.stateTrajectory[N].size());  // dx[N]
+
+    return feasibleTrajectory;
+  }
+
+  ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
+
+  ocs2::scalar_array_t getPartitioningTimes() {
+    const auto partitioning = std::get<2>(GetParam());
+    if (partitioning == Partitioning::SINGLE) {
+      return {startTime, finalTime};
+    } else {
+      return {startTime, (startTime + finalTime) / 2.0, finalTime};
+    }
   }
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numPartitions, ocs2::search_strategy::Type strategy,
@@ -159,21 +247,25 @@ class CorrectnessUnconstrainedTest : public testing::Test {
   ocs2::qp_solver::ContinuousTrajectory qpSolution;
 };
 
-constexpr size_t CorrectnessUnconstrainedTest::N;
-constexpr size_t CorrectnessUnconstrainedTest::STATE_DIM;
-constexpr size_t CorrectnessUnconstrainedTest::INPUT_DIM;
-constexpr ocs2::scalar_t CorrectnessUnconstrainedTest::solutionPrecision;
+constexpr size_t DDPCorrectness::N;
+constexpr size_t DDPCorrectness::STATE_DIM;
+constexpr size_t DDPCorrectness::INPUT_DIM;
+constexpr size_t DDPCorrectness::numStateInputConstraints;
+constexpr size_t DDPCorrectness::numStateOnlyConstraints;
+constexpr size_t DDPCorrectness::numFinalStateOnlyConstraints;
+constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_linesearch) {
+TEST_P(DDPCorrectness, TestSLQ) {
   // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
+  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, getSearchStrategy());
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+
   ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
@@ -185,31 +277,14 @@ TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_linesearch) {
+TEST_P(DDPCorrectness, TestILQR) {
   // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // ddp
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_linesearch) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
+  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, getSearchStrategy());
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+
   ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
@@ -221,93 +296,19 @@ TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, ilqr_multi_partition_linesearch) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // ddp
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
+/* Test name printed in gtest results */
+std::string testName(const testing::TestParamInfo<DDPCorrectness::ParamType>& info) {
+  std::string name;
+  name += ocs2::search_strategy::toString(std::get<0>(info.param)) + "__";
+  name += std::get<1>(info.param) == Constraining::CONSTARINED ? "CONSTARINED" : "UNCONSTRAINED";
+  name += "__";
+  name += std::get<2>(info.param) == Partitioning::SINGLE ? "SINGLE_PARTITION" : "MULTI_PARTITION";
+  return name;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, slq_single_partition_levenberg_marquardt) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings =
-      getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // ddp
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, slq_multi_partition_levenberg_marquardt) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings =
-      getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // ddp
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, ilqr_single_partition_levenberg_marquardt) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings =
-      getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // ddp
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(CorrectnessUnconstrainedTest, ilqr_multi_partition_levenberg_marquardt) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings =
-      getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // ddp
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
-}
+INSTANTIATE_TEST_CASE_P(DDPCorrectnessTestCase, DDPCorrectness,
+                        testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH,
+                                                            ocs2::search_strategy::Type::LEVENBERG_MARQUARDT}),
+                                         testing::ValuesIn({Constraining::CONSTARINED, Constraining::UNCONSTRAINED}),
+                                         testing::ValuesIn({Partitioning::SINGLE, Partitioning::MULTI})),
+                        testName);

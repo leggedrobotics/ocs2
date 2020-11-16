@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
@@ -48,10 +49,12 @@ namespace qp_solver {
  *
  * @param cost : continuous cost function
  * @param system : continuous system dynamics
+ * @param constraintsPtr : constraints. For unconstrained problems use a null pointer.
  * @param nominalTrajectory : time, state and input trajectory to make the linear quadratic approximation around
  * @return vector of discrete cost and dynamics at each node.
  */
 std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBase& cost, SystemDynamicsBase& system,
+                                                                  ConstraintBase* constraintsPtr,
                                                                   const ContinuousTrajectory& nominalTrajectory);
 
 /**
@@ -59,11 +62,14 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBa
  *
  * @param cost : continuous cost
  * @param system : continuous system
+ * @param constraintsPtr : constraints. For unconstrained problems use a null pointer.
  * @param start : linearization point at the start of the stage
  * @param end : linearization point at the end of the stage
+ * @param isInitialTime : Whether start is an initial time points.
  * @return discreted stage
  */
-LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, TrajectoryRef start, StateTrajectoryRef end);
+LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, ConstraintBase* constraintsPtr,
+                                      TrajectoryRef start, StateTrajectoryRef end, bool isInitialTime);
 
 /**
  * Computes the cost integral from a start condition over a dt interval
@@ -82,6 +88,14 @@ ScalarFunctionQuadraticApproximation approximateCost(CostFunctionBase& cost, Tra
  * @return Linear approximation of the discrete dynamcis
  */
 VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system, TrajectoryRef start, scalar_t dt);
+
+/**
+ * Computes the equality constraints at given trajectory point
+ * @param constraints : constraints object
+ * @param point : linearization point
+ * @return Linear approximation of the constraints
+ */
+VectorFunctionLinearApproximation approximateConstraints(ConstraintBase& constraints, TrajectoryRef point, bool isInitialTime);
 
 }  // namespace qp_solver
 }  // namespace ocs2

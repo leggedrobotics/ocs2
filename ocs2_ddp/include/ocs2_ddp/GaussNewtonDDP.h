@@ -115,7 +115,7 @@ class GaussNewtonDDP : public SolverBase {
 
   scalar_t getValueFunction(scalar_t time, const vector_t& state) const override;
 
-  void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const override;
+  vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const override;
 
   void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const override;
 
@@ -547,9 +547,8 @@ template <typename Data_T, class Alloc>
 void GaussNewtonDDP::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
                                                  std::vector<Data_T, Alloc>& cachedTrajectory) {
   // adding the fist cashed value
-  Data_T firstCachedValue;
-  LinearInterpolation::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
-  cachedTrajectory.emplace_back(firstCachedValue);
+  Data_T firstCachedValue = LinearInterpolation::interpolate(timeSegment, currentTrajectory);
+  cachedTrajectory.emplace_back(std::move(firstCachedValue));
 
   // Concatenate the rest
   const int ignoredSizeOfNominal = timeSegment.first + 1;

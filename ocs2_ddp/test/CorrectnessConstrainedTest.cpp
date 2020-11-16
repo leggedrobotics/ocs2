@@ -44,7 +44,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 
-class CorrectnessConstrainedTest : public testing::Test {
+enum class Partitioning { SINGLE, MULTI };
+enum class Constraining { CONSTARINED, UNCONSTRAINED };
+
+class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Type, Constraining, Partitioning>> {
  protected:
   static constexpr size_t N = 50;
   static constexpr size_t STATE_DIM = 3;
@@ -54,7 +57,7 @@ class CorrectnessConstrainedTest : public testing::Test {
   static constexpr size_t numStateOnlyConstraints = 0;
   static constexpr size_t numFinalStateOnlyConstraints = 0;
 
-  CorrectnessConstrainedTest() {
+  DDPCorrectness() {
     srand(0);
 
     // Try generateing problem
@@ -162,6 +165,17 @@ class CorrectnessConstrainedTest : public testing::Test {
     return feasibleTrajectory;
   }
 
+  ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
+
+  ocs2::scalar_array_t getPartitioningTimes() {
+    const auto partitioning = std::get<2>(GetParam());
+    if (partitioning == Partitioning::SINGLE) {
+      return {startTime, finalTime};
+    } else {
+      return {startTime, (startTime + finalTime) / 2.0, finalTime};
+    }
+  }
+
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numPartitions, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
     ocs2::ddp::Settings ddpSettings;
@@ -228,24 +242,25 @@ class CorrectnessConstrainedTest : public testing::Test {
   ocs2::qp_solver::ContinuousTrajectory qpSolution;
 };
 
-constexpr size_t CorrectnessConstrainedTest::N;
-constexpr size_t CorrectnessConstrainedTest::STATE_DIM;
-constexpr size_t CorrectnessConstrainedTest::INPUT_DIM;
-constexpr size_t CorrectnessConstrainedTest::numStateInputConstraints;
-constexpr size_t CorrectnessConstrainedTest::numStateOnlyConstraints;
-constexpr size_t CorrectnessConstrainedTest::numFinalStateOnlyConstraints;
-constexpr ocs2::scalar_t CorrectnessConstrainedTest::solutionPrecision;
+constexpr size_t DDPCorrectness::N;
+constexpr size_t DDPCorrectness::STATE_DIM;
+constexpr size_t DDPCorrectness::INPUT_DIM;
+constexpr size_t DDPCorrectness::numStateInputConstraints;
+constexpr size_t DDPCorrectness::numStateOnlyConstraints;
+constexpr size_t DDPCorrectness::numFinalStateOnlyConstraints;
+constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessConstrainedTest, slq_single_partition_linesearch) {
+TEST_P(DDPCorrectness, TestSLQ) {
   // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
+  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, getSearchStrategy());
 
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+
   ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
@@ -257,31 +272,14 @@ TEST_F(CorrectnessConstrainedTest, slq_single_partition_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessConstrainedTest, slq_multi_partition_linesearch) {
+TEST_P(DDPCorrectness, TestILQR) {
   // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // ddp
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(CorrectnessConstrainedTest, ilqr_single_partition_linesearch) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
+  ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, getSearchStrategy());
 
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+
   ddp.setCostDesiredTrajectories(costDesiredTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
@@ -293,17 +291,19 @@ TEST_F(CorrectnessConstrainedTest, ilqr_single_partition_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CorrectnessConstrainedTest, ilqr_multi_partition_linesearch) {
-  // settings
-  ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, partitioningTimes.size() - 1, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // ddp
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-  const auto solution = ddp.primalSolution(finalTime);
-
-  correctnessTest(ddpSettings, performanceIndex, solution);
+/* Test name printed in gtest results */
+std::string testName(const testing::TestParamInfo<DDPCorrectness::ParamType>& info) {
+  std::string name;
+  name += ocs2::search_strategy::toString(std::get<0>(info.param)) + "__";
+  name += std::get<1>(info.param) == Constraining::CONSTARINED ? "CONSTARINED" : "UNCONSTRAINED";
+  name += "__";
+  name += std::get<2>(info.param) == Partitioning::SINGLE ? "SINGLE_PARTITION" : "MULTI_PARTITION";
+  return name;
 }
+
+INSTANTIATE_TEST_CASE_P(DDPCorrectnessTestCase, DDPCorrectness,
+                        testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH,
+                                                            ocs2::search_strategy::Type::LEVENBERG_MARQUARDT}),
+                                         testing::ValuesIn({Constraining::CONSTARINED /* , Constraining::UNCONSTRAINED*/}),
+                                         testing::ValuesIn({Partitioning::SINGLE, Partitioning::MULTI})),
+                        testName);

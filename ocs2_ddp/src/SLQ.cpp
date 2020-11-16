@@ -100,46 +100,36 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   const auto k = timeIndex;
   const auto time = BASE::SsTimeTrajectoryStock_[i][k];
 
-  // local variables
-  vector_t nominalState;
-  vector_t nominalInput;
-
-  matrix_t projectedBm;
-  matrix_t projectedPm;
-  vector_t projectedRv;
-
-  matrix_t projectedKm;  // projected feedback
-  vector_t projectedLv;  // projected feedforward
-
-  matrix_t Qu;  // projector
-  matrix_t CmProjected;
-  vector_t EvProjected;
-
   // interpolate
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, &(BASE::nominalTimeTrajectoriesStock_[i]));
-  LinearInterpolation::interpolate(indexAlpha, nominalState, &(BASE::nominalStateTrajectoriesStock_[i]));
-  LinearInterpolation::interpolate(indexAlpha, nominalInput, &(BASE::nominalInputTrajectoriesStock_[i]));
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, BASE::nominalTimeTrajectoriesStock_[i]);
+  const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, BASE::nominalStateTrajectoriesStock_[i]);
+  const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, BASE::nominalInputTrajectoriesStock_[i]);
 
   // BmProjected
-  ModelData::interpolate(indexAlpha, projectedBm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::dynamics_dfdu);
+  const matrix_t projectedBm =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::dynamics_dfdu);
   // PmProjected
-  ModelData::interpolate(indexAlpha, projectedPm, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdux);
+  const matrix_t projectedPm =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdux);
   // RvProjected
-  ModelData::interpolate(indexAlpha, projectedRv, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdu);
+  const vector_t projectedRv =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdu);
   // EvProjected
-  ModelData::interpolate(indexAlpha, EvProjected, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_f);
+  const vector_t EvProjected =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_f);
   // CmProjected
-  ModelData::interpolate(indexAlpha, CmProjected, &BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_dfdx);
+  const matrix_t CmProjected =
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_dfdx);
 
-  // Qu
-  riccati_modification::interpolate(indexAlpha, Qu, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                    riccati_modification::constraintNullProjector);
-  // deltaGm
-  riccati_modification::interpolate(indexAlpha, projectedKm, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                    riccati_modification::deltaGm);
-  // deltaGv
-  riccati_modification::interpolate(indexAlpha, projectedLv, &BASE::riccatiModificationTrajectoriesStock_[i],
-                                    riccati_modification::deltaGv);
+  // projector
+  const matrix_t Qu = LinearInterpolation::interpolate(indexAlpha, BASE::riccatiModificationTrajectoriesStock_[i],
+                                                       riccati_modification::constraintNullProjector);
+  // deltaGm, projected feedback
+  matrix_t projectedKm =
+      LinearInterpolation::interpolate(indexAlpha, BASE::riccatiModificationTrajectoriesStock_[i], riccati_modification::deltaGm);
+  // deltaGv, projected feedforward
+  vector_t projectedLv =
+      LinearInterpolation::interpolate(indexAlpha, BASE::riccatiModificationTrajectoriesStock_[i], riccati_modification::deltaGv);
 
   // projectedKm = projectedPm + projectedBm^t * Sm
   projectedKm = -(projectedKm + projectedPm);

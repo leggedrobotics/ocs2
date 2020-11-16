@@ -160,7 +160,7 @@ scalar_t MPC_MRT_Interface::getValueFunction(scalar_t time, const vector_t& stat
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_MRT_Interface::getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) {
-  mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state, Vx);
+  Vx = mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state);
 }
 
 /******************************************************************************************************/

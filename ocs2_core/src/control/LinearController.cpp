@@ -80,7 +80,7 @@ vector_t LinearController::computeInput(scalar_t t, const vector_t& x) {
   const auto indexAlpha = LinearInterpolation::timeSegment(t, timeStamp_);
 
   vector_t uff = LinearInterpolation::interpolate(indexAlpha, biasArray_);
-  matrix_t k = LinearInterpolation::interpolate(indexAlpha, gainArray_);
+  const matrix_t k = LinearInterpolation::interpolate(indexAlpha, gainArray_);
 
   uff.noalias() += k * x;
   return uff;
@@ -129,8 +129,8 @@ void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArra
    */
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, timeStamp_);
-  vector_t uff = LinearInterpolation::interpolate(indexAlpha, biasArray_);
-  matrix_t k = LinearInterpolation::interpolate(indexAlpha, gainArray_);
+  const vector_t uff = LinearInterpolation::interpolate(indexAlpha, biasArray_);
+  const matrix_t k = LinearInterpolation::interpolate(indexAlpha, gainArray_);
 
   const size_t stateDim = k.cols();
   const size_t inputDim = k.rows();

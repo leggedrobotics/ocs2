@@ -319,11 +319,11 @@ scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) 
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
-  matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
-  vector_t Sv = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
-  scalar_t s = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
+  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
+  const vector_t Sv = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
+  const scalar_t s = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
 
-  vector_t xNominal =
+  const vector_t xNominal =
       LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
 
   vector_t deltaX = state - xNominal;
@@ -334,21 +334,23 @@ scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const {
+vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const {
   const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
 
-  matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
+  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
 
   // Sv
-  Vx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
+  vector_t Vx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
 
-  vector_t xNominal =
+  const vector_t xNominal =
       LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
 
-  vector_t deltaX = state - xNominal;
+  const vector_t deltaX = state - xNominal;
   Vx += Sm * deltaX;
+
+  return Vx;
 }
 
 /******************************************************************************************************/
@@ -359,31 +361,30 @@ void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, co
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
 
-  vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[activeSubsystem]);
+  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[activeSubsystem]);
 
-  matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
+  const matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
 
-  matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
+  const matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
 
-  vector_t Rv = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
+  const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
 
-  vector_t EvProjected =
+  const vector_t EvProjected =
       LinearInterpolation::interpolate(indexAlpha, projectedModelDataTrajectoriesStock_[activeSubsystem], ModelData::stateInputEqConstr_f);
 
-  matrix_t CmProjected = LinearInterpolation::interpolate(indexAlpha, projectedModelDataTrajectoriesStock_[activeSubsystem],
-                                                          ModelData::stateInputEqConstr_dfdx);
+  const matrix_t CmProjected = LinearInterpolation::interpolate(indexAlpha, projectedModelDataTrajectoriesStock_[activeSubsystem],
+                                                                ModelData::stateInputEqConstr_dfdx);
 
-  matrix_t Hm = LinearInterpolation::interpolate(indexAlpha, riccatiModificationTrajectoriesStock_[activeSubsystem],
-                                                 riccati_modification::hamiltonianHessian);
+  const matrix_t Hm = LinearInterpolation::interpolate(indexAlpha, riccatiModificationTrajectoriesStock_[activeSubsystem],
+                                                       riccati_modification::hamiltonianHessian);
 
-  matrix_t DmDagger = LinearInterpolation::interpolate(indexAlpha, riccatiModificationTrajectoriesStock_[activeSubsystem],
-                                                       riccati_modification::constraintRangeProjector);
+  const matrix_t DmDagger = LinearInterpolation::interpolate(indexAlpha, riccatiModificationTrajectoriesStock_[activeSubsystem],
+                                                             riccati_modification::constraintRangeProjector);
 
-  vector_t costate;
-  getValueFunctionStateDerivative(time, state, costate);
+  const vector_t costate = getValueFunctionStateDerivative(time, state);
 
-  vector_t deltaX = state - xNominal;
-  matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
+  const vector_t deltaX = state - xNominal;
+  const matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
 
   nu = DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
 
@@ -942,9 +943,9 @@ void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm,
 
       const auto& time = nominalControllersStock_[i].timeStamp_[k];
       const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[i]);
-      vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[i]);
-      vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, nominalInputTrajectoriesStock_[i]);
-      vector_t deltaUee =
+      const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[i]);
+      const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, nominalInputTrajectoriesStock_[i]);
+      const vector_t deltaUee =
           nominalInput - nominalControllersStock_[i].gainArray_[k] * nominalState - nominalControllersStock_[i].biasArray_[k];
       maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
 
@@ -1373,12 +1374,12 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
         for (int k = timeSegment.first + 1; k < nominalTimeTrajectoriesStock_[i].size(); k++) {
           const auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], cachedTimeTrajectoriesStock_[i]);
 
-          vector_t stateCached = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[i]);
+          const vector_t stateCached = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[i]);
           if (!stateCached.isApprox(nominalStateTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached state trajectory is not correctly set.");
           }
 
-          vector_t inputCached = LinearInterpolation::interpolate(indexAlpha, cachedInputTrajectoriesStock_[i]);
+          const vector_t inputCached = LinearInterpolation::interpolate(indexAlpha, cachedInputTrajectoriesStock_[i]);
           if (!inputCached.isApprox(nominalInputTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached input trajectory is not correctly set.");
           }

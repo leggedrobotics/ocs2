@@ -119,7 +119,7 @@ void FeedforwardController::flattenSingle(scalar_t time, std::vector<float>& fla
    * ]
    */
 
-  vector_t uff = LinearInterpolation::interpolate(time, timeStamp_, uffArray_);
+  const vector_t uff = LinearInterpolation::interpolate(time, timeStamp_, uffArray_);
 
   flatArray = std::vector<float>(uff.data(), uff.data() + uff.rows());
 }

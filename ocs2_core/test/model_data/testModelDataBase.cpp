@@ -53,16 +53,14 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
   double time = 5.0;
   // get (index, alpha) pair
   const auto indexAlpha = LinearInterpolation::timeSegment(time, timeArray);
-  // scalar
-  double enquiryScalar = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::time);
-  // dynamic vector
-  Eigen::VectorXd enquiryVector = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_f);
-  // dynamic matrix
-  Eigen::MatrixXd enquiryMatrix = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_dfdx);
 
-  ASSERT_TRUE(enquiryScalar == time);
-  ASSERT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));
-  ASSERT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones() * time));
+  const scalar_t enquiryScalar = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::time);
+  const vector_t enquiryVector = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_f);
+  const matrix_t enquiryMatrix = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_dfdx);
+
+  EXPECT_TRUE(enquiryScalar == time);
+  EXPECT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));
+  EXPECT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones() * time));
 }
 
 TEST(testModelDataBase, testMovableCopyable) {

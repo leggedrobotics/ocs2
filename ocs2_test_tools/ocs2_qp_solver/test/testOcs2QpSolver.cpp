@@ -38,9 +38,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class Ocs2QpSolverTest : public testing::Test {
  protected:
   static constexpr size_t N = 10;  // Trajectory length
-  static constexpr size_t STATE_DIM = 3;
-  static constexpr size_t INPUT_DIM = 2;
+  static constexpr size_t STATE_DIM = 5;
+  static constexpr size_t INPUT_DIM = 3;
+  static constexpr size_t numStateInputConstraints = 1;
+  static constexpr size_t numStateOnlyConstraints = 1;
+  static constexpr size_t numFinalStateOnlyConstraints = 2;
+  static constexpr ocs2::scalar_t precision = 1e-9;
   static constexpr ocs2::scalar_t dt = 1e-3;
+
+  void checkDynamics(const ocs2::qp_solver::ContinuousTrajectory& solution) const {
+    // Forward integrate with unconstrainedSolution u(t) and check x(t)
+    ocs2::vector_t x = x0;
+    for (int k = 0; k < N; ++k) {
+      auto dt = solution.timeTrajectory[k + 1] - solution.timeTrajectory[k];
+      x += dt * system->computeFlowMap(solution.timeTrajectory[k], x, solution.inputTrajectory[k]);
+      ASSERT_TRUE(x.isApprox(solution.stateTrajectory[k + 1], precision));
+    }
+  }
 
   Ocs2QpSolverTest() {
     srand(0);
@@ -50,36 +64,58 @@ class Ocs2QpSolverTest : public testing::Test {
         ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
     cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
     system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+    constraint =
+        ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
     nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     x0 = ocs2::vector_t::Random(STATE_DIM);
-    solution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
+    constrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, *constraint, nominalTrajectory, x0);
+    unconstrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
   }
 
   std::unique_ptr<ocs2::CostFunctionBase> cost;
   ocs2::CostDesiredTrajectories costDesiredTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
+  std::unique_ptr<ocs2::ConstraintBase> constraint;
   ocs2::qp_solver::ContinuousTrajectory nominalTrajectory;
   ocs2::vector_t x0;
-  ocs2::qp_solver::ContinuousTrajectory solution;
+  ocs2::qp_solver::ContinuousTrajectory constrainedSolution;
+  ocs2::qp_solver::ContinuousTrajectory unconstrainedSolution;
 };
 
 constexpr size_t Ocs2QpSolverTest::N;
 constexpr size_t Ocs2QpSolverTest::STATE_DIM;
 constexpr size_t Ocs2QpSolverTest::INPUT_DIM;
+constexpr size_t Ocs2QpSolverTest::numStateInputConstraints;
+constexpr size_t Ocs2QpSolverTest::numStateOnlyConstraints;
+constexpr size_t Ocs2QpSolverTest::numFinalStateOnlyConstraints;
+constexpr ocs2::scalar_t Ocs2QpSolverTest::precision;
 constexpr ocs2::scalar_t Ocs2QpSolverTest::dt;
 
 TEST_F(Ocs2QpSolverTest, initialCondition) {
-  ASSERT_TRUE(x0.isApprox(solution.stateTrajectory.front()));
+  ASSERT_TRUE(x0.isApprox(constrainedSolution.stateTrajectory.front(), precision));
+  ASSERT_TRUE(x0.isApprox(unconstrainedSolution.stateTrajectory.front(), precision));
 }
 
 TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
-  // Forward integrate with solution u(t) and check x(t)
-  ocs2::vector_t x = x0;
-  for (int k = 0; k < N; ++k) {
-    auto dt = solution.timeTrajectory[k + 1] - solution.timeTrajectory[k];
-    x += dt * system->computeFlowMap(solution.timeTrajectory[k], x, solution.inputTrajectory[k]);
-    ASSERT_TRUE(x.isApprox(solution.stateTrajectory[k + 1]));
+  checkDynamics(constrainedSolution);
+  checkDynamics(unconstrainedSolution);
+}
+
+TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
+  const auto g0 = constraint->stateInputEqualityConstraint(constrainedSolution.timeTrajectory[0], constrainedSolution.stateTrajectory[0],
+                                                           constrainedSolution.inputTrajectory[0]);
+  ASSERT_TRUE(g0.isZero(precision));
+  for (int k = 1; k < N; ++k) {
+    const auto g = constraint->stateInputEqualityConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k],
+                                                            constrainedSolution.inputTrajectory[k]);
+    ASSERT_TRUE(g.isZero(precision));
+    const auto h = constraint->stateEqualityConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k]);
+    ASSERT_TRUE(h.isZero(precision));
   }
+  const auto gf = constraint->finalStateEqualityConstraint(constrainedSolution.timeTrajectory[N], constrainedSolution.stateTrajectory[N]);
+  ASSERT_TRUE(gf.isZero(precision));
 }
 
 TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
@@ -88,9 +124,9 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
   linearization2.timeTrajectory = nominalTrajectory.timeTrajectory;
 
   // Compare solutions
-  auto solution2 = solveLinearQuadraticOptimalControlProblem(*cost, *system, linearization2, x0);
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(solution.stateTrajectory, solution2.stateTrajectory));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(solution.inputTrajectory, solution2.inputTrajectory));
+  auto solution2 = solveLinearQuadraticOptimalControlProblem(*cost, *system, *constraint, linearization2, x0);
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(constrainedSolution.stateTrajectory, solution2.stateTrajectory, precision));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(constrainedSolution.inputTrajectory, solution2.inputTrajectory, precision));
 }
 
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {

@@ -39,10 +39,10 @@ add_library(${PROJECT_NAME}
   src/QpDiscreteTranscription.cpp
   src/QpSolver.cpp
   src/QpTrajectories.cpp
-  )
+)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  )
+)
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #########################
@@ -54,7 +54,7 @@ if(cmake_clang_tools_FOUND)
   add_clang_tooling(
     TARGETS
       ${PROJECT_NAME}
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
   )
@@ -84,10 +84,10 @@ install(DIRECTORY test/include/${PROJECT_NAME}/
 
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testDiscreteTranscription.cpp
-  test/testOcs2QpSolver.cpp
   test/testQpSolver.cpp
-  )
+  test/testOcs2QpSolver.cpp
+)
 target_link_libraries(test_${PROJECT_NAME}
   ${PROJECT_NAME}
   gtest_main
-  )
+)

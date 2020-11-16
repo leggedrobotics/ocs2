@@ -41,12 +41,10 @@ include_directories(
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/LoopshapingSynchronizedModule.cpp
   src/QuadrupedLoopshapingDummyNode.cpp
   src/QuadrupedLoopshapingInterface.cpp
   src/QuadrupedLoopshapingMpcNode.cpp
   src/QuadrupedLoopshapingSlqMpc.cpp
-  src/QuadrupedLoopshapingDummyObserver.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

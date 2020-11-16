@@ -4,6 +4,8 @@
 
 #include "ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingDummyNode.h"
 
+#include <ocs2_ros_interfaces/mrt/LoopshapingDummyObserver.h>
+
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
@@ -11,7 +13,6 @@
 
 #include <ocs2_quadruped_interface/QuadrupedLogger.h>
 #include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingDummyObserver.h>
 
 namespace switched_model_loopshaping {
 
@@ -35,7 +36,7 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
 
   // Loopshaping observer wrappers
   std::vector<std::shared_ptr<ocs2::DummyObserver>> observers{visualizer, logger};
-  auto loopshapingObservers = std::make_shared<QuadrupedLoopshapingDummyObserver>(quadrupedInterface.getLoopshapingDefinition(), observers);
+  auto loopshapingObservers = std::make_shared<ocs2::LoopshapingDummyObserver>(quadrupedInterface.getLoopshapingDefinition(), observers);
 
   // Dummy MRT
   ocs2::MRT_ROS_Dummy_Loop dummySimulator(mrt, mrtDesiredFrequency, mpcDesiredFrequency);

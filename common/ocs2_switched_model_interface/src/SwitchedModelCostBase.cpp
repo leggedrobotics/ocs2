@@ -15,8 +15,10 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                                             const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal)
-    : ocs2::QuadraticCostFunction(Q, R, QFinal), comModelPtr_(comModel.clone()), modeScheduleManagerPtr_(&modeScheduleManager) {}
+                                             const state_matrix_t& Q, const input_matrix_t& R)
+    : ocs2::QuadraticCostFunction(Q, R, state_matrix_t::Zero()),
+      comModelPtr_(comModel.clone()),
+      modeScheduleManagerPtr_(&modeScheduleManager) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

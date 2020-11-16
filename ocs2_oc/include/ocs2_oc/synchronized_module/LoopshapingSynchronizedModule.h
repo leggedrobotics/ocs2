@@ -49,6 +49,8 @@ class LoopshapingSynchronizedModule : public SolverSynchronizedModule {
 
   void postSolverRun(const PrimalSolution& primalSolution) override;
 
+  void add(std::shared_ptr<ocs2::SolverSynchronizedModule> module) { synchronizedModulesPtrArray_.push_back(std::move(module)); }
+
  private:
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray_;

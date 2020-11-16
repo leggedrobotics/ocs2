@@ -46,6 +46,8 @@ class LoopshapingDummyObserver : public DummyObserver {
 
   void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) override;
 
+  void add(std::shared_ptr<DummyObserver> observer) { observersPtrArray_.push_back(std::move(observer)); }
+
  private:
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
   std::vector<std::shared_ptr<DummyObserver>> observersPtrArray_;

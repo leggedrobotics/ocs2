@@ -6,6 +6,7 @@
 
 // Loopshaping
 #include <ocs2_core/loopshaping/Loopshaping.h>
+#include <ocs2_robotic_tools/common/LoopshapingRobotInterface.h>
 
 #include <ocs2_quadruped_interface/QuadrupedInterface.h>
 
@@ -14,12 +15,11 @@
 #include <ocs2_switched_model_interface/Dimensions.h>
 
 #include "ocs2_quadruped_loopshaping_interface/LoopshapingDimensions.h"
-#include "ocs2_quadruped_loopshaping_interface/LoopshapingModeScheduleManager.h"
 #include "ocs2_quadruped_loopshaping_interface/LoopshapingSynchronizedModule.h"
 
 namespace switched_model_loopshaping {
 
-class QuadrupedLoopshapingInterface : public ocs2::RobotInterface {
+class QuadrupedLoopshapingInterface : public ocs2::LoopshapingRobotInterface {
  public:
   using com_model_t = switched_model::ComModelBase<double>;
   using kinematic_model_t = switched_model::KinematicsModelBase<double>;
@@ -29,52 +29,35 @@ class QuadrupedLoopshapingInterface : public ocs2::RobotInterface {
   using ad_com_model_t = switched_model::ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = switched_model::KinematicsModelBase<ad_scalar_t>;
 
-  QuadrupedLoopshapingInterface(std::unique_ptr<switched_model::QuadrupedInterface> quadrupedPtr, const std::string& pathToConfigFolder);
+  QuadrupedLoopshapingInterface(std::unique_ptr<switched_model::QuadrupedInterface> quadrupedPtr,
+                                std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition);
 
   ~QuadrupedLoopshapingInterface() override = default;
 
-  std::shared_ptr<ocs2::LoopshapingDefinition> getLoopshapingDefinition() const { return loopshapingDefinition_; };
-
-  std::shared_ptr<LoopshapingModeScheduleManager> getModeScheduleManagerPtr() const { return loopshapingModeScheduleManager_; }
+  const switched_model::QuadrupedInterface& getQuadrupedInterface() const { return this->get<switched_model::QuadrupedInterface>(); }
 
   std::shared_ptr<LoopshapingSynchronizedModule> getLoopshapingSynchronizedModule() const { return loopshapingSynchronizedModule_; };
 
   /** Gets kinematic model */
-  const kinematic_model_t& getKinematicModel() const { return quadrupedPtr_->getKinematicModel(); }
+  const kinematic_model_t& getKinematicModel() const { return getQuadrupedInterface().getKinematicModel(); }
 
   /** Gets center of mass model */
-  const com_model_t& getComModel() const { return quadrupedPtr_->getComModel(); }
+  const com_model_t& getComModel() const { return getQuadrupedInterface().getComModel(); }
 
   /** Gets the loaded initial state */
   const vector_t& getInitialState() const { return initialState_; }
 
   /** Gets the loaded initial partition times */
-  const scalar_array_t& getInitialPartitionTimes() const { return quadrupedPtr_->getInitialPartitionTimes(); }
+  const scalar_array_t& getInitialPartitionTimes() const { return getQuadrupedInterface().getInitialPartitionTimes(); }
 
   /** Access to model settings */
-  const switched_model::ModelSettings& modelSettings() const { return quadrupedPtr_->modelSettings(); };
+  const switched_model::ModelSettings& modelSettings() const { return getQuadrupedInterface().modelSettings(); };
 
   /** Gets the rollout class */
   const ocs2::RolloutBase& getRollout() const { return *timeTriggeredRolloutPtr_; }
 
-  const ocs2::LoopshapingDynamics& getDynamics() const override { return *dynamicsPtr_; }
-
-  const ocs2::LoopshapingCost& getCost() const override { return *costFunctionPtr_; }
-
-  const ocs2::LoopshapingConstraint* getConstraintPtr() const override { return constraintsPtr_.get(); }
-
-  const ocs2::LoopshapingOperatingPoint& getOperatingPoints() const override { return *operatingPointsPtr_; }
-
  private:
-  std::unique_ptr<switched_model::QuadrupedInterface> quadrupedPtr_;
-  std::unique_ptr<ocs2::LoopshapingDynamics> dynamicsPtr_;
-  std::unique_ptr<ocs2::LoopshapingConstraint> constraintsPtr_;
-  std::unique_ptr<ocs2::LoopshapingCost> costFunctionPtr_;
-  std::unique_ptr<ocs2::LoopshapingOperatingPoint> operatingPointsPtr_;
   std::unique_ptr<ocs2::RolloutBase> timeTriggeredRolloutPtr_;
-  std::unique_ptr<ocs2::LoopshapingFilterDynamics> filterDynamicsPtr_;
-  std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition_;
-  std::shared_ptr<LoopshapingModeScheduleManager> loopshapingModeScheduleManager_;
   std::shared_ptr<LoopshapingSynchronizedModule> loopshapingSynchronizedModule_;
 
   vector_t initialState_;

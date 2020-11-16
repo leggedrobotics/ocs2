@@ -24,10 +24,11 @@ ComKinoSystemDynamicsAd* ComKinoSystemDynamicsAd::clone() const {
   return new ComKinoSystemDynamicsAd(*this);
 }
 
-auto ComKinoSystemDynamicsAd::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const -> ad_vector_t {
+ocs2::ad_vector_t ComKinoSystemDynamicsAd::systemFlowMap(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state,
+                                                         const ocs2::ad_vector_t& input) const {
   const comkino_state_ad_t comkinoState = state;
   const comkino_input_ad_t comkinoInput = input;
-  ad_vector_t stateDerivative(state.rows());
+  ocs2::ad_vector_t stateDerivative(state.rows());
 
   const joint_coordinate_ad_t dqJoints = getJointVelocities(comkinoInput);
   const com_state_ad_t comStateDerivative = computeComStateDerivative(*adComModelPtr_, *adKinematicModelPtr_, comkinoState, comkinoInput);

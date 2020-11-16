@@ -16,7 +16,7 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
   const std::string robotName = "anymal";
 
   auto gaitReceiver = std::make_shared<switched_model::GaitReceiver>(
-      nodeHandle, quadrupedInterface.getModeScheduleManagerPtr()->modeScheduleManager_->getGaitSchedule(), robotName);
+      nodeHandle, quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
   auto loopshapingSolverModule = quadrupedInterface.getLoopshapingSynchronizedModule();
   loopshapingSolverModule->synchronizedModules_.push_back(gaitReceiver);
 

@@ -69,7 +69,7 @@ void ComKinoOperatingPointsBase::getSystemOperatingTrajectories(const vector_t& 
 
   vector_t state = vector_t::Zero(STATE_DIM);
   if (!timeTrajectory.empty()) {
-    ocs2::LinearInterpolation::interpolate(midTime, state, &timeTrajectory, &stateTrajectory);
+    state = ocs2::LinearInterpolation::interpolate(midTime, timeTrajectory, stateTrajectory);
   }
   const auto inputOperatingPoint = computeInputOperatingPoints(contactFlags, state);
 

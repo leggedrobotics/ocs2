@@ -798,8 +798,9 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
     for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
       const vector_t& xFinalUpdated = nominalStateTrajectoriesStock_[i + 1].front();
       const vector_t deltaState = xFinalUpdated - xFinalStock_[i];
-      sFinalStock_[i] += deltaState.dot(0.5 * SmFinalStock_[i] * deltaState + SvFinalStock_[i]);
-      SvFinalStock_[i] += SmFinalStock_[i] * deltaState;
+      const vector_t SmFinalDeltaState = SmFinalStock_[i] * deltaState;
+      sFinalStock_[i] += deltaState.dot(0.5 * SmFinalDeltaState + SvFinalStock_[i]);
+      SvFinalStock_[i] += SmFinalDeltaState;
     }  // end of loop
 
     nextTaskId_ = 0;

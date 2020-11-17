@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/circular_kinematics.h>
 
-class CircularKinematicsTest : public testing::Test {
+class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Type, size_t>> {
  protected:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 2;
@@ -73,6 +73,10 @@ class CircularKinematicsTest : public testing::Test {
     // operatingTrajectories
     operatingPointsPtr.reset(new ocs2::OperatingPoints(initState, ocs2::vector_t::Zero(INPUT_DIM)));
   }
+
+  ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
+
+  size_t getNumThreads() { return std::get<1>(GetParam()); }
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
                                   bool display = false) const {
@@ -137,9 +141,9 @@ constexpr ocs2::scalar_t CircularKinematicsTest::expectedStateInputEqConstraintI
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CircularKinematicsTest, slq_single_thread_linesearch) {
+TEST_P(CircularKinematicsTest, SLQ) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 1, ocs2::search_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -160,32 +164,9 @@ TEST_F(CircularKinematicsTest, slq_single_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CircularKinematicsTest, slq_multi_thread_linesearch) {
+TEST_P(CircularKinematicsTest, ILQR) {
   // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 3, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(CircularKinematicsTest, ilqr_single_thread_linesearch) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 1, ocs2::search_strategy::Type::LINE_SEARCH);
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
@@ -206,22 +187,14 @@ TEST_F(CircularKinematicsTest, ilqr_single_thread_linesearch) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(CircularKinematicsTest, ilqr_multi_thread_linesearch) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 3, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
+INSTANTIATE_TEST_CASE_P(CircularKinematicsTestCase, CircularKinematicsTest,
+                        testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH
+                                                            /* , ocs2::search_strategy::Type::LEVENBERG_MARQUARDT */}),
+                                         testing::ValuesIn({size_t(1), size_t(3)})), /* num threads */
+                        [](const testing::TestParamInfo<CircularKinematicsTest::ParamType>& info) {
+                          /* returns test name for gtest summary */
+                          std::string name;
+                          name += ocs2::search_strategy::toString(std::get<0>(info.param)) + "__";
+                          name += std::get<1>(info.param) == 1 ? "SINGLE_THREAD" : "MULTI_THREAD";
+                          return name;
+                        });

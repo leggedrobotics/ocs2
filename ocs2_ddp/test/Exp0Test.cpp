@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 
-class Exp0Test : public testing::Test {
+class Exp0 : public testing::Test {
  protected:
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
@@ -49,7 +49,7 @@ class Exp0Test : public testing::Test {
   static constexpr ocs2::scalar_t expectedStateInputEqConstraintISE = 0.0;
   static constexpr ocs2::scalar_t expectedStateEqConstraintISE = 0.0;
 
-  Exp0Test() {
+  Exp0() {
     // event times
     const ocs2::scalar_array_t eventTimes{0.1897};
     const std::vector<size_t> subsystemsSequence{0, 1};
@@ -137,208 +137,16 @@ class Exp0Test : public testing::Test {
   std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
 };
 
-constexpr size_t Exp0Test::STATE_DIM;
-constexpr size_t Exp0Test::INPUT_DIM;
-constexpr ocs2::scalar_t Exp0Test::expectedCost;
-constexpr ocs2::scalar_t Exp0Test::expectedStateInputEqConstraintISE;
-constexpr ocs2::scalar_t Exp0Test::expectedStateEqConstraintISE;
+constexpr size_t Exp0::STATE_DIM;
+constexpr size_t Exp0::INPUT_DIM;
+constexpr ocs2::scalar_t Exp0::expectedCost;
+constexpr ocs2::scalar_t Exp0::expectedStateInputEqConstraintISE;
+constexpr ocs2::scalar_t Exp0::expectedStateEqConstraintISE;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(Exp0Test, slq_single_thread_linesearch) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 1, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, slq_multi_thread_linesearch) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 3, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, ilqr_single_thread_linesearch) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 1, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, ilqr_multi_thread_linesearch) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 3, ocs2::search_strategy::Type::LINE_SEARCH);
-
-  // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, slq_single_thread_levenberg_marquardt) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, slq_multi_thread_levenberg_marquardt) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 3, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, ilqr_single_thread_levenberg_marquardt) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 1, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, ilqr_multi_thread_levenberg_marquardt) {
-  // ddp settings
-  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, 3, ocs2::search_strategy::Type::LEVENBERG_MARQUARDT);
-
-  // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
-
-  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
-    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
-  }
-
-  // run ddp
-  ddp.run(startTime, initState, finalTime, partitioningTimes);
-  // get performance index
-  const auto performanceIndex = ddp.getPerformanceIndeces();
-
-  // performanceIndeces test
-  performanceIndexTest(ddpSettings, performanceIndex);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TEST_F(Exp0Test, ddp_feedback_policy) {
+TEST_F(Exp0, ddp_feedback_policy) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = true;
@@ -361,7 +169,7 @@ TEST_F(Exp0Test, ddp_feedback_policy) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(Exp0Test, ddp_feedforward_policy) {
+TEST_F(Exp0, ddp_feedforward_policy) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.useFeedbackPolicy_ = false;
@@ -384,7 +192,7 @@ TEST_F(Exp0Test, ddp_feedforward_policy) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_F(Exp0Test, ddp_caching) {
+TEST_F(Exp0, ddp_caching) {
   // ddp settings
   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
   ddpSettings.displayInfo_ = false;
@@ -423,3 +231,74 @@ TEST_F(Exp0Test, ddp_caching) {
   finalTime = 2.0;
   EXPECT_NO_THROW(ddp.run(startTime, initState, finalTime, partitioningTimes, std::vector<ocs2::ControllerBase*>()));
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/* Add parametrized test suite */
+class Exp0Param : public Exp0, public testing::WithParamInterface<std::tuple<ocs2::search_strategy::Type, size_t>> {
+ protected:
+  ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
+
+  size_t getNumThreads() { return std::get<1>(GetParam()); }
+};
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_P(Exp0Param, SLQ) {
+  // ddp settings
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
+
+  // instantiate
+  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
+    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
+  }
+
+  // run ddp
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  // get performance index
+  const auto performanceIndex = ddp.getPerformanceIndeces();
+
+  // performanceIndeces test
+  performanceIndexTest(ddpSettings, performanceIndex);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_P(Exp0Param, ILQR) {
+  // ddp settings
+  const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
+
+  // instantiate
+  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+
+  if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
+    std::cerr << "\n" << getTestName(ddpSettings) << "\n";
+  }
+
+  // run ddp
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  // get performance index
+  const auto performanceIndex = ddp.getPerformanceIndeces();
+
+  // performanceIndeces test
+  performanceIndexTest(ddpSettings, performanceIndex);
+}
+
+INSTANTIATE_TEST_CASE_P(Exp0ParamCase, Exp0Param,
+                        testing::Combine(testing::ValuesIn({ocs2::search_strategy::Type::LINE_SEARCH,
+                                                            ocs2::search_strategy::Type::LEVENBERG_MARQUARDT}),
+                                         testing::ValuesIn({size_t(1), size_t(3)})), /* num threads */
+                        [](const testing::TestParamInfo<Exp0Param::ParamType>& info) {
+                          /* returns test name for gtest summary */
+                          std::string name;
+                          name += ocs2::search_strategy::toString(std::get<0>(info.param)) + "__";
+                          name += std::get<1>(info.param) == 1 ? "SINGLE_THREAD" : "MULTI_THREAD";
+                          return name;
+                        });

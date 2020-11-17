@@ -524,41 +524,38 @@ void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::distributeWork() {
-  const int numWorkers = ddpSettings_.nThreads_;
-  startingIndicesRiccatiWorker_.resize(numWorkers);
-  endingIndicesRiccatiWorker_.resize(numWorkers);
-
+std::vector<std::pair<int, int>> GaussNewtonDDP::distributeWork(int numWorkers) const {
   const int subsystemsPerThread = (finalActivePartition_ - initActivePartition_ + 1) / numWorkers;
   int remainingSubsystems = (finalActivePartition_ - initActivePartition_ + 1) % numWorkers;
 
   int startingId, endingId = finalActivePartition_;
+  std::vector<std::pair<int, int>> indexPeriodArray;
   for (size_t i = 0; i < numWorkers; i++) {
-    endingIndicesRiccatiWorker_[i] = endingId;
     if (remainingSubsystems > 0) {
       startingId = endingId - subsystemsPerThread;
       remainingSubsystems--;
     } else {
       startingId = endingId - subsystemsPerThread + 1;
     }
-    startingIndicesRiccatiWorker_[i] = startingId;
+    if (startingId <= endingId) {
+      indexPeriodArray.emplace_back(startingId, endingId);
+    }
     endingId = startingId - 1;
   }
-  // adding the inactive subsystems
-  endingIndicesRiccatiWorker_.front() = numPartitions_ - 1;
-  startingIndicesRiccatiWorker_.back() = 0;
 
   if (ddpSettings_.displayInfo_) {
     std::cerr << "Initial Active Subsystem: " << initActivePartition_ << "\n";
     std::cerr << "Final Active Subsystem:   " << finalActivePartition_ << "\n";
     std::cerr << "Backward path work distribution:\n";
     for (size_t i = 0; i < numWorkers; i++) {
-      std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
-      std::cerr << "end: " << endingIndicesRiccatiWorker_[i] << "\t";
-      std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << "\n";
+      std::cerr << "start: " << indexPeriodArray[i].first << "\t";
+      std::cerr << "end: " << indexPeriodArray[i].second << "\t";
+      std::cerr << "num: " << indexPeriodArray[i].second - indexPeriodArray[i].first + 1 << "\n";
     }
     std::cerr << "\n";
   }
+
+  return indexPeriodArray;
 }
 
 /******************************************************************************************************/
@@ -774,22 +771,59 @@ scalar_t GaussNewtonDDP::calculateRolloutMerit(const PerformanceIndex& performan
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
+  // clear partitions
+  for (size_t i = 0; i < numPartitions_; i++) {
+    SsTimeTrajectoryStock_[i].clear();
+    SsNormalizedTimeTrajectoryStock_[i].clear();
+    SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
+    SmTrajectoryStock_[i].clear();
+    SvTrajectoryStock_[i].clear();
+    sTrajectoryStock_[i].clear();
+  }  // end of i loop
+
+  // solve it sequentially for the first iteration
+  if (totalNumIterations_ == 0) {
+    std::pair<int, int> indexPeriod{initActivePartition_, finalActivePartition_};
+    solveRiccatiEquationsForPartitions(0, indexPeriod, SmFinal, SvFinal, sFinal);
+
+  } else {  // solve it in parallel
+    // distribution of the sequential tasks (e.g. Riccati solver) in between threads
+    const std::vector<std::pair<int, int>> indexPeriodArray = distributeWork(ddpSettings_.nThreads_);
+
+    // correct the end of parrtition's final values based on the cached values
+    SmFinalStock_[finalActivePartition_] = SmFinal;
+    SvFinalStock_[finalActivePartition_] = SvFinal;
+    sFinalStock_[finalActivePartition_] = sFinal;
+    xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
+    for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
+      const vector_t& xFinalUpdated = nominalStateTrajectoriesStock_[i + 1].front();
+      const vector_t deltaState = xFinalUpdated - xFinalStock_[i];
+      const vector_t SmFinalDeltaState = SmFinalStock_[i] * deltaState;
+      sFinalStock_[i] += deltaState.dot(0.5 * SmFinalDeltaState + SvFinalStock_[i]);
+      SvFinalStock_[i] += SmFinalDeltaState;
+    }  // end of loop
+
+    nextTaskId_ = 0;
+    std::function<void(void)> task = [&] {
+      const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+      const auto& indexPeriod = indexPeriodArray[taskId];
+      solveRiccatiEquationsForPartitions(taskId, indexPeriod, SmFinalStock_[indexPeriod.second], SvFinalStock_[indexPeriod.second],
+                                         sFinalStock_[indexPeriod.second]);
+    };
+    runParallel(task, indexPeriodArray.size());
+  }
+
+  // update the final values for the next iteration
   SmFinalStock_[finalActivePartition_] = SmFinal;
   SvFinalStock_[finalActivePartition_] = SvFinal;
   sFinalStock_[finalActivePartition_] = sFinal;
   xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
-
-  // solve it sequentially for the first iteration
-  if (totalNumIterations_ == 0) {
-    nextTaskId_ = 0;
-    for (int i = 0; i < ddpSettings_.nThreads_; i++) {
-      riccatiSolverTask();
-    }
-  } else {  // solve it in parallel
-    nextTaskId_ = 0;
-    std::function<void(void)> task = [this] { riccatiSolverTask(); };
-    runParallel(task, ddpSettings_.nThreads_);
-  }
+  for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
+    SmFinalStock_[i] = SmTrajectoryStock_[i + 1].front();
+    SvFinalStock_[i] = SvTrajectoryStock_[i + 1].front();
+    sFinalStock_[i] = sTrajectoryStock_[i + 1].front();
+    xFinalStock_[i] = nominalStateTrajectoriesStock_[i + 1].front();
+  }  // end of i loop
 
   // testing the numerical stability of the Riccati equations
   if (ddpSettings_.checkNumericalStability_) {
@@ -839,56 +873,19 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::riccatiSolverTask() {
-  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+void GaussNewtonDDP::solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& indexPeriod, matrix_t SmFinal,
+                                                        vector_t SvFinal, scalar_t sFinal) {
+  for (int i = indexPeriod.second; i >= indexPeriod.first; i--) {
+    assert(initActivePartition_ <= i && i <= finalActivePartition_);
 
-  for (int i = endingIndicesRiccatiWorker_[taskId]; i >= startingIndicesRiccatiWorker_[taskId]; i--) {
-    // for inactive subsystems
-    if (i < initActivePartition_ || i > finalActivePartition_) {
-      SsTimeTrajectoryStock_[i].clear();
-      SsNormalizedTimeTrajectoryStock_[i].clear();
-      SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
-      SmTrajectoryStock_[i].clear();
-      SvTrajectoryStock_[i].clear();
-      sTrajectoryStock_[i].clear();
+    // solve the backward pass
+    riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
 
-    } else {
-      matrix_t SmFinal;
-      vector_t SvFinal;
-      scalar_t sFinal;
-      vector_t xFinal;
-
-      {  // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        SmFinal = SmFinalStock_[i];
-        SvFinal = SvFinalStock_[i];
-        sFinal = sFinalStock_[i];
-        xFinal = xFinalStock_[i];
-      }
-
-      // modify the end subsystem final values based on the cached values for asynchronous run
-      if (i == endingIndicesRiccatiWorker_[taskId] && i < finalActivePartition_) {
-        const vector_t deltaState = nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
-        sFinal += deltaState.dot(0.5 * SmFinal * deltaState + SvFinal);
-        SvFinal += SmFinal * deltaState;
-      }
-
-      // solve the backward pass
-      riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
-
-      // set the final value for next Riccati equation
-      if (i > initActivePartition_) {
-        // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        SmFinalStock_[i - 1] = SmTrajectoryStock_[i].front();
-        SvFinalStock_[i - 1] = SvTrajectoryStock_[i].front();
-        sFinalStock_[i - 1] = sTrajectoryStock_[i].front();
-        xFinalStock_[i - 1] = nominalStateTrajectoriesStock_[i].front();
-      }
-    }
-  }
+    // set the final value for next Riccati equation
+    SmFinal = SmTrajectoryStock_[i].front();
+    SvFinal = SvTrajectoryStock_[i].front();
+    sFinal = sTrajectoryStock_[i].front();
+  }  // end of i loop
 }
 
 /******************************************************************************************************/
@@ -1644,9 +1641,6 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration) << " (Dynamics might have been violated)";
     std::cerr << "\n###################\n";
   }
-
-  // distribution of the sequential tasks (e.g. Riccati solver) in between threads
-  distributeWork();
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
   swapDataToCache();

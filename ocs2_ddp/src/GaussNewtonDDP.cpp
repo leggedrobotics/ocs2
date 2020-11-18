@@ -316,7 +316,9 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
-  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  partition = std::max(partition, initActivePartition_);
+  partition = std::min(partition, finalActivePartition_);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
   const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
@@ -335,7 +337,9 @@ scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const {
-  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  partition = std::max(partition, initActivePartition_);
+  partition = std::min(partition, finalActivePartition_);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
 

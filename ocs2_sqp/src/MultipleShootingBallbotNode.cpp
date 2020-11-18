@@ -32,13 +32,13 @@ int main(int argc, char **argv)
 
   // Set this one up.
   ocs2::MultipleShootingSolverSettings settings;
-  settings.N = 15;
+  settings.N = 10;
   settings.nx = 10;
   settings.nu = 3;
   settings.sqpIteration = 5;
   settings.printPrimalSol = false;
   settings.printSolverStatistics = false;
-  settings.printSolverStatus = false;
+  settings.printSolverStatus = true;
   settings.initPrimalSol = false;
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();

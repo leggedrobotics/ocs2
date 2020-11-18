@@ -252,8 +252,8 @@ namespace ocs2
     // so I temporarily used costQuadraticApproximation with a random linearization point of input u
     // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
     ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(N), u.col(N - 1));
-    Q_data[N] = delta_t_ * finalCostFunctionApprox.dfdxx;
-    q_data[N] = delta_t_ * finalCostFunctionApprox.dfdx;
+    Q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
+    q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdx;
     QQ[N] = Q_data[N].data();
     qq[N] = q_data[N].data();
 
@@ -316,7 +316,7 @@ namespace ocs2
     int ric_alg = 0;
 
     int hpipm_status;
-    int nrep = 5;
+    int nrep = 10;
 
     int dim_size = d_ocp_qp_dim_memsize(N);
     void *dim_mem = malloc(dim_size);

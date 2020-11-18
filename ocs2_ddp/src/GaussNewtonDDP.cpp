@@ -365,25 +365,19 @@ void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, co
   activeSubsystem = std::max(activeSubsystem, initActivePartition_);
   activeSubsystem = std::min(activeSubsystem, finalActivePartition_);
 
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
-
+  auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
   const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[activeSubsystem]);
-
   const matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
-
   const matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
-
   const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
 
+  indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[activeSubsystem]);
   const vector_t EvProjected =
       LinearInterpolation::interpolate(indexAlpha, projectedModelDataTrajectoriesStock_[activeSubsystem], ModelData::stateInputEqConstr_f);
-
   const matrix_t CmProjected = LinearInterpolation::interpolate(indexAlpha, projectedModelDataTrajectoriesStock_[activeSubsystem],
                                                                 ModelData::stateInputEqConstr_dfdx);
-
   const matrix_t Hm = LinearInterpolation::interpolate(indexAlpha, riccatiModificationTrajectoriesStock_[activeSubsystem],
                                                        riccati_modification::hamiltonianHessian);
-
   const matrix_t DmDagger = LinearInterpolation::interpolate(indexAlpha, riccatiModificationTrajectoriesStock_[activeSubsystem],
                                                              riccati_modification::constraintRangeProjector);
 

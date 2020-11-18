@@ -361,7 +361,9 @@ vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
-  const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  activeSubsystem = std::max(activeSubsystem, initActivePartition_);
+  activeSubsystem = std::min(activeSubsystem, finalActivePartition_);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
 

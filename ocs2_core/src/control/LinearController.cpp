@@ -185,9 +185,13 @@ void LinearController::concatenate(const ControllerBase* nextController, int ind
     int last = index + length;
     timeStamp_.insert(timeStamp_.end(), nextLinCtrl->timeStamp_.begin() + index, nextLinCtrl->timeStamp_.begin() + last);
     biasArray_.insert(biasArray_.end(), nextLinCtrl->biasArray_.begin() + index, nextLinCtrl->biasArray_.begin() + last);
-    deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin() + index,
-                           nextLinCtrl->deltaBiasArray_.begin() + last);
     gainArray_.insert(gainArray_.end(), nextLinCtrl->gainArray_.begin() + index, nextLinCtrl->gainArray_.begin() + last);
+
+    // deltaBiasArray can be of different, incompatible size.
+    if (last < nextLinCtrl->deltaBiasArray_.size()) {
+      deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin() + index,
+                             nextLinCtrl->deltaBiasArray_.begin() + last);
+    }
   } else {
     throw std::runtime_error("Concatenate only works with controllers of the same type.");
   }

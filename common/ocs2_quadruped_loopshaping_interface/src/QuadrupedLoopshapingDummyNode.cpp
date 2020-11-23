@@ -39,7 +39,8 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
   initObservation.mode = switched_model::ModeNumber::STANCE;
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {initObservation.state}, {initObservation.input});
+  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {quadrupedInterface.getQuadrupedInterface().getInitialState()},
+                                                            {initObservation.input});
 
   // run dummy
   dummySimulator.run(initObservation, initCostDesiredTrajectories);

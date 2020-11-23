@@ -139,25 +139,17 @@ namespace ocs2
     scalar_t *ssl_guess[N + 1];
     scalar_t *ssu_guess[N + 1];
 
-    vector_t init_l = initState - x.col(0);
-    vector_t init_u = initState - x.col(0);
-    scalar_t *lbx0 = init_l.data();
-    scalar_t *ubx0 = init_u.data();
-
-    int idxbx0Data[n_state];
     scalar_t x_guessData[n_state];
     scalar_t u_guessData[n_input];
     for (int i = 0; i < n_state; i++)
     {
       x_guessData[i] = 0.0;
-      idxbx0Data[i] = i;
     }
     for (int i = 0; i < n_input; i++)
     {
       u_guessData[i] = 0.0;
     }
 
-    int *idxbx0 = idxbx0Data;
     scalar_t *x_guess = x_guessData;
     scalar_t *u_guess = u_guessData;
     scalar_t sl_guess[] = {};
@@ -182,10 +174,7 @@ namespace ocs2
       ssu_guess[i] = su_guess;
     }
     nnuData[N] = 0;
-    nnbxData[0] = n_state;
-    iidxbx[0] = idxbx0;
-    llbx[0] = lbx0;
-    uubx[0] = ubx0;
+    nnxData[0] = 0;
     int *nu = nnuData;
     int *nx = nnxData;
     int *nbu = nnbuData;
@@ -231,6 +220,10 @@ namespace ocs2
       B_data[i] = delta_t_ * systemDynamicApprox.dfdu;
       BB[i] = B_data[i].data();
       b_data[i] = x.col(i) + delta_t_ * systemDynamicApprox.f - x.col(i + 1);
+      if (i == 0)
+      {
+        b_data[i] += A_data[i] * (initState - x.col(0));
+      }
       bb[i] = b_data[i].data();
 
       ocs2::ScalarFunctionQuadraticApproximation costFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(i), u.col(i));
@@ -451,15 +444,23 @@ namespace ocs2
 
     for (int ii = 0; ii < N; ii++)
     {
-      d_ocp_qp_sol_get_x(ii, &qp_sol, xTemp);
+      if (ii == 0)
+      {
+        deltaX.col(ii) = initState - x.col(0);
+      }
+      else
+      {
+        d_ocp_qp_sol_get_x(ii, &qp_sol, xTemp);
+        for (int j = 0; j < n_state; j++)
+        {
+          deltaX(j, ii) = xTemp[j];
+        }
+      }
+
       d_ocp_qp_sol_get_u(ii, &qp_sol, uTemp);
       for (int j = 0; j < n_input; j++)
       {
         deltaU(j, ii) = uTemp[j];
-      }
-      for (int j = 0; j < n_state; j++)
-      {
-        deltaX(j, ii) = xTemp[j];
       }
     }
     d_ocp_qp_sol_get_x(N, &qp_sol, xTemp);

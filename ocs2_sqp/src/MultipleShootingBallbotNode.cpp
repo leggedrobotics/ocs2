@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   settings.nu = 3;
   settings.sqpIteration = 5;
   settings.printPrimalSol = false;
-  settings.printSolverStatistics = false;
+  settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.initPrimalSol = false;
 

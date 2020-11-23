@@ -316,7 +316,6 @@ namespace ocs2
     int ric_alg = 0;
 
     int hpipm_status;
-    int nrep = 10;
 
     int dim_size = d_ocp_qp_dim_memsize(N);
     void *dim_mem = malloc(dim_size);
@@ -378,12 +377,11 @@ namespace ocs2
 
     hpipm_timer timer;
     hpipm_tic(&timer);
-    for (int rep = 0; rep < nrep; rep++)
-    {
-      d_ocp_qp_ipm_solve(&qp, &qp_sol, &arg, &workspace);
-      d_ocp_qp_ipm_get_status(&workspace, &hpipm_status);
-    }
-    scalar_t time_ipm = hpipm_toc(&timer) / nrep;
+
+    d_ocp_qp_ipm_solve(&qp, &qp_sol, &arg, &workspace);
+    d_ocp_qp_ipm_get_status(&workspace, &hpipm_status);
+
+    scalar_t time_ipm = hpipm_toc(&timer);
 
     auto endSolveTime = std::chrono::steady_clock::now();
     auto solveIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSolveTime - startSolveTime);
@@ -413,7 +411,7 @@ namespace ocs2
       {
         printf("\n -> Solver failed! Unknown return flag\n");
       }
-      printf("\nAverage solution time over %i runs: %e [s]\n", nrep, time_ipm);
+      printf("\nSolution time: %e [s]\n", time_ipm);
       printf("\n\n");
     }
 

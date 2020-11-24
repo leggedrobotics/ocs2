@@ -70,7 +70,7 @@ TEST(RungeKuttaDormandPrince5Test, integrateLinearSystem) {
   EXPECT_NEAR(stateTrajectory.back()(1), 1.0, 1e-3);
 }
 
-TEST(RungeKuttaDormandPrince5Test, compareWithBoostOdeint) {
+TEST(RungeKuttaDormandPrince5Test, IntegrateAdaptiveCompareWithBoost) {
   const ocs2::scalar_t t0 = 0.0;
   const ocs2::scalar_t t1 = 10.0;
   const ocs2::scalar_t dt = 0.05;
@@ -92,6 +92,31 @@ TEST(RungeKuttaDormandPrince5Test, compareWithBoostOdeint) {
 
   for (size_t i = 0; i < tTraj.size(); i++) {
     EXPECT_NEAR(tTraj[i], tTraj_boost[i], 1e-6);
+    EXPECT_TRUE(xTraj[i].isApprox(xTraj_boost[i], 1e-6));
+  }
+}
+
+TEST(RungeKuttaDormandPrince5Test, IntegrateTimesCompareWithBoost) {
+  const ocs2::scalar_t t0 = 0.0;
+  const ocs2::scalar_t t1 = 10.0;
+  const ocs2::scalar_t dt = 0.05;
+  const ocs2::vector_t x0 = ocs2::vector_t::Zero(2);
+
+  LinearSystem sys;
+
+  ocs2::scalar_array_t times = {0.0, 2.0, 4.0, 6.0, 8.0, 10.0};
+
+  ocs2::vector_array_t xTraj;
+  ocs2::Observer observer(&xTraj);
+  auto integrator = ocs2::newIntegrator(ocs2::IntegratorType::ODE45_OCS2);
+  integrator->integrateTimes(sys, observer, x0, times.begin(), times.end(), dt);
+
+  ocs2::vector_array_t xTraj_boost;
+  ocs2::Observer observer_boost(&xTraj_boost);
+  auto integrator_boost = ocs2::newIntegrator(ocs2::IntegratorType::ODE45);
+  integrator_boost->integrateTimes(sys, observer_boost, x0, times.begin(), times.end(), dt);
+
+  for (size_t i = 0; i < times.size(); i++) {
     EXPECT_TRUE(xTraj[i].isApprox(xTraj_boost[i], 1e-6));
   }
 }

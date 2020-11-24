@@ -15,7 +15,7 @@ namespace ocs2
   public:
     MultipleShootingMpc(mpc::Settings mpcSettings,
                         MultipleShootingSolverSettings settings,
-                        const ocs2::SystemDynamicsBaseAD *systemDynamicsPtr,
+                        const ocs2::SystemDynamicsBase *systemDynamicsPtr,
                         const ocs2::CostFunctionBase *costFunctionPtr)
         : MPC_BASE(std::move(mpcSettings))
     {

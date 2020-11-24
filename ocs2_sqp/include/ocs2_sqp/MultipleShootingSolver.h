@@ -3,9 +3,9 @@
 //
 
 #pragma once
-
+#include <iostream>
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 
 #include <blasfeo_d_aux_ext_dep.h>
@@ -40,7 +40,7 @@ namespace ocs2
     /**
    * Pass dynamics costs etc. See what you need.
    */
-    MultipleShootingSolver(MultipleShootingSolverSettings settings, const ocs2::SystemDynamicsBaseAD *systemDynamicsPtr, const ocs2::CostFunctionBase *costFunctionPtr);
+    MultipleShootingSolver(MultipleShootingSolverSettings settings, const ocs2::SystemDynamicsBase *systemDynamicsPtr, const ocs2::CostFunctionBase *costFunctionPtr);
 
     ~MultipleShootingSolver() override = default;
 
@@ -81,7 +81,7 @@ namespace ocs2
     void runImpl(scalar_t initTime, const vector_t &initState, scalar_t finalTime, const scalar_array_t &partitioningTimes,
                  const std::vector<ControllerBase *> &controllersPtrStock) override { runImpl(initTime, initState, finalTime, partitioningTimes); }
 
-    std::tuple<matrix_t, matrix_t> runSingleIter(SystemDynamicsBaseAD &systemDynamicsPtr,
+    std::tuple<matrix_t, matrix_t> runSingleIter(SystemDynamicsBase &systemDynamicsPtr,
                                                  CostFunctionBase &costFunctionPtr,
                                                  scalar_t delta_t_,
                                                  scalar_t initTime,
@@ -90,7 +90,7 @@ namespace ocs2
                                                  const vector_t &initState);
 
     MultipleShootingSolverSettings settings_;
-    std::unique_ptr<SystemDynamicsBaseAD> systemDynamicsPtr_;
+    std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
     std::unique_ptr<CostFunctionBase> costFunctionPtr_;
 
     PrimalSolution primalSolution_;

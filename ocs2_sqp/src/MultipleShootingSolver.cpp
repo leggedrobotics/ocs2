@@ -10,7 +10,7 @@
 namespace ocs2
 {
 
-  MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBaseAD *systemDynamicsPtr,
+  MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase *systemDynamicsPtr,
                                                  const CostFunctionBase *costFunctionPtr)
       : Solver_BASE(),
         systemDynamicsPtr_(systemDynamicsPtr->clone()),
@@ -94,7 +94,7 @@ namespace ocs2
     primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
   }
 
-  std::tuple<matrix_t, matrix_t> MultipleShootingSolver::runSingleIter(SystemDynamicsBaseAD &systemDynamicsObj,
+  std::tuple<matrix_t, matrix_t> MultipleShootingSolver::runSingleIter(SystemDynamicsBase &systemDynamicsObj,
                                                                        CostFunctionBase &costFunctionObj,
                                                                        scalar_t delta_t_,
                                                                        scalar_t initTime,
@@ -173,8 +173,9 @@ namespace ocs2
       ssl_guess[i] = sl_guess;
       ssu_guess[i] = su_guess;
     }
+
     nnuData[N] = 0;
-    nnxData[0] = 0;
+    nnxData[0] = 0;  // to ignore the bounding condition for x0
     int *nu = nnuData;
     int *nx = nnxData;
     int *nbu = nnbuData;
@@ -222,7 +223,7 @@ namespace ocs2
       b_data[i] = x.col(i) + delta_t_ * systemDynamicApprox.f - x.col(i + 1);
       if (i == 0)
       {
-        b_data[i] += A_data[i] * (initState - x.col(0));
+        b_data[i] += A_data[i] * (initState - x.col(0)); // to ignore the bounding condition for x0
       }
       bb[i] = b_data[i].data();
 
@@ -246,7 +247,7 @@ namespace ocs2
     // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
     ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(N), u.col(N - 1));
     Q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
-    q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdx;
+    q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdx; // 10 is a customized number, subject to adjustment 
     QQ[N] = Q_data[N].data();
     qq[N] = q_data[N].data();
 

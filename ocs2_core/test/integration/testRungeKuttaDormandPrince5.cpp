@@ -91,7 +91,6 @@ TEST(RungeKuttaDormandPrince5Test, compareWithBoostOdeint) {
   integrator_boost->integrateAdaptive(sys, observer_boost, x0, t0, t1, dt);
 
   for (size_t i = 0; i < tTraj.size(); i++) {
-    // std::cout << "t " << tTraj[i] << "  t_boost " << tTraj_boost[i] << '\n';
     EXPECT_NEAR(tTraj[i], tTraj_boost[i], 1e-6);
     EXPECT_TRUE(xTraj[i].isApprox(xTraj_boost[i], 1e-6));
   }
@@ -126,5 +125,6 @@ TEST(RungeKuttaDormandPrince5Test, integrateBackwards) {
   EXPECT_NEAR(timeTrajectory.front(), t1, 1e-6);
   EXPECT_NEAR(timeTrajectory.back(), t0, 1e-6);
   EXPECT_TRUE(stateTrajectory.front().isApprox(x1));
+  // Choosing an appropriate tolerance is tricky
   EXPECT_TRUE((stateTrajectory.back() - x0).norm() < 1e-3);
 }

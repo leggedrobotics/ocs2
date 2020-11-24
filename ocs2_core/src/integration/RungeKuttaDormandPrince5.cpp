@@ -230,7 +230,7 @@ void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0,
   doStep(system, x0, dxdt, t, dt, x_out, dxdt_out);
 
   // error estimate
-  error = dt * (dc1 * k1_ + dc3 * k3_ + dc4 * k4_ + dc5 * k5_ + dc6 * k6_ + dc7 * dxdt_out);
+  error.noalias() = dt * (dc1 * k1_ + dc3 * k3_ + dc4 * k4_ + dc5 * k5_ + dc6 * k6_ + dc7 * dxdt_out);
 }
 
 /******************************************************************************************************/
@@ -238,7 +238,7 @@ void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0,
 /******************************************************************************************************/
 scalar_t RungeKuttaDormandPrince5::error(const vector_t& x_old, const vector_t& dxdt_old, vector_t& x_err, scalar_t dt, scalar_t absTol,
                                          scalar_t relTol) const {
-  x_err = x_err.array() / (absTol + relTol * (x_old.array().abs() + dxdt_old.array().abs()));
+  x_err = x_err.array() / (absTol + relTol * (x_old.array().abs() + std::abs(dt) * dxdt_old.array().abs()));
   return x_err.lpNorm<Eigen::Infinity>();
 }
 

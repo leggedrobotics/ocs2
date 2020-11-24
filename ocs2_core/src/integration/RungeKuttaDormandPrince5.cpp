@@ -1,7 +1,31 @@
-/*
- * Author: Michael Spieler
- * Date:   2020-11-23
- */
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include <ocs2_core/integration/RungeKuttaDormandPrince5.h>
 
@@ -160,7 +184,8 @@ bool RungeKuttaDormandPrince5::tryStep(system_func_t& system, vector_t& x, vecto
 /******************************************************************************************************/
 void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0, const vector_t& dxdt, scalar_t t, scalar_t dt,
                                       vector_t& x_out, vector_t& dxdt_out) {
-  /* Runge Kutta Dormand-Prince Butcher tableau constanst: */
+  /* Runge Kutta Dormand-Prince Butcher tableau constants.
+   * https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method */
   const scalar_t a2 = 1.0 / 5;
   const scalar_t a3 = 3.0 / 10;
   const scalar_t a4 = 4.0 / 5;
@@ -208,6 +233,7 @@ void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0,
   x_out = x0 + dt * (c1 * k1_ + c3 * k3_ + c4 * k4_ + c5 * k5_ + c6 * k6_);
   system(x_out, dxdt_out, t + dt);
 }
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -236,10 +262,10 @@ void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RungeKuttaDormandPrince5::error(const vector_t& x_old, const vector_t& dxdt_old, vector_t& x_err, scalar_t dt, scalar_t absTol,
-                                         scalar_t relTol) const {
-  x_err = x_err.array() / (absTol + relTol * (x_old.array().abs() + std::abs(dt) * dxdt_old.array().abs()));
-  return x_err.lpNorm<Eigen::Infinity>();
+scalar_t RungeKuttaDormandPrince5::error(const vector_t& x_old, const vector_t& dxdt_old, const vector_t& x_err, scalar_t dt,
+                                         scalar_t absTol, scalar_t relTol) const {
+  const vector_t err = x_err.array() / (absTol + relTol * (x_old.array().abs() + std::abs(dt) * dxdt_old.array().abs()));
+  return err.lpNorm<Eigen::Infinity>();
 }
 
 /******************************************************************************************************/

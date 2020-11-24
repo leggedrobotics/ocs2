@@ -33,6 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/*
+ * 5th order Runge Kutta Dormand-Prince (ode45) Integrator class
+ *
+ * The implementation is based on the boost odeint integrator with the controlled
+ * boost::numeric::odeint::runge_kutta_dopri5 stepper.
+ */
 class RungeKuttaDormandPrince5 : public IntegratorBase {
  public:
   explicit RungeKuttaDormandPrince5(std::shared_ptr<SystemEventHandler> eventHandlerPtr = nullptr)
@@ -85,25 +91,88 @@ class RungeKuttaDormandPrince5 : public IntegratorBase {
                          scalar_t dtInitial, scalar_t absTol, scalar_t relTol) override;
 
  private:
+  /**
+   * Try to perform one step. If the step is accepted, then state (x), derivative (dxdt), time (t) and step size (dt) are updated.
+   * Otherwise only the step size (dt) is updated and false is returned.
+   *
+   * @param [in] system: System function.
+   * @param [in,out] x: current state.
+   * @param [in,out] dxdt: current derivative wrt. time.
+   * @param [in,out] t: current time.
+   * @param [in,out] dt: step size.
+   * @param [in] absTol: The absolute tolerance error for ode solver.
+   * @param [in] relTol: The relative tolerance error for ode solver.
+   * @return true if the step is taken, false otherwise..
+   */
   bool tryStep(system_func_t& system, vector_t& x, vector_t& dxdt, scalar_t& t, scalar_t& dt, scalar_t absTol, scalar_t relTol);
 
+  /**
+   * Perform one Dormand-Prince step.
+   *
+   * @param [in] system: System function.
+   * @param [in] x0: current state.
+   * @param [in] dxdt: current derivative wrt. time.
+   * @param [in] t: current time.
+   * @param [in] dt: step size.
+   * @param [out] x_out: next state (can be same reference as x0).
+   * @param [out] dxdt_out: derivative at next state (can be same reference as dxdt).
+   */
   void doStep(system_func_t& system, const vector_t& x0, const vector_t& dxdt, scalar_t t, scalar_t dt, vector_t& x_out,
               vector_t& dxdt_out);
 
+  /**
+   * Perform one Dormand-Prince step and the error estimate.
+   *
+   * @param [in] system: System function.
+   * @param [in] x0: current state.
+   * @param [in] dxdt: current derivative wrt. time.
+   * @param [in] t: current time.
+   * @param [in] dt: step size.
+   * @param [out] x_out: next state (can be same reference as x0).
+   * @param [out] dxdt_out: derivative at next state (can be same reference as dxdt).
+   * @param [out] error: step error estimate.
+   */
   void doStep(system_func_t& system, const vector_t& x0, const vector_t& dxdt, scalar_t t, scalar_t dt, vector_t& x_out, vector_t& dxdt_out,
               vector_t& error);
 
+  /**
+   * Estimate the maximal error value.
+   *
+   * @param [in] x_old: prevoius state.
+   * @param [in] dxdt_old: prevoius derivative.
+   * @param [in] error: step error estimate.
+   * @param [in] dt: step size.
+   * @param [in] absTol: The absolute error tolerance.
+   * @param [in] relTol: The relative error tolerance.
+   * @return maximal error value.
+   */
+  scalar_t error(const vector_t& x_old, const vector_t& dxdt_old, const vector_t& x_err, scalar_t dt, scalar_t eps_abs,
+                 scalar_t eps_rel) const;
+
+  /**
+   * Decrease the step size
+   *
+   * @param [in] dt: step size.
+   * @param [in] error: maximal error.
+   * @return new step size dt.
+   */
   scalar_t decreaseStep(scalar_t dt, scalar_t error) const;
 
+  /**
+   * Increase the step size
+   *
+   * @param [in] dt: step size.
+   * @param [in] error: maximal error.
+   * @return new step size dt.
+   */
   scalar_t increaseStep(scalar_t dt, scalar_t error) const;
-
-  scalar_t error(const vector_t& x_old, const vector_t& dxdt_old, vector_t& x_err, scalar_t dt, scalar_t eps_abs, scalar_t eps_rel) const;
 
  private:
   const size_t MAX_STEP_RETRIES = 100;
 
-  // intermediate results
+  /** intermediate state during Runge-Kutta step. */
   vector_t x_;
+  /** intermediate derivatives during Runge-Kutta step. */
   vector_t k1_, k2_, k3_, k4_, k5_, k6_;
 };
 

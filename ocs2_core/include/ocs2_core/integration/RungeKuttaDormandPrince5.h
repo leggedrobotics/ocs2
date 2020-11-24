@@ -52,9 +52,7 @@ class RungeKuttaDormandPrince5 : public IntegratorBase {
    * @param [in] dt: Time step.
    */
   void runIntegrateConst(system_func_t system, observer_func_t observer, const vector_t& initialState, scalar_t startTime,
-                         scalar_t finalTime, scalar_t dt) override {
-    throw std::runtime_error("not implemented");
-  }
+                         scalar_t finalTime, scalar_t dt) override;
 
   /**
    * Adaptive time integration based on start time and final time.
@@ -89,18 +87,22 @@ class RungeKuttaDormandPrince5 : public IntegratorBase {
  private:
   bool tryStep(system_func_t& system, vector_t& x, vector_t& dxdt, scalar_t& t, scalar_t& dt, scalar_t absTol, scalar_t relTol);
 
+  void doStep(system_func_t& system, const vector_t& x0, const vector_t& dxdt, scalar_t t, scalar_t dt, vector_t& x_out,
+              vector_t& dxdt_out);
+
   void doStep(system_func_t& system, const vector_t& x0, const vector_t& dxdt, scalar_t t, scalar_t dt, vector_t& x_out, vector_t& dxdt_out,
               vector_t& error);
 
-  scalar_t decrease_step(scalar_t dt, scalar_t error) const;
+  scalar_t decreaseStep(scalar_t dt, scalar_t error) const;
 
-  scalar_t increase_step(scalar_t dt, scalar_t error) const;
+  scalar_t increaseStep(scalar_t dt, scalar_t error) const;
 
   scalar_t error(const vector_t& x_old, const vector_t& dxdt_old, vector_t& x_err, scalar_t dt, scalar_t eps_abs, scalar_t eps_rel) const;
 
  private:
   const size_t MAX_STEP_RETRIES = 100;
 
+  // intermediate results
   vector_t x_;
   vector_t k1_, k2_, k3_, k4_, k5_, k6_;
 };

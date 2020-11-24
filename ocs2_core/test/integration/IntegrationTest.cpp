@@ -101,6 +101,10 @@ TEST(IntegrationTest, SecondOrderSystem_ODE45) {
   testSecondOrderSystem(IntegratorType::ODE45);
 }
 
+TEST(IntegrationTest, SecondOrderSystem_ODE45_OCS2) {
+  testSecondOrderSystem(IntegratorType::ODE45_OCS2);
+}
+
 TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort) {
   testSecondOrderSystem(IntegratorType::ADAMS_BASHFORTH);
 }

@@ -178,7 +178,7 @@ LinearController LinearController::unFlatten(const size_array_t& stateDim, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearController::concatenate(const ControllerBase* nextController, int index, int length) {
-  if (auto nextLinCtrl = dynamic_cast<const LinearController*>(nextController)) {
+  if (const auto* nextLinCtrl = dynamic_cast<const LinearController*>(nextController)) {
     if (!timeStamp_.empty() && timeStamp_.back() > nextLinCtrl->timeStamp_.front()) {
       throw std::runtime_error("Concatenate requires that the nextController comes later in time.");
     }
@@ -191,6 +191,8 @@ void LinearController::concatenate(const ControllerBase* nextController, int ind
     if (last < nextLinCtrl->deltaBiasArray_.size()) {
       deltaBiasArray_.insert(deltaBiasArray_.end(), nextLinCtrl->deltaBiasArray_.begin() + index,
                              nextLinCtrl->deltaBiasArray_.begin() + last);
+    } else {
+      deltaBiasArray_.clear();
     }
   } else {
     throw std::runtime_error("Concatenate only works with controllers of the same type.");

@@ -7,6 +7,7 @@
 #include <ocs2_oc/oc_solver/Solver_BASE.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/constraint/ConstraintBase.h>
 
 #include <blasfeo_d_aux_ext_dep.h>
 extern "C"
@@ -28,6 +29,7 @@ namespace ocs2
     size_t nx;
     size_t nu;
     size_t sqpIteration;
+    bool constrained; // true for constrained systems, false for unconstrained systems
     bool printSolverStatus;
     bool printSolverStatistics;
     bool printPrimalSol;
@@ -40,7 +42,10 @@ namespace ocs2
     /**
    * Pass dynamics costs etc. See what you need.
    */
-    MultipleShootingSolver(MultipleShootingSolverSettings settings, const ocs2::SystemDynamicsBase *systemDynamicsPtr, const ocs2::CostFunctionBase *costFunctionPtr);
+    MultipleShootingSolver(MultipleShootingSolverSettings settings,
+                           const ocs2::SystemDynamicsBase *systemDynamicsPtr,
+                           const ocs2::CostFunctionBase *costFunctionPtr,
+                           const ocs2::ConstraintBase *constraintPtr);
 
     ~MultipleShootingSolver() override = default;
 
@@ -64,6 +69,19 @@ namespace ocs2
       }
     }
 
+    // self helper function
+    void printPrimalSolution()
+    {
+      std::cout << "getting primal solution \n";
+      for (int i = 0; i < settings_.N; i++)
+      {
+        std::cout << "time: " << primalSolution_.timeTrajectory_[i]
+                  << " state: " << primalSolution_.stateTrajectory_[i].transpose()
+                  << " input: " << primalSolution_.inputTrajectory_[i].transpose()
+                  << std::endl;
+      };
+    }
+
     // Maybe Ignore
     const PerformanceIndex &getPerformanceIndeces() const override { return performanceIndex_; }
     size_t getNumIterations() const override { return 1; }
@@ -81,8 +99,9 @@ namespace ocs2
     void runImpl(scalar_t initTime, const vector_t &initState, scalar_t finalTime, const scalar_array_t &partitioningTimes,
                  const std::vector<ControllerBase *> &controllersPtrStock) override { runImpl(initTime, initState, finalTime, partitioningTimes); }
 
-    std::tuple<matrix_t, matrix_t> runSingleIter(SystemDynamicsBase &systemDynamicsPtr,
-                                                 CostFunctionBase &costFunctionPtr,
+    std::tuple<matrix_t, matrix_t> runSingleIter(SystemDynamicsBase &systemDynamicsObj,
+                                                 CostFunctionBase &costFunctionObj,
+                                                 ConstraintBase &constraintObj,
                                                  scalar_t delta_t_,
                                                  scalar_t initTime,
                                                  const matrix_t &x,
@@ -92,6 +111,7 @@ namespace ocs2
     MultipleShootingSolverSettings settings_;
     std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
     std::unique_ptr<CostFunctionBase> costFunctionPtr_;
+    std::unique_ptr<ConstraintBase> constraintPtr_;
 
     PrimalSolution primalSolution_;
 

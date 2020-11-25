@@ -10,11 +10,14 @@
 namespace ocs2
 {
 
-  MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase *systemDynamicsPtr,
-                                                 const CostFunctionBase *costFunctionPtr)
+  MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings,
+                                                 const SystemDynamicsBase *systemDynamicsPtr,
+                                                 const CostFunctionBase *costFunctionPtr,
+                                                 const ConstraintBase *constraintPtr)
       : Solver_BASE(),
         systemDynamicsPtr_(systemDynamicsPtr->clone()),
         costFunctionPtr_(costFunctionPtr->clone()),
+        constraintPtr_(constraintPtr->clone()),
         settings_(std::move(settings))
   {
     std::cout << "creating multiple shooting solver\n";
@@ -28,7 +31,9 @@ namespace ocs2
     std::cout << "resetting\n";
   }
 
-  void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t &initState, scalar_t finalTime,
+  void MultipleShootingSolver::runImpl(scalar_t initTime,
+                                       const vector_t &initState,
+                                       scalar_t finalTime,
                                        const scalar_array_t &partitioningTimes)
   {
     // ignore partitioningTimes
@@ -63,7 +68,7 @@ namespace ocs2
       std::cout << "\n---------------sqp iteration " << i << "----------\n";
       auto startSqpTime = std::chrono::steady_clock::now();
       matrix_t delta_x, delta_u;
-      std::tie(delta_x, delta_u) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, delta_t_, initTime, x, u, initState);
+      std::tie(delta_x, delta_u) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, *constraintPtr_, delta_t_, initTime, x, u, initState);
       x += delta_x;
       u += delta_u;
       auto endSqpTime = std::chrono::steady_clock::now();
@@ -96,6 +101,7 @@ namespace ocs2
 
   std::tuple<matrix_t, matrix_t> MultipleShootingSolver::runSingleIter(SystemDynamicsBase &systemDynamicsObj,
                                                                        CostFunctionBase &costFunctionObj,
+                                                                       ConstraintBase &constraintObj,
                                                                        scalar_t delta_t_,
                                                                        scalar_t initTime,
                                                                        const matrix_t &x,
@@ -161,7 +167,14 @@ namespace ocs2
       nnxData[i] = n_state;
       nnbuData[i] = 0;
       nnbxData[i] = 0;
-      nngData[i] = 0;
+      if (settings_.constrained)
+      {
+        nngData[i] = 1; // temporarily settings for circular kinematics
+      }
+      else
+      {
+        nngData[i] = 0;
+      }
       nnsbxData[i] = 0;
       nnsbuData[i] = 0;
       nnsgData[i] = 0;
@@ -173,9 +186,8 @@ namespace ocs2
       ssl_guess[i] = sl_guess;
       ssu_guess[i] = su_guess;
     }
-
     nnuData[N] = 0;
-    nnxData[0] = 0;  // to ignore the bounding condition for x0
+    nnxData[0] = 0; // to ignore the bounding condition for x0
     int *nu = nnuData;
     int *nx = nnxData;
     int *nbu = nnbuData;
@@ -211,6 +223,19 @@ namespace ocs2
     q_data.resize(N + 1);
     r_data.resize(N);
 
+    scalar_t *CC[N + 1];
+    scalar_t *DD[N + 1];
+    scalar_t *llg[N + 1];
+    scalar_t *uug[N + 1];
+    matrix_array_t C_data;
+    matrix_array_t D_data;
+    matrix_array_t lg_data;
+    matrix_array_t ug_data;
+    C_data.resize(N + 1);
+    D_data.resize(N + 1);
+    lg_data.resize(N + 1);
+    ug_data.resize(N + 1);
+
     scalar_t operTime = initTime;
 
     for (int i = 0; i < N; i++)
@@ -239,6 +264,23 @@ namespace ocs2
       r_data[i] = delta_t_ * costFunctionApprox.dfdu;
       rr[i] = r_data[i].data();
 
+      if (settings_.constrained)
+      {
+        ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x.col(i), u.col(i));
+        // C*x + D*u + e = 0
+        // C = dfdx, D = dfdu, e = f
+        // for hpipm 
+        // ug >= C*x + D*u >= lg
+        C_data[i] = constraintApprox.dfdx; 
+        CC[i] = C_data[i].data();
+        D_data[i] = constraintApprox.dfdu;
+        DD[i] = D_data[i].data();
+        lg_data[i] = -constraintApprox.f;
+        llg[i] = lg_data[i].data();
+        ug_data[i] = -constraintApprox.f;
+        uug[i] = ug_data[i].data();
+      }
+
       operTime += delta_t_;
     }
 
@@ -247,17 +289,27 @@ namespace ocs2
     // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
     ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(N), u.col(N - 1));
     Q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
-    q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdx; // 10 is a customized number, subject to adjustment 
+    q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
     QQ[N] = Q_data[N].data();
     qq[N] = q_data[N].data();
 
     int *iidxbu[N + 1] = {};
     scalar_t *llbu[N + 1] = {};
     scalar_t *uubu[N + 1] = {};
-    scalar_t *CC[N + 1] = {};
-    scalar_t *DD[N + 1] = {};
-    scalar_t *llg[N + 1] = {};
-    scalar_t *uug[N + 1] = {};
+
+    if (settings_.constrained)
+    {
+      ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x.col(N), u.col(N - 1));
+      C_data[N] = constraintApprox.dfdx;
+      D_data[N] = constraintApprox.dfdu;
+      lg_data[N] = -constraintApprox.f;
+      ug_data[N] = -constraintApprox.f;
+      CC[N] = C_data[N].data();
+      DD[N] = D_data[N].data();
+      llg[N] = lg_data[N].data();
+      uug[N] = ug_data[N].data();
+    }
+
     scalar_t *ZZl[N + 1] = {};
     scalar_t *ZZu[N + 1] = {};
     scalar_t *zzl[N + 1] = {};
@@ -297,7 +349,7 @@ namespace ocs2
     scalar_t **hsl_guess = ssl_guess;
     scalar_t **hsu_guess = ssu_guess;
 
-    int iter_max = 30;
+    int iter_max = 50;
     scalar_t alpha_min = 1e-8;
     scalar_t mu0 = 1e4;
     scalar_t tol_stat = 1e-5;

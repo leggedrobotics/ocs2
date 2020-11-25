@@ -16,10 +16,11 @@ namespace ocs2
     MultipleShootingMpc(mpc::Settings mpcSettings,
                         MultipleShootingSolverSettings settings,
                         const ocs2::SystemDynamicsBase *systemDynamicsPtr,
-                        const ocs2::CostFunctionBase *costFunctionPtr)
+                        const ocs2::CostFunctionBase *costFunctionPtr,
+                        const ocs2::ConstraintBase *constraintPtr)
         : MPC_BASE(std::move(mpcSettings))
     {
-      solverPtr_.reset(new ocs2::MultipleShootingSolver(settings, systemDynamicsPtr, costFunctionPtr));
+      solverPtr_.reset(new ocs2::MultipleShootingSolver(settings, systemDynamicsPtr, costFunctionPtr, constraintPtr));
       std::cout << "creating multiple shooting mpc\n";
     };
 
@@ -32,11 +33,11 @@ namespace ocs2
     void calculateController(scalar_t initTime, const vector_t &initState, scalar_t finalTime)
     {
       // Hopefully this is enough
-      scalar_array_t partitioningTimes = {0.0};
+      ocs2::scalar_array_t partitioningTimes = {0.0};
       solverPtr_->run(initTime, initState, finalTime, partitioningTimes);
     }
 
   private:
-    std::unique_ptr<MultipleShootingSolver> solverPtr_;
+    std::unique_ptr<ocs2::MultipleShootingSolver> solverPtr_;
   };
 } // namespace ocs2

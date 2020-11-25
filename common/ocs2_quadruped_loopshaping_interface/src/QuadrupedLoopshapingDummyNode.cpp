@@ -4,12 +4,15 @@
 
 #include "ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingDummyNode.h"
 
+#include <ocs2_ros_interfaces/mrt/LoopshapingDummyObserver.h>
+
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingVisualizer.h>
+#include <ocs2_quadruped_interface/QuadrupedLogger.h>
+#include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
 
 namespace switched_model_loopshaping {
 
@@ -23,14 +26,21 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::unique_ptr<switched_model::QuadrupedVisualizer> visualizer(
-      new switched_model::QuadrupedVisualizer(quadrupedInterface.getKinematicModel(), quadrupedInterface.getComModel(), nodeHandle));
-  auto loopshapingVisualizer =
-      std::make_shared<QuadrupedLoopshapingVisualizer>(quadrupedInterface.getLoopshapingDefinition(), std::move(visualizer));
+  auto visualizer = std::make_shared<switched_model::QuadrupedVisualizer>(quadrupedInterface.getKinematicModel(),
+                                                                          quadrupedInterface.getComModel(), nodeHandle);
+
+  // Logging
+  std::string logFileName = "/tmp/ocs2/QuadrupedLoopshapingDummyNodeLog.txt";
+  auto logger = std::make_shared<switched_model::QuadrupedLogger>(logFileName, quadrupedInterface.getKinematicModel(),
+                                                                  quadrupedInterface.getComModel());
+
+  // Loopshaping observer wrappers
+  std::vector<std::shared_ptr<ocs2::DummyObserver>> observers{visualizer, logger};
+  auto loopshapingObservers = std::make_shared<ocs2::LoopshapingDummyObserver>(quadrupedInterface.getLoopshapingDefinition(), observers);
 
   // Dummy MRT
   ocs2::MRT_ROS_Dummy_Loop dummySimulator(mrt, mrtDesiredFrequency, mpcDesiredFrequency);
-  dummySimulator.subscribeObservers({loopshapingVisualizer});
+  dummySimulator.subscribeObservers({loopshapingObservers});
 
   // initial state
   ocs2::SystemObservation initObservation;

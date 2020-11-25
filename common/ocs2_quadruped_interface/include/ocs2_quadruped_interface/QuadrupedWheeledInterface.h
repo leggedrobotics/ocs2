@@ -40,6 +40,8 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
 
   const cost_function_t& getCost() const override { return *costFunctionPtr_; }
 
+  const ocs2::QuadraticCostFunction* getTerminalCostPtr() const override { return terminalCostFunctionPtr_.get(); }
+
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
   const operating_point_t& getOperatingPoints() const override { return *operatingPointsPtr_; }
@@ -48,6 +50,7 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
   std::unique_ptr<constraint_t> constraintsPtr_;
   std::unique_ptr<cost_function_t> costFunctionPtr_;
+  std::unique_ptr<ocs2::QuadraticCostFunction> terminalCostFunctionPtr_;
   std::unique_ptr<operating_point_t> operatingPointsPtr_;
   std::unique_ptr<time_triggered_rollout_t> timeTriggeredRolloutPtr_;
   synchronized_module_ptr_array_t solverModules_;

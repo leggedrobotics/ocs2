@@ -14,7 +14,8 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   input_matrix_t R;
   state_matrix_t Qfinal;
   std::tie(Q, R, Qfinal) = loadCostMatrices(pathToConfigFolder + "/task.info", getKinematicModel(), getInitialState());
-  costFunctionPtr_.reset(new SwitchedModelCostBase(getComModel(), *getSwitchedModelModeScheduleManagerPtr(), Q, R, Qfinal));
+  costFunctionPtr_.reset(new SwitchedModelCostBase(getComModel(), *getSwitchedModelModeScheduleManagerPtr(), Q, R));
+  terminalCostFunctionPtr_.reset(new ocs2::QuadraticCostFunction(ocs2::matrix_t(), ocs2::matrix_t(), Qfinal));
 
   dynamicsPtr_.reset(new ComKinoSystemDynamicsAd(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
   constraintsPtr_.reset(new ComKinoConstraintBaseAd(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),

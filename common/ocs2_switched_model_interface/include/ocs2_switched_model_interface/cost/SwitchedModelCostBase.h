@@ -21,7 +21,7 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
 
   //! Constructor
   SwitchedModelCostBase(const com_model_t& comModel, const SwitchedModelModeScheduleManager& modeScheduleManager, const state_matrix_t& Q,
-                        const input_matrix_t& R, const state_matrix_t& QFinal);
+                        const input_matrix_t& R);
 
   //! Destructor
   ~SwitchedModelCostBase() override = default;

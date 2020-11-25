@@ -34,6 +34,8 @@ class QuadrupedPointfootInterface : public QuadrupedInterface {
 
   const SwitchedModelCostBase& getCost() const override { return *costFunctionPtr_; }
 
+  const ocs2::QuadraticCostFunction* getTerminalCostPtr() const override { return terminalCostFunctionPtr_.get(); }
+
   const ComKinoConstraintBaseAd* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
   const ComKinoOperatingPointsBase& getOperatingPoints() const override { return *operatingPointsPtr_; }
@@ -42,6 +44,7 @@ class QuadrupedPointfootInterface : public QuadrupedInterface {
   std::unique_ptr<ComKinoSystemDynamicsAd> dynamicsPtr_;
   std::unique_ptr<ComKinoConstraintBaseAd> constraintsPtr_;
   std::unique_ptr<SwitchedModelCostBase> costFunctionPtr_;
+  std::unique_ptr<ocs2::QuadraticCostFunction> terminalCostFunctionPtr_;
   std::unique_ptr<ComKinoOperatingPointsBase> operatingPointsPtr_;
   std::unique_ptr<ocs2::TimeTriggeredRollout> timeTriggeredRolloutPtr_;
   synchronized_module_ptr_array_t solverModules_;

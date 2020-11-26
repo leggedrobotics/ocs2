@@ -120,6 +120,8 @@ add_library(${PROJECT_NAME}
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
   src/misc/Log.cpp
+  src/soft_constraint/SoftConstraintPenaltyBase.cpp
+  src/soft_constraint/RelaxedBarrierSoftConstraint.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

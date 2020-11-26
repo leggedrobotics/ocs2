@@ -51,7 +51,8 @@ class StateInputSoftConstraint : public StateInputCost {
 
   ~StateInputSoftConstraint() override = default;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& /* desiredTrajectory */) const override {
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                    const CostDesiredTrajectories& /* desiredTrajectory */) const override {
     return penaltyPtr_->getValue(constraintPtr_->getValue(time, state, input));
   }
 

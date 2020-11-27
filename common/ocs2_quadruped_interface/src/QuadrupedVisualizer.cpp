@@ -208,8 +208,8 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 
   for (size_t j = 0; j < stateTrajectory.size(); j++) {
     const auto state = stateTrajectory.at(j);
-    joint_coordinate_t input;
-    if (j < stateTrajectory.size()) {
+    vector_t input;
+    if (j < inputTrajectory.size()) {
       input = inputTrajectory.at(j);
     }
 

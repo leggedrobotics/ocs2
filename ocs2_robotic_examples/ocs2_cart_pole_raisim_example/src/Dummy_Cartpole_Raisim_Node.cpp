@@ -41,11 +41,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_cart_pole_example/ros_comm/CartpoleDummyVisualization.h>
 #include <ocs2_cart_pole_raisim_example/CartpoleRaisimConversions.h>
 
-inline std::string getActivationKey() {
+inline std::string getRaisimActivationKey() {
   if (char* envPath = getenv("WORKSPACE")) {
     return std::string(envPath) + "/activation.raisim";
   } else {
-    throw std::runtime_error("Could not find environment variable for $WORKSPACE/activation.raisim license key.");
+    return "/usr/share/raisim/activation.raisim";
   }
 }
 
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
   // Robot interface
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
-  raisim::World::setActivationKey(getActivationKey());
+  raisim::World::setActivationKey(getRaisimActivationKey());
 
   // setup simulator rollouts
   std::unique_ptr<ocs2::RaisimRollout> simRollout(new ocs2::RaisimRollout(

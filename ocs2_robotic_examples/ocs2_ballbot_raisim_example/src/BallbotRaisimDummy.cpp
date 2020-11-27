@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <cstdlib>
+
 #include <ros/init.h>
 #include <ros/package.h>
 
@@ -38,6 +40,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+
+inline std::string getRaisimActivationKey() {
+  if (char* envPath = getenv("WORKSPACE")) {
+    return std::string(envPath) + "/activation.raisim";
+  } else {
+    return "/usr/share/raisim/activation.raisim";
+  }
+}
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "ballbot";
@@ -63,6 +73,8 @@ int main(int argc, char* argv[]) {
   if (!ros::param::get(urdfParamName, urdf)) {
     throw ros::Exception("Error reading urdf from parameter server: " + urdfParamName);
   }
+
+  raisim::World::setActivationKey(getRaisimActivationKey());
 
   // setup raisim rollout
   ocs2::RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_ballbot_raisim_example") + "/config/raisim_rollout.info",

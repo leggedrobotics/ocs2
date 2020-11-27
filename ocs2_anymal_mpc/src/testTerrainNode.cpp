@@ -42,8 +42,8 @@ int main(int argc, char* argv[]) {
 
   auto regionPublisher_ =
       nodeHandle.advertise<convex_plane_decomposition_msgs::PlanarTerrain>("/convex_plane_decomposition_ros/planar_terrain", 1);
-  auto boundaryPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("boundaries", 1);
-  auto insetPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("insets", 1);
+  auto boundaryPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("/convex_plane_decomposition_ros/boundaries", 1);
+  auto insetPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("/convex_plane_decomposition_ros/insets", 1);
 
   const double spacingRadius = 0.5;
   const double hexRadius = 0.4;

@@ -29,18 +29,10 @@ installed in /opt/hpipm/, having folders /lib, /include, /cmake
 you may need to set the variable 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/blasfeo/lib
 
-Update on 2020-11-10 night: 
+Some useful commands for catkin: 
+1. below is for different build types 
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Debug
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 
-1. The current code can be compiled with both 
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Debug and
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release But it only runs in Debug mode, not in the Release mode. 
-I am still looking for the reason. 
-In debug mode, one can run "roslaunch ocs2_sqp ballbot.launch"
-
-2. I don't know how to access the user-defined desired final state of ballbot x_g = (x_pos, y_pos, yaw).
-I suppose L = 1/2 (x-x_g)' * Q * (x-x_g), so the linearization of L should return Q*(x-x_g), but it seems not to be the case now. 
-So I manually add a term in the hpipm setting "qq". It can somehow move to the goal (1,1) manually set by me. 
-However, I still add a final state cost x'Qx which plays against it. So it will diverge after a while. 
-
-3. How to use the final stage cost? The Q_final is typically zero. Shall I just ignore it? 
-Do the final stage cost also have linearization version? 
+2. below is for building tests 
+catkin build --make-args tests -- my_package1 my_package2

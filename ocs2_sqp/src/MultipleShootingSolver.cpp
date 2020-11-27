@@ -47,8 +47,12 @@ namespace ocs2
     matrix_t u(settings_.nu, settings_.N);
     if (!settings_.initPrimalSol)
     {
-      x = matrix_t::Random(settings_.nx, settings_.N + 1);
-      u = matrix_t::Random(settings_.nu, settings_.N);
+      // x = matrix_t::Random(settings_.nx, settings_.N + 1);
+      for (int i = 0; i < settings_.N + 1; i++)
+      {
+        x.col(i) << 1.0, 0.0;
+      }
+      u = matrix_t::Zero(settings_.nu, settings_.N);
       std::cout << "using random init\n";
     }
     else
@@ -71,6 +75,10 @@ namespace ocs2
       std::tie(delta_x, delta_u) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, *constraintPtr_, delta_t_, initTime, x, u, initState);
       x += delta_x;
       u += delta_u;
+      std::cout << "state: " << std::endl
+                << x.transpose() << std::endl;
+      std::cout << "input: " << std::endl
+                << u.transpose() << std::endl;
       auto endSqpTime = std::chrono::steady_clock::now();
       auto sqpIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSqpTime - startSqpTime);
       scalar_t sqpTime = std::chrono::duration<scalar_t, std::milli>(sqpIntervalTime).count();
@@ -269,9 +277,9 @@ namespace ocs2
         ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x.col(i), u.col(i));
         // C*x + D*u + e = 0
         // C = dfdx, D = dfdu, e = f
-        // for hpipm 
+        // for hpipm
         // ug >= C*x + D*u >= lg
-        C_data[i] = constraintApprox.dfdx; 
+        C_data[i] = constraintApprox.dfdx;
         CC[i] = C_data[i].data();
         D_data[i] = constraintApprox.dfdu;
         DD[i] = D_data[i].data();

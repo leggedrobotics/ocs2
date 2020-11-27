@@ -79,7 +79,7 @@ namespace ocs2
                   << " state: " << primalSolution_.stateTrajectory_[i].transpose()
                   << " input: " << primalSolution_.inputTrajectory_[i].transpose()
                   << std::endl;
-      };
+      }
     }
 
     // Maybe Ignore

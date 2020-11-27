@@ -40,13 +40,14 @@ namespace ocs2 {
 enum class ConstraintOrder { Linear, Quadratic };
 
 /**
- *   Implements the cost penalty for the inequality constraint
- *   \f$ h_i(x, u) \geq 0 \quad \forall  i \in [1,..,M] \f$
+ *   A helper class that implements the cost penalty for general constraint
+ *   \f$ h_i(x, u) \quad \forall  i \in [1,..,M] \f$
  *
  *   penalty = \f$ \sum_{i=1}^{M} p(h_i(x, u)) \f$
  *
- *   The scalar penalty function \f$ p() \f$ and its derivatives are to be implemented in the derived class.
- *   This base class implements the chain rule from the inequality constraint and the implemented penalty function.
+ *   This class uses the chain rule to compute the second-order approximation of the constraint-penalty. In the case that the
+ *   second-order approximation of constraint is not provided, it employs a Gauss-Newton approximation technique which only
+ *   relies on the first-order approximation.
  */
 class SoftConstraintPenalty {
  public:

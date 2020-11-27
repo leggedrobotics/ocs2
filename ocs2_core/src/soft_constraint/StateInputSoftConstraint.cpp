@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,55 +27,58 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/RelaxedBarrierSoftConstraint.h>
+#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const RelaxedBarrierPenaltyConfig& RelaxedBarrierSoftConstraint::getConfg(size_t i) const {
-  if (configArray_.size() == 1) {
-    return configArray_.front();
-  } else {
-    return configArray_.at(i);
+StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr,
+                                                   std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray,
+                                                   ConstraintOrder constraintOrder)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyFunctionPtrArray)), constraintOrder_(constraintOrder) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, size_t numConstraints,
+                                                   std::unique_ptr<PenaltyFunctionBase> penaltyFunction, ConstraintOrder constraintOrder)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)), constraintOrder_(constraintOrder) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputSoftConstraint::StateInputSoftConstraint(const StateInputSoftConstraint& other)
+    : constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_), constraintOrder_(other.constraintOrder_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputSoftConstraint* StateInputSoftConstraint::clone() const {
+  return new StateInputSoftConstraint(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                            const CostDesiredTrajectories&) const {
+  return penalty_.getValue(constraintPtr_->getValue(time, state, input));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation StateInputSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                         const vector_t& input,
+                                                                                         const CostDesiredTrajectories&) const {
+  switch (constraintOrder_) {
+    case ConstraintOrder::Linear:
+      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, input));
+    case ConstraintOrder::Quadratic:
+      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, input));
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t RelaxedBarrierSoftConstraint::getPenaltyValue(size_t i, scalar_t h) const {
-  const auto& config = getConfg(i);
-  if (h > config.delta) {
-    return -config.mu * log(h);
-  } else {
-    return config.mu * (-log(config.delta) + scalar_t(0.5) * pow((h - 2.0 * config.delta) / config.delta, 2.0) - scalar_t(0.5));
-  };
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t RelaxedBarrierSoftConstraint::getPenaltyDerivative(size_t i, scalar_t h) const {
-  const auto& config = getConfg(i);
-  if (h > config.delta) {
-    return -config.mu / h;
-  } else {
-    return config.mu * ((h - 2.0 * config.delta) / (config.delta * config.delta));
-  };
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t RelaxedBarrierSoftConstraint::getPenaltySecondDerivative(size_t i, scalar_t h) const {
-  const auto& config = getConfg(i);
-  if (h > config.delta) {
-    return config.mu / (h * h);
-  } else {
-    return config.mu / (config.delta * config.delta);
-  };
 }
 
 }  // namespace ocs2

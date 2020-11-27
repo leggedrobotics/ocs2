@@ -29,7 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iterator>
+#include <memory>
+
 #include <ocs2_core/Types.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
 
 namespace ocs2 {
 
@@ -44,13 +48,26 @@ enum class ConstraintOrder { Linear, Quadratic };
  *   The scalar penalty function \f$ p() \f$ and its derivatives are to be implemented in the derived class.
  *   This base class implements the chain rule from the inequality constraint and the implemented penalty function.
  */
-class SoftConstraintPenaltyBase {
+class SoftConstraintPenalty {
  public:
-  /** Default constructor */
-  SoftConstraintPenaltyBase() = default;
+  /**
+   * Constructor
+   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
+   */
+  SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray);
+
+  /**
+   * Constructor
+   * @param [in] numConstraints: The number of constraints.
+   * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
+   */
+  SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr);
 
   /** Default destructor */
-  virtual ~SoftConstraintPenaltyBase() = default;
+  virtual ~SoftConstraintPenalty() = default;
+
+  /** copy constructor */
+  SoftConstraintPenalty(const SoftConstraintPenalty& other);
 
   /**
    * Get the penalty cost.
@@ -79,32 +96,7 @@ class SoftConstraintPenaltyBase {
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const;
 
  private:
-  /**
-   * Compute the penalty value at a certain constraint value.
-   *
-   * @param [in] i: The index of the constraint in the constraint vector.
-   * @param [in] h: Constraint value.
-   * @return penalty cost.
-   */
-  virtual scalar_t getPenaltyValue(size_t i, scalar_t h) const = 0;
-
-  /**
-   * Compute the penalty derivative at a certain constraint value.
-   *
-   * @param [in] i: The index of the constraint in the constraint vector.
-   * @param [in] h: Constraint value.
-   * @return penalty derivative with respect to constraint value.
-   */
-  virtual scalar_t getPenaltyDerivative(size_t i, scalar_t h) const = 0;
-
-  /**
-   * Compute the penalty second derivative at a certain constraint value.
-   *
-   * @param [in] i: The index of the constraint in the constraint vector.
-   * @param [in] h: Constraint value.
-   * @return penalty second derivative with respect to constraint value.
-   */
-  virtual scalar_t getPenaltySecondDerivative(size_t i, scalar_t h) const = 0;
+  std::vector<std::shared_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray_;
 };
 
 }  // namespace ocs2

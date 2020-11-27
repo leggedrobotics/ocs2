@@ -34,41 +34,46 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/StateConstraint.h>
 #include <ocs2_core/cost/StateCost.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenaltyBase.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 namespace ocs2 {
 
-class StateSoftConstraint : public StateCost {
+class StateSoftConstraint final : public StateCost {
  public:
   /**
    * Constructor.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyPtr: A pointer to the penalty function on the constraint.
+   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
    * @param [in] constraintOrder: The order of constraint's approximation.
    */
-  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::unique_ptr<SoftConstraintPenaltyBase> penaltyPtr,
-                      ConstraintOrder constraintOrder = ConstraintOrder::Quadratic)
-      : constraintPtr_(std::move(constraintPtr)), penaltyPtr_(std::move(penaltyPtr)), constraintOrder_(constraintOrder) {}
+  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr,
+                      std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray,
+                      ConstraintOrder constraintOrder = ConstraintOrder::Quadratic);
+
+  /**
+   * Constructor.
+   * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
+   * @param [in] numConstraints: The number of constraints.
+   * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
+   * @param [in] constraintOrder: The order of constraint's approximation.
+   */
+  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints,
+                      std::unique_ptr<PenaltyFunctionBase> penaltyFunction, ConstraintOrder constraintOrder = ConstraintOrder::Quadratic);
 
   ~StateSoftConstraint() override = default;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& /* desiredTrajectory */) const override {
-    return penaltyPtr_->getValue(constraintPtr_->getValue(time, state));
-  }
+  StateSoftConstraint* clone() const override;
+
+  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& /* desiredTrajectory */) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& /* desiredTrajectory */) const override {
-    switch (constraintOrder_) {
-      case ConstraintOrder::Linear:
-        return penaltyPtr_->getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));
-      case ConstraintOrder::Quadratic:
-        return penaltyPtr_->getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state));
-    }
-  }
+                                                                 const CostDesiredTrajectories& /* desiredTrajectory */) const override;
 
  private:
+  StateSoftConstraint(const StateSoftConstraint& other);
+
   std::unique_ptr<StateConstraint> constraintPtr_;
-  std::unique_ptr<SoftConstraintPenaltyBase> penaltyPtr_;
+  SoftConstraintPenalty penalty_;
   ConstraintOrder constraintOrder_;
 };
 

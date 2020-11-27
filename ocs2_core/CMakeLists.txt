@@ -120,8 +120,10 @@ add_library(${PROJECT_NAME}
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
   src/misc/Log.cpp
-  src/soft_constraint/SoftConstraintPenaltyBase.cpp
-  src/soft_constraint/RelaxedBarrierSoftConstraint.cpp
+  src/soft_constraint/SoftConstraintPenalty.cpp
+  src/soft_constraint/StateSoftConstraint.cpp
+  src/soft_constraint/StateInputSoftConstraint.cpp
+  src/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -318,6 +320,16 @@ catkin_add_gtest(test_Logging
   test/misc/testLogging.cpp
 )
 target_link_libraries(test_Logging
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_softConstraint
+  test/soft_constraint/testSoftConstraint.cpp
+)
+target_link_libraries(test_softConstraint
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

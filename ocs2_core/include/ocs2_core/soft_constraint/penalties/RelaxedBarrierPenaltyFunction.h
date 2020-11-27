@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/soft_constraint/SoftConstraintPenaltyBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
 
 namespace ocs2 {
 
@@ -57,31 +57,27 @@ struct RelaxedBarrierPenaltyConfig {
  *
  * where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
  */
-class RelaxedBarrierSoftConstraint final : public SoftConstraintPenaltyBase {
+class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
  public:
   /**
    * Constructior
    * @param [in] config: Configuration object containing mu and delta.
    */
-  explicit RelaxedBarrierSoftConstraint(const RelaxedBarrierPenaltyConfig& config) : configArray_({config}) {}
-
-  /**
-   * Constructior
-   * @param [in] configArray: Array with configuration objects containing mu and delta.
-   */
-  explicit RelaxedBarrierSoftConstraint(std::vector<RelaxedBarrierPenaltyConfig> configArray) : configArray_(std::move(configArray)) {}
+  explicit RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyConfig config) : config_(std::move(config)) {}
 
   /** Default destructor */
-  virtual ~RelaxedBarrierSoftConstraint() = default;
+  ~RelaxedBarrierPenaltyFunction() override = default;
+
+  RelaxedBarrierPenaltyFunction* clone() const override { return new RelaxedBarrierPenaltyFunction(*this); }
+
+  scalar_t getValue(scalar_t h) const override;
+  scalar_t getDerivative(scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  std::vector<RelaxedBarrierPenaltyConfig> configArray_;
+  RelaxedBarrierPenaltyFunction(const RelaxedBarrierPenaltyFunction& other) = default;
 
-  const RelaxedBarrierPenaltyConfig& getConfg(size_t i) const;
-
-  scalar_t getPenaltyValue(size_t i, scalar_t h) const override;
-  scalar_t getPenaltyDerivative(size_t i, scalar_t h) const override;
-  scalar_t getPenaltySecondDerivative(size_t i, scalar_t h) const override;
+  RelaxedBarrierPenaltyConfig config_;
 };
 
 }  // namespace ocs2

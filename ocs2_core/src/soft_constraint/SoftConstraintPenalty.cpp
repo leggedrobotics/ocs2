@@ -27,17 +27,56 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/SoftConstraintPenaltyBase.h>
+#include <cassert>
+
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SoftConstraintPenaltyBase::getValue(const vector_t& h) const {
+SoftConstraintPenalty::SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray)
+    : penaltyFunctionPtrArray_(std::make_move_iterator(penaltyFunctionPtrArray.begin()),
+                               std::make_move_iterator(penaltyFunctionPtrArray.end())) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SoftConstraintPenalty::SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr)
+    : penaltyFunctionPtrArray_(numConstraints, std::move(penaltyFunctionPtr)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SoftConstraintPenalty::SoftConstraintPenalty(const SoftConstraintPenalty& other) {
+  if (other.penaltyFunctionPtrArray_.empty()) {
+    return;
+  }
+
+  const size_t numConstraints = other.penaltyFunctionPtrArray_.size();
+  if (other.penaltyFunctionPtrArray_.front() == other.penaltyFunctionPtrArray_.back()) {
+    // single penalty function
+    std::shared_ptr<PenaltyFunctionBase> tempPtr(other.penaltyFunctionPtrArray_.front()->clone());
+    penaltyFunctionPtrArray_.assign(numConstraints, tempPtr);
+
+  } else {
+    // multiple penalty function
+    for (size_t i = 0; i < numConstraints; i++) {
+      penaltyFunctionPtrArray_.emplace_back(other.penaltyFunctionPtrArray_[i]->clone());
+    }  // end of i loop
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SoftConstraintPenalty::getValue(const vector_t& h) const {
+  const auto numInequalityConstraints = h.rows();
+  assert(penaltyFunctionPtrArray_.size() == numInequalityConstraints);
   scalar_t penalty = 0;
-  for (size_t i = 0; i < h.rows(); i++) {
-    penalty += getPenaltyValue(i, h(i));
+  for (size_t i = 0; i < numInequalityConstraints; i++) {
+    penalty += penaltyFunctionPtrArray_[i]->getValue(h(i));
   }
   return penalty;
 }
@@ -45,9 +84,9 @@ scalar_t SoftConstraintPenaltyBase::getValue(const vector_t& h) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation SoftConstraintPenaltyBase::getQuadraticApproximation(
-    const VectorFunctionLinearApproximation& h) const {
+ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproximation(const VectorFunctionLinearApproximation& h) const {
   const auto numInequalityConstraints = h.f.rows();
+  assert(penaltyFunctionPtrArray_.size() == numInequalityConstraints);
   const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
 
@@ -56,10 +95,10 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenaltyBase::getQuadraticAppr
   vector_t penaltyDerivative(numInequalityConstraints);
   vector_t penaltySecondDerivative(numInequalityConstraints);
   for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltyDerivative(i) = getPenaltyDerivative(i, h.f(i));
-    penaltySecondDerivative(i) = getPenaltySecondDerivative(i, h.f(i));
+    penaltyDerivative(i) = penaltyFunctionPtrArray_[i]->getDerivative(h.f(i));
+    penaltySecondDerivative(i) = penaltyFunctionPtrArray_[i]->getSecondDerivative(h.f(i));
 
-    penaltyApproximation.f += getPenaltyValue(i, h.f(i));
+    penaltyApproximation.f += penaltyFunctionPtrArray_[i]->getValue(h.f(i));
   }  // end of i loop
 
   penaltyApproximation.dfdx = h.dfdx.transpose() * penaltyDerivative;
@@ -76,9 +115,9 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenaltyBase::getQuadraticAppr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation SoftConstraintPenaltyBase::getQuadraticApproximation(
-    const VectorFunctionQuadraticApproximation& h) const {
+ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const {
   const auto numInequalityConstraints = h.f.rows();
+  assert(penaltyFunctionPtrArray_.size() == numInequalityConstraints);
   const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
 
@@ -88,10 +127,10 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenaltyBase::getQuadraticAppr
   vector_t penaltyDerivative(numInequalityConstraints);
   vector_t penaltySecondDerivative(numInequalityConstraints);
   for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltyDerivative(i) = getPenaltyDerivative(i, h.f(i));
-    penaltySecondDerivative(i) = getPenaltySecondDerivative(i, h.f(i));
+    penaltyDerivative(i) = penaltyFunctionPtrArray_[i]->getDerivative(h.f(i));
+    penaltySecondDerivative(i) = penaltyFunctionPtrArray_[i]->getSecondDerivative(h.f(i));
 
-    penalty.f += getPenaltyValue(i, h.f(i));
+    penalty.f += penaltyFunctionPtrArray_[i]->getValue(h.f(i));
     penalty.dfdxx.noalias() += penaltyDerivative(i) * h.dfdxx[i];
     penalty.dfduu.noalias() += penaltyDerivative(i) * h.dfduu[i];
     penalty.dfdux.noalias() += penaltyDerivative(i) * h.dfdux[i];

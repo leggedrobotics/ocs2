@@ -1,5 +1,3 @@
-#include <cstdlib>
-
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
@@ -15,14 +13,6 @@ using vector_t = ocs2::vector_t;
 using scalar_array_t = ocs2::scalar_array_t;
 using size_array_t = ocs2::size_array_t;
 using vector_array_t = ocs2::vector_array_t;
-
-inline std::string getRaisimActivationKey() {
-  if (char* envPath = getenv("WORKSPACE")) {
-    return std::string(envPath) + "/activation.raisim";
-  } else {
-    return "/usr/share/raisim/activation.raisim";
-  }
-}
 
 TEST(ocs2_cart_pole_raisim_example, ConversionsConsistency) {
   vector_t ocs2_state;
@@ -66,7 +56,7 @@ TEST(ocs2_cart_pole_raisim_example, RolloutTest) {
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
 
-  raisim::World::setActivationKey(getRaisimActivationKey());
+  raisim::World::setActivationKey(ocs2::getRaisimActivationKey());
 
   ocs2::RaisimRollout rollout(ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf",
                               &ocs2::cartpole::stateToRaisimGenCoordGenVel, &ocs2::cartpole::raisimGenCoordGenVelToState,

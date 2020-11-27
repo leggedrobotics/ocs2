@@ -23,6 +23,11 @@ struct TerrainPlane {
       : positionInWorld(std::move(positionInWorld_)), orientationWorldToTerrain(std::move(orientationWorldToTerrain_)) {}
 };
 
+struct NormalAndPosition {
+  vector3_t normal;
+  vector3_t position;
+};
+
 /** Returns the surface normal = z-axis of the terrain, the unit vector is represented in the world frame*/
 inline vector3_t surfaceNormalInWorld(const TerrainPlane& terrainPlane) {
   return terrainPlane.orientationWorldToTerrain.row(2).transpose();

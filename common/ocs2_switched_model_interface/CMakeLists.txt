@@ -61,6 +61,7 @@ add_library(${PROJECT_NAME}
 	src/logic/SwitchedModelModeScheduleManager.cpp
 	src/ros_msg_conversions/RosMsgConversions.cpp
 	src/terrain/PlanarTerrainModel.cpp
+	src/terrain/PlaneFitting.cpp
 	src/terrain/TerrainPlane.cpp
 	src/visualization/Colors.cpp
 	src/visualization/VisualizationHelpers.cpp

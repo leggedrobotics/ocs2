@@ -35,9 +35,11 @@ class SwingTrajectoryPlanner {
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
                          const KinematicsModelBase<scalar_t>& kinematicsModel, const joint_coordinate_t& nominalJointPositions);
 
-  void update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-              const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
-              const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg, const TerrainModel& terrainModel);
+  void updateTerrain(std::unique_ptr<TerrainModel> terrainModel);
+
+  void updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
+                          const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+                          const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg);
 
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
 
@@ -62,7 +64,7 @@ class SwingTrajectoryPlanner {
   feet_array_t<vector3_t> nominalConfigurationBaseToFootInBaseFrame_;
 
   feet_array_t<std::vector<ConvexTerrain>> nominalFootholdsPerLeg_;
-  std::unique_ptr<SignedDistanceField> signedDistanceField_;
+  std::unique_ptr<TerrainModel> terrainModel_;
 };
 
 }  // namespace switched_model

@@ -14,36 +14,34 @@ namespace switched_model {
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
                                                const KinematicsModelBase<scalar_t>& kinematicsModel,
                                                const joint_coordinate_t& nominalJointPositions)
-    : settings_(std::move(settings)),
-      comModel_(comModel.clone()),
-      kinematicsModel_(kinematicsModel.clone()),
-      signedDistanceField_(nullptr) {
+    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {
   nominalConfigurationBaseToFootInBaseFrame_ = kinematicsModel_->positionBaseToFeetInBaseFrame(nominalJointPositions);
 }
 
-void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                                    const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
-                                    const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg,
-                                    const TerrainModel& terrainModel) {
+void SwingTrajectoryPlanner::updateTerrain(std::unique_ptr<TerrainModel> terrainModel) {
+  terrainModel_ = std::move(terrainModel);
+}
+
+void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
+                                                const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+                                                const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg) {
+  if (!terrainModel_) {
+    throw std::runtime_error("[SwingTrajectoryPlanner] terrain cannot be null. Update the terrain before planning swing motions");
+  }
+
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
-
-  // Copy the signed distance field if there is one
-  const auto* const sdfPtr = terrainModel.getSignedDistanceField();
-  if (sdfPtr != nullptr) {
-    signedDistanceField_.reset(sdfPtr->clone());
-  }
 
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
     const auto& contactTimings = contactTimingsPerLeg[leg];
 
     // Update last contacts if this leg is ever in contact
     if (!contactTimings.empty() && startsWithStancePhase(contactTimings)) {
-      updateLastContact(leg, contactTimings.front().end, feetPositions[leg], terrainModel);
+      updateLastContact(leg, contactTimings.front().end, feetPositions[leg], *terrainModel_);
     }
 
     // Nominal footholds / terrain planes
-    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, costDesiredTrajectories, finalTime, terrainModel);
+    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, costDesiredTrajectories, finalTime, *terrainModel_);
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
@@ -75,7 +73,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
     footPhases.emplace_back(
-        new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, signedDistanceField_.get(), settings_.errorGain));
+        new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(), settings_.errorGain));
   }
 
   // Loop through contact phases
@@ -110,8 +108,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       liftOff.velocity *= scaling;
       touchDown.velocity *= scaling;
       eventTimes.push_back(currentContactTiming.end);
-      footPhases.emplace_back(
-          new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, signedDistanceField_.get(), settings_.errorGain));
+      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(),
+                                             settings_.errorGain));
     }
   }
 

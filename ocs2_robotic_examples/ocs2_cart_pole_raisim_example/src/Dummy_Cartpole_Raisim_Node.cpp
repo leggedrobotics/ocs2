@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <cstdlib>
+
 #include <ros/init.h>
 #include <ros/package.h>
 
@@ -38,6 +40,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_cart_pole_example/definitions.h>
 #include <ocs2_cart_pole_example/ros_comm/CartpoleDummyVisualization.h>
 #include <ocs2_cart_pole_raisim_example/CartpoleRaisimConversions.h>
+
+inline std::string getActivationKey() {
+  if (char* envPath = getenv("WORKSPACE")) {
+    return std::string(envPath) + "/activation.raisim";
+  } else {
+    throw std::runtime_error("Could not find environment variable for $WORKSPACE/activation.raisim license key.");
+  }
+}
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "cartpole";
@@ -56,6 +66,8 @@ int main(int argc, char* argv[]) {
 
   // Robot interface
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
+
+  raisim::World::setActivationKey(getActivationKey());
 
   // setup simulator rollouts
   std::unique_ptr<ocs2::RaisimRollout> simRollout(new ocs2::RaisimRollout(

@@ -56,6 +56,8 @@ TEST(ocs2_cart_pole_raisim_example, RolloutTest) {
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
 
+  raisim::World::setActivationKey(ocs2::getRaisimActivationKey());
+
   ocs2::RaisimRollout rollout(ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf",
                               &ocs2::cartpole::stateToRaisimGenCoordGenVel, &ocs2::cartpole::raisimGenCoordGenVelToState,
                               &ocs2::cartpole::inputToRaisimGeneralizedForce);

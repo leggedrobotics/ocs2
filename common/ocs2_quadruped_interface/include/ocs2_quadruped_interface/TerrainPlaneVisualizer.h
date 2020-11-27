@@ -12,6 +12,7 @@
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
+#include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_switched_model_interface/terrain/TerrainModel.h>
 
 namespace switched_model {
@@ -35,7 +36,7 @@ class TerrainPlaneVisualizer {
 
 class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronizedModule {
  public:
-  TerrainPlaneVisualizerSynchronizedModule(const ocs2::Synchronized<TerrainModel>& terrainModel, ros::NodeHandle& nodeHandle);
+  TerrainPlaneVisualizerSynchronizedModule(const SwingTrajectoryPlanner& swingTrajectoryPlanner, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override{};
@@ -43,7 +44,7 @@ class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronized
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override;
 
  private:
-  const ocs2::Synchronized<TerrainModel>* terrainModelPtr_;
+  const SwingTrajectoryPlanner* swingTrajectoryPlanner_;
   TerrainPlaneVisualizer planeVisualizer_;
 };
 

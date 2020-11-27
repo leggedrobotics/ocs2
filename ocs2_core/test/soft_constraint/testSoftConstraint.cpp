@@ -44,7 +44,7 @@ class TestStateConstraint : public ocs2::StateConstraint {
 
   size_t getNumConstraints(ocs2::scalar_t time) const override { return numConstraints_; }
   ocs2::vector_t getValue(ocs2::scalar_t time, const ocs2::vector_t& state) const override {
-    ocs2::vector_t::Zero(numConstraints_);
+    return ocs2::vector_t::Zero(numConstraints_);
   }
   ocs2::VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const ocs2::vector_t& state) const override {
     return ocs2::VectorFunctionLinearApproximation::Zero(numConstraints_, state.size(), 0);
@@ -68,7 +68,7 @@ class TestStateInputConstraint : public ocs2::StateInputConstraint {
 
   size_t getNumConstraints(ocs2::scalar_t time) const override { return numConstraints_; }
   ocs2::vector_t getValue(ocs2::scalar_t time, const ocs2::vector_t& state, const ocs2::vector_t& input) const override {
-    ocs2::vector_t::Zero(numConstraints_);
+    return ocs2::vector_t::Zero(numConstraints_);
   }
   ocs2::VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const ocs2::vector_t& state,
                                                                  const ocs2::vector_t& input) const override {

@@ -98,7 +98,7 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
   if (signedDistanceField_ != nullptr) {
     const auto apexSdf = signedDistanceField_->valueAndDerivative(apexPositionInWorld);
     if (apexSdf.first < swingHeight) {
-      apexPositionInWorld += (swingHeight - apexSdf.first) * apexSdf.second;
+      apexPositionInWorld += (swingHeight - apexSdf.first) * apexSdf.second.normalized();
     }
   }
 

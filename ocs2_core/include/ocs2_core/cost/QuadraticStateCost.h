@@ -38,7 +38,7 @@ class QuadraticStateCost : public StateCost {
  public:
   /**
    * Constructor for the quadratic cost function defined as the following:
-   * \f$ \Phi = 0.5(x-x_{f})' Q_{f} (x-x_{f}) \f$.
+   * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$.
    * @param [in] Q: \f$ Q \f$
    */
   QuadraticStateCost(matrix_t Q);
@@ -46,11 +46,14 @@ class QuadraticStateCost : public StateCost {
   QuadraticStateCost* clone() const override;
 
   /** Get cost term value */
-  scalar_t getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory) const override;
+  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const override;
 
   /** Get cost term quadratic approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x,
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const CostDesiredTrajectories& desiredTrajectory) const override;
+
+  /** Computes the state deviation for the nominal state */
+  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
 
  protected:
   QuadraticStateCost(const QuadraticStateCost& rhs) = default;

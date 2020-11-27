@@ -36,8 +36,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 QuadraticStateInputCost::QuadraticStateInputCost(matrix_t Q, matrix_t R, matrix_t P /* = matrix_t() */)
     : Q_(std::move(Q)), R_(std::move(R)), P_(std::move(P)) {
-  if (P_.size() == 0) {
-    P_ = matrix_t::Zero(R_.rows(), Q_.rows());
+  if (P_.size() > 0) {
+    assert(P_.rows() == R_.rows());
+    assert(P_.cols() == Q_.rows());
   }
 }
 
@@ -51,33 +52,59 @@ QuadraticStateInputCost* QuadraticStateInputCost::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticStateInputCost::getValue(scalar_t t, const vector_t& x, const vector_t& u,
+scalar_t QuadraticStateInputCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
                                            const CostDesiredTrajectories& desiredTrajectory) const {
-  const vector_t xDeviation = x - desiredTrajectory.getDesiredState(t);
-  const vector_t uDeviation = u - desiredTrajectory.getDesiredInput(t);
-  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
+  vector_t stateDeviation, inputDeviation;
+  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, desiredTrajectory);
+
+  if (P_.size() == 0) {
+    return 0.5 * stateDeviation.dot(Q_ * stateDeviation) + 0.5 * inputDeviation.dot(R_ * inputDeviation);
+  } else {
+    return 0.5 * stateDeviation.dot(Q_ * stateDeviation) + 0.5 * inputDeviation.dot(R_ * inputDeviation) +
+           inputDeviation.dot(P_ * stateDeviation);
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApproximation(
-    scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory) const {
-  const vector_t xDeviation = x - desiredTrajectory.getDesiredState(t);
-  const vector_t uDeviation = u - desiredTrajectory.getDesiredInput(t);
-  const vector_t qDeviation = Q_ * xDeviation;
-  const vector_t rDeviation = R_ * uDeviation;
-  const vector_t pDeviation = P_ * xDeviation;
+    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
+  vector_t stateDeviation, inputDeviation;
+  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, desiredTrajectory);
+
+  const vector_t qDeviation = Q_ * stateDeviation;
+  const vector_t rDeviation = R_ * inputDeviation;
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation) + uDeviation.dot(pDeviation);
+  L.f = 0.5 * stateDeviation.dot(qDeviation) + 0.5 * inputDeviation.dot(rDeviation);
   L.dfdx = qDeviation;
-  L.dfdx.noalias() += P_.transpose() * uDeviation;
-  L.dfdu = rDeviation + pDeviation;
+  L.dfdu = rDeviation;
   L.dfdxx = Q_;
-  L.dfdux = P_;
   L.dfduu = R_;
+
+  if (P_.size() == 0) {
+    L.dfdux.setZero(input.size(), state.size());
+
+  } else {
+    const vector_t pDeviation = P_ * stateDeviation;
+    L.f += inputDeviation.dot(pDeviation);
+    L.dfdu += pDeviation;
+    L.dfdx.noalias() += P_.transpose() * inputDeviation;
+    L.dfdux = P_;
+  }
+
   return L;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<vector_t, vector_t> QuadraticStateInputCost::getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                              const CostDesiredTrajectories& desiredTrajectory) const {
+  const vector_t stateDeviation = state - desiredTrajectory.getDesiredState(time);
+  const vector_t inputDeviation = input - desiredTrajectory.getDesiredInput(time);
+  return {stateDeviation, inputDeviation};
 }
 
 }  // namespace ocs2

@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <utility>
+
 #include <ocs2_core/cost/StateInputCost.h>
 
 namespace ocs2 {
@@ -48,11 +50,16 @@ class QuadraticStateInputCost : public StateInputCost {
   QuadraticStateInputCost* clone() const override;
 
   /** Get cost term value */
-  scalar_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory) const override;
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                    const CostDesiredTrajectories& desiredTrajectory) const override;
 
   /** Get cost term quadratic approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                  const CostDesiredTrajectories& desiredTrajectory) const override;
+
+  /** Computes the state-input deviation pair around the nominal state and input */
+  virtual std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                               const CostDesiredTrajectories& desiredTrajectory) const;
 
  protected:
   QuadraticStateInputCost(const QuadraticStateInputCost& rhs) = default;

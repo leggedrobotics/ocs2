@@ -34,50 +34,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Configuration object for the relaxed barrier penalty.
+ * Configuration object for the squared hinge penalty.
  * mu : scaling factor
- * delta: relaxation parameter, see class description
+ * epsilon: relaxation parameter, see class description
  */
-struct RelaxedBarrierPenaltyConfig {
+struct SquaredHingePenaltyConfig {
   scalar_t mu = 1.0;
-  scalar_t delta = 1e-3;
+  scalar_t epsilon = 1e-3;
 };
 
 /**
- * Implements the relaxed barrier function for a single inequality constraint \f$ h \geq 0 \f$
+ * Implements the squared-hinge function for a single inequality constraint \f$ h \geq 0 \f$
  *
  * \f[
  *   p(h)=\left\lbrace
  *               \begin{array}{ll}
- *                 -\mu \ln(h) & if \quad  h > \delta, \\
- *                 -\mu \ln(\delta) + \mu \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,
+ *                 \frac{\mu}{2} (h - \epsilon)^2 & if \quad  h < \epsilon, \\
+ *                 0 & otherwise,
  *               \end{array}
  *             \right.
  * \f]
  *
- * where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
+ * where \f$ \mu \geq 0 \f$, and \f$ \epsilon \geq 0 \f$ are user defined parameters.
  */
-class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
+class SquaredHingePenaltyFunction final : public PenaltyFunctionBase {
  public:
   /**
    * Constructior
    * @param [in] config: Configuration object containing mu and delta.
    */
-  explicit RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyConfig config) : config_(std::move(config)) {}
+  explicit SquaredHingePenaltyFunction(SquaredHingePenaltyConfig config) : config_(std::move(config)) {}
 
   /** Default destructor */
-  ~RelaxedBarrierPenaltyFunction() override = default;
+  ~SquaredHingePenaltyFunction() override = default;
 
-  RelaxedBarrierPenaltyFunction* clone() const override { return new RelaxedBarrierPenaltyFunction(*this); }
+  SquaredHingePenaltyFunction* clone() const override { return new SquaredHingePenaltyFunction(*this); }
 
   scalar_t getValue(scalar_t h) const override;
   scalar_t getDerivative(scalar_t h) const override;
   scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  RelaxedBarrierPenaltyFunction(const RelaxedBarrierPenaltyFunction& other) = default;
+  SquaredHingePenaltyFunction(const SquaredHingePenaltyFunction& other) = default;
 
-  RelaxedBarrierPenaltyConfig config_;
+  SquaredHingePenaltyConfig config_;
 };
 
 }  // namespace ocs2

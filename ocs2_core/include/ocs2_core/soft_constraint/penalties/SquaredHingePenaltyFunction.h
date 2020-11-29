@@ -39,8 +39,9 @@ namespace ocs2 {
  * epsilon: relaxation parameter, see class description
  */
 struct SquaredHingePenaltyConfig {
-  scalar_t mu = 1.0;
-  scalar_t epsilon = 1e-3;
+  SquaredHingePenaltyConfig(scalar_t muParam = 1.0, scalar_t epsilonParam = 1e-3) : mu(muParam), epsilon(epsilonParam) {}
+  scalar_t mu;
+  scalar_t epsilon;
 };
 
 /**

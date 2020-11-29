@@ -33,6 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/**
+ * The penalty function interface class is used to penalize constraint violation by adding a penalty term to the cost function.
+ * We assume that the penalty function is convex.
+ */
 class PenaltyFunctionBase {
  public:
   /** Default constructor */

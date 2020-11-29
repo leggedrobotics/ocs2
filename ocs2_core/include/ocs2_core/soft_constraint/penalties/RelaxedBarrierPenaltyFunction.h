@@ -39,8 +39,9 @@ namespace ocs2 {
  * delta: relaxation parameter, see class description
  */
 struct RelaxedBarrierPenaltyConfig {
-  scalar_t mu = 1.0;
-  scalar_t delta = 1e-3;
+  RelaxedBarrierPenaltyConfig(scalar_t muParam = 1.0, scalar_t deltaParam = 1e-3) : mu(muParam), delta(deltaParam) {}
+  scalar_t mu;
+  scalar_t delta;
 };
 
 /**

@@ -65,7 +65,7 @@ class SoftConstraintPenalty {
   SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr);
 
   /** Default destructor */
-  virtual ~SoftConstraintPenalty() = default;
+  ~SoftConstraintPenalty() = default;
 
   /** copy constructor */
   SoftConstraintPenalty(const SoftConstraintPenalty& other);
@@ -97,6 +97,8 @@ class SoftConstraintPenalty {
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const;
 
  private:
+  std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(const vector_t& h) const;
+
   std::vector<std::shared_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray_;
 };
 

@@ -18,6 +18,5 @@
 
   <depend>ocs2_core</depend>
   <depend>ocs2_oc</depend>
-  <depend>raisim</depend>
 
 </package>

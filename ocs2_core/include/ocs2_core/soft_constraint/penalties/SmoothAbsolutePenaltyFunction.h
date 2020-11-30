@@ -34,52 +34,52 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Configuration object for the relaxed barrier penalty.
+ * Configuration object for the smooth absolute penalty.
  * mu : scaling factor
  * delta: relaxation parameter, see class description
  */
-struct RelaxedBarrierPenaltyConfig {
-  RelaxedBarrierPenaltyConfig() : RelaxedBarrierPenaltyConfig(1.0, 1e-3) {}
-  RelaxedBarrierPenaltyConfig(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+struct SmoothAbsolutePenaltyConfig {
+  SmoothAbsolutePenaltyConfig() : SmoothAbsolutePenaltyConfig(1.0, 1e-2) {}
+  SmoothAbsolutePenaltyConfig(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
   scalar_t mu;
   scalar_t delta;
 };
 
 /**
- * Implements the relaxed barrier function for a single inequality constraint \f$ h \geq 0 \f$
+ * Implements the smooth-absolute function for a single equality constraint \f$ h = 0 \f$
  *
  * \f[
- *   p(h)=\left\lbrace
- *               \begin{array}{ll}
- *                 -\mu \ln(h) & if \quad  h > \delta, \\
- *                 -\mu \ln(\delta) + \mu \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,
- *               \end{array}
- *             \right.
+ *   p(h) = \mu sqrt(x^2 + \delta^2).
  * \f]
  *
- * where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
+ * where \f$ \mu > 0 \f$, and \f$ \delta > 0 \f$ are user defined parameters. Note that
+ * \f$ \delta \f$ defines the error bound between the absolute function and its approximation:
+ *
+ * \f[
+ *   | x - sqrt(x^2 + \delta^2) | \leq \delta, \quad \forall x \in R
+ * \f]
  */
-class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
+class SmoothAbsolutePenaltyFunction final : public PenaltyFunctionBase {
  public:
   /**
    * Constructor
    * @param [in] config: Configuration object containing mu and delta.
    */
-  explicit RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyConfig config) : config_(std::move(config)) {}
+  explicit SmoothAbsolutePenaltyFunction(SmoothAbsolutePenaltyConfig config) : config_(std::move(config)) {}
 
   /** Default destructor */
-  ~RelaxedBarrierPenaltyFunction() override = default;
+  ~SmoothAbsolutePenaltyFunction() override = default;
 
-  RelaxedBarrierPenaltyFunction* clone() const override { return new RelaxedBarrierPenaltyFunction(*this); }
+  SmoothAbsolutePenaltyFunction* clone() const override { return new SmoothAbsolutePenaltyFunction(*this); }
 
   scalar_t getValue(scalar_t h) const override;
   scalar_t getDerivative(scalar_t h) const override;
   scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  RelaxedBarrierPenaltyFunction(const RelaxedBarrierPenaltyFunction& other) = default;
+  SmoothAbsolutePenaltyFunction(const SmoothAbsolutePenaltyFunction& other) = default;
 
-  RelaxedBarrierPenaltyConfig config_;
+  SmoothAbsolutePenaltyConfig config_;
 };
 
 }  // namespace ocs2

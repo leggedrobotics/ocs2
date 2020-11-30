@@ -27,41 +27,32 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenaltyFunction.h>
+#include <cmath>
+
+#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SquaredHingePenaltyFunction::getValue(scalar_t h) const {
-  if (h < config_.delta) {
-    return config_.mu * 0.5 * std::pow(h - config_.delta, 2);
-  } else {
-    return 0;
-  }
+scalar_t SmoothAbsolutePenaltyFunction::getValue(scalar_t h) const {
+  return config_.mu * sqrt(pow(h, 2) + pow(config_.delta, 2));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SquaredHingePenaltyFunction::getDerivative(scalar_t h) const {
-  if (h < config_.delta) {
-    return config_.mu * (h - config_.delta);
-  } else {
-    return 0;
-  }
+scalar_t SmoothAbsolutePenaltyFunction::getDerivative(scalar_t h) const {
+  return config_.mu * h / sqrt(pow(h, 2) + pow(config_.delta, 2));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SquaredHingePenaltyFunction::getSecondDerivative(scalar_t h) const {
-  if (h < config_.delta) {
-    return config_.mu;
-  } else {
-    return 0;
-  }
+scalar_t SmoothAbsolutePenaltyFunction::getSecondDerivative(scalar_t h) const {
+  const scalar_t deltaSquare = pow(config_.delta, 2);
+  return config_.mu * deltaSquare / pow(pow(h, 2) + deltaSquare, 1.5);
 }
 
 }  // namespace ocs2

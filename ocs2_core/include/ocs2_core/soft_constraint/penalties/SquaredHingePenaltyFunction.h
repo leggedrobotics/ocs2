@@ -36,12 +36,13 @@ namespace ocs2 {
 /**
  * Configuration object for the squared hinge penalty.
  * mu : scaling factor
- * epsilon: relaxation parameter, see class description
+ * delta: relaxation parameter, see class description
  */
 struct SquaredHingePenaltyConfig {
-  SquaredHingePenaltyConfig(scalar_t muParam = 1.0, scalar_t epsilonParam = 1e-3) : mu(muParam), epsilon(epsilonParam) {}
+  SquaredHingePenaltyConfig() : SquaredHingePenaltyConfig(100.0, 1e-1) {}
+  SquaredHingePenaltyConfig(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
   scalar_t mu;
-  scalar_t epsilon;
+  scalar_t delta;
 };
 
 /**
@@ -50,18 +51,18 @@ struct SquaredHingePenaltyConfig {
  * \f[
  *   p(h)=\left\lbrace
  *               \begin{array}{ll}
- *                 \frac{\mu}{2} (h - \epsilon)^2 & if \quad  h < \epsilon, \\
+ *                 \frac{\mu}{2} (h - \delta)^2 & if \quad  h < \delta, \\
  *                 0 & otherwise,
  *               \end{array}
  *             \right.
  * \f]
  *
- * where \f$ \mu \geq 0 \f$, and \f$ \epsilon \geq 0 \f$ are user defined parameters.
+ * where \f$ \mu > 0 \f$, and \f$ \delta \in R \f$ are user defined parameters.
  */
 class SquaredHingePenaltyFunction final : public PenaltyFunctionBase {
  public:
   /**
-   * Constructior
+   * Constructor
    * @param [in] config: Configuration object containing mu and delta.
    */
   explicit SquaredHingePenaltyFunction(SquaredHingePenaltyConfig config) : config_(std::move(config)) {}

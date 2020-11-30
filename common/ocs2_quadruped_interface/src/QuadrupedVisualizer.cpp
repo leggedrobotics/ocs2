@@ -348,6 +348,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   const double tEnd = mpcTimeTrajectory.back();
   for (int event = 0; event < eventTimes.size(); ++event) {
     if (tStart < eventTimes[event] && eventTimes[event] < tEnd) {  // Only publish future footholds within the optimized horizon
+      const auto preEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event]);
       const auto postEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event + 1]);
       const vector_t postEventState = ocs2::LinearInterpolation::interpolate(eventTimes[event], mpcTimeTrajectory, mpcStateTrajectory);
       const base_coordinate_t comPose = getComPose(state_vector_t(postEventState));
@@ -355,7 +356,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
       const joint_coordinate_t qJoints = getJointPositions(state_vector_t(postEventState));
 
       for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-        if (postEventContactFlags[i]) {  // If a foot is in contact after an event, a marker is added at that location.
+        if (!preEventContactFlags[i] && postEventContactFlags[i]) {  // If a foot lands, a marker is added at that location.
           const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
           sphereList.points.emplace_back(getPointMsg(o_feetPosition));
           sphereList.colors.push_back(getColor(feetColorMap_[i]));

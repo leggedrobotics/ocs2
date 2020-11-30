@@ -109,6 +109,18 @@ std::unique_ptr<SoftConstraint> softConstraintFactory(size_t numConstraints, ocs
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+TEST(testSoftConstraint, clone) {
+  constexpr size_t numConstraints = 10;
+
+  auto stateQuadraticConstraintPtr =
+      softConstraintFactory<TestStateConstraint, ocs2::StateSoftConstraint>(numConstraints, ocs2::ConstraintOrder::Quadratic, true);
+  EXPECT_NO_THROW(std::unique_ptr<ocs2::StateSoftConstraint>(stateQuadraticConstraintPtr->clone()));
+
+  auto stateLinearConstraintPtr =
+      softConstraintFactory<TestStateInputConstraint, ocs2::StateInputSoftConstraint>(numConstraints, ocs2::ConstraintOrder::Linear, false);
+  EXPECT_NO_THROW(std::unique_ptr<ocs2::StateInputSoftConstraint>(stateLinearConstraintPtr->clone()));
+}
+
 TEST(testSoftConstraint, softStateConstraint) {
   constexpr size_t numConstraints = 10;
   const ocs2::vector_t state = ocs2::vector_t::Zero(2);
@@ -116,7 +128,7 @@ TEST(testSoftConstraint, softStateConstraint) {
   const ocs2::CostDesiredTrajectories costDesiredTrajectories;
 
   auto stateLinearConstraintPtr =
-      softConstraintFactory<TestStateConstraint, ocs2::StateSoftConstraint>(numConstraints, ocs2::ConstraintOrder::Linear, true);
+      softConstraintFactory<TestStateConstraint, ocs2::StateSoftConstraint>(numConstraints, ocs2::ConstraintOrder::Linear, false);
   EXPECT_NO_THROW(stateLinearConstraintPtr->getValue(0.0, state, costDesiredTrajectories));
   EXPECT_NO_THROW(stateLinearConstraintPtr->getQuadraticApproximation(0.0, state, costDesiredTrajectories));
 
@@ -138,7 +150,7 @@ TEST(testSoftConstraint, softStateInputConstraint) {
   EXPECT_NO_THROW(stateInputLinearConstraintPtr->getQuadraticApproximation(0.0, state, input, costDesiredTrajectories));
 
   auto stateInputQuadraticConstraintPtr = softConstraintFactory<TestStateInputConstraint, ocs2::StateInputSoftConstraint>(
-      numConstraints, ocs2::ConstraintOrder::Quadratic, true);
+      numConstraints, ocs2::ConstraintOrder::Quadratic, false);
   EXPECT_NO_THROW(stateInputQuadraticConstraintPtr->getValue(0.0, state, input, costDesiredTrajectories));
   EXPECT_NO_THROW(stateInputQuadraticConstraintPtr->getQuadraticApproximation(0.0, state, input, costDesiredTrajectories));
 }

@@ -41,24 +41,25 @@ class QuadraticStateCost : public StateCost {
    * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$.
    * @param [in] Q: \f$ Q \f$
    */
-  QuadraticStateCost(matrix_t Q);
+  explicit QuadraticStateCost(matrix_t Q);
   ~QuadraticStateCost() override = default;
   QuadraticStateCost* clone() const override;
 
   /** Get cost term value */
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const override;
+  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const final;
 
   /** Get cost term quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const override;
-
-  /** Computes the state deviation for the nominal state */
-  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+                                                                 const CostDesiredTrajectories& desiredTrajectory) const final;
 
  protected:
   QuadraticStateCost(const QuadraticStateCost& rhs) = default;
 
- protected:
+  /** Computes the state deviation for the nominal state.
+   * This method can be overwritten if desiredTrajectory has a different dimensions. */
+  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+
+ private:
   matrix_t Q_;
 };
 

@@ -51,20 +51,21 @@ class QuadraticStateInputCost : public StateInputCost {
 
   /** Get cost term value */
   scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                    const CostDesiredTrajectories& desiredTrajectory) const override;
+                    const CostDesiredTrajectories& desiredTrajectory) const final;
 
   /** Get cost term quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const override;
-
-  /** Computes the state-input deviation pair around the nominal state and input */
-  virtual std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                               const CostDesiredTrajectories& desiredTrajectory) const;
+                                                                 const CostDesiredTrajectories& desiredTrajectory) const final;
 
  protected:
   QuadraticStateInputCost(const QuadraticStateInputCost& rhs) = default;
 
- protected:
+  /** Computes the state-input deviation pair around the nominal state and input.
+   * This method can be overwritten if desiredTrajectory has a different dimensions. */
+  virtual std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                               const CostDesiredTrajectories& desiredTrajectory) const;
+
+ private:
   matrix_t Q_;
   matrix_t R_;
   matrix_t P_;

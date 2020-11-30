@@ -34,18 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Configuration object for the smooth absolute penalty.
- * mu : scaling factor
- * delta: relaxation parameter, see class description
- */
-struct SmoothAbsolutePenaltyConfig {
-  SmoothAbsolutePenaltyConfig() : SmoothAbsolutePenaltyConfig(1.0, 1e-2) {}
-  SmoothAbsolutePenaltyConfig(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
-  scalar_t mu;
-  scalar_t delta;
-};
-
-/**
  * Implements the smooth-absolute function for a single equality constraint \f$ h = 0 \f$
  *
  * \f[
@@ -62,10 +50,22 @@ struct SmoothAbsolutePenaltyConfig {
 class SmoothAbsolutePenaltyFunction final : public PenaltyFunctionBase {
  public:
   /**
+   * Configuration object for the smooth absolute penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    Config() : Config(1.0, 1e-2) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
+
+  /**
    * Constructor
    * @param [in] config: Configuration object containing mu and delta.
    */
-  explicit SmoothAbsolutePenaltyFunction(SmoothAbsolutePenaltyConfig config) : config_(std::move(config)) {}
+  explicit SmoothAbsolutePenaltyFunction(Config config) : config_(std::move(config)) {}
 
   /** Default destructor */
   ~SmoothAbsolutePenaltyFunction() override = default;
@@ -79,7 +79,7 @@ class SmoothAbsolutePenaltyFunction final : public PenaltyFunctionBase {
  private:
   SmoothAbsolutePenaltyFunction(const SmoothAbsolutePenaltyFunction& other) = default;
 
-  SmoothAbsolutePenaltyConfig config_;
+  Config config_;
 };
 
 }  // namespace ocs2

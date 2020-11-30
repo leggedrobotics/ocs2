@@ -34,18 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Configuration object for the relaxed barrier penalty.
- * mu : scaling factor
- * delta: relaxation parameter, see class description
- */
-struct RelaxedBarrierPenaltyConfig {
-  RelaxedBarrierPenaltyConfig() : RelaxedBarrierPenaltyConfig(1.0, 1e-3) {}
-  RelaxedBarrierPenaltyConfig(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
-  scalar_t mu;
-  scalar_t delta;
-};
-
-/**
  * Implements the relaxed barrier function for a single inequality constraint \f$ h \geq 0 \f$
  *
  * \f[
@@ -62,10 +50,22 @@ struct RelaxedBarrierPenaltyConfig {
 class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
  public:
   /**
+   * Configuration object for the relaxed barrier penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    Config() : Config(1.0, 1e-3) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
+
+  /**
    * Constructor
    * @param [in] config: Configuration object containing mu and delta.
    */
-  explicit RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyConfig config) : config_(std::move(config)) {}
+  explicit RelaxedBarrierPenaltyFunction(Config config) : config_(std::move(config)) {}
 
   /** Default destructor */
   ~RelaxedBarrierPenaltyFunction() override = default;
@@ -79,7 +79,7 @@ class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
  private:
   RelaxedBarrierPenaltyFunction(const RelaxedBarrierPenaltyFunction& other) = default;
 
-  RelaxedBarrierPenaltyConfig config_;
+  Config config_;
 };
 
 }  // namespace ocs2

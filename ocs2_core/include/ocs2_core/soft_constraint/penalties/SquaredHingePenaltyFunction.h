@@ -34,18 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Configuration object for the squared hinge penalty.
- * mu : scaling factor
- * delta: relaxation parameter, see class description
- */
-struct SquaredHingePenaltyConfig {
-  SquaredHingePenaltyConfig() : SquaredHingePenaltyConfig(100.0, 1e-1) {}
-  SquaredHingePenaltyConfig(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
-  scalar_t mu;
-  scalar_t delta;
-};
-
-/**
  * Implements the squared-hinge function for a single inequality constraint \f$ h \geq 0 \f$
  *
  * \f[
@@ -62,10 +50,22 @@ struct SquaredHingePenaltyConfig {
 class SquaredHingePenaltyFunction final : public PenaltyFunctionBase {
  public:
   /**
+   * Configuration object for the squared hinge penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    Config() : Config(100.0, 1e-1) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
+
+  /**
    * Constructor
    * @param [in] config: Configuration object containing mu and delta.
    */
-  explicit SquaredHingePenaltyFunction(SquaredHingePenaltyConfig config) : config_(std::move(config)) {}
+  explicit SquaredHingePenaltyFunction(Config config) : config_(std::move(config)) {}
 
   /** Default destructor */
   ~SquaredHingePenaltyFunction() override = default;
@@ -79,7 +79,7 @@ class SquaredHingePenaltyFunction final : public PenaltyFunctionBase {
  private:
   SquaredHingePenaltyFunction(const SquaredHingePenaltyFunction& other) = default;
 
-  SquaredHingePenaltyConfig config_;
+  Config config_;
 };
 
 }  // namespace ocs2

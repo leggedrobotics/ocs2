@@ -52,7 +52,7 @@ namespace ocs2 {
  *   A few commonly-used penalty functions have been provided by the toolbox such as Relaxed-Barrier and Squared-Hinge
  *   penalty functions.
  */
-class StateInputSoftConstraint : public StateInputCost {
+class StateInputSoftConstraint final : public StateInputCost {
  public:
   /**
    * Constructor.

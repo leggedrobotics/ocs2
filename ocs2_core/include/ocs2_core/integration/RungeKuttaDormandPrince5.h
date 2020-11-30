@@ -29,6 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <algorithm>
+#include <limits>
+
 #include <ocs2_core/integration/IntegratorBase.h>
 
 namespace ocs2 {
@@ -90,7 +93,6 @@ class RungeKuttaDormandPrince5 : public IntegratorBase {
                          typename scalar_array_t::const_iterator beginTimeItr, typename scalar_array_t::const_iterator endTimeItr,
                          scalar_t dtInitial, scalar_t absTol, scalar_t relTol) override;
 
- private:
   /**
    * Try to perform one step. If the step is accepted, then state (x), derivative (dxdt), time (t) and step size (dt) are updated.
    * Otherwise only the step size (dt) is updated and false is returned.
@@ -167,7 +169,33 @@ class RungeKuttaDormandPrince5 : public IntegratorBase {
    */
   scalar_t increaseStep(scalar_t dt, scalar_t error) const;
 
- private:
+  /** Helper less comparison for both positive and negative dt case. */
+  static bool lessWithSign(scalar_t t1, scalar_t t2, scalar_t dt) {
+    if (dt > 0) {
+      return t2 - t1 > std::numeric_limits<scalar_t>::epsilon();
+    } else {
+      return t1 - t2 > std::numeric_limits<scalar_t>::epsilon();
+    }
+  }
+
+  /** Helper to get the min absolute value, t1 and t2 have same sign. */
+  static scalar_t minAbs(scalar_t t1, scalar_t t2) {
+    if (t1 > 0) {
+      return std::min(t1, t2);
+    } else {
+      return std::max(t1, t2);
+    }
+  }
+
+  /** Helper to get max absolute value, t1 and t2 have same sign. */
+  static scalar_t maxAbs(scalar_t t1, scalar_t t2) {
+    if (t1 > 0) {
+      return std::max(t1, t2);
+    } else {
+      return std::min(t1, t2);
+    }
+  }
+
   const size_t MAX_STEP_RETRIES = 100;
 
   /** intermediate state during Runge-Kutta step. */

@@ -37,9 +37,6 @@ struct Gait {
  */
 bool isValidGait(const Gait& gait);
 
-/** Get the current mode index. */
-int getCurrentModeIndex(scalar_t phase, const Gait& gait);
-
 /** Check is if the phase is in [0.0, 1.0) */
 bool isValidPhase(scalar_t phase);
 
@@ -48,15 +45,6 @@ scalar_t wrapPhase(scalar_t phase);
 
 /** The modes are selected with a closed-open interval: [ ) */
 int getModeIndexFromPhase(scalar_t phase, const Gait& gait);
-
-/** Gets the mode index until next touch down from the phase variable and returns -1 if there is no last touch down after the phase */
-int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait);
-
-/** Gets the mode index until last touch down from the phase variable and returns -1 if there is no last touch down before the phase. */
-int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait);
-
-/** Adapts the mode sequence between the two mode ids of a specific leg to be in contact. */
-void setContactStateOfLegToContactBetweenModes(int startModeId, int lastModeId, int leg, Gait& gait);
 
 /** Gets the active mode from the phase variable */
 size_t getModeFromPhase(scalar_t phase, const Gait& gait);

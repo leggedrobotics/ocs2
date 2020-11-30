@@ -34,7 +34,7 @@ scalar_t wrapPhase(scalar_t phase) {
   return phase;
 }
 
-int getCurrentModeIndex(scalar_t phase, const Gait& gait) {
+int getModeIndexFromPhase(scalar_t phase, const Gait& gait) {
   assert(isValidPhase(phase));
   assert(isValidGait(gait));
   auto firstLargerValueIterator = std::upper_bound(gait.eventPhases.begin(), gait.eventPhases.end(), phase);
@@ -44,53 +44,7 @@ int getCurrentModeIndex(scalar_t phase, const Gait& gait) {
 size_t getModeFromPhase(scalar_t phase, const Gait& gait) {
   assert(isValidPhase(phase));
   assert(isValidGait(gait));
-  return gait.modeSequence[getCurrentModeIndex(phase, gait)];
-}
-
-int getModeIndexFromPhaseUntilNextTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait) {
-  assert(isValidPhase(phase));
-  assert(isValidGait(gait));
-  int modeIndex = getCurrentModeIndex(phase, gait);
-  while (modeIndex < gait.modeSequence.size()) {
-    size_t currentMode = gait.modeSequence[modeIndex];
-    if (modeNumber2StanceLeg(currentMode)[leg]) {
-      break;
-    } else {
-      ++modeIndex;
-    }
-  }
-  if (modeIndex >= gait.modeSequence.size()) {
-    modeIndex = -1;
-  }
-  return modeIndex;
-}
-
-int getModeIndexFromPhaseUntilLastTouchDownOfLeg(scalar_t phase, int leg, const Gait& gait) {
-  assert(isValidPhase(phase));
-  assert(isValidGait(gait));
-  int modeIndex = getCurrentModeIndex(phase, gait);
-  while (modeIndex >= 0) {
-    size_t currentMode = gait.modeSequence[modeIndex];
-    if (modeNumber2StanceLeg(currentMode)[leg]) {
-      break;
-    } else {
-      --modeIndex;
-    }
-  }
-  if (modeIndex < 0) {
-    modeIndex = -1;
-  }
-  return modeIndex;
-}
-
-void setContactStateOfLegToContactBetweenModes(int startModeId, int lastModeId, int leg, Gait& gait) {
-  assert(startModeId < gait.modeSequence.size());
-  assert(lastModeId < gait.modeSequence.size());
-  for (int modeIndex = startModeId; modeIndex <= lastModeId; ++modeIndex) {
-    auto stanceLegs = switched_model::modeNumber2StanceLeg(gait.modeSequence[modeIndex]);
-    stanceLegs[leg] = true;
-    gait.modeSequence[modeIndex] = switched_model::stanceLeg2ModeNumber(stanceLegs);
-  }
+  return gait.modeSequence[getModeIndexFromPhase(phase, gait)];
 }
 
 scalar_t timeLeftInGait(scalar_t phase, const Gait& gait) {
@@ -102,7 +56,7 @@ scalar_t timeLeftInGait(scalar_t phase, const Gait& gait) {
 scalar_t timeLeftInMode(scalar_t phase, const Gait& gait) {
   assert(isValidPhase(phase));
   assert(isValidGait(gait));
-  int modeIndex = getCurrentModeIndex(phase, gait);
+  int modeIndex = getModeIndexFromPhase(phase, gait);
   if (modeIndex < gait.eventPhases.size()) {
     return (gait.eventPhases[modeIndex] - phase) * gait.duration;
   } else {

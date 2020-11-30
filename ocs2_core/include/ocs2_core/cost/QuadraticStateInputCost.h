@@ -29,50 +29,46 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <type_traits>
+#include <utility>
 
-#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/StateInputCost.h>
 
 namespace ocs2 {
 
-/** State-only constraint function base class */
-class StateConstraint {
+/** Quadratic state-input cost term */
+class QuadraticStateInputCost : public StateInputCost {
  public:
-  StateConstraint() = default;
-  virtual ~StateConstraint() = default;
-  virtual StateConstraint* clone() const = 0;
+  /**
+   * Constructor for the quadratic cost function defined as the following:
+   * \f$ L = 0.5(x-x_{n})' Q (x-x_{n}) + 0.5(u-u_{n})' R (u-u_{n}) + (u-u_{n})' P (x-x_{n}) \f$
+   * @param [in] Q: \f$ Q \f$
+   * @param [in] R: \f$ R \f$
+   * @param [in] P: \f$ P \f$
+   */
+  QuadraticStateInputCost(matrix_t Q, matrix_t R, matrix_t P = matrix_t());
+  ~QuadraticStateInputCost() override = default;
+  QuadraticStateInputCost* clone() const override;
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
+  /** Get cost term value */
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                    const CostDesiredTrajectories& desiredTrajectory) const final;
 
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
-
-  /** Get the size of the constraint vector at given time */
-  virtual size_t getNumConstraints(scalar_t time) const = 0;
-
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
-
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
-  }
-
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
-  }
+  /** Get cost term quadratic approximation */
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                 const CostDesiredTrajectories& desiredTrajectory) const final;
 
  protected:
-  StateConstraint(const StateConstraint& rhs) = default;
+  QuadraticStateInputCost(const QuadraticStateInputCost& rhs) = default;
+
+  /** Computes the state-input deviation pair around the nominal state and input.
+   * This method can be overwritten if desiredTrajectory has a different dimensions. */
+  virtual std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                               const CostDesiredTrajectories& desiredTrajectory) const;
 
  private:
-  bool active_ = true;
+  matrix_t Q_;
+  matrix_t R_;
+  matrix_t P_;
 };
-
-// Template for conditional compilation using SFINAE
-template <typename T>
-using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
 
 }  // namespace ocs2

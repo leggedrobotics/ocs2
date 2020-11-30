@@ -83,22 +83,22 @@ class CostCollection final {
   }
 
   /** Get state-input cost value */
-  template <typename T = COST>
-  ifStateInputCost_t<T, scalar_t> getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                           const CostDesiredTrajectories& desiredTrajectory) const;
+  template <typename T = COST, EnableIfStateInputCost_t<T> = true>
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const;
 
   /** Get state-input cost quadratic approximation */
-  template <typename T = COST>
-  ifStateInputCost_t<T, ScalarFunctionQuadraticApproximation> getQuadraticApproximation(
-      scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const;
+  template <typename T = COST, EnableIfStateInputCost_t<T> = true>
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                 const CostDesiredTrajectories& desiredTrajectory) const;
 
   /** Get state-only cost value */
-  template <typename T = COST>
-  ifStateCost_t<T, scalar_t> getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+  template <typename T = COST, EnableIfStateCost_t<T> = true>
+  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+
   /** Get state-only cost quadratic approximation */
-  template <typename T = COST>
-  ifStateCost_t<T, ScalarFunctionQuadraticApproximation> getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                   const CostDesiredTrajectories& desiredTrajectory) const;
+  template <typename T = COST, EnableIfStateCost_t<T> = true>
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                 const CostDesiredTrajectories& desiredTrajectory) const;
 
  private:
   std::map<std::string, std::unique_ptr<COST>> costTermMap_;

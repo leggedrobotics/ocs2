@@ -29,50 +29,38 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <type_traits>
-
-#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/StateCost.h>
 
 namespace ocs2 {
 
-/** State-only constraint function base class */
-class StateConstraint {
+/** Quadratic state-only cost term */
+class QuadraticStateCost : public StateCost {
  public:
-  StateConstraint() = default;
-  virtual ~StateConstraint() = default;
-  virtual StateConstraint* clone() const = 0;
+  /**
+   * Constructor for the quadratic cost function defined as the following:
+   * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$.
+   * @param [in] Q: \f$ Q \f$
+   */
+  explicit QuadraticStateCost(matrix_t Q);
+  ~QuadraticStateCost() override = default;
+  QuadraticStateCost* clone() const override;
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
+  /** Get cost term value */
+  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const final;
 
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
-
-  /** Get the size of the constraint vector at given time */
-  virtual size_t getNumConstraints(scalar_t time) const = 0;
-
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
-
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
-  }
-
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
-  }
+  /** Get cost term quadratic approximation */
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                 const CostDesiredTrajectories& desiredTrajectory) const final;
 
  protected:
-  StateConstraint(const StateConstraint& rhs) = default;
+  QuadraticStateCost(const QuadraticStateCost& rhs) = default;
+
+  /** Computes the state deviation for the nominal state.
+   * This method can be overwritten if desiredTrajectory has a different dimensions. */
+  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
 
  private:
-  bool active_ = true;
+  matrix_t Q_;
 };
-
-// Template for conditional compilation using SFINAE
-template <typename T>
-using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
 
 }  // namespace ocs2

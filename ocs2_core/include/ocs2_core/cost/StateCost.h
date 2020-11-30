@@ -64,7 +64,7 @@ class StateCost {
 };
 
 // Template for conditional compilation using SFINAE
-template <typename T, typename RETURN_TYPE>
-using ifStateCost_t = typename std::enable_if<std::is_same<T, StateCost>::value, RETURN_TYPE>::type;
+template <typename T>
+using EnableIfStateCost_t = typename std::enable_if<std::is_same<T, StateCost>::value, bool>::type;
 
 }  // namespace ocs2

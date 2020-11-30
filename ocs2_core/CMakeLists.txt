@@ -123,8 +123,9 @@ add_library(${PROJECT_NAME}
   src/soft_constraint/SoftConstraintPenalty.cpp
   src/soft_constraint/StateSoftConstraint.cpp
   src/soft_constraint/StateInputSoftConstraint.cpp
-  src/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.cpp
+  src/soft_constraint/penalties/QuadraticPenaltyFunction.cpp
   src/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.cpp
+  src/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.cpp
   src/soft_constraint/penalties/SquaredHingePenaltyFunction.cpp
 )
 target_link_libraries(${PROJECT_NAME}

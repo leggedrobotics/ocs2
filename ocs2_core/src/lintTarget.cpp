@@ -79,6 +79,7 @@
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
+#include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
 #include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.h>
 #include <ocs2_core/soft_constraint/penalties/SquaredHingePenaltyFunction.h>

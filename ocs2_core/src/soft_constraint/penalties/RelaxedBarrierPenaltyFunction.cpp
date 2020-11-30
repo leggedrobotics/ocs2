@@ -38,7 +38,8 @@ scalar_t RelaxedBarrierPenaltyFunction::getValue(scalar_t h) const {
   if (h > config_.delta) {
     return -config_.mu * log(h);
   } else {
-    return config_.mu * (-log(config_.delta) + scalar_t(0.5) * pow((h - 2.0 * config_.delta) / config_.delta, 2.0) - scalar_t(0.5));
+    const scalar_t delta_h = (h - 2.0 * config_.delta) / config_.delta;
+    return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
   };
 }
 

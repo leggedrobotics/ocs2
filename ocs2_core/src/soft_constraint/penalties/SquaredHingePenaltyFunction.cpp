@@ -36,7 +36,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 scalar_t SquaredHingePenaltyFunction::getValue(scalar_t h) const {
   if (h < config_.delta) {
-    return config_.mu * 0.5 * std::pow(h - config_.delta, 2);
+    const scalar_t delta_h = h - config_.delta;
+    return config_.mu * 0.5 * delta_h * delta_h;
   } else {
     return 0;
   }

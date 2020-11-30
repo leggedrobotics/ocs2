@@ -37,35 +37,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SoftConstraintPenalty::SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray)
-    : penaltyFunctionPtrArray_(std::make_move_iterator(penaltyFunctionPtrArray.begin()),
-                               std::make_move_iterator(penaltyFunctionPtrArray.end())) {}
+    : penaltyFunctionPtrArray_(std::move(penaltyFunctionPtrArray)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SoftConstraintPenalty::SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr)
-    : penaltyFunctionPtrArray_(numConstraints, std::move(penaltyFunctionPtr)) {}
+SoftConstraintPenalty::SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr) {
+  for (size_t i = 0; i < numConstraints; i++) {
+    penaltyFunctionPtrArray_.emplace_back(penaltyFunctionPtr->clone());
+  }  // end of i loop
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SoftConstraintPenalty::SoftConstraintPenalty(const SoftConstraintPenalty& other) {
-  if (other.penaltyFunctionPtrArray_.empty()) {
-    return;
-  }
-
-  const size_t numConstraints = other.penaltyFunctionPtrArray_.size();
-  if (other.penaltyFunctionPtrArray_.front() == other.penaltyFunctionPtrArray_.back()) {
-    // single penalty function
-    std::shared_ptr<PenaltyFunctionBase> tempPtr(other.penaltyFunctionPtrArray_.front()->clone());
-    penaltyFunctionPtrArray_.assign(numConstraints, tempPtr);
-
-  } else {
-    // multiple penalty function
-    for (size_t i = 0; i < numConstraints; i++) {
-      penaltyFunctionPtrArray_.emplace_back(other.penaltyFunctionPtrArray_[i]->clone());
-    }  // end of i loop
-  }
+  for (size_t i = 0; i < other.penaltyFunctionPtrArray_.size(); i++) {
+    penaltyFunctionPtrArray_.emplace_back(other.penaltyFunctionPtrArray_[i]->clone());
+  }  // end of i loop
 }
 
 /******************************************************************************************************/
@@ -91,7 +80,7 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproxim
   scalar_t penaltyValue = 0.0;
   vector_t penaltyDerivative, penaltySecondDerivative;
   std::tie(penaltyValue, penaltyDerivative, penaltySecondDerivative) = getPenaltyValue1stDev2ndDev(h.f);
-  const vector_t penaltySecondDev_dhdx = penaltySecondDerivative.asDiagonal() * h.dfdx;
+  const matrix_t penaltySecondDev_dhdx = penaltySecondDerivative.asDiagonal() * h.dfdx;
 
   auto penaltyApproximation = ScalarFunctionQuadraticApproximation::Zero(stateDim, inputDim);
 
@@ -117,7 +106,7 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproxim
   scalar_t penaltyValue = 0.0;
   vector_t penaltyDerivative, penaltySecondDerivative;
   std::tie(penaltyValue, penaltyDerivative, penaltySecondDerivative) = getPenaltyValue1stDev2ndDev(h.f);
-  const vector_t penaltySecondDev_dhdx = penaltySecondDerivative.asDiagonal() * h.dfdx;
+  const matrix_t penaltySecondDev_dhdx = penaltySecondDerivative.asDiagonal() * h.dfdx;
 
   auto penaltyApproximation = ScalarFunctionQuadraticApproximation::Zero(stateDim, inputDim);
   for (size_t i = 0; i < penaltyDerivative.rows(); i++) {

@@ -99,7 +99,7 @@ class SoftConstraintPenalty {
  private:
   std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(const vector_t& h) const;
 
-  std::vector<std::shared_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray_;
+  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray_;
 };
 
 }  // namespace ocs2

@@ -217,4 +217,25 @@ feet_array_t<vector3_s_t<SCALAR_T>> toArray(const joint_coordinate_s_t<SCALAR_T>
           valuesAsVector.template segment<3>(9)};
 }
 
+/**
+ * Applies the function f to each leg individually. The inputs of f are to be passed per leg using feet_array<T>.
+ *
+ * Example usage:
+ *  feet_array_t<scalar_t> numbers = {0.0, 1.0, 2.0, 3.0};
+ *  feet_array_t<bool> flags = {true, false, true, false};
+ *
+ *  auto negativeIfTrue = [](scalar_t val, bool flag) { return flag ? val : -val; };
+ *  const auto result = applyPerLeg(negativeIfTrue, numbers, flags); // = {-0.0, 1.0, -2.0, 3.0}
+ */
+template <typename Func, typename... T>
+auto applyPerLeg(Func f, const feet_array_t<T>&... inputs) -> feet_array_t<decltype(f(inputs[0]...))> {
+  return {f(inputs[0]...), f(inputs[1]...), f(inputs[2]...), f(inputs[3]...)};
+}
+
+/** Creates a feet array filled with constant values */
+template <typename T>
+feet_array_t<T> constantFeetArray(const T& val) {
+  return {val, val, val, val};
+}
+
 }  // end of namespace switched_model

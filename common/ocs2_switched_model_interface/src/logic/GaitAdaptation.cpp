@@ -9,8 +9,95 @@
 #include "ocs2_switched_model_interface/logic/GaitAdaptation.h"
 
 #include "ocs2_switched_model_interface/core/MotionPhaseDefinition.h"
+#include "ocs2_switched_model_interface/logic/SingleLegLogic.h"
 
 namespace switched_model {
+
+GaitAdaptation::GaitAdaptation(const GaitAdaptationSettings& settings, const contact_flag_t& measuredContactFlags)
+    : timeUntilNextTouchDownPerLeg_(constantFeetArray<scalar_t>(0.0)),
+      timeUntilNextLiftOffPerLeg_(constantFeetArray<scalar_t>(0.0)),
+      settings_(settings) {}
+
+void GaitAdaptation::advance(GaitSchedule& gaitSchedule, const contact_flag_t& measuredContactFlags, scalar_t dt) {
+  // Update internal knowledge of next touchdown / liftoff
+  advanceSwingEvents(gaitSchedule);
+
+  // Decide on a strategy per leg and schedule adaptation
+  const auto& scheduledAdaptation = advanceLegStrategies(modeNumber2StanceLeg(gaitSchedule.getCurrentMode()), measuredContactFlags);
+
+  // Apply all scheduled
+  applyAdaptation(gaitSchedule, scheduledAdaptation);
+}
+
+void GaitAdaptation::advanceSwingEvents(const GaitSchedule& gaitSchedule) {
+  // Only interested in events within the specified windows
+  const auto checkHorizon = settings_.earlyTouchDownTimeWindow;
+
+  // Extract contact timings from the gait schedule
+  const auto modeSchedule = gaitSchedule.getModeSchedule(checkHorizon);
+  const auto contactTimingsPerLeg = switched_model::extractContactTimingsPerLeg(modeSchedule);
+  const auto currentTime = gaitSchedule.getCurrentTime();
+
+  for (size_t leg = 0; leg < switched_model::NUM_CONTACT_POINTS; ++leg) {
+    timeUntilNextTouchDownPerLeg_[leg] = getTimeOfNextTouchDown(currentTime, contactTimingsPerLeg[leg]) - currentTime;
+    timeUntilNextLiftOffPerLeg_[leg] = getTimeOfNextLiftOff(currentTime, contactTimingsPerLeg[leg]) - currentTime;
+  }
+}
+
+auto GaitAdaptation::advanceLegStrategies(const contact_flag_t& desiredContactFlags, const contact_flag_t& measuredContactFlags)
+    -> feet_array_t<ScheduledAdaptation> {
+  auto adaptations = constantFeetArray<ScheduledAdaptation>(ScheduledAdaptation::None);
+
+  for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    bool desiredContact = desiredContactFlags[leg];
+    bool measuredContact = measuredContactFlags[leg];
+
+    if (desiredContact) {
+      if (measuredContact) {
+        adaptations[leg] = desiredContactMeasuredContact(leg);
+      } else {
+        adaptations[leg] = desiredContactMeasuredMotion(leg);
+      }
+    } else {  // motion is desired
+      if (measuredContact) {
+        adaptations[leg] = desiredMotionMeasuredContact(leg);
+      } else {
+        adaptations[leg] = desiredMotionMeasuredMotion(leg);
+      }
+    }
+  }
+
+  return adaptations;
+}
+
+auto GaitAdaptation::desiredContactMeasuredContact(size_t leg) -> ScheduledAdaptation {
+  return ScheduledAdaptation::None;
+}
+
+auto GaitAdaptation::desiredContactMeasuredMotion(size_t leg) -> ScheduledAdaptation {
+  return ScheduledAdaptation::None;
+}
+
+auto GaitAdaptation::desiredMotionMeasuredContact(size_t leg) -> ScheduledAdaptation {
+  if (!std::isnan(timeUntilNextTouchDownPerLeg_[leg]) && timeUntilNextTouchDownPerLeg_[leg] < settings_.earlyTouchDownTimeWindow) {
+    // Touchdown was planned to be soon -> Take the contact early
+    return ScheduledAdaptation::EarlyContact;
+  } else {
+    return ScheduledAdaptation::None;
+  }
+}
+
+auto GaitAdaptation::desiredMotionMeasuredMotion(size_t leg) -> ScheduledAdaptation {
+  return ScheduledAdaptation::None;
+}
+
+void GaitAdaptation::applyAdaptation(GaitSchedule& gaitSchedule, const feet_array_t<ScheduledAdaptation>& scheduledAdaptations) {
+  // Early contact
+  if (std::any_of(scheduledAdaptations.begin(), scheduledAdaptations.end(), isEarlyContact)) {
+    const auto earlyTouchDownPerLeg = applyPerLeg(isEarlyContact, scheduledAdaptations);
+    gaitSchedule.adaptCurrentGait(earlyTouchDownAdaptation(earlyTouchDownPerLeg));
+  }
+}
 
 std::function<void(scalar_t& currentPhase, switched_model::Gait& currentGait, scalar_t currTime, switched_model::Gait& nextGait)>
 earlyTouchDownAdaptation(const switched_model::feet_array_t<bool>& earlyTouchDownPerLeg) {

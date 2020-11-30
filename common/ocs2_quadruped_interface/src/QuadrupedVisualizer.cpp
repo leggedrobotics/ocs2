@@ -208,9 +208,11 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 
   for (size_t j = 0; j < stateTrajectory.size(); j++) {
     const auto state = stateTrajectory.at(j);
-    vector_t input;
+    input_vector_t input;
     if (j < inputTrajectory.size()) {
       input = inputTrajectory.at(j);
+    } else {
+      input.setZero();
     }
 
     // Construct pose msg

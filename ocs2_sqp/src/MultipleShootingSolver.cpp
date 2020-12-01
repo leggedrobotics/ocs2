@@ -47,12 +47,8 @@ namespace ocs2
     matrix_t u(settings_.nu, settings_.N);
     if (!settings_.initPrimalSol)
     {
-      // x = matrix_t::Random(settings_.nx, settings_.N + 1);
-      for (int i = 0; i < settings_.N + 1; i++)
-      {
-        x.col(i) << 1.0, 0.0;
-      }
-      u = matrix_t::Zero(settings_.nu, settings_.N);
+      x = matrix_t::Random(settings_.nx, settings_.N + 1);
+      u = matrix_t::Random(settings_.nu, settings_.N);
       std::cout << "using random init\n";
     }
     else
@@ -75,10 +71,10 @@ namespace ocs2
       std::tie(delta_x, delta_u) = runSingleIter(*systemDynamicsPtr_, *costFunctionPtr_, *constraintPtr_, delta_t_, initTime, x, u, initState);
       x += delta_x;
       u += delta_u;
-      std::cout << "state: " << std::endl
-                << x.transpose() << std::endl;
-      std::cout << "input: " << std::endl
-                << u.transpose() << std::endl;
+      for (int j = 0; j < settings_.N; j++)
+      {
+        std::cout << "x dot u is: " << x.col(j).dot(u.col(j)) << std::endl;
+      }
       auto endSqpTime = std::chrono::steady_clock::now();
       auto sqpIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSqpTime - startSqpTime);
       scalar_t sqpTime = std::chrono::duration<scalar_t, std::milli>(sqpIntervalTime).count();
@@ -127,6 +123,8 @@ namespace ocs2
     int n_state = x.rows();
     int n_input = u.rows();
 
+    int n_constraint; // should be get from the constraintObj
+
     // number of input
     int nnuData[N + 1];
     // number of states
@@ -144,30 +142,26 @@ namespace ocs2
     // number of softed constraints on general constraints
     int nnsgData[N + 1];
 
-    int *iidxbx[N + 1];
-    scalar_t *llbx[N + 1];
-    scalar_t *uubx[N + 1];
+    int *iidxbx[N + 1] = {}; // box constraints for states
+    scalar_t *llbx[N + 1] = {};
+    scalar_t *uubx[N + 1] = {};
 
-    scalar_t *uu_guess[N + 1];
-    scalar_t *xx_guess[N + 1];
-    scalar_t *ssl_guess[N + 1];
-    scalar_t *ssu_guess[N + 1];
+    int *iidxbu[N + 1] = {}; // box constraints for inputs
+    scalar_t *llbu[N + 1] = {};
+    scalar_t *uubu[N + 1] = {};
 
-    scalar_t x_guessData[n_state];
-    scalar_t u_guessData[n_input];
-    for (int i = 0; i < n_state; i++)
-    {
-      x_guessData[i] = 0.0;
-    }
-    for (int i = 0; i < n_input; i++)
-    {
-      u_guessData[i] = 0.0;
-    }
+    scalar_t *uu_guess[N + 1] = {};
+    scalar_t *xx_guess[N + 1] = {};
+    scalar_t *ssl_guess[N + 1] = {};
+    scalar_t *ssu_guess[N + 1] = {};
 
-    scalar_t *x_guess = x_guessData;
-    scalar_t *u_guess = u_guessData;
-    scalar_t sl_guess[] = {};
-    scalar_t su_guess[] = {};
+    scalar_t *ZZl[N + 1] = {};
+    scalar_t *ZZu[N + 1] = {};
+    scalar_t *zzl[N + 1] = {};
+    scalar_t *zzu[N + 1] = {};
+    int *iidxs[N + 1] = {};
+    scalar_t *llls[N + 1] = {};
+    scalar_t *llus[N + 1] = {};
 
     for (int i = 0; i < N + 1; i++)
     {
@@ -186,16 +180,15 @@ namespace ocs2
       nnsbxData[i] = 0;
       nnsbuData[i] = 0;
       nnsgData[i] = 0;
-      iidxbx[i] = NULL;
-      llbx[i] = NULL;
-      uubx[i] = NULL;
-      uu_guess[i] = u_guess;
-      xx_guess[i] = x_guess;
-      ssl_guess[i] = sl_guess;
-      ssu_guess[i] = su_guess;
     }
-    nnuData[N] = 0;
+    nnuData[N] = 0; // no input in the final state x_N
     nnxData[0] = 0; // to ignore the bounding condition for x0
+
+    if (settings_.constrained)
+    {
+      nngData[N] = 0;
+    }
+
     int *nu = nnuData;
     int *nx = nnxData;
     int *nbu = nnbuData;
@@ -205,7 +198,7 @@ namespace ocs2
     int *nsbu = nnsbuData;
     int *nsg = nnsgData;
 
-    scalar_t *AA[N + 1];
+    scalar_t *AA[N];
     scalar_t *BB[N];
     scalar_t *bb[N];
     scalar_t *QQ[N + 1];
@@ -231,24 +224,30 @@ namespace ocs2
     q_data.resize(N + 1);
     r_data.resize(N);
 
-    scalar_t *CC[N + 1];
-    scalar_t *DD[N + 1];
-    scalar_t *llg[N + 1];
-    scalar_t *uug[N + 1];
+    // below are useful only when there are constraints
+    scalar_t *CC[N];
+    scalar_t *DD[N];
+    scalar_t *llg[N];
+    scalar_t *uug[N];
     matrix_array_t C_data;
     matrix_array_t D_data;
     matrix_array_t lg_data;
     matrix_array_t ug_data;
-    C_data.resize(N + 1);
-    D_data.resize(N + 1);
-    lg_data.resize(N + 1);
-    ug_data.resize(N + 1);
+    C_data.resize(N);
+    D_data.resize(N);
+    lg_data.resize(N);
+    ug_data.resize(N);
 
     scalar_t operTime = initTime;
 
     for (int i = 0; i < N; i++)
     {
       ocs2::VectorFunctionLinearApproximation systemDynamicApprox = systemDynamicsObj.linearApproximation(operTime, x.col(i), u.col(i));
+      // dx_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
+      // A_{k} = Id + dt * dfdx
+      // B_{k} = dt * dfdu
+      // b_{k} = x_{n} + dt * f(x_{n},u_{n}) - x_{n+1}
+      // currently only one-step Euler integration, subject to modification to RK4
       A_data[i] = delta_t_ * systemDynamicApprox.dfdx + matrix_t::Identity(n_state, n_state);
       AA[i] = A_data[i].data();
       B_data[i] = delta_t_ * systemDynamicApprox.dfdu;
@@ -275,17 +274,22 @@ namespace ocs2
       if (settings_.constrained)
       {
         ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x.col(i), u.col(i));
-        // C*x + D*u + e = 0
-        // C = dfdx, D = dfdu, e = f
-        // for hpipm
-        // ug >= C*x + D*u >= lg
+        // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
+        // C_{k} = dfdx
+        // D_{k} = dfdu
+        // e_{k} = f
+        // for hpipm --> ug >= C*dx + D*du >= lg
         C_data[i] = constraintApprox.dfdx;
         CC[i] = C_data[i].data();
         D_data[i] = constraintApprox.dfdu;
         DD[i] = D_data[i].data();
         lg_data[i] = -constraintApprox.f;
+        if (i == 0)
+        {
+          lg_data[i] -= C_data[i] * (initState - x.col(0));
+        }
+        ug_data[i] = lg_data[i];
         llg[i] = lg_data[i].data();
-        ug_data[i] = -constraintApprox.f;
         uug[i] = ug_data[i].data();
       }
 
@@ -300,31 +304,6 @@ namespace ocs2
     q_data[N] = 10 * delta_t_ * finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
     QQ[N] = Q_data[N].data();
     qq[N] = q_data[N].data();
-
-    int *iidxbu[N + 1] = {};
-    scalar_t *llbu[N + 1] = {};
-    scalar_t *uubu[N + 1] = {};
-
-    if (settings_.constrained)
-    {
-      ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x.col(N), u.col(N - 1));
-      C_data[N] = constraintApprox.dfdx;
-      D_data[N] = constraintApprox.dfdu;
-      lg_data[N] = -constraintApprox.f;
-      ug_data[N] = -constraintApprox.f;
-      CC[N] = C_data[N].data();
-      DD[N] = D_data[N].data();
-      llg[N] = lg_data[N].data();
-      uug[N] = ug_data[N].data();
-    }
-
-    scalar_t *ZZl[N + 1] = {};
-    scalar_t *ZZu[N + 1] = {};
-    scalar_t *zzl[N + 1] = {};
-    scalar_t *zzu[N + 1] = {};
-    int *iidxs[N + 1] = {};
-    scalar_t *llls[N + 1] = {};
-    scalar_t *llus[N + 1] = {};
 
     scalar_t **hA = AA;
     scalar_t **hB = BB;
@@ -357,7 +336,8 @@ namespace ocs2
     scalar_t **hsl_guess = ssl_guess;
     scalar_t **hsu_guess = ssu_guess;
 
-    int iter_max = 50;
+    // the hpipm parameters below are subject to changes, may be integratred into settings_
+    int iter_max = 30;
     scalar_t alpha_min = 1e-8;
     scalar_t mu0 = 1e4;
     scalar_t tol_stat = 1e-5;
@@ -496,7 +476,7 @@ namespace ocs2
       printf("\nocp ipm time = %e [s]\n\n", time_ipm);
     }
 
-    // getting deltaX, deltaU
+    // retrieve deltaX, deltaU
     auto startFillTime = std::chrono::steady_clock::now();
     matrix_t deltaU(n_input, N);
     matrix_t deltaX(n_state, N + 1);
@@ -532,7 +512,7 @@ namespace ocs2
     auto endFillTime = std::chrono::steady_clock::now();
     auto fillIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endFillTime - startFillTime);
     scalar_t fillTime = std::chrono::duration<scalar_t, std::milli>(fillIntervalTime).count();
-    std::cout << "Fill time usage: " << fillTime << "[ms]." << std::endl;
+    std::cout << "Retrieve time usage: " << fillTime << "[ms]." << std::endl;
 
     free(dim_mem);
     free(qp_mem);

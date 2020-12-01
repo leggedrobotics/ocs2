@@ -80,7 +80,9 @@ class CircularKinematicsCost final : public CostFunctionBaseAD {
  protected:
   ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                        const ad_vector_t& parameters) const override {
-    return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
+    // return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
+    // return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input) + 0.5 * (pow(state(0)-0.0,2) + pow(state(1)-1.0,2));
+    return 0.5 * (pow(state(0)-0.0,2) + pow(state(1)-1.0,2)) + 0.1*input.dot(input);
   }
 
   ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {

@@ -131,8 +131,8 @@ target_include_directories(${PROJECT_NAME}_node_new INTERFACE
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}_circular_kinematics src/MultipleShootingCircularKinematics.cpp)
-target_include_directories(${PROJECT_NAME}_circular_kinematics INTERFACE
+add_executable(circular_kinematics src/MultipleShootingCircularKinematics.cpp)
+target_include_directories(circular_kinematics INTERFACE
   ${blasfeo_INCLUDE_DIRS}
   ${hpipm_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -141,9 +141,9 @@ target_include_directories(${PROJECT_NAME}_circular_kinematics INTERFACE
 if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
 	target_link_libraries(${PROJECT_NAME}_node ${HPIPM_LIBS} ${catkin_LIBRARIES})
 	target_link_libraries(${PROJECT_NAME}_node_new ${HPIPM_LIBS} ${catkin_LIBRARIES})
-	target_link_libraries(${PROJECT_NAME}_circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME})
+	target_link_libraries(circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME})
 else() # add explicit math library
 	target_link_libraries(${PROJECT_NAME}_node ${HPIPM_LIBS} ${catkin_LIBRARIES} m)
   target_link_libraries(${PROJECT_NAME}_node_new ${HPIPM_LIBS} ${catkin_LIBRARIES} m)
-	target_link_libraries(${PROJECT_NAME}_circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME} m)
+	target_link_libraries(circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME} m)
 endif()

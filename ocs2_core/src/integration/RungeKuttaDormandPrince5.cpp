@@ -153,37 +153,37 @@ void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0,
                                       vector_t& x_out, vector_t& dxdt_out) {
   /* Runge Kutta Dormand-Prince Butcher tableau constants.
    * https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method */
-  const scalar_t a2 = 1.0 / 5;
-  const scalar_t a3 = 3.0 / 10;
-  const scalar_t a4 = 4.0 / 5;
-  const scalar_t a5 = 8.0 / 9;
+  constexpr scalar_t a2 = 1.0 / 5;
+  constexpr scalar_t a3 = 3.0 / 10;
+  constexpr scalar_t a4 = 4.0 / 5;
+  constexpr scalar_t a5 = 8.0 / 9;
 
-  const scalar_t b21 = 1.0 / 5;
+  constexpr scalar_t b21 = 1.0 / 5;
 
-  const scalar_t b31 = 3.0 / 40;
-  const scalar_t b32 = 9.0 / 40;
+  constexpr scalar_t b31 = 3.0 / 40;
+  constexpr scalar_t b32 = 9.0 / 40;
 
-  const scalar_t b41 = 44.0 / 45;
-  const scalar_t b42 = -56.0 / 15;
-  const scalar_t b43 = 32.0 / 9;
+  constexpr scalar_t b41 = 44.0 / 45;
+  constexpr scalar_t b42 = -56.0 / 15;
+  constexpr scalar_t b43 = 32.0 / 9;
 
-  const scalar_t b51 = 19372.0 / 6561;
-  const scalar_t b52 = -25360.0 / 2187;
-  const scalar_t b53 = 64448.0 / 6561;
-  const scalar_t b54 = -212.0 / 729;
+  constexpr scalar_t b51 = 19372.0 / 6561;
+  constexpr scalar_t b52 = -25360.0 / 2187;
+  constexpr scalar_t b53 = 64448.0 / 6561;
+  constexpr scalar_t b54 = -212.0 / 729;
 
-  const scalar_t b61 = 9017.0 / 3168;
-  const scalar_t b62 = -355.0 / 33;
-  const scalar_t b63 = 46732.0 / 5247;
-  const scalar_t b64 = 49.0 / 176;
-  const scalar_t b65 = -5103.0 / 18656;
+  constexpr scalar_t b61 = 9017.0 / 3168;
+  constexpr scalar_t b62 = -355.0 / 33;
+  constexpr scalar_t b63 = 46732.0 / 5247;
+  constexpr scalar_t b64 = 49.0 / 176;
+  constexpr scalar_t b65 = -5103.0 / 18656;
 
-  const scalar_t c1 = 35.0 / 384;
+  constexpr scalar_t c1 = 35.0 / 384;
   // c2 = 0
-  const scalar_t c3 = 500.0 / 1113;
-  const scalar_t c4 = 125.0 / 192;
-  const scalar_t c5 = -2187.0 / 6784;
-  const scalar_t c6 = 11.0 / 84;
+  constexpr scalar_t c3 = 500.0 / 1113;
+  constexpr scalar_t c4 = 125.0 / 192;
+  constexpr scalar_t c5 = -2187.0 / 6784;
+  constexpr scalar_t c6 = 11.0 / 84;
 
   k1_ = dxdt;  // k1 = system(x, t) from previous iteration
   x_.noalias() = x0 + dt * b21 * k1_;
@@ -206,19 +206,19 @@ void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0,
 /******************************************************************************************************/
 void RungeKuttaDormandPrince5::doStep(system_func_t& system, const vector_t& x0, const vector_t& dxdt, scalar_t t, scalar_t dt,
                                       vector_t& x_out, vector_t& dxdt_out, vector_t& error) {
-  const scalar_t c1 = 35.0 / 384;
+  constexpr scalar_t c1 = 35.0 / 384;
   // c2 = 0
-  const scalar_t c3 = 500.0 / 1113;
-  const scalar_t c4 = 125.0 / 192;
-  const scalar_t c5 = -2187.0 / 6784;
-  const scalar_t c6 = 11.0 / 84;
+  constexpr scalar_t c3 = 500.0 / 1113;
+  constexpr scalar_t c4 = 125.0 / 192;
+  constexpr scalar_t c5 = -2187.0 / 6784;
+  constexpr scalar_t c6 = 11.0 / 84;
 
-  const scalar_t dc1 = c1 - 5179.0 / 57600;
-  const scalar_t dc3 = c3 - 7571.0 / 16695;
-  const scalar_t dc4 = c4 - 393.0 / 640;
-  const scalar_t dc5 = c5 - -92097.0 / 339200;
-  const scalar_t dc6 = c6 - 187.0 / 2100;
-  const scalar_t dc7 = -1.0 / 40;
+  constexpr scalar_t dc1 = c1 - 5179.0 / 57600;
+  constexpr scalar_t dc3 = c3 - 7571.0 / 16695;
+  constexpr scalar_t dc4 = c4 - 393.0 / 640;
+  constexpr scalar_t dc5 = c5 - -92097.0 / 339200;
+  constexpr scalar_t dc6 = c6 - 187.0 / 2100;
+  constexpr scalar_t dc7 = -1.0 / 40;
 
   doStep(system, x0, dxdt, t, dt, x_out, dxdt_out);
 
@@ -239,7 +239,7 @@ scalar_t RungeKuttaDormandPrince5::error(const vector_t& x_old, const vector_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t RungeKuttaDormandPrince5::decreaseStep(scalar_t dt, scalar_t error) const {
-  const int ERROR_ORDER = 4;
+  constexpr int ERROR_ORDER = 4;
   dt *= std::max(0.9 * std::pow(error, -1.0 / (ERROR_ORDER - 1)), 0.2);
   return dt;
 }
@@ -248,7 +248,7 @@ scalar_t RungeKuttaDormandPrince5::decreaseStep(scalar_t dt, scalar_t error) con
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t RungeKuttaDormandPrince5::increaseStep(scalar_t dt, scalar_t error) const {
-  const int STEPPER_ORDER = 5;
+  constexpr int STEPPER_ORDER = 5;
   if (error < 0.5) {
     error = std::max(std::pow(scalar_t(5.0), -STEPPER_ORDER), error);
     dt *= 0.9 * std::pow(error, -1.0 / STEPPER_ORDER);

@@ -50,7 +50,10 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
    */
   QuadrupedVisualizer(const kinematic_model_t& kinematicModel, const com_model_t& comModel, ros::NodeHandle& n,
                       scalar_t maxUpdateFrequency = 1000.0)
-      : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), minPublishTimeDifference_(1 / maxUpdateFrequency) {
+      : kinematicModelPtr_(kinematicModel.clone()),
+        comModelPtr_(comModel.clone()),
+        lastTime_(std::numeric_limits<scalar_t>::lowest()),
+        minPublishTimeDifference_(1.0 / maxUpdateFrequency) {
     launchVisualizerNode(n);
   };
 
@@ -95,6 +98,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   ros::Publisher currentPosePublisher_;
   ros::Publisher currentFeetPosesPublisher_;
 
+  scalar_t lastTime_;
   scalar_t minPublishTimeDifference_;
 };
 

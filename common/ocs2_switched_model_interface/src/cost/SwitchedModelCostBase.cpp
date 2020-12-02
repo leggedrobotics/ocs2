@@ -18,14 +18,13 @@ SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const 
                                              const ad_kinematic_model_t& adKinematicsModel,
                                              const SwitchedModelModeScheduleManager& modeScheduleManager,
                                              const SwingTrajectoryPlanner& swingTrajectoryPlanner, const state_matrix_t& Q,
-                                             const input_matrix_t& R, const state_matrix_t& QFinal, bool generateModels)
+                                             const input_matrix_t& R, bool generateModels)
     : comModelPtr_(comModel.clone()),
       footPlacementCost_(new FootPlacementCost(FootPlacementCostParameters(), adComModel, adKinematicsModel, generateModels)),
       modeScheduleManagerPtr_(&modeScheduleManager),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       Q_(Q),
-      R_(R),
-      QFinal_(QFinal) {}
+      R_(R) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -37,8 +36,7 @@ SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
       swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
       Q_(rhs.Q_),
-      R_(rhs.R_),
-      QFinal_(rhs.QFinal_) {}
+      R_(rhs.R_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -81,8 +79,7 @@ scalar_t SwitchedModelCostBase::finalCost(scalar_t t, const vector_t& x) {
     throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
   }
 
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
+  return 0.0;
 }
 
 /******************************************************************************************************/
@@ -144,13 +141,10 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::finalCostQuadraticAp
     throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
   }
 
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  const vector_t qDeviation = QFinal_ * xDeviation;
-
   ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = 0.5 * xDeviation.dot(qDeviation);
-  Phi.dfdx = qDeviation;
-  Phi.dfdxx = QFinal_;
+  Phi.f = 0.0;
+  Phi.dfdx.setZero(STATE_DIM);
+  Phi.dfdxx.setZero(STATE_DIM, STATE_DIM);
   return Phi;
 }
 

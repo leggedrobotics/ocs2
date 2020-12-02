@@ -12,7 +12,9 @@ namespace switched_model {
 GaitSchedule::GaitSchedule(scalar_t time, Gait gait) : time_(time), phase_(0.0), gaitSchedule_{std::move(gait)} {}
 
 void GaitSchedule::advanceToTime(scalar_t time) {
-  assert(time >= time_);
+  if (time <= time_) {
+    return;
+  }
 
   const scalar_t dt = time - time_;
   std::deque<Gait>::iterator newActiveGait;

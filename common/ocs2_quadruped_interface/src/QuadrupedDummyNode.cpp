@@ -9,6 +9,7 @@
 
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 
+#include <ocs2_quadruped_interface/QuadrupedLogger.h>
 #include <ocs2_quadruped_interface/QuadrupedVisualizer.h>
 
 namespace switched_model {
@@ -28,9 +29,14 @@ void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& q
   auto visualizer = std::make_shared<switched_model::QuadrupedVisualizer>(quadrupedInterface.getKinematicModel(),
                                                                           quadrupedInterface.getComModel(), nodeHandle);
 
+  // Logging
+  std::string logFileName = "/tmp/ocs2/QuadrupedDummyNodeLog.txt";
+  auto logger = std::make_shared<switched_model::QuadrupedLogger>(logFileName, quadrupedInterface.getKinematicModel(),
+                                                                  quadrupedInterface.getComModel());
+
   // Dummy MRT
   ocs2::MRT_ROS_Dummy_Loop dummySimulator(mrt, mrtDesiredFrequency, mpcDesiredFrequency);
-  dummySimulator.subscribeObservers({visualizer});
+  dummySimulator.subscribeObservers({visualizer, logger});
 
   // initial state
   ocs2::SystemObservation initObservation;

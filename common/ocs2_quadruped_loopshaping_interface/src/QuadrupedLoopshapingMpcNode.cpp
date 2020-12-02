@@ -7,6 +7,10 @@
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 
+#include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
+#include <ocs2_quadruped_interface/TerrainPlaneVisualizer.h>
+#include <ocs2_quadruped_interface/TerrainReceiver.h>
+
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSlqMpc.h>
 
 namespace switched_model_loopshaping {
@@ -15,10 +19,27 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
                                  const ocs2::mpc::Settings& mpcSettings, const ocs2::ddp::Settings& ddpSettings) {
   const std::string robotName = "anymal";
 
+  auto loopshapingSolverModule = quadrupedInterface.getLoopshapingSynchronizedModule();
+
+  // Gait
   auto gaitReceiver = std::make_shared<switched_model::GaitReceiver>(
       nodeHandle, quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
-  auto loopshapingSolverModule = quadrupedInterface.getLoopshapingSynchronizedModule();
-  loopshapingSolverModule->synchronizedModules_.push_back(gaitReceiver);
+  loopshapingSolverModule->add(gaitReceiver);
+
+  // Terrain Receiver
+  auto terrainReceiver = std::make_shared<switched_model::TerrainReceiverSynchronizedModule>(
+      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
+  loopshapingSolverModule->add(terrainReceiver);
+
+  // Terrain plane visualization
+  auto terrainVisualizer = std::make_shared<switched_model::TerrainPlaneVisualizerSynchronizedModule>(
+      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
+  loopshapingSolverModule->add(terrainVisualizer);
+
+  // Swing planner
+  auto swingPlanningVisualizer = std::make_shared<switched_model::SwingPlanningVisualizer>(
+      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
+  loopshapingSolverModule->add(swingPlanningVisualizer);
 
   // launch MPC nodes
   auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, ddpSettings);

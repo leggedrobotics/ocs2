@@ -54,6 +54,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/QuadrupedDummyNode.cpp
   src/QuadrupedInterface.cpp
+  src/QuadrupedLogger.cpp
   src/QuadrupedMpcNode.cpp
   src/QuadrupedPointfootInterface.cpp
   src/QuadrupedSlqMpc.cpp

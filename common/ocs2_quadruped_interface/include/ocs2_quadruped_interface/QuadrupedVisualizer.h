@@ -36,9 +36,10 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   scalar_t footMarkerDiameter_ = 0.03;        // Size of the spheres at the feet
   scalar_t footAlphaWhenLifted_ = 0.3;        // Alpha value when a foot is lifted.
   scalar_t forceScale_ = 1000.0;              // Vector scale in N/m
+  scalar_t velScale_ = 5.0;                   // Vector scale in m/s
   scalar_t copMarkerDiameter_ = 0.03;         // Size of the sphere at the center of pressure
   scalar_t supportPolygonLineWidth_ = 0.005;  // LineThickness for the support polygon
-  scalar_t trajectoryLineWidth_ = 0.005;      // LineThickness for trajectories
+  scalar_t trajectoryLineWidth_ = 0.01;       // LineThickness for trajectories
   feet_array_t<Color> feetColorMap_ = {Color::blue, Color::orange, Color::yellow, Color::purple};  // Colors for markers per feet
 
   /**
@@ -50,7 +51,10 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
    */
   QuadrupedVisualizer(const kinematic_model_t& kinematicModel, const com_model_t& comModel, ros::NodeHandle& n,
                       scalar_t maxUpdateFrequency = 1000.0)
-      : kinematicModelPtr_(kinematicModel.clone()), comModelPtr_(comModel.clone()), minPublishTimeDifference_(1 / maxUpdateFrequency) {
+      : kinematicModelPtr_(kinematicModel.clone()),
+        comModelPtr_(comModel.clone()),
+        lastTime_(std::numeric_limits<scalar_t>::lowest()),
+        minPublishTimeDifference_(1.0 / maxUpdateFrequency) {
     launchVisualizerNode(n);
   };
 
@@ -85,16 +89,26 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   tf::TransformBroadcaster tfBroadcaster_;
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
 
-  ros::Publisher costDesiredPublisher_;
-  ros::Publisher costDesiredPosePublisher_;
+  // Cost desired publisher.
+  ros::Publisher costDesiredBasePositionPublisher_;
+  ros::Publisher costDesiredBasePosePublisher_;
+  ros::Publisher costDesiredBaseVelocityPublisher_;
+  ros::Publisher costDesiredBaseAngVelocityPublisher_;
+  feet_array_t<ros::Publisher> costDesiredFeetPositionPublishers_;
   feet_array_t<ros::Publisher> costDesiredFeetPosePublishers_;
+  feet_array_t<ros::Publisher> costDesiredFeetVelocityPublishers_;
+
+  // State optimized publisher.
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher stateOptimizedPosePublisher_;
   feet_array_t<ros::Publisher> stateOptimizedFeetPosePublishers_;
+
+  // Current state publisher..
   ros::Publisher currentStatePublisher_;
   ros::Publisher currentPosePublisher_;
   ros::Publisher currentFeetPosesPublisher_;
 
+  scalar_t lastTime_;
   scalar_t minPublishTimeDifference_;
 };
 

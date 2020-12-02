@@ -4,7 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Grid1
         - /Grid1/Offset1
         - /Desired Trajectory1
         - /Optimized Trajectory1
@@ -441,6 +440,110 @@ Visualization Manager:
             "": true
           Queue Size: 1
           Value: true
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: /ocs2_anymal/desiredVelTrajectory
+          Name: Base Velocity Trajectory
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: /ocs2_anymal/desiredAngVelTrajectory
+          Name: Base Angular Velocity Trajectory
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Alpha: 1
+          Arrow Length: 0.30000001192092896
+          Axes Length: 0.05000000074505806
+          Axes Radius: 0.009999999776482582
+          Class: rviz/PoseArray
+          Color: 255; 25; 0
+          Enabled: false
+          Head Length: 0.07000000029802322
+          Head Radius: 0.029999999329447746
+          Name: CoM Pose Trajectory
+          Shaft Length: 0.23000000417232513
+          Shaft Radius: 0.009999999776482582
+          Shape: Axes
+          Topic: ocs2_anymal/desiredPoseTrajectory
+          Unreliable: false
+          Value: false
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LF
+              Name: LF
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RF
+              Name: RF
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LH
+              Name: LH
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RH
+              Name: RH
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+          Enabled: true
+          Name: Feet Position Trajectories
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/LF
+              Name: LF
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/RF
+              Name: RF
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/LH
+              Name: LH
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/RH
+              Name: RH
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+          Enabled: false
+          Name: Feet Velocity Trajectories
         - Class: rviz/Group
           Displays:
             - Alpha: 1
@@ -509,22 +612,6 @@ Visualization Manager:
               Value: true
           Enabled: false
           Name: Feet Pose Trajectories
-        - Alpha: 1
-          Arrow Length: 0.30000001192092896
-          Axes Length: 0.05000000074505806
-          Axes Radius: 0.009999999776482582
-          Class: rviz/PoseArray
-          Color: 255; 25; 0
-          Enabled: true
-          Head Length: 0.07000000029802322
-          Head Radius: 0.029999999329447746
-          Name: CoM Pose Trajectory
-          Shaft Length: 0.23000000417232513
-          Shaft Radius: 0.009999999776482582
-          Shape: Axes
-          Topic: ocs2_anymal/desiredPoseTrajectory
-          Unreliable: false
-          Value: true
       Enabled: true
       Name: Desired Trajectory
     - Class: rviz/Group
@@ -535,7 +622,7 @@ Visualization Manager:
           Axes Radius: 0.009999999776482582
           Class: rviz/PoseArray
           Color: 255; 25; 0
-          Enabled: true
+          Enabled: false
           Head Length: 0.07000000029802322
           Head Radius: 0.029999999329447746
           Name: CoM Pose Trajectory
@@ -544,7 +631,7 @@ Visualization Manager:
           Shape: Axes
           Topic: ocs2_anymal/optimizedPoseTrajectory
           Unreliable: false
-          Value: true
+          Value: false
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /ocs2_anymal/optimizedStateTrajectory

@@ -68,14 +68,13 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
 
 void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,
                                  const ocs2::CommandData& command) {
-  static scalar_t lastTime = std::numeric_limits<scalar_t>::lowest();
-  if (observation.time - lastTime > minPublishTimeDifference_) {
+  if (observation.time - lastTime_ > minPublishTimeDifference_) {
     const auto timeStamp = ros::Time(observation.time);
     publishObservation(timeStamp, observation);
     publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
     publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
                                     primalSolution.modeSchedule_);
-    lastTime = observation.time;
+    lastTime_ = observation.time;
   }
 }
 

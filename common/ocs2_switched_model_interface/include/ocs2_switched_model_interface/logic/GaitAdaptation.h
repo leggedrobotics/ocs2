@@ -29,6 +29,12 @@ class GaitAdaptation {
   enum class ScheduledAdaptation { None, EarlyContact };
   static bool isEarlyContact(ScheduledAdaptation adaptation) { return adaptation == ScheduledAdaptation::EarlyContact; }
 
+  /**
+   * Determines the gait adaptation strategy per leg.
+   * @param desiredContactFlags : true = this leg was planned to be in contact, false = this was planned to be in swing.
+   * @param measuredContactFlags : true = this leg is measured to be in contact, false = this leg is measured to be in swing.
+   * @return Scheduled adaptation enum per leg.
+   */
   feet_array_t<ScheduledAdaptation> advanceLegStrategies(const contact_flag_t& desiredContactFlags,
                                                          const contact_flag_t& measuredContactFlags);
   ScheduledAdaptation desiredContactMeasuredContact(size_t leg);

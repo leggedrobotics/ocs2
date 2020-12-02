@@ -54,14 +54,18 @@ auto GaitAdaptation::advanceLegStrategies(const contact_flag_t& desiredContactFl
 
     if (desiredContact) {
       if (measuredContact) {
+        // Leg was planned to be in contact, and is measured to be in contact
         adaptations[leg] = desiredContactMeasuredContact(leg);
       } else {
+        // Leg was planned to be in contact, but is measured to be in swing
         adaptations[leg] = desiredContactMeasuredMotion(leg);
       }
-    } else {  // motion is desired
+    } else {
       if (measuredContact) {
+        // Leg was planned to be in swing, but is measured to be in contact
         adaptations[leg] = desiredMotionMeasuredContact(leg);
       } else {
+        // Leg was planned to be in swing, and is measured to be in swing
         adaptations[leg] = desiredMotionMeasuredMotion(leg);
       }
     }

@@ -39,27 +39,21 @@ inline bool endsWithStancePhase(const std::vector<ContactTiming>& timings) {
 }
 
 inline bool touchesDownAtLeastOnce(const std::vector<ContactTiming>& timings) {
-  return !timings.empty();
+  return std::any_of(timings.begin(), timings.end(), [](const ContactTiming& timing) { return hasStartTime(timing); });
 }
 
-/**
- * Extracts the contact timings for all legs from a modeSchedule
- */
+inline bool liftsOffAtLeastOnce(const std::vector<ContactTiming>& timings) {
+  return !timings.empty() && hasEndTime(timings.front());
+}
+
+/** Extracts the contact timings for all legs from a modeSchedule */
 feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(const ocs2::ModeSchedule& modeSchedule);
 
-/** Returns time until next lift off for all legs from a modeschedule. Returns -1 if leg is not lifting off */
-feet_array_t<scalar_t> getTimeUntilNextLiftOffPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule);
+/** Returns time of the next lift off. Returns nan if leg is not lifting off */
+scalar_t getTimeOfNextLiftOff(scalar_t currentTime, const std::vector<ContactTiming>& contactTimings);
 
-/** Returns time until next touch down for all legs from a modeschedule. Returns -1 if leg does not touch down */
-feet_array_t<scalar_t> getTimeUntilNextTouchDownPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule);
-
-/** Returns swing phase for all legs from a modeschedule. Returns -1 if swing phase can not be calculated */
-feet_array_t<scalar_t> getSwingPhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastLiftOffTimePerLeg,
-                                           const ocs2::ModeSchedule& modeSchedule);
-
-/** Returns stance phase for all legs from a modeschedule. Returns -1 if stance phase can not be calculated */
-feet_array_t<scalar_t> getStancePhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastTouchDownTimePerLeg,
-                                            const ocs2::ModeSchedule& modeSchedule);
+/** Returns time of the  touch down for all legs from a modeschedule. Returns nan if leg does not touch down */
+scalar_t getTimeOfNextTouchDown(scalar_t currentTime, const std::vector<ContactTiming>& contactTimings);
 
 /**
  * Get {startTime, endTime} for all contact phases. Swingphases are always implied in between: endTime[i] < startTime[i+1]

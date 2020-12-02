@@ -25,7 +25,10 @@ struct FootNormalConstraintMatrix {
  */
 class FootPhase {
  public:
+  FootPhase() = default;
   virtual ~FootPhase() = default;
+  FootPhase(const FootPhase&) = delete;
+  FootPhase& operator=(const FootPhase&) = delete;
 
   /** Returns the contact flag for this phase. Stance phase: True, Swing phase: false */
   virtual bool contactFlag() const = 0;

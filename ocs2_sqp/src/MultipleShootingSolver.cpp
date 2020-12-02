@@ -123,7 +123,7 @@ namespace ocs2
     int n_state = x.rows();
     int n_input = u.rows();
 
-    int n_constraint; // should be get from the constraintObj
+    int n_constraint = 1; // should be get from the constraintObj
 
     // number of input
     int nnuData[N + 1];
@@ -171,7 +171,7 @@ namespace ocs2
       nnbxData[i] = 0;
       if (settings_.constrained)
       {
-        nngData[i] = 1; // temporarily settings for circular kinematics
+        nngData[i] = n_constraint; // temporarily settings for circular kinematics
       }
       else
       {
@@ -286,7 +286,7 @@ namespace ocs2
         lg_data[i] = -constraintApprox.f;
         if (i == 0)
         {
-          lg_data[i] -= C_data[i] * (initState - x.col(0));
+          lg_data[i] -= C_data[i] * (initState - x.col(0)); // due to x0 is not part of optimization variables 
         }
         ug_data[i] = lg_data[i];
         llg[i] = lg_data[i].data();

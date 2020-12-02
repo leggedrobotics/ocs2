@@ -13,8 +13,8 @@ namespace switched_model {
  * state = [theta, p, w, v, q (4x)]
  * theta: EulerXYZ (3x1)
  * p: CoM position in Origin frame (3x1)
- * w: CoM linear velocity in Base Frame (3x1)
- * v: CoM angular velocity in Base Frame (3x1)
+ * w: CoM angular velocity in Base Frame (3x1)
+ * v: CoM linear velocity in Base Frame (3x1)
  * q: Joint angles per leg [HAA, HFE, KFE] (3x1) [4x]
  *
  * input = [lambda (4x), qj (4x)]
@@ -30,8 +30,8 @@ namespace switched_model {
  * theta: EulerXYZ (3x1)
  * p: Base position in Origin frame (3x1)
  * q: Joint angles per leg [HAA, HFE, KFE] (3x1) [4x]
- * w: Base linear velocity in Base Frame (3x1)
- * v: Base angular velocity in Base Frame (3x1)
+ * w: Base angular velocity in Base Frame (3x1)
+ * v: Base linear velocity in Base Frame (3x1)
  * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1) [4x]
  */
 

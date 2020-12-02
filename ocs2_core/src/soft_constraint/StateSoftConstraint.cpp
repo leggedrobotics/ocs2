@@ -71,11 +71,10 @@ scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                     const CostDesiredTrajectories&) const {
-  switch (constraintOrder_) {
-    case ConstraintOrder::Linear:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));
-    case ConstraintOrder::Quadratic:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state));
+  if (constraintOrder_ == ConstraintOrder::Linear) {
+    return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));
+  } else {  // constraintOrder_ == ConstraintOrder::Quadratic
+    return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state));
   }
 }
 

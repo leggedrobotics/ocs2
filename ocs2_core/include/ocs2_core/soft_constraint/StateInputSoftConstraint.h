@@ -76,6 +76,13 @@ class StateInputSoftConstraint final : public StateInputCost {
 
   ~StateInputSoftConstraint() override = default;
 
+  /** Gets the wrapped constraint. */
+  template <typename Derived = StateInputConstraint>
+  Derived& get() {
+    static_assert(std::is_base_of<StateInputConstraint, Derived>::value, "Template argument must derive from StateInputConstraint");
+    return dynamic_cast<Derived&>(*constraintPtr_);
+  }
+
   StateInputSoftConstraint* clone() const override;
 
   scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,

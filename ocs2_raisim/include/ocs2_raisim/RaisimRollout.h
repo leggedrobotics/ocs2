@@ -42,18 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Get the raisim activation key path from RAISIM_LICENSE_PATH environment variable.
- * This path needs to be passed to raisim with raisim::World::setActivationKey(PATH).
- */
-inline std::string getRaisimActivationKey() {
-  if (char* envPath = getenv("RAISIM_LICENSE_PATH")) {
-    return envPath;
-  } else {
-    throw std::runtime_error("Could not find RAISIM_LICENSE_PATH environment variable");
-  }
-}
-
-/**
  * This rollout class uses the Raisim physics simulator for integrating the system dynamics
  */
 class RaisimRollout final : public RolloutBase {

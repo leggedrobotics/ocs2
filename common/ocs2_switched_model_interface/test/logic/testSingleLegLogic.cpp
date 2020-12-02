@@ -18,7 +18,8 @@ TEST(TestContactTiming, stanceOnly) {
   ASSERT_TRUE(startsWithStancePhase(stanceOnlyVector));
   ASSERT_FALSE(endsWithSwingPhase(stanceOnlyVector));
   ASSERT_TRUE(endsWithStancePhase(stanceOnlyVector));
-  ASSERT_TRUE(touchesDownAtLeastOnce(stanceOnlyVector));
+  ASSERT_FALSE(touchesDownAtLeastOnce(stanceOnlyVector));
+  ASSERT_FALSE(liftsOffAtLeastOnce(stanceOnlyVector));
 }
 
 TEST(TestContactTiming, SwingOnly) {
@@ -29,6 +30,7 @@ TEST(TestContactTiming, SwingOnly) {
   ASSERT_TRUE(endsWithSwingPhase(swingOnlyVector));
   ASSERT_FALSE(endsWithStancePhase(swingOnlyVector));
   ASSERT_FALSE(touchesDownAtLeastOnce(swingOnlyVector));
+  ASSERT_FALSE(liftsOffAtLeastOnce(swingOnlyVector));
 }
 
 TEST(TestContactTiming, SwingToStance) {
@@ -42,6 +44,7 @@ TEST(TestContactTiming, SwingToStance) {
   ASSERT_FALSE(endsWithSwingPhase(swingToStanceVector));
   ASSERT_TRUE(endsWithStancePhase(swingToStanceVector));
   ASSERT_TRUE(touchesDownAtLeastOnce(swingToStanceVector));
+  ASSERT_FALSE(liftsOffAtLeastOnce(swingToStanceVector));
 }
 
 TEST(TestContactTiming, StanceToSwing) {
@@ -54,5 +57,6 @@ TEST(TestContactTiming, StanceToSwing) {
   ASSERT_TRUE(startsWithStancePhase(stanceToSwingVector));
   ASSERT_TRUE(endsWithSwingPhase(stanceToSwingVector));
   ASSERT_FALSE(endsWithStancePhase(stanceToSwingVector));
-  ASSERT_TRUE(touchesDownAtLeastOnce(stanceToSwingVector));
+  ASSERT_FALSE(touchesDownAtLeastOnce(stanceToSwingVector));
+  ASSERT_TRUE(liftsOffAtLeastOnce(stanceToSwingVector));
 }

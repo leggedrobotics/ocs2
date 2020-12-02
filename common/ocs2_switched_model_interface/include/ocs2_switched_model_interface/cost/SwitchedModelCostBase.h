@@ -30,7 +30,7 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
   //! Constructor
   SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
                         const SwitchedModelModeScheduleManager& modeScheduleManager, const SwingTrajectoryPlanner& swingTrajectoryPlanner,
-                        const state_matrix_t& Q, const input_matrix_t& R, const state_matrix_t& QFinal, bool generateModels);
+                        const state_matrix_t& Q, const input_matrix_t& R, bool generateModels);
 
   //! Destructor
   ~SwitchedModelCostBase() override = default;
@@ -61,7 +61,6 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
   // Quadratic cost terms
   state_matrix_t Q_;
   input_matrix_t R_;
-  state_matrix_t QFinal_;
 };
 
 }  // end of namespace switched_model

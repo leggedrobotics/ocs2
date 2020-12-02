@@ -110,3 +110,33 @@ TEST(TestGetModeSchedule, doubleGaitTransition) {
   ASSERT_EQ(modeSchedule.eventTimes.size(), multiModeGait.eventPhases.size() + 2 + multiModeGait.eventPhases.size() + 2);
   ASSERT_EQ(modeSchedule.modeSequence.back(), 1);
 }
+
+TEST(TestGetModeSchedule, mergePhases) {
+  std::vector<Gait> gaitSchedule = {singleModeGait, singleModeGait, multiModeGait};
+
+  double t0 = 0.1;
+  // Progress to half the last gait and loop it once
+  const double timeHorizon = 2.0 * singleModeGait.duration + multiModeGait.duration;
+  auto modeSchedule = getModeSchedule(0.0, t0, timeHorizon, gaitSchedule.begin(), gaitSchedule.end());
+  // The switch to between the two single modes is merged to 1.
+  ASSERT_EQ(modeSchedule.eventTimes.size(), 1 + multiModeGait.eventPhases.size());
+  ASSERT_EQ(modeSchedule.modeSequence[0], 1);
+  ASSERT_EQ(modeSchedule.modeSequence[1], 0);
+  ASSERT_EQ(modeSchedule.modeSequence[2], 1);
+  ASSERT_EQ(modeSchedule.modeSequence[3], 2);
+}
+
+TEST(TestGetModeSchedule, finalPhaseNotFullyInHorizon) {
+  std::vector<Gait> gaitSchedule = {singleModeGait, multiModeGait};
+
+  double t0 = 0.0;
+  // Progress to half the last gait and loop it once
+  const double timeHorizon = singleModeGait.duration + 0.999 * multiModeGait.duration;
+  auto modeSchedule = getModeSchedule(0.0, t0, timeHorizon, gaitSchedule.begin(), gaitSchedule.end());
+  // The switch to between the two single modes is merged to 1.
+  ASSERT_EQ(modeSchedule.eventTimes.size(), 1 + multiModeGait.eventPhases.size());
+  ASSERT_EQ(modeSchedule.modeSequence[0], 1);
+  ASSERT_EQ(modeSchedule.modeSequence[1], 0);
+  ASSERT_EQ(modeSchedule.modeSequence[2], 1);
+  ASSERT_EQ(modeSchedule.modeSequence[3], 2);
+}

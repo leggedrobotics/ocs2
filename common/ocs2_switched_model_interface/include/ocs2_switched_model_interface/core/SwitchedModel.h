@@ -13,8 +13,8 @@ namespace switched_model {
  * state = [theta, p, w, v, q (4x)]
  * theta: EulerXYZ (3x1)
  * p: CoM position in Origin frame (3x1)
- * w: CoM linear velocity in Base Frame (3x1)
- * v: CoM angular velocity in Base Frame (3x1)
+ * w: CoM angular velocity in Base Frame (3x1)
+ * v: CoM linear velocity in Base Frame (3x1)
  * q: Joint angles per leg [HAA, HFE, KFE] (3x1) [4x]
  *
  * input = [lambda (4x), qj (4x)]
@@ -30,8 +30,8 @@ namespace switched_model {
  * theta: EulerXYZ (3x1)
  * p: Base position in Origin frame (3x1)
  * q: Joint angles per leg [HAA, HFE, KFE] (3x1) [4x]
- * w: Base linear velocity in Base Frame (3x1)
- * v: Base angular velocity in Base Frame (3x1)
+ * w: Base angular velocity in Base Frame (3x1)
+ * v: Base linear velocity in Base Frame (3x1)
  * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1) [4x]
  */
 
@@ -227,6 +227,27 @@ joint_coordinate_s_t<SCALAR_T> fromArray(const feet_array_t<vector3_s_t<SCALAR_T
   joint_coordinate_s_t<SCALAR_T> valuesAsVector;
   valuesAsVector << valuesAsArray[0], valuesAsArray[1], valuesAsArray[2], valuesAsArray[3];
   return valuesAsVector;
+}
+
+/**
+ * Applies the function f to each leg individually. The inputs of f are to be passed per leg using feet_array<T>.
+ *
+ * Example usage:
+ *  feet_array_t<scalar_t> numbers = {0.0, 1.0, 2.0, 3.0};
+ *  feet_array_t<bool> flags = {true, false, true, false};
+ *
+ *  auto negativeIfTrue = [](scalar_t val, bool flag) { return flag ? val : -val; };
+ *  const auto result = applyPerLeg(negativeIfTrue, numbers, flags); // = {-0.0, 1.0, -2.0, 3.0}
+ */
+template <typename Func, typename... T>
+auto applyPerLeg(Func f, const feet_array_t<T>&... inputs) -> feet_array_t<decltype(f(inputs[0]...))> {
+  return {f(inputs[0]...), f(inputs[1]...), f(inputs[2]...), f(inputs[3]...)};
+}
+
+/** Creates a feet array filled with constant values */
+template <typename T>
+feet_array_t<T> constantFeetArray(const T& val) {
+  return {val, val, val, val};
 }
 
 }  // end of namespace switched_model

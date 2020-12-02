@@ -15,102 +15,29 @@ feet_array_t<std::vector<ContactTiming>> extractContactTimingsPerLeg(const ocs2:
   const auto contactSequencePerLeg = extractContactFlags(modeSchedule.modeSequence);
 
   // Extract timings per leg
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+  for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     contactTimingsPerLeg[leg] = extractContactTimings(modeSchedule.eventTimes, contactSequencePerLeg[leg]);
   }
 
   return contactTimingsPerLeg;
 }
 
-feet_array_t<scalar_t> getTimeUntilNextLiftOffPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
-  feet_array_t<scalar_t> timeUntilNextLiftOffPerLeg;
-
-  // Convert mode sequence to a contact timing vector per leg.
-  const auto& contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
-
-  // Extract timings per leg
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    if (contactTimingsPerLeg[leg].empty()) {
-      timeUntilNextLiftOffPerLeg[leg] = -1.0;
-    } else if (std::isnan(contactTimingsPerLeg[leg].front().end)) {
-      timeUntilNextLiftOffPerLeg[leg] = -1.0;
-    } else {
-      timeUntilNextLiftOffPerLeg[leg] = contactTimingsPerLeg[leg].front().end - currentTime;
+scalar_t getTimeOfNextLiftOff(scalar_t currentTime, const std::vector<ContactTiming>& contactTimings) {
+  for (const auto& contactPhase : contactTimings) {
+    if (hasEndTime(contactPhase) && contactPhase.end > currentTime) {
+      return contactPhase.end;
     }
   }
-
-  return timeUntilNextLiftOffPerLeg;
+  return timingNaN();
 }
 
-feet_array_t<scalar_t> getTimeUntilNextTouchDownPerLeg(scalar_t currentTime, const ocs2::ModeSchedule& modeSchedule) {
-  feet_array_t<scalar_t> timeUntilNextTouchDownPerLeg;
-
-  // Convert mode sequence to a contact timing vector per leg.
-  auto contactTimingsPerLeg = extractContactTimingsPerLeg(modeSchedule);
-
-  // Convert mode sequence to a contact flag vector per leg
-  const auto& contactSequencePerLeg = extractContactFlags(modeSchedule.modeSequence);
-
-  // Extract timings per leg
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    if (contactSequencePerLeg[leg].empty()) {
-      timeUntilNextTouchDownPerLeg[leg] = -1.0;
-      break;
-    }
-    if (contactSequencePerLeg[leg].front()) {
-      contactTimingsPerLeg[leg].erase(contactTimingsPerLeg[leg].begin());
-    }
-
-    if (contactTimingsPerLeg[leg].empty()) {
-      timeUntilNextTouchDownPerLeg[leg] = -1.0;
-    } else if (std::isnan(contactTimingsPerLeg[leg].front().start)) {
-      timeUntilNextTouchDownPerLeg[leg] = -1.0;
-    } else {
-      timeUntilNextTouchDownPerLeg[leg] = contactTimingsPerLeg[leg].front().start - currentTime;
+scalar_t getTimeOfNextTouchDown(scalar_t currentTime, const std::vector<ContactTiming>& contactTimings) {
+  for (const auto& contactPhase : contactTimings) {
+    if (hasStartTime(contactPhase) && contactPhase.start > currentTime) {
+      return contactPhase.start;
     }
   }
-
-  return timeUntilNextTouchDownPerLeg;
-}
-
-feet_array_t<scalar_t> getSwingPhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastLiftOffTimePerLeg,
-                                           const ocs2::ModeSchedule& modeSchedule) {
-  feet_array_t<scalar_t> swingPhasePerLeg;
-
-  // Convert mode sequence to a time until next touch down per leg.
-  const auto& timUntilNextTouchDownPerLeg = getTimeUntilNextTouchDownPerLeg(currentTime, modeSchedule);
-
-  // Extract swing phase per leg.
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    if (currentTime < 0.0 || lastLiftOffTimePerLeg[leg] < 0.0 || lastLiftOffTimePerLeg[leg] > currentTime ||
-        timUntilNextTouchDownPerLeg[leg] < 0.0) {
-      swingPhasePerLeg[leg] = -1.0;
-    } else {
-      swingPhasePerLeg[leg] =
-          (currentTime - lastLiftOffTimePerLeg[leg]) / (timUntilNextTouchDownPerLeg[leg] + currentTime - lastLiftOffTimePerLeg[leg]);
-    }
-  }
-  return swingPhasePerLeg;
-}
-
-feet_array_t<scalar_t> getStancePhasePerLeg(scalar_t currentTime, feet_array_t<scalar_t> lastTouchDownTimePerLeg,
-                                            const ocs2::ModeSchedule& modeSchedule) {
-  feet_array_t<scalar_t> stancePhasePerLeg;
-
-  // Convert mode sequence to a time until next touch down per leg.
-  const auto& timUntilNextLiftOffPerLeg = getTimeUntilNextLiftOffPerLeg(currentTime, modeSchedule);
-
-  // Extract swing phase per leg.
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    if (currentTime < 0.0 || lastTouchDownTimePerLeg[leg] < 0.0 || lastTouchDownTimePerLeg[leg] > currentTime ||
-        timUntilNextLiftOffPerLeg[leg] < 0.0) {
-      stancePhasePerLeg[leg] = -1.0;
-    } else {
-      stancePhasePerLeg[leg] =
-          (currentTime - lastTouchDownTimePerLeg[leg]) / (timUntilNextLiftOffPerLeg[leg] + currentTime - lastTouchDownTimePerLeg[leg]);
-    }
-  }
-  return stancePhasePerLeg;
+  return timingNaN();
 }
 
 std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& eventTimes, const std::vector<bool>& contactFlags) {
@@ -118,6 +45,7 @@ std::vector<ContactTiming> extractContactTimings(const std::vector<scalar_t>& ev
   const int numPhases = contactFlags.size();
 
   std::vector<ContactTiming> contactTimings;
+  contactTimings.reserve(1 + eventTimes.size() / 2);  // Approximate upper bound
   int currentPhase = 0;
 
   while (currentPhase < numPhases) {

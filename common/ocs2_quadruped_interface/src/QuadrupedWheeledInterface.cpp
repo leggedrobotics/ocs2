@@ -14,10 +14,10 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
   input_matrix_t R;
   state_matrix_t Qfinal;
   std::tie(Q, R, Qfinal) = loadCostMatrices(pathToConfigFolder + "/task.info", getKinematicModel(), getInitialState());
-  costFunctionPtr_.reset(new cost_function_t(getComModel(), adComModel, adKinematicModel, *getSwitchedModelModeScheduleManagerPtr(),
-                                             getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), Q, R, Qfinal,
-                                             modelSettings().recompileLibraries_));
-
+  costFunctionPtr_.reset(new SwitchedModelCostBase(getComModel(), adComModel, adKinematicModel, *getSwitchedModelModeScheduleManagerPtr(),
+                                                   getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), Q, R,
+                                                   modelSettings().recompileLibraries_));
+  terminalCostFunctionPtr_.reset(new ocs2::QuadraticCostFunction(ocs2::matrix_t(), ocs2::matrix_t(), Qfinal));
   dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
   constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
                                          getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), modelSettings()));

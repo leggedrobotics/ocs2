@@ -26,8 +26,8 @@ QuadrupedLoopshapingInterface::QuadrupedLoopshapingInterface(std::unique_ptr<swi
 
   // wrap with loopshaping
   timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(getDynamics(), getQuadrupedInterface().rolloutSettings()));
-  loopshapingSynchronizedModule_ =
-      std::make_shared<LoopshapingSynchronizedModule>(getQuadrupedInterface().getSynchronizedModules(), this->getLoopshapingDefinition());
+  loopshapingSynchronizedModule_ = std::make_shared<ocs2::LoopshapingSynchronizedModule>(this->getLoopshapingDefinition(),
+                                                                                         getQuadrupedInterface().getSynchronizedModules());
 }
 
 }  // namespace switched_model_loopshaping

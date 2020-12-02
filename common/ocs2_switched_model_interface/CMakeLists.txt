@@ -54,6 +54,7 @@ add_library(${PROJECT_NAME}
 	src/foot_planner/SplineCpg.cpp
 	src/foot_planner/SwingTrajectoryPlanner.cpp
 	src/logic/Gait.cpp
+	src/logic/GaitAdaptation.cpp
 	src/logic/GaitReceiver.cpp
 	src/logic/GaitSchedule.cpp
 	src/logic/ModeSequenceTemplate.cpp
@@ -165,6 +166,7 @@ target_link_libraries(test_${PROJECT_NAME}_footplanner
 )
 
 catkin_add_gtest(test_${PROJECT_NAME}_logic
+	test/logic/testEarlyTouchDown.cpp
 	test/logic/testExtractContractTimings.cpp
 	test/logic/testGait.cpp
 	test/logic/testGaitSwitching.cpp

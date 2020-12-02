@@ -8,7 +8,6 @@ Panels:
         - /Desired Trajectory1
         - /Optimized Trajectory1
         - /Current1
-        - /Terrain1
       Splitter Ratio: 0.7034631967544556
     Tree Height: 1645
   - Class: rviz/Selection
@@ -279,36 +278,12 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        depth_camera_front_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_front_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_front_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         depth_camera_left_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         depth_camera_left_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_left_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_left_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_left_depth_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -321,36 +296,12 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        depth_camera_rear_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_rear_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_rear_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         depth_camera_right_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         depth_camera_right_camera_parent:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_right_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_right_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        depth_camera_right_depth_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -448,6 +399,110 @@ Visualization Manager:
             "": true
           Queue Size: 1
           Value: true
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: /ocs2_anymal/desiredVelTrajectory
+          Name: Base Velocity Trajectory
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: /ocs2_anymal/desiredAngVelTrajectory
+          Name: Base Angular Velocity Trajectory
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Alpha: 1
+          Arrow Length: 0.30000001192092896
+          Axes Length: 0.05000000074505806
+          Axes Radius: 0.009999999776482582
+          Class: rviz/PoseArray
+          Color: 255; 25; 0
+          Enabled: false
+          Head Length: 0.07000000029802322
+          Head Radius: 0.029999999329447746
+          Name: CoM Pose Trajectory
+          Shaft Length: 0.23000000417232513
+          Shaft Radius: 0.009999999776482582
+          Shape: Axes
+          Topic: ocs2_anymal/desiredPoseTrajectory
+          Unreliable: false
+          Value: false
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LF
+              Name: LF
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RF
+              Name: RF
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LH
+              Name: LH
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+            - Class: rviz/Marker
+              Enabled: true
+              Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RH
+              Name: RH
+              Namespaces:
+                "": true
+              Queue Size: 1
+              Value: true
+          Enabled: true
+          Name: Feet Position Trajectories
+        - Class: rviz/Group
+          Displays:
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/LF
+              Name: LF
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/RF
+              Name: RF
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/LH
+              Name: LH
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+            - Class: rviz/MarkerArray
+              Enabled: false
+              Marker Topic: /ocs2_anymal/desiredFeetVelTrajectory/RH
+              Name: RH
+              Namespaces:
+                {}
+              Queue Size: 100
+              Value: false
+          Enabled: false
+          Name: Feet Velocity Trajectories
         - Class: rviz/Group
           Displays:
             - Alpha: 1
@@ -516,22 +571,6 @@ Visualization Manager:
               Value: true
           Enabled: false
           Name: Feet Pose Trajectories
-        - Alpha: 1
-          Arrow Length: 0.30000001192092896
-          Axes Length: 0.05000000074505806
-          Axes Radius: 0.009999999776482582
-          Class: rviz/PoseArray
-          Color: 255; 25; 0
-          Enabled: true
-          Head Length: 0.07000000029802322
-          Head Radius: 0.029999999329447746
-          Name: CoM Pose Trajectory
-          Shaft Length: 0.23000000417232513
-          Shaft Radius: 0.009999999776482582
-          Shape: Axes
-          Topic: ocs2_anymal/desiredPoseTrajectory
-          Unreliable: false
-          Value: true
       Enabled: true
       Name: Desired Trajectory
     - Class: rviz/Group
@@ -542,7 +581,7 @@ Visualization Manager:
           Axes Radius: 0.009999999776482582
           Class: rviz/PoseArray
           Color: 255; 25; 0
-          Enabled: true
+          Enabled: false
           Head Length: 0.07000000029802322
           Head Radius: 0.029999999329447746
           Name: CoM Pose Trajectory
@@ -551,7 +590,7 @@ Visualization Manager:
           Shape: Axes
           Topic: ocs2_anymal/optimizedPoseTrajectory
           Unreliable: false
-          Value: true
+          Value: false
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /ocs2_anymal/optimizedStateTrajectory
@@ -841,7 +880,7 @@ Window Geometry:
   Height: 2049
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000038300000765fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e000007650000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000043000004320000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf0000057100fffffffb0000000800540069006d0065010000000000000450000000000000000000000aeb0000076500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d0000003c6fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000003c6000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004300000432000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf0000024400fffffffb0000000800540069006d0065010000000000000450000000000000000000000567000003c600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -850,6 +889,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 3706
-  X: 134
-  Y: 55
+  Width: 1853
+  X: 1987
+  Y: 49

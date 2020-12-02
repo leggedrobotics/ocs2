@@ -57,8 +57,6 @@ int main(int argc, char* argv[]) {
   // Robot interface
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
-  raisim::World::setActivationKey(ocs2::getRaisimActivationKey());
-
   // setup simulator rollouts
   std::unique_ptr<ocs2::RaisimRollout> simRollout(new ocs2::RaisimRollout(
       ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf", &ocs2::cartpole::stateToRaisimGenCoordGenVel,

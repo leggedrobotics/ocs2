@@ -64,8 +64,6 @@ int main(int argc, char* argv[]) {
     throw ros::Exception("Error reading urdf from parameter server: " + urdfParamName);
   }
 
-  raisim::World::setActivationKey(ocs2::getRaisimActivationKey());
-
   // setup raisim rollout
   ocs2::RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_ballbot_raisim_example") + "/config/raisim_rollout.info",
                                                     "rollout", true);

@@ -249,27 +249,19 @@ namespace ocs2
       // b_{k} = x_{n} + dt * f(x_{n},u_{n}) - x_{n+1}
       // currently only one-step Euler integration, subject to modification to RK4
       A_data[i] = delta_t_ * systemDynamicApprox.dfdx + matrix_t::Identity(n_state, n_state);
-      AA[i] = A_data[i].data();
       B_data[i] = delta_t_ * systemDynamicApprox.dfdu;
-      BB[i] = B_data[i].data();
       b_data[i] = x.col(i) + delta_t_ * systemDynamicApprox.f - x.col(i + 1);
       if (i == 0)
       {
         b_data[i] += A_data[i] * (initState - x.col(0)); // to ignore the bounding condition for x0
       }
-      bb[i] = b_data[i].data();
 
       ocs2::ScalarFunctionQuadraticApproximation costFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(i), u.col(i));
       Q_data[i] = delta_t_ * costFunctionApprox.dfdxx;
-      QQ[i] = Q_data[i].data();
       R_data[i] = delta_t_ * costFunctionApprox.dfduu;
-      RR[i] = R_data[i].data();
       S_data[i] = delta_t_ * costFunctionApprox.dfdux;
-      SS[i] = S_data[i].data();
       q_data[i] = delta_t_ * costFunctionApprox.dfdx;
-      qq[i] = q_data[i].data();
       r_data[i] = delta_t_ * costFunctionApprox.dfdu;
-      rr[i] = r_data[i].data();
 
       if (settings_.constrained)
       {
@@ -280,18 +272,29 @@ namespace ocs2
         // e_{k} = f
         // for hpipm --> ug >= C*dx + D*du >= lg
         C_data[i] = constraintApprox.dfdx;
-        CC[i] = C_data[i].data();
         D_data[i] = constraintApprox.dfdu;
-        DD[i] = D_data[i].data();
         lg_data[i] = -constraintApprox.f;
         if (i == 0)
         {
-          lg_data[i] -= C_data[i] * (initState - x.col(0)); // due to x0 is not part of optimization variables 
+          lg_data[i] -= C_data[i] * (initState - x.col(0)); // due to x0 is not part of optimization variables
         }
         ug_data[i] = lg_data[i];
+        CC[i] = C_data[i].data();
+        DD[i] = D_data[i].data();
         llg[i] = lg_data[i].data();
         uug[i] = ug_data[i].data();
+
+        // new way for handling the equality constraints
       }
+
+      AA[i] = A_data[i].data();
+      BB[i] = B_data[i].data();
+      bb[i] = b_data[i].data();
+      QQ[i] = Q_data[i].data();
+      RR[i] = R_data[i].data();
+      SS[i] = S_data[i].data();
+      qq[i] = q_data[i].data();
+      rr[i] = r_data[i].data();
 
       operTime += delta_t_;
     }

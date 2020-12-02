@@ -166,7 +166,7 @@ namespace ocs2
 
     for (int i = 0; i < N + 1; i++)
     {
-      nnuData[i] = n_input - n_constraint;
+      nnuData[i] = n_input - n_constraint; // m - p
       nnxData[i] = n_state;
       nnbuData[i] = 0;
       nnbxData[i] = 0;
@@ -230,14 +230,16 @@ namespace ocs2
     scalar_t *DD[N] = {};
     scalar_t *llg[N] = {};
     scalar_t *uug[N] = {};
-    // matrix_array_t C_data;
-    // matrix_array_t D_data;
-    // matrix_array_t lg_data;
-    // matrix_array_t ug_data;
-    // C_data.resize(N);
-    // D_data.resize(N);
-    // lg_data.resize(N);
-    // ug_data.resize(N);
+    matrix_array_t C_data;
+    vector_array_t e_data;
+    matrix_array_t Q1_data;
+    matrix_array_t Q2_data;
+    matrix_array_t R1_data;
+    C_data.resize(N);
+    e_data.resize(N);
+    Q1_data.resize(N);
+    Q2_data.resize(N);
+    R1_data.resize(N);
 
     scalar_t operTime = initTime;
 
@@ -289,7 +291,7 @@ namespace ocs2
         // new way for handling the equality constraints
         matrix_t C = constraintApprox.dfdx; // p x n
         matrix_t D = constraintApprox.dfdu; // p x m
-        vector_t e = constraintApprox.f;   // p x 1
+        vector_t e = constraintApprox.f;    // p x 1
         if (i == 0)
         {
           e += C * (initState - x.col(0)); // due to x0 is not part of optimization variables
@@ -305,6 +307,11 @@ namespace ocs2
         matrix_t R1 = R.topRows(n_constraint); // p x p
         // R = [R1;
         //      0]
+        C_data[i] = C;
+        e_data[i] = e;
+        Q1_data[i] = Q1;
+        Q2_data[i] = Q2;
+        R1_data[i] = R1;
 
         // some intermediate variables used multiple times
         matrix_t Q1_R1invT = Q1 * (R1.transpose()).inverse();
@@ -513,9 +520,9 @@ namespace ocs2
       printf("\nocp ipm time = %e [s]\n\n", time_ipm);
     }
 
-    // retrieve deltaX, deltaU
+    // retrieve deltaX, deltaUTilde
     auto startFillTime = std::chrono::steady_clock::now();
-    matrix_t deltaU(n_input, N);
+    matrix_t deltaUTilde(n_input - n_constraint, N); // now this is \tilde{\delta u}
     matrix_t deltaX(n_state, N + 1);
     scalar_t uTemp[n_input];
     scalar_t xTemp[n_state];
@@ -536,9 +543,9 @@ namespace ocs2
       }
 
       d_ocp_qp_sol_get_u(ii, &qp_sol, uTemp);
-      for (int j = 0; j < n_input; j++)
+      for (int j = 0; j < n_input - n_constraint; j++)
       {
-        deltaU(j, ii) = uTemp[j];
+        deltaUTilde(j, ii) = uTemp[j];
       }
     }
     d_ocp_qp_sol_get_x(N, &qp_sol, xTemp);
@@ -550,6 +557,13 @@ namespace ocs2
     auto fillIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endFillTime - startFillTime);
     scalar_t fillTime = std::chrono::duration<scalar_t, std::milli>(fillIntervalTime).count();
     std::cout << "Retrieve time usage: " << fillTime << "[ms]." << std::endl;
+
+    // remap the tilde delta u to real delta u
+    matrix_t deltaU(n_input, N);
+    for (int i = 0; i < N; i++)
+    {
+      deltaU.col(i) = Q2_data[i] * deltaUTilde.col(i) - Q1_data[i] * (R1_data[i].transpose()).inverse() * (C_data[i] * deltaX.col(i) + e_data[i]);
+    }
 
     free(dim_mem);
     free(qp_mem);

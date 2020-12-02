@@ -76,6 +76,13 @@ class StateSoftConstraint final : public StateCost {
 
   ~StateSoftConstraint() override = default;
 
+  /** Gets the wrapped constraint. */
+  template <typename Derived = StateConstraint>
+  Derived& get() {
+    static_assert(std::is_base_of<StateConstraint, Derived>::value, "Template argument must derive from StateConstraint");
+    return dynamic_cast<Derived&>(*constraintPtr_);
+  }
+
   StateSoftConstraint* clone() const override;
 
   scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& /* desiredTrajectory */) const override;

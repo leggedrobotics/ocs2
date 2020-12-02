@@ -9,6 +9,7 @@
 
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
 #include <ocs2_quadruped_interface/TerrainPlaneVisualizer.h>
+#include <ocs2_quadruped_interface/TerrainReceiver.h>
 
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSlqMpc.h>
 
@@ -25,9 +26,14 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
       nodeHandle, quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
   loopshapingSolverModule->add(gaitReceiver);
 
-  // Terrain
-  auto terrainVisualizer = std::make_shared<switched_model::TerrainPlaneVisualizerSynchronizedModule>(
+  // Terrain Receiver
+  auto terrainReceiver = std::make_shared<switched_model::TerrainReceiverSynchronizedModule>(
       quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getTerrainModel(), nodeHandle);
+  loopshapingSolverModule->add(terrainReceiver);
+
+  // Terrain plane visualization
+  auto terrainVisualizer = std::make_shared<switched_model::TerrainPlaneVisualizerSynchronizedModule>(
+      quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
   loopshapingSolverModule->add(terrainVisualizer);
 
   // Swing planner

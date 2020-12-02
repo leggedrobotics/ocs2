@@ -12,10 +12,10 @@ TerrainReceiverSynchronizedModule::TerrainReceiverSynchronizedModule(ocs2::Synch
 
 void TerrainReceiverSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                                                      const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-  std::unique_ptr<switched_model::SegmentedPlanesTerrainModel> terrainUpdate;
-  if (segmentedPlanesRos_->update(terrainUpdate)) {  // Fills the pointer if an update is available
-    terrainModelPtr_->lock().reset(std::move(terrainUpdate));
-  };
+  if (auto newTerrain = segmentedPlanesRos_->getTerrainModel()) {
+    terrainModelPtr_->lock().reset(std::move(newTerrain));
+    segmentedPlanesRos_->publish();
+  }
 }
 
 }  // namespace switched_model

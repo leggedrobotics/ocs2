@@ -30,11 +30,16 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
     modeSchedule = lockedGaitSchedulePtr->getModeSchedule(1.5 * timeHorizon);
   }
 
-  {
-    auto lockedTerrainPtr = terrainModel_.lock();
-    swingTrajectoryPtr_->update(initTime, finalTime, currentState, costDesiredTrajectory, extractContactTimingsPerLeg(modeSchedule),
-                                *lockedTerrainPtr);
+  // Transfer terrain ownership if a new terrain is available
+  std::unique_ptr<TerrainModel> newTerrain;
+  terrainModel_.swap(newTerrain);  // Thread-safe swap with lockable Terrain
+  if (newTerrain) {
+    swingTrajectoryPtr_->updateTerrain(std::move(newTerrain));
   }
+
+  // Prepare swing motions
+  swingTrajectoryPtr_->updateSwingMotions(initTime, finalTime, currentState, costDesiredTrajectory,
+                                          extractContactTimingsPerLeg(modeSchedule));
 }
 
 }  // namespace switched_model

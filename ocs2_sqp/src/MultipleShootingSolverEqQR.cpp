@@ -321,7 +321,7 @@ namespace ocs2
         b_data[i] = b_data[i] - B_data[i] * Q1_R1invT * e;
         B_data[i] = B_data[i] * Q2;
 
-        q_data[i] = q_data[i] - Q1_R1invT_C.transpose() * r_data[i] - S_data[i] * Q1_R1invT * e - Q1_R1invT_C.transpose() * R_data[i] * Q1_R1invT_C * e;
+        q_data[i] = q_data[i] - Q1_R1invT_C.transpose() * r_data[i] - S_data[i] * Q1_R1invT * e - Q1_R1invT_C.transpose() * R_data[i] * Q1_R1invT * e;
         r_data[i] = Q2.transpose() * r_data[i] - Q2.transpose() * R_data[i] * Q1_R1invT * e;
         Q_data[i] = Q_data[i] - 2 * Q1_R1invT_C.transpose() * S_data[i] + Q1_R1invT_C.transpose() * R_data[i] * Q1_R1invT_C;
         S_data[i] = Q2.transpose() * S_data[i] - Q2.transpose() * R_data[i] * Q1_R1invT_C;

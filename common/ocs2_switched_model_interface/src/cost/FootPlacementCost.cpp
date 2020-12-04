@@ -6,12 +6,9 @@
 
 namespace switched_model {
 
-FootPlacementCost::FootPlacementCost(FootPlacementCostParameters settings, const ad_com_model_t& adComModel,
-                                     const ad_kinematic_model_t& adKinematicsModel, bool generateModels)
-    : settings_(settings), sdfsettings_(), constraintValuesUpdated_(false), feetJacobiansUpdated_(false) {
-  sdfsettings_.mu = 2.5;
-  sdfsettings_.delta = 0.005;
-
+FootPlacementCost::FootPlacementCost(FootPlacementCostParameters settings, FootPlacementCostParameters sdfSettings,
+                                     const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel, bool generateModels)
+    : settings_(settings), sdfsettings_(sdfSettings), constraintValuesUpdated_(false), feetJacobiansUpdated_(false) {
   std::string libName = "FootPlacementCost";
   std::string libFolder = "/tmp/ocs2";
   auto diffFunc = [&](const ad_vector_t& x, ad_vector_t& y) { adfunc(adComModel, adKinematicsModel, x, y); };

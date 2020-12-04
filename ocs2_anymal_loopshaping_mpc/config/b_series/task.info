@@ -35,6 +35,14 @@ model_settings
   gaitOptimization              false
 
   recompileLibraries            true
+
+  ; FootPlacementCostParameters
+  mu                            0.1   ; magnitude scaling
+  delta                         0.01  ; [m] distance from constraint boundary where the barrier becomes quadratic.
+
+  ; FootPlacementCostParameters Sdf
+  muSdf                         2.5
+  deltaSdf                      0.005
 }
 
 terrainPlane
@@ -290,22 +298,22 @@ R
 {
    scaling 1e-3
 
-   ; LF contact forces 
+   ; LF contact forces
    (0,0)      1.0    ; LF_X
    (1,1)      1.0    ; LF_Y
    (2,2)      1.0    ; LF_Z
 
-   ; RF contact forces 
+   ; RF contact forces
    (3,3)      1.0    ; RF_X
    (4,4)      1.0    ; RF_Y
    (5,5)      1.0    ; RF_Z
 
-   ; LH contact forces 
+   ; LH contact forces
    (6,6)      1.0    ; LH_X
    (7,7)      1.0    ; LH_Y
    (8,8)      1.0    ; LH_Z
 
-   ; RH contact forces 
+   ; RH contact forces
    (9,9)      1.0    ; RH_X
    (10,10)    1.0    ; RH_Y
    (11,11)    1.0    ; RH_Z
@@ -436,9 +444,9 @@ CoM_final_pose
 {
   ; orientation
   (0,0) 0.0      ; x
-  (1,0) 0.0      ; y 
+  (1,0) 0.0      ; y
   (2,0) 0.0      ; z
-                
+
   ; position
   (3,0) 2.0      ; x ;1.0
   (4,0) 0.0      ; y
@@ -454,4 +462,3 @@ CoM_final_pose
 ;  yMin  -10.0
 ;  yMax  10.0
 ;}
-

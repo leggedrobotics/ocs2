@@ -22,6 +22,14 @@ struct ModelSettings {
   bool enforceTorqueConstraint_ = false;
   scalar_t torqueLimit_ = 40.0;
   bool recompileLibraries_ = true;
+
+  // FootPlacementCostParameters
+  scalar_t mu_ = 0.1;      // magnitude scaling
+  scalar_t delta_ = 0.01;  // [m] distance from constraint boundary where the barrier becomes quadratic.
+
+  // FootPlacementCostParameters Sdf
+  scalar_t muSdf_ = 2.5;
+  scalar_t deltaSdf_ = 0.005;
 };
 
 ModelSettings loadModelSettings(const std::string& filename, bool verbose = true);

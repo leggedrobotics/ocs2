@@ -18,9 +18,11 @@ SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const 
                                              const ad_kinematic_model_t& adKinematicsModel,
                                              const SwitchedModelModeScheduleManager& modeScheduleManager,
                                              const SwingTrajectoryPlanner& swingTrajectoryPlanner, const state_matrix_t& Q,
-                                             const input_matrix_t& R, bool generateModels)
+                                             const input_matrix_t& R, ModelSettings options)
     : comModelPtr_(comModel.clone()),
-      footPlacementCost_(new FootPlacementCost(FootPlacementCostParameters(), adComModel, adKinematicsModel, generateModels)),
+      footPlacementCost_(new FootPlacementCost(FootPlacementCostParameters(options.mu_, options.delta_),
+                                               FootPlacementCostParameters(options.muSdf_, options.deltaSdf_), adComModel,
+                                               adKinematicsModel, options.recompileLibraries_)),
       modeScheduleManagerPtr_(&modeScheduleManager),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       Q_(Q),

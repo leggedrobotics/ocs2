@@ -10,6 +10,7 @@
 #include <ocs2_core/cost/CostFunctionBase.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
+#include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/cost/FootPlacementCost.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
@@ -28,9 +29,10 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
   using com_model_t = ComModelBase<scalar_t>;
 
   //! Constructor
+  //! Constructor
   SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
                         const SwitchedModelModeScheduleManager& modeScheduleManager, const SwingTrajectoryPlanner& swingTrajectoryPlanner,
-                        const state_matrix_t& Q, const input_matrix_t& R, bool generateModels);
+                        const state_matrix_t& Q, const input_matrix_t& R, ModelSettings options = ModelSettings());
 
   //! Destructor
   ~SwitchedModelCostBase() override = default;

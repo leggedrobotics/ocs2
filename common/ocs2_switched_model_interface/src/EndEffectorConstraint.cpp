@@ -26,7 +26,7 @@ void EndEffectorConstraintSettings::resize(size_t rows, size_t cols) {
 constexpr size_t EndEffectorConstraint::domain_dim_;
 constexpr size_t EndEffectorConstraint::range_dim_;
 
-EndEffectorConstraint::EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
+EndEffectorConstraint::EndEffectorConstraint(ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber,
                                              EndEffectorConstraintSettings settings, ad_com_model_t& adComModel,
                                              ad_kinematic_model_t& adKinematicsModel, adfunc_t adfunc, bool generateModels, bool loadModels)
     : BASE(constraintOrder),
@@ -81,7 +81,7 @@ scalar_array_t EndEffectorConstraint::getValue(scalar_t time, const state_vector
 
 EndEffectorConstraint::LinearApproximation_t EndEffectorConstraint::getLinearApproximation(scalar_t time, const state_vector_t& state,
                                                                                            const input_vector_t& input) const {
-  if (getOrder() == ocs2::ConstraintOrder::None) {
+  if (getOrder() == ConstraintOrder::None) {
     return BASE::getLinearApproximation(time, state, input);
   }
   // Assemble input
@@ -107,31 +107,50 @@ EndEffectorConstraint::LinearApproximation_t EndEffectorConstraint::getLinearApp
 
 EndEffectorConstraint::QuadraticApproximation_t EndEffectorConstraint::getQuadraticApproximation(scalar_t time, const state_vector_t& state,
                                                                                                  const input_vector_t& input) const {
-  if (getOrder() != ocs2::ConstraintOrder::Quadratic) {
-    return BASE::getQuadraticApproximation(time, state, input);
+  switch (getOrder()) {
+    case ConstraintOrder::Linear: {  // return the linear model
+      auto linearApprox = getLinearApproximation(time, state, input);
+      QuadraticApproximation_t quadraticApproximation;
+      quadraticApproximation.constraintValues = std::move(linearApprox.constraintValues);
+      quadraticApproximation.derivativeState = std::move(linearApprox.derivativeState);
+      quadraticApproximation.derivativeInput = std::move(linearApprox.derivativeInput);
+      for (int i = 0; i < settings_.A.rows(); i++) {
+        quadraticApproximation.secondDerivativesState.push_back(state_matrix_t::Zero());
+        quadraticApproximation.secondDerivativesInput.push_back(input_matrix_t::Zero());
+        quadraticApproximation.derivativesInputState.push_back(input_state_matrix_t::Zero());
+      }
+      return quadraticApproximation;
+    }
+
+    case ConstraintOrder::Quadratic: {  // return the quadratic model
+      // Assemble input
+      vector_t tapedInput(domain_dim_);
+      tapedInput << time, state, input;
+
+      // Convert to output format
+      QuadraticApproximation_t quadraticApproximation;
+      auto linearApproximation = getLinearApproximation(time, state, input);
+      quadraticApproximation.constraintValues = std::move(linearApproximation.constraintValues);
+      quadraticApproximation.derivativeState = std::move(linearApproximation.derivativeState);
+      quadraticApproximation.derivativeInput = std::move(linearApproximation.derivativeInput);
+
+      for (int i = 0; i < settings_.A.rows(); i++) {
+        timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A.row(i), tapedInput);
+
+        quadraticApproximation.secondDerivativesState.emplace_back(weightedHessian.block(1, 1, STATE_DIM, STATE_DIM));
+        quadraticApproximation.secondDerivativesInput.emplace_back(
+            weightedHessian.block(1 + STATE_DIM, 1 + STATE_DIM, INPUT_DIM, INPUT_DIM));
+        quadraticApproximation.derivativesInputState.emplace_back(weightedHessian.block(1 + STATE_DIM, 1, INPUT_DIM, STATE_DIM));
+      }
+      return quadraticApproximation;
+    }
+
+    default:
+      return BASE::getQuadraticApproximation(time, state, input);
   }
-  // Assemble input
-  vector_t tapedInput(domain_dim_);
-  tapedInput << time, state, input;
-
-  // Convert to output format
-  QuadraticApproximation_t quadraticApproximation;
-  auto linearApproximation = getLinearApproximation(time, state, input);
-  quadraticApproximation.constraintValues = std::move(linearApproximation.constraintValues);
-  quadraticApproximation.derivativeState = std::move(linearApproximation.derivativeState);
-  quadraticApproximation.derivativeInput = std::move(linearApproximation.derivativeInput);
-
-  for (int i = 0; i < settings_.A.rows(); i++) {
-    timeStateInput_matrix_t weightedHessian = adInterface_->getHessian(settings_.A.row(i), tapedInput);
-
-    quadraticApproximation.secondDerivativesState.emplace_back(weightedHessian.block(1, 1, STATE_DIM, STATE_DIM));
-    quadraticApproximation.secondDerivativesInput.emplace_back(weightedHessian.block(1 + STATE_DIM, 1 + STATE_DIM, INPUT_DIM, INPUT_DIM));
-    quadraticApproximation.derivativesInputState.emplace_back(weightedHessian.block(1 + STATE_DIM, 1, INPUT_DIM, STATE_DIM));
-  }
-  return quadraticApproximation;
 }
 
-void EndEffectorConstraint::initAdModels(ocs2::ConstraintOrder constraintOrder, bool generateModels, bool loadModels, bool verbose) {
+void EndEffectorConstraint::initAdModels(ConstraintOrder constraintOrder, bool generateModels, bool loadModels, bool verbose) {
   auto&& order = static_cast<ad_interface_t::ApproximationOrder>(constraintOrder);
   if (generateModels) {
     adInterface_->createModels(order, verbose);

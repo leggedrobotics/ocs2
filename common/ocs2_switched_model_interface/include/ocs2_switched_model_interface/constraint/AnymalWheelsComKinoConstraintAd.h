@@ -46,7 +46,7 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase {
   /** Sets up the inequality constraints for a query at time t */
   void updateInequalityConstraints(scalar_t t);
 
-  using ConstraintCollection_t = ocs2::ConstraintCollection<STATE_DIM, INPUT_DIM>;
+  using ConstraintCollection_t = ConstraintCollection<STATE_DIM, INPUT_DIM>;
   ConstraintCollection_t equalityStateInputConstraintCollection_;  // state input equality constraints
   ConstraintCollection_t inequalityConstraintCollection_;          // inequality constraints
 

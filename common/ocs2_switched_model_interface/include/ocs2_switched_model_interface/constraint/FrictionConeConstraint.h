@@ -19,11 +19,11 @@ namespace switched_model {
  * sqrt(regularization) instead of Fz = 0
  *
  */
-class FrictionConeConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
+class FrictionConeConstraint final : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+  using BASE = ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_t;

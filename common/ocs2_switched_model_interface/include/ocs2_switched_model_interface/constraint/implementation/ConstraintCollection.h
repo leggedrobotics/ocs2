@@ -1,5 +1,5 @@
 
-namespace ocs2 {
+namespace switched_model {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -218,4 +218,4 @@ void ConstraintCollection<STATE_DIM, INPUT_DIM>::appendVectorToVectorByMoving(st
   v1.insert(v1.end(), std::make_move_iterator(v2.begin()), std::make_move_iterator(v2.end()));
 }
 
-}  // namespace ocs2
+}  // namespace switched_model

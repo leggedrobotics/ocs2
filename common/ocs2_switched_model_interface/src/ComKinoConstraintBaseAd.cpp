@@ -43,7 +43,7 @@ ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ComKinoConstraintBaseAd::initializeConstraintTerms() {
-  using ConstraintTerm_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+  using ConstraintTerm_t = ConstraintTerm<STATE_DIM, INPUT_DIM>;
 
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];

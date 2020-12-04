@@ -12,8 +12,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>doxygen</depend>
-  <depend>texlive-latex-base</depend>
+  <doc_depend>doxygen</doc_depend>
+  <doc_depend>texlive-latex-base</doc_depend>
 
   <depend>ocs2_core</depend>
   <depend>ocs2_oc</depend>

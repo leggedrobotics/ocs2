@@ -172,7 +172,14 @@ namespace ocs2
 
     for (int i = 0; i < N + 1; i++)
     {
-      nnuData[i] = n_input - n_constraint; // m - p
+      if (settings_.constrained)
+      {
+        nnuData[i] = n_input - n_constraint; // m - p
+      }
+      else
+      {
+        nnuData[i] = n_input; // m
+      }
       nnxData[i] = n_state;
       nnbuData[i] = 0;
       nnbxData[i] = 0;
@@ -295,7 +302,7 @@ namespace ocs2
         matrix_t Q1_R1invT = Q1 * (R1.transpose()).inverse();
         matrix_t Q1_R1invT_C = Q1_R1invT * C;
 
-        // see the doc/deduction.pdf for more details 
+        // see the doc/deduction.pdf for more details
         A_data[i] = A_data[i] - B_data[i] * Q1_R1invT_C;
         b_data[i] = b_data[i] - B_data[i] * Q1_R1invT * e;
         B_data[i] = B_data[i] * Q2;
@@ -502,36 +509,35 @@ namespace ocs2
 
     // retrieve deltaX, deltaUTilde
     auto startFillTime = std::chrono::steady_clock::now();
-    matrix_t deltaUTilde(n_input - n_constraint, N); // now this is \tilde{\delta u}
     matrix_t deltaX(n_state, N + 1);
-    scalar_t uTemp[n_input - n_constraint];
+    deltaX.col(0) = initState - x.col(0); // because the first variable delta x0 is not optimized. Rather it's a constant.
+    matrix_t deltaU(n_input, N);
+    matrix_t deltaUTilde(n_input - n_constraint, N); // now this is \tilde{\delta u}, only useful when constrained
+    scalar_t uTemp[n_input];
     scalar_t xTemp[n_state];
 
     for (int ii = 0; ii < N; ii++)
     {
-      if (ii == 0)
+      d_ocp_qp_sol_get_x(ii + 1, &qp_sol, xTemp);
+      for (int j = 0; j < n_state; j++)
       {
-        deltaX.col(ii) = initState - x.col(0); // because the first variable delta x0 is not optimized. Rather it's a constant.
+        deltaX(j, ii + 1) = xTemp[j];
+      }
+      d_ocp_qp_sol_get_u(ii, &qp_sol, uTemp);
+      if (settings_.constrained)
+      {
+        for (int j = 0; j < n_input - n_constraint; j++) // <-- pay attention to the number of states for tilded deltaU, should be m - p
+        {
+          deltaUTilde(j, ii) = uTemp[j];
+        }
       }
       else
       {
-        d_ocp_qp_sol_get_x(ii, &qp_sol, xTemp);
-        for (int j = 0; j < n_state; j++)
+        for (int j = 0; j < n_input; j++) // <-- pay attention to the number of states for tilded deltaU, should be m - p
         {
-          deltaX(j, ii) = xTemp[j];
+          deltaU(j, ii) = uTemp[j];
         }
       }
-
-      d_ocp_qp_sol_get_u(ii, &qp_sol, uTemp);
-      for (int j = 0; j < n_input - n_constraint; j++) // <-- pay attention to the number of states for tilded deltaU, should be m - p
-      {
-        deltaUTilde(j, ii) = uTemp[j];
-      }
-    }
-    d_ocp_qp_sol_get_x(N, &qp_sol, xTemp);
-    for (int j = 0; j < n_state; j++)
-    {
-      deltaX(j, N) = xTemp[j];
     }
     auto endFillTime = std::chrono::steady_clock::now();
     auto fillIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endFillTime - startFillTime);
@@ -539,12 +545,15 @@ namespace ocs2
     std::cout << "Retrieve time usage: " << fillTime << "[ms]." << std::endl;
 
     // remap the tilde delta u to real delta u
-    matrix_t deltaU(n_input, N);
-    for (int i = 0; i < N; i++)
+    if (settings_.constrained)
     {
-      deltaU.col(i) = Q2_data[i] * deltaUTilde.col(i) - Q1_data[i] * (R1_data[i].transpose()).inverse() * (C_data[i] * deltaX.col(i) + e_data[i]);
+      for (int i = 0; i < N; i++)
+      {
+        deltaU.col(i) = Q2_data[i] * deltaUTilde.col(i) - Q1_data[i] * (R1_data[i].transpose()).inverse() * (C_data[i] * deltaX.col(i) + e_data[i]);
+      }
     }
 
+    // free the hpipm memories
     free(dim_mem);
     free(qp_mem);
     free(qp_sol_mem);

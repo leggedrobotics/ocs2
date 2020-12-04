@@ -5,9 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
-        - /Desired Trajectory1
-        - /Optimized Trajectory1
-        - /Current1
       Splitter Ratio: 0.7034631967544556
     Tree Height: 763
   - Class: rviz/Selection
@@ -478,7 +475,7 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LF
               Name: LF
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
             - Class: rviz/Marker
@@ -486,7 +483,7 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RF
               Name: RF
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
             - Class: rviz/Marker
@@ -494,7 +491,7 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LH
               Name: LH
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
             - Class: rviz/Marker
@@ -502,10 +499,10 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RH
               Name: RH
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
-          Enabled: true
+          Enabled: false
           Name: Feet Position Trajectories
         - Class: rviz/Group
           Displays:

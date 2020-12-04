@@ -84,6 +84,7 @@ namespace ocs2
     }
 
     std::cout << "SQP time total: " << sqpTimeAll << "[ms]." << std::endl;
+
     // Fill PrimalSolution. time, state , input
     scalar_array_t timeTrajectory;
     vector_array_t stateTrajectory;
@@ -156,6 +157,11 @@ namespace ocs2
     scalar_t *ssl_guess[N + 1] = {};
     scalar_t *ssu_guess[N + 1] = {};
 
+    scalar_t *CC[N] = {};
+    scalar_t *DD[N] = {};
+    scalar_t *llg[N] = {};
+    scalar_t *uug[N] = {};
+
     scalar_t *ZZl[N + 1] = {};
     scalar_t *ZZu[N + 1] = {};
     scalar_t *zzl[N + 1] = {};
@@ -170,25 +176,13 @@ namespace ocs2
       nnxData[i] = n_state;
       nnbuData[i] = 0;
       nnbxData[i] = 0;
-      // if (settings_.constrained)
-      // {
-      // nngData[i] = n_constraint; // temporarily settings for circular kinematics
-      // }
-      // else
-      // {
       nngData[i] = 0;
-      // }
       nnsbxData[i] = 0;
       nnsbuData[i] = 0;
       nnsgData[i] = 0;
     }
     nnuData[N] = 0; // no input in the final state x_N
     nnxData[0] = 0; // to ignore the bounding condition for x0
-
-    // if (settings_.constrained)
-    // {
-    //   nngData[N] = 0;
-    // }
 
     int *nu = nnuData;
     int *nx = nnxData;
@@ -226,10 +220,6 @@ namespace ocs2
     r_data.resize(N);
 
     // below are useful only when there are constraints
-    scalar_t *CC[N] = {};
-    scalar_t *DD[N] = {};
-    scalar_t *llg[N] = {};
-    scalar_t *uug[N] = {};
     matrix_array_t C_data;
     vector_array_t e_data;
     matrix_array_t Q1_data;
@@ -274,21 +264,7 @@ namespace ocs2
         // D_{k} = dfdu
         // e_{k} = f
 
-        // for hpipm --> ug >= C*dx + D*du >= lg
-        // C_data[i] = constraintApprox.dfdx;
-        // D_data[i] = constraintApprox.dfdu;
-        // lg_data[i] = -constraintApprox.f;
-        // if (i == 0)
-        // {
-        //   lg_data[i] -= C_data[i] * (initState - x.col(0)); // due to x0 is not part of optimization variables
-        // }
-        // ug_data[i] = lg_data[i];
-        // CC[i] = C_data[i].data();
-        // DD[i] = D_data[i].data();
-        // llg[i] = lg_data[i].data();
-        // uug[i] = ug_data[i].data();
-
-        // new way for handling the equality constraints
+        // handle equality constraints using QR decomposition
         matrix_t C = constraintApprox.dfdx; // p x n
         matrix_t D = constraintApprox.dfdu; // p x m
         vector_t e = constraintApprox.f;    // p x 1
@@ -307,6 +283,8 @@ namespace ocs2
         matrix_t R1 = R.topRows(n_constraint); // p x p
         // R = [R1;
         //      0]
+
+        // store the matrices Ck, Q1k, Q2k, R1k and vector ek for later remapping \tilde{\delta uk} -> \delta uk
         C_data[i] = C;
         e_data[i] = e;
         Q1_data[i] = Q1;
@@ -317,6 +295,7 @@ namespace ocs2
         matrix_t Q1_R1invT = Q1 * (R1.transpose()).inverse();
         matrix_t Q1_R1invT_C = Q1_R1invT * C;
 
+        // see the doc/deduction.pdf for more details 
         A_data[i] = A_data[i] - B_data[i] * Q1_R1invT_C;
         b_data[i] = b_data[i] - B_data[i] * Q1_R1invT * e;
         B_data[i] = B_data[i] * Q2;
@@ -340,9 +319,10 @@ namespace ocs2
       operTime += delta_t_;
     }
 
-    // we should have used the finalCostQuadraticApproximation defined by Q_final matrix, but in this case, it is zero, which leads to diverging ending states
-    // so I temporarily used costQuadraticApproximation with a random linearization point of input u
+    // we should have used the finalCostQuadraticApproximation defined by Q_final matrix, just like the following:
     // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
+    // but in this case, it is zero, which leads to unpenalized ending states
+    // so I temporarily used costQuadraticApproximation with a random linearization point of input u
     ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(N), u.col(N - 1));
     Q_data[N] = 10 * finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
     q_data[N] = 10 * finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
@@ -524,14 +504,14 @@ namespace ocs2
     auto startFillTime = std::chrono::steady_clock::now();
     matrix_t deltaUTilde(n_input - n_constraint, N); // now this is \tilde{\delta u}
     matrix_t deltaX(n_state, N + 1);
-    scalar_t uTemp[n_input];
+    scalar_t uTemp[n_input - n_constraint];
     scalar_t xTemp[n_state];
 
     for (int ii = 0; ii < N; ii++)
     {
       if (ii == 0)
       {
-        deltaX.col(ii) = initState - x.col(0);
+        deltaX.col(ii) = initState - x.col(0); // because the first variable delta x0 is not optimized. Rather it's a constant.
       }
       else
       {
@@ -543,7 +523,7 @@ namespace ocs2
       }
 
       d_ocp_qp_sol_get_u(ii, &qp_sol, uTemp);
-      for (int j = 0; j < n_input - n_constraint; j++)
+      for (int j = 0; j < n_input - n_constraint; j++) // <-- pay attention to the number of states for tilded deltaU, should be m - p
       {
         deltaUTilde(j, ii) = uTemp[j];
       }

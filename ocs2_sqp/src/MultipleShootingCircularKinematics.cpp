@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     const ocs2::scalar_t finalTime = 1.0;
     const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished(); // radius 1.0
     const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime}; // doesn't matter 
-    solver.run(startTime, initState, finalTime, partitioningTimes);
+    solver.run(startTime, initState, finalTime, partitioningTimes); // this function calls the runImpl function 
     solver.printPrimalSolution();
 
     // Successful exit

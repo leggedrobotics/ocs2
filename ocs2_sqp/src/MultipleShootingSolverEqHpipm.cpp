@@ -283,8 +283,6 @@ namespace ocs2
         DD[i] = D_data[i].data();
         llg[i] = lg_data[i].data();
         uug[i] = ug_data[i].data();
-
-        // new way for handling the equality constraints
       }
 
       AA[i] = A_data[i].data();

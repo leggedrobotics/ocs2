@@ -1,0 +1,308 @@
+\documentclass{article}% use option titlepage to get the title on a page of its own.
+\usepackage{bm}
+\usepackage{optidef} 
+
+% optimization 
+\DeclareMathOperator*{\minimize}{minimize} % minimize 
+\newcommand{\Lagr}{\mathcal{L}} % Lagrangian multiplier 
+\newcommand{\vect}[1]{\boldsymbol{\mathbf{#1}}}
+\newcommand{\norm}[1]{\Vert{#1}\Vert}
+
+% nice math rendering
+\usepackage{amssymb,amsmath,amsfonts} 
+\usepackage{breqn} % to use dmath
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\let\proof\relax
+\let\endproof\relax
+\usepackage{amsthm}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{mathtools}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{bm}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage[binary-units=true]{siunitx}
+\usepackage[linkcolor=black,citecolor=black,urlcolor=black,colorlinks=true]{hyperref}
+\newcommand{\tp}{^{\mathrm{T}}}
+\newcommand{\itp}{^{\mathrm{-T}}}
+
+\usepackage[cm]{fullpage}
+\usepackage{layout}
+\usepackage{sectsty}
+
+\sectionfont{\fontsize{12}{12}\selectfont}
+
+\title{\textbf{Deduction}}
+\author{Shaohui Yang}
+
+\begin{document}
+\maketitle
+
+\section{}
+Following the same notation as in HPIPM document, the cost function of optimal control function is: 
+\begin{equation}
+	\sum_{k=0}^{N-1} \frac{1}{2} 
+	\begin{bmatrix}
+	\Delta u_k \\
+	\Delta x_k \\
+	1
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	R_k & S_k & r_k \\
+	S_k\tp & Q_k & q_k \\
+	r_k\tp & q_k\tp & 0
+	\end{bmatrix}
+	\begin{bmatrix}
+	\Delta u_k \\
+	\Delta x_k \\
+	1
+	\end{bmatrix}
+	+ \frac{1}{2}\Delta x_N\tp Q_N \Delta x_N + \Delta x_N\tp q_N
+\end{equation}
+which is equivalent to 
+\begin{equation}
+	\sum_{k=0}^{N-1} \frac{1}{2} 
+	\begin{bmatrix}
+	\Delta u_k \\
+	\Delta x_k
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	R_k & S_k \\
+	S_k\tp & Q_k
+	\end{bmatrix}
+	\begin{bmatrix}
+	\Delta u_k \\
+	\Delta x_k 
+	\end{bmatrix} + 
+	\begin{bmatrix}
+	\Delta u_k \\
+	\Delta x_k 
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	r_k \\
+	q_k 
+	\end{bmatrix} + 
+	\frac{1}{2}\Delta x_N\tp Q_N \Delta x_N + \Delta x_N\tp q_N
+\end{equation}
+The dynamic constraints are 
+\begin{subequations}
+	\begin{align}
+	x_{k+1} = f(x_k,u_k)
+	\end{align}
+	\begin{align}
+	\Delta x_{k+1} = A_k \Delta x_k + B_k \Delta u_k + b_k 
+	\end{align}
+	\begin{align}
+	A_k = \frac{\partial f}{\partial x_k}(x_k,u_k) \quad
+	B_k = \frac{\partial f}{\partial u_k}(x_k,u_k) \quad
+	b_k = f(x_k,u_k) - x_{k+1}
+	\end{align}
+\end{subequations}
+The equality constraints are 
+\begin{subequations}
+	\begin{align}
+	g(x_k, u_k) = 0 \quad  g \in \mathbb{R}^p
+	\end{align}
+	\begin{align}
+	C_k \Delta x_k + D_k \Delta u_k + e_k = 0
+	\end{align}
+	\begin{align}
+	C_k = \frac{\partial g}{\partial x_k}(x_k,u_k) \quad C_k \in \mathbb{R}^{p \times n} \quad
+	D_k = \frac{\partial g}{\partial u_k}(x_k,u_k) \quad D_k \in \mathbb{R}^{p \times m} \quad
+	e_k = g(x_k, u_k)
+	\end{align}
+\end{subequations}
+Now do the QR decomposition on the equality constraints
+\begin{subequations}
+	\begin{align}
+	D_k \Delta u_k = -C_k \Delta x_k - e_k
+	\end{align}
+	\begin{align}
+	D_k\tp = 
+	\begin{bmatrix}
+	Q_k^1 & Q_k^2
+	\end{bmatrix}
+	\begin{bmatrix}
+	R_k^1 \\
+	0
+	\end{bmatrix} 
+	\quad 
+	Q_k^1 \in \mathbb{R}^{m \times p}
+	\quad 
+	Q_k^2 \in \mathbb{R}^{m \times (m-p)}
+	\quad 
+	R_k^1 \in \mathbb{R}^{p \times p} 
+	\end{align}
+	\begin{align}
+		\text{The upper indices of $Q_k^1$, $Q_k^2$ and $R_k^1$ matrices do not mean power!}
+	\end{align}
+	\begin{align}
+	\Delta u_k &= Q_k^2 \tilde{\Delta u_k} + Q_k^1(R_k^1)\itp(-C_k \Delta x_k - e_k) \\
+	&= Q_k^2 \tilde{\Delta u_k} - Q_k^1(R_k^1)\itp(C_k \Delta x_k + e_k)
+	\quad \tilde{\Delta u_k} \in \mathbb{R}^{(m-p)\times 1}
+	\end{align}
+\end{subequations}
+The new variable $\tilde{\Delta u_k}$ is not constrained anymore. 
+Now plug the new $\Delta u_k$ into the cost terms. Begin with the first order terms
+\begin{subequations}
+	\begin{align}
+	\begin{bmatrix}
+	\Delta u_k \\
+	\Delta x_k 
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	r_k \\
+	q_k 
+	\end{bmatrix} &= 
+	\begin{bmatrix}
+	Q_k^2 \tilde{\Delta u_k} - Q_k^1(R_k^1)\itp(C_k \Delta x_k + e_k) \\
+	\Delta x_k
+	\end{bmatrix}\tp
+	\begin{bmatrix}
+	r_k \\
+	q_k 
+	\end{bmatrix} \\ 
+	&= 
+	\left( 
+	\tilde{\Delta u_k}\tp (Q_k^2)\tp - 
+	\Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp -
+	e_k\tp \left( Q_k^1(R_k^1)\itp \right)\tp 
+	\right)r_k + \Delta x_k\tp q_k \\
+	&= 
+	\begin{bmatrix}
+	\tilde{\Delta u_k} \\
+	\Delta x_k 
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	(Q_k^2)\tp r_k \\
+	q_k - \left( Q_k^1(R_k^1)\itp C_k \right)\tp r_k 
+	\end{bmatrix} -  e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp r_k \\
+	&= 
+	\begin{bmatrix}
+	\tilde{\Delta u_k} \\
+	\Delta x_k 
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	\tilde{r_k^1} \\
+	\tilde{q_k^1}
+	\end{bmatrix} + C_k^1
+	\end{align}
+	\begin{align}
+	\tilde{r_k^1} &= (Q_k^2)\tp r_k \\
+	\tilde{q_k^1} &= q_k - \left( Q_k^1(R_k^1)\itp C_k \right)\tp r_k \\
+	C_k^1 &= -  e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp r_k
+	\end{align}
+\end{subequations}
+Then the second order term $\frac{1}{2} \Delta u_k\tp R_k \Delta u_k$
+\begin{subequations}
+	\begin{align}
+	& \quad 
+	\frac{1}{2} \Delta u_k\tp R_k \Delta u_k  \\
+	&= 
+	\frac{1}{2} \tilde{\Delta u_k}\tp (Q_k^2)\tp R_k Q_k^2 \tilde{\Delta u_k}
+	+ \frac{1}{2}  \Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \Delta x_k 
+	+ \frac{1}{2} e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k \\
+	&-
+	\tilde{\Delta u_k}\tp (Q_k^2)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \Delta x_k 
+	- \tilde{\Delta u_k}\tp (Q_k^2)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k
+	- \Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k
+	\end{align}
+\end{subequations}
+Then the second order term $\Delta u_k\tp S_k \Delta x_k$
+\begin{subequations}
+	\begin{align}
+	\Delta u_k\tp S_k \Delta x_k = 
+	\tilde{\Delta u_k}\tp (Q_k^2)\tp S_k \Delta x_k
+	- \Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp S_k \Delta x_k
+	- e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp S_k \Delta x_k
+	\end{align}
+\end{subequations}
+Note there is no change to the second order term $\frac{1}{2} \Delta x_k\tp Q_k \Delta x_k$. Combining all above:
+\begin{subequations}
+	\begin{align}
+	&\qquad \frac{1}{2} \Delta u_k\tp R_k \Delta u_k + 
+	\frac{1}{2} \Delta x_k\tp Q_k \Delta x_k + 
+	\Delta u_k\tp S_k \Delta x_k \\
+	&= \frac{1}{2} \tilde{\Delta u_k}\tp \tilde{R_k} \tilde{\Delta u_k} 
+	+ \frac{1}{2} \Delta x_k\tp \tilde{Q_k} \Delta x_k
+	+ \tilde{\Delta u_k}\tp \tilde{S_k} \Delta x_k
+	+ 	\begin{bmatrix}
+	\tilde{\Delta u_k} \\
+	\Delta x_k 
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	\tilde{r_k^2} \\
+	\tilde{q_k^2}
+	\end{bmatrix} 
+	+ C_k^2
+	\end{align}
+	\begin{align}
+	\tilde{R_k} &= (Q_k^2)\tp R_k Q_k^2 \\
+	\tilde{Q_k} &= Q_k - 2\left( Q_k^1(R_k^1)\itp C_k \right)\tp S_k + \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \\
+	\tilde{S_k} &= (Q_k^2)\tp S_k - (Q_k^2)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \\
+	\tilde{r_k^2} &= -(Q_k^2)\tp R_k \left(Q_k^1(R_k^1)\itp \right)e_k \\
+	\tilde{q_k^2} &= -S_k \left(Q_k^1(R_k^1)\itp \right)e_k - \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k \\
+	C_k^2 &= \frac{1}{2} e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k
+	\end{align}
+\end{subequations}
+The new cost is now 
+\begin{subequations}
+	\begin{align}
+	\sum_{k=0}^{N-1} \left( \frac{1}{2} 
+	\begin{bmatrix}
+	\tilde{\Delta u_k} \\
+	\Delta x_k
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	\tilde{R_k} & \tilde{Q_k} \\
+	\tilde{S_k\tp} & \tilde{Q_k}
+	\end{bmatrix}
+	\begin{bmatrix}
+	\tilde{\Delta u_k} \\
+	\Delta x_k 
+	\end{bmatrix} + 
+	\begin{bmatrix}
+	\tilde{\Delta u_k} \\
+	\Delta x_k 
+	\end{bmatrix}\tp 
+	\begin{bmatrix}
+	\tilde{r_k} \\
+	\tilde{q_k} 
+	\end{bmatrix}
+	+ C_k^1 + C_k^2
+	\right) + 
+	\frac{1}{2}\Delta x_N\tp Q_N \Delta x_N + \Delta x_N\tp q_N
+	\end{align}
+	\begin{align}
+	\tilde{r_k} &= \tilde{r_k^1} + \tilde{r_k^2} \\
+	\tilde{q_k} &= \tilde{q_k^1} + \tilde{q_k^2}
+	\end{align}
+\end{subequations}
+Now we plug the new variable $\Delta u_k = Q_k^2 \tilde{\Delta u_k} - Q_k^1(R_k^1)\itp(C_k \Delta x_k + e_k)$ into the dynamic equality constraints 
+\begin{subequations}
+	\begin{align}
+	\Delta x_{k+1} &= A_k \Delta x_k + B_k \Delta u_k + b_k \\
+	&= A_k \Delta x_k + B_k Q_k^2 \tilde{\Delta u_k} - B_k Q_k^1(R_k^1)\itp C_k \Delta x_k - B_k Q_k^1(R_k^1)\itp e_k + b_k \\
+	&= \left( A_k - B_k Q_k^1(R_k^1)\itp C_k \right) \Delta x_k + B_k Q_k^2 \tilde{\Delta u_k} + b_k - B_k Q_k^1(R_k^1)\itp e_k \\
+	&= \tilde{A_k} \Delta x_k + \tilde{B_k} \tilde{\Delta u_k} + \tilde{b_k}
+	\end{align}
+	\begin{align}
+	A_k = \frac{\partial f}{\partial x_k}(x_k,u_k) \quad
+	B_k = \frac{\partial f}{\partial u_k}(x_k,u_k) \quad
+	b_k = f(x_k,u_k) - x_{k+1}
+	\end{align}
+	\begin{align}
+	\tilde{A_k} = \left( A_k - B_k Q_k^1(R_k^1)\itp C_k \right) \quad
+	\tilde{B_k} =  B_k Q_k^2 \quad
+	\tilde{b_k} = b_k - B_k Q_k^1(R_k^1)\itp e_k
+	\end{align}
+\end{subequations}
+
+\end{document}

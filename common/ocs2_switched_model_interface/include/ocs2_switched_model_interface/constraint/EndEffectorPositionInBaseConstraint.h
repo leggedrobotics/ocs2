@@ -31,7 +31,7 @@ class EndEffectorPositionInBaseConstraint final : public EndEffectorConstraint {
   explicit EndEffectorPositionInBaseConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                                ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                                std::string constraintPrefix = "b_EEPositionConstraint_")
-      : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
+      : BASE(ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
              EndEffectorPositionInBaseConstraint::adfunc, generateModels) {}
 
   EndEffectorPositionInBaseConstraint(const EndEffectorPositionInBaseConstraint& rhs) = default;

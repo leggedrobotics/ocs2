@@ -6,11 +6,11 @@
 
 namespace switched_model {
 
-class ZeroForceConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
+class ZeroForceConstraint final : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+  using BASE = ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_t;
@@ -18,7 +18,7 @@ class ZeroForceConstraint final : public ocs2::ConstraintTerm<STATE_DIM, INPUT_D
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
-  explicit ZeroForceConstraint(int legNumber) : BASE(ocs2::ConstraintOrder::Linear), legNumber_(legNumber) {}
+  explicit ZeroForceConstraint(int legNumber) : BASE(ConstraintOrder::Linear), legNumber_(legNumber) {}
 
   ZeroForceConstraint* clone() const override { return new ZeroForceConstraint(*this); }
 

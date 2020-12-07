@@ -29,7 +29,7 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint {
   explicit EndEffectorVelocityInBaseConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                                ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                                std::string constraintPrefix = "b_EEVelocityConstraint_")
-      : BASE(ocs2::ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
+      : BASE(ConstraintOrder::Linear, std::move(constraintPrefix), legNumber, std::move(settings), adComModel, adKinematicsModel,
              EndEffectorVelocityInBaseConstraint::adfunc, generateModels) {}
 
   EndEffectorVelocityInBaseConstraint(const EndEffectorVelocityInBaseConstraint& rhs) = default;

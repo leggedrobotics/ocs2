@@ -7,13 +7,13 @@
 
 #include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
 
-class TestEmptyConstraint : public ocs2::ConstraintTerm<3, 2> {
+class TestEmptyConstraint : public switched_model::ConstraintTerm<3, 2> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::ConstraintTerm<3, 2>;
+  using BASE = switched_model::ConstraintTerm<3, 2>;
 
-  TestEmptyConstraint() : BASE(ocs2::ConstraintOrder::None){};
+  TestEmptyConstraint() : BASE(switched_model::ConstraintOrder::None){};
 
   TestEmptyConstraint* clone() const override { return new TestEmptyConstraint(*this); };
 
@@ -27,18 +27,18 @@ class TestEmptyConstraint : public ocs2::ConstraintTerm<3, 2> {
   };
 };
 
-class TestLinearConstraint : public ocs2::ConstraintTerm<3, 2> {
+class TestLinearConstraint : public switched_model::ConstraintTerm<3, 2> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::ConstraintTerm<3, 2>;
+  using BASE = switched_model::ConstraintTerm<3, 2>;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_t;
   using typename BASE::state_matrix_t;
   using typename BASE::state_vector_t;
 
-  TestLinearConstraint() : BASE(ocs2::ConstraintOrder::Linear){};
+  TestLinearConstraint() : BASE(switched_model::ConstraintOrder::Linear){};
 
   TestLinearConstraint* clone() const override { return new TestLinearConstraint(*this); };
 

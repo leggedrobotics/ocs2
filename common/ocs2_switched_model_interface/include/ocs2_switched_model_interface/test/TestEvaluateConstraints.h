@@ -31,7 +31,7 @@ int evaluateConstraint(ComModelBase<ocs2::CppAdInterface::ad_scalar_t>& comModel
 
   auto order = constraint.getOrder();
   switch (order) {
-    case ocs2::ConstraintOrder::Quadratic: {
+    case ConstraintOrder::Quadratic: {
       std::cout << "\nConstraintOrder: quadratic.\n";
       auto quadApprox = (constraint.getQuadraticApproximation(t, x, u));
       std::cout << "ddhdxdx" << std::endl;
@@ -69,7 +69,7 @@ int evaluateConstraint(ComModelBase<ocs2::CppAdInterface::ad_scalar_t>& comModel
       }
     }
       //! fallthrough on purpose
-    case ocs2::ConstraintOrder::Linear: {
+    case ConstraintOrder::Linear: {
       std::cout << "\nConstraintOrder: Linear.\n";
       auto linApprox = (constraint.getLinearApproximation(t, x, u));
       std::cout << "dhdx" << std::endl;

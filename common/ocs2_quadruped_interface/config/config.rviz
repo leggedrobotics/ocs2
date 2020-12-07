@@ -5,12 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Grid1/Offset1
-        - /Desired Trajectory1
-        - /Optimized Trajectory1
-        - /Current1
-        - /Terrain1
       Splitter Ratio: 0.7034631967544556
-    Tree Height: 736
+    Tree Height: 763
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -32,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Signed distance
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -479,7 +475,7 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LF
               Name: LF
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
             - Class: rviz/Marker
@@ -487,7 +483,7 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RF
               Name: RF
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
             - Class: rviz/Marker
@@ -495,7 +491,7 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/LH
               Name: LH
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
             - Class: rviz/Marker
@@ -503,10 +499,10 @@ Visualization Manager:
               Marker Topic: /ocs2_anymal/desiredFeetTrajectory/RH
               Name: RH
               Namespaces:
-                "": true
+                {}
               Queue Size: 1
               Value: true
-          Enabled: true
+          Enabled: false
           Name: Feet Position Trajectories
         - Class: rviz/Group
           Displays:
@@ -767,87 +763,6 @@ Visualization Manager:
           Value: true
       Enabled: true
       Name: Current
-    - Class: rviz/Group
-      Displays:
-        - Alpha: 1
-          Class: jsk_rviz_plugin/PolygonArray
-          Color: 25; 255; 0
-          Enabled: true
-          Name: Insets
-          Topic: /convex_plane_decomposition_ros/boundaries
-          Unreliable: false
-          Value: true
-          coloring: Auto
-          enable lighting: true
-          normal length: 0.10000000149011612
-          only border: true
-          show normal: true
-        - Alpha: 1
-          Class: jsk_rviz_plugin/PolygonArray
-          Color: 25; 255; 0
-          Enabled: true
-          Name: Boundaries
-          Topic: /convex_plane_decomposition_ros/boundaries
-          Unreliable: false
-          Value: true
-          coloring: Auto
-          enable lighting: true
-          normal length: 0.10000000149011612
-          only border: true
-          show normal: true
-        - Alpha: 1
-          Autocompute Intensity Bounds: true
-          Autocompute Value Bounds:
-            Max Value: 10
-            Min Value: -10
-            Value: true
-          Axis: Z
-          Channel Name: intensity
-          Class: rviz/PointCloud2
-          Color: 255; 255; 255
-          Color Transformer: Intensity
-          Decay Time: 0
-          Enabled: true
-          Invert Rainbow: false
-          Max Color: 255; 255; 255
-          Max Intensity: -6.845311872893944e-9
-          Min Color: 0; 0; 0
-          Min Intensity: -0.04000000283122063
-          Name: Signed distance
-          Position Transformer: XYZ
-          Queue Size: 10
-          Selectable: true
-          Size (Pixels): 3
-          Size (m): 0.009999999776482582
-          Style: Flat Squares
-          Topic: /convex_plane_decomposition_ros/signed_distance_field
-          Unreliable: false
-          Use Fixed Frame: true
-          Use rainbow: true
-          Value: true
-        - Alpha: 1
-          Autocompute Intensity Bounds: true
-          Class: grid_map_rviz_plugin/GridMap
-          Color: 200; 200; 200
-          Color Layer: elevation
-          Color Transformer: GridMapLayer
-          Enabled: true
-          Height Layer: elevation
-          Height Transformer: GridMapLayer
-          History Length: 1
-          Invert Rainbow: false
-          Max Color: 255; 255; 255
-          Max Intensity: 10
-          Min Color: 0; 0; 0
-          Min Intensity: 0
-          Name: GridMap
-          Show Grid Lines: true
-          Topic: /elevation_mapping/elevation_map_raw
-          Unreliable: false
-          Use Rainbow: true
-          Value: true
-      Enabled: true
-      Name: Terrain
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -876,25 +791,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 2.688960075378418
+      Distance: 2.141564130783081
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.6157378554344177
-        Y: -0.37922966480255127
-        Z: -1.1324882507324219e-6
+        X: -0.417638897895813
+        Y: 0.23163104057312012
+        Z: -1.1920928955078125e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.11979666352272034
+      Pitch: 0.2952028214931488
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 4.6678900718688965
+      Yaw: 2.0029025077819824
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho
@@ -969,10 +884,10 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1025
+  Height: 1052
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000383000003a7fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000003a7000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004300000432000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000003b4000003a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d0000003c6fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000003c6000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004300000432000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf0000024400fffffffb0000000800540069006d0065010000000000000450000000000000000000000567000003c600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -983,4 +898,4 @@ Window Geometry:
     collapsed: false
   Width: 1853
   X: 1987
-  Y: 27
+  Y: 49

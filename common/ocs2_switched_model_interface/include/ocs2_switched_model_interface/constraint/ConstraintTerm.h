@@ -9,14 +9,15 @@
 
 #include <ocs2_core/Types.h>
 #include <ocs2_switched_model_interface/Dimensions.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
-namespace ocs2 {
+namespace switched_model {
 
 enum class ConstraintOrder { None, Linear, Quadratic };
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 struct LinearConstraintApproximation {
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
 
@@ -27,7 +28,7 @@ struct LinearConstraintApproximation {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 struct LinearConstraintApproximationAsMatrices {
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using constraint1_vector_t = typename DIMENSIONS::constraint1_vector_t;
   using constraint1_state_matrix_t = typename DIMENSIONS::constraint1_state_matrix_t;
   using constraint1_input_matrix_t = typename DIMENSIONS::constraint1_input_matrix_t;
@@ -39,14 +40,14 @@ struct LinearConstraintApproximationAsMatrices {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 struct QuadraticConstraintApproximation {
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using state_vector_array_t = typename DIMENSIONS::state_vector_array_t;
   using input_vector_array_t = typename DIMENSIONS::input_vector_array_t;
   using state_matrix_array_t = typename DIMENSIONS::state_matrix_array_t;
   using input_matrix_array_t = typename DIMENSIONS::input_matrix_array_t;
   using input_state_matrix_array_t = typename DIMENSIONS::input_state_matrix_array_t;
 
-  scalar_array_t constraintValues;
+  ocs2::scalar_array_t constraintValues;
   state_vector_array_t derivativeState;
   input_vector_array_t derivativeInput;
   state_matrix_array_t secondDerivativesState;
@@ -59,7 +60,7 @@ class ConstraintTerm {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
   using state_matrix_t = typename DIMENSIONS::state_matrix_t;
@@ -96,4 +97,4 @@ class ConstraintTerm {
   bool active_;
 };
 
-};  // namespace ocs2
+};  // namespace switched_model

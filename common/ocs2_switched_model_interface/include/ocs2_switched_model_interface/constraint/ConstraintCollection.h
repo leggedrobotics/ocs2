@@ -15,12 +15,12 @@
 
 #include "ocs2_switched_model_interface/constraint/ConstraintTerm.h"
 
-namespace ocs2 {
+namespace switched_model {
 
 template <size_t STATE_DIM, size_t INPUT_DIM>
 class ConstraintCollection {
  public:
-  using DIMENSIONS = Dimensions<STATE_DIM, INPUT_DIM>;
+  using DIMENSIONS = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
   using state_vector_t = typename DIMENSIONS::state_vector_t;
   using input_vector_t = typename DIMENSIONS::input_vector_t;
 
@@ -88,6 +88,6 @@ class ConstraintCollection {
   std::map<std::string, std::unique_ptr<constraint_term_t>> constraintTermMap_;
 };
 
-}  // namespace ocs2
+}  // namespace switched_model
 
 #include "implementation/ConstraintCollection.h"

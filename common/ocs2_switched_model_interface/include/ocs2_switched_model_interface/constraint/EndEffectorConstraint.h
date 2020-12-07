@@ -24,14 +24,14 @@ struct EndEffectorConstraintSettings {
   void resize(size_t rows, size_t cols);
 };
 
-class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
+class EndEffectorConstraint : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
   static constexpr size_t domain_dim_ = 1 + STATE_DIM + INPUT_DIM;
   static constexpr size_t range_dim_ = 3;
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+  using BASE = ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using typename BASE::input_matrix_t;
   using typename BASE::input_state_matrix_t;
   using typename BASE::input_vector_t;
@@ -53,7 +53,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   using adfunc_t = void (*)(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber, const ad_vector_t& x,
                             ad_vector_t& y);
 
-  EndEffectorConstraint(ocs2::ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber, Settings_t settings,
+  EndEffectorConstraint(ConstraintOrder constraintOrder, std::string eeConstraintName, int legNumber, Settings_t settings,
                         ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, adfunc_t adfunc, bool generateModels,
                         bool loadModels = true);
 
@@ -79,7 +79,7 @@ class EndEffectorConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> 
   int legNumber_;
 
  private:
-  void initAdModels(ocs2::ConstraintOrder constraintOrder, bool generateModels, bool loadModels, bool verbose = true);
+  void initAdModels(ConstraintOrder constraintOrder, bool generateModels, bool loadModels, bool verbose = true);
 
   std::string libName_;
   std::string libFolder_;

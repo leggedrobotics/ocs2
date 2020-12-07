@@ -22,12 +22,12 @@ namespace switched_model {
  *
  * The derivative of the end-effector velocity and position w.r.t the joint space is generated with auto-differentation.
  */
-class FootNormalConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
+class FootNormalConstraint : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
   static constexpr size_t domain_dim_ = 1 + STATE_DIM + INPUT_DIM;
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Base_t = ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM>;
+  using Base_t = ConstraintTerm<STATE_DIM, INPUT_DIM>;
   using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
   using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
 
@@ -35,7 +35,7 @@ class FootNormalConstraint : public ocs2::ConstraintTerm<STATE_DIM, INPUT_DIM> {
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   static constexpr ocs2::CppAdInterface::ApproximationOrder order_ = ocs2::CppAdInterface::ApproximationOrder::First;
-  static constexpr ocs2::ConstraintOrder constraintOrder_ = ocs2::ConstraintOrder::Linear;
+  static constexpr ConstraintOrder constraintOrder_ = ConstraintOrder::Linear;
 
   FootNormalConstraint(int legNumber, FootNormalConstraintMatrix settings, const ad_com_model_t& adComModel,
                        const ad_kinematic_model_t& adKinematicsModel, bool generateModel);

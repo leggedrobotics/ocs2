@@ -31,7 +31,7 @@ class EndEffectorVelocityInFootFrameConstraint : public EndEffectorConstraint {
   explicit EndEffectorVelocityInFootFrameConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
                                                     ad_kinematic_model_t& adKinematicsModel, bool generateModels = true,
                                                     std::string constraintPrefix = "EEVelocityInFootFrameConstraint_")
-      : BASE{ocs2::ConstraintOrder::Linear,
+      : BASE{ConstraintOrder::Linear,
              std::move(constraintPrefix),
              legNumber,
              std::move(settings),

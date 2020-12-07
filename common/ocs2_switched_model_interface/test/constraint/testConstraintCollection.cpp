@@ -8,7 +8,7 @@
 #include "testConstraintTerm.h"
 
 TEST(TestConstraintCollection, add) {
-  ocs2::ConstraintCollection<3, 2> constraintCollection;
+  switched_model::ConstraintCollection<3, 2> constraintCollection;
 
   // Add after construction
   std::unique_ptr<TestEmptyConstraint> constraintTerm(new TestEmptyConstraint());
@@ -16,7 +16,7 @@ TEST(TestConstraintCollection, add) {
 }
 
 TEST(TestConstraintCollection, numberOfConstraints) {
-  ocs2::ConstraintCollection<3, 2> constraintCollection;
+  switched_model::ConstraintCollection<3, 2> constraintCollection;
 
   // Initially we have zero constraints for all types
   ASSERT_EQ(constraintCollection.getNumConstraints(0.0), 0);
@@ -31,7 +31,7 @@ TEST(TestConstraintCollection, numberOfConstraints) {
 }
 
 TEST(TestConstraintCollection, activatingConstraints) {
-  ocs2::ConstraintCollection<3, 2> constraintCollection;
+  switched_model::ConstraintCollection<3, 2> constraintCollection;
 
   // Initially we have zero constraints for all types
   ASSERT_EQ(constraintCollection.getNumConstraints(0.0), 0);
@@ -51,7 +51,7 @@ TEST(TestConstraintCollection, activatingConstraints) {
 }
 
 TEST(TestConstraintCollection, getValue_as_stdvector) {
-  using collection_t = ocs2::ConstraintCollection<3, 2>;
+  using collection_t = switched_model::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
   ocs2::scalar_array_t constraintValues;
 
@@ -81,7 +81,7 @@ TEST(TestConstraintCollection, getValue_as_stdvector) {
 }
 
 TEST(TestConstraintCollection, getLinearApproximation) {
-  using collection_t = ocs2::ConstraintCollection<3, 2>;
+  using collection_t = switched_model::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
 
   // evaluation point
@@ -114,7 +114,7 @@ TEST(TestConstraintCollection, getLinearApproximation) {
 }
 
 TEST(TestConstraintCollection, getQuadraticApproximation) {
-  using collection_t = ocs2::ConstraintCollection<3, 2>;
+  using collection_t = switched_model::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
 
   // evaluation point
@@ -140,7 +140,7 @@ TEST(TestConstraintCollection, getQuadraticApproximation) {
 }
 
 TEST(TestConstraintCollection, getValue_as_eigenvector) {
-  using collection_t = ocs2::ConstraintCollection<3, 2>;
+  using collection_t = switched_model::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
   Eigen::VectorXd constraintVector;
 
@@ -170,7 +170,7 @@ TEST(TestConstraintCollection, getValue_as_eigenvector) {
 }
 
 TEST(TestConstraintCollection, getLinearApproximationAsMatrices) {
-  using collection_t = ocs2::ConstraintCollection<3, 2>;
+  using collection_t = switched_model::ConstraintCollection<3, 2>;
   collection_t constraintCollection;
 
   // evaluation point

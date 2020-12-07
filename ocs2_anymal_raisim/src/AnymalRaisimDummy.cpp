@@ -10,9 +10,6 @@ namespace anymal {
 void runAnymalRaisimDummy(ros::NodeHandle& nodeHandle, std::unique_ptr<switched_model::QuadrupedInterface> anymalInterface,
                           const switched_model::WholebodyDynamics<ocs2::scalar_t>& wholebodyDynamics, const std::string& urdf,
                           double mrtDesiredFreq, double mpcDesiredFreq, const ocs2::RaisimRolloutSettings& raisimRolloutSettings) {
-  // License
-  raisim::World::setActivationKey(ocs2::getRaisimActivationKey());
-
   // Set up Raisim rollout
   anymal::AnymalRaisimConversions conversions(anymalInterface->getComModel(), anymalInterface->getKinematicModel(), wholebodyDynamics);
 

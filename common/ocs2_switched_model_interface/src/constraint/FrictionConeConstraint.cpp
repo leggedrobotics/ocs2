@@ -11,7 +11,7 @@ namespace switched_model {
 
 FrictionConeConstraint::FrictionConeConstraint(scalar_t frictionCoefficient, scalar_t regularization, int legNumber, scalar_t gripperForce,
                                                scalar_t hessianDiagonalShift)
-    : BASE(ocs2::ConstraintOrder::Quadratic),
+    : BASE(ConstraintOrder::Quadratic),
       frictionCoefficient_(frictionCoefficient),
       regularization_(regularization),
       gripperForce_(gripperForce),

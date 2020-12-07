@@ -763,6 +763,87 @@ Visualization Manager:
           Value: true
       Enabled: true
       Name: Current
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 1
+          Class: jsk_rviz_plugin/PolygonArray
+          Color: 25; 255; 0
+          Enabled: true
+          Name: Insets
+          Topic: /convex_plane_decomposition_ros/boundaries
+          Unreliable: false
+          Value: true
+          coloring: Auto
+          enable lighting: true
+          normal length: 0.10000000149011612
+          only border: true
+          show normal: true
+        - Alpha: 1
+          Class: jsk_rviz_plugin/PolygonArray
+          Color: 25; 255; 0
+          Enabled: true
+          Name: Boundaries
+          Topic: /convex_plane_decomposition_ros/boundaries
+          Unreliable: false
+          Value: true
+          coloring: Auto
+          enable lighting: true
+          normal length: 0.10000000149011612
+          only border: true
+          show normal: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: -6.845311872893944e-9
+          Min Color: 0; 0; 0
+          Min Intensity: -0.04000000283122063
+          Name: Signed distance
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic: /convex_plane_decomposition_ros/signed_distance_field
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Class: grid_map_rviz_plugin/GridMap
+          Color: 200; 200; 200
+          Color Layer: elevation
+          Color Transformer: GridMapLayer
+          Enabled: true
+          Height Layer: elevation
+          Height Transformer: GridMapLayer
+          History Length: 1
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 10
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: GridMap
+          Show Grid Lines: true
+          Topic: /elevation_mapping/elevation_map_raw
+          Unreliable: false
+          Use Rainbow: true
+          Value: true
+      Enabled: true
+      Name: Terrain
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255

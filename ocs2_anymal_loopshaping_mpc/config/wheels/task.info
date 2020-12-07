@@ -35,6 +35,14 @@ model_settings
   gaitOptimization              false
 
   recompileLibraries            true
+
+  ; FootPlacementCostParameters
+  mu                            0.1   ; magnitude scaling
+  delta                         0.01  ; [m] distance from constraint boundary where the barrier becomes quadratic.
+
+  ; FootPlacementCostParameters Sdf
+  muSdf                         2.5
+  deltaSdf                      0.005
 }
 
 terrainPlane
@@ -376,4 +384,3 @@ CoM_final_pose
 ;  yMin  -10.0
 ;  yMax  10.0
 ;}
-

@@ -12,8 +12,9 @@
 namespace switched_model {
 
 struct FootPlacementCostParameters {
-  scalar_t mu = 0.1;      // magnitude scaling
-  scalar_t delta = 0.01;  // [m] distance from constraint boundary where the barrier becomes quadratic.
+  FootPlacementCostParameters(scalar_t mu_, scalar_t delta_) : mu(mu_), delta(delta_) {}
+  scalar_t mu;     // magnitude scaling
+  scalar_t delta;  // [m] distance from constraint boundary where the barrier becomes quadratic.
 };
 
 class FootPlacementCost {
@@ -27,8 +28,8 @@ class FootPlacementCost {
 
   using analytic_jacobian_t = typename Eigen::Matrix<scalar_t, 3, STATE_DIM>;
 
-  FootPlacementCost(FootPlacementCostParameters settings, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
-                    bool generateModels);
+  FootPlacementCost(FootPlacementCostParameters settings, FootPlacementCostParameters sdfSettings, const ad_com_model_t& adComModel,
+                    const ad_kinematic_model_t& adKinematicsModel, bool generateModels);
 
   FootPlacementCost* clone() const;
 

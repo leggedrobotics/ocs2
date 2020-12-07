@@ -41,6 +41,10 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceTorqueConstraint_, prefix + "enforceTorqueConstraint", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.torqueLimit_, prefix + "torqueLimit", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.mu_, prefix + "mu", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.delta_, prefix + "delta", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.muSdf_, prefix + "muSdf", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaSdf_, prefix + "deltaSdf", verbose);
 
   if (verbose) {
     std::cerr << " #### ================================================ ####" << std::endl;

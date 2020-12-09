@@ -36,10 +36,11 @@ int main(int argc, char **argv)
   // Set this one up.
   ocs2::MultipleShootingSolverSettings settings;
   settings.N = 10;
-  settings.nx = 10;
-  settings.nu = 3;
+  settings.n_state = 10;
+  settings.n_input = 3;
   settings.sqpIteration = 5;
   settings.constrained = false;
+  settings.qr_decomp = false;
   settings.printPrimalSol = false;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;

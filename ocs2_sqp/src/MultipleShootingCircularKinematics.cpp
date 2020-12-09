@@ -11,21 +11,23 @@ int main(int argc, char **argv)
     // Set this one up.
     ocs2::MultipleShootingSolverSettings settings;
     settings.N = 20;
-    settings.nx = 2;
-    settings.nu = 2;
+    settings.n_state = 2;
+    settings.n_input = 2;
+    settings.n_constraint = 1;
     settings.sqpIteration = 5;
     settings.constrained = true;
+    settings.qr_decomp = true; // can be either true or false 
     settings.printPrimalSol = false;
-    settings.printSolverStatistics = true;
-    settings.printSolverStatus = true;
+    settings.printSolverStatistics = false;
+    settings.printSolverStatus = false;
     settings.initPrimalSol = false;
     ocs2::MultipleShootingSolver solver(settings, &system, &cost, &constraint);
 
     const ocs2::scalar_t startTime = 0.0;
     const ocs2::scalar_t finalTime = 1.0;
-    const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished(); // radius 1.0
-    const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime}; // doesn't matter 
-    solver.run(startTime, initState, finalTime, partitioningTimes); // this function calls the runImpl function 
+    const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();                       // radius 1.0
+    const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime}; // doesn't matter
+    solver.run(startTime, initState, finalTime, partitioningTimes);                                    // this function calls the runImpl function
     solver.printPrimalSolution();
 
     // Successful exit

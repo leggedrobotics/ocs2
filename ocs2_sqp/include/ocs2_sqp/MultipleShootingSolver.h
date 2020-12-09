@@ -26,10 +26,12 @@ namespace ocs2
   struct MultipleShootingSolverSettings
   {
     size_t N;
-    size_t nx;
-    size_t nu;
+    size_t n_state;
+    size_t n_input;
+    size_t n_constraint;
     size_t sqpIteration;
     bool constrained; // true for constrained systems, false for unconstrained systems
+    bool qr_decomp;   // this variable is meaningful only if the system is constrained. True to use QR decomposiion, false to use lg <= Cx+Du+e <= ug
     bool printSolverStatus;
     bool printSolverStatistics;
     bool printPrimalSol;
@@ -99,14 +101,18 @@ namespace ocs2
     void runImpl(scalar_t initTime, const vector_t &initState, scalar_t finalTime, const scalar_array_t &partitioningTimes,
                  const std::vector<ControllerBase *> &controllersPtrStock) override { runImpl(initTime, initState, finalTime, partitioningTimes); }
 
-    std::tuple<matrix_t, matrix_t> runSingleIter(SystemDynamicsBase &systemDynamicsObj,
-                                                 CostFunctionBase &costFunctionObj,
-                                                 ConstraintBase &constraintObj,
-                                                 scalar_t delta_t_,
-                                                 scalar_t initTime,
-                                                 const matrix_t &x,
-                                                 const matrix_t &u,
-                                                 const vector_t &initState);
+    void setupCostDynamicsEqualityConstraint(SystemDynamicsBase &systemDynamicsObj,
+                                             CostFunctionBase &costFunctionObj,
+                                             ConstraintBase &constraintObj,
+                                             scalar_t delta_t_,
+                                             scalar_t initTime,
+                                             const matrix_t &x,
+                                             const matrix_t &u,
+                                             const vector_t &initState);
+    void setupDimension();
+    std::tuple<matrix_t, matrix_t> getOCPSolution(const vector_t &delta_x0);
+    void solveOCP();
+    void freeHPIPMMem();
 
     MultipleShootingSolverSettings settings_;
     std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
@@ -114,6 +120,60 @@ namespace ocs2
     std::unique_ptr<ConstraintBase> constraintPtr_;
 
     PrimalSolution primalSolution_;
+
+    std::vector<int> nx_; //! number of states per stage
+    std::vector<int> nu_; //! number of inputs per stage
+    std::vector<int> ng_; //! number of general constraints per stage
+
+    std::vector<int> nbu_; //! number of input box constraints per stage
+    std::vector<int> nbx_; //! number of state box constraints per stage
+
+    std::vector<int> nsbx_; // number of softed constraints on state box constraints
+    std::vector<int> nsbu_; // number of softed constraints on input box constraints
+    std::vector<int> nsg_;  // number of softed constraints on general constraints
+
+    matrix_array_t A_data;
+    matrix_array_t B_data;
+    matrix_array_t b_data;
+    matrix_array_t Q_data;
+    matrix_array_t R_data;
+    matrix_array_t S_data;
+    matrix_array_t q_data;
+    matrix_array_t r_data;
+
+    // below are useful only when there are equality constraints that handled by QR decomposition
+    matrix_array_t C_data;
+    vector_array_t e_data;
+    matrix_array_t Q1_data;
+    matrix_array_t Q2_data;
+    matrix_array_t R1_data;
+
+    // below are useful when there are equality constraints ug >= C*dx + D*du >= lg, ug == lg
+    // also useful for inequality constraints
+    matrix_array_t C_C_data;
+    matrix_array_t D_D_data;
+    vector_array_t lg_data;
+    vector_array_t ug_data;
+
+    void *dim_mem;
+    struct d_ocp_qp_dim dim;
+
+    void *qp_mem;
+    struct d_ocp_qp qp;
+
+    void *qp_sol_mem;
+    struct d_ocp_qp_sol qp_sol;
+
+    void *ipm_arg_mem;
+    struct d_ocp_qp_ipm_arg arg;
+
+    // workspace
+    void *ipm_mem;
+    struct d_ocp_qp_ipm_ws workspace;
+    int hpipm_status; // status code after solving
+
+    // todo make this a setting
+    ::hpipm_mode mode = ::hpipm_mode::SPEED; // ROBUST/BALANCED; see also hpipm_common.h
 
     // Unused : just to implement the interface
     PerformanceIndex performanceIndex_;

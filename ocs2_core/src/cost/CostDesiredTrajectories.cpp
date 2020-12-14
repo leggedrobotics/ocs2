@@ -88,14 +88,11 @@ bool CostDesiredTrajectories::operator==(const CostDesiredTrajectories& other) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 vector_t CostDesiredTrajectories::getDesiredState(scalar_t time) const {
-  vector_t desiredState;
   if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
-    // TODO(mspieler): error handling
     throw std::runtime_error("CostDesiredTrajectories is empty.");
   } else {
-    LinearInterpolation::interpolate(time, desiredState, &desiredTimeTrajectory_, &desiredStateTrajectory_);
+    return LinearInterpolation::interpolate(time, desiredTimeTrajectory_, desiredStateTrajectory_);
   }
-  return desiredState;
 }
 
 /******************************************************************************************************/
@@ -104,12 +101,10 @@ vector_t CostDesiredTrajectories::getDesiredState(scalar_t time) const {
 vector_t CostDesiredTrajectories::getDesiredInput(scalar_t time) const {
   vector_t desiredInput;
   if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
-    // TODO(mspieler): error handling
     throw std::runtime_error("CostDesiredTrajectories is empty.");
   } else {
-    LinearInterpolation::interpolate(time, desiredInput, &desiredTimeTrajectory_, &desiredInputTrajectory_);
+    return LinearInterpolation::interpolate(time, desiredTimeTrajectory_, desiredInputTrajectory_);
   }
-  return desiredInput;
 }
 
 /******************************************************************************************************/

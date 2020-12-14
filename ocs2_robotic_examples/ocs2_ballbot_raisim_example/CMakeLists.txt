@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_ballbot_raisim_example)
 
 # Generate compile_commands.json for clang tools

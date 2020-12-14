@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,34 +27,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_robotic_tools/command/TargetTrajectories_Joystick_Interface.h>
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectories_Joystick_Interface::TargetTrajectories_Joystick_Interface(
-    int argc, char* argv[], const std::string& robotName /*= "robot"*/, const size_t targetCommandSize /*= 0*/,
-    const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-    : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
-      targetCommandSize_(targetCommandSize),
-      targetCommandLimits_(targetCommandLimits) {
-  if (targetCommandLimits.size() != targetCommandSize) throw std::runtime_error("Target command limits are not set properly");
+scalar_t RelaxedBarrierPenaltyFunction::getValue(scalar_t h) const {
+  if (h > config_.delta) {
+    return -config_.mu * log(h);
+  } else {
+    const scalar_t delta_h = (h - 2.0 * config_.delta) / config_.delta;
+    return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
+  };
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t& TargetTrajectories_Joystick_Interface::targetCommandSize() {
-  return targetCommandSize_;
+scalar_t RelaxedBarrierPenaltyFunction::getDerivative(scalar_t h) const {
+  if (h > config_.delta) {
+    return -config_.mu / h;
+  } else {
+    return config_.mu * ((h - 2.0 * config_.delta) / (config_.delta * config_.delta));
+  };
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectories_Joystick_Interface::publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories) {
-  // publish cost desired trajectories
-  ocs2::TargetTrajectories_ROS_Interface::publishTargetTrajectories(costDesiredTrajectories);
+scalar_t RelaxedBarrierPenaltyFunction::getSecondDerivative(scalar_t h) const {
+  if (h > config_.delta) {
+    return config_.mu / (h * h);
+  } else {
+    return config_.mu / (config_.delta * config_.delta);
+  };
 }
+
 }  // namespace ocs2

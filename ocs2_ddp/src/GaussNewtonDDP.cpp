@@ -51,7 +51,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
                                const CostFunctionBase* heuristicsFunctionPtr)
-    : Solver_BASE(), ddpSettings_(std::move(ddpSettings)) {
+    : SolverBase(), ddpSettings_(std::move(ddpSettings)) {
   // thread-pool
   threadPoolPtr_.reset(new ThreadPool(ddpSettings_.nThreads_, ddpSettings_.threadPriority_));
 
@@ -316,19 +316,17 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
-  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  partition = std::max(partition, initActivePartition_);
+  partition = std::min(partition, finalActivePartition_);
 
-  matrix_t Sm;
-  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
+  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
+  const vector_t Sv = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
+  const scalar_t s = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
 
-  vector_t Sv;
-  LinearInterpolation::interpolate(indexAlpha, Sv, &SvTrajectoryStock_[partition]);
-
-  scalar_t s;
-  LinearInterpolation::interpolate(indexAlpha, s, &sTrajectoryStock_[partition]);
-
-  vector_t xNominal;
-  LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
+  const vector_t xNominal =
+      LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
 
   vector_t deltaX = state - xNominal;
 
@@ -338,62 +336,55 @@ scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const {
-  const auto partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const {
+  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  partition = std::max(partition, initActivePartition_);
+  partition = std::min(partition, finalActivePartition_);
 
-  matrix_t Sm;
-  const auto indexAlpha = LinearInterpolation::interpolate(time, Sm, &SsTimeTrajectoryStock_[partition], &SmTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
+
+  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
 
   // Sv
-  LinearInterpolation::interpolate(indexAlpha, Vx, &SvTrajectoryStock_[partition]);
+  vector_t Vx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
 
-  vector_t xNominal;
-  LinearInterpolation::interpolate(time, xNominal, &nominalTimeTrajectoriesStock_[partition], &nominalStateTrajectoriesStock_[partition]);
+  const vector_t xNominal =
+      LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
 
-  vector_t deltaX = state - xNominal;
+  const vector_t deltaX = state - xNominal;
   Vx += Sm * deltaX;
+
+  return Vx;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
-  const auto activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  activeSubsystem = std::max(activeSubsystem, initActivePartition_);
+  activeSubsystem = std::min(activeSubsystem, finalActivePartition_);
 
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, &nominalTimeTrajectoriesStock_[activeSubsystem]);
+  auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
+  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[activeSubsystem]);
+  const matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
+  const matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
+  const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
 
-  vector_t xNominal;
-  LinearInterpolation::interpolate(indexAlpha, xNominal, &nominalStateTrajectoriesStock_[activeSubsystem]);
+  indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[activeSubsystem]);
+  const vector_t EvProjected = LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_[activeSubsystem],
+                                                                ModelData::stateInputEqConstr_f);
+  const matrix_t CmProjected = LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_[activeSubsystem],
+                                                                ModelData::stateInputEqConstr_dfdx);
+  const matrix_t Hm = LinearInterpolation::interpolate(indexAlpha, cachedRiccatiModificationTrajectoriesStock_[activeSubsystem],
+                                                       riccati_modification::hamiltonianHessian);
+  const matrix_t DmDagger = LinearInterpolation::interpolate(indexAlpha, cachedRiccatiModificationTrajectoriesStock_[activeSubsystem],
+                                                             riccati_modification::constraintRangeProjector);
 
-  matrix_t Bm;
-  ModelData::interpolate(indexAlpha, Bm, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
+  const vector_t costate = getValueFunctionStateDerivative(time, state);
 
-  matrix_t Pm;
-  ModelData::interpolate(indexAlpha, Pm, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
-
-  vector_t Rv;
-  ModelData::interpolate(indexAlpha, Rv, &modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
-
-  vector_t EvProjected;
-  ModelData::interpolate(indexAlpha, EvProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem], ModelData::stateInputEqConstr_f);
-
-  matrix_t CmProjected;
-  ModelData::interpolate(indexAlpha, CmProjected, &projectedModelDataTrajectoriesStock_[activeSubsystem],
-                         ModelData::stateInputEqConstr_dfdx);
-
-  matrix_t Hm;
-  riccati_modification::interpolate(indexAlpha, Hm, &riccatiModificationTrajectoriesStock_[activeSubsystem],
-                                    riccati_modification::hamiltonianHessian);
-
-  matrix_t DmDagger;
-  riccati_modification::interpolate(indexAlpha, DmDagger, &riccatiModificationTrajectoriesStock_[activeSubsystem],
-                                    riccati_modification::constraintRangeProjector);
-
-  vector_t costate;
-  getValueFunctionStateDerivative(time, state, costate);
-
-  vector_t deltaX = state - xNominal;
-  matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
+  const vector_t deltaX = state - xNominal;
+  const matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
 
   nu = DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
 
@@ -533,41 +524,38 @@ void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::distributeWork() {
-  const int numWorkers = ddpSettings_.nThreads_;
-  startingIndicesRiccatiWorker_.resize(numWorkers);
-  endingIndicesRiccatiWorker_.resize(numWorkers);
-
+std::vector<std::pair<int, int>> GaussNewtonDDP::distributeWork(int numWorkers) const {
   const int subsystemsPerThread = (finalActivePartition_ - initActivePartition_ + 1) / numWorkers;
   int remainingSubsystems = (finalActivePartition_ - initActivePartition_ + 1) % numWorkers;
 
   int startingId, endingId = finalActivePartition_;
+  std::vector<std::pair<int, int>> indexPeriodArray;
   for (size_t i = 0; i < numWorkers; i++) {
-    endingIndicesRiccatiWorker_[i] = endingId;
     if (remainingSubsystems > 0) {
       startingId = endingId - subsystemsPerThread;
       remainingSubsystems--;
     } else {
       startingId = endingId - subsystemsPerThread + 1;
     }
-    startingIndicesRiccatiWorker_[i] = startingId;
+    if (startingId <= endingId) {
+      indexPeriodArray.emplace_back(startingId, endingId);
+    }
     endingId = startingId - 1;
   }
-  // adding the inactive subsystems
-  endingIndicesRiccatiWorker_.front() = numPartitions_ - 1;
-  startingIndicesRiccatiWorker_.back() = 0;
 
   if (ddpSettings_.displayInfo_) {
     std::cerr << "Initial Active Subsystem: " << initActivePartition_ << "\n";
     std::cerr << "Final Active Subsystem:   " << finalActivePartition_ << "\n";
     std::cerr << "Backward path work distribution:\n";
     for (size_t i = 0; i < numWorkers; i++) {
-      std::cerr << "start: " << startingIndicesRiccatiWorker_[i] << "\t";
-      std::cerr << "end: " << endingIndicesRiccatiWorker_[i] << "\t";
-      std::cerr << "num: " << endingIndicesRiccatiWorker_[i] - startingIndicesRiccatiWorker_[i] + 1 << "\n";
+      std::cerr << "start: " << indexPeriodArray[i].first << "\t";
+      std::cerr << "end: " << indexPeriodArray[i].second << "\t";
+      std::cerr << "num: " << indexPeriodArray[i].second - indexPeriodArray[i].first + 1 << "\n";
     }
     std::cerr << "\n";
   }
+
+  return indexPeriodArray;
 }
 
 /******************************************************************************************************/
@@ -783,22 +771,59 @@ scalar_t GaussNewtonDDP::calculateRolloutMerit(const PerformanceIndex& performan
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
+  // clear partitions
+  for (size_t i = 0; i < numPartitions_; i++) {
+    SsTimeTrajectoryStock_[i].clear();
+    SsNormalizedTimeTrajectoryStock_[i].clear();
+    SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
+    SmTrajectoryStock_[i].clear();
+    SvTrajectoryStock_[i].clear();
+    sTrajectoryStock_[i].clear();
+  }  // end of i loop
+
+  // solve it sequentially for the first iteration
+  if (totalNumIterations_ == 0) {
+    std::pair<int, int> indexPeriod{initActivePartition_, finalActivePartition_};
+    solveRiccatiEquationsForPartitions(0, indexPeriod, SmFinal, SvFinal, sFinal);
+
+  } else {  // solve it in parallel
+    // distribution of the sequential tasks (e.g. Riccati solver) in between threads
+    const std::vector<std::pair<int, int>> indexPeriodArray = distributeWork(ddpSettings_.nThreads_);
+
+    // correct the end of parrtition's final values based on the cached values
+    SmFinalStock_[finalActivePartition_] = SmFinal;
+    SvFinalStock_[finalActivePartition_] = SvFinal;
+    sFinalStock_[finalActivePartition_] = sFinal;
+    xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
+    for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
+      const vector_t& xFinalUpdated = nominalStateTrajectoriesStock_[i + 1].front();
+      const vector_t deltaState = xFinalUpdated - xFinalStock_[i];
+      const vector_t SmFinalDeltaState = SmFinalStock_[i] * deltaState;
+      sFinalStock_[i] += deltaState.dot(0.5 * SmFinalDeltaState + SvFinalStock_[i]);
+      SvFinalStock_[i] += SmFinalDeltaState;
+    }  // end of loop
+
+    nextTaskId_ = 0;
+    std::function<void(void)> task = [&] {
+      const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+      const auto& indexPeriod = indexPeriodArray[taskId];
+      solveRiccatiEquationsForPartitions(taskId, indexPeriod, SmFinalStock_[indexPeriod.second], SvFinalStock_[indexPeriod.second],
+                                         sFinalStock_[indexPeriod.second]);
+    };
+    runParallel(task, indexPeriodArray.size());
+  }
+
+  // update the final values for the next iteration
   SmFinalStock_[finalActivePartition_] = SmFinal;
   SvFinalStock_[finalActivePartition_] = SvFinal;
   sFinalStock_[finalActivePartition_] = sFinal;
   xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
-
-  // solve it sequentially for the first iteration
-  if (totalNumIterations_ == 0) {
-    nextTaskId_ = 0;
-    for (int i = 0; i < ddpSettings_.nThreads_; i++) {
-      riccatiSolverTask();
-    }
-  } else {  // solve it in parallel
-    nextTaskId_ = 0;
-    std::function<void(void)> task = [this] { riccatiSolverTask(); };
-    runParallel(task, ddpSettings_.nThreads_);
-  }
+  for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
+    SmFinalStock_[i] = SmTrajectoryStock_[i + 1].front();
+    SvFinalStock_[i] = SvTrajectoryStock_[i + 1].front();
+    sFinalStock_[i] = sTrajectoryStock_[i + 1].front();
+    xFinalStock_[i] = nominalStateTrajectoriesStock_[i + 1].front();
+  }  // end of i loop
 
   // testing the numerical stability of the Riccati equations
   if (ddpSettings_.checkNumericalStability_) {
@@ -848,56 +873,19 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::riccatiSolverTask() {
-  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+void GaussNewtonDDP::solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& indexPeriod, matrix_t SmFinal,
+                                                        vector_t SvFinal, scalar_t sFinal) {
+  for (int i = indexPeriod.second; i >= indexPeriod.first; i--) {
+    assert(initActivePartition_ <= i && i <= finalActivePartition_);
 
-  for (int i = endingIndicesRiccatiWorker_[taskId]; i >= startingIndicesRiccatiWorker_[taskId]; i--) {
-    // for inactive subsystems
-    if (i < initActivePartition_ || i > finalActivePartition_) {
-      SsTimeTrajectoryStock_[i].clear();
-      SsNormalizedTimeTrajectoryStock_[i].clear();
-      SsNormalizedEventsPastTheEndIndecesStock_[i].clear();
-      SmTrajectoryStock_[i].clear();
-      SvTrajectoryStock_[i].clear();
-      sTrajectoryStock_[i].clear();
+    // solve the backward pass
+    riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
 
-    } else {
-      matrix_t SmFinal;
-      vector_t SvFinal;
-      scalar_t sFinal;
-      vector_t xFinal;
-
-      {  // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        SmFinal = SmFinalStock_[i];
-        SvFinal = SvFinalStock_[i];
-        sFinal = sFinalStock_[i];
-        xFinal = xFinalStock_[i];
-      }
-
-      // modify the end subsystem final values based on the cached values for asynchronous run
-      if (i == endingIndicesRiccatiWorker_[taskId] && i < finalActivePartition_) {
-        const vector_t deltaState = nominalStateTrajectoriesStock_[i + 1].front() - xFinal;
-        sFinal += deltaState.dot(0.5 * SmFinal * deltaState + SvFinal);
-        SvFinal += SmFinal * deltaState;
-      }
-
-      // solve the backward pass
-      riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
-
-      // set the final value for next Riccati equation
-      if (i > initActivePartition_) {
-        // lock data
-        std::lock_guard<std::mutex> lock(riccatiSolverDataMutex_);
-
-        SmFinalStock_[i - 1] = SmTrajectoryStock_[i].front();
-        SvFinalStock_[i - 1] = SvTrajectoryStock_[i].front();
-        sFinalStock_[i - 1] = sTrajectoryStock_[i].front();
-        xFinalStock_[i - 1] = nominalStateTrajectoriesStock_[i].front();
-      }
-    }
-  }
+    // set the final value for next Riccati equation
+    SmFinal = SmTrajectoryStock_[i].front();
+    SvFinal = SvTrajectoryStock_[i].front();
+    sFinal = sTrajectoryStock_[i].front();
+  }  // end of i loop
 }
 
 /******************************************************************************************************/
@@ -951,12 +939,10 @@ void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm,
       maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_[i].deltaBiasArray_[k].norm());
 
       const auto& time = nominalControllersStock_[i].timeStamp_[k];
-      const auto indexAlpha = LinearInterpolation::timeSegment(time, &(nominalTimeTrajectoriesStock_[i]));
-      vector_t nominalState;
-      LinearInterpolation::interpolate(indexAlpha, nominalState, &(nominalStateTrajectoriesStock_[i]));
-      vector_t nominalInput;
-      LinearInterpolation::interpolate(indexAlpha, nominalInput, &(nominalInputTrajectoriesStock_[i]));
-      vector_t deltaUee =
+      const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[i]);
+      const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[i]);
+      const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, nominalInputTrajectoriesStock_[i]);
+      const vector_t deltaUee =
           nominalInput - nominalControllersStock_[i].gainArray_[k] * nominalState - nominalControllersStock_[i].biasArray_[k];
       maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
 
@@ -1084,7 +1070,7 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
     if (ddpSettings_.checkNumericalStability_) {
       if (LinearAlgebra::rank(Dm) != Dm.rows()) {
         std::string msg = ">>> WARNING: The state-input constraints are rank deficient!";
-        Solver_BASE::printString(msg);
+        this->printString(msg);
       }
     }
     // constraint projectors are obtained at once
@@ -1330,7 +1316,7 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t stateEqConstraintISE, sc
     displayText += "    State-Input Equality:";
     displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyTol);
     displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.stateInputEqConstrPenaltyCoeff) + ".\n";
-    Solver_BASE::printString(displayText);
+    this->printString(displayText);
   }
 }
 
@@ -1363,7 +1349,7 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
     } else if (cachedTimeTrajectoriesStock_[i].back() < nominalTimeTrajectoriesStock_[i].back()) {
       // find the time segment
       const scalar_t finalTime = cachedTimeTrajectoriesStock_[i].back() + OCS2NumericTraits<scalar_t>::weakEpsilon();
-      const auto timeSegment = LinearInterpolation::timeSegment(finalTime, &nominalTimeTrajectoriesStock_[i]);
+      const auto timeSegment = LinearInterpolation::timeSegment(finalTime, nominalTimeTrajectoriesStock_[i]);
 
       // post event index
       const int sizeBeforeCorrection = cachedTimeTrajectoriesStock_[i].size();
@@ -1383,16 +1369,14 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
       // debugging checks for the added tail
       if (ddpSettings_.debugCaching_) {
         for (int k = timeSegment.first + 1; k < nominalTimeTrajectoriesStock_[i].size(); k++) {
-          auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], &cachedTimeTrajectoriesStock_[i]);
+          const auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], cachedTimeTrajectoriesStock_[i]);
 
-          vector_t stateCached;
-          LinearInterpolation::interpolate(indexAlpha, stateCached, &cachedStateTrajectoriesStock_[i]);
+          const vector_t stateCached = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[i]);
           if (!stateCached.isApprox(nominalStateTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached state trajectory is not correctly set.");
           }
 
-          vector_t inputCached;
-          LinearInterpolation::interpolate(indexAlpha, inputCached, &cachedInputTrajectoriesStock_[i]);
+          const vector_t inputCached = LinearInterpolation::interpolate(indexAlpha, cachedInputTrajectoriesStock_[i]);
           if (!inputCached.isApprox(nominalInputTrajectoriesStock_[i][k])) {
             throw std::runtime_error("The tail of the cached input trajectory is not correctly set.");
           }
@@ -1657,9 +1641,6 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration) << " (Dynamics might have been violated)";
     std::cerr << "\n###################\n";
   }
-
-  // distribution of the sequential tasks (e.g. Riccati solver) in between threads
-  distributeWork();
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
   swapDataToCache();

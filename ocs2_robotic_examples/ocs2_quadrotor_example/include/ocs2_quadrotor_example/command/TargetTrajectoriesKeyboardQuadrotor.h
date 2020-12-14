@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_quadrotor_example/definitions.h>
 #include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
 
 namespace ocs2 {
 namespace quadrotor {
@@ -43,7 +43,7 @@ namespace quadrotor {
 /**
  * This class implements TargetTrajectories communication using ROS.
  */
-class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajectories_Keyboard_Interface {
+class TargetTrajectoriesKeyboardQuadrotor final : public ocs2::TargetTrajectoriesKeyboardInterface {
  public:
   enum { COMMAND_DIM = 12 };
 
@@ -69,18 +69,18 @@ class TargetTrajectories_Keyboard_Quadrotor final : public ocs2::TargetTrajector
    * goalPoseLimit(10): \omega_Y
    * goalPoseLimit(11): \omega_Z
    */
-  TargetTrajectories_Keyboard_Quadrotor(int argc, char* argv[], const std::string& robotName = "robot",
-                                        const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0,
-                                                                                             2.0, 2.0, 2.0, 2.0})
-      : TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {
+  TargetTrajectoriesKeyboardQuadrotor(int argc, char* argv[], const std::string& robotName = "robot",
+                                      const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0,
+                                                                                           2.0, 2.0, 2.0, 2.0})
+      : TargetTrajectoriesKeyboardInterface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {
     observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
-                                                          &TargetTrajectories_Keyboard_Quadrotor::observationCallback, this);
+                                                          &TargetTrajectoriesKeyboardQuadrotor::observationCallback, this);
   }
 
   /**
    * Default destructor
    */
-  ~TargetTrajectories_Keyboard_Quadrotor() override = default;
+  ~TargetTrajectoriesKeyboardQuadrotor() override = default;
 
   void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);

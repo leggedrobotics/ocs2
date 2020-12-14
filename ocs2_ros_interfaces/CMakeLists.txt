@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_ros_interfaces)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -53,9 +53,10 @@ add_library(${PROJECT_NAME}
   src/command/TargetTrajectories_ROS_Interface.cpp
   src/common/RosMsgConversions.cpp
   src/mpc/MPC_ROS_Interface.cpp
-  src/mrt/MRT_ROS_Interface.cpp
+  src/mrt/LoopshapingDummyObserver.cpp
   src/mrt/MRT_ROS_Dummy_Loop.cpp
-)
+  src/mrt/MRT_ROS_Interface.cpp
+  )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )

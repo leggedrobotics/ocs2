@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_robotic_tools)
 
 # Generate compile_commands.json for clang tools
@@ -43,9 +43,10 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/command/TargetTrajectories_Joystick_Interface.cpp
-  src/command/TargetTrajectories_Keyboard_Interface.cpp
+  src/command/TargetTrajectoriesJoystickInterface.cpp
+  src/command/TargetTrajectoriesKeyboardInterface.cpp
   src/common/RotationTransforms.cpp
+  src/common/LoopshapingRobotInterface.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

@@ -44,10 +44,12 @@ struct LinearQuadraticStage {
   ScalarFunctionQuadraticApproximation cost;
   /** Linear approximation of the dynamics */
   VectorFunctionLinearApproximation dynamics;
+  /** Linear approximation of the constraints */
+  VectorFunctionLinearApproximation constraints;
 
   LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d)
-      : cost(std::move(c)), dynamics(std::move(d)) {}
+  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d, VectorFunctionLinearApproximation g)
+      : cost(std::move(c)), dynamics(std::move(d)), constraints(std::move(g)) {}
 };
 
 }  // namespace qp_solver

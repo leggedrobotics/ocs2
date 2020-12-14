@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/Rollout_Settings.h>
@@ -60,7 +60,7 @@ namespace ocs2 {
 /**
  * This class is an interface class for the Gauss-Newton DDP based methods.
  */
-class GaussNewtonDDP : public Solver_BASE {
+class GaussNewtonDDP : public SolverBase {
  public:
   struct ConstraintPenaltyCoefficients {
     scalar_t stateEqConstrPenaltyTol = 1e-3;
@@ -115,7 +115,7 @@ class GaussNewtonDDP : public Solver_BASE {
 
   scalar_t getValueFunction(scalar_t time, const vector_t& state) const override;
 
-  void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) const override;
+  vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const override;
 
   void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const override;
 
@@ -264,8 +264,10 @@ class GaussNewtonDDP : public Solver_BASE {
  private:
   /**
    * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
+   * @param [in] numThreads: Number of threads.
+   * @return The pair of the initial and final Indices for solving Riccati equations in parallel
    */
-  void distributeWork();
+  std::vector<std::pair<int, int>> distributeWork(int numThreads) const;
 
   /**
    * Forward integrate the system dynamics with given controller and operating trajectories. In general, it uses the
@@ -305,8 +307,14 @@ class GaussNewtonDDP : public Solver_BASE {
 
   /**
    * Solves Riccati equations for the partitions assigned to the given thread.
+   * @param [in] taskId: Thread ID
+   * @param [in] indexPeriod: The pair of initial and final partitions which indicates the partitions assigned to the thread.
+   * @param [in] SmFinal: The final Sm for Riccati equation.
+   * @param [in] SvFinal: The final Sv for Riccati equation.
+   * @param [in] sFinal: The final s for Riccati equation.
    */
-  void riccatiSolverTask();
+  void solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& indexPeriod, matrix_t SmFinal, vector_t SvFinal,
+                                          scalar_t sFinal);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -523,11 +531,6 @@ class GaussNewtonDDP : public Solver_BASE {
 
   ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;
 
-  std::vector<int> startingIndicesRiccatiWorker_;
-  std::vector<int> endingIndicesRiccatiWorker_;
-  // parallel Riccati solver
-  std::mutex riccatiSolverDataMutex_;
-
   // forward pass and backward pass average time step
   scalar_t avgTimeStepFP_ = 0.0;
   scalar_t avgTimeStepBP_ = 0.0;
@@ -547,9 +550,8 @@ template <typename Data_T, class Alloc>
 void GaussNewtonDDP::correctcachedTrajectoryTail(std::pair<int, scalar_t> timeSegment, const std::vector<Data_T, Alloc>& currentTrajectory,
                                                  std::vector<Data_T, Alloc>& cachedTrajectory) {
   // adding the fist cashed value
-  Data_T firstCachedValue;
-  LinearInterpolation::interpolate(timeSegment, firstCachedValue, &currentTrajectory);
-  cachedTrajectory.emplace_back(firstCachedValue);
+  Data_T firstCachedValue = LinearInterpolation::interpolate(timeSegment, currentTrajectory);
+  cachedTrajectory.emplace_back(std::move(firstCachedValue));
 
   // Concatenate the rest
   const int ignoredSizeOfNominal = timeSegment.first + 1;

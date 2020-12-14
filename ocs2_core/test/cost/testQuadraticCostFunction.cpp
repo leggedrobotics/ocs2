@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 
 using namespace ocs2;
 
@@ -81,4 +83,44 @@ TEST_F(testQuadraticCostFunction, finalCostApproximation) {
   EXPECT_TRUE(Phi.dfdxx.isApprox(Qf_, PRECISION));
 
   EXPECT_NEAR(Phi.f, costFunction.finalCost(t_, x_), PRECISION);
+}
+
+TEST_F(testQuadraticCostFunction, StateInputCostValue) {
+  QuadraticStateInputCost costFunction(Q_, R_, P_);
+
+  auto L = costFunction.getValue(t_, x_, u_, costDesiredTrajectories_);
+  EXPECT_NEAR(L, expectedCost_, PRECISION);
+}
+
+TEST_F(testQuadraticCostFunction, StateInputCostApproximation) {
+  QuadraticStateInputCost costFunction(Q_, R_, P_);
+
+  auto L = costFunction.getQuadraticApproximation(t_, x_, u_, costDesiredTrajectories_);
+
+  vector_t dx = x_ - xNominal_;
+  vector_t du = u_ - uNominal_;
+  EXPECT_NEAR(L.f, expectedCost_, PRECISION);
+  EXPECT_TRUE(L.dfdx.isApprox(Q_ * dx + P_.transpose() * du, PRECISION));
+  EXPECT_TRUE(L.dfdu.isApprox(R_ * du + P_ * dx, PRECISION));
+  EXPECT_TRUE(L.dfdxx.isApprox(Q_, PRECISION));
+  EXPECT_TRUE(L.dfdux.isApprox(P_, PRECISION));
+  EXPECT_TRUE(L.dfduu.isApprox(R_, PRECISION));
+}
+
+TEST_F(testQuadraticCostFunction, StateCostValue) {
+  QuadraticStateCost costFunction(Qf_);
+
+  auto L = costFunction.getValue(t_, x_, costDesiredTrajectories_);
+  EXPECT_NEAR(L, expectedFinalCost_, PRECISION);
+}
+
+TEST_F(testQuadraticCostFunction, StateCostApproximation) {
+  QuadraticStateCost costFunction(Qf_);
+
+  auto Phi = costFunction.getQuadraticApproximation(t_, x_, costDesiredTrajectories_);
+
+  vector_t dx = x_ - xNominal_;
+  EXPECT_NEAR(Phi.f, expectedFinalCost_, PRECISION);
+  EXPECT_TRUE(Phi.dfdx.isApprox(Qf_ * dx, PRECISION));
+  EXPECT_TRUE(Phi.dfdxx.isApprox(Qf_, PRECISION));
 }

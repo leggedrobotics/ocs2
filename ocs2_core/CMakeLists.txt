@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_core)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -85,6 +85,8 @@ add_library(${PROJECT_NAME}
   src/cost/RelaxedBarrierCost.cpp
   src/cost/CostFunctionLinearCombination.cpp
   src/cost/QuadraticCostFunction.cpp
+  src/cost/QuadraticStateCost.cpp
+  src/cost/QuadraticStateInputCost.cpp
   src/cost/QuadraticGaussNewtonCostBaseAD.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
@@ -120,6 +122,13 @@ add_library(${PROJECT_NAME}
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
   src/misc/Log.cpp
+  src/soft_constraint/SoftConstraintPenalty.cpp
+  src/soft_constraint/StateSoftConstraint.cpp
+  src/soft_constraint/StateInputSoftConstraint.cpp
+  src/soft_constraint/penalties/QuadraticPenaltyFunction.cpp
+  src/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.cpp
+  src/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.cpp
+  src/soft_constraint/penalties/SquaredHingePenaltyFunction.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -316,6 +325,16 @@ catkin_add_gtest(test_Logging
   test/misc/testLogging.cpp
 )
 target_link_libraries(test_Logging
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(test_softConstraint
+  test/soft_constraint/testSoftConstraint.cpp
+)
+target_link_libraries(test_softConstraint
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

@@ -4,7 +4,7 @@
 
 #pragma once
 #include <iostream>
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
@@ -38,7 +38,7 @@ namespace ocs2
     bool initPrimalSol; // if false, use random matrix as init; if true, use the last PrimalSolution as init.
   };
 
-  class MultipleShootingSolver : public Solver_BASE
+  class MultipleShootingSolver : public SolverBase
   {
   public:
     /**
@@ -90,7 +90,7 @@ namespace ocs2
     const std::vector<PerformanceIndex> &getIterationsLog() const override { return performanceIndeces_; };
     const scalar_array_t &getPartitioningTimes() const override { return partitionTime_; };
     scalar_t getValueFunction(scalar_t time, const vector_t &state) const override { return 0.0; };
-    void getValueFunctionStateDerivative(scalar_t time, const vector_t &state, vector_t &Vx) const override{};
+    vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t &state) const override{};
     void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t &state, vector_t &nu) const override{};
     void rewindOptimizer(size_t firstIndex){};
     const unsigned long long int &getRewindCounter() const { 0; };

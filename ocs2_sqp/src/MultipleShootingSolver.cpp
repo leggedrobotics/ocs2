@@ -19,7 +19,7 @@ namespace ocs2
                                                  const SystemDynamicsBase *systemDynamicsPtr,
                                                  const CostFunctionBase *costFunctionPtr,
                                                  const ConstraintBase *constraintPtr)
-      : Solver_BASE(),
+      : SolverBase(),
         systemDynamicsPtr_(systemDynamicsPtr->clone()),
         costFunctionPtr_(costFunctionPtr->clone()),
         constraintPtr_(constraintPtr->clone()),
@@ -30,7 +30,7 @@ namespace ocs2
 
   void MultipleShootingSolver::reset()
   {
-    // Solver_BASE::reset();
+    // SolverBase::reset();
     // there is no Solve_BASE::reset() function. One can see GaussNewtonDDP.h. The reset function there only clears some variables of the solver itself.
     // additional reset
     std::cout << "resetting\n";

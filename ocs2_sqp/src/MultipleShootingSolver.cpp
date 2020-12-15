@@ -429,18 +429,22 @@ namespace ocs2
           R1_data[i] = R1;
 
           // some intermediate variables used multiple times
-          matrix_t Q1_R1invT = Q1 * (R1.transpose()).inverse();
-          matrix_t Q1_R1invT_C = Q1_R1invT * C;
+          matrix_t P_ke = Q1 * (R1.transpose()).inverse();
+          matrix_t P_kx = P_ke * C;
 
           // see the doc/deduction.pdf for more details
-          A_data[i] = A_data[i] - B_data[i] * Q1_R1invT_C;
-          b_data[i] = b_data[i] - B_data[i] * Q1_R1invT * e;
+          A_data[i] = A_data[i] - B_data[i] * P_kx;
+          b_data[i] = b_data[i] - B_data[i] * P_ke * e;
           B_data[i] = B_data[i] * Q2;
 
-          q_data[i] = q_data[i] - Q1_R1invT_C.transpose() * r_data[i] - S_data[i] * Q1_R1invT * e - Q1_R1invT_C.transpose() * R_data[i] * Q1_R1invT * e;
-          r_data[i] = Q2.transpose() * r_data[i] - Q2.transpose() * R_data[i] * Q1_R1invT * e;
-          Q_data[i] = Q_data[i] - 2 * Q1_R1invT_C.transpose() * S_data[i] + Q1_R1invT_C.transpose() * R_data[i] * Q1_R1invT_C;
-          S_data[i] = Q2.transpose() * S_data[i] - Q2.transpose() * R_data[i] * Q1_R1invT_C;
+          vector_t q_1 = q_data[i] - P_kx.transpose() * r_data[i];
+          vector_t q_2 = -S_data[i].transpose() * P_ke * e - P_kx.transpose() * R_data[i] * P_ke * e;
+          q_data[i] = q_1 + q_2;
+          vector_t r_1 = Q2.transpose() * r_data[i];
+          vector_t r_2 = -Q2.transpose() * R_data[i] * P_ke * e;
+          r_data[i] = r_1 + r_2;
+          Q_data[i] = Q_data[i] - P_kx.transpose() * S_data[i] - S_data[i].transpose() * P_kx + P_kx.transpose() * R_data[i] * P_kx;
+          S_data[i] = Q2.transpose() * S_data[i] - Q2.transpose() * R_data[i] * P_kx;
           R_data[i] = Q2.transpose() * R_data[i] * Q2;
         }
         else

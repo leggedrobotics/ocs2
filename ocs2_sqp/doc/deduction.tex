@@ -92,6 +92,8 @@ which is equivalent to
 	\frac{1}{2}\Delta x_N\tp Q_N \Delta x_N + \Delta x_N\tp q_N
 \end{equation}
 The dynamic constraints are 
+%todo: add the details of the continuous model f 
+%todo: currently it is only first order euler equation
 \begin{subequations}
 	\begin{align}
 	x_{k+1} = f(x_k,u_k)
@@ -120,6 +122,8 @@ The equality constraints are
 	\end{align}
 \end{subequations}
 Now do the QR decomposition on the equality constraints
+%todo: add more details of the QR decomposition part
+%todo: see the reference from Ruben 
 \begin{subequations}
 	\begin{align}
 	D_k \Delta u_k = -C_k \Delta x_k - e_k
@@ -144,11 +148,18 @@ Now do the QR decomposition on the equality constraints
 		\text{The upper indices of $Q_k^1$, $Q_k^2$ and $R_k^1$ matrices do not mean power!}
 	\end{align}
 	\begin{align}
-	\Delta u_k &= Q_k^2 \tilde{\Delta u_k} + Q_k^1(R_k^1)\itp(-C_k \Delta x_k - e_k) \\
-	&= Q_k^2 \tilde{\Delta u_k} - Q_k^1(R_k^1)\itp(C_k \Delta x_k + e_k)
-	\quad \tilde{\Delta u_k} \in \mathbb{R}^{(m-p)\times 1}
+	\Delta u_k &= Q_k^2 \tilde{\Delta u_k} + Q_{k}^{1}(R_{k}^1)\itp (-C_k \Delta x_k - e_k) \\
+	&= Q_k^2 \tilde{\Delta u_k} - P_{ke}(C_k \Delta x_k + e_k) \\
+	&= Q_k^2 \tilde{\Delta u_k} -P_{kx} \Delta x_k - P_{ke} e_k \\
+	\tilde{\Delta u_k} & \in \mathbb{R}^{(m-p)\times 1}
 	\end{align}
 \end{subequations}
+with the following for simpler notations: 
+\begin{equation}
+	P_{kx} = Q_{k}^{1}(R_{k}^1)\itp C_k  \qquad
+	P_{ke} = Q_{k}^{1}(R_{k}^1)\itp
+\end{equation}
+
 The new variable $\tilde{\Delta u_k}$ is not constrained anymore. 
 Now plug the new $\Delta u_k$ into the cost terms. Begin with the first order terms
 \begin{subequations}
@@ -160,9 +171,10 @@ Now plug the new $\Delta u_k$ into the cost terms. Begin with the first order te
 	\begin{bmatrix}
 	r_k \\
 	q_k 
-	\end{bmatrix} &= 
+	\end{bmatrix} 
+	&= 
 	\begin{bmatrix}
-	Q_k^2 \tilde{\Delta u_k} - Q_k^1(R_k^1)\itp(C_k \Delta x_k + e_k) \\
+	Q_k^2 \tilde{\Delta u_k} - P_{kx}\Delta x_k - P_{ke}e_k) \\
 	\Delta x_k
 	\end{bmatrix}\tp
 	\begin{bmatrix}
@@ -172,8 +184,8 @@ Now plug the new $\Delta u_k$ into the cost terms. Begin with the first order te
 	&= 
 	\left( 
 	\tilde{\Delta u_k}\tp (Q_k^2)\tp - 
-	\Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp -
-	e_k\tp \left( Q_k^1(R_k^1)\itp \right)\tp 
+	\Delta x_k\tp P_{kx}\tp -
+	e_k\tp P_{ke}\tp 
 	\right)r_k + \Delta x_k\tp q_k \\
 	&= 
 	\begin{bmatrix}
@@ -182,8 +194,8 @@ Now plug the new $\Delta u_k$ into the cost terms. Begin with the first order te
 	\end{bmatrix}\tp 
 	\begin{bmatrix}
 	(Q_k^2)\tp r_k \\
-	q_k - \left( Q_k^1(R_k^1)\itp C_k \right)\tp r_k 
-	\end{bmatrix} -  e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp r_k \\
+	q_k - P_{kx}\tp r_k 
+	\end{bmatrix} -  e_k\tp P_{ke}\tp r_k \\
 	&= 
 	\begin{bmatrix}
 	\tilde{\Delta u_k} \\
@@ -196,8 +208,8 @@ Now plug the new $\Delta u_k$ into the cost terms. Begin with the first order te
 	\end{align}
 	\begin{align}
 	\tilde{r_k^1} &= (Q_k^2)\tp r_k \\
-	\tilde{q_k^1} &= q_k - \left( Q_k^1(R_k^1)\itp C_k \right)\tp r_k \\
-	C_k^1 &= -  e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp r_k
+	\tilde{q_k^1} &= q_k - P_{kx}\tp r_k \\
+	C_k^1 &= -  e_k\tp P_{ke}\tp r_k
 	\end{align}
 \end{subequations}
 Then the second order term $\frac{1}{2} \Delta u_k\tp R_k \Delta u_k$
@@ -207,21 +219,28 @@ Then the second order term $\frac{1}{2} \Delta u_k\tp R_k \Delta u_k$
 	\frac{1}{2} \Delta u_k\tp R_k \Delta u_k  \\
 	&= 
 	\frac{1}{2} \tilde{\Delta u_k}\tp (Q_k^2)\tp R_k Q_k^2 \tilde{\Delta u_k}
-	+ \frac{1}{2}  \Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \Delta x_k 
-	+ \frac{1}{2} e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k \\
+	+ \frac{1}{2}  \Delta x_k\tp P_{kx}\tp R_k P_{kx} \Delta x_k 
+	+ \frac{1}{2} e_k\tp P_{ke}\tp R_k P_{ke} e_k \\
 	&-
-	\tilde{\Delta u_k}\tp (Q_k^2)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \Delta x_k 
-	- \tilde{\Delta u_k}\tp (Q_k^2)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k
-	- \Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k
+	\frac{1}{2} \tilde{\Delta u_k}\tp (Q_k^2)\tp R_k P_{kx} \Delta x_k 
+	-\frac{1}{2}\Delta x_k\tp P_{kx} \tp R_k (Q_k^2)\tilde{\Delta u_k} \\
+	&- \tilde{\Delta u_k}\tp (Q_k^2)\tp R_k P_{ke} e_k
+	- \Delta x_k\tp P_{kx}\tp R_k P_{ke} e_k
 	\end{align}
 \end{subequations}
-Then the second order term $\Delta u_k\tp S_k \Delta x_k$
+Then the second order term $\frac{1}{2} \Delta u_k\tp S_k \Delta x_k$ and $\frac{1}{2} \Delta x_k\tp S_k\tp \Delta u_k$
 \begin{subequations}
 	\begin{align}
-	\Delta u_k\tp S_k \Delta x_k = 
-	\tilde{\Delta u_k}\tp (Q_k^2)\tp S_k \Delta x_k
-	- \Delta x_k\tp \left( Q_k^1(R_k^1)\itp C_k \right)\tp S_k \Delta x_k
-	- e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp S_k \Delta x_k
+	\frac{1}{2} \Delta u_k\tp S_k \Delta x_k = 
+	\frac{1}{2} \tilde{\Delta u_k}\tp (Q_k^2)\tp S_k \Delta x_k
+	- \frac{1}{2} \Delta x_k\tp P_{kx}\tp S_k \Delta x_k
+	- \frac{1}{2} e_k\tp P_{ke}\tp S_k \Delta x_k
+	\end{align}
+	\begin{align}
+	\frac{1}{2} \Delta x_k\tp S_k\tp \Delta u_k = 
+	\frac{1}{2} \Delta x_k\tp S_k\tp (Q_k^2) \tilde{\Delta u_k} 
+	- \frac{1}{2} \Delta x_k\tp S_k\tp P_{kx} \Delta x_k
+	- \frac{1}{2} \Delta x_k\tp S_k\tp P_{ke} e_k
 	\end{align}
 \end{subequations}
 Note there is no change to the second order term $\frac{1}{2} \Delta x_k\tp Q_k \Delta x_k$. Combining all above:
@@ -229,10 +248,12 @@ Note there is no change to the second order term $\frac{1}{2} \Delta x_k\tp Q_k 
 	\begin{align}
 	&\qquad \frac{1}{2} \Delta u_k\tp R_k \Delta u_k + 
 	\frac{1}{2} \Delta x_k\tp Q_k \Delta x_k + 
-	\Delta u_k\tp S_k \Delta x_k \\
+	\frac{1}{2} \Delta u_k\tp S_k \Delta x_k + 
+	\frac{1}{2} \Delta x_k\tp S_k\tp \Delta u_k \\
 	&= \frac{1}{2} \tilde{\Delta u_k}\tp \tilde{R_k} \tilde{\Delta u_k} 
 	+ \frac{1}{2} \Delta x_k\tp \tilde{Q_k} \Delta x_k
-	+ \tilde{\Delta u_k}\tp \tilde{S_k} \Delta x_k
+	+ \frac{1}{2} \tilde{\Delta u_k}\tp \tilde{S_k} \Delta x_k
+	+ \frac{1}{2} \Delta x_k\tp \tilde{S_k}\tp \tilde{\Delta u_k}
 	+ 	\begin{bmatrix}
 	\tilde{\Delta u_k} \\
 	\Delta x_k 
@@ -245,11 +266,11 @@ Note there is no change to the second order term $\frac{1}{2} \Delta x_k\tp Q_k 
 	\end{align}
 	\begin{align}
 	\tilde{R_k} &= (Q_k^2)\tp R_k Q_k^2 \\
-	\tilde{Q_k} &= Q_k - 2\left( Q_k^1(R_k^1)\itp C_k \right)\tp S_k + \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \\
-	\tilde{S_k} &= (Q_k^2)\tp S_k - (Q_k^2)\tp R_k \left( Q_k^1(R_k^1)\itp C_k \right) \\
-	\tilde{r_k^2} &= -(Q_k^2)\tp R_k \left(Q_k^1(R_k^1)\itp \right)e_k \\
-	\tilde{q_k^2} &= -S_k \left(Q_k^1(R_k^1)\itp \right)e_k - \left( Q_k^1(R_k^1)\itp C_k \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k \\
-	C_k^2 &= \frac{1}{2} e_k\tp \left(Q_k^1(R_k^1)\itp \right)\tp R_k \left(Q_k^1(R_k^1)\itp \right) e_k
+	\tilde{Q_k} &= Q_k - P_{kx}\tp S_k - S_k\tp P_{kx} + P_{kx}\tp R_k P_{kx} \\
+	\tilde{S_k} &= (Q_k^2)\tp S_k - (Q_k^2)\tp R_k P_{kx} \\
+	\tilde{r_k^2} &= -(Q_k^2)\tp R_k P_{ke}e_k \\
+	\tilde{q_k^2} &= -S_k\tp P_{ke}e_k - P_{kx}\tp R_k P_{ke} e_k \\
+	C_k^2 &= \frac{1}{2} e_k\tp P_{ke}\tp R_k P_{ke} e_k
 	\end{align}
 \end{subequations}
 The new cost is now 
@@ -285,12 +306,12 @@ The new cost is now
 	\tilde{q_k} &= \tilde{q_k^1} + \tilde{q_k^2}
 	\end{align}
 \end{subequations}
-Now we plug the new variable $\Delta u_k = Q_k^2 \tilde{\Delta u_k} - Q_k^1(R_k^1)\itp(C_k \Delta x_k + e_k)$ into the dynamic equality constraints 
+Now we plug the new variable $\Delta u_k = Q_k^2 \tilde{\Delta u_k} - P_{kx} \Delta x_k - P_{ke}e_k$ into the dynamic equality constraints 
 \begin{subequations}
 	\begin{align}
 	\Delta x_{k+1} &= A_k \Delta x_k + B_k \Delta u_k + b_k \\
-	&= A_k \Delta x_k + B_k Q_k^2 \tilde{\Delta u_k} - B_k Q_k^1(R_k^1)\itp C_k \Delta x_k - B_k Q_k^1(R_k^1)\itp e_k + b_k \\
-	&= \left( A_k - B_k Q_k^1(R_k^1)\itp C_k \right) \Delta x_k + B_k Q_k^2 \tilde{\Delta u_k} + b_k - B_k Q_k^1(R_k^1)\itp e_k \\
+	&= A_k \Delta x_k + B_k Q_k^2 \tilde{\Delta u_k} - B_kP_{kx} \Delta x_k - B_k P_{ke} e_k + b_k \\
+	&= \left( A_k - B_kP_{kx} \right) \Delta x_k + B_k Q_k^2 \tilde{\Delta u_k} + b_k - B_k P_{ke} e_k \\
 	&= \tilde{A_k} \Delta x_k + \tilde{B_k} \tilde{\Delta u_k} + \tilde{b_k}
 	\end{align}
 	\begin{align}
@@ -299,9 +320,9 @@ Now we plug the new variable $\Delta u_k = Q_k^2 \tilde{\Delta u_k} - Q_k^1(R_k^
 	b_k = f(x_k,u_k) - x_{k+1}
 	\end{align}
 	\begin{align}
-	\tilde{A_k} = \left( A_k - B_k Q_k^1(R_k^1)\itp C_k \right) \quad
+	\tilde{A_k} = \left( A_k - B_kP_{kx} \right) \quad
 	\tilde{B_k} =  B_k Q_k^2 \quad
-	\tilde{b_k} = b_k - B_k Q_k^1(R_k^1)\itp e_k
+	\tilde{b_k} = b_k - B_k P_{ke} e_k
 	\end{align}
 \end{subequations}
 

@@ -48,9 +48,6 @@ namespace ballbot {
  */
 class BallbotSystemDynamics : public SystemDynamicsBaseAD {
  public:
-  using SystemDynamicsBaseAD::ad_scalar_t;
-  using SystemDynamicsBaseAD::ad_vector_t;
-
   /** Constructor */
   BallbotSystemDynamics() : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
     wheelRadius_ = param_.wheelRadius_;

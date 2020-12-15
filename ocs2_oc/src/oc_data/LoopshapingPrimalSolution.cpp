@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,56 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <string>
-
-#include <ocs2_core/Types.h>
-#include <ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
+#include "ocs2_oc/oc_data/LoopshapingPrimalSolution.h"
 
 namespace ocs2 {
 
-/**
- * This class lets the user to insert robot command form joystick.
- */
-class TargetTrajectories_Joystick_Interface : public ocs2::TargetTrajectories_ROS_Interface {
- public:
-  /**
-   * Constructor
-   *
-   * @param [in] robotName: robot's name.
-   * @param [in] targetCommandSize: command expected length
-   * @param [in] targetCommandLimits: The limits of the loaded command from
-   * command-line (for safety purposes).
-   */
-  TargetTrajectories_Joystick_Interface(int argc, char* argv[], const std::string& robotName = "robot", const size_t targetCommandSize = 0,
-                                        const scalar_array_t& targetCommandLimits = scalar_array_t());
-
-  /**
-   * Default destructor
-   */
-  ~TargetTrajectories_Joystick_Interface() override = default;
-
-  /**
-   * Gets the command vector size.
-   *
-   * @return The command vector size.
-   */
-  size_t& targetCommandSize();
-
-  /**
-   * Sets cost trajectories from input desired state, and publishes cost desired trajectories
-   */
-  void publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories);
-
- protected:
-  /******
-   * Variables
-   ******/
-  size_t targetCommandSize_;
-  scalar_array_t targetCommandLimits_;
-
-  scalar_array_t targetCommand_;
-};
+PrimalSolution loopshapingToSystemPrimalSolution(const PrimalSolution& primalSolution, const LoopshapingDefinition& loopshapingDefinition) {
+  PrimalSolution systemPrimalSolution;
+  systemPrimalSolution.controllerPtr_ = nullptr;
+  systemPrimalSolution.timeTrajectory_ = primalSolution.timeTrajectory_;
+  systemPrimalSolution.modeSchedule_ = primalSolution.modeSchedule_;
+  systemPrimalSolution.stateTrajectory_.reserve(primalSolution.stateTrajectory_.size());
+  systemPrimalSolution.inputTrajectory_.reserve(primalSolution.inputTrajectory_.size());
+  for (size_t k = 0; k < primalSolution.stateTrajectory_.size(); ++k) {
+    const auto systemState = loopshapingDefinition.getSystemState(primalSolution.stateTrajectory_[k]);
+    const auto systemInput = loopshapingDefinition.getSystemInput(systemState, primalSolution.inputTrajectory_[k]);
+    systemPrimalSolution.stateTrajectory_.push_back(std::move(systemState));
+    systemPrimalSolution.inputTrajectory_.push_back(std::move(systemInput));
+  }
+  return systemPrimalSolution;
+}
 
 }  // namespace ocs2

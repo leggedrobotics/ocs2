@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_mpc)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -47,6 +47,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/LoopshapingSystemObservation.cpp
   src/MPC_BASE.cpp
   src/MPC_DDP.cpp
   src/MPC_Settings.cpp

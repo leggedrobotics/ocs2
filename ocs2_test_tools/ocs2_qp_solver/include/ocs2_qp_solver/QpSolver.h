@@ -53,12 +53,16 @@ std::pair<vector_array_t, vector_array_t> solveLinearQuadraticProblem(const std:
 /**
  * Constructs the matrix of stacked dynamic constraints A w + b = 0
  *
- * A = [ I  *
+ * A = [-I  *
+ *       C  D  *  *
  *       A  B -I  *
+ *       *  *  C  D  *  *
  *       *  *  A  B -I  *
+ *       *  *  *  *  C  D  *
  *       *  *  *  *  A  B -I ]
+ *       *  *  *  *  *  *  C ]
  *
- * b = [x0; b[0]; ... b[N-1]]
+ * b = [x0; e[0]; b[0]; ... e[N-1]; b[N-1]; e[N]]
  *
  * @param lqp : linear quadratic problem.
  * @param dx0 : initial state deviation from the nominal trajectories.
@@ -72,18 +76,28 @@ VectorFunctionLinearApproximation getConstraintMatrices(const std::vector<Linear
 /**
  * Constructs a matrix of stacked cost functions  1/2 w' H w + g' w
  *
- * H = [ Q  P' *
- *       P  R  *
+ * H = [ Q  P'
+ *       P  R
  *             Q  P'
- *             P  R ]
+ *             P  R
+ *                   Qf ]
  *
- * g = [q[0]; r[0]; q[1]; r[1]; ... ]
+ * g = [q[0]; r[0]; q[1]; r[1]; ... qf ]
  *
  * @param lqp
  * @param numDecisionVariables : size of w
  * @return quadratic cost function in w, where w is the vector of decision variables
  */
 ScalarFunctionQuadraticApproximation getCostMatrices(const std::vector<LinearQuadraticStage>& lqp, int numDecisionVariables);
+
+/**
+ * Constructs the equality constrained QP from the discretized linear quadratic control problem.
+ * @param lqp : linear quadratic problem.
+ * @param dx0 : initial state deviation from the nominal trajectories.
+ * @return { cost matrices, constraint matrices }
+ */
+std::pair<ScalarFunctionQuadraticApproximation, VectorFunctionLinearApproximation> getDenseQp(const std::vector<LinearQuadraticStage>& lqp,
+                                                                                              const vector_t& dx0);
 
 /**
  * Solves the equality constrained QP

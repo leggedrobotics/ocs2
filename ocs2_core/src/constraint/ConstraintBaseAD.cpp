@@ -134,22 +134,21 @@ VectorFunctionLinearApproximation ConstraintBaseAD::finalStateEqualityConstraint
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateInputConstraint(ad_scalar_t time, const ad_vector_t& state,
-                                                                     const ad_vector_t& input) const {
+ad_vector_t ConstraintBaseAD::stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const {
   return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const {
+ad_vector_t ConstraintBaseAD::stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const {
   return ad_vector_t(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ConstraintBaseAD::ad_vector_t ConstraintBaseAD::stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const {
+ad_vector_t ConstraintBaseAD::stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const {
   return ad_vector_t(0);
 }
 

@@ -43,7 +43,23 @@ ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase&
                                                                const ContinuousTrajectory& nominalTrajectory,
                                                                const vector_t& initialState) {
   // Approximate
-  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nominalTrajectory);
+  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nullptr, nominalTrajectory);
+
+  // Solve for an update step
+  ContinuousTrajectory deltaSolution;
+  deltaSolution.timeTrajectory = nominalTrajectory.timeTrajectory;
+  std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =
+      solveLinearQuadraticProblem(lqApproximation, initialState - nominalTrajectory.stateTrajectory.front());
+
+  // Take a full step: Add update to nominal trajectory
+  return nominalTrajectory + deltaSolution;
+}
+
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase& costFunction, SystemDynamicsBase& systemDynamics,
+                                                               ConstraintBase& constraints, const ContinuousTrajectory& nominalTrajectory,
+                                                               const vector_t& initialState) {
+  // Approximate
+  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, &constraints, nominalTrajectory);
 
   // Solve for an update step
   ContinuousTrajectory deltaSolution;

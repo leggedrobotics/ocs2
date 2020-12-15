@@ -27,60 +27,55 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/oc_solver/ModeScheduleManager.h"
+#include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModeScheduleManager::ModeScheduleManager(ModeSchedule modeSchedule)
-    : modeSchedule_(std::move(modeSchedule)), modeScheduleBuffer_(), modeScheduleUpdated_(false) {}
+StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr,
+                                         std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray,
+                                         ConstraintOrder constraintOrder)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyFunctionPtrArray)), constraintOrder_(constraintOrder) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ModeScheduleManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                       const CostDesiredTrajectories& costDesiredTrajectory) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  if (modeScheduleUpdated_) {
-    modeScheduleUpdated_ = false;
-    swap(modeSchedule_, modeScheduleBuffer_);
+StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints,
+                                         std::unique_ptr<PenaltyFunctionBase> penaltyFunction, ConstraintOrder constraintOrder)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)), constraintOrder_(constraintOrder) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateSoftConstraint::StateSoftConstraint(const StateSoftConstraint& other)
+    : constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_), constraintOrder_(other.constraintOrder_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateSoftConstraint* StateSoftConstraint::clone() const {
+  return new StateSoftConstraint(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories&) const {
+  return penalty_.getValue(constraintPtr_->getValue(time, state));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                    const CostDesiredTrajectories&) const {
+  if (constraintOrder_ == ConstraintOrder::Linear) {
+    return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));
+  } else {  // constraintOrder_ == ConstraintOrder::Quadratic
+    return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state));
   }
-  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory, modeSchedule_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const ModeSchedule& ModeScheduleManager::getModeSchedule() const {
-  return modeSchedule_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ModeSchedule ModeScheduleManager::getModeScheduleImage() const {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  return modeSchedule_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ModeScheduleManager::setModeSchedule(const ModeSchedule& modeSchedule) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  modeScheduleUpdated_ = true;
-  modeScheduleBuffer_ = modeSchedule;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ModeScheduleManager::setModeSchedule(ModeSchedule&& modeSchedule) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
-  modeScheduleUpdated_ = true;
-  modeScheduleBuffer_ = std::move(modeSchedule);
 }
 
 }  // namespace ocs2

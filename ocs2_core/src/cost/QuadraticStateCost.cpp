@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,78 +27,51 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
-#include <mutex>
-
-#include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/misc/Numerics.h>
-
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
-  preRun(initTime, initState, finalTime);
-  runImpl(initTime, initState, finalTime, partitioningTimes);
-  postRun();
+QuadraticStateCost::QuadraticStateCost(matrix_t Q) : Q_(std::move(Q)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+QuadraticStateCost* QuadraticStateCost::clone() const {
+  return new QuadraticStateCost(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                      const std::vector<ControllerBase*>& controllersPtrStock) {
-  preRun(initTime, initState, finalTime);
-  runImpl(initTime, initState, finalTime, partitioningTimes, controllersPtrStock);
-  postRun();
+scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+  const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
+  return 0.5 * xDeviation.dot(Q_ * xDeviation);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PrimalSolution Solver_BASE::primalSolution(scalar_t finalTime) const {
-  PrimalSolution primalSolution;
-  getPrimalSolution(finalTime, &primalSolution);
-  return primalSolution;
+ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                   const CostDesiredTrajectories& desiredTrajectory) const {
+  const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
+  const vector_t qDeviation = Q_ * xDeviation;
+
+  ScalarFunctionQuadraticApproximation Phi;
+  Phi.f = 0.5 * xDeviation.dot(qDeviation);
+  Phi.dfdx = qDeviation;
+  Phi.dfdxx = Q_;
+  return Phi;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void Solver_BASE::printString(const std::string& text) const {
-  std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
-  std::cerr << text << '\n';
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void Solver_BASE::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  if (modeScheduleManager_) {
-    modeScheduleManager_->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
-    modeSchedule_ = modeScheduleManager_->getModeSchedule();
-  }
-  for (auto& module : synchronizedModules_) {
-    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void Solver_BASE::postRun() {
-  if (modeScheduleManager_ || !synchronizedModules_.empty()) {
-    const auto solution = primalSolution(getFinalTime());
-    if (modeScheduleManager_) {
-      modeScheduleManager_->postSolverRun(solution);
-    }
-    for (auto& module : synchronizedModules_) {
-      module->postSolverRun(solution);
-    }
-  }
+vector_t QuadraticStateCost::getStateDeviation(scalar_t time, const vector_t& state,
+                                               const CostDesiredTrajectories& desiredTrajectory) const {
+  return state - desiredTrajectory.getDesiredState(time);
 }
 
 }  // namespace ocs2

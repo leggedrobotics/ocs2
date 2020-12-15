@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_robotic_tools/command/TargetTrajectories_Keyboard_Interface.h>
+#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
 
 #include "ocs2_double_integrator_example/definitions.h"
 
@@ -40,7 +40,7 @@ namespace double_integrator {
 /**
  * This class implements TargetTrajectories communication using ROS.
  */
-class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetTrajectories_Keyboard_Interface {
+class TargetTrajectoriesKeyboardDoubleIntegrator final : public ocs2::TargetTrajectoriesKeyboardInterface {
  public:
   enum { COMMAND_DIM = 2 };
 
@@ -53,14 +53,14 @@ class TargetTrajectories_Keyboard_Double_Integrator final : public ocs2::TargetT
    * goalPoseLimit(0): X
    * goalPoseLimit(1): V_X
    */
-  TargetTrajectories_Keyboard_Double_Integrator(int argc, char* argv[], const std::string& robotName = "robot",
-                                                const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0})
-      : ocs2::TargetTrajectories_Keyboard_Interface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {}
+  TargetTrajectoriesKeyboardDoubleIntegrator(int argc, char* argv[], const std::string& robotName = "robot",
+                                             const scalar_array_t& goalPoseLimit = scalar_array_t{10.0, 10.0})
+      : ocs2::TargetTrajectoriesKeyboardInterface(argc, argv, robotName, COMMAND_DIM, goalPoseLimit) {}
 
   /**
    * Default destructor
    */
-  ~TargetTrajectories_Keyboard_Double_Integrator() override = default;
+  ~TargetTrajectoriesKeyboardDoubleIntegrator() override = default;
 
   void toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime, vector_t& desiredState,
                                    vector_t& desiredInput) override {

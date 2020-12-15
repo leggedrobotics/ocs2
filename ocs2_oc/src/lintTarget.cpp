@@ -5,10 +5,13 @@
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
 // oc_solver
-#include <ocs2_oc/oc_solver/ModeScheduleManager.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/oc_solver/SolverSynchronizedModule.h>
-#include <ocs2_oc/oc_solver/Solver_BASE.h>
+#include <ocs2_oc/oc_solver/SolverBase.h>
+
+// synchronized_module
+#include <ocs2_oc/synchronized_module/LoopshapingModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 // rollout
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>

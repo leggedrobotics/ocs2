@@ -37,6 +37,9 @@ class DiscreteTranscriptionTest : public testing::Test {
   static constexpr size_t N = 10;  // Trajectory length
   static constexpr size_t STATE_DIM = 3;
   static constexpr size_t INPUT_DIM = 2;
+  static constexpr size_t numStateInputConstraints = 1;
+  static constexpr size_t numStateOnlyConstraints = 1;
+  static constexpr size_t numFinalStateOnlyConstraints = 1;
   static constexpr ocs2::scalar_t dt = 1e-2;
 
   DiscreteTranscriptionTest() {
@@ -47,65 +50,108 @@ class DiscreteTranscriptionTest : public testing::Test {
         ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
     cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
     system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
+    constraints =
+        ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
+                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
+
     linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
-    lqp = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, linearization);
+
+    unconstrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, nullptr, linearization);
+    constrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, constraints.get(), linearization);
+  }
+
+  void checkSizes(const std::vector<ocs2::qp_solver::LinearQuadraticStage>& lqr, size_t numStateInputConstraints,
+                  size_t numStateOnlyConstraints, size_t numTerminalConstraints) const {
+    ASSERT_EQ(lqr.size(), N + 1);
+    for (int k = 0; k < N; ++k) {
+      // Cost sizes
+      ASSERT_EQ(lqr[k].cost.dfdxx.rows(), STATE_DIM);
+      ASSERT_EQ(lqr[k].cost.dfdxx.cols(), STATE_DIM);
+      ASSERT_EQ(lqr[k].cost.dfdux.rows(), INPUT_DIM);
+      ASSERT_EQ(lqr[k].cost.dfdux.cols(), STATE_DIM);
+      ASSERT_EQ(lqr[k].cost.dfduu.rows(), INPUT_DIM);
+      ASSERT_EQ(lqr[k].cost.dfduu.cols(), INPUT_DIM);
+
+      // Dynamics sizes
+      ASSERT_EQ(lqr[k].dynamics.dfdx.rows(), STATE_DIM);
+      ASSERT_EQ(lqr[k].dynamics.dfdx.cols(), STATE_DIM);
+      ASSERT_EQ(lqr[k].dynamics.dfdu.rows(), STATE_DIM);
+      ASSERT_EQ(lqr[k].dynamics.dfdu.cols(), INPUT_DIM);
+
+      // Constraint sizes
+      const auto numIntermediateConstraints = k == 0 ? numStateInputConstraints : numStateInputConstraints + numStateOnlyConstraints;
+      ASSERT_EQ(lqr[k].constraints.f.rows(), numIntermediateConstraints);
+      ASSERT_EQ(lqr[k].constraints.dfdx.rows(), numIntermediateConstraints);
+      ASSERT_EQ(lqr[k].constraints.dfdu.rows(), numIntermediateConstraints);
+      if (numIntermediateConstraints > 0) {
+        ASSERT_EQ(lqr[k].constraints.dfdx.cols(), STATE_DIM);
+        ASSERT_EQ(lqr[k].constraints.dfdu.cols(), INPUT_DIM);
+      }
+    }
+
+    // Terminal Cost size
+    ASSERT_EQ(lqr[N].cost.dfdxx.rows(), STATE_DIM);
+    ASSERT_EQ(lqr[N].cost.dfdxx.cols(), STATE_DIM);
+
+    // Terminal Constraint size
+    ASSERT_EQ(lqr[N].constraints.f.rows(), numTerminalConstraints);
+    ASSERT_EQ(lqr[N].constraints.dfdx.rows(), numTerminalConstraints);
+    if (numTerminalConstraints > 0) {
+      ASSERT_EQ(lqr[N].constraints.dfdx.cols(), STATE_DIM);
+    }
   }
 
   std::unique_ptr<ocs2::CostFunctionBase> cost;
   ocs2::CostDesiredTrajectories costDesiredTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
+  std::unique_ptr<ocs2::ConstraintBase> constraints;
   ocs2::qp_solver::ContinuousTrajectory linearization;
-  std::vector<ocs2::qp_solver::LinearQuadraticStage> lqp;
+  std::vector<ocs2::qp_solver::LinearQuadraticStage> unconstrainedLqr;
+  std::vector<ocs2::qp_solver::LinearQuadraticStage> constrainedLqr;
 };
 
 constexpr size_t DiscreteTranscriptionTest::N;
 constexpr size_t DiscreteTranscriptionTest::STATE_DIM;
 constexpr size_t DiscreteTranscriptionTest::INPUT_DIM;
+constexpr size_t DiscreteTranscriptionTest::numStateInputConstraints;
+constexpr size_t DiscreteTranscriptionTest::numStateOnlyConstraints;
+constexpr size_t DiscreteTranscriptionTest::numFinalStateOnlyConstraints;
 constexpr ocs2::scalar_t DiscreteTranscriptionTest::dt;
 
-TEST_F(DiscreteTranscriptionTest, approximationHasCorrectSizes) {
-  const auto n = STATE_DIM;
-  const auto m = INPUT_DIM;
-  ASSERT_EQ(lqp.size(), N + 1);
-  for (int k = 0; k < N; ++k) {
-    // Cost sizes
-    ASSERT_EQ(lqp[k].cost.dfdxx.rows(), n);
-    ASSERT_EQ(lqp[k].cost.dfdxx.cols(), n);
-    ASSERT_EQ(lqp[k].cost.dfdux.rows(), m);
-    ASSERT_EQ(lqp[k].cost.dfdux.cols(), n);
-    ASSERT_EQ(lqp[k].cost.dfduu.rows(), m);
-    ASSERT_EQ(lqp[k].cost.dfduu.cols(), m);
+TEST_F(DiscreteTranscriptionTest, unconstrainedLqrHasCorrectSizes) {
+  checkSizes(unconstrainedLqr, 0, 0, 0);
+}
 
-    // Dynamics sizes
-    ASSERT_EQ(lqp[k].dynamics.dfdx.rows(), n);
-    ASSERT_EQ(lqp[k].dynamics.dfdx.cols(), n);
-    ASSERT_EQ(lqp[k].dynamics.dfdu.rows(), n);
-    ASSERT_EQ(lqp[k].dynamics.dfdu.cols(), m);
-  }
-
-  // Terminal Cost size
-  ASSERT_EQ(lqp[N].cost.dfdxx.rows(), n);
-  ASSERT_EQ(lqp[N].cost.dfdxx.cols(), n);
+TEST_F(DiscreteTranscriptionTest, constrainedLqrHasCorrectSizes) {
+  checkSizes(constrainedLqr, numStateInputConstraints, numStateOnlyConstraints, numFinalStateOnlyConstraints);
 }
 
 TEST_F(DiscreteTranscriptionTest, linearizationInvariance) {
   auto linearization2 = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
   linearization2.timeTrajectory = linearization.timeTrajectory;
 
-  const auto lqp2 = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, linearization2);
+  const auto lqp2 = ocs2::qp_solver::getLinearQuadraticApproximation(*cost, *system, constraints.get(), linearization2);
 
   // All matrices should stay the same. The linear and constant parts changes
   for (int k = 0; k < N; ++k) {
     // Cost
-    ASSERT_TRUE(lqp[k].cost.dfdxx.isApprox(lqp2[k].cost.dfdxx));
-    ASSERT_TRUE(lqp[k].cost.dfdux.isApprox(lqp2[k].cost.dfdux));
-    ASSERT_TRUE(lqp[k].cost.dfduu.isApprox(lqp2[k].cost.dfduu));
+    ASSERT_TRUE(constrainedLqr[k].cost.dfdxx.isApprox(lqp2[k].cost.dfdxx));
+    ASSERT_TRUE(constrainedLqr[k].cost.dfdux.isApprox(lqp2[k].cost.dfdux));
+    ASSERT_TRUE(constrainedLqr[k].cost.dfduu.isApprox(lqp2[k].cost.dfduu));
 
     // Dynamics
-    ASSERT_TRUE(lqp[k].dynamics.dfdx.isApprox(lqp2[k].dynamics.dfdx));
-    ASSERT_TRUE(lqp[k].dynamics.dfdu.isApprox(lqp2[k].dynamics.dfdu));
+    ASSERT_TRUE(constrainedLqr[k].dynamics.dfdx.isApprox(lqp2[k].dynamics.dfdx));
+    ASSERT_TRUE(constrainedLqr[k].dynamics.dfdu.isApprox(lqp2[k].dynamics.dfdu));
+
+    // Constraints
+    ASSERT_TRUE(constrainedLqr[k].constraints.dfdx.isApprox(lqp2[k].constraints.dfdx));
+    ASSERT_TRUE(constrainedLqr[k].constraints.dfdu.isApprox(lqp2[k].constraints.dfdu));
   }
 
-  // Terminal Cost size
-  ASSERT_TRUE(lqp[N].cost.dfdxx.isApprox(lqp2[N].cost.dfdxx));
+  // Terminal Cost
+  ASSERT_TRUE(constrainedLqr[N].cost.dfdxx.isApprox(lqp2[N].cost.dfdxx));
+
+  // Terminal Constraints
+  ASSERT_TRUE(constrainedLqr[N].constraints.dfdx.isApprox(lqp2[N].constraints.dfdx));
 }

@@ -95,22 +95,24 @@ class ConstraintCollection final {
   size_t getNumConstraints(scalar_t time) const;
 
   /* State-input constraints */
-  template <typename T = CONSTRAINT>
-  ifStateInputConstraint_t<T, vector_t> getValue(scalar_t time, const vector_t& state, const vector_t& input) const;
-  template <typename T = CONSTRAINT>
-  ifStateInputConstraint_t<T, LinearApproximation_t> getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                            const vector_t& input) const;
-  template <typename T = CONSTRAINT>
-  ifStateInputConstraint_t<T, QuadraticApproximation_t> getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                  const vector_t& input) const;
+  template <typename T = CONSTRAINT, EnableIfStateInputConstraint_t<T> = true>
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const;
+
+  template <typename T = CONSTRAINT, EnableIfStateInputConstraint_t<T> = true>
+  LinearApproximation_t getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
+
+  template <typename T = CONSTRAINT, EnableIfStateInputConstraint_t<T> = true>
+  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
 
   /* State-only constraints */
-  template <typename T = CONSTRAINT>
-  ifStateConstraint_t<T, vector_t> getValue(scalar_t time, const vector_t& state) const;
-  template <typename T = CONSTRAINT>
-  ifStateConstraint_t<T, LinearApproximation_t> getLinearApproximation(scalar_t time, const vector_t& state) const;
-  template <typename T = CONSTRAINT>
-  ifStateConstraint_t<T, QuadraticApproximation_t> getQuadraticApproximation(scalar_t time, const vector_t& state) const;
+  template <typename T = CONSTRAINT, EnableIfStateConstraint_t<T> = true>
+  vector_t getValue(scalar_t time, const vector_t& state) const;
+
+  template <typename T = CONSTRAINT, EnableIfStateConstraint_t<T> = true>
+  LinearApproximation_t getLinearApproximation(scalar_t time, const vector_t& state) const;
+
+  template <typename T = CONSTRAINT, EnableIfStateConstraint_t<T> = true>
+  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const vector_t& state) const;
 
  private:
   /**

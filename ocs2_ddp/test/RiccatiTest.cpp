@@ -160,7 +160,7 @@ TEST(RiccatiTest, testFlattenAndUnflatten) {
   allSs = riccati_t::convert2Vector(Sm, Sv, s);
   riccati_t::convert2Matrix(allSs, Sm_out, Sv_out, s_out);
 
-  EXPECT_EQ(Sm, Sm_out);
-  EXPECT_EQ(Sv, Sv_out);
   EXPECT_EQ(s, s_out);
+  ASSERT_TRUE(Sv.isApprox(Sv_out));
+  ASSERT_TRUE(Sm.isApprox(Sm_out));
 }

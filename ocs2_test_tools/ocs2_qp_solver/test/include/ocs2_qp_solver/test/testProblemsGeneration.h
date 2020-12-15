@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
 
+#include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
@@ -74,9 +75,28 @@ inline std::unique_ptr<ocs2::LinearSystemDynamics> getOcs2Dynamics(const VectorF
   return std::unique_ptr<ocs2::LinearSystemDynamics>(new ocs2::LinearSystemDynamics(dynamics.dfdx, dynamics.dfdu));
 }
 
+/** Get random nc linear constraints of n states, and m inputs */
+inline VectorFunctionLinearApproximation getRandomConstraints(int n, int m, int nc) {
+  VectorFunctionLinearApproximation constraints;
+  constraints.dfdx = matrix_t::Random(nc, n);
+  constraints.dfdu = matrix_t::Random(nc, m);
+  constraints.f = vector_t::Random(nc);
+  return constraints;
+}
+
+inline std::unique_ptr<ocs2::LinearConstraint> getOcs2Constraints(const VectorFunctionLinearApproximation& stateInputConstraints,
+                                                                  const VectorFunctionLinearApproximation& stateOnlyConstraints,
+                                                                  const VectorFunctionLinearApproximation& finalStateOnlyConstraints) {
+  return std::unique_ptr<ocs2::LinearConstraint>(
+      new ocs2::LinearConstraint(stateInputConstraints.f, stateInputConstraints.dfdx, stateInputConstraints.dfdu, stateOnlyConstraints.f,
+                                 stateOnlyConstraints.dfdx, finalStateOnlyConstraints.f, finalStateOnlyConstraints.dfdx));
+}
+
 inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt) {
-  ContinuousTrajectory trajectory = {
-      .timeTrajectory = scalar_array_t(N + 1), .stateTrajectory = vector_array_t(N + 1), .inputTrajectory = vector_array_t(N)};
+  ContinuousTrajectory trajectory;
+  trajectory.timeTrajectory = scalar_array_t(N + 1);
+  trajectory.stateTrajectory = vector_array_t(N + 1);
+  trajectory.inputTrajectory = vector_array_t(N);
   auto t = -dt;
   std::generate(trajectory.timeTrajectory.begin(), trajectory.timeTrajectory.end(), [&t, dt]() {
     t += dt;
@@ -87,16 +107,16 @@ inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt
   return trajectory;
 }
 
-inline std::vector<LinearQuadraticStage> generateRandomLqProblem(int N, int nx, int nu) {
+inline std::vector<LinearQuadraticStage> generateRandomLqProblem(int N, int nx, int nu, int nc) {
   std::vector<LinearQuadraticStage> lqProblem;
-  lqProblem.reserve(N);
+  lqProblem.reserve(N + 1);
 
   for (int k = 0; k < N; ++k) {
-    lqProblem.emplace_back(getRandomCost(nx, nu), getRandomDynamics(nx, nu));
+    lqProblem.emplace_back(getRandomCost(nx, nu), getRandomDynamics(nx, nu), getRandomConstraints(nx, nu, nc));
   }
 
   // Terminal Cost
-  lqProblem.emplace_back(getRandomCost(nx, 0), VectorFunctionLinearApproximation());
+  lqProblem.emplace_back(getRandomCost(nx, 0), VectorFunctionLinearApproximation(), getRandomConstraints(nx, nu, nc));
 
   return lqProblem;
 }
@@ -121,6 +141,33 @@ inline bool isEqual(const vector_t& lhs, const vector_t& rhs, scalar_t tol = Eig
 inline bool isEqual(const vector_array_t& v0, const vector_array_t& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   return (v0.size() == v1.size()) &&
          std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const vector_t& lhs, const vector_t& rhs) { return isEqual(lhs, rhs, tol); });
+}
+
+/** Checks QP feasibility and numerical conditioning */
+inline bool isQpFeasible(const ocs2::ScalarFunctionQuadraticApproximation& qpCost,
+                         const ocs2::VectorFunctionLinearApproximation& qpConstraints) {
+  const auto& H = qpCost.dfdxx;
+  const auto& A = qpConstraints.dfdx;
+
+  // Cost must be convex
+  Eigen::LDLT<ocs2::matrix_t> ldlt(H);
+  if (!(H.ldlt().vectorD().array() > 0.0).all()) {
+    std::cerr << "H is not positive definite\n";
+    return false;
+  }
+
+  // Constraints feasibility
+  Eigen::JacobiSVD<ocs2::matrix_t> svd(A);
+  const auto conditionNumber = svd.singularValues()(0) / svd.singularValues().tail(1)(0);
+  if (svd.rank() != A.rows()) {
+    std::cerr << "A is not full row-rank\n";
+    return false;
+  } else if (conditionNumber > 1e6) {
+    std::cerr << "A is ill-conditioned\n";
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace qp_solver

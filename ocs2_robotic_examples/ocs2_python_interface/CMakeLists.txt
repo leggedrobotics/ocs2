@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_python_interface)
 
 set(CATKIN_PACKAGE_DEPENDENCIES

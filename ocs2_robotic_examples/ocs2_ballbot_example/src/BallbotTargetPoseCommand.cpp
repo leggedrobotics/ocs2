@@ -27,13 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_ballbot_example/command/TargetTrajectories_Keyboard_Ballbot.h"
+#include "ocs2_ballbot_example/command/TargetTrajectoriesKeyboardBallbot.h"
 
 using namespace ocs2;
 using namespace ballbot;
 
 int main(int argc, char* argv[]) {
-  TargetTrajectories_Keyboard_Ballbot targetPoseCommand(argc, argv, "ballbot");
+  TargetTrajectoriesKeyboardBallbot targetPoseCommand(argc, argv, "ballbot");
 
   targetPoseCommand.launchNodes();
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_oc)
 
 ## Find catkin macros and libraries
@@ -47,8 +47,11 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticApproximator.cpp
-  src/oc_solver/ModeScheduleManager.cpp
-  src/oc_solver/Solver_BASE.cpp
+  src/oc_data/LoopshapingPrimalSolution.cpp
+  src/oc_solver/SolverBase.cpp
+  src/synchronized_module/ModeScheduleManager.cpp
+  src/synchronized_module/LoopshapingModeScheduleManager.cpp
+  src/synchronized_module/LoopshapingSynchronizedModule.cpp
   src/rollout/OperatingTrajectoriesRollout.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp

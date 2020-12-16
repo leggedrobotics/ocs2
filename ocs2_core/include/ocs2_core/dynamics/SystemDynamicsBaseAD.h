@@ -96,7 +96,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @return state vector time derivative.
    */
   virtual ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                    const ad_vector_t& parameters = ad_vector_t(0)) const = 0;
+                                    const ad_vector_t& parameters) const = 0;
 
   /**
    * Gets the parameters of the system flow map
@@ -121,7 +121,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] parameters: parameter vector.
    * @return jumped state.
    */
-  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters = ad_vector_t(0)) const;
+  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
 
   /**
    * Gets the parameters of the jump map
@@ -147,7 +147,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] parameters: parameter vector.
    * @return A vector of guard surfaces values
    */
-  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters = ad_vector_t(0)) const;
+  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
 
   /**
    * Gets the parameters of the guard surfaces

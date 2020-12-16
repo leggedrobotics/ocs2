@@ -53,7 +53,7 @@ class CartPoleSytemDynamics : public SystemDynamicsBaseAD {
   CartPoleSytemDynamics* clone() const override { return new CartPoleSytemDynamics(*this); }
 
   ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ocs2::ad_vector_t& parameters) const override {
+                            const ad_vector_t& parameters) const override {
     const ad_scalar_t cosTheta = cos(state(0));
     const ad_scalar_t sinTheta = sin(state(0));
 

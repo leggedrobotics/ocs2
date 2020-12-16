@@ -25,13 +25,15 @@ namespace ocs2
 
   struct MultipleShootingSolverSettings
   {
-    size_t N;
+    size_t N; // number of states in between initTime and finalTime. Typically finalTime - initTime = 1.0 seconds, so N=20 -> delta_t=0.05s
     size_t n_state;
     size_t n_input;
-    size_t n_constraint;
+    size_t n_mode;
+    std::vector<size_t> n_constraint;   // size = n_mode
+    std::vector<size_t> N_distribution; // size = n_mode, sum = N
     size_t sqpIteration;
     bool constrained; // true for constrained systems, false for unconstrained systems
-    bool qr_decomp;   // this variable is meaningful only if the system is constrained. True to use QR decomposiion, false to use lg <= Cx+Du+e <= ug
+    bool qr_decomp;   // this variable is meaningful only if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
     bool printSolverStatus;
     bool printSolverStatistics;
     bool printPrimalSol;
@@ -109,10 +111,11 @@ namespace ocs2
                                              const matrix_t &x,
                                              const matrix_t &u,
                                              const vector_t &initState);
-    void setupDimension();
+    void setupDimension(scalar_t initTime, scalar_t finalTime, ConstraintBase &constraintObj);
     std::tuple<matrix_t, matrix_t> getOCPSolution(const vector_t &delta_x0);
     void solveOCP();
     void freeHPIPMMem();
+    void getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime, ConstraintBase &constraintObj);
 
     MultipleShootingSolverSettings settings_;
     std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;

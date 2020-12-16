@@ -76,7 +76,7 @@ endif()
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 
-# SQP node for ballbot, temporily use the eq_hpipm version library 
+# SQP node for ballbot
 add_executable(ballbot_sqp src/MultipleShootingBallbotNode.cpp)
 add_dependencies(ballbot_sqp ${catkin_EXPORTED_TARGETS})
 target_include_directories(ballbot_sqp INTERFACE
@@ -106,10 +106,22 @@ else() # add explicit math library
 endif()
 target_compile_options(circular_kinematics PRIVATE ${OCS2_CXX_FLAGS})
 
+#########################
+###   CLANG TOOLING   ###
+#########################
 
 #############
 ## Install ##
 #############
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 #############
 ## Testing ##

@@ -42,8 +42,8 @@ int main(int argc, char **argv)
   settings.constrained = false;
   settings.qr_decomp = false;
   settings.printPrimalSol = false;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = true;
+  settings.printSolverStatistics = false;
+  settings.printSolverStatus = false;
   settings.initPrimalSol = false;
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();

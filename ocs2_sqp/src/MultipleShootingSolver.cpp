@@ -41,19 +41,29 @@ namespace ocs2
                                        scalar_t finalTime,
                                        const scalar_array_t &partitioningTimes)
   {
+    // STATE_DIM & INPUT_DIM are fixed, can be retrieved from the Q, R matrices from task.info
+
     // ignore partitioningTimes
 
     // Initialize cost
     costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
 
     // Solve the problem.
-    setupDimension();
+
+    // EQ_CONSTRAINT_DIM is not fixed in different modes, get them
+    getInfoFromModeSchedule(initTime, finalTime, *constraintPtr_);
+
+    setupDimension(initTime, finalTime, *constraintPtr_);
     scalar_t delta_t_ = (finalTime - initTime) / settings_.N;
     matrix_t x(settings_.n_state, settings_.N + 1);
     matrix_t u(settings_.n_input, settings_.N);
     if (!settings_.initPrimalSol)
     {
-      x = matrix_t::Random(settings_.n_state, settings_.N + 1);
+      for (int i = 0; i < settings_.N + 1; i++)
+      {
+        x.col(i) = initState;
+      }
+      // x = matrix_t::Random(settings_.n_state, settings_.N + 1);
       u = matrix_t::Random(settings_.n_input, settings_.N);
       std::cout << "using random init\n";
     }
@@ -71,7 +81,7 @@ namespace ocs2
     scalar_t sqpTimeAll = 0.0;
     for (int i = 0; i < settings_.sqpIteration; i++)
     {
-      std::cout << "\n---------------sqp iteration " << i << "----------\n";
+      std::cout << "\n-----------------------------------sqp iteration " << i << "----------------------------------------\n";
       auto startSqpTime = std::chrono::steady_clock::now();
       setupCostDynamicsEqualityConstraint(*systemDynamicsPtr_, *costFunctionPtr_, *constraintPtr_, delta_t_, initTime, x, u, initState);
       solveOCP();
@@ -81,10 +91,10 @@ namespace ocs2
       freeHPIPMMem();
       x += delta_x; // step size will be used in future
       u += delta_u;
-      for (int j = 0; j < settings_.N; j++)
-      {
-        std::cout << "x dot u is: " << x.col(j).dot(u.col(j)) << std::endl;
-      }
+      // for (int j = 0; j < settings_.N; j++)
+      // {
+      //   std::cout << "x dot u is: " << x.col(j).dot(u.col(j)) << std::endl;
+      // }
       auto endSqpTime = std::chrono::steady_clock::now();
       auto sqpIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSqpTime - startSqpTime);
       scalar_t sqpTime = std::chrono::duration<scalar_t, std::milli>(sqpIntervalTime).count();
@@ -300,8 +310,9 @@ namespace ocs2
     deltaX.col(0) = delta_x0; // because the first variable delta x0 is not optimized. Rather it's a constant.
     matrix_t deltaU(settings_.n_input, settings_.N);
     // only useful for QR decomposition case
-    matrix_t deltaUTilde(settings_.n_input - settings_.n_constraint, settings_.N); // now this is \tilde{\delta u}, only useful when constrained
-    scalar_t uTemp[settings_.n_input];                                             // take the largest possible
+    // matrix_t deltaUTilde(settings_.n_input - settings_.n_constraint, settings_.N); // now this is \tilde{\delta u}, only useful when constrained
+    std::vector<vector_t> deltaUTilde(settings_.N); // now this is \tilde{\delta u}, only useful when constrained
+    scalar_t uTemp[settings_.n_input];              // take the largest possible
     scalar_t xTemp[settings_.n_state];
 
     for (int i = 0; i < settings_.N; i++)
@@ -311,12 +322,14 @@ namespace ocs2
       {
         deltaX(j, i + 1) = xTemp[j];
       }
+
       d_ocp_qp_sol_get_u(i, &qp_sol, uTemp);
       if (settings_.constrained && settings_.qr_decomp)
       {
-        for (int j = 0; j < settings_.n_input - settings_.n_constraint; j++) // <-- pay attention to the number of states for tilded deltaU, should be m - p
+        deltaUTilde[i] = vector_t::Zero(nu_[i]);
+        for (int j = 0; j < nu_[i]; j++) // <-- pay attention to the number of states for tilded deltaU, should be m - p
         {
-          deltaUTilde(j, i) = uTemp[j];
+          deltaUTilde[i](j) = uTemp[j];
         }
       }
       else
@@ -333,7 +346,7 @@ namespace ocs2
     {
       for (int i = 0; i < settings_.N; i++)
       {
-        deltaU.col(i) = Q2_data[i] * deltaUTilde.col(i) - Q1_data[i] * (R1_data[i].transpose()).inverse() * (C_data[i] * deltaX.col(i) + e_data[i]);
+        deltaU.col(i) = Q2_data[i] * deltaUTilde[i] - Q1_data[i] * (R1_data[i].transpose()).inverse() * (C_data[i] * deltaX.col(i) + e_data[i]);
       }
     }
 
@@ -361,8 +374,6 @@ namespace ocs2
     // Vector initState of shape (n_state, 1)
 
     auto startSetupTime = std::chrono::steady_clock::now();
-    scalar_t totalQRTime = 0.0;
-    scalar_t totalAdditionalTime = 0.0;
 
     scalar_t operTime = initTime;
 
@@ -414,12 +425,12 @@ namespace ocs2
           matrix_t Q = qr.householderQ();                            // m x m
           matrix_t R = qr.matrixQR().triangularView<Eigen::Upper>(); // m x p
           // D_transpose = Q * R
-          matrix_t Q1 = Q.leftCols(settings_.n_constraint);                      // m x p
-          matrix_t Q2 = Q.rightCols(settings_.n_input - settings_.n_constraint); // m x (m-p)
+          matrix_t Q1 = Q.leftCols(settings_.n_input - nu_[i]); // m x p <-- bug here!!!!!!!!!!!!!!
+          matrix_t Q2 = Q.rightCols(nu_[i]);                    // m x (m-p)
           // Q = [Q1, Q2]
-          matrix_t R1 = R.topRows(settings_.n_constraint); // p x p
-                                                           // R = [R1;
-                                                           //      0]
+          matrix_t R1 = R.topRows(settings_.n_input - nu_[i]); // p x p
+                                                               // R = [R1;
+                                                               //      0]
 
           // store the matrices Ck, Q1k, Q2k, R1k and vector ek for later remapping \tilde{\delta uk} -> \delta uk
           C_data[i] = C;
@@ -465,12 +476,12 @@ namespace ocs2
     }
 
     // we should have used the finalCostQuadraticApproximation defined by Q_final matrix, just like the following:
-    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(settings_.N));
-    // but in this case, it is zero, which leads to unpenalized ending states
+    ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(settings_.N));
+    // but in the case of ballbot, it is zero, which leads to unpenalized ending states
     // so I temporarily used costQuadraticApproximation with a random linearization point of input u
-    ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(settings_.N), u.col(settings_.N - 1));
-    Q_data[settings_.N] = 10 * finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
-    q_data[settings_.N] = 10 * finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
+    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(settings_.N), vector_t::Zero(settings_.n_input));
+    Q_data[settings_.N] = finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
+    q_data[settings_.N] = finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
 
     auto endSetupTime = std::chrono::steady_clock::now();
     auto setupIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSetupTime - startSetupTime);
@@ -478,31 +489,85 @@ namespace ocs2
     std::cout << "setup time usage: " << setupTime << "[ms]." << std::endl;
   }
 
-  void MultipleShootingSolver::setupDimension()
+  void MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime, ConstraintBase &constraintObj)
   {
+    // in different modes, the n_constraint differs
+    scalar_array_t eventTimes = this->getModeSchedule().eventTimes;
+    settings_.n_mode = eventTimes.size() + 1;
+    settings_.n_constraint.resize(settings_.n_mode);
+    settings_.N_distribution.resize(settings_.n_mode);
+    scalar_t delta_t = (finalTime - initTime) / settings_.N;
+
+    eventTimes.insert(eventTimes.begin(), initTime);
+    eventTimes.push_back(finalTime);
+
+    std::cout << "number of mode is " << settings_.n_mode << std::endl;
+    for (int i = 0; i < settings_.n_mode; i++)
+    {
+      scalar_t operTime = (eventTimes[i + 1] + eventTimes[i]) / 2;
+      size_t N_distribution_i = (size_t)((eventTimes[i + 1] - eventTimes[i]) / delta_t);
+      ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, vector_t::Zero(settings_.n_state), vector_t::Zero(settings_.n_input));
+      vector_t e = constraintApprox.f;
+      settings_.n_constraint[i] = e.rows();
+      settings_.N_distribution[i] = N_distribution_i;
+      std::cout << "in mode: " << i << std::endl;
+      std::cout << "N_distribution_i " << N_distribution_i << std::endl;
+      std::cout << "num of constraints " << settings_.n_constraint[i] << std::endl;
+    }
+  }
+  void MultipleShootingSolver::setupDimension(scalar_t initTime, scalar_t finalTime, ConstraintBase &constraintObj)
+  {
+    scalar_t delta_t = (finalTime - initTime) / settings_.N;
+
+    // STATE_DIM is always the same
     nx_.resize(settings_.N + 1, settings_.n_state);
     nx_[0] = 0;
 
+    // INPUT_DIM may differ
     if (settings_.constrained && settings_.qr_decomp)
     {
-      nu_.resize(settings_.N + 1, settings_.n_input - settings_.n_constraint);
+      nu_.resize(settings_.N + 1);
+      for (int i = 0; i < settings_.N; i++)
+      {
+        scalar_t operTime = initTime + delta_t * i;
+        ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, vector_t::Zero(settings_.n_state), vector_t::Zero(settings_.n_input));
+        vector_t e = constraintApprox.f;
+        nu_[i] = settings_.n_input - e.rows();
+      }
     }
     else
     {
       nu_.resize(settings_.N + 1, settings_.n_input);
     }
     nu_[settings_.N] = 0;
+    for (int i = 0; i < settings_.N + 1; i++)
+    {
+      std::cout << "num of input is " << nu_[i] << std::endl;
+    }
 
+    // EQ_CONSTRAINT_DIM may differ
     if (settings_.constrained && !settings_.qr_decomp)
     {
-      ng_.resize(settings_.N + 1, settings_.n_constraint);
+      ng_.resize(settings_.N + 1);
+      for (int i = 0; i < settings_.N; i++)
+      {
+        scalar_t operTime = initTime + delta_t * i;
+        ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, vector_t::Zero(settings_.n_state), vector_t::Zero(settings_.n_input));
+        vector_t e = constraintApprox.f;
+        ng_[i] = e.rows();
+      }
       ng_[settings_.N] = 0;
     }
     else
     {
       ng_.resize(settings_.N + 1, 0);
     }
+    for (int i = 0; i < settings_.N + 1; i++)
+    {
+      std::cout << "num of constraint is " << ng_[i] << std::endl;
+    }
 
+    // All others are set to zero
     nbu_.resize(settings_.N + 1, 0);
     nbx_.resize(settings_.N + 1, 0);
     nsbx_.resize(settings_.N + 1, 0);

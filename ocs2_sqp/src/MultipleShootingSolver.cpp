@@ -465,7 +465,7 @@ namespace ocs2
     }
 
     // we should have used the finalCostQuadraticApproximation defined by Q_final matrix, just like the following:
-    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(N));
+    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(settings_.N));
     // but in this case, it is zero, which leads to unpenalized ending states
     // so I temporarily used costQuadraticApproximation with a random linearization point of input u
     ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(settings_.N), u.col(settings_.N - 1));

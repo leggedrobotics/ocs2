@@ -43,7 +43,6 @@ catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   LIBRARIES
-    ${PROJECT_NAME}_eq_hpipm
     ${PROJECT_NAME}
   DEPENDS
     Boost

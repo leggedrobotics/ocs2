@@ -38,8 +38,8 @@ namespace mobile_manipulator {
 
 class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
  public:
-  using ocs2::SystemDynamicsBaseAD::ad_scalar_t;
-  using ocs2::SystemDynamicsBaseAD::ad_vector_t;
+  using ad_scalar_t = ocs2::ad_scalar_t;
+  using ad_vector_t = ocs2::ad_vector_t;
 
   explicit MobileManipulatorDynamics(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface);
   ~MobileManipulatorDynamics() override = default;

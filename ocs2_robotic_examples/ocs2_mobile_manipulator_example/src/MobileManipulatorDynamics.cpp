@@ -29,8 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 
-#include "pinocchio/algorithm/joint-configuration.hpp"
-
 namespace mobile_manipulator {
 
 MobileManipulatorDynamics::MobileManipulatorDynamics(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface)

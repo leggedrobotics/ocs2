@@ -41,6 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Forward declaration of main pinocchio types */
 #include <ocs2_pinocchio/pinocchio_forward_declaration.h>
 
+#include "pinocchio/parsers/urdf/types.hpp"
+
 namespace ocs2 {
 
 template <typename SCALAR>
@@ -163,6 +165,13 @@ PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlStr
 
 /** Factory function from URDF string with root joint */
 PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString, const PinocchioInterface::JointModel& rootJoint);
+
+/** Factory function from URDF model tree */
+PinocchioInterface getPinocchioInterfaceFromUrdfModel(const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+
+/** Factory function from URDF model tree with root joint */
+PinocchioInterface getPinocchioInterfaceFromUrdfModel(const ::urdf::ModelInterfaceSharedPtr& urdfTree,
+                                                      const PinocchioInterface::JointModel& rootJoint);
 
 /** Cast pinocchio interface to CppAD scalar type. */
 PinocchioInterfaceCppAd castToCppAd(const PinocchioInterface& interface);

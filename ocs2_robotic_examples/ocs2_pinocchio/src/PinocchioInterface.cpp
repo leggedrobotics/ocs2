@@ -124,7 +124,7 @@ PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlStr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfModel(const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
+PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree) {
   pinocchio::ModelTpl<scalar_t> model;
   pinocchio::urdf::buildModel(urdfTree, model);
   return PinocchioInterface(model);
@@ -133,7 +133,7 @@ PinocchioInterface getPinocchioInterfaceFromUrdfModel(const ::urdf::ModelInterfa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfModel(const ::urdf::ModelInterfaceSharedPtr& urdfTree,
+PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
                                                       const PinocchioInterface::JointModel& rootJoint) {
   pinocchio::ModelTpl<scalar_t> model;
   pinocchio::urdf::buildModel(urdfTree, rootJoint, model);

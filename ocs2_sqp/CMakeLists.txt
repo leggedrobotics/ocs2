@@ -36,6 +36,9 @@ else()
     message(WARNING "Could not find HPIPM or BLASFEO")
 endif()
 
+# something that might cause troubles 
+# if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
+
 catkin_package(
   INCLUDE_DIRS
     include
@@ -46,11 +49,6 @@ catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   LIBRARIES
-    # maybe should add something like this 
-    ${HPIPM_LIBS}
-    dl
-    m
-    
     ${PROJECT_NAME}
   DEPENDS
     Boost
@@ -72,15 +70,9 @@ include_directories(
 add_library(${PROJECT_NAME} src/MultipleShootingSolver.cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_include_directories(${PROJECT_NAME} INTERFACE
-  ${blasfeo_INCLUDE_DIRS}
-  ${hpipm_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
-  target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${HPIPM_LIBS} dl)
-else()
-  target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${HPIPM_LIBS} dl m)
-endif()
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${HPIPM_LIBS})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 
@@ -88,30 +80,18 @@ target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 add_executable(ballbot_sqp src/MultipleShootingBallbotNode.cpp)
 add_dependencies(ballbot_sqp ${catkin_EXPORTED_TARGETS})
 target_include_directories(ballbot_sqp INTERFACE
-  ${blasfeo_INCLUDE_DIRS}
-  ${hpipm_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
-  target_link_libraries(ballbot_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
-else()
-  target_link_libraries(ballbot_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS} m)
-endif()
+target_link_libraries(ballbot_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
 target_compile_options(ballbot_sqp PRIVATE ${OCS2_CXX_FLAGS})
 
 
 # Circular kinematics example 
 add_executable(circular_kinematics src/MultipleShootingCircularKinematics.cpp)
 target_include_directories(circular_kinematics INTERFACE
-  ${blasfeo_INCLUDE_DIRS}
-  ${hpipm_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
-	target_link_libraries(circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME})
-else() # add explicit math library
-	target_link_libraries(circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME} m)
-endif()
+target_link_libraries(circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME})
 target_compile_options(circular_kinematics PRIVATE ${OCS2_CXX_FLAGS})
 
 #########################

@@ -25,19 +25,19 @@ namespace ocs2
 
   struct MultipleShootingSolverSettings
   {
-    size_t N; // number of states in between initTime and finalTime. Typically finalTime - initTime = 1.0 seconds, so N=20 -> delta_t=0.05s
+    size_t N; // user-defined # of partition. finalTime - initTime = 1.0 seconds, so N = 10 -> delta_t = 0.1 s
     size_t n_state;
     size_t n_input;
-    size_t n_mode;
-    std::vector<size_t> n_constraint;   // size = n_mode
-    std::vector<size_t> N_distribution; // size = n_mode, sum = N
+    scalar_array_t trueEventTimes; // size (N_real + 1), this is a modification to this->getModeSchedule().eventTimes. More info in function getInfoFromModeSchedule.
+    size_t N_real;                 // real # of partition, >= N, because there are some provided time instances must be covered
     size_t sqpIteration;
     bool constrained; // true for constrained systems, false for unconstrained systems
     bool qr_decomp;   // this variable is meaningful only if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
     bool printSolverStatus;
     bool printSolverStatistics;
     bool printPrimalSol;
-    bool initPrimalSol; // if false, use random matrix as init; if true, use the last PrimalSolution as init.
+    bool printModeScheduleDebug;
+    bool initPrimalSol; // if false, use random matrix as init; if true, use the last PrimalSolution as init. Internal use only.
   };
 
   class MultipleShootingSolver : public SolverBase
@@ -63,7 +63,7 @@ namespace ocs2
       if (settings_.printPrimalSol)
       {
         std::cout << "getting primal solution \n";
-        for (int i = 0; i < settings_.N; i++)
+        for (int i = 0; i < settings_.N_real; i++)
         {
           std::cout << "time: " << primalSolutionPtr->timeTrajectory_[i]
                     << " state: " << primalSolutionPtr->stateTrajectory_[i].transpose()
@@ -77,7 +77,7 @@ namespace ocs2
     void printPrimalSolution()
     {
       std::cout << "getting primal solution \n";
-      for (int i = 0; i < settings_.N; i++)
+      for (int i = 0; i < settings_.N_real; i++)
       {
         std::cout << "time: " << primalSolution_.timeTrajectory_[i]
                   << " state: " << primalSolution_.stateTrajectory_[i].transpose()
@@ -106,12 +106,10 @@ namespace ocs2
     void setupCostDynamicsEqualityConstraint(SystemDynamicsBase &systemDynamicsObj,
                                              CostFunctionBase &costFunctionObj,
                                              ConstraintBase &constraintObj,
-                                             scalar_t delta_t_,
-                                             scalar_t initTime,
                                              const matrix_t &x,
                                              const matrix_t &u,
                                              const vector_t &initState);
-    void setupDimension(scalar_t initTime, scalar_t finalTime, ConstraintBase &constraintObj);
+    void setupDimension(ConstraintBase &constraintObj);
     std::tuple<matrix_t, matrix_t> getOCPSolution(const vector_t &delta_x0);
     void solveOCP();
     void freeHPIPMMem();

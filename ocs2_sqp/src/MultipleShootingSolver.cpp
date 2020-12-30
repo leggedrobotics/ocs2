@@ -57,15 +57,28 @@ namespace ocs2
     scalar_t delta_t_ = (finalTime - initTime) / settings_.N;
     matrix_t x(settings_.n_state, settings_.N + 1);
     matrix_t u(settings_.n_input, settings_.N);
+
+    // debug advice from Jan
+    // ignore the incoming initState
+    // substitute everything below from initState -> defaultState (get from the task.info)
+
+    // need to initialize the u with all zero except contact force along z-axis
+    // check the weight of anymal
+    vector_t stanceInput = vector_t::Zero(settings_.n_input);
+    stanceInput(2) = 110;
+    stanceInput(5) = 110;
+    stanceInput(8) = 110;
+    stanceInput(11) = 110;
+
     if (!settings_.initPrimalSol)
     {
-      for (int i = 0; i < settings_.N + 1; i++)
+      for (int i = 0; i < settings_.N; i++)
       {
         x.col(i) = initState;
+        u.col(i) = stanceInput;
       }
-      // x = matrix_t::Random(settings_.n_state, settings_.N + 1);
-      u = matrix_t::Random(settings_.n_input, settings_.N);
-      std::cout << "using random init\n";
+      x.col(settings_.N) = initState;
+      std::cout << "using given initial state and stancing steady input\n";
     }
     else
     {
@@ -74,6 +87,7 @@ namespace ocs2
         x.col(i) = primalSolution_.stateTrajectory_[i];
         u.col(i) = primalSolution_.inputTrajectory_[i];
       }
+      x.col(settings_.N) = primalSolution_.stateTrajectory_[settings_.N - 1];
       std::cout << "using past primal sol init\n";
     }
     settings_.initPrimalSol = true;
@@ -91,10 +105,6 @@ namespace ocs2
       freeHPIPMMem();
       x += delta_x; // step size will be used in future
       u += delta_u;
-      // for (int j = 0; j < settings_.N; j++)
-      // {
-      //   std::cout << "x dot u is: " << x.col(j).dot(u.col(j)) << std::endl;
-      // }
       auto endSqpTime = std::chrono::steady_clock::now();
       auto sqpIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSqpTime - startSqpTime);
       scalar_t sqpTime = std::chrono::duration<scalar_t, std::milli>(sqpIntervalTime).count();
@@ -425,7 +435,7 @@ namespace ocs2
           matrix_t Q = qr.householderQ();                            // m x m
           matrix_t R = qr.matrixQR().triangularView<Eigen::Upper>(); // m x p
           // D_transpose = Q * R
-          matrix_t Q1 = Q.leftCols(settings_.n_input - nu_[i]); // m x p <-- bug here!!!!!!!!!!!!!!
+          matrix_t Q1 = Q.leftCols(settings_.n_input - nu_[i]); // m x p
           matrix_t Q2 = Q.rightCols(nu_[i]);                    // m x (m-p)
           // Q = [Q1, Q2]
           matrix_t R1 = R.topRows(settings_.n_input - nu_[i]); // p x p
@@ -476,12 +486,12 @@ namespace ocs2
     }
 
     // we should have used the finalCostQuadraticApproximation defined by Q_final matrix, just like the following:
-    ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(settings_.N));
+    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(operTime, x.col(settings_.N));
     // but in the case of ballbot, it is zero, which leads to unpenalized ending states
     // so I temporarily used costQuadraticApproximation with a random linearization point of input u
-    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(settings_.N), vector_t::Zero(settings_.n_input));
-    Q_data[settings_.N] = finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
-    q_data[settings_.N] = finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
+    ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(settings_.N), vector_t::Zero(settings_.n_input));
+    Q_data[settings_.N] = 10 * finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
+    q_data[settings_.N] = 10 * finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
 
     auto endSetupTime = std::chrono::steady_clock::now();
     auto setupIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSetupTime - startSetupTime);
@@ -492,6 +502,8 @@ namespace ocs2
   void MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime, ConstraintBase &constraintObj)
   {
     // in different modes, the n_constraint differs
+    // if we have N horizon, how is these N horizon distributed
+    // N = 20 --> {2,3, 4, 2}
     scalar_array_t eventTimes = this->getModeSchedule().eventTimes;
     settings_.n_mode = eventTimes.size() + 1;
     settings_.n_constraint.resize(settings_.n_mode);
@@ -517,6 +529,9 @@ namespace ocs2
   }
   void MultipleShootingSolver::setupDimension(scalar_t initTime, scalar_t finalTime, ConstraintBase &constraintObj)
   {
+    // 22.6 - 23.6 --> 1.0 seconds
+    // delta_t --> 0.05 seconds
+    // 22.7, 22.9, 23.0 ( I know this should be improved )
     scalar_t delta_t = (finalTime - initTime) / settings_.N;
 
     // STATE_DIM is always the same

@@ -40,9 +40,17 @@ catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
+    # below should be working for every package that depends on ocs2_sqp ${catkin_INCLUDE_DIR} will contains this 
+    ${blasfeo_INCLUDE_DIRS}
+    ${hpipm_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   LIBRARIES
+    # maybe should add something like this 
+    ${HPIPM_LIBS}
+    dl
+    m
+    
     ${PROJECT_NAME}
   DEPENDS
     Boost

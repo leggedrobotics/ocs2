@@ -36,3 +36,7 @@ catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 2. below is for building tests 
 catkin build --make-args tests -- my_package1 my_package2
+
+3. One can use GDB to debug ros, add the following to the launch file 
+      launch-prefix="gnome-terminal -- gdb -ex run --args"
+      launch-prefix="gnome-terminal -- gdb -ex start --args"

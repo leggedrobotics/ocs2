@@ -1,0 +1,6 @@
+This is a todo list of ocs2_sqp package: 
+
+1. Currently, all packages that depend on ocs2_sqp need to find the hpipm & blasfeo libraries in /opt, do target_include_directories & 
+target_link_libraries respectively. This is troublesome. Perhaps the comments in ocs2_sqp/CMakeLists.txt can help. 
+
+2. 

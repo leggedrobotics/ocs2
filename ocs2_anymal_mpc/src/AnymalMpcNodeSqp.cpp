@@ -31,13 +31,13 @@ int main(int argc, char *argv[])
   sqpSettings.N = 10;
   sqpSettings.n_state = 24;
   sqpSettings.n_input = 24;
-  // sqpSettings.n_constraint = 12;
   sqpSettings.sqpIteration = 5;
   sqpSettings.constrained = true;
   sqpSettings.qr_decomp = true;
-  sqpSettings.printPrimalSol = true;
-  sqpSettings.printSolverStatistics = true;
-  sqpSettings.printSolverStatus = true;
+  sqpSettings.printPrimalSol = false;
+  sqpSettings.printSolverStatistics = false;
+  sqpSettings.printSolverStatus = false;
+  sqpSettings.printModeScheduleDebug = false;
   sqpSettings.initPrimalSol = false;
   quadrupedMpcNodeSqp(nodeHandle, *anymalInterface, mpcSettings, sqpSettings);
 

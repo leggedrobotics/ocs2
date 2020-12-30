@@ -92,6 +92,7 @@ target_link_libraries(${PROJECT_NAME}_mpc_node
   ${catkin_LIBRARIES}
 )
 
+############################## mpc sqp node by Yang Shaohui
 add_executable(${PROJECT_NAME}_mpc_node_sqp
   src/AnymalMpcNodeSqp.cpp
 )
@@ -101,15 +102,9 @@ add_dependencies(${PROJECT_NAME}_mpc_node_sqp
   ${catkin_EXPORTED_TARGETS}
 )
 target_include_directories(${PROJECT_NAME}_mpc_node_sqp INTERFACE
-  ${blasfeo_INCLUDE_DIRS}
-  ${hpipm_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
-  target_link_libraries(${PROJECT_NAME}_mpc_node_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
-else()
-  target_link_libraries(${PROJECT_NAME}_mpc_node_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS} m)
-endif()
+target_link_libraries(${PROJECT_NAME}_mpc_node_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
   src/AnymalDummyMRT.cpp

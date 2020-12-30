@@ -87,15 +87,9 @@ add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_include_directories(${PROJECT_NAME} INTERFACE
-  ${blasfeo_INCLUDE_DIRS}
-  ${hpipm_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
-  target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
-else()
-  target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS} m)
-endif()
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #########################

@@ -28,10 +28,10 @@ int main(int argc, char *argv[])
   auto anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolder(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
   ocs2::MultipleShootingSolverSettings sqpSettings;
-  sqpSettings.N = 20;
+  sqpSettings.N = 10;
   sqpSettings.n_state = 24;
   sqpSettings.n_input = 24;
-  sqpSettings.n_constraint = 12;
+  // sqpSettings.n_constraint = 12;
   sqpSettings.sqpIteration = 5;
   sqpSettings.constrained = true;
   sqpSettings.qr_decomp = true;

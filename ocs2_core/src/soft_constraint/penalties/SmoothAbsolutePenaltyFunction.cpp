@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,52 +27,32 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include <cmath>
 
-#include <type_traits>
-
-#include <ocs2_core/Types.h>
+#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.h>
 
 namespace ocs2 {
 
-/** State-only constraint function base class */
-class StateConstraint {
- public:
-  StateConstraint() = default;
-  virtual ~StateConstraint() = default;
-  virtual StateConstraint* clone() const = 0;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SmoothAbsolutePenaltyFunction::getValue(scalar_t h) const {
+  return config_.mu * sqrt(h * h + config_.delta * config_.delta);
+}
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SmoothAbsolutePenaltyFunction::getDerivative(scalar_t h) const {
+  return config_.mu * h / sqrt(h * h + config_.delta * config_.delta);
+}
 
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
-
-  /** Get the size of the constraint vector at given time */
-  virtual size_t getNumConstraints(scalar_t time) const = 0;
-
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
-
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
-  }
-
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
-  }
-
- protected:
-  StateConstraint(const StateConstraint& rhs) = default;
-
- private:
-  bool active_ = true;
-};
-
-// Template for conditional compilation using SFINAE
-template <typename T>
-using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SmoothAbsolutePenaltyFunction::getSecondDerivative(scalar_t h) const {
+  const scalar_t deltaSquare = config_.delta * config_.delta;
+  return config_.mu * deltaSquare / pow(h * h + deltaSquare, 1.5);
+}
 
 }  // namespace ocs2

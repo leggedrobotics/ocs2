@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <cstdlib>
+
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_raisim/RaisimRolloutSettings.h>
 #include <raisim/World.hpp>

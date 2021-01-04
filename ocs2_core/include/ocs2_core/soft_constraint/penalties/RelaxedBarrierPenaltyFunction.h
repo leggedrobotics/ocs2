@@ -29,50 +29,57 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <type_traits>
-
-#include <ocs2_core/Types.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
 
 namespace ocs2 {
 
-/** State-only constraint function base class */
-class StateConstraint {
+/**
+ * Implements the relaxed barrier function for a single inequality constraint \f$ h \geq 0 \f$
+ *
+ * \f[
+ *   p(h)=\left\lbrace
+ *               \begin{array}{ll}
+ *                 -\mu \ln(h) & if \quad  h > \delta, \\
+ *                 -\mu \ln(\delta) + \mu \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,
+ *               \end{array}
+ *             \right.
+ * \f]
+ *
+ * where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
+ */
+class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
  public:
-  StateConstraint() = default;
-  virtual ~StateConstraint() = default;
-  virtual StateConstraint* clone() const = 0;
+  /**
+   * Configuration object for the relaxed barrier penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    Config() : Config(1.0, 1e-3) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
+  /**
+   * Constructor
+   * @param [in] config: Configuration object containing mu and delta.
+   */
+  explicit RelaxedBarrierPenaltyFunction(Config config) : config_(std::move(config)) {}
 
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
+  /** Default destructor */
+  ~RelaxedBarrierPenaltyFunction() override = default;
 
-  /** Get the size of the constraint vector at given time */
-  virtual size_t getNumConstraints(scalar_t time) const = 0;
+  RelaxedBarrierPenaltyFunction* clone() const override { return new RelaxedBarrierPenaltyFunction(*this); }
 
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
-
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
-  }
-
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
-  }
-
- protected:
-  StateConstraint(const StateConstraint& rhs) = default;
+  scalar_t getValue(scalar_t h) const override;
+  scalar_t getDerivative(scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  bool active_ = true;
-};
+  RelaxedBarrierPenaltyFunction(const RelaxedBarrierPenaltyFunction& other) = default;
 
-// Template for conditional compilation using SFINAE
-template <typename T>
-using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
+  Config config_;
+};
 
 }  // namespace ocs2

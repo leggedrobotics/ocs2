@@ -29,50 +29,51 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <type_traits>
-
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
-/** State-only constraint function base class */
-class StateConstraint {
+/**
+ * The penalty function interface class is used to penalize constraint violation by adding a penalty term to the cost function.
+ * We assume that the penalty function is convex.
+ */
+class PenaltyFunctionBase {
  public:
-  StateConstraint() = default;
-  virtual ~StateConstraint() = default;
-  virtual StateConstraint* clone() const = 0;
+  /** Default constructor */
+  PenaltyFunctionBase() = default;
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
+  /** Default destructor */
+  virtual ~PenaltyFunctionBase() = default;
 
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
+  /** Clones the class */
+  virtual PenaltyFunctionBase* clone() const = 0;
 
-  /** Get the size of the constraint vector at given time */
-  virtual size_t getNumConstraints(scalar_t time) const = 0;
+  /**
+   * Compute the penalty value at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty cost.
+   */
+  virtual scalar_t getValue(scalar_t h) const = 0;
 
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
+  /**
+   * Compute the penalty derivative at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty derivative with respect to constraint value.
+   */
+  virtual scalar_t getDerivative(scalar_t h) const = 0;
 
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
-  }
-
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
-  }
+  /**
+   * Compute the penalty second derivative at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty second derivative with respect to constraint value.
+   */
+  virtual scalar_t getSecondDerivative(scalar_t h) const = 0;
 
  protected:
-  StateConstraint(const StateConstraint& rhs) = default;
-
- private:
-  bool active_ = true;
+  PenaltyFunctionBase(const PenaltyFunctionBase& other) = default;
 };
-
-// Template for conditional compilation using SFINAE
-template <typename T>
-using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
 
 }  // namespace ocs2

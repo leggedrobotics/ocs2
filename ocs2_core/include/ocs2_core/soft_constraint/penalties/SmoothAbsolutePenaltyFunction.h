@@ -29,50 +29,57 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <type_traits>
-
-#include <ocs2_core/Types.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
 
 namespace ocs2 {
 
-/** State-only constraint function base class */
-class StateConstraint {
+/**
+ * Implements the smooth-absolute function for a single equality constraint \f$ h = 0 \f$
+ *
+ * \f[
+ *   p(h) = \mu sqrt(x^2 + \delta^2).
+ * \f]
+ *
+ * where \f$ \mu > 0 \f$, and \f$ \delta > 0 \f$ are user defined parameters. Note that
+ * \f$ \delta \f$ defines the error bound between the absolute function and its approximation:
+ *
+ * \f[
+ *   | x - sqrt(x^2 + \delta^2) | \leq \delta, \quad \forall x \in R
+ * \f]
+ */
+class SmoothAbsolutePenaltyFunction final : public PenaltyFunctionBase {
  public:
-  StateConstraint() = default;
-  virtual ~StateConstraint() = default;
-  virtual StateConstraint* clone() const = 0;
+  /**
+   * Configuration object for the smooth absolute penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    Config() : Config(1.0, 1e-2) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
+  /**
+   * Constructor
+   * @param [in] config: Configuration object containing mu and delta.
+   */
+  explicit SmoothAbsolutePenaltyFunction(Config config) : config_(std::move(config)) {}
 
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
+  /** Default destructor */
+  ~SmoothAbsolutePenaltyFunction() override = default;
 
-  /** Get the size of the constraint vector at given time */
-  virtual size_t getNumConstraints(scalar_t time) const = 0;
+  SmoothAbsolutePenaltyFunction* clone() const override { return new SmoothAbsolutePenaltyFunction(*this); }
 
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
-
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
-  }
-
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
-  }
-
- protected:
-  StateConstraint(const StateConstraint& rhs) = default;
+  scalar_t getValue(scalar_t h) const override;
+  scalar_t getDerivative(scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  bool active_ = true;
-};
+  SmoothAbsolutePenaltyFunction(const SmoothAbsolutePenaltyFunction& other) = default;
 
-// Template for conditional compilation using SFINAE
-template <typename T>
-using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
+  Config config_;
+};
 
 }  // namespace ocs2

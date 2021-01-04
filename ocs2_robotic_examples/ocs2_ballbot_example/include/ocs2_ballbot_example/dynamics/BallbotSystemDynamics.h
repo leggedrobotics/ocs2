@@ -61,7 +61,8 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD {
 
   BallbotSystemDynamics* clone() const override { return new BallbotSystemDynamics(*this); }
 
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& parameters) const override;
 
  private:
   BallbotParameters param_;

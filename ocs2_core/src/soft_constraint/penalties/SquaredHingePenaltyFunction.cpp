@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,52 +27,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <type_traits>
-
-#include <ocs2_core/Types.h>
+#include <ocs2_core/soft_constraint/penalties/SquaredHingePenaltyFunction.h>
 
 namespace ocs2 {
 
-/** State-only constraint function base class */
-class StateConstraint {
- public:
-  StateConstraint() = default;
-  virtual ~StateConstraint() = default;
-  virtual StateConstraint* clone() const = 0;
-
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
-
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
-
-  /** Get the size of the constraint vector at given time */
-  virtual size_t getNumConstraints(scalar_t time) const = 0;
-
-  /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const = 0;
-
-  /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SquaredHingePenaltyFunction::getValue(scalar_t h) const {
+  if (h < config_.delta) {
+    const scalar_t delta_h = h - config_.delta;
+    return config_.mu * 0.5 * delta_h * delta_h;
+  } else {
+    return 0;
   }
+}
 
-  /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SquaredHingePenaltyFunction::getDerivative(scalar_t h) const {
+  if (h < config_.delta) {
+    return config_.mu * (h - config_.delta);
+  } else {
+    return 0;
   }
+}
 
- protected:
-  StateConstraint(const StateConstraint& rhs) = default;
-
- private:
-  bool active_ = true;
-};
-
-// Template for conditional compilation using SFINAE
-template <typename T>
-using EnableIfStateConstraint_t = typename std::enable_if<std::is_same<T, StateConstraint>::value, bool>::type;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t SquaredHingePenaltyFunction::getSecondDerivative(scalar_t h) const {
+  if (h < config_.delta) {
+    return config_.mu;
+  } else {
+    return 0;
+  }
+}
 
 }  // namespace ocs2

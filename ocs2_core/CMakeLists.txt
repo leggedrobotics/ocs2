@@ -92,7 +92,6 @@ add_library(${PROJECT_NAME}
   src/dynamics/LinearSystemDynamics.cpp
   src/dynamics/SystemDynamicsBase.cpp
   src/dynamics/SystemDynamicsBaseAD.cpp
-  src/dynamics/SystemDynamicsParametrizedBaseAD.cpp
   src/dynamics/SystemDynamicsLinearizer.cpp
   src/dynamics/TransferFunctionBase.cpp
   src/initialization/OperatingPoints.cpp

@@ -46,11 +46,12 @@ class LinearSystemDynamicsAD : public SystemDynamicsBaseAD {
   LinearSystemDynamicsAD* clone() const override { return new LinearSystemDynamicsAD(*this); }
 
  protected:
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override {
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& parameters) const override {
     return A_.cast<ad_scalar_t>() * state + B_.cast<ad_scalar_t>() * input;
   }
 
-  ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state) const override { return G_.cast<ad_scalar_t>() * state; }
+  ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override { return G_.cast<ad_scalar_t>() * state; }
 
  private:
   matrix_t A_;

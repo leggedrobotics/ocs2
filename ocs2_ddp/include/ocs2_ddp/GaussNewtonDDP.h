@@ -117,7 +117,7 @@ class GaussNewtonDDP : public SolverBase {
 
   vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const override;
 
-  void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const override;
+  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
   void rewindOptimizer(size_t firstIndex) override;
 

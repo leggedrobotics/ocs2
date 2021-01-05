@@ -326,11 +326,14 @@ scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) 
   const scalar_t s = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
 
   const vector_t xNominal =
-      LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
+      LinearInterpolation::interpolate(time, cachedTimeTrajectoriesStock_[partition], cachedStateTrajectoriesStock_[partition]);
 
-  vector_t deltaX = state - xNominal;
+  const vector_t deltaX = state - xNominal;
 
-  return s + deltaX.dot(Sv) + 0.5 * deltaX.dot(Sm * deltaX);
+  vector_t pseudoVx = Sv;
+  pseudoVx.noalias() += 0.5 * Sm * deltaX;
+
+  return s + deltaX.dot(pseudoVx);
 }
 
 /******************************************************************************************************/
@@ -342,17 +345,16 @@ vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const ve
   partition = std::min(partition, finalActivePartition_);
 
   const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
-
   const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
-
-  // Sv
-  vector_t Vx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
+  const vector_t Sv = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
 
   const vector_t xNominal =
-      LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
+      LinearInterpolation::interpolate(time, cachedTimeTrajectoriesStock_[partition], cachedStateTrajectoriesStock_[partition]);
 
   const vector_t deltaX = state - xNominal;
-  Vx += Sm * deltaX;
+
+  vector_t Vx = Sv;
+  Vx.noalias() += Sm * deltaX;
 
   return Vx;
 }
@@ -360,18 +362,21 @@ vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
+vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
   size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
   activeSubsystem = std::max(activeSubsystem, initActivePartition_);
   activeSubsystem = std::min(activeSubsystem, finalActivePartition_);
 
-  auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
-  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[activeSubsystem]);
-  const matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
-  const matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
-  const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[activeSubsystem]);
+  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[activeSubsystem]);
 
-  indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[activeSubsystem]);
+  const matrix_t Bm =
+      LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
+  const matrix_t Pm =
+      LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
+  const vector_t Rv =
+      LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
+
   const vector_t EvProjected = LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_[activeSubsystem],
                                                                 ModelData::stateInputEqConstr_f);
   const matrix_t CmProjected = LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_[activeSubsystem],
@@ -386,10 +391,12 @@ void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, co
   const vector_t deltaX = state - xNominal;
   const matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
 
-  nu = DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
-
   //  alternative computation
-  //  nu = DmDagger.transpose() * (Hm * DmDagger.transpose() * CmProjected * deltaX - Rv - Bm.transpose() * costate);
+  //  const vector_t nu = DmDagger.transpose() * (Hm * DmDagger.transpose() * CmProjected * deltaX - Rv - Bm.transpose() * costate);
+  const vector_t nu =
+      DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
+
+  return nu;
 }
 
 /******************************************************************************************************/

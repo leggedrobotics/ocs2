@@ -386,15 +386,18 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time
   const matrix_t DmDagger = LinearInterpolation::interpolate(indexAlpha, cachedRiccatiModificationTrajectoriesStock_[activeSubsystem],
                                                              riccati_modification::constraintRangeProjector);
 
+  const vector_t deltaX = state - xNominal;
   const vector_t costate = getValueFunctionStateDerivative(time, state);
 
-  const vector_t deltaX = state - xNominal;
-  const matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
+  vector_t err = EvProjected;
+  err.noalias() += CmProjected * deltaX;
 
-  //  alternative computation
-  //  const vector_t nu = DmDagger.transpose() * (Hm * DmDagger.transpose() * CmProjected * deltaX - Rv - Bm.transpose() * costate);
-  const vector_t nu =
-      DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
+  vector_t temp = -Rv;
+  temp.noalias() -= Pm * deltaX;
+  temp.noalias() -= Bm.transpose() * costate;
+  temp.noalias() += Hm * err;
+
+  const vector_t nu = DmDagger.transpose() * temp;
 
   return nu;
 }

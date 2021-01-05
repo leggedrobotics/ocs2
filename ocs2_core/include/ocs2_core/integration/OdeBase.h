@@ -45,7 +45,7 @@ class OdeBase {
   virtual ~OdeBase() = default;
 
   /** Returns the number of function calls. */
-  int getNumFunctionCalls() const { return numFunctionCalls_; }
+  size_t getNumFunctionCalls() const { return numFunctionCalls_; }
 
   /** Resets the number of function calls to zero. */
   void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
@@ -80,7 +80,7 @@ class OdeBase {
   /** Copy constructor */
   OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
 
-  int numFunctionCalls_ = 0;
+  size_t numFunctionCalls_ = 0;
 };
 
 }  // namespace ocs2

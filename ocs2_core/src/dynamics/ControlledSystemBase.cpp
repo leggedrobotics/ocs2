@@ -64,7 +64,7 @@ ControllerBase* ControlledSystemBase::controllerPtr() const {
 /******************************************************************************************************/
 vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
   assert(controllerPtr_ != nullptr);
-  vector_t u = controllerPtr_->computeInput(t, x);
+  const vector_t u = controllerPtr_->computeInput(t, x);
   return computeFlowMap(t, x, u);
 }
 

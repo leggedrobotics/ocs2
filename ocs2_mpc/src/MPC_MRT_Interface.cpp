@@ -152,22 +152,22 @@ void MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time, matrix_t& K) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t MPC_MRT_Interface::getValueFunction(scalar_t time, const vector_t& state) {
+scalar_t MPC_MRT_Interface::getValueFunction(scalar_t time, const vector_t& state) const {
   return mpc_.getSolverPtr()->getValueFunction(time, state);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx) {
-  Vx = mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state);
+vector_t MPC_MRT_Interface::getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const {
+  return mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
-  mpc_.getSolverPtr()->getStateInputEqualityConstraintLagrangian(time, state, nu);
+vector_t MPC_MRT_Interface::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
+  return mpc_.getSolverPtr()->getStateInputEqualityConstraintLagrangian(time, state);
 }
 
 }  // namespace ocs2

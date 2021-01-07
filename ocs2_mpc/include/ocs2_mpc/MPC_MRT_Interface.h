@@ -78,21 +78,6 @@ class MPC_MRT_Interface final : public MRT_BASE {
   void advanceMpc();
 
   /**
-   * @brief Access the solver's internal value function
-   * @param time query time
-   * @param state query state
-   * @return value of the given state at the given time
-   */
-  scalar_t getValueFunction(scalar_t time, const vector_t& state);
-
-  /**
-   * @brief Calculates the state derivative of the value function
-   * @param [in] time the query time
-   * @param [out] Vx partial derivative of the value function at requested time at nominal state
-   */
-  void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx);
-
-  /**
    * @brief getLinearFeedbackGain retrieves K matrix from solver
    * @param [in] time
    * @param [out] K
@@ -100,12 +85,28 @@ class MPC_MRT_Interface final : public MRT_BASE {
   void getLinearFeedbackGain(scalar_t time, matrix_t& K);
 
   /**
+   * @brief Access the solver's internal value function
+   * @param time: query time
+   * @param state: query state
+   * @return The value function at the requested time and state.
+   */
+  scalar_t getValueFunction(scalar_t time, const vector_t& state) const;
+
+  /**
+   * @brief Calculates the state derivative of the value function
+   * @param [in] time: the query time
+   * @param [in] state: query state
+   * @return The partial derivative of the value function at the requested time and state.
+   */
+  vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const;
+
+  /**
    * @brief Computes the Lagrange multiplier related to the state-input constraints
    * @param [in] time: query time
    * @param [in] state: query state
-   * @param [out] nu: the Lagrange multiplier
+   * @return The Lagrange multiplier at the requested time and state
    */
-  void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const;
+  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const;
 
  protected:
   /**

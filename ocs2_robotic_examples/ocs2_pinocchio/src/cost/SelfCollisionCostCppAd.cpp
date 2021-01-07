@@ -177,6 +177,9 @@ ad_vector_t SelfCollisionCostCppAd::computeLinkPointsAd(ad_vector_t state, ad_ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 ad_vector_t SelfCollisionCostCppAd::distanceCalculationAd(ad_vector_t state, ad_vector_t points) {
+  pinocchioInterfaceAd_.forwardKinematics(state);
+  pinocchioInterfaceAd_.updateGlobalPlacements();
+
   ad_vector_t results = ad_vector_t::Zero(points.size() / numberOfParamsPerResult_);
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
     const auto collisionPair = pinocchioGeometrySelfCollisions_.getGeometryModel().collisionPairs[i];

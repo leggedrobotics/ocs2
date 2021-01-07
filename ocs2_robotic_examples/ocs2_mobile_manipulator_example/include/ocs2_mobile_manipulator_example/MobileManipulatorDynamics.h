@@ -52,7 +52,8 @@ class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
   /* Clone */
   MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
 
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override;
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& parameters) const override;
 
  private:
   std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;

@@ -37,7 +37,8 @@ MobileManipulatorDynamics::MobileManipulatorDynamics(const ocs2::PinocchioInterf
 }
 
 MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
-                                                                                const ad_vector_t& input) const {
+                                                                                const ad_vector_t& input,
+                                                                                const ad_vector_t& parameters) const {
   ad_vector_t dxdt(STATE_DIM);
   const auto theta = state(2);
   const auto v = input(0);  // forward velocity in base frame

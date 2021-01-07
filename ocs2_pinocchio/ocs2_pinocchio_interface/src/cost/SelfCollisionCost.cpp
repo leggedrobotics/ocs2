@@ -28,8 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
-
-#include <ocs2_pinocchio/skewSymmetricMatrix.h>
+#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
 #include <ocs2_pinocchio/cost/SelfCollisionCost.h>
 

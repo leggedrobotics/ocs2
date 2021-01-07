@@ -34,10 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 
 // CppAD
-#include <map>
-#include <set>
-#include <vector>
-
 #include <ocs2_core/automatic_differentiation/Types.h>
 
 namespace ocs2 {

@@ -33,6 +33,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/**
+ * Get the skew symmetric representation of a vector
+ *
+ * v_hat = [0.0, -v.z(), v.y(),
+ *          v.z(), 0.0, -v.x(),
+ *          -v.y(), v.x(), 0.0];
+ *
+ * @param [in] vector 3x1
+ * @return matrix 3x3
+ */
 template <typename SCALAR>
 Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix(Eigen::Matrix<SCALAR, 3, 1> v) {
   Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix;

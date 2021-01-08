@@ -38,9 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
-#include <visualization_msgs/MarkerArray.h>
-
-#include <ocs2_pinocchio_interface/PinocchioGeometryInterface.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
 namespace ocs2 {
 

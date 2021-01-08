@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
-project(ocs2_pinocchio_interface)
+cmake_minimum_required(VERSION 3.0.2)
+project(ocs2_self_collision)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -7,6 +7,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
+  ocs2_pinocchio_interface
+
+  # visualization deps
+  roscpp
+  std_msgs
+  geometry_msgs
+  visualization_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -20,6 +27,8 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
+pkg_check_modules(hpp-fcl REQUIRED hpp-fcl)
+# requires liboctomap-dev and libassimp-dev
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -51,6 +60,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
+  ${hpp-fcl_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -59,15 +69,12 @@ link_directories(
 
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
-  src/PinocchioInterface.cpp
-  src/PinocchioInterfaceAD.cpp
-
-  # precompile pinocchio functions
-  src/pinocchio_lib/frames.cpp
-  src/pinocchio_lib/kinematics.cpp
-  src/pinocchio_lib/jacobian.cpp
-  src/pinocchio_lib/types.cpp
-  src/pinocchio_lib/urdf.cpp
+  src/cost/SelfCollisionCost.cpp
+  src/cost/SelfCollisionCostCppAd.cpp
+  src/PinocchioGeometryInterface.cpp
+  src/visualization/GeometryInterfaceVisualization.cpp
+  src/visualization/VisualizationHelpers.cpp
+  src/loadStdVectorOfPair.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -110,13 +117,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ############
 # Testing ##
 ############
-
-catkin_add_gtest(testPinocchioInterface
-  test/testPinocchioInterface.cpp
-)
-target_link_libraries(testPinocchioInterface
-  gtest_main
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)

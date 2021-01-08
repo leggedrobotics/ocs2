@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_pinocchio_interface/PinocchioGeometryInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/cost/CostFunctionBase.h>

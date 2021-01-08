@@ -36,8 +36,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pinocchio/multibody/geometry.hpp>
 
-#include <ocs2_pinocchio_interface/visualization/GeometryInterfaceVisualization.h>
-#include <ocs2_pinocchio_interface/visualization/VisualizationHelpers.h>
+#include <visualization_msgs/MarkerArray.h>
+
+#include <ocs2_self_collision/visualization/GeometryInterfaceVisualization.h>
+#include <ocs2_self_collision/visualization/VisualizationHelpers.h>
 
 namespace ocs2 {
 

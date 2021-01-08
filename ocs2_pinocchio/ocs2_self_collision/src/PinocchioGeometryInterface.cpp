@@ -36,16 +36,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pinocchio/fwd.hpp>
 
-#include <ocs2_pinocchio_interface/PinocchioGeometryInterface.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
 #include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/geometry.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/multibody/data.hpp>
+#include <pinocchio/multibody/fcl.hpp>
 #include <pinocchio/multibody/geometry.hpp>
 #include <pinocchio/multibody/model.hpp>
 #include <pinocchio/parsers/urdf.hpp>
-#include "pinocchio/algorithm/geometry.hpp"
-#include "pinocchio/multibody/fcl.hpp"
 
 namespace ocs2 {
 

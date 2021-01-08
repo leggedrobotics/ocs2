@@ -34,8 +34,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+namespace {
+
 /** Helper less comparison for both positive and negative dt case. */
-static bool lessWithSign(scalar_t t1, scalar_t t2, scalar_t dt) {
+bool lessWithSign(scalar_t t1, scalar_t t2, scalar_t dt) {
   if (dt > 0) {
     return t2 - t1 > std::numeric_limits<scalar_t>::epsilon();
   } else {
@@ -44,7 +46,7 @@ static bool lessWithSign(scalar_t t1, scalar_t t2, scalar_t dt) {
 }
 
 /** Helper to get the min absolute value, t1 and t2 have same sign. */
-static scalar_t minAbs(scalar_t t1, scalar_t t2) {
+scalar_t minAbs(scalar_t t1, scalar_t t2) {
   if (t1 > 0) {
     return std::min(t1, t2);
   } else {
@@ -53,15 +55,13 @@ static scalar_t minAbs(scalar_t t1, scalar_t t2) {
 }
 
 /** Helper to get max absolute value, t1 and t2 have same sign. */
-static scalar_t maxAbs(scalar_t t1, scalar_t t2) {
+scalar_t maxAbs(scalar_t t1, scalar_t t2) {
   if (t1 > 0) {
     return std::max(t1, t2);
   } else {
     return std::min(t1, t2);
   }
 }
-
-namespace {
 
 /** Runge Kutta Dormand-Prince stepper */
 class Stepper {
@@ -82,6 +82,20 @@ class Stepper {
    * @return true if the step is taken, false otherwise..
    */
   bool tryStep(system_func_t& system, vector_t& x, vector_t& dxdt, scalar_t& t, scalar_t& dt, scalar_t absTol, scalar_t relTol) {
+    static constexpr scalar_t c1 = 35.0 / 384;
+    // c2 = 0
+    static constexpr scalar_t c3 = 500.0 / 1113;
+    static constexpr scalar_t c4 = 125.0 / 192;
+    static constexpr scalar_t c5 = -2187.0 / 6784;
+    static constexpr scalar_t c6 = 11.0 / 84;
+
+    static constexpr scalar_t dc1 = c1 - 5179.0 / 57600;
+    static constexpr scalar_t dc3 = c3 - 7571.0 / 16695;
+    static constexpr scalar_t dc4 = c4 - 393.0 / 640;
+    static constexpr scalar_t dc5 = c5 - -92097.0 / 339200;
+    static constexpr scalar_t dc6 = c6 - 187.0 / 2100;
+    static constexpr scalar_t dc7 = -1.0 / 40;
+
     vector_t x_out, dxdt_out;
     doStep(system, x, dxdt, t, dt, x_out, dxdt_out);
 
@@ -115,6 +129,40 @@ class Stepper {
    */
   void doStep(system_func_t& system, const vector_t& x0, const vector_t& dxdt, scalar_t t, scalar_t dt, vector_t& x_out,
               vector_t& dxdt_out) {
+    /* Runge Kutta Dormand-Prince Butcher tableau constants.
+     * https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method */
+    static constexpr scalar_t a2 = 1.0 / 5;
+    static constexpr scalar_t a3 = 3.0 / 10;
+    static constexpr scalar_t a4 = 4.0 / 5;
+    static constexpr scalar_t a5 = 8.0 / 9;
+
+    static constexpr scalar_t b21 = 1.0 / 5;
+
+    static constexpr scalar_t b31 = 3.0 / 40;
+    static constexpr scalar_t b32 = 9.0 / 40;
+
+    static constexpr scalar_t b41 = 44.0 / 45;
+    static constexpr scalar_t b42 = -56.0 / 15;
+    static constexpr scalar_t b43 = 32.0 / 9;
+
+    static constexpr scalar_t b51 = 19372.0 / 6561;
+    static constexpr scalar_t b52 = -25360.0 / 2187;
+    static constexpr scalar_t b53 = 64448.0 / 6561;
+    static constexpr scalar_t b54 = -212.0 / 729;
+
+    static constexpr scalar_t b61 = 9017.0 / 3168;
+    static constexpr scalar_t b62 = -355.0 / 33;
+    static constexpr scalar_t b63 = 46732.0 / 5247;
+    static constexpr scalar_t b64 = 49.0 / 176;
+    static constexpr scalar_t b65 = -5103.0 / 18656;
+
+    static constexpr scalar_t c1 = 35.0 / 384;
+    // c2 = 0
+    static constexpr scalar_t c3 = 500.0 / 1113;
+    static constexpr scalar_t c4 = 125.0 / 192;
+    static constexpr scalar_t c5 = -2187.0 / 6784;
+    static constexpr scalar_t c6 = 11.0 / 84;
+
     k1_ = dxdt;  // k1 = system(x, t) from previous iteration
     vector_t x = x0 + dt * b21 * k1_;
     system(x, k2_, t + dt * a2);
@@ -178,81 +226,9 @@ class Stepper {
     return dt;
   }
 
-  /* Runge Kutta Dormand-Prince Butcher tableau constants.
-   * https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method */
-  static constexpr scalar_t a2 = 1.0 / 5;
-  static constexpr scalar_t a3 = 3.0 / 10;
-  static constexpr scalar_t a4 = 4.0 / 5;
-  static constexpr scalar_t a5 = 8.0 / 9;
-
-  static constexpr scalar_t b21 = 1.0 / 5;
-
-  static constexpr scalar_t b31 = 3.0 / 40;
-  static constexpr scalar_t b32 = 9.0 / 40;
-
-  static constexpr scalar_t b41 = 44.0 / 45;
-  static constexpr scalar_t b42 = -56.0 / 15;
-  static constexpr scalar_t b43 = 32.0 / 9;
-
-  static constexpr scalar_t b51 = 19372.0 / 6561;
-  static constexpr scalar_t b52 = -25360.0 / 2187;
-  static constexpr scalar_t b53 = 64448.0 / 6561;
-  static constexpr scalar_t b54 = -212.0 / 729;
-
-  static constexpr scalar_t b61 = 9017.0 / 3168;
-  static constexpr scalar_t b62 = -355.0 / 33;
-  static constexpr scalar_t b63 = 46732.0 / 5247;
-  static constexpr scalar_t b64 = 49.0 / 176;
-  static constexpr scalar_t b65 = -5103.0 / 18656;
-
-  static constexpr scalar_t c1 = 35.0 / 384;
-  // c2 = 0
-  static constexpr scalar_t c3 = 500.0 / 1113;
-  static constexpr scalar_t c4 = 125.0 / 192;
-  static constexpr scalar_t c5 = -2187.0 / 6784;
-  static constexpr scalar_t c6 = 11.0 / 84;
-
-  static constexpr scalar_t dc1 = c1 - 5179.0 / 57600;
-  static constexpr scalar_t dc3 = c3 - 7571.0 / 16695;
-  static constexpr scalar_t dc4 = c4 - 393.0 / 640;
-  static constexpr scalar_t dc5 = c5 - -92097.0 / 339200;
-  static constexpr scalar_t dc6 = c6 - 187.0 / 2100;
-  static constexpr scalar_t dc7 = -1.0 / 40;
-
   /** intermediate derivatives during Runge-Kutta step. */
   vector_t k1_, k2_, k3_, k4_, k5_, k6_;
 };
-
-constexpr scalar_t Stepper::a2;
-constexpr scalar_t Stepper::a3;
-constexpr scalar_t Stepper::a4;
-constexpr scalar_t Stepper::a5;
-constexpr scalar_t Stepper::b21;
-constexpr scalar_t Stepper::b31;
-constexpr scalar_t Stepper::b32;
-constexpr scalar_t Stepper::b41;
-constexpr scalar_t Stepper::b42;
-constexpr scalar_t Stepper::b43;
-constexpr scalar_t Stepper::b51;
-constexpr scalar_t Stepper::b52;
-constexpr scalar_t Stepper::b53;
-constexpr scalar_t Stepper::b54;
-constexpr scalar_t Stepper::b61;
-constexpr scalar_t Stepper::b62;
-constexpr scalar_t Stepper::b63;
-constexpr scalar_t Stepper::b64;
-constexpr scalar_t Stepper::b65;
-constexpr scalar_t Stepper::c1;
-constexpr scalar_t Stepper::c3;
-constexpr scalar_t Stepper::c4;
-constexpr scalar_t Stepper::c5;
-constexpr scalar_t Stepper::c6;
-constexpr scalar_t Stepper::dc1;
-constexpr scalar_t Stepper::dc3;
-constexpr scalar_t Stepper::dc4;
-constexpr scalar_t Stepper::dc5;
-constexpr scalar_t Stepper::dc6;
-constexpr scalar_t Stepper::dc7;
 
 }  // namespace
 
@@ -307,8 +283,8 @@ void RungeKuttaDormandPrince5::runIntegrateAdaptive(system_func_t system, observ
       if (tries > maxNumStepsRetries_) {
         throw std::runtime_error("[RungeKuttaDormandPrince5] Max number of iterations exceeded");
       }
-    }
-  }
+    }  // end of while loop
+  }    // end of while loop
   observer(x, t);
 }
 
@@ -348,8 +324,8 @@ void RungeKuttaDormandPrince5::runIntegrateTimes(system_func_t system, observer_
           throw std::runtime_error("[RungeKuttaDormandPrince5] Max number of iterations exceeded");
         }
       }
-    }
-  }
+    }  // end of while loop
+  }    // end of while loop
 }
 
 /******************************************************************************************************/

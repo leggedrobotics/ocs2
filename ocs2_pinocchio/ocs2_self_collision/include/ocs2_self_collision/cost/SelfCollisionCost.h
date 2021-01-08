@@ -29,51 +29,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
-#include <ocs2_core/automatic_differentiation/Types.h>
-#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 
-namespace mobile_manipulator {
+namespace ocs2 {
 
-class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
+class SelfCollisionCost final : public CostFunctionBase {
  public:
-  using ad_scalar_t = ocs2::ad_scalar_t;
-  using ad_vector_t = ocs2::ad_vector_t;
-
-  EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
-                  const std::string& endEffectorName);
-  ~EndEffectorCost() override = default;
+  SelfCollisionCost(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
+                    scalar_t minimumDistance, scalar_t mu, scalar_t delta);
+  ~SelfCollisionCost() override = default;
 
   /* Copy constructor */
-  EndEffectorCost(const EndEffectorCost& rhs);
+  SelfCollisionCost(const SelfCollisionCost& rhs);
 
-  EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
+  SelfCollisionCost* clone() const override { return new SelfCollisionCost(*this); }
 
- protected:
-  ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override;
-  ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
 
-  /* Set num parameters to size of desired trajectory state */
-  size_t getNumIntermediateParameters() const override;
-  vector_t getIntermediateParameters(scalar_t time) const override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  size_t getNumFinalParameters() const override;
-  vector_t getFinalParameters(scalar_t time) const override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  private:
-  vector_t interpolateReference(scalar_t time) const;
+  PinocchioInterface pinocchioInterface_;
+  PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
-  std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;
+  scalar_t minimumDistance_;
 
-  /* Quadratic cost */
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t Qf_;
-
-  size_t endEffectorIndex_;
+  const RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

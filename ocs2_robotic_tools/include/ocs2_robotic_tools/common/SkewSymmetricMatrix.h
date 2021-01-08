@@ -29,34 +29,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <ocs2_core/Types.h>
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+namespace ocs2 {
 
-namespace mobile_manipulator {
+/**
+ * Get the skew symmetric representation of a vector
+ *
+ * v_hat = [0.0, -v.z(), v.y(),
+ *          v.z(), 0.0, -v.x(),
+ *          -v.y(), v.x(), 0.0];
+ *
+ * @param [in] vector 3x1
+ * @return matrix 3x3
+ */
+template <typename SCALAR>
+Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix(Eigen::Matrix<SCALAR, 3, 1> v) {
+  Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix;
+  // clang-format off
+  skewSymmetricMatrix <<    0, -v(2),  v(1),
+                         v(2),     0, -v(0),
+                        -v(1),  v(0),     0;
+  // clan-format on
+  return skewSymmetricMatrix;
+}
 
-class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
- public:
-  using ad_scalar_t = ocs2::ad_scalar_t;
-  using ad_vector_t = ocs2::ad_vector_t;
-
-  explicit MobileManipulatorDynamics(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface);
-  ~MobileManipulatorDynamics() override = default;
-
-  /* Copy constructor */
-  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) : ocs2::SystemDynamicsBaseAD(rhs) {
-    pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(*rhs.pinocchioInterface_));
-  }
-
-  /* Clone */
-  MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ad_vector_t& parameters) const override;
-
- private:
-  std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;
-};
-
-}  // namespace mobile_manipulator
+}  // namespace ocs2

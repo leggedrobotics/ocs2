@@ -27,53 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+/*
+ * GeometryInterfaceVisualization.h
+ *
+ *  Created on: 4 Sep 2020
+ *      Author: perry
+ */
+
 #pragma once
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ros/ros.h>
 
-#include <ocs2_core/automatic_differentiation/Types.h>
-#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
-namespace mobile_manipulator {
+namespace ocs2 {
 
-class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
+class GeometryInterfaceVisualization {
  public:
-  using ad_scalar_t = ocs2::ad_scalar_t;
-  using ad_vector_t = ocs2::ad_vector_t;
+  GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
+                                 std::string pinocchioWorldFrame = "world");
+  virtual ~GeometryInterfaceVisualization() = default;
 
-  EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
-                  const std::string& endEffectorName);
-  ~EndEffectorCost() override = default;
-
-  /* Copy constructor */
-  EndEffectorCost(const EndEffectorCost& rhs);
-
-  EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
-
- protected:
-  ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override;
-  ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
-
-  /* Set num parameters to size of desired trajectory state */
-  size_t getNumIntermediateParameters() const override;
-  vector_t getIntermediateParameters(scalar_t time) const override;
-
-  size_t getNumFinalParameters() const override;
-  vector_t getFinalParameters(scalar_t time) const override;
+  void publishDistances(const ocs2::vector_t&);
 
  private:
-  vector_t interpolateReference(scalar_t time) const;
+  PinocchioGeometryInterface geometryInterface_;
 
-  std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;
+  ros::Publisher markerPublisher_;
 
-  /* Quadratic cost */
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t Qf_;
-
-  size_t endEffectorIndex_;
+  std::string pinocchioWorldFrame_;
 };
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

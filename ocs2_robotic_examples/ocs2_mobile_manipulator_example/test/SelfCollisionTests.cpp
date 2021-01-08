@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/package.h>
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
-#include <ocs2_pinocchio/cost/SelfCollisionCost.h>
-#include <ocs2_pinocchio/cost/SelfCollisionCostCppAd.h>
+#include <ocs2_self_collision/cost/SelfCollisionCost.h>
+#include <ocs2_self_collision/cost/SelfCollisionCostCppAd.h>
 
 // Copied from ocs2_core/test
 // TODO(perry) make not random, move hessian check elsewhere (we don't use the true hessian)

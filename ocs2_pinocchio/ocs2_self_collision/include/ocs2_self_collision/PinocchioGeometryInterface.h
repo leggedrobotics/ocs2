@@ -27,53 +27,50 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+/*
+ * PinocchioGeometryInterface.h
+ *
+ *  Created on: 25 Aug 2020
+ *      Author: perry
+ */
+
 #pragma once
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
+#include <utility>
+
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_core/automatic_differentiation/Types.h>
-#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
+#include <hpp/fcl/collision_data.h>
 
-namespace mobile_manipulator {
+/* Forward declaration of pinocchio geometry types */
+namespace pinocchio {
+struct GeometryModel;
+}  // namespace pinocchio
 
-class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
+namespace ocs2 {
+
+class PinocchioGeometryInterface {
  public:
-  using ad_scalar_t = ocs2::ad_scalar_t;
-  using ad_vector_t = ocs2::ad_vector_t;
+  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+                             const std::vector<std::pair<size_t, size_t>>& collisionPairs);
 
-  EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
-                  const std::string& endEffectorName);
-  ~EndEffectorCost() override = default;
+  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+                             const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
-  /* Copy constructor */
-  EndEffectorCost(const EndEffectorCost& rhs);
+  virtual ~PinocchioGeometryInterface() = default;
 
-  EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
+  // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)
+  PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
 
- protected:
-  ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override;
-  ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
+  pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
+  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
-  /* Set num parameters to size of desired trajectory state */
-  size_t getNumIntermediateParameters() const override;
-  vector_t getIntermediateParameters(scalar_t time) const override;
-
-  size_t getNumFinalParameters() const override;
-  vector_t getFinalParameters(scalar_t time) const override;
+  std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q);
 
  private:
-  vector_t interpolateReference(scalar_t time) const;
-
-  std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;
-
-  /* Quadratic cost */
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t Qf_;
-
-  size_t endEffectorIndex_;
+  PinocchioInterface pinocchioInterface_;
+  std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 };
 
-}  // namespace mobile_manipulator
+}  // namespace ocs2

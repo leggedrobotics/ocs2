@@ -39,6 +39,7 @@ int main(int argc, char **argv)
   settings.n_state = 10;
   settings.n_input = 3;
   settings.sqpIteration = 5;
+  settings.deltaTol = 1e-3;
   settings.constrained = false;
   settings.qr_decomp = false;
   settings.printPrimalSol = false;

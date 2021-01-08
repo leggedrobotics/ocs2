@@ -31,6 +31,7 @@ namespace ocs2
     scalar_array_t trueEventTimes; // size (N_real + 1), this is a modification to this->getModeSchedule().eventTimes. More info in function getInfoFromModeSchedule.
     size_t N_real;                 // real # of partition, >= N, because there are some provided time instances must be covered
     size_t sqpIteration;
+    scalar_t deltaTol;
     bool constrained; // true for constrained systems, false for unconstrained systems
     bool qr_decomp;   // this variable is meaningful only if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
     bool printSolverStatus;

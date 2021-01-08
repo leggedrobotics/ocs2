@@ -4,6 +4,7 @@
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 #include <iostream>
 #include <chrono>
 #include <Eigen/QR>
@@ -59,21 +60,22 @@ namespace ocs2
     // setup dimension for the coming OCP
     setupDimension(*constraintPtr_);
 
-    // Initialize the state and input containers 
+    // Initialize the state and input containers
     matrix_t x(settings_.n_state, settings_.N_real + 1);
     matrix_t u(settings_.n_input, settings_.N_real);
 
     // need to initialize the u with all zero except contact force along z-axis
-    // here 110 corresponds to the weight of ANYmal, this figure should not be hardcoded 
+    // here 110 corresponds to the weight of ANYmal, this figure should not be hardcoded
+    // this is not necessary, since zero input now works
     vector_t stanceInput = vector_t::Zero(settings_.n_input);
-    stanceInput(2) = 110;
-    stanceInput(5) = 110;
-    stanceInput(8) = 110;
-    stanceInput(11) = 110;
+    // stanceInput(2) = 110;
+    // stanceInput(5) = 110;
+    // stanceInput(8) = 110;
+    // stanceInput(11) = 110;
 
     if (!settings_.initPrimalSol)
     {
-      // for the first time, do the following init 
+      // for the first time, do the following init
       for (int i = 0; i < settings_.N_real; i++)
       {
         x.col(i) = initState;
@@ -85,31 +87,13 @@ namespace ocs2
     else
     {
       // previous N_real may not be the same as the current one, so size mismatch might happen.
-      int prevN_real = primalSolution_.timeTrajectory_.size();
-      if (settings_.N_real <= prevN_real)
+      // do linear interpolation here
+      for (int i = 0; i < settings_.N_real; i++)
       {
-        for (int i = 0; i < settings_.N_real; i++)
-        {
-          x.col(i) = primalSolution_.stateTrajectory_[i];
-          u.col(i) = primalSolution_.inputTrajectory_[i];
-        }
-        x.col(settings_.N_real) = primalSolution_.stateTrajectory_[settings_.N_real - 1];
+        x.col(i) = LinearInterpolation::interpolate(settings_.trueEventTimes[i], primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_);
+        u.col(i) = LinearInterpolation::interpolate(settings_.trueEventTimes[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_);
       }
-      else
-      {
-        // settings_.N_real > prevN_real
-        for (int i = 0; i < prevN_real; i++)
-        {
-          x.col(i) = primalSolution_.stateTrajectory_[i];
-          u.col(i) = primalSolution_.inputTrajectory_[i];
-        }
-        for (int i = 0; i < settings_.N_real - prevN_real; i++)
-        {
-          x.col(i + prevN_real) = primalSolution_.stateTrajectory_[prevN_real - 1];
-          u.col(i + prevN_real) = primalSolution_.inputTrajectory_[prevN_real - 1];
-        }
-        x.col(settings_.N_real) = primalSolution_.stateTrajectory_[prevN_real - 1];
-      }
+      x.col(settings_.N_real) = LinearInterpolation::interpolate(settings_.trueEventTimes[settings_.N_real], primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_);
       // std::cout << "using past primal sol init\n";
     }
     settings_.initPrimalSol = true;
@@ -125,13 +109,18 @@ namespace ocs2
       matrix_t delta_x, delta_u;
       std::tie(delta_x, delta_u) = getOCPSolution(delta_x0);
       freeHPIPMMem();
-      x += delta_x; // step size will be used in future
+      x += delta_x; // step size will be used in future // TODO here
       u += delta_u;
       auto endSqpTime = std::chrono::steady_clock::now();
       auto sqpIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSqpTime - startSqpTime);
       scalar_t sqpTime = std::chrono::duration<scalar_t, std::milli>(sqpIntervalTime).count();
       sqpTimeAll += sqpTime;
       std::cout << "\tSQP total time in this iter: " << sqpTime << "[ms]." << std::endl;
+      if (delta_u.norm() < settings_.deltaTol && delta_x.norm() < settings_.deltaTol)
+      {
+        std::cout << "exiting the loop earlier\n";
+        break;
+      }
     }
     std::cout << "Summary -- SQP time total: " << sqpTimeAll << "[ms]." << std::endl;
 
@@ -417,21 +406,38 @@ namespace ocs2
     {
       operTime = settings_.trueEventTimes[i];
       delta_t_ = settings_.trueEventTimes[i + 1] - settings_.trueEventTimes[i];
-      ocs2::VectorFunctionLinearApproximation systemDynamicApprox = systemDynamicsObj.linearApproximation(operTime, x.col(i), u.col(i));
+      scalar_t delta_t_half_ = delta_t_ / 2.0;
+      ocs2::VectorFunctionLinearApproximation k1 = systemDynamicsObj.linearApproximation(operTime, x.col(i), u.col(i));
+      ocs2::VectorFunctionLinearApproximation k2 = systemDynamicsObj.linearApproximation(operTime + delta_t_half_, x.col(i) + delta_t_half_ * k1.f, u.col(i));
+      ocs2::VectorFunctionLinearApproximation k3 = systemDynamicsObj.linearApproximation(operTime + delta_t_half_, x.col(i) + delta_t_half_ * k2.f, u.col(i));
+      ocs2::VectorFunctionLinearApproximation k4 = systemDynamicsObj.linearApproximation(operTime + delta_t_, x.col(i) + delta_t_ * k3.f, u.col(i));
       // dx_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
       // A_{k} = Id + dt * dfdx
       // B_{k} = dt * dfdu
       // b_{k} = x_{n} + dt * f(x_{n},u_{n}) - x_{n+1}
-      // currently only one-step Euler integration, subject to modification to RK4
-      A_data[i] = delta_t_ * systemDynamicApprox.dfdx + matrix_t::Identity(settings_.n_state, settings_.n_state);
-      B_data[i] = delta_t_ * systemDynamicApprox.dfdu;
-      b_data[i] = x.col(i) + delta_t_ * systemDynamicApprox.f - x.col(i + 1);
+      // TODO here: currently only one-step Euler integration, subject to modification to RK4
+      matrix_t dk1dxk = k1.dfdx;
+      matrix_t dk2dxk = k2.dfdx * (matrix_t::Identity(settings_.n_state, settings_.n_state) + delta_t_half_ * dk1dxk);
+      matrix_t dk3dxk = k3.dfdx * (matrix_t::Identity(settings_.n_state, settings_.n_state) + delta_t_half_ * dk2dxk);
+      matrix_t dk4dxk = k4.dfdx * (matrix_t::Identity(settings_.n_state, settings_.n_state) + delta_t_ * dk3dxk);
+      A_data[i] = matrix_t::Identity(settings_.n_state, settings_.n_state) + (delta_t_ / 6.0) * (dk1dxk + 2 * dk2dxk + 2 * dk3dxk + dk4dxk);
+      matrix_t dk1duk = k1.dfdu;
+      matrix_t dk2duk = k2.dfdu + delta_t_half_ * k2.dfdx * dk1duk;
+      matrix_t dk3duk = k3.dfdu + delta_t_half_ * k3.dfdx * dk2duk;
+      matrix_t dk4duk = k4.dfdu + delta_t_ * k4.dfdx * dk3duk;
+      matrix_t trueBMatrix = (delta_t_ / 6.0) * (dk1duk + 2 * dk2duk + 2 * dk3duk + dk4duk); // <-- this should be the correct one, but not working
+      B_data[i] = (delta_t_ / 6.0) * (k1.dfdu + 2 * k2.dfdu + 2 * k3.dfdu + k4.dfdu);        // <-- this is working but not the right one
+      std::cout << "difference of B and true B " << (trueBMatrix - B_data[i]).norm() << std::endl;
+      // B_data[i] = trueBMatrix;
+      b_data[i] = x.col(i) + (delta_t_ / 6.0) * (k1.f + 2 * k2.f + 2 * k3.f + k4.f) - x.col(i + 1);
+
       if (i == 0)
       {
         b_data[i] += A_data[i] * (initState - x.col(0)); // to ignore the bounding condition for x0
       }
 
       ocs2::ScalarFunctionQuadraticApproximation costFunctionApprox = costFunctionObj.costQuadraticApproximation(operTime, x.col(i), u.col(i));
+      // TODO here: SQP Q matrix should also depend on the \lambda
       Q_data[i] = costFunctionApprox.dfdxx;
       R_data[i] = costFunctionApprox.dfduu;
       S_data[i] = costFunctionApprox.dfdux;
@@ -624,7 +630,7 @@ namespace ocs2
     // INPUT_DIM may differ
     if (settings_.constrained && settings_.qr_decomp)
     {
-      // the system is constrained and we are using qr decomposition trick, so the # of input will be less 
+      // the system is constrained and we are using qr decomposition trick, so the # of input will be less
       nu_.resize(settings_.N_real + 1);
       for (int i = 0; i < settings_.N_real; i++)
       {
@@ -636,7 +642,7 @@ namespace ocs2
     }
     else
     {
-      // the system is constrained and we are NOT using qr decomposition trick, so the # of input will not be changed 
+      // the system is constrained and we are NOT using qr decomposition trick, so the # of input will not be changed
       nu_.resize(settings_.N_real + 1, settings_.n_input);
     }
     nu_[settings_.N_real] = 0;
@@ -644,7 +650,7 @@ namespace ocs2
     // EQ_CONSTRAINT_DIM may differ
     if (settings_.constrained && !settings_.qr_decomp)
     {
-      // the system is constrained and we are NOT using qr decomposition trick, so the # of constraints will be nonzero 
+      // the system is constrained and we are NOT using qr decomposition trick, so the # of constraints will be nonzero
       ng_.resize(settings_.N_real + 1);
       for (int i = 0; i < settings_.N_real; i++)
       {
@@ -657,7 +663,7 @@ namespace ocs2
     }
     else
     {
-      // the system is constrained and we are using qr decomposition trick, so the # of constraints will be zero 
+      // the system is constrained and we are using qr decomposition trick, so the # of constraints will be zero
       ng_.resize(settings_.N_real + 1, 0);
     }
 

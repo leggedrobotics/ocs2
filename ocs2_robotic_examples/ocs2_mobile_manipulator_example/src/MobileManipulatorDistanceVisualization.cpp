@@ -30,12 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // needs to be included before boost
 #include <pinocchio/multibody/geometry.hpp>
 
-#include <ocs2_pinocchio/PinocchioGeometryInterface.h>
-#include <ocs2_pinocchio/PinocchioInterface.h>
-#include <ocs2_pinocchio/loadStdVectorOfPair.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_pinocchio/visualization/GeometryInterfaceVisualization.h>
-#include <ocs2_pinocchio/visualization/VisualizationHelpers.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
+#include <ocs2_self_collision/loadStdVectorOfPair.h>
+#include <ocs2_self_collision/visualization/GeometryInterfaceVisualization.h>
+#include <ocs2_self_collision/visualization/VisualizationHelpers.h>
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 

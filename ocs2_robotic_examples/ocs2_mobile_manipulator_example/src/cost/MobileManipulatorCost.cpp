@@ -33,9 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 
-#include <ocs2_pinocchio/cost/SelfCollisionCost.h>
-#include <ocs2_pinocchio/cost/SelfCollisionCostCppAd.h>
-#include <ocs2_pinocchio/loadStdVectorOfPair.h>
+#include <ocs2_self_collision/cost/SelfCollisionCost.h>
+#include <ocs2_self_collision/cost/SelfCollisionCostCppAd.h>
+#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include <ros/package.h>
 

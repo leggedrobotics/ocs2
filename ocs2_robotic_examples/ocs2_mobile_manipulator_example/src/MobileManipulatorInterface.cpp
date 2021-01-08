@@ -28,14 +28,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <pinocchio/fwd.hpp>
+#include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
-#include "pinocchio/multibody/joint/joint-composite.hpp"
 
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
 
-#include "ocs2_mobile_manipulator_example/MobileManipulatorInterface.h"
+#include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 
 namespace mobile_manipulator {
 

@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pinocchio/fwd.hpp>
 
-#include <ocs2_pinocchio/PinocchioGeometryInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioGeometryInterface.h>
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>

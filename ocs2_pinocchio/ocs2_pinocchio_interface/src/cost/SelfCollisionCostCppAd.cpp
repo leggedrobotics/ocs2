@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *      Author: perry
  */
 
-#include <ocs2_pinocchio/cost/SelfCollisionCostCppAd.h>
+#include <ocs2_pinocchio_interface/cost/SelfCollisionCostCppAd.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 

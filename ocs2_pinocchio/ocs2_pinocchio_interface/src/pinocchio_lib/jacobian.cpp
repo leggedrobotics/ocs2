@@ -3,7 +3,7 @@
  * Date:   2020-09-08
  */
 
-#include <ocs2_pinocchio/pinocchio_lib.h>
+#include <ocs2_pinocchio_interface/pinocchio_lib.h>
 
 #include <pinocchio/algorithm/jacobian.hpp>
 

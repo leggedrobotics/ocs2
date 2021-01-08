@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cppad/cg.hpp>
 
 /* Forward declaration of main pinocchio types */
-#include <ocs2_pinocchio/pinocchio_forward_declaration.h>
+#include <ocs2_pinocchio_interface/pinocchio_forward_declaration.h>
 #include <urdf_model/model.h>
 
 namespace ocs2 {

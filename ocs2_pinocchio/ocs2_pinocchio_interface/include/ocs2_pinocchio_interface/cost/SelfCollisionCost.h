@@ -27,50 +27,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*
- * PinocchioGeometryInterface.h
- *
- *  Created on: 25 Aug 2020
- *      Author: perry
- */
-
 #pragma once
 
-#include <utility>
+#include <ocs2_pinocchio_interface/PinocchioGeometryInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_pinocchio/PinocchioInterface.h>
-
-#include <hpp/fcl/collision_data.h>
-
-/* Forward declaration of pinocchio geometry types */
-namespace pinocchio {
-struct GeometryModel;
-}  // namespace pinocchio
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 
 namespace ocs2 {
 
-class PinocchioGeometryInterface {
+class SelfCollisionCost final : public CostFunctionBase {
  public:
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::pair<size_t, size_t>>& collisionPairs);
+  SelfCollisionCost(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
+                    scalar_t minimumDistance, scalar_t mu, scalar_t delta);
+  ~SelfCollisionCost() override = default;
 
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
-                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
+  /* Copy constructor */
+  SelfCollisionCost(const SelfCollisionCost& rhs);
 
-  virtual ~PinocchioGeometryInterface() = default;
+  SelfCollisionCost* clone() const override { return new SelfCollisionCost(*this); }
 
-  // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)
-  PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
 
-  pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
-  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q);
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  private:
   PinocchioInterface pinocchioInterface_;
-  std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
+  PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
+
+  scalar_t minimumDistance_;
+
+  const RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };
 
 }  // namespace ocs2

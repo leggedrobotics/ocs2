@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <visualization_msgs/MarkerArray.h>
 
-#include <ocs2_pinocchio/PinocchioGeometryInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioGeometryInterface.h>
 
 namespace ocs2 {
 

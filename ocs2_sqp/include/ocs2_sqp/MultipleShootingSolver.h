@@ -39,6 +39,7 @@ namespace ocs2
     bool printPrimalSol;
     bool printModeScheduleDebug;
     bool initPrimalSol; // if false, use random matrix as init; if true, use the last PrimalSolution as init. Internal use only.
+    std::string robotName;
   };
 
   class MultipleShootingSolver : public SolverBase

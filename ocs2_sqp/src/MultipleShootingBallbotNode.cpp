@@ -46,6 +46,7 @@ int main(int argc, char **argv)
   settings.printSolverStatistics = false;
   settings.printSolverStatus = false;
   settings.initPrimalSol = false;
+  settings.robotName = "ballbot";
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
   std::unique_ptr<ocs2::MultipleShootingMpc> mpc(

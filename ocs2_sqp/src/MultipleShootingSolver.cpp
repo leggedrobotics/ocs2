@@ -514,15 +514,21 @@ namespace ocs2
       }
     }
 
-    // we should use the finalCostQuadraticApproximation defined by Q_final matrix, just like the following:
-    ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x.col(settings_.N_real));
-    // but in the case of ballbot, it is zero, which leads to unpenalized ending states
-    // so I temporarily used costQuadraticApproximation with a random linearization point of input u
-    // below only for ballbot
-    // ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x.col(settings_.N_real), vector_t::Zero(settings_.n_input));
-
-    Q_data[settings_.N_real] = finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
-    q_data[settings_.N_real] = finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
+    if (settings_.robotName == "ballbot")
+    {
+      // we should use the finalCostQuadraticApproximation defined by Q_final matrix
+      // but in the case of ballbot, it is zero, which leads to unpenalized ending states
+      // so I temporarily used costQuadraticApproximation with a random linearization point of input u
+      ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.costQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x.col(settings_.N_real), vector_t::Zero(settings_.n_input));
+      Q_data[settings_.N_real] = 10 * finalCostFunctionApprox.dfdxx; // manually add larger penalty s.t. the final state converges to the ref state
+      q_data[settings_.N_real] = 10 * finalCostFunctionApprox.dfdx;  // 10 is a customized number, subject to adjustment
+    }
+    else
+    {
+      ocs2::ScalarFunctionQuadraticApproximation finalCostFunctionApprox = costFunctionObj.finalCostQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x.col(settings_.N_real));
+      Q_data[settings_.N_real] = finalCostFunctionApprox.dfdxx;
+      q_data[settings_.N_real] = finalCostFunctionApprox.dfdx;
+    }
 
     auto endSetupTime = std::chrono::steady_clock::now();
     auto setupIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSetupTime - startSetupTime);

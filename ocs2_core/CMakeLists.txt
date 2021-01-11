@@ -97,6 +97,7 @@ add_library(${PROJECT_NAME}
   src/initialization/OperatingPoints.cpp
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
+  src/integration/RungeKuttaDormandPrince5.cpp
   src/integration/OdeBase.cpp
   src/integration/Observer.cpp
   src/integration/StateTriggeredEventHandler.cpp
@@ -208,6 +209,7 @@ target_link_libraries(initialization_unittest
 
 catkin_add_gtest(test_integration
   test/integration/IntegrationTest.cpp
+  test/integration/testRungeKuttaDormandPrince5.cpp
   test/integration/TrapezoidalIntegrationTest.cpp
 )
 target_link_libraries(test_integration

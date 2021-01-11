@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
   sqpSettings.printSolverStatus = false;
   sqpSettings.printModeScheduleDebug = false;
   sqpSettings.initPrimalSol = false;
+  sqpSettings.robotName = "ANYmal";
   quadrupedMpcNodeSqp(nodeHandle, *anymalInterface, mpcSettings, sqpSettings);
 
   return 0;

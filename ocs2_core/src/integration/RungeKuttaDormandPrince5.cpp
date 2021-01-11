@@ -82,19 +82,19 @@ class Stepper {
    * @return true if the step is taken, false otherwise..
    */
   bool tryStep(system_func_t& system, vector_t& x, vector_t& dxdt, scalar_t& t, scalar_t& dt, scalar_t absTol, scalar_t relTol) {
-    static constexpr scalar_t c1 = 35.0 / 384;
+    constexpr scalar_t c1 = 35.0 / 384;
     // c2 = 0
-    static constexpr scalar_t c3 = 500.0 / 1113;
-    static constexpr scalar_t c4 = 125.0 / 192;
-    static constexpr scalar_t c5 = -2187.0 / 6784;
-    static constexpr scalar_t c6 = 11.0 / 84;
+    constexpr scalar_t c3 = 500.0 / 1113;
+    constexpr scalar_t c4 = 125.0 / 192;
+    constexpr scalar_t c5 = -2187.0 / 6784;
+    constexpr scalar_t c6 = 11.0 / 84;
 
-    static constexpr scalar_t dc1 = c1 - 5179.0 / 57600;
-    static constexpr scalar_t dc3 = c3 - 7571.0 / 16695;
-    static constexpr scalar_t dc4 = c4 - 393.0 / 640;
-    static constexpr scalar_t dc5 = c5 - -92097.0 / 339200;
-    static constexpr scalar_t dc6 = c6 - 187.0 / 2100;
-    static constexpr scalar_t dc7 = -1.0 / 40;
+    constexpr scalar_t dc1 = c1 - 5179.0 / 57600;
+    constexpr scalar_t dc3 = c3 - 7571.0 / 16695;
+    constexpr scalar_t dc4 = c4 - 393.0 / 640;
+    constexpr scalar_t dc5 = c5 - -92097.0 / 339200;
+    constexpr scalar_t dc6 = c6 - 187.0 / 2100;
+    constexpr scalar_t dc7 = -1.0 / 40;
 
     vector_t x_out, dxdt_out;
     doStep(system, x, dxdt, t, dt, x_out, dxdt_out);
@@ -131,37 +131,37 @@ class Stepper {
               vector_t& dxdt_out) {
     /* Runge Kutta Dormand-Prince Butcher tableau constants.
      * https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method */
-    static constexpr scalar_t a2 = 1.0 / 5;
-    static constexpr scalar_t a3 = 3.0 / 10;
-    static constexpr scalar_t a4 = 4.0 / 5;
-    static constexpr scalar_t a5 = 8.0 / 9;
+    constexpr scalar_t a2 = 1.0 / 5;
+    constexpr scalar_t a3 = 3.0 / 10;
+    constexpr scalar_t a4 = 4.0 / 5;
+    constexpr scalar_t a5 = 8.0 / 9;
 
-    static constexpr scalar_t b21 = 1.0 / 5;
+    constexpr scalar_t b21 = 1.0 / 5;
 
-    static constexpr scalar_t b31 = 3.0 / 40;
-    static constexpr scalar_t b32 = 9.0 / 40;
+    constexpr scalar_t b31 = 3.0 / 40;
+    constexpr scalar_t b32 = 9.0 / 40;
 
-    static constexpr scalar_t b41 = 44.0 / 45;
-    static constexpr scalar_t b42 = -56.0 / 15;
-    static constexpr scalar_t b43 = 32.0 / 9;
+    constexpr scalar_t b41 = 44.0 / 45;
+    constexpr scalar_t b42 = -56.0 / 15;
+    constexpr scalar_t b43 = 32.0 / 9;
 
-    static constexpr scalar_t b51 = 19372.0 / 6561;
-    static constexpr scalar_t b52 = -25360.0 / 2187;
-    static constexpr scalar_t b53 = 64448.0 / 6561;
-    static constexpr scalar_t b54 = -212.0 / 729;
+    constexpr scalar_t b51 = 19372.0 / 6561;
+    constexpr scalar_t b52 = -25360.0 / 2187;
+    constexpr scalar_t b53 = 64448.0 / 6561;
+    constexpr scalar_t b54 = -212.0 / 729;
 
-    static constexpr scalar_t b61 = 9017.0 / 3168;
-    static constexpr scalar_t b62 = -355.0 / 33;
-    static constexpr scalar_t b63 = 46732.0 / 5247;
-    static constexpr scalar_t b64 = 49.0 / 176;
-    static constexpr scalar_t b65 = -5103.0 / 18656;
+    constexpr scalar_t b61 = 9017.0 / 3168;
+    constexpr scalar_t b62 = -355.0 / 33;
+    constexpr scalar_t b63 = 46732.0 / 5247;
+    constexpr scalar_t b64 = 49.0 / 176;
+    constexpr scalar_t b65 = -5103.0 / 18656;
 
-    static constexpr scalar_t c1 = 35.0 / 384;
+    constexpr scalar_t c1 = 35.0 / 384;
     // c2 = 0
-    static constexpr scalar_t c3 = 500.0 / 1113;
-    static constexpr scalar_t c4 = 125.0 / 192;
-    static constexpr scalar_t c5 = -2187.0 / 6784;
-    static constexpr scalar_t c6 = 11.0 / 84;
+    constexpr scalar_t c3 = 500.0 / 1113;
+    constexpr scalar_t c4 = 125.0 / 192;
+    constexpr scalar_t c5 = -2187.0 / 6784;
+    constexpr scalar_t c6 = 11.0 / 84;
 
     k1_ = dxdt;  // k1 = system(x, t) from previous iteration
     vector_t x = x0 + dt * b21 * k1_;

@@ -60,6 +60,7 @@ class SelfCollisionCost final : public CostFunctionBase {
   PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
   scalar_t minimumDistance_;
+  int i;
 
   const RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };

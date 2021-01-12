@@ -33,10 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_mpc/SystemObservation.h>
+#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 // MPC messages
 #include <ocs2_msgs/mode_schedule.h>
 #include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_msgs/mpc_performance_indices.h>
 #include <ocs2_msgs/mpc_target_trajectories.h>
 
 namespace ocs2 {
@@ -73,6 +75,24 @@ void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_sch
  * @return The mode schedule which contains the event times and the mode sequence.
  */
 ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg);
+
+/**
+ * Creates the performance indices message.
+ *
+ * @param [in] initTime: The initial time for which the MPC is computed.
+ * @param [in] performanceIndices: The performance indices of the solver.
+ * @param [out] performanceIndicesMsg: The performance indices ROS message.
+ */
+void createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices,
+                                 ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
+
+/**
+ * Reads the performance indices message.
+ *
+ * @param [in] performanceIndicesMsg: The performance indices ROS message.
+ * @return The performance indices of the solver.
+ */
+PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
 
 /**
  * Creates the target trajectories message.

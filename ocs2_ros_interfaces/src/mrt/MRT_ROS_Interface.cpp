@@ -124,8 +124,8 @@ void MRT_ROS_Interface::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, PrimalSolution& primalSolution,
-                                      CommandData& commandData) {
+void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, CommandData& commandData,
+                                      PrimalSolution& primalSolution, PerformanceIndex& performanceIndices) {
   auto& timeBuffer = primalSolution.timeTrajectory_;
   auto& stateBuffer = primalSolution.stateTrajectory_;
   auto& inputBuffer = primalSolution.inputTrajectory_;
@@ -133,6 +133,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 
   ros_msg_conversions::readObservationMsg(msg.initObservation, commandData.mpcInitObservation_);
   ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories, commandData.mpcCostDesiredTrajectories_);
+  performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
   primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
   const size_t N = msg.timeTrajectory.size();
@@ -140,9 +141,9 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   size_array_t inputDim(N);
 
   if (N == 0) {
-    throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Controller must not be empty");
+    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] controller must not be empty!");
   } else if (N != msg.stateTrajectory.size() && N != msg.inputTrajectory.size()) {
-    throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Controller must have same size");
+    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] controller must have same size!");
   }
 
   timeBuffer.clear();
@@ -162,7 +163,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 
   // check data size
   if (msg.data.size() != N) {
-    throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Data has the wrong length");
+    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Data has the wrong length!");
   }
 
   std::vector<std::vector<float> const*> controllerDataPtrArray(N, nullptr);
@@ -183,7 +184,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
       break;
     }
     default:
-      throw std::runtime_error("MRT_ROS_Interface::readPolicyMsg: Unknown controllerType");
+      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Unknown controllerType!");
   }
 }
 
@@ -192,10 +193,12 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 /******************************************************************************************************/
 void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
   // read new policy and command from msg
-  auto newSolution = std::unique_ptr<PrimalSolution>(new PrimalSolution);
-  auto newCommand = std::unique_ptr<CommandData>(new CommandData);
-  readPolicyMsg(*msg, *newSolution, *newCommand);
-  this->fillSolutionBuffer(std::move(newCommand), std::move(newSolution));
+  std::unique_ptr<CommandData> commandPtr(new CommandData);
+  std::unique_ptr<PrimalSolution> primalSolutionPtr(new PrimalSolution);
+  std::unique_ptr<PerformanceIndex> performanceIndicesPtr(new PerformanceIndex);
+  readPolicyMsg(*msg, *commandPtr, *primalSolutionPtr, *performanceIndicesPtr);
+
+  this->moveToBuffer(std::move(commandPtr), std::move(primalSolutionPtr), std::move(performanceIndicesPtr));
 }
 
 /******************************************************************************************************/
@@ -249,10 +252,10 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   // display
   ROS_INFO_STREAM("MRT node is setting up ...");
 
-  // Observation publisher
+  // observation publisher
   mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(robotName_ + "_mpc_observation", 1);
 
-  // SLQ-MPC subscriber
+  // policy subscriber
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
       robotName_ + "_mpc_policy",                                                         // topic name
       1,                                                                                  // queue length

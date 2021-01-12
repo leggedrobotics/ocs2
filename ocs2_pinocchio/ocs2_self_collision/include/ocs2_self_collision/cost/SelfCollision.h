@@ -32,37 +32,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-
 namespace ocs2 {
 
-class SelfCollisionCost final : public CostFunctionBase {
+class SelfCollision {
  public:
-  SelfCollisionCost(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
-                    scalar_t minimumDistance, scalar_t mu, scalar_t delta);
-  ~SelfCollisionCost() override = default;
+  using base_t = Eigen::Matrix<scalar_t, 6, 1>;
+
+  SelfCollision(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimunDistance);
+  ~SelfCollision() = default;
 
   /* Copy constructor */
-  SelfCollisionCost(const SelfCollisionCost& rhs);
+  SelfCollision(const SelfCollision& rhs);
 
-  SelfCollisionCost* clone() const override { return new SelfCollisionCost(*this); }
+  SelfCollision* clone() const { return new SelfCollision(*this); }
 
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  vector_t getValue(const base_t& base, const vector_t& joints);
 
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  std::pair<vector_t, matrix_t> getLinearApproximation(const base_t& base, const vector_t& joints);
 
  private:
   PinocchioInterface pinocchioInterface_;
   PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
   scalar_t minimumDistance_;
-  int i;
-
-  const RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };
 
 }  // namespace ocs2

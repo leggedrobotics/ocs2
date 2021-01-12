@@ -40,35 +40,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
 
 namespace ocs2 {
 
-class SelfCollisionCostCppAd : public CostFunctionBase {
+class SelfCollisionCppAd {
  public:
-  SelfCollisionCostCppAd(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
-                         scalar_t minimumDistance, scalar_t mu, scalar_t delta);
-  ~SelfCollisionCostCppAd() override = default;
-  SelfCollisionCostCppAd(const SelfCollisionCostCppAd& rhs);
+  using base_t = Eigen::Matrix<scalar_t, 6, 1>;
 
-  SelfCollisionCostCppAd* clone() const override { return new SelfCollisionCostCppAd(*this); }
+  SelfCollisionCppAd(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
+                         scalar_t minimumDistance);
+  ~SelfCollisionCppAd() = default;
+  SelfCollisionCppAd(const SelfCollisionCppAd& rhs);
+
+  SelfCollisionCppAd* clone() const { return new SelfCollisionCppAd(*this); }
 
   void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                   bool verbose = true);
 
   /** Evaluate the cost */
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-
-  /** Evaluate the final cost */
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  vector_t getValue(const base_t& base, const vector_t& joints);
 
   /** Evaluate the cost quadratic approximation */
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-
-  /** Evaluate the final cost quadratic approximation */
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  std::pair<vector_t, matrix_t> getLinearApproximation(const base_t& base, const vector_t& joints);
 
   ad_vector_t getCollisionObjectJointPoses();
 
@@ -97,8 +91,6 @@ class SelfCollisionCostCppAd : public CostFunctionBase {
   PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
   scalar_t minimumDistance_;
-
-  const RelaxedBarrierPenalty relaxedBarrierPenalty_;
 };
 
 } /* namespace ocs2 */

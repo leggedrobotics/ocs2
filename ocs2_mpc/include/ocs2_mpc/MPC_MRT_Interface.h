@@ -110,11 +110,11 @@ class MPC_MRT_Interface final : public MRT_BASE {
 
  protected:
   /**
-   * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
-   * This method is automatically called by advanceMpc()
+   * Updates the buffer variables from the MPC object. This method is automatically called by advanceMpc()
+   *
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    */
-  void fillMpcOutputBuffers(SystemObservation mpcInitObservation);
+  void copyToBuffer(const SystemObservation& mpcInitObservation);
 
  protected:
   MPC_BASE& mpc_;

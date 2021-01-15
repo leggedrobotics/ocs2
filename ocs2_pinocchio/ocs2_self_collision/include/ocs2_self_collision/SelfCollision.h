@@ -36,25 +36,35 @@ namespace ocs2 {
 
 class SelfCollision {
  public:
-  using base_t = Eigen::Matrix<scalar_t, 6, 1>;
-
-  SelfCollision(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimunDistance);
+  SelfCollision(PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimunDistance);
   ~SelfCollision() = default;
-
-  /* Copy constructor */
   SelfCollision(const SelfCollision& rhs);
 
-  SelfCollision* clone() const { return new SelfCollision(*this); }
+  /**
+   * Evaluate the distance violation
+   * This method computes the distance results of all collision pairs through PinocchioGeometryInterface
+   * and compare each of them with the specified minimum distance.
+   *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] q: pinocchio state of the robot
+   * @return: the differences between the distance of each collision pair and the minimum distance
+   */
+  vector_t getValue(PinocchioInterface& pinocchioInterface, const vector_t& q) const;
 
-  vector_t getValue(const base_t& base, const vector_t& joints);
-
-  std::pair<vector_t, matrix_t> getLinearApproximation(const base_t& base, const vector_t& joints);
+  /**
+   * Evaluate the linear approximation of the distance function
+   * This method analytically computes the first derivative of distance against the pinocchio generalized coordinates
+   *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] q: pinocchio coordinates
+   * @return: the pair of the distance violation and the first derivative of the distance against q
+   */
+  std::pair<vector_t, matrix_t> getLinearApproximation(PinocchioInterface& pinocchioInterface, const vector_t& q) const;
 
  private:
-  PinocchioInterface pinocchioInterface_;
   PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
 
-  scalar_t minimumDistance_;
+  scalar_t minimumDistance_ = 0;
 };
 
 }  // namespace ocs2

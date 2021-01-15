@@ -69,8 +69,8 @@ link_directories(
 
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
-  src/cost/SelfCollisionCost.cpp
-  src/cost/SelfCollisionCostCppAd.cpp
+  src/SelfCollision.cpp
+  src/SelfCollisionCppAd.cpp
   src/PinocchioGeometryInterface.cpp
   src/visualization/GeometryInterfaceVisualization.cpp
   src/visualization/VisualizationHelpers.cpp

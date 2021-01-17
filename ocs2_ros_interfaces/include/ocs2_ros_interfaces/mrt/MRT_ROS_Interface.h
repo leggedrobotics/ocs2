@@ -110,10 +110,12 @@ class MRT_ROS_Interface : public MRT_BASE {
    * Helper function to read a MPC policy message.
    *
    * @param [in] msg: A constant pointer to the message
-   * @param [out] primalSolution: The MPC policy data
    * @param [out] commandData: The MPC command data
+   * @param [out] primalSolution: The MPC policy data
+   * @param [out] performanceIndices: The MPC performance indices data
    */
-  static void readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, PrimalSolution& primalSolution, CommandData& commandData);
+  static void readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, CommandData& commandData, PrimalSolution& primalSolution,
+                            PerformanceIndex& performanceIndices);
 
   /**
    * A thread function which sends the current state and checks for a new MPC update.

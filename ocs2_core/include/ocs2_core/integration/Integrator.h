@@ -40,7 +40,17 @@ namespace ocs2 {
  * @brief The IntegratorType enum
  * Enum used in selecting a specific integrator.
  */
-enum class IntegratorType { EULER, ODE45, ADAMS_BASHFORTH, BULIRSCH_STOER, MODIFIED_MIDPOINT, RK4, RK5_VARIABLE, ADAMS_BASHFORTH_MOULTON };
+enum class IntegratorType {
+  EULER,
+  ODE45,
+  ODE45_OCS2,
+  ADAMS_BASHFORTH,
+  BULIRSCH_STOER,
+  MODIFIED_MIDPOINT,
+  RK4,
+  RK5_VARIABLE,
+  ADAMS_BASHFORTH_MOULTON
+};
 
 namespace integrator_type {
 

@@ -73,6 +73,19 @@ target_link_libraries(test_custom_callback_queue
 )
 target_compile_options(test_custom_callback_queue PRIVATE ${OCS2_CXX_FLAGS})
 
+# multiplot remap node
+add_executable(multiplot_remap
+  src/multiplot/MultiplotRemap.cpp
+)
+add_dependencies(multiplot_remap
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(multiplot_remap
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(multiplot_remap PRIVATE ${OCS2_CXX_FLAGS})
+
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
 )

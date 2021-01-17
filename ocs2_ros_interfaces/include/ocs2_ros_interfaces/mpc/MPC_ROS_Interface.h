@@ -127,21 +127,23 @@ class MPC_ROS_Interface {
    *
    * @param [in] primalSolution: The policy data of the MPC.
    * @param [in] commandData: The command data of the MPC.
+   * @param [in] performanceIndices: The performance indices data of the solver.
    * @return MPC policy message.
    */
-  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData);
+  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
+                                                                const PerformanceIndex& performanceIndices);
 
   /**
    * Handles ROS publishing thread.
    */
-  void publisherWorkerThread();
+  void publisherWorker();
 
   /**
-   * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
-   * This method is automatically called by advanceMpc()
+   * Updates the buffer variables from the MPC object. This method is automatically called by advanceMpc()
+   *
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    */
-  void fillMpcOutputBuffers(SystemObservation mpcInitObservation);
+  void copyToBuffer(const SystemObservation& mpcInitObservation);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,
@@ -174,12 +176,14 @@ class MPC_ROS_Interface {
   ::ros::Publisher mpcPolicyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 
-  std::unique_ptr<PrimalSolution> currentPrimalSolution_;
-  std::unique_ptr<PrimalSolution> primalSolutionBuffer_;
-  std::unique_ptr<CommandData> currentCommand_;
-  std::unique_ptr<CommandData> commandBuffer_;
+  std::unique_ptr<CommandData> bufferCommandPtr_;
+  std::unique_ptr<CommandData> publisherCommandPtr_;
+  std::unique_ptr<PrimalSolution> bufferPrimalSolutionPtr_;
+  std::unique_ptr<PrimalSolution> publisherPrimalSolutionPtr_;
+  std::unique_ptr<PerformanceIndex> bufferPerformanceIndicesPtr_;
+  std::unique_ptr<PerformanceIndex> publisherPerformanceIndicesPtr_;
 
-  mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
+  mutable std::mutex bufferMutex_;  // for policy variables with prefix (buffer*)
 
   // multi-threading for publishers
   std::atomic_bool terminateThread_;

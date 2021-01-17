@@ -37,10 +37,12 @@ namespace ocs2 {
 MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string robotName /*= "robot"*/)
     : mpc_(mpc),
       robotName_(std::move(robotName)),
-      currentPrimalSolution_(new PrimalSolution()),
-      primalSolutionBuffer_(new PrimalSolution()),
-      currentCommand_(new CommandData()),
-      commandBuffer_(new CommandData()) {
+      bufferPrimalSolutionPtr_(new PrimalSolution()),
+      publisherPrimalSolutionPtr_(new PrimalSolution()),
+      bufferCommandPtr_(new CommandData()),
+      publisherCommandPtr_(new CommandData()),
+      bufferPerformanceIndicesPtr_(new PerformanceIndex),
+      publisherPerformanceIndicesPtr_(new PerformanceIndex) {
   set();
 }
 
@@ -61,9 +63,9 @@ void MPC_ROS_Interface::set() {
   resetRequestedEver_ = false;
   mpcTimer_.reset();
 
-  // Start thread for publishing
+  // start thread for publishing
 #ifdef PUBLISH_THREAD
-  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorkerThread, this);
+  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
 #endif
 }
 
@@ -114,12 +116,15 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
 /******************************************************************************************************/
 /******************************************************************************************************/
 ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const PrimalSolution& primalSolution,
-                                                                          const CommandData& commandData) {
+                                                                          const CommandData& commandData,
+                                                                          const PerformanceIndex& performanceIndices) {
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
 
   ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
   ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
   ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_, mpcPolicyMsg.modeSchedule);
+  ros_msg_conversions::createPerformanceIndicesMsg(commandData.mpcInitObservation_.time, performanceIndices,
+                                                   mpcPolicyMsg.performanceIndices);
 
   switch (primalSolution.controllerPtr_->getType()) {
     case ControllerType::FEEDFORWARD:
@@ -187,7 +192,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::publisherWorkerThread() {
+void MPC_ROS_Interface::publisherWorker() {
   while (!terminateThread_) {
     std::unique_lock<std::mutex> lk(publisherMutex_);
 
@@ -198,12 +203,14 @@ void MPC_ROS_Interface::publisherWorkerThread() {
     }
 
     {
-      std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
-      currentPrimalSolution_.swap(primalSolutionBuffer_);
-      currentCommand_.swap(commandBuffer_);
+      std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
+      publisherCommandPtr_.swap(bufferCommandPtr_);
+      publisherPrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);
+      publisherPerformanceIndicesPtr_.swap(bufferPerformanceIndicesPtr_);
     }
 
-    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*currentPrimalSolution_, *currentCommand_);
+    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg =
+        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_);
 
     // publish the message
     mpcPolicyPublisher_.publish(mpcPolicyMsg);
@@ -217,20 +224,23 @@ void MPC_ROS_Interface::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservation) {
+void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) {
   // buffer policy mutex
-  std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
+  std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
 
   // get solution
   scalar_t finalTime = mpcInitObservation.time + mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
-  mpc_.getSolverPtr()->getPrimalSolution(finalTime, primalSolutionBuffer_.get());
+  mpc_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
 
   // command
-  commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
-  commandBuffer_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
+  bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
+  bufferCommandPtr_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
+
+  // performance indices
+  *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
 }
 
 /******************************************************************************************************/
@@ -268,7 +278,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   if (!controllerIsUpdated) {
     return;
   }
-  fillMpcOutputBuffers(currentObservation);
+  copyToBuffer(currentObservation);
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -298,7 +308,8 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   msgReady_.notify_one();
 
 #else
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*primalSolutionBuffer_, *commandBuffer_);
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg =
+      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
 }

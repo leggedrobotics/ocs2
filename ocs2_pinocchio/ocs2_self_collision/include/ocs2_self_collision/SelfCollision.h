@@ -36,8 +36,18 @@ namespace ocs2 {
 
 class SelfCollision {
  public:
+  /**
+   * Constructor
+   *
+   * @param [in] geometryInterfaceSelfCollision: PinocchioGeometryInterface of the robot and collision pairs
+   * @parma [in] minimumDistance: minimum allowed distance between each collision pair
+   */
   SelfCollision(PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimunDistance);
+
+  /** Default destructor */
   ~SelfCollision() = default;
+
+  /** Copy constructor */
   SelfCollision(const SelfCollision& rhs);
 
   /**

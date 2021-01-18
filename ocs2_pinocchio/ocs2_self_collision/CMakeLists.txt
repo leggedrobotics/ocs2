@@ -69,12 +69,12 @@ link_directories(
 
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
-  src/SelfCollision.cpp
-  src/SelfCollisionCppAd.cpp
   src/PinocchioGeometryInterface.cpp
   src/visualization/GeometryInterfaceVisualization.cpp
   src/visualization/VisualizationHelpers.cpp
   src/loadStdVectorOfPair.cpp
+  src/SelfCollision.cpp
+  src/SelfCollisionCppAd.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

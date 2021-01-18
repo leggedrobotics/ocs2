@@ -45,8 +45,9 @@ class EndEffectorKinematics {
 
   EndEffectorKinematics() = default;
   virtual ~EndEffectorKinematics() = default;
-
   virtual EndEffectorKinematics* clone() const = 0;
+  EndEffectorKinematics& operator=(const EndEffectorKinematics&) = delete;
+
   virtual const std::vector<std::string>& getIds() const = 0;
   virtual std::vector<vector3_t> getPositions(const vector_t& state) = 0;
   virtual std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) = 0;
@@ -59,7 +60,6 @@ class EndEffectorKinematics {
 
  protected:
   EndEffectorKinematics(const EndEffectorKinematics&) = default;
-  EndEffectorKinematics& operator=(const EndEffectorKinematics&) = delete;
 };
 
 }  // namespace ocs2

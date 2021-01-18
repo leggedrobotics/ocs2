@@ -27,42 +27,45 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <string>
-#include <vector>
-
-#include <ocs2_pinocchio_interface/EndEffectorKinematics.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
-namespace ocs2 {
+namespace mobile_manipulator {
 
-class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar_t> {
+template <typename SCALAR>
+class MobileManipulatorPinocchioMapping final : public ocs2::PinocchioStateInputMapping<SCALAR> {
  public:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using vector3x_t = Eigen::Matrix<scalar_t, 3, Eigen::Dynamic>;
+  using scalar_t = SCALAR;
+  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
+  using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
 
-  PinocchioEndEffectorKinematics(PinocchioInterface pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
-                                 std::vector<std::string> endEffectorIds);
+  MobileManipulatorPinocchioMapping() = default;
+  ~MobileManipulatorPinocchioMapping() override = default;
+  MobileManipulatorPinocchioMapping<SCALAR>* clone() const override { return new MobileManipulatorPinocchioMapping<SCALAR>(*this); }
 
-  ~PinocchioEndEffectorKinematics() override = default;
-  PinocchioEndEffectorKinematics* clone() const override;
-  PinocchioEndEffectorKinematics& operator=(const PinocchioEndEffectorKinematics&) = delete;
+  vector_t getPinocchioJointPosition(const vector_t& state) const override { return state; }
 
-  const std::vector<std::string>& getIds() const override;
-  std::vector<vector3_t> getPositions(const vector_t& state) override;
-  std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) override;
-  std::vector<VectorFunctionLinearApproximation> getPositionsLinearApproximation(const vector_t& state) override;
-  std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) override;
+  vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override {
+    vector_t dxdt(STATE_DIM);
+    const auto theta = state(2);
+    const auto v = input(0);  // forward velocity in base frame
+    dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
+    return dxdt;
+  }
 
- private:
-  PinocchioEndEffectorKinematics(const PinocchioEndEffectorKinematics& rhs);
-
-  PinocchioInterface pinocchioInterface_;
-  std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
-  const std::vector<std::string> endEffectorIds_;
-  std::vector<size_t> endEffectorFrameIds_;
+  std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override {
+    matrix_t dfdu(Jv.rows(), INPUT_DIM);
+    Eigen::Matrix<scalar_t, 3, 2> dvdu_base;
+    const scalar_t theta = state(2);
+    // clang-format off
+    dvdu_base << cos(theta), 0,
+                 sin(theta), 0,
+                 0, 1.0;
+    // clang-format on
+    dfdu.template leftCols<2>() = Jv.template leftCols<3>() * dvdu_base;
+    dfdu.template rightCols<6>() = Jv.template rightCols<6>();
+    return {Jq, dfdu};
+  }
 };
 
-}  // namespace ocs2
+}  // namespace mobile_manipulator

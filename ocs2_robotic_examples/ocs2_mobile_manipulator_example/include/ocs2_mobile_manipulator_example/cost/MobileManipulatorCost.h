@@ -40,7 +40,7 @@ namespace mobile_manipulator {
 
 using MobileManipulatorCost = ocs2::CostFunctionLinearCombination;
 
-std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface,
+std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
                                                                 const std::string& taskFile, const std::string& libraryFolder,
                                                                 bool recompileLibraries);
 

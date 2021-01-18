@@ -39,10 +39,9 @@ class SelfCollision {
   /**
    * Constructor
    *
-   * @param [in] geometryInterfaceSelfCollision: PinocchioGeometryInterface of the robot and collision pairs
    * @parma [in] minimumDistance: minimum allowed distance between each collision pair
    */
-  SelfCollision(PinocchioGeometryInterface geometryInterfaceSelfCollision, scalar_t minimunDistance);
+  SelfCollision(scalar_t minimunDistance);
 
   /** Default destructor */
   ~SelfCollision() = default;
@@ -55,25 +54,26 @@ class SelfCollision {
    * This method computes the distance results of all collision pairs through PinocchioGeometryInterface
    * and compare each of them with the specified minimum distance.
    *
-   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
    * @param [in] q: pinocchio state of the robot
    * @return: the differences between the distance of each collision pair and the minimum distance
    */
-  vector_t getValue(PinocchioInterface& pinocchioInterface, const vector_t& q) const;
+  vector_t getValue(PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, const vector_t& q) const;
 
   /**
    * Evaluate the linear approximation of the distance function
    * This method analytically computes the first derivative of distance against the pinocchio generalized coordinates
    *
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
    * @param [in] q: pinocchio coordinates
    * @return: the pair of the distance violation and the first derivative of the distance against q
    */
-  std::pair<vector_t, matrix_t> getLinearApproximation(PinocchioInterface& pinocchioInterface, const vector_t& q) const;
+  std::pair<vector_t, matrix_t> getLinearApproximation(PinocchioInterface& pinocchioInterface,
+                                                       PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,
+                                                       const vector_t& q) const;
 
  private:
-  PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
-
   scalar_t minimumDistance_ = 0;
 };
 

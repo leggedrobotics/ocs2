@@ -27,7 +27,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_self_collision/SelfCollision.h>
+#include "ocs2_self_collision/SelfCollision.h"
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
@@ -40,11 +40,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SelfCollision::SelfCollision(scalar_t minimumDistance) : minimumDistance_(minimumDistance) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-SelfCollision::SelfCollision(const SelfCollision& rhs) : minimumDistance_(rhs.minimumDistance_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -66,17 +61,16 @@ vector_t SelfCollision::getValue(PinocchioGeometryInterface& pinocchioGeometrySe
 std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(PinocchioInterface& pinocchioInterface,
                                                                     PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,
                                                                     const vector_t& q) const {
-  using Vector3 = Eigen::Matrix<scalar_t, 3, 1>;
+  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometrySelfCollisions.computeDistances(q);
-
-  vector_t f(distanceArray.size());
-  matrix_t dfdq(distanceArray.size(), q.size());
 
   pinocchioInterface.forwardKinematics(q);
   pinocchioInterface.updateGlobalPlacements();
   pinocchioInterface.computeJointJacobians(q);
 
+  vector_t f(distanceArray.size());
+  matrix_t dfdq(distanceArray.size(), q.size());
   for (size_t i = 0; i < distanceArray.size(); ++i) {
     // Distance violation
     f[i] = distanceArray[i].min_distance - minimumDistance_;
@@ -87,8 +81,8 @@ std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(PinocchioInt
         pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.first];
 
     // We need to get the jacobian of the point on the first object; use the joint jacobian translated to the point
-    const Vector3 joint1Position = pinocchioInterface.getJointPosition(geometryObject1.parentJoint);
-    const Vector3 pt1Offset = distanceArray[i].nearest_points[0] - joint1Position;
+    const vector3_t joint1Position = pinocchioInterface.getJointPosition(geometryObject1.parentJoint);
+    const vector3_t pt1Offset = distanceArray[i].nearest_points[0] - joint1Position;
     const matrix_t joint1Jacobian = pinocchioInterface.getJointJacobian(geometryObject1.parentJoint);
     // Jacobians from pinocchio are given as
     // [ position jacobian ]
@@ -99,8 +93,8 @@ std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(PinocchioInt
         pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.second];
 
     // We need to get the jacobian of the point on the second object; use the joint jacobian translated to the point
-    const Vector3 joint2Position = pinocchioInterface.getJointPosition(geometryObject2.parentJoint);
-    const Vector3 pt2Offset = distanceArray[i].nearest_points[1] - joint2Position;
+    const vector3_t joint2Position = pinocchioInterface.getJointPosition(geometryObject2.parentJoint);
+    const vector3_t pt2Offset = distanceArray[i].nearest_points[1] - joint2Position;
     const matrix_t joint2Jacobian = pinocchioInterface.getJointJacobian(geometryObject2.parentJoint);
     const matrix_t pt2Jacobian = joint2Jacobian.topRows(3) - skewSymmetricMatrix(pt2Offset) * joint2Jacobian.bottomRows(3);
 
@@ -108,11 +102,11 @@ std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(PinocchioInt
     // vector from point to point
     const matrix_t differenceJacobian = pt2Jacobian - pt1Jacobian;
     // TODO(perry): is there a way to calculate a correct jacobian for the case of distanceVector = 0?
-    const Vector3 distanceVector = distanceArray[i].min_distance > 0
-                                       ? (distanceArray[i].nearest_points[1] - distanceArray[i].nearest_points[0]).normalized()
-                                       : (distanceArray[i].nearest_points[0] - distanceArray[i].nearest_points[1]).normalized();
+    const vector3_t distanceVector = distanceArray[i].min_distance > 0
+                                         ? (distanceArray[i].nearest_points[1] - distanceArray[i].nearest_points[0]).normalized()
+                                         : (distanceArray[i].nearest_points[0] - distanceArray[i].nearest_points[1]).normalized();
     dfdq.row(i) = distanceVector.transpose() * differenceJacobian;
-  }
+  }  // end of i loop
 
   return std::make_pair(f, dfdq);
 }

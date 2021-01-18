@@ -43,12 +43,6 @@ class SelfCollision {
    */
   SelfCollision(scalar_t minimunDistance);
 
-  /** Default destructor */
-  ~SelfCollision() = default;
-
-  /** Copy constructor */
-  SelfCollision(const SelfCollision& rhs);
-
   /**
    * Evaluate the distance violation
    * This method computes the distance results of all collision pairs through PinocchioGeometryInterface
@@ -56,7 +50,7 @@ class SelfCollision {
    *
    * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
    * @param [in] q: pinocchio state of the robot
-   * @return: the differences between the distance of each collision pair and the minimum distance
+   * @return: The differences between the distance of each collision pair and the minimum distance
    */
   vector_t getValue(PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, const vector_t& q) const;
 
@@ -67,7 +61,7 @@ class SelfCollision {
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
    * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
    * @param [in] q: pinocchio coordinates
-   * @return: the pair of the distance violation and the first derivative of the distance against q
+   * @return: The pair of the distance violation and the first derivative of the distance against q
    */
   std::pair<vector_t, matrix_t> getLinearApproximation(PinocchioInterface& pinocchioInterface,
                                                        PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,

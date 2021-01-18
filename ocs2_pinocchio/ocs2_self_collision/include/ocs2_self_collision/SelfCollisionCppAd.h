@@ -27,13 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*
- * SelfCollisionCppAd.h
- *
- *  Created on: 8 Sep 2020
- *      Author: perry
- */
-
 #pragma once
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>

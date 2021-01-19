@@ -62,13 +62,6 @@ add_library(${PROJECT_NAME}
   src/PinocchioInterface.cpp
   src/PinocchioInterfaceAD.cpp
   src/PinocchioEndEffectorKinematics.cpp
-
-  # precompile pinocchio functions
-  src/pinocchio_lib/frames.cpp
-  src/pinocchio_lib/kinematics.cpp
-  src/pinocchio_lib/jacobian.cpp
-  src/pinocchio_lib/types.cpp
-  src/pinocchio_lib/urdf.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

@@ -48,12 +48,43 @@ class EndEffectorKinematics {
   virtual EndEffectorKinematics* clone() const = 0;
   EndEffectorKinematics& operator=(const EndEffectorKinematics&) = delete;
 
+  /** Get end-effector IDs (names) */
   virtual const std::vector<std::string>& getIds() const = 0;
+
+  /**
+   * Get end-effector position vectors in world frame
+   *
+   * @param [in] state vector
+   * @return array of position vectors
+   */
   virtual std::vector<vector3_t> getPositions(const vector_t& state) = 0;
+
+  /**
+   * Get end-effector velocity vectors in world frame
+   *
+   * @param [in] state: state vector
+   * @param [in] input: input vector
+   * @return array of velocity vectors
+   */
   virtual std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) = 0;
+
+  /**
+   * Get end-effector position linear approximation in world frame
+   *
+   * @param [in] state: state vector
+   * @return array of position function linear approximations
+   */
   virtual std::vector<VectorFunctionLinearApproximation> getPositionsLinearApproximation(const vector_t& state) {
     throw std::runtime_error("[EndEffectorKinematics] getPositionLinearApproximation() not implemented");
   }
+
+  /**
+   * Get end-effector velocity linear approximation in world frame
+   *
+   * @param [in] state: state vector
+   * @param [in] input: input vector
+   * @return array of velocity function linear approximations
+   */
   virtual std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) {
     throw std::runtime_error("[EndEffectorKinematics] getVelocityLinearApproximation() not implemented");
   }

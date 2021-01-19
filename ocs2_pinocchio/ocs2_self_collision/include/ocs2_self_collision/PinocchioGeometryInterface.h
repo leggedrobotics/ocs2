@@ -42,7 +42,7 @@ struct GeometryModel;
 
 namespace ocs2 {
 
-class PinocchioGeometryInterface {
+class PinocchioGeometryInterface final {
  public:
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<size_t, size_t>>& collisionPairs);
@@ -51,18 +51,23 @@ class PinocchioGeometryInterface {
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
-  virtual ~PinocchioGeometryInterface() = default;
-
-  // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)
+  ~PinocchioGeometryInterface() = default;
   PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
 
   pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
-  std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q);
+  /**
+   * Compute collision pair distances
+   *
+   * @note Requires pinocchioInterface with updated joint placements by calling forwardKinematics().
+   *
+   * @param [in] pinocchioInterface:  forward kinematics
+   * @return Array of distance results
+   */
+  std::vector<hpp::fcl::DistanceResult> computeDistances(const PinocchioInterface& pinocchioInterface) const;
 
  private:
-  PinocchioInterface pinocchioInterface_;
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 };
 

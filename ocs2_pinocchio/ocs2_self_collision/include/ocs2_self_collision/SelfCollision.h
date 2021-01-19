@@ -41,31 +41,33 @@ class SelfCollision {
    *
    * @parma [in] minimumDistance: minimum allowed distance between each collision pair
    */
-  SelfCollision(scalar_t minimunDistance);
+  explicit SelfCollision(scalar_t minimumDistance);
 
   /**
    * Evaluate the distance violation
    * This method computes the distance results of all collision pairs through PinocchioGeometryInterface
    * and compare each of them with the specified minimum distance.
    *
-   * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
-   * @param [in] q: pinocchio state of the robot
+   * @note Requires updated forwardKinematics() on pinocchioInterface.
+   *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @return: The differences between the distance of each collision pair and the minimum distance
    */
-  vector_t getValue(PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, const vector_t& q) const;
+  vector_t getValue(const PinocchioInterface& pinocchioInterface, const PinocchioGeometryInterface& pinocchioGeometryInterface) const;
 
   /**
    * Evaluate the linear approximation of the distance function
    * This method analytically computes the first derivative of distance against the pinocchio generalized coordinates
    *
+   * @note Requires updated forwardKinematics(), updateGlobalPlacements() and computeJointJacobians() on pinocchioInterface.
+   *
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
-   * @param [in] q: pinocchio coordinates
+   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @return: The pair of the distance violation and the first derivative of the distance against q
    */
-  std::pair<vector_t, matrix_t> getLinearApproximation(PinocchioInterface& pinocchioInterface,
-                                                       PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,
-                                                       const vector_t& q) const;
+  std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface,
+                                                       const PinocchioGeometryInterface& pinocchioGeometryInterface) const;
 
  private:
   scalar_t minimumDistance_ = 0;

@@ -44,8 +44,9 @@ SelfCollision::SelfCollision(scalar_t minimumDistance) : minimumDistance_(minimu
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SelfCollision::getValue(PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, const vector_t& q) const {
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometrySelfCollisions.computeDistances(q);
+vector_t SelfCollision::getValue(const PinocchioInterface& pinocchioInterface,
+                                 const PinocchioGeometryInterface& pinocchioGeometryInterface) const {
+  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface.computeDistances(pinocchioInterface);
 
   vector_t violations = vector_t::Zero(distanceArray.size());
   for (size_t i = 0; i < distanceArray.size(); ++i) {
@@ -58,27 +59,21 @@ vector_t SelfCollision::getValue(PinocchioGeometryInterface& pinocchioGeometrySe
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(PinocchioInterface& pinocchioInterface,
-                                                                    PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,
-                                                                    const vector_t& q) const {
+std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(const PinocchioInterface& pinocchioInterface,
+                                                                    const PinocchioGeometryInterface& pinocchioGeometryInterface) const {
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometrySelfCollisions.computeDistances(q);
-
-  pinocchioInterface.forwardKinematics(q);
-  pinocchioInterface.updateGlobalPlacements();
-  pinocchioInterface.computeJointJacobians(q);
+  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface.computeDistances(pinocchioInterface);
 
   vector_t f(distanceArray.size());
-  matrix_t dfdq(distanceArray.size(), q.size());
+  matrix_t dfdq(distanceArray.size(), pinocchioInterface.getModel().nq);
   for (size_t i = 0; i < distanceArray.size(); ++i) {
     // Distance violation
     f[i] = distanceArray[i].min_distance - minimumDistance_;
 
     // Jacobian calculation
-    pinocchio::CollisionPair collisionPair = pinocchioGeometrySelfCollisions.getGeometryModel().collisionPairs[i];
-    const pinocchio::GeometryObject& geometryObject1 =
-        pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.first];
+    pinocchio::CollisionPair collisionPair = pinocchioGeometryInterface.getGeometryModel().collisionPairs[i];
+    const pinocchio::GeometryObject& geometryObject1 = pinocchioGeometryInterface.getGeometryModel().geometryObjects[collisionPair.first];
 
     // We need to get the jacobian of the point on the first object; use the joint jacobian translated to the point
     const vector3_t joint1Position = pinocchioInterface.getJointPosition(geometryObject1.parentJoint);
@@ -89,8 +84,7 @@ std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(PinocchioInt
     // [ rotation jacobian ]
     const matrix_t pt1Jacobian = joint1Jacobian.topRows(3) - skewSymmetricMatrix(pt1Offset) * joint1Jacobian.bottomRows(3);
 
-    const pinocchio::GeometryObject& geometryObject2 =
-        pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.second];
+    const pinocchio::GeometryObject& geometryObject2 = pinocchioGeometryInterface.getGeometryModel().geometryObjects[collisionPair.second];
 
     // We need to get the jacobian of the point on the second object; use the joint jacobian translated to the point
     const vector3_t joint2Position = pinocchioInterface.getJointPosition(geometryObject2.parentJoint);

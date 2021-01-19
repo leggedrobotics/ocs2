@@ -46,9 +46,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GeometryInterfaceVisualization::GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
+GeometryInterfaceVisualization::GeometryInterfaceVisualization(PinocchioInterface pinocchioInterface,
+                                                               const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
                                                                std::string pinocchioWorldFrame)
-    : geometryInterface_(geometryInterface),
+    : pinocchioInterface_(std::move(pinocchioInterface)),
+      geometryInterface_(geometryInterface),
       markerPublisher_(nh.advertise<visualization_msgs::MarkerArray>("distance_markers", 1, true)),
       pinocchioWorldFrame_(std::move(pinocchioWorldFrame)) {}
 
@@ -56,7 +58,8 @@ GeometryInterfaceVisualization::GeometryInterfaceVisualization(const PinocchioGe
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q) {
-  std::vector<hpp::fcl::DistanceResult> results = geometryInterface_.computeDistances(q);
+  pinocchioInterface_.forwardKinematics(q);
+  std::vector<hpp::fcl::DistanceResult> results = geometryInterface_.computeDistances(pinocchioInterface_);
 
   visualization_msgs::MarkerArray markerArray;
 

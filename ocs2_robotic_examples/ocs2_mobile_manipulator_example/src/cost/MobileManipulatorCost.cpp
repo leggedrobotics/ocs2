@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 
-#include <ocs2_self_collision/cost/SelfCollisionCost.h>
-#include <ocs2_self_collision/cost/SelfCollisionCostCppAd.h>
+//  #include <ocs2_self_collision/cost/SelfCollisionCost.h>
+//  #include <ocs2_self_collision/cost/SelfCollisionCostCppAd.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include <ros/package.h>
@@ -98,20 +98,21 @@ std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::Pino
 
   std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
   ocs2::PinocchioInterface pinocchioInterfaceDouble = MobileManipulatorInterface::buildPinocchioInterface(urdfPath_);
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, selfCollisionLinkPairs, selfCollisionObjectPairs);
+  //  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterfaceDouble, selfCollisionLinkPairs,
+  //  selfCollisionObjectPairs);
 
-  std::cout << "Pinocchio Geometry collision object list: ";
-  for (const auto& element : geometryInterface.getGeometryModel().collisionPairs) {
-    std::cout << "[" << element.first << "," << element.second << "]; ";
-  }
-  std::cout << std::endl;
+  //  std::cout << "Pinocchio Geometry collision object list: ";
+  //  for (const auto& element : geometryInterface.getGeometryModel().collisionPairs) {
+  //    std::cout << "[" << element.first << "," << element.second << "]; ";
+  //  }
+  //  std::cout << std::endl;
 
-  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
+  //  auto colCost = std::make_shared<ocs2::SelfCollisionCost>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu, delta);
   //  auto colCostAd = std::make_shared<ocs2::SelfCollisionCostCppAd>(pinocchioInterfaceDouble, geometryInterface, minimumDistance, mu,
   //  delta); colCostAd->initialize("ColCostAd", libraryFolder, recompileLibraries, verbose);
 
   costs.emplace_back(WeightedCost{eeCostWeight, std::move(eeCostPtr)});
-  costs.emplace_back(WeightedCost{selfColWeight, std::move(colCost)});
+  //  costs.emplace_back(WeightedCost{selfColWeight, std::move(colCost)});
   //  costs.emplace_back(WeightedCost{selfColWeight, std::move(colCostAd)});
 
   // TODO(mspieler): use make_unique after switch to C++14

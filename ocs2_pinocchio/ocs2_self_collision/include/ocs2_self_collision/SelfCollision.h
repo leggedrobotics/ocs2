@@ -32,36 +32,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-
 namespace ocs2 {
 
-class SelfCollisionCost final : public CostFunctionBase {
+class SelfCollision {
  public:
-  SelfCollisionCost(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterfaceSelfCollision,
-                    scalar_t minimumDistance, scalar_t mu, scalar_t delta);
-  ~SelfCollisionCost() override = default;
+  /**
+   * Constructor
+   *
+   * @parma [in] minimumDistance: minimum allowed distance between each collision pair
+   */
+  SelfCollision(scalar_t minimunDistance);
 
-  /* Copy constructor */
-  SelfCollisionCost(const SelfCollisionCost& rhs);
+  /**
+   * Evaluate the distance violation
+   * This method computes the distance results of all collision pairs through PinocchioGeometryInterface
+   * and compare each of them with the specified minimum distance.
+   *
+   * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
+   * @param [in] q: pinocchio state of the robot
+   * @return: The differences between the distance of each collision pair and the minimum distance
+   */
+  vector_t getValue(PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, const vector_t& q) const;
 
-  SelfCollisionCost* clone() const override { return new SelfCollisionCost(*this); }
-
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
-
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  /**
+   * Evaluate the linear approximation of the distance function
+   * This method analytically computes the first derivative of distance against the pinocchio generalized coordinates
+   *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] pinocchioGeometrySelfCollisions: PinocchioGeometryinterface of the robot model and collision pairs
+   * @param [in] q: pinocchio coordinates
+   * @return: The pair of the distance violation and the first derivative of the distance against q
+   */
+  std::pair<vector_t, matrix_t> getLinearApproximation(PinocchioInterface& pinocchioInterface,
+                                                       PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,
+                                                       const vector_t& q) const;
 
  private:
-  PinocchioInterface pinocchioInterface_;
-  PinocchioGeometryInterface pinocchioGeometrySelfCollisions_;
-
-  scalar_t minimumDistance_;
-
-  const RelaxedBarrierPenalty relaxedBarrierPenalty_;
+  scalar_t minimumDistance_ = 0;
 };
 
 }  // namespace ocs2

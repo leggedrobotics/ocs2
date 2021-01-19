@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/package.h>
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
-#include <ocs2_self_collision/cost/SelfCollisionCost.h>
-#include <ocs2_self_collision/cost/SelfCollisionCostCppAd.h>
+// #include <ocs2_self_collision/cost/SelfCollisionCost.h>
+// #include <ocs2_self_collision/cost/SelfCollisionCostCppAd.h>
 
 // Copied from ocs2_core/test
 // TODO(perry) make not random, move hessian check elsewhere (we don't use the true hessian)
@@ -153,7 +153,7 @@ TEST(testSelfCollision, AnalyticalVsAutoDiff) {
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
   ocs2::PinocchioInterface pInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath));
-  ocs2::PinocchioGeometryInterface gInterface(urdfPath, pInterface, {{1, 4}, {1, 6}, {1, 9}});
+  // ocs2::PinocchioGeometryInterface gInterface(urdfPath, pInterface, {{1, 4}, {1, 6}, {1, 9}});
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
   // gInterface->getGeometryModel().addAllCollisionPairs();
 
@@ -161,13 +161,13 @@ TEST(testSelfCollision, AnalyticalVsAutoDiff) {
   const ocs2::scalar_t mu = 0.01;
   const ocs2::scalar_t delta = 1e-3;
 
-  ocs2::SelfCollisionCost selfCollisionCost(pInterface, gInterface, minDistance, mu, delta);
-  ocs2::SelfCollisionCostCppAd selfCollisionCostCppAd(pInterface, gInterface, minDistance, mu, delta);
+  // ocs2::SelfCollisionCost selfCollisionCost(pInterface, gInterface, minDistance, mu, delta);
+  // ocs2::SelfCollisionCostCppAd selfCollisionCostCppAd(pInterface, gInterface, minDistance, mu, delta);
 
   auto libraryFolder = ros::package::getPath("ocs2_mobile_manipulator_example") + "/auto_generated";
-  selfCollisionCostCppAd.initialize("ColCost", libraryFolder, true, false);
+  // selfCollisionCostCppAd.initialize("ColCost", libraryFolder, true, false);
 
   bool success = true;
-  checkCostFunction(100, &selfCollisionCost, &selfCollisionCostCppAd, success, 9, 8);
+  // checkCostFunction(100, &selfCollisionCost, &selfCollisionCostCppAd, success, 9, 8);
   ASSERT_TRUE(success);
 }

@@ -30,8 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_pinocchio_interface/pinocchio_lib.h>
-
 #include <ocs2_pinocchio_interface/implementation/PinocchioInterface.h>
 
 namespace ocs2 {

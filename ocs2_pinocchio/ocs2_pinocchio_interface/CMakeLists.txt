@@ -61,6 +61,7 @@ link_directories(
 add_library(${PROJECT_NAME}
   src/PinocchioInterface.cpp
   src/PinocchioInterfaceAD.cpp
+  src/PinocchioEndEffectorKinematics.cpp
 
   # precompile pinocchio functions
   src/pinocchio_lib/frames.cpp

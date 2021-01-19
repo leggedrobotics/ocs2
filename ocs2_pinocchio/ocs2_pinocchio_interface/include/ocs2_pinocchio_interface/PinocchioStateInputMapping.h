@@ -29,19 +29,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
+#include <ocs2_core/Types.h>
 
-#include <ocs2_core/cost/CostFunctionLinearCombination.h>
+namespace ocs2 {
+/**
+ * Mapping between OCS2 and pinocchio state and input
+ */
+template <typename SCALAR>
+class PinocchioStateInputMapping {
+ public:
+  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
+  using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+  PinocchioStateInputMapping() = default;
+  virtual ~PinocchioStateInputMapping() = default;
+  virtual PinocchioStateInputMapping* clone() const = 0;
 
-namespace mobile_manipulator {
+  /* Get the pinocchio joint configuration from OCS2 state and input vectors. */
+  virtual vector_t getPinocchioJointPosition(const vector_t& state) const = 0;
 
-using MobileManipulatorCost = ocs2::CostFunctionLinearCombination;
+  /* Get the pinocchio joint velocity from OCS2 state and input vectors. */
+  virtual vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const = 0;
 
-std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
-                                                                const std::string& taskFile, const std::string& libraryFolder,
-                                                                bool recompileLibraries);
+  /* Mapps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu. */
+  virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const = 0;
 
-}  // namespace mobile_manipulator
+ protected:
+  PinocchioStateInputMapping(const PinocchioStateInputMapping& rhs) = default;
+};
+
+}  // namespace ocs2

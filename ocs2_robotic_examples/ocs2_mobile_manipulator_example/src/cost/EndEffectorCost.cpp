@@ -27,110 +27,99 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <cppad/cg/support/cppadcg_eigen.hpp>
-
 #include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 namespace mobile_manipulator {
 
-EndEffectorCost::EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
-                                 const std::string& endEffectorName)
-    : ocs2::QuadraticGaussNewtonCostBaseAD(STATE_DIM, INPUT_DIM),
-      Q_(std::move(Q)),
-      R_(std::move(R)),
-      Qf_(std::move(Qf)),
-      endEffectorIndex_(pinocchioInterface.getBodyId(endEffectorName)) {
-  pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(pinocchioInterface));
-}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+EndEffectorCost::EndEffectorCost(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics,
+                                 const ocs2::PenaltyFunctionBase& penalty)
+    : endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
+      constraintPenalty_(3 * endEffectorKinematics.getIds().size(), std::unique_ptr<ocs2::PenaltyFunctionBase>(penalty.clone())) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
-    : ocs2::QuadraticGaussNewtonCostBaseAD(rhs), Q_(rhs.Q_), R_(rhs.R_), Qf_(rhs.Qf_), endEffectorIndex_(rhs.endEffectorIndex_) {
-  pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(*rhs.pinocchioInterface_));
+    : endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()), constraintPenalty_(rhs.constraintPenalty_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t EndEffectorCost::cost(scalar_t time, const vector_t& state, const vector_t& input) {
+  vector_t eeDesiredPosition;
+  Eigen::Quaternion<scalar_t> eeDesiredOrientation;
+  std::tie(eeDesiredPosition, eeDesiredOrientation) = interpolateReference(time);
+
+  const vector_t eePosition = endEffectorKinematicsPtr_->getPositions(state)[0];
+  return constraintPenalty_.getValue(eePosition - eeDesiredPosition);
 }
 
-auto EndEffectorCost::intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                               const ad_vector_t& parameters) const -> ad_vector_t {
-  const ad_vector_t eeDesiredPosition(parameters.head<3>());
-  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
-  eeDesiredOrientation.coeffs() = parameters.tail(4);
-  pinocchioInterface_->forwardKinematics(state);
-  pinocchioInterface_->updateFramePlacements();
-  const auto eePosition = pinocchioInterface_->getBodyPosition(endEffectorIndex_);
-  const auto eeOrientation = pinocchioInterface_->getBodyOrientation(endEffectorIndex_);
-
-  ad_vector_t error(6);
-  error.head(3) = eePosition - eeDesiredPosition;                                 // position error
-  error.tail(3) = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation);  // orientation error
-
-  ad_vector_t cost(INPUT_DIM + 6);
-  cost.head(INPUT_DIM) = R_.array().sqrt().matrix() * input;
-  cost.tail(6) = Q_.array().sqrt().matrix() * error;
-  return cost;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t EndEffectorCost::finalCost(scalar_t time, const vector_t& state) {
+  return 0;
 }
 
-auto EndEffectorCost::finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const -> ad_vector_t {
-  const ad_vector_t eeDesiredPosition(parameters.head(3));
-  Eigen::Quaternion<ad_scalar_t> eeDesiredOrientation;
-  eeDesiredOrientation.coeffs() = parameters.tail(4);
-  pinocchioInterface_->forwardKinematics(state);
-  pinocchioInterface_->updateFramePlacements();
-  const auto eePosition = pinocchioInterface_->getBodyPosition(endEffectorIndex_);
-  const auto eeOrientation = pinocchioInterface_->getBodyOrientation(endEffectorIndex_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation EndEffectorCost::costQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                 const vector_t& input) {
+  vector_t eeDesiredPosition;
+  Eigen::Quaternion<scalar_t> eeDesiredOrientation;
+  std::tie(eeDesiredPosition, eeDesiredOrientation) = interpolateReference(time);
 
-  ad_vector_t error(6);
-  error.head(3) = eePosition - eeDesiredPosition;                                 // position error
-  error.tail(3) = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation);  // orientation error
+  auto eePosLin = endEffectorKinematicsPtr_->getPositionsLinearApproximation(state)[0];
+  eePosLin.f -= eeDesiredPosition;
 
-  return Qf_.array().sqrt().matrix() * error;
+  return constraintPenalty_.getQuadraticApproximation(eePosLin);
 }
 
-/* Author: Johannes Pankert */
-vector_t EndEffectorCost::interpolateReference(scalar_t time) const {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation EndEffectorCost::finalCostQuadraticApproximation(scalar_t time, const vector_t& state) {
+  return ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<vector_t, Eigen::Quaternion<scalar_t>> EndEffectorCost::interpolateReference(scalar_t time) const {
   if (costDesiredTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[EndEffectorCost] costDesiredTrajectoriesPtr_ is not set.");
   }
 
-  vector_t reference(7);
+  std::pair<vector_t, Eigen::Quaternion<scalar_t>> reference;
+
   const auto& desiredTimeTrajectory = costDesiredTrajectoriesPtr_->desiredTimeTrajectory();
   const auto& desiredStateTrajectory = costDesiredTrajectoriesPtr_->desiredStateTrajectory();
 
   auto it = std::lower_bound(desiredTimeTrajectory.begin(), desiredTimeTrajectory.end(), time);
   int timeAIdx = it - desiredTimeTrajectory.begin() - 1;
   if (timeAIdx == -1) {
-    reference = desiredStateTrajectory[0];
-
+    reference.first = desiredStateTrajectory[0].head<3>();
+    reference.second.coeffs() = desiredStateTrajectory[0].tail<4>();
   } else if (timeAIdx == desiredTimeTrajectory.size() - 1) {
-    reference = desiredStateTrajectory[timeAIdx];
-
+    reference.first = desiredStateTrajectory[timeAIdx].head<3>();
+    reference.second.coeffs() = desiredStateTrajectory[timeAIdx].tail<4>();
   } else {
     // interpolation
     const scalar_t tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
     const Eigen::Quaternion<scalar_t> quatA(desiredStateTrajectory[timeAIdx].tail<4>());
     const Eigen::Quaternion<scalar_t> quatB(desiredStateTrajectory[timeAIdx + 1].tail<4>());
 
-    reference.tail<4>() = quatA.slerp(tau, quatB).coeffs();
-    reference.head<3>() = (1 - tau) * desiredStateTrajectory[timeAIdx].head<3>() + tau * desiredStateTrajectory[timeAIdx + 1].head<3>();
+    reference.first = (1 - tau) * desiredStateTrajectory[timeAIdx].head<3>() + tau * desiredStateTrajectory[timeAIdx + 1].head<3>();
+    reference.second = quatA.slerp(tau, quatB);
   }
 
   return reference;
-}
-
-size_t EndEffectorCost::getNumIntermediateParameters() const {
-  return 7;
-}
-
-vector_t EndEffectorCost::getIntermediateParameters(scalar_t time) const {
-  return interpolateReference(time);
-}
-
-size_t EndEffectorCost::getNumFinalParameters() const {
-  return 7;
-}
-
-vector_t EndEffectorCost::getFinalParameters(scalar_t time) const {
-  return interpolateReference(time);
 }
 
 }  // namespace mobile_manipulator

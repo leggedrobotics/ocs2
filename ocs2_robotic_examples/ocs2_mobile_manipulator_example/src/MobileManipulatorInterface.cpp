@@ -77,9 +77,6 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   pinocchioInterfacePtr_.reset(new ocs2::PinocchioInterface(buildPinocchioInterface(urdfPath_)));
   std::cerr << *pinocchioInterfacePtr_;
 
-  // local CppAD copy
-  auto pinocchioInterfaceAd = ocs2::castToCppAd(*pinocchioInterfacePtr_);
-
   /*
    * DDP-MPC settings
    */
@@ -92,7 +89,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics
    */
-  dynamicsPtr_.reset(new MobileManipulatorDynamics(pinocchioInterfaceAd));
+  dynamicsPtr_.reset(new MobileManipulatorDynamics(ocs2::castToCppAd(*pinocchioInterfacePtr_)));
   dynamicsPtr_->initialize("mobile_manipulator_dynamics", libraryFolder_, recompileLibraries, true);
 
   /*
@@ -104,7 +101,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  costPtr_ = getMobileManipulatorCost(pinocchioInterfaceAd, taskFile, libraryFolder_, recompileLibraries);
+  costPtr_ = getMobileManipulatorCost(*pinocchioInterfacePtr_, taskFile, libraryFolder_, recompileLibraries);
 
   /*
    * Constraints

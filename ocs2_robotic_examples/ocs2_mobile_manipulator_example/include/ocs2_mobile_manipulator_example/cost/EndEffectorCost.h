@@ -30,48 +30,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_pinocchio_interface/EndEffectorKinematics.h>
 
-#include <ocs2_core/automatic_differentiation/Types.h>
-#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 namespace mobile_manipulator {
 
-class EndEffectorCost final : public ocs2::QuadraticGaussNewtonCostBaseAD {
+class EndEffectorCost final : public ocs2::CostFunctionBase {
  public:
-  using ad_scalar_t = ocs2::ad_scalar_t;
-  using ad_vector_t = ocs2::ad_vector_t;
-
-  EndEffectorCost(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface, matrix_t Q, matrix_t R, matrix_t Qf,
-                  const std::string& endEffectorName);
+  EndEffectorCost(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics, const ocs2::PenaltyFunctionBase& penalty);
   ~EndEffectorCost() override = default;
-
-  /* Copy constructor */
-  EndEffectorCost(const EndEffectorCost& rhs);
 
   EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
 
- protected:
-  ad_vector_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override;
-  ad_vector_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override;
-
-  /* Set num parameters to size of desired trajectory state */
-  size_t getNumIntermediateParameters() const override;
-  vector_t getIntermediateParameters(scalar_t time) const override;
-
-  size_t getNumFinalParameters() const override;
-  vector_t getFinalParameters(scalar_t time) const override;
+  scalar_t cost(scalar_t time, const vector_t& state, const vector_t& input) override;
+  scalar_t finalCost(scalar_t time, const vector_t& state) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t time, const vector_t& state) override;
 
  private:
-  vector_t interpolateReference(scalar_t time) const;
+  EndEffectorCost(const EndEffectorCost& rhs);
 
-  std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;
+  std::pair<vector_t, Eigen::Quaternion<scalar_t>> interpolateReference(scalar_t time) const;
 
-  /* Quadratic cost */
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t Qf_;
+  ocs2::SoftConstraintPenalty constraintPenalty_;
+  std::unique_ptr<ocs2::EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
 
   size_t endEffectorIndex_;
 };

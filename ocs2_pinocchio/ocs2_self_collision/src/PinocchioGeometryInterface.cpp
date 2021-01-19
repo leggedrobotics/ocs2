@@ -52,7 +52,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                                                        const std::vector<std::pair<size_t, size_t>>& collisionPairs)
     : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {
   pinocchio::urdf::buildGeom(pinocchioInterface_.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
@@ -65,7 +65,7 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                                                        const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                                                        const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
     : pinocchioInterface_(pinocchioInterface), geometryModelPtr_(new pinocchio::GeometryModel) {

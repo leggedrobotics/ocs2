@@ -27,13 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*
- * PinocchioGeometryInterface.h
- *
- *  Created on: 25 Aug 2020
- *      Author: perry
- */
-
 #pragma once
 
 #include <utility>
@@ -51,10 +44,10 @@ namespace ocs2 {
 
 class PinocchioGeometryInterface {
  public:
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+  PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<size_t, size_t>>& collisionPairs);
 
-  PinocchioGeometryInterface(const std::string& urdfPath, PinocchioInterface& pinocchioInterface,
+  PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 

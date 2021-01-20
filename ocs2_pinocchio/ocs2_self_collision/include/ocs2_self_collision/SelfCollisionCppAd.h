@@ -41,9 +41,10 @@ class SelfCollisionCppAd {
   /**
    * Constructor
    *
+   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @param [in] minimumDistance: minimum allowed distance between each collision pair
    */
-  explicit SelfCollisionCppAd(scalar_t minimumDistance);
+  SelfCollisionCppAd(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance);
 
   /** Default destructor */
   ~SelfCollisionCppAd() = default;
@@ -55,16 +56,14 @@ class SelfCollisionCppAd {
    * Initializes model libraries
    *
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @param [in] modelName : name of the generate model library
    * @param [in] modelFolder : folder to save the model library files to
    * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
    * available.
    * @param [in] verbose : print information.
    */
-  void initialize(const PinocchioInterface& pinocchioInterface, PinocchioGeometryInterface& pinocchioGeometryInterface,
-                  const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                  bool verbose = true);
+  void initialize(const PinocchioInterface& pinocchioInterface, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
+                  bool recompileLibraries = true, bool verbose = true);
 
   /**
    * Evaluate the distance violation
@@ -74,10 +73,9 @@ class SelfCollisionCppAd {
    * @note Requires updated forwardKinematics() on pinocchioInterface.
    *
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @return: the differences between the distance of each collision pair and the minimum distance
    */
-  vector_t getValue(const PinocchioInterface& pinocchioInterface, const PinocchioGeometryInterface& pinocchioGeometryInterface) const;
+  vector_t getValue(const PinocchioInterface& pinocchioInterface) const;
 
   /**
    * Evaluate the linear approximation of the distance function
@@ -85,20 +83,16 @@ class SelfCollisionCppAd {
    * @note Requires updated forwardKinematics() on pinocchioInterface.
    *
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @param [in] q: pinocchio coordinates
    * @return: the pair of the distance violation and the first derivative of the distance against q
    */
-  std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface,
-                                                       const PinocchioGeometryInterface& pinocchioGeometryInterface,
-                                                       const vector_t& q) const;
+  std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface, const vector_t& q) const;
 
  private:
   /**
    * Sets all the required CppAdCodeGenInterfaces
    */
-  void setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, PinocchioGeometryInterface& pinocchioGeometryInterface,
-                       const std::string& modelName, const std::string& modelFolder);
+  void setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const std::string& modelName, const std::string& modelFolder);
 
   /**
    * Create the forward model and derivatives.
@@ -114,24 +108,24 @@ class SelfCollisionCppAd {
    */
   void loadModelsIfAvailable(bool verbose);
 
-  // Number of params per result = 3 + 3 + 1 (nearest point 1, nearest point 2, sign indicator)
-  const size_t numberOfParamsPerResult_ = 7;
-
   // From the current state of the robot, and the closest points in world frame, compute the positions of the points in link frame
   // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
   // Returns a vector that is of length |3*2*number of collision pairs + 1 (for sign indicator)|
-  ad_vector_t computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, PinocchioGeometryInterface& pinocchioGeometryInterface,
-                                  ad_vector_t state, ad_vector_t points);
+  ad_vector_t computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state, const ad_vector_t& points) const;
   // From the current state of the robot, and the closest points in link frames, calculate the distances wrt state
   // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
   // Returns a vector that is of length |collisionPairs|
-  ad_vector_t distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, PinocchioGeometryInterface& pinocchioGeometryInterface,
-                                    ad_vector_t state, ad_vector_t points);
+  ad_vector_t distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state,
+                                    const ad_vector_t& points) const;
+
+  // Number of params per result = 3 + 3 + 1 (nearest point 1, nearest point 2, sign indicator)
+  const size_t numberOfParamsPerResult_ = 7;
 
   std::unique_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
   std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
-  scalar_t minimumDistance_ = 0;
+  PinocchioGeometryInterface pinocchioGeometryInterface_;
+  scalar_t minimumDistance_;
 };
 
 } /* namespace ocs2 */

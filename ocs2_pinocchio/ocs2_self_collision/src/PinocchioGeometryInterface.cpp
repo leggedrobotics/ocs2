@@ -44,11 +44,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                                                       const std::vector<std::pair<size_t, size_t>>& collisionPairs)
+                                                       const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
     : geometryModelPtr_(new pinocchio::GeometryModel) {
   pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
 
-  for (const auto& pair : collisionPairs) {
+  for (const auto& pair : collisionObjectPairs) {
     geometryModelPtr_->addCollisionPair(pinocchio::CollisionPair{pair.first, pair.second});
   }
 }

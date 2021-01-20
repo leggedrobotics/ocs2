@@ -44,9 +44,25 @@ namespace ocs2 {
 
 class PinocchioGeometryInterface final {
  public:
+  /**
+   * Constructor
+   *
+   * @param [in] urdfPath: Path to the robot URDF for loading the collision bodies
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] collisionObjectPairs: List of collision object index pairs
+   */
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::pair<size_t, size_t>>& collisionPairs);
+                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs);
 
+  /**
+   * Constructor
+   *
+   * @param [in] urdfPath: Path to the robot URDF for loading the collision bodies
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] collisionLinkPairs: List of collision link pairs by string name. One link can contain multiple colision objects.
+   *                                 In this case, all collision object combinations are added.
+   * @param [in] collisionObjectPairs: List of collision object index pairs
+   */
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
@@ -59,8 +75,8 @@ class PinocchioGeometryInterface final {
    *
    * @note Requires pinocchioInterface with updated joint placements by calling forwardKinematics().
    *
-   * @param [in] pinocchioInterface:  forward kinematics
-   * @return Array of distance results
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @return An array of distances between pairs of collision bodies defined in the constructor.
    */
   std::vector<hpp::fcl::DistanceResult> computeDistances(const PinocchioInterface& pinocchioInterface) const;
 

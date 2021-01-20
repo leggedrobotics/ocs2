@@ -39,9 +39,10 @@ class SelfCollision {
   /**
    * Constructor
    *
+   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @parma [in] minimumDistance: minimum allowed distance between each collision pair
    */
-  explicit SelfCollision(scalar_t minimumDistance);
+  SelfCollision(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance);
 
   /**
    * Evaluate the distance violation
@@ -51,10 +52,9 @@ class SelfCollision {
    * @note Requires updated forwardKinematics() on pinocchioInterface.
    *
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @return: The differences between the distance of each collision pair and the minimum distance
    */
-  vector_t getValue(const PinocchioInterface& pinocchioInterface, const PinocchioGeometryInterface& pinocchioGeometryInterface) const;
+  vector_t getValue(const PinocchioInterface& pinocchioInterface) const;
 
   /**
    * Evaluate the linear approximation of the distance function
@@ -66,11 +66,11 @@ class SelfCollision {
    * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @return: The pair of the distance violation and the first derivative of the distance against q
    */
-  std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface,
-                                                       const PinocchioGeometryInterface& pinocchioGeometryInterface) const;
+  std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface) const;
 
  private:
-  scalar_t minimumDistance_ = 0;
+  PinocchioGeometryInterface pinocchioGeometryInterface_;
+  scalar_t minimumDistance_;
 };
 
 }  // namespace ocs2

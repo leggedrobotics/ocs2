@@ -51,9 +51,6 @@ class PinocchioGeometryInterface final {
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
-  ~PinocchioGeometryInterface() = default;
-  PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
-
   pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 

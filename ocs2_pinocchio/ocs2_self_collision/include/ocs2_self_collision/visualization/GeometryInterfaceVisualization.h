@@ -27,30 +27,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*
- * GeometryInterfaceVisualization.h
- *
- *  Created on: 4 Sep 2020
- *      Author: perry
- */
-
 #pragma once
 
 #include <ros/ros.h>
 
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 
 namespace ocs2 {
 
 class GeometryInterfaceVisualization {
  public:
-  GeometryInterfaceVisualization(const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
-                                 std::string pinocchioWorldFrame = "world");
+  GeometryInterfaceVisualization(PinocchioInterface pinocchioInterface, const PinocchioGeometryInterface& geometryInterface,
+                                 ros::NodeHandle& nh, std::string pinocchioWorldFrame = "world");
   virtual ~GeometryInterfaceVisualization() = default;
 
   void publishDistances(const ocs2::vector_t&);
 
  private:
+  PinocchioInterface pinocchioInterface_;
   PinocchioGeometryInterface geometryInterface_;
 
   ros::Publisher markerPublisher_;

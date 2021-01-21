@@ -92,7 +92,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
   ocs2::PinocchioGeometryInterface geomInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}});
 
-  geometryVisualization_.reset(new ocs2::GeometryInterfaceVisualization(geomInterface, nodeHandle));
+  geometryVisualization_.reset(new ocs2::GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
 }
 
 /******************************************************************************************************/

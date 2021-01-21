@@ -61,10 +61,10 @@ class PinocchioInterfaceTpl final {
   using Data = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using JointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
-  using MatrixX = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
-  using VectorX = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
-  using Vector3 = Eigen::Matrix<SCALAR, 3, 1>;
-  using Quaternion = Eigen::Quaternion<SCALAR>;
+  using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
+  using vector3_t = Eigen::Matrix<SCALAR, 3, 1>;
+  using quaternion_t = Eigen::Quaternion<SCALAR>;
 
   /**
    * Construct from given pinocchio model
@@ -101,7 +101,7 @@ class PinocchioInterfaceTpl final {
    * @param[in] bodyId pinocchio body index
    * @return the body position
    */
-  Vector3 getBodyPosition(size_t bodyId) const;
+  vector3_t getBodyPosition(size_t bodyId) const;
 
   /**
    * Get the orientation of a body in the (pinocchio) world frame
@@ -110,7 +110,7 @@ class PinocchioInterfaceTpl final {
    * @param[in] bodyId pinocchio body index
    * @return the body orientation
    */
-  Quaternion getBodyOrientation(size_t bodyId) const;
+  quaternion_t getBodyOrientation(size_t bodyId) const;
 
   /**
    * Get the joint position in the (pinocchio) world frame
@@ -119,7 +119,7 @@ class PinocchioInterfaceTpl final {
    * @param[in] jointIndex pinocchio joint index
    * @return the joint position
    */
-  Vector3 getJointPosition(size_t jointIndex) const;
+  vector3_t getJointPosition(size_t jointIndex) const;
 
   /**
    * Get the joint orientation in the (pinocchio) world frame
@@ -128,20 +128,20 @@ class PinocchioInterfaceTpl final {
    * @param[in] jointIndex pinocchio joint index
    * @return the joint orientation
    */
-  Quaternion getJointOrientation(size_t jointIndex) const;
+  quaternion_t getJointOrientation(size_t jointIndex) const;
 
   /** Get the joint jacobian wrt. the generalized coordinates. */
-  MatrixX getJointJacobian(size_t jointIndex) const;
+  matrix_t getJointJacobian(size_t jointIndex) const;
 
   /**
    * @param[in] bodyName name of the body (corresponds to the pinocchio name, which is usually the URDF link name)
    * @return body index
    */
   size_t getBodyId(const std::string& bodyName) const;
-  void forwardKinematics(const VectorX& q);
+  void forwardKinematics(const vector_t& q);
   void updateFramePlacements();
   void updateGlobalPlacements();
-  void computeJointJacobians(const VectorX& q);
+  void computeJointJacobians(const vector_t& q);
 
   friend std::ostream& operator<<(std::ostream& os, const PinocchioInterfaceTpl<scalar_t>& p);
 

@@ -42,27 +42,45 @@ struct GeometryModel;
 
 namespace ocs2 {
 
-class PinocchioGeometryInterface {
+class PinocchioGeometryInterface final {
  public:
+  /**
+   * Constructor
+   *
+   * @param [in] urdfPath: Path to the robot URDF for loading the collision bodies
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] collisionObjectPairs: List of collision object index pairs
+   */
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::pair<size_t, size_t>>& collisionPairs);
+                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs);
 
+  /**
+   * Constructor
+   *
+   * @param [in] urdfPath: Path to the robot URDF for loading the collision bodies
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] collisionLinkPairs: List of collision link pairs by string name. One link can contain multiple colision objects.
+   *                                 In this case, all collision object combinations are added.
+   * @param [in] collisionObjectPairs: List of collision object index pairs
+   */
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
-  virtual ~PinocchioGeometryInterface() = default;
-
-  // TODO(perry) discussion over appropriate depth of copy/clone (ie should the interface ptrs or interfaces be copied)
-  PinocchioGeometryInterface(const PinocchioGeometryInterface& other);
-
   pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
-  std::vector<hpp::fcl::DistanceResult> computeDistances(const Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>& q);
+  /**
+   * Compute collision pair distances
+   *
+   * @note Requires pinocchioInterface with updated joint placements by calling forwardKinematics().
+   *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @return An array of distances between pairs of collision bodies defined in the constructor.
+   */
+  std::vector<hpp::fcl::DistanceResult> computeDistances(const PinocchioInterface& pinocchioInterface) const;
 
  private:
-  PinocchioInterface pinocchioInterface_;
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 };
 

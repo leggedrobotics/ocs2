@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
   gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
-  vInterface.reset(new ocs2::GeometryInterfaceVisualization(*gInterface, nodeHandle, "base"));
+  vInterface.reset(new ocs2::GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base"));
 
   ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);
 

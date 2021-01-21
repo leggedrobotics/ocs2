@@ -27,13 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*
- * SelfCollisionCostCppAd.cpp
- *
- *  Created on: 8 Sep 2020
- *      Author: perry
- */
-
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
@@ -45,22 +38,25 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SelfCollisionCppAd::SelfCollisionCppAd(scalar_t minimumDistance) : minimumDistance_(minimumDistance) {}
+SelfCollisionCppAd::SelfCollisionCppAd(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
+    : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SelfCollisionCppAd::SelfCollisionCppAd(const SelfCollisionCppAd& rhs)
     : minimumDistance_(rhs.minimumDistance_),
+      pinocchioGeometryInterface_(rhs.pinocchioGeometryInterface_),
       cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
       cppAdInterfaceLinkPoints_(new CppAdInterface(*rhs.cppAdInterfaceLinkPoints_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SelfCollisionCppAd::initialize(PinocchioInterface& pinocchioInterface, PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,
-                                    const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose) {
-  setADInterfaces(pinocchioInterface, pinocchioGeometrySelfCollisions, modelName, modelFolder);
+void SelfCollisionCppAd::initialize(const PinocchioInterface& pinocchioInterface, const std::string& modelName,
+                                    const std::string& modelFolder, bool recompileLibraries, bool verbose) {
+  PinocchioInterfaceCppAd pinocchioInterfaceAd = castToCppAd(pinocchioInterface);
+  setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
   if (recompileLibraries) {
     createModels(verbose);
   } else {
@@ -71,8 +67,8 @@ void SelfCollisionCppAd::initialize(PinocchioInterface& pinocchioInterface, Pino
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SelfCollisionCppAd::getValue(PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, const vector_t& q) const {
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometrySelfCollisions.computeDistances(q);
+vector_t SelfCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterface) const {
+  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   vector_t violations = vector_t::Zero(distanceArray.size());
   for (size_t i = 0; i < distanceArray.size(); ++i) {
@@ -85,9 +81,9 @@ vector_t SelfCollisionCppAd::getValue(PinocchioGeometryInterface& pinocchioGeome
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(PinocchioGeometryInterface& pinocchioGeometrySelfCollisions,
+std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(const PinocchioInterface& pinocchioInterface,
                                                                          const vector_t& q) const {
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometrySelfCollisions.computeDistances(q);
+  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   vector_t pointsInWorldFrame(distanceArray.size() * numberOfParamsPerResult_);
 
@@ -109,30 +105,27 @@ std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(Pinocch
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ad_vector_t SelfCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd,
-                                                    PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, ad_vector_t state,
-                                                    ad_vector_t points) {
-  using Vector3 = Eigen::Matrix<ad_scalar_t, 3, 1>;
-  using Quaternion = Eigen::Quaternion<ad_scalar_t>;
+ad_vector_t SelfCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state,
+                                                    const ad_vector_t& points) const {
+  using vector3_t = Eigen::Matrix<ad_scalar_t, 3, 1>;
+  using quaternion_t = Eigen::Quaternion<ad_scalar_t>;
 
   pinocchioInterfaceAd.forwardKinematics(state);
   pinocchioInterfaceAd.updateGlobalPlacements();
 
   ad_vector_t pointsInLinkFrames = ad_vector_t::Zero(points.size());
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
-    const auto collisionPair = pinocchioGeometrySelfCollisions.getGeometryModel().collisionPairs[i];
-    const pinocchio::GeometryObject& geometryObject1 =
-        pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.first];
+    const auto collisionPair = pinocchioGeometryInterface_.getGeometryModel().collisionPairs[i];
+    const pinocchio::GeometryObject& geometryObject1 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.first];
     const auto joint1Position = pinocchioInterfaceAd.getJointPosition(geometryObject1.parentJoint);
     const auto joint1Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject1.parentJoint);
-    const Vector3 joint1PositionInverse = joint1Orientation.conjugate() * -joint1Position;
-    const Quaternion joint1OrientationInverse = joint1Orientation.conjugate();
-    const pinocchio::GeometryObject& geometryObject2 =
-        pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.second];
+    const vector3_t joint1PositionInverse = joint1Orientation.conjugate() * -joint1Position;
+    const quaternion_t joint1OrientationInverse = joint1Orientation.conjugate();
+    const pinocchio::GeometryObject& geometryObject2 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.second];
     const auto joint2Position = pinocchioInterfaceAd.getJointPosition(geometryObject2.parentJoint);
     const auto joint2Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject2.parentJoint);
-    const Vector3 joint2PositionInverse = joint2Orientation.conjugate() * -joint2Position;
-    const Quaternion joint2OrientationInverse = joint2Orientation.conjugate();
+    const vector3_t joint2PositionInverse = joint2Orientation.conjugate() * -joint2Position;
+    const quaternion_t joint2OrientationInverse = joint2Orientation.conjugate();
 
     ad_vector_t point1 = points.segment(i * numberOfParamsPerResult_, 3);
     ad_vector_t point2 = points.segment(i * numberOfParamsPerResult_ + 3, 3);
@@ -148,19 +141,17 @@ ad_vector_t SelfCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd,
-                                                      PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, ad_vector_t state,
-                                                      ad_vector_t points) {
+ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state,
+                                                      const ad_vector_t& points) const {
   pinocchioInterfaceAd.forwardKinematics(state);
   pinocchioInterfaceAd.updateGlobalPlacements();
 
   ad_vector_t results = ad_vector_t::Zero(points.size() / numberOfParamsPerResult_);
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
-    const auto collisionPair = pinocchioGeometrySelfCollisions.getGeometryModel().collisionPairs[i];
+    const auto collisionPair = pinocchioGeometryInterface_.getGeometryModel().collisionPairs[i];
     ad_vector_t point1 = points.segment(i * numberOfParamsPerResult_, 3);
 
-    const pinocchio::GeometryObject& geometryObject1 =
-        pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.first];
+    const pinocchio::GeometryObject& geometryObject1 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.first];
 
     const auto joint1Position = pinocchioInterfaceAd.getJointPosition(geometryObject1.parentJoint);
     const auto joint1Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject1.parentJoint);
@@ -168,8 +159,7 @@ ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& p
 
     ad_vector_t point2 = points.segment(i * numberOfParamsPerResult_ + 3, 3);
 
-    const pinocchio::GeometryObject& geometryObject2 =
-        pinocchioGeometrySelfCollisions.getGeometryModel().geometryObjects[collisionPair.second];
+    const pinocchio::GeometryObject& geometryObject2 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.second];
 
     const auto joint2Position = pinocchioInterfaceAd.getJointPosition(geometryObject2.parentJoint);
     const auto joint2Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject2.parentJoint);
@@ -184,17 +174,13 @@ ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& p
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SelfCollisionCppAd::setADInterfaces(PinocchioInterface& pinocchioInterface,
-                                         PinocchioGeometryInterface& pinocchioGeometrySelfCollisions, const std::string& modelName,
+void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const std::string& modelName,
                                          const std::string& modelFolder) {
-  const size_t stateDim = pinocchioInterface.getModel().nq;
-  const size_t numDistanceResults = pinocchioGeometrySelfCollisions.getGeometryModel().collisionPairs.size();
-
-  PinocchioInterfaceCppAd pinocchioInterfaceAd = castToCppAd(pinocchioInterface);
+  const size_t stateDim = pinocchioInterfaceAd.getModel().nq;
+  const size_t numDistanceResults = pinocchioGeometryInterface_.getGeometryModel().collisionPairs.size();
 
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
-    Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult =
-        distanceCalculationAd(pinocchioInterfaceAd, pinocchioGeometrySelfCollisions, x, p);
+    Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = distanceCalculationAd(pinocchioInterfaceAd, x, p);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
   cppAdInterfaceDistanceCalculation_.reset(new CppAdInterface(stateAndClosestPointsToDistance, stateDim,
@@ -202,8 +188,7 @@ void SelfCollisionCppAd::setADInterfaces(PinocchioInterface& pinocchioInterface,
                                                               modelName + "_distance_intermediate", modelFolder));
 
   auto stateAndClosestPointsToLinkFrame = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
-    Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult =
-        computeLinkPointsAd(pinocchioInterfaceAd, pinocchioGeometrySelfCollisions, x, p);
+    Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = computeLinkPointsAd(pinocchioInterfaceAd, x, p);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
   cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, stateDim,

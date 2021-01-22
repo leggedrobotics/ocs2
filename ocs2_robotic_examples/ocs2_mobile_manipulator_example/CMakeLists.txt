@@ -73,7 +73,7 @@ link_directories(
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
   src/cost/MobileManipulatorCost.cpp
-  src/cost/EndEffectorCost.cpp
+  src/constraint/EndEffectorConstraint.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
 )

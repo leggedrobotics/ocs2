@@ -29,35 +29,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
 #include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio_interface/EndEffectorKinematics.h>
 
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_core/constraint/StateConstraint.h>
 
 namespace mobile_manipulator {
 
-class EndEffectorCost final : public ocs2::CostFunctionBase {
+class EndEffectorConstraint final : public ocs2::StateConstraint {
  public:
-  EndEffectorCost(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics, const ocs2::PenaltyFunctionBase& penalty);
-  ~EndEffectorCost() override = default;
+  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
+  using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-  EndEffectorCost* clone() const override { return new EndEffectorCost(*this); }
+  explicit EndEffectorConstraint(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics);
+  ~EndEffectorConstraint() override = default;
+  EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }
 
-  scalar_t cost(scalar_t time, const vector_t& state, const vector_t& input) override;
-  scalar_t finalCost(scalar_t time, const vector_t& state) override;
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input) override;
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t time, const vector_t& state) override;
+  size_t getNumConstraints(scalar_t time) const override;
+  vector_t getValue(scalar_t time, const vector_t& state) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
+
+  void setDesiredPose(const vector3_t& position, const quaternion_t& orientation);
 
  private:
-  EndEffectorCost(const EndEffectorCost& rhs);
+  EndEffectorConstraint(const EndEffectorConstraint& rhs);
 
-  std::pair<vector_t, Eigen::Quaternion<scalar_t>> interpolateReference(scalar_t time) const;
-
-  ocs2::SoftConstraintPenalty constraintPenalty_;
+  vector3_t eeDesiredPosition_;
+  quaternion_t eeDesiredOrientation_;
   std::unique_ptr<ocs2::EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
-
-  size_t endEffectorIndex_;
 };
 
 }  // namespace mobile_manipulator

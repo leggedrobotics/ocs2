@@ -44,6 +44,9 @@ class SelfCollision {
    */
   SelfCollision(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance);
 
+  /** Get the number of collision pairs */
+  size_t getNumCollisionPairs() const { return pinocchioGeometryInterface_.getNumCollisionPairs(); }
+
   /**
    * Evaluate the distance violation
    * This method computes the distance results of all collision pairs through PinocchioGeometryInterface

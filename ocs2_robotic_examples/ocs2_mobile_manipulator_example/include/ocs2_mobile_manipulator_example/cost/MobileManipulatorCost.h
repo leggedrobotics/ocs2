@@ -31,17 +31,55 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/cost/CostFunctionLinearCombination.h>
-
-#include <ocs2_mobile_manipulator_example/definitions.h>
+#include <ocs2_core/cost/CostCollection.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
+#include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
+#include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraint.h>
+// #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
 
 namespace mobile_manipulator {
 
-using MobileManipulatorCost = ocs2::CostFunctionLinearCombination;
+class MobileManipulatorCost : public ocs2::CostFunctionBase {
+ public:
+  using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
-                                                                const std::string& taskFile, const std::string& libraryFolder,
-                                                                bool recompileLibraries);
+  MobileManipulatorCost(ocs2::PinocchioInterface pinocchioInterface, const std::string& taskFile, const std::string& libraryFolder,
+                        bool recompileLibraries);
+  ~MobileManipulatorCost() override = default;
+  MobileManipulatorCost* clone() const override { return new MobileManipulatorCost(*this); }
+
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
+  scalar_t finalCost(scalar_t t, const vector_t& x) override;
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+
+ private:
+  MobileManipulatorCost(const MobileManipulatorCost& rhs);
+
+  void setCachePointers();
+  void setEndEffectorReference(scalar_t time);
+  void setFinalEndEffectorReference(scalar_t time);
+  std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
+                                                               scalar_t time) const;
+
+  std::unique_ptr<ocs2::StateInputCost> getQuadraticInputCost(const std::string& taskFile);
+  std::unique_ptr<ocs2::StateCost> getEndEffectorCost(const std::string& taskFile, const std::string& fieldName);
+  std::unique_ptr<ocs2::StateCost> getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
+                                                        bool recompileLibraries);
+  ocs2::PinocchioInterface pinocchioInterface_;
+  ocs2::CostCollection<ocs2::StateInputCost> stateInputCosts_;
+  ocs2::CostCollection<ocs2::StateCost> stateCosts_;
+  ocs2::CostCollection<ocs2::StateCost> finalCosts_;
+
+  SelfCollisionConstraint* selfCollisionConstraintPtr_ = nullptr;
+  EndEffectorConstraint* eeConstraintPtr_ = nullptr;
+  EndEffectorConstraint* finalEeConstraintPtr_ = nullptr;
+};
+
+std::unique_ptr<ocs2::CostFunctionBase> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
+                                                                 const std::string& taskFile, const std::string& libraryFolder,
+                                                                 bool recompileLibraries);
 
 }  // namespace mobile_manipulator

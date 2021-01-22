@@ -8,7 +8,7 @@ ddp
 {
   algorithm                     SLQ
 
-  nThreads                      1
+  nThreads                      3
 
   maxNumIterations              10
   minRelCost                    0.1
@@ -35,7 +35,7 @@ ddp
   strategy                      LINE_SEARCH
   lineSearch
   {
-    minStepLength                 1.0
+    minStepLength                 1e-2
     maxStepLength                 1.0
     hessianCorrectionStrategy     DIAGONAL_SHIFT
     hessianCorrectionMultiple     1e-3
@@ -57,18 +57,24 @@ mpc
 {
   timeHorizon                    1.0
   numPartitions                  4
+
   runtimeMaxNumIterations        1
   initMaxNumIterations           10
-  runtimeMinStepLength           1.0
+
   runtimeMaxStepLength           1.0
+  runtimeMinStepLength           1.0
   initMaxStepLength              1.0
-  initMinStepLength              0.1
+  initMinStepLength              1e-2
+
+  debugPrint                     false
   coldStart                      false
+
   useParallelRiccatiSolver       true  ; use disjoint riccati solver in MP case and recedingHorizon fashion
+
   solutionTimeWindow             0.2   ; [s]
+
   mpcDesiredFrequency            100   ; [Hz]
   mrtDesiredFrequency            400   ; [Hz]
-  debugPrint                     false
 }
 
 ; initial state
@@ -85,27 +91,12 @@ initialState
   (8,0)  0.0  ; WR_ROT
 }
 
-endEffectorCost
+inputCost
 {
-  weight  1.0
-
-  ; End effector cost weight matrix
-  Q
-  {
-    scaling 1e+1
-
-    (0,0) 1.0 ; end effector x
-    (1,1) 1.0 ; end effector y
-    (2,2) 1.0 ; end effector z
-    (3,3) 1.0 ; end effector roll
-    (4,4) 1.0 ; end effector pitch
-    (5,5) 1.0 ; end effector yaw
-  }
-
   ; control weight matrix
   R
   {
-    scaling 1e-0
+    scaling 1e-2
 
     (0,0)  1.0  ; forward velocity
     (1,1)  1.0  ; turning velocity
@@ -116,25 +107,27 @@ endEffectorCost
     (6,6)  1.0  ; WR_FLE velocity
     (7,7)  1.0  ; WR_ROT velocity
   }
-
-  ; final end effector cost weight matrix
-  Q_final
-  {
-    scaling 1e+0
-
-    (0,0) 1.0  ; end effector x
-    (1,1) 1.0  ; end effector y
-    (2,2) 1.0  ; end effector z
-    (3,3) 1.0  ; end effector roll
-    (4,4) 1.0  ; end effector pitch
-    (5,5) 1.0  ; end effector yaw
-  }
 }
 
-
-selfCollisionCost
+endEffector
 {
-  weight  1.00
+  name "WRIST_2" ; name defined in the URDF
+
+  ; end effector quadratic penalty scaling
+  muPosition  10.0
+  muOrientation  0.0
+}
+
+finalEndEffector
+{
+  name "WRIST_2"
+  muPosition  10.0
+  muOrientation  0.0
+}
+
+selfCollision
+{
+  useCppAd false
 
   ; Self Collision raw object pairs
   collisionObjectPairs

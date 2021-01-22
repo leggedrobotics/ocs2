@@ -118,9 +118,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
   pinocchio::Data& data = pinocchioInterface_.getData();
   const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
 
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
   pinocchio::computeJointJacobians(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
 
   const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::WORLD;
 

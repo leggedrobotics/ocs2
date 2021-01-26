@@ -58,7 +58,7 @@ size_t SelfCollisionConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state) const {
   if (pinocchioInterfacePtr_ == nullptr) {
-    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterfacePtr()");
+    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
   return selfCollision_.getValue(*pinocchioInterfacePtr_);
@@ -69,7 +69,7 @@ vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state)
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SelfCollisionConstraint::getLinearApproximation(scalar_t time, const vector_t& state) const {
   if (pinocchioInterfacePtr_ == nullptr) {
-    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterfacePtr()");
+    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
   VectorFunctionLinearApproximation constraint;
@@ -78,27 +78,6 @@ VectorFunctionLinearApproximation SelfCollisionConstraint::getLinearApproximatio
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
   return constraint;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SelfCollisionConstraint::computeValue(const vector_t& state) {
-  if (pinocchioInterfacePtr_ == nullptr) {
-    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterfacePtr()");
-  }
-  pinocchioInterfacePtr_->forwardKinematics(mappingPtr_->getPinocchioJointPosition(state));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SelfCollisionConstraint::computeApproximation(const vector_t& state) {
-  if (pinocchioInterfacePtr_ == nullptr) {
-    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterfacePtr()");
-  }
-  pinocchioInterfacePtr_->computeJointJacobians(mappingPtr_->getPinocchioJointPosition(state));
-  pinocchioInterfacePtr_->updateGlobalPlacements();
 }
 
 }  // namespace mobile_manipulator

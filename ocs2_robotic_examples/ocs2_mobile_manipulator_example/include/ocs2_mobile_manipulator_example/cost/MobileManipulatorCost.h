@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
+#include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
 #include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
 #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraint.h>
 // #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
@@ -69,17 +70,19 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
   std::unique_ptr<ocs2::StateCost> getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
                                                         bool recompileLibraries);
   ocs2::PinocchioInterface pinocchioInterface_;
-  ocs2::CostCollection<ocs2::StateInputCost> stateInputCosts_;
-  ocs2::CostCollection<ocs2::StateCost> stateCosts_;
-  ocs2::CostCollection<ocs2::StateCost> finalCosts_;
+  ocs2::CostCollection<ocs2::StateInputCost> stateInputCostCollection_;
+  ocs2::CostCollection<ocs2::StateCost> stateCostCollection_;
+  ocs2::CostCollection<ocs2::StateCost> finalCostCollection_;
+
+  MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping_;
 
   SelfCollisionConstraint* selfCollisionConstraintPtr_ = nullptr;
   EndEffectorConstraint* eeConstraintPtr_ = nullptr;
   EndEffectorConstraint* finalEeConstraintPtr_ = nullptr;
 };
 
-std::unique_ptr<ocs2::CostFunctionBase> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
-                                                                 const std::string& taskFile, const std::string& libraryFolder,
-                                                                 bool recompileLibraries);
+std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
+                                                                const std::string& taskFile, const std::string& libraryFolder,
+                                                                bool recompileLibraries);
 
 }  // namespace mobile_manipulator

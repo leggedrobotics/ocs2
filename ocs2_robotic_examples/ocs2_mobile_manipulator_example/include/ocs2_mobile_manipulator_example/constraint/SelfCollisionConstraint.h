@@ -47,13 +47,19 @@ class SelfCollisionConstraint final : public ocs2::StateConstraint {
   SelfCollisionConstraint* clone() const override { return new SelfCollisionConstraint(*this); }
 
   size_t getNumConstraints(scalar_t time) const override;
+
+  /** Get the self collision distance values
+   * @note Requires pinocchio::forwardKinematics().
+   */
   vector_t getValue(scalar_t time, const vector_t& state) const override;
+
+  /** Get the self collision distance approximation
+   * @note Requires pinocchio::forwardKinematics(), pinocchio::updateGlobalPlacements() and pinocchio::computeJointJacobians().
+   */
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
-  void setPinocchioInterfacePtr(ocs2::PinocchioInterface* ptr) { pinocchioInterfacePtr_ = ptr; }
-
-  void computeValue(const vector_t& state);
-  void computeApproximation(const vector_t& state);
+  /** Caches the pointer to the pinocchio interface. */
+  void setPinocchioInterface(ocs2::PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 
  private:
   SelfCollisionConstraint(const SelfCollisionConstraint& rhs);

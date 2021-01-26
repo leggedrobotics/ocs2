@@ -62,7 +62,7 @@ mpc
   initMaxNumIterations           10
 
   runtimeMaxStepLength           1.0
-  runtimeMinStepLength           1.0
+  runtimeMinStepLength           1e-2
   initMaxStepLength              1.0
   initMinStepLength              1e-2
 

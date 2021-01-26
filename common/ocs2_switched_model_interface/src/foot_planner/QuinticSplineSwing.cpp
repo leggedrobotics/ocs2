@@ -2,7 +2,7 @@
 // Created by rgrandia on 21.01.21.
 //
 
-#include "ocs2_switched_model_interface/foot_planner/QuinticSpline.h"
+#include "ocs2_switched_model_interface/foot_planner/QuinticSplineSwing.h"
 
 namespace switched_model {
 

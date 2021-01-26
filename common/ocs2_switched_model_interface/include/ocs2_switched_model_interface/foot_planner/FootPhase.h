@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/foot_planner/QuinticSpline.h"
+#include "ocs2_switched_model_interface/foot_planner/QuinticSplineSwing.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {

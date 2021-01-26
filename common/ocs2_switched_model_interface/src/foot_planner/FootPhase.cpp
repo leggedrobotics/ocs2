@@ -3,6 +3,7 @@
 //
 
 #include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
+#include "ocs2_switched_model_interface/foot_planner/CubicSpline.h"
 
 namespace switched_model {
 
@@ -111,58 +112,56 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
 
   // LiftOff Motion
   const vector3_t liftoffNormal = surfaceNormalInWorld(*liftOff_.terrainPlane);
-  const CubicSpline::Node liftOffInLiftOffFrame{liftOff_.time, 0.0, liftoffNormal.dot(liftOffVelocityInWorld)};
-  const CubicSpline::Node apexInLiftOffFrame{apexTime,
-                                             terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *liftOff_.terrainPlane),
-                                             liftoffNormal.dot(apexVelocityInWorld)};
-  const CubicSpline::Node touchDownInLiftOffFrame{
-      touchDown_.time, terrainSignedDistanceFromPositionInWorld(touchDownPositionInWorld, *liftOff_.terrainPlane),
-      liftoffNormal.dot(touchDownVelocityInWorld)};
+  const SwingNode liftOffInLiftOffFrame{liftOff_.time, 0.0, liftoffNormal.dot(liftOffVelocityInWorld)};
+  const SwingNode apexInLiftOffFrame{apexTime, terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *liftOff_.terrainPlane),
+                                     liftoffNormal.dot(apexVelocityInWorld)};
+  const SwingNode touchDownInLiftOffFrame{touchDown_.time,
+                                          terrainSignedDistanceFromPositionInWorld(touchDownPositionInWorld, *liftOff_.terrainPlane),
+                                          liftoffNormal.dot(touchDownVelocityInWorld)};
 
   // Create spline in liftOffFrame
-  liftOffMotion_.reset(new SplineCpg(liftOffInLiftOffFrame, apexInLiftOffFrame, touchDownInLiftOffFrame));
+  liftOffMotion_.reset(new QuinticSwing(liftOffInLiftOffFrame, apexInLiftOffFrame, touchDownInLiftOffFrame));
 
   // Touchdown Motion
   const vector3_t touchDownNormal = surfaceNormalInWorld(*touchDown_.terrainPlane);
-  const CubicSpline::Node liftOffInTouchDownFrame{
-      liftOff_.time, terrainSignedDistanceFromPositionInWorld(liftOffPositionInWorld, *touchDown_.terrainPlane),
-      touchDownNormal.dot(liftOffVelocityInWorld)};
-  const CubicSpline::Node apexInTouchDownFrame{apexTime,
-                                               terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *touchDown_.terrainPlane),
-                                               touchDownNormal.dot(apexVelocityInWorld)};
-  CubicSpline::Node touchDownInTouchDownFrame{touchDown_.time, 0.0, touchDownNormal.dot(touchDownVelocityInWorld)};
+  const SwingNode liftOffInTouchDownFrame{liftOff_.time,
+                                          terrainSignedDistanceFromPositionInWorld(liftOffPositionInWorld, *touchDown_.terrainPlane),
+                                          touchDownNormal.dot(liftOffVelocityInWorld)};
+  const SwingNode apexInTouchDownFrame{apexTime, terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *touchDown_.terrainPlane),
+                                       touchDownNormal.dot(apexVelocityInWorld)};
+  SwingNode touchDownInTouchDownFrame{touchDown_.time, 0.0, touchDownNormal.dot(touchDownVelocityInWorld)};
 
   // Create spline in touchDownFrame
-  touchdownMotion_.reset(new SplineCpg(liftOffInTouchDownFrame, apexInTouchDownFrame, touchDownInTouchDownFrame));
+  touchdownMotion_.reset(new QuinticSwing(liftOffInTouchDownFrame, apexInTouchDownFrame, touchDownInTouchDownFrame));
 
   // Terrain clearance
   if (signedDistanceField_ != nullptr) {
     const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOff_.terrainPlane->positionInWorld), 0.0);
     const scalar_t sdfEndClearance_ = std::min(signedDistanceField_->value(touchDown_.terrainPlane->positionInWorld), 0.0);
-    CubicSpline::Node startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
-    CubicSpline::Node apexNode{apexTime, sdfMidClearance_, 0.0};
-    CubicSpline::Node endNode{touchDown_.time, sdfEndClearance_ - startEndMargin_, touchDownInTouchDownFrame.velocity};
-    terrainClearanceMotion_.reset(new SplineCpg(startNode, apexNode, endNode));
+    SwingNode startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
+    SwingNode apexNode{apexTime, sdfMidClearance_, 0.0};
+    SwingNode endNode{touchDown_.time, sdfEndClearance_ - startEndMargin_, touchDownInTouchDownFrame.velocity};
+    terrainClearanceMotion_.reset(new QuinticSwing(startNode, apexNode, endNode));
   } else {
     terrainClearanceMotion_.reset();
   }
 }
 
 void SwingPhase::setHalveSwing(scalar_t swingHeight) {
-  const CubicSpline::Node liftOffInLiftOffFrame{liftOff_.time, 0.0, liftOff_.velocity};
-  const CubicSpline::Node touchDownInLiftOffFrame{touchDown_.time, swingHeight, 0.0};
+  const SwingNode liftOffInLiftOffFrame{liftOff_.time, 0.0, liftOff_.velocity};
+  const SwingNode touchDownInLiftOffFrame{touchDown_.time, swingHeight, 0.0};
 
   // The two motions are equal and defined in the liftoff plane
-  liftOffMotion_.reset(new SplineCpg(liftOffInLiftOffFrame, swingHeight, touchDownInLiftOffFrame));
-  touchdownMotion_.reset(new SplineCpg(*liftOffMotion_));
+  liftOffMotion_.reset(new QuinticSwing(liftOffInLiftOffFrame, swingHeight, touchDownInLiftOffFrame));
+  touchdownMotion_.reset(new QuinticSwing(*liftOffMotion_));
   touchDown_.terrainPlane = liftOff_.terrainPlane;
 
   {  // Terrain clearance
     if (signedDistanceField_ != nullptr) {
       const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOff_.terrainPlane->positionInWorld), 0.0);
-      CubicSpline::Node startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
-      CubicSpline::Node endNode{touchDown_.time, sdfMidClearance_, 0.0};
-      terrainClearanceMotion_.reset(new SplineCpg(startNode, sdfMidClearance_, endNode));
+      SwingNode startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
+      SwingNode endNode{touchDown_.time, sdfMidClearance_, 0.0};
+      terrainClearanceMotion_.reset(new QuinticSwing(startNode, sdfMidClearance_, endNode));
     } else {
       terrainClearanceMotion_.reset();
     }

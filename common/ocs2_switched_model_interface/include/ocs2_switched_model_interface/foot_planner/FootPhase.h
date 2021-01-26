@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/foot_planner/SplineCpg.h"
+#include "ocs2_switched_model_interface/foot_planner/QuinticSplineSwing.h"
 #include "ocs2_switched_model_interface/terrain/ConvexTerrain.h"
 #include "ocs2_switched_model_interface/terrain/SignedDistanceField.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
@@ -105,9 +105,9 @@ class SwingPhase final : public FootPhase {
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   SignedDistanceConstraint getSignedDistanceConstraint(scalar_t time) const override;
-  const SplineCpg& getMotionInLiftOffFrame() const { return *liftOffMotion_; };
+  const QuinticSwing& getMotionInLiftOffFrame() const { return *liftOffMotion_; };
   const TerrainPlane& getLiftOffFrame() const { return *liftOff_.terrainPlane; };
-  const SplineCpg& getMotionInTouchDownFrame() const { return *touchdownMotion_; };
+  const QuinticSwing& getMotionInTouchDownFrame() const { return *touchdownMotion_; };
   const TerrainPlane& getTouchDownFrame() const { return *touchDown_.terrainPlane; };
 
  private:
@@ -118,12 +118,12 @@ class SwingPhase final : public FootPhase {
 
   SwingEvent liftOff_;
   SwingEvent touchDown_;
-  std::unique_ptr<SplineCpg> liftOffMotion_;
-  std::unique_ptr<SplineCpg> touchdownMotion_;
+  std::unique_ptr<QuinticSwing> liftOffMotion_;
+  std::unique_ptr<QuinticSwing> touchdownMotion_;
   scalar_t positionGain_;
 
   const SignedDistanceField* signedDistanceField_;
-  std::unique_ptr<SplineCpg> terrainClearanceMotion_;
+  std::unique_ptr<QuinticSwing> terrainClearanceMotion_;
   const scalar_t sdfMidClearance_ = 0.05;
   const scalar_t startEndMargin_ = 0.02;
 };

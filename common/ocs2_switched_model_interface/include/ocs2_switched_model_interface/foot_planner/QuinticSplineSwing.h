@@ -22,8 +22,18 @@ struct SwingNode {
 class QuinticSpline {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /** Default constructor creates a flat spline, y(t) = 0.0 */
   QuinticSpline() : c_(vector6_t::Zero()), t0_(0.0), dt_(0.0) {}
-  QuinticSpline(vector6_t coefficients, scalar_t t0, scalar_t dt) : c_(coefficients), t0_(t0), dt_(dt) {}
+
+  /**
+   * Constructs a quintic spline. See class description for the definition.
+   *
+   * @param coefficients : spline coefficients [c_5, ..., c_0]
+   * @param t0 : start time of the spline.
+   * @param dt : time normalization factor. The normalized time is 1.0 at t = t0 + dt
+   */
+  QuinticSpline(const vector6_t& coefficients, scalar_t t0, scalar_t dt) : c_(coefficients), t0_(t0), dt_(dt) {}
 
   /** returns y(t) */
   scalar_t position(scalar_t time) const;
@@ -39,7 +49,11 @@ class QuinticSpline {
 
   /// Coefficients [c_5, ..., c_0] for normalized time
   vector6_t c_;
+
+  /// Start time of the spline
   scalar_t t0_;
+
+  /// Spline time normalization
   scalar_t dt_;
 };
 
@@ -62,8 +76,25 @@ class QuinticSpline {
  */
 class QuinticSwing {
  public:
-  QuinticSwing(SwingNode start, scalar_t midHeight, SwingNode end);
-  QuinticSwing(SwingNode start, SwingNode mid, SwingNode end);
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * Construct a swing trajectory with given boundary conditions
+   *
+   * @param start : starting time and boundary conditions
+   * @param midHeight : desired height at the middle of the trajectory. Assumes zero velocity.
+   * @param end : ending time and boundary conditions
+   */
+  QuinticSwing(const SwingNode& start, scalar_t midHeight, const SwingNode& end);
+
+  /**
+   * Construct a swing trajectory with given boundary conditions
+   *
+   * @param start : starting time and boundary conditions
+   * @param mid : waypoint time, position, and velocity. Time must be between start and end.
+   * @param end : ending time and boundary conditions
+   */
+  QuinticSwing(const SwingNode& start, const SwingNode& mid, const SwingNode& end);
 
   /** returns z(t) */
   scalar_t position(scalar_t time) const;

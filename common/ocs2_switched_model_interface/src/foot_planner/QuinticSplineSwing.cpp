@@ -34,10 +34,14 @@ scalar_t QuinticSpline::normalizedTime(scalar_t t) const {
   return (t - t0_) / dt_;
 }
 
-QuinticSwing::QuinticSwing(SwingNode start, scalar_t midHeight, SwingNode end)
+QuinticSwing::QuinticSwing(const SwingNode &start, scalar_t midHeight, const SwingNode &end)
     : QuinticSwing(start, SwingNode{(start.time + end.time) / 2.0, midHeight, 0.0}, end) {}
 
-QuinticSwing::QuinticSwing(SwingNode start, SwingNode mid, SwingNode end) : midTime_(mid.time) {
+QuinticSwing::QuinticSwing(const SwingNode &start, const SwingNode &mid, const SwingNode &end) : midTime_(mid.time) {
+  assert(start.time < mid.time);
+  assert(mid.time < end.time);
+
+  // Compute time normalization
   const scalar_t dt_lhs = mid.time - start.time;
   const scalar_t dt_rhs = end.time - mid.time;
   const scalar_t scaling = dt_lhs / dt_rhs;

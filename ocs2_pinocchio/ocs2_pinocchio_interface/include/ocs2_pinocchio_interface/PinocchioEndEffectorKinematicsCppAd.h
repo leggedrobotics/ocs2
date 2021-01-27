@@ -36,68 +36,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+
 namespace ocs2 {
 
-class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar_t> {
+class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<scalar_t> {
  public:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
   using matrix3x_t = Eigen::Matrix<scalar_t, 3, Eigen::Dynamic>;
   using vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-  PinocchioEndEffectorKinematics(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
-                                 std::vector<std::string> endEffectorIds);
+  PinocchioEndEffectorKinematicsCppAd(PinocchioInterface pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                      std::vector<std::string> endEffectorIds);
 
-  ~PinocchioEndEffectorKinematics() override = default;
-  PinocchioEndEffectorKinematics* clone() const override;
-  PinocchioEndEffectorKinematics& operator=(const PinocchioEndEffectorKinematics&) = delete;
+  ~PinocchioEndEffectorKinematicsCppAd() override = default;
+  PinocchioEndEffectorKinematicsCppAd* clone() const override;
+  PinocchioEndEffectorKinematicsCppAd& operator=(const PinocchioEndEffectorKinematicsCppAd&) = delete;
+
+  void initialize(size_t stateDim, const std::string& modelName, const std::string& modelFolder, bool recompileLibraries = true,
+                  bool verbose = false);
 
   const std::vector<std::string>& getIds() const override;
 
-  /** Get the end effector position vectors.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   */
   std::vector<vector3_t> getPositions(const vector_t& state) override;
+  std::vector<std::pair<vector3_t, quaternion_t>> getPoses(const vector_t& state) override {
+    throw std::runtime_error("[PinocchioEndEffectorKinematicsCppAd] getPoseArray() not implemented");
+  }
+  std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) override {
+    throw std::runtime_error("[PinocchioEndEffectorKinematicsCppAd] getVelocitiyArray() not implemented");
+  }
 
-  /** Get the end effector poses.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   */
-  std::vector<std::pair<vector3_t, quaternion_t>> getPoses(const vector_t& state) override;
-
-  /** Get the end effector position vectors.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q, v)
-   */
-  std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) override;
-
-  /** Get the end effector position linear approximation.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   *       pinocchio::computeJointJacobians(model, data)
-   */
   std::vector<VectorFunctionLinearApproximation> getPositionsLinearApproximation(const vector_t& state) override;
 
-  /** Get the end effector velocity linear approximation
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q, v)
-   *       pinocchio::updateFramePlacements(model, data)
-   *       pinocchio::computeJointJacobians(model, data)
-   *       pinocchio::computeJointJacobiansTimeVariation(model, data, q, v)
-   */
-  std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) override;
-
-  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
-
  private:
-  PinocchioEndEffectorKinematics(const PinocchioEndEffectorKinematics& rhs);
+  PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs);
 
-  const PinocchioInterface* pinocchioInterfacePtr_;
-  std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+  ad_vector_t getPositionsCppAd(const ad_vector_t& state);
+
+  std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
+
+  PinocchioInterface pinocchioInterface_;
+  std::unique_ptr<PinocchioStateInputMapping<ad_scalar_t>> mappingPtr_;
   const std::vector<std::string> endEffectorIds_;
   std::vector<size_t> endEffectorFrameIds_;
 };

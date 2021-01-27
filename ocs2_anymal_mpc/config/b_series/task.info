@@ -20,7 +20,7 @@ model_settings
     touchDownVelocity          -0.4
     swingHeight                 0.1
     touchdownAfterHorizon       0.2
-    errorGain                   5.0
+    errorGain                   20.0
     swingTimeScale              0.15
   }
 

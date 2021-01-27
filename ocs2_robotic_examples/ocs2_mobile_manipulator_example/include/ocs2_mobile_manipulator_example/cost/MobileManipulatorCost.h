@@ -37,8 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
 #include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
-#include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraint.h>
-// #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
 
 namespace mobile_manipulator {
 
@@ -66,7 +64,8 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
                                                                scalar_t time) const;
 
   std::unique_ptr<ocs2::StateInputCost> getQuadraticInputCost(const std::string& taskFile);
-  std::unique_ptr<ocs2::StateCost> getEndEffectorCost(const std::string& taskFile, const std::string& fieldName);
+  std::unique_ptr<ocs2::StateCost> getEndEffectorCost(const std::string& taskFile, const std::string& fieldName,
+                                                      const std::string& libraryFolder, bool recompileLibraries);
   std::unique_ptr<ocs2::StateCost> getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
                                                         bool recompileLibraries);
   ocs2::PinocchioInterface pinocchioInterface_;
@@ -76,7 +75,6 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
 
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping_;
 
-  SelfCollisionConstraint* selfCollisionConstraintPtr_ = nullptr;
   EndEffectorConstraint* eeConstraintPtr_ = nullptr;
   EndEffectorConstraint* finalEeConstraintPtr_ = nullptr;
 };

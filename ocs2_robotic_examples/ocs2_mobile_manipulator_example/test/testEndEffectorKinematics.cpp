@@ -27,11 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>
+
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
 #include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
@@ -58,30 +61,20 @@ class TestEndEffectorKinematics : public ::testing::Test {
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
 };
 
-TEST_F(TestEndEffectorKinematics, testKinematics) {
-  const auto q = pinocchioMapping.getPinocchioJointPosition(x);
-  pinocchioInterfacePtr->forwardKinematics(q);
-  pinocchioInterfacePtr->updateFramePlacements();
-  pinocchioInterfacePtr->computeJointJacobians(q);
-
-  const auto id = pinocchioInterfacePtr->getBodyId("WRIST_2");
-  vector_t pos = pinocchioInterfacePtr->getBodyPosition(id);
-
-  const auto eePos = eeKinematicsPtr->getPositions(x)[0];
-  const auto eePosLin = eeKinematicsPtr->getPositionsLinearApproximation(x)[0];
-
-  EXPECT_TRUE(pos.isApprox(eePos));
-  EXPECT_TRUE(pos.isApprox(eePosLin.f));
-
-  std::cerr << "position:\n" << eePos.transpose() << '\n';
-  std::cerr << "linear approximation:\n" << eePosLin;
-}
-
-TEST_F(TestEndEffectorKinematics, testEndEffectorCost) {
+TEST_F(TestEndEffectorKinematics, testEndEffectorConstraint) {
   using quaternion_t = EndEffectorConstraint::quaternion_t;
   using vector3_t = EndEffectorConstraint::vector3_t;
 
+  const auto q = pinocchioMapping.getPinocchioJointPosition(x);
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
+
   auto eeConstraintPtr = std::make_shared<EndEffectorConstraint>(*eeKinematicsPtr);
+  dynamic_cast<ocs2::PinocchioEndEffectorKinematics&>(eeConstraintPtr->getEndEffectorKinematics())
+      .setPinocchioInterface(*pinocchioInterfacePtr);
   eeConstraintPtr->setDesiredPose(vector3_t::Zero(), quaternion_t(1, 0, 0, 0));
 
   std::cerr << "constraint:\n" << eeConstraintPtr->getValue(0.0, x) << '\n';

@@ -84,10 +84,7 @@ class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar
 
   /** Get the end effector velocity linear approximation
    * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q, v)
-   *       pinocchio::updateFramePlacements(model, data)
-   *       pinocchio::computeJointJacobians(model, data)
-   *       pinocchio::computeJointJacobiansTimeVariation(model, data, q, v)
+   *       pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a)
    */
   std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) override;
 

@@ -28,7 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 #include <pinocchio/fwd.hpp>
 
+#include <pinocchio/algorithm/frames-derivatives.hpp>
 #include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics-derivatives.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -157,10 +159,8 @@ TEST_F(TestEndEffectorKinematics, testVelocity) {
   const auto& model = pinocchioInterfacePtr->getModel();
   auto& data = pinocchioInterfacePtr->getData();
 
-  pinocchio::forwardKinematics(model, data, q, v);
-  pinocchio::updateFramePlacements(model, data);
-  pinocchio::computeJointJacobians(model, data);
-  pinocchio::computeJointJacobiansTimeVariation(model, data, q, v);
+  const auto a = ocs2::vector_t::Zero(q.rows());
+  pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a);
 
   eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
@@ -171,11 +171,4 @@ TEST_F(TestEndEffectorKinematics, testVelocity) {
   const auto eeVelLin = eeKinematicsPtr->getVelocitiesLinearApproximation(x, u)[0];
   const auto eeVelLinAd = eeKinematicsCppAdPtr->getVelocitiesLinearApproximation(x, u)[0];
   compareApproximation(eeVelLin, eeVelLinAd, /* functionOfInput = */ true);
-
-  std::cerr << "\nanalytical:\n";
-  std::cerr << "position:\n" << eeVel.transpose() << '\n';
-  std::cerr << "linear approximation:\n" << eeVelLin;
-  std::cerr << "\nCppAD:\n";
-  std::cerr << "position:\n" << eeVelAd.transpose() << '\n';
-  std::cerr << "linear approximation:\n" << eeVelLinAd;
 }

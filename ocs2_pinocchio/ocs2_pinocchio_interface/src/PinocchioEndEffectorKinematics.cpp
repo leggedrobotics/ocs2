@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pinocchio/fwd.hpp>
 
+#include <pinocchio/algorithm/frames-derivatives.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
@@ -167,7 +168,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  // Need to copy here because getFrameJacobian() and getFrameJacobianTimeVariation() modify data. Will be fixed in pinocchio version 3.
+  // Need to copy here because getFrameVelocityDerivatives() modifies data. Will be fixed in pinocchio version 3.
   pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
   const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
   const vector_t v = mappingPtr_->getPinocchioJointVelocity(state, input);
@@ -176,15 +177,13 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 
   std::vector<VectorFunctionLinearApproximation> velocities;
   for (const auto& frameId : endEffectorFrameIds_) {
-    matrix_t J = matrix_t::Zero(6, model.nq);
-    pinocchio::getFrameJacobian(model, data, frameId, rf, J);
-
-    matrix_t dJ = matrix_t::Zero(6, model.nv);
-    pinocchio::getFrameJacobianTimeVariation(model, data, frameId, rf, dJ);
+    matrix_t v_partial_dq = matrix_t::Zero(6, model.nv);
+    matrix_t v_partial_dv = matrix_t::Zero(6, model.nv);
+    pinocchio::getFrameVelocityDerivatives(model, data, frameId, rf, v_partial_dq, v_partial_dv);
 
     VectorFunctionLinearApproximation vel;
     vel.f = pinocchio::getFrameVelocity(model, data, frameId, rf).linear();
-    std::tie(vel.dfdx, vel.dfdu) = mappingPtr_->getOcs2Jacobian(state, dJ.topRows(3), J.topRows(3));
+    std::tie(vel.dfdx, vel.dfdu) = mappingPtr_->getOcs2Jacobian(state, v_partial_dq.topRows(3), v_partial_dv.topRows(3));
     velocities.emplace_back(std::move(vel));
   }
   return velocities;

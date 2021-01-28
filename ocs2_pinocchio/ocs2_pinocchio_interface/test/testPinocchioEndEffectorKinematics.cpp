@@ -66,13 +66,45 @@ class TestEndEffectorKinematics : public ::testing::Test {
     pinocchioInterfacePtr.reset(new ocs2::PinocchioInterface(pinocchioInterface));
     eeKinematicsPtr.reset(new ocs2::PinocchioEndEffectorKinematics(pinocchioInterface, pinocchioMapping, {"WRIST_2"}));
     eeKinematicsCppAdPtr.reset(new ocs2::PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMappingCppAd, {"WRIST_2"}));
-    eeKinematicsCppAdPtr->initialize(6, "pinocchio_end_effector_kinematics", "/tmp/ocs2", true, false);
+    eeKinematicsCppAdPtr->initialize(6, 6, "pinocchio_end_effector_kinematics", "/tmp/ocs2", true, false);
 
     x.resize(6);
     x << 2.5, -1.0, 1.5, 0.0, 1.0, 0.0;
+    u.setOnes(6);
+
+    q = pinocchioMapping.getPinocchioJointPosition(x);
+    v = pinocchioMapping.getPinocchioJointVelocity(x, u);
   }
 
-  ocs2::vector_t x;
+  void compareApproximation(const ocs2::VectorFunctionLinearApproximation& f1, const ocs2::VectorFunctionLinearApproximation& f2,
+                            bool functionOfInput = false) {
+    if (!f1.f.isApprox(f2.f)) {
+      std::cerr << "f1.f  " << f1.f.transpose() << '\n';
+      std::cerr << "f2.f  " << f2.f.transpose() << '\n';
+    }
+
+    if (!f1.dfdx.isApprox(f2.dfdx)) {
+      std::cerr << "f1.dfdx\n" << f1.dfdx << '\n';
+      std::cerr << "f2.dfdx\n" << f2.dfdx << '\n';
+    }
+
+    if (functionOfInput && !f1.dfdu.isApprox(f2.dfdu)) {
+      std::cerr << "f1.dfdu\n" << f1.dfdu << '\n';
+      std::cerr << "f2.dfdu\n" << f2.dfdu << '\n';
+    }
+
+    EXPECT_TRUE(f1.f.isApprox(f2.f));
+    EXPECT_TRUE(f1.dfdx.isApprox(f2.dfdx));
+    if (functionOfInput) {
+      EXPECT_TRUE(f1.dfdu.isApprox(f2.dfdu));
+    }
+  }
+
+  ocs2::vector_t x;  // state
+  ocs2::vector_t u;  // input
+  ocs2::vector_t q;  // pinocchio joint positions
+  ocs2::vector_t v;  // pinocchio joint velocities
+
   std::unique_ptr<ocs2::PinocchioInterface> pinocchioInterfacePtr;
   std::unique_ptr<ocs2::PinocchioEndEffectorKinematics> eeKinematicsPtr;
   std::unique_ptr<ocs2::PinocchioEndEffectorKinematicsCppAd> eeKinematicsCppAdPtr;
@@ -80,10 +112,10 @@ class TestEndEffectorKinematics : public ::testing::Test {
   ManipulatorMapping<ocs2::ad_scalar_t> pinocchioMappingCppAd;
 };
 
-TEST_F(TestEndEffectorKinematics, testKinematics) {
-  const auto q = pinocchioMapping.getPinocchioJointPosition(x);
+TEST_F(TestEndEffectorKinematics, testKinematicsPosition) {
   const auto& model = pinocchioInterfacePtr->getModel();
   auto& data = pinocchioInterfacePtr->getData();
+
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
   pinocchio::computeJointJacobians(model, data);
@@ -100,35 +132,50 @@ TEST_F(TestEndEffectorKinematics, testKinematics) {
   EXPECT_TRUE(pos.isApprox(eePos));
   EXPECT_TRUE(pos.isApprox(eePosLin.f));
   EXPECT_TRUE(J.topRows<3>().isApprox(eePosLin.dfdx));
-
-  std::cerr << "position:\n" << eePos.transpose() << '\n';
-  std::cerr << "linear approximation:\n" << eePosLin;
 }
 
 TEST_F(TestEndEffectorKinematics, compareWithCppAd) {
-  const auto q = pinocchioMapping.getPinocchioJointPosition(x);
   const auto& model = pinocchioInterfacePtr->getModel();
   auto& data = pinocchioInterfacePtr->getData();
+
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
   pinocchio::computeJointJacobians(model, data);
 
   eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
+
   const auto eePos = eeKinematicsPtr->getPositions(x)[0];
-  const auto eePosLin = eeKinematicsPtr->getPositionsLinearApproximation(x)[0];
-
   const auto eePosAd = eeKinematicsCppAdPtr->getPositions(x)[0];
-  const auto eePosLinAd = eeKinematicsCppAdPtr->getPositionsLinearApproximation(x)[0];
-
   EXPECT_TRUE(eePos.isApprox(eePosAd));
-  EXPECT_TRUE(eePosLin.f.isApprox(eePosLinAd.f));
-  EXPECT_TRUE(eePosLin.dfdx.isApprox(eePosLinAd.dfdx));
-  EXPECT_TRUE(eePosLin.dfdu.isApprox(eePosLinAd.dfdu));
+
+  const auto eePosLin = eeKinematicsPtr->getPositionsLinearApproximation(x)[0];
+  const auto eePosLinAd = eeKinematicsCppAdPtr->getPositionsLinearApproximation(x)[0];
+  compareApproximation(eePosLin, eePosLinAd);
+}
+
+TEST_F(TestEndEffectorKinematics, testVelocity) {
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+
+  pinocchio::forwardKinematics(model, data, q, v);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
+  pinocchio::computeJointJacobiansTimeVariation(model, data, q, v);
+
+  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
+
+  const auto eeVel = eeKinematicsPtr->getVelocities(x, u)[0];
+  const auto eeVelAd = eeKinematicsCppAdPtr->getVelocities(x, u)[0];
+  EXPECT_TRUE(eeVel.isApprox(eeVelAd));
+
+  const auto eeVelLin = eeKinematicsPtr->getVelocitiesLinearApproximation(x, u)[0];
+  const auto eeVelLinAd = eeKinematicsCppAdPtr->getVelocitiesLinearApproximation(x, u)[0];
+  compareApproximation(eeVelLin, eeVelLinAd, /* functionOfInput = */ true);
 
   std::cerr << "\nanalytical:\n";
-  std::cerr << "position:\n" << eePos.transpose() << '\n';
-  std::cerr << "linear approximation:\n" << eePosLin;
+  std::cerr << "position:\n" << eeVel.transpose() << '\n';
+  std::cerr << "linear approximation:\n" << eeVelLin;
   std::cerr << "\nCppAD:\n";
-  std::cerr << "position:\n" << eePosAd.transpose() << '\n';
-  std::cerr << "linear approximation:\n" << eePosLinAd;
+  std::cerr << "position:\n" << eeVelAd.transpose() << '\n';
+  std::cerr << "linear approximation:\n" << eeVelLinAd;
 }

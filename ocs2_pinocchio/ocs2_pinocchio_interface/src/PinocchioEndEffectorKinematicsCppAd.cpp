@@ -71,16 +71,26 @@ PinocchioEndEffectorKinematicsCppAd* PinocchioEndEffectorKinematicsCppAd::clone(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PinocchioEndEffectorKinematicsCppAd::initialize(size_t stateDim, const std::string& modelName, const std::string& modelFolder,
-                                                     bool recompileLibraries, bool verbose) {
+void PinocchioEndEffectorKinematicsCppAd::initialize(size_t stateDim, size_t inputDim, const std::string& modelName,
+                                                     const std::string& modelFolder, bool recompileLibraries, bool verbose) {
   auto positionFunc = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { y = getPositionsCppAd(x); };
   positionCppAdInterfacePtr_.reset(
-      new CppAdInterface(positionFunc, stateDim, 3 * endEffectorIds_.size(), modelName + "_end_effector_pose", modelFolder));
+      new CppAdInterface(positionFunc, stateDim, 3 * endEffectorIds_.size(), modelName + "_position", modelFolder));
+
+  auto velocityFunc = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+    ad_vector_t state = x.head(stateDim);
+    ad_vector_t input = x.tail(inputDim);
+    y = getVelocitiesCppAd(state, input);
+  };
+  velocityCppAdInterfacePtr_.reset(
+      new CppAdInterface(velocityFunc, stateDim + inputDim, 3 * endEffectorIds_.size(), modelName + "_velocity", modelFolder));
 
   if (recompileLibraries) {
     positionCppAdInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+    velocityCppAdInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
   } else {
     positionCppAdInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+    velocityCppAdInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }
 }
 
@@ -139,6 +149,63 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
     positions.emplace_back(std::move(pos));
   }
   return positions;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocitiesCppAd(const ad_vector_t& state, const ad_vector_t& input) {
+  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
+  auto pinocchioInterfaceCppAd = castToCppAd(pinocchioInterface_);
+  const auto& model = pinocchioInterfaceCppAd.getModel();
+  auto& data = pinocchioInterfaceCppAd.getData();
+  const ad_vector_t q = mappingPtr_->getPinocchioJointPosition(state);
+  const ad_vector_t v = mappingPtr_->getPinocchioJointVelocity(state, input);
+
+  pinocchio::forwardKinematics(model, data, q, v);
+
+  ad_vector_t velocities(3 * endEffectorFrameIds_.size());
+  for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
+    const auto frameId = endEffectorFrameIds_[i];
+    velocities.segment<3>(3 * i) = pinocchio::getFrameVelocity(model, data, frameId, rf).linear();
+  }
+  return velocities;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+auto PinocchioEndEffectorKinematicsCppAd::getVelocities(const vector_t& state, const vector_t& input) -> std::vector<vector3_t> {
+  vector_t stateInput(state.rows() + input.rows());
+  stateInput << state, input;
+  const vector_t velocityValues = velocityCppAdInterfacePtr_->getFunctionValue(stateInput);
+
+  std::vector<vector3_t> velocities;
+  for (int i = 0; i < endEffectorIds_.size(); i++) {
+    velocities.emplace_back(velocityValues.segment<3>(3 * i));
+  }
+  return velocities;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCppAd::getVelocitiesLinearApproximation(
+    const vector_t& state, const vector_t& input) {
+  vector_t stateInput(state.rows() + input.rows());
+  stateInput << state, input;
+  const vector_t velocityValues = velocityCppAdInterfacePtr_->getFunctionValue(stateInput);
+  const matrix_t velocityJacobian = velocityCppAdInterfacePtr_->getJacobian(state);
+
+  std::vector<VectorFunctionLinearApproximation> velocities;
+  for (int i = 0; i < endEffectorIds_.size(); i++) {
+    VectorFunctionLinearApproximation vel;
+    vel.f = velocityValues.segment<3>(3 * i);
+    vel.dfdx = velocityJacobian.block(3 * i, 0, 3, state.rows());
+    vel.dfdu = velocityJacobian.block(3 * i, state.rows(), 3, input.rows());
+    velocities.emplace_back(std::move(vel));
+  }
+  return velocities;
 }
 
 }  // namespace ocs2

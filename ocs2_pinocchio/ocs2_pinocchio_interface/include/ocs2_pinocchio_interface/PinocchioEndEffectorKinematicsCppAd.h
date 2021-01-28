@@ -54,8 +54,8 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
   PinocchioEndEffectorKinematicsCppAd* clone() const override;
   PinocchioEndEffectorKinematicsCppAd& operator=(const PinocchioEndEffectorKinematicsCppAd&) = delete;
 
-  void initialize(size_t stateDim, const std::string& modelName, const std::string& modelFolder, bool recompileLibraries = true,
-                  bool verbose = false);
+  void initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder,
+                  bool recompileLibraries = true, bool verbose = false);
 
   const std::vector<std::string>& getIds() const override;
 
@@ -63,18 +63,19 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
   std::vector<std::pair<vector3_t, quaternion_t>> getPoses(const vector_t& state) override {
     throw std::runtime_error("[PinocchioEndEffectorKinematicsCppAd] getPoseArray() not implemented");
   }
-  std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) override {
-    throw std::runtime_error("[PinocchioEndEffectorKinematicsCppAd] getVelocitiyArray() not implemented");
-  }
+  std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) override;
 
   std::vector<VectorFunctionLinearApproximation> getPositionsLinearApproximation(const vector_t& state) override;
+  std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) override;
 
  private:
   PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs);
 
   ad_vector_t getPositionsCppAd(const ad_vector_t& state);
+  ad_vector_t getVelocitiesCppAd(const ad_vector_t& state, const ad_vector_t& input);
 
   std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
+  std::unique_ptr<CppAdInterface> velocityCppAdInterfacePtr_;
 
   PinocchioInterface pinocchioInterface_;
   std::unique_ptr<PinocchioStateInputMapping<ad_scalar_t>> mappingPtr_;

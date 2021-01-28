@@ -261,7 +261,7 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
   } else {
     MobileManipulatorPinocchioMapping<ocs2::ad_scalar_t> pinocchioMappingCppAd;
     ocs2::PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface_, pinocchioMappingCppAd, {name});
-    eeKinematics.initialize(STATE_DIM, "end_effector_kinematics", libraryFolder, recompileLibraries, false);
+    eeKinematics.initialize(STATE_DIM, INPUT_DIM, "end_effector_kinematics", libraryFolder, recompileLibraries, false);
     eeConstraint = std::unique_ptr<ocs2::StateConstraint>(new EndEffectorConstraint(eeKinematics));
   }
 

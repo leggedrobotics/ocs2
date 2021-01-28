@@ -94,55 +94,6 @@ class PinocchioInterfaceTpl final {
   Data& getData() { return *robotDataPtr_; }
   const Data& getData() const { return *robotDataPtr_; }
 
-  /**
-   * Get the position of a body in the (pinocchio) world frame
-   * Requires forwardKinematics and updateFramePlacements
-   *
-   * @param[in] bodyId pinocchio body index
-   * @return the body position
-   */
-  vector3_t getBodyPosition(size_t bodyId) const;
-
-  /**
-   * Get the orientation of a body in the (pinocchio) world frame
-   * Requires forwardKinematics and updateFramePlacements
-   *
-   * @param[in] bodyId pinocchio body index
-   * @return the body orientation
-   */
-  quaternion_t getBodyOrientation(size_t bodyId) const;
-
-  /**
-   * Get the joint position in the (pinocchio) world frame
-   * Requires forwardKinematics and updateGlobalPlacements
-   *
-   * @param[in] jointIndex pinocchio joint index
-   * @return the joint position
-   */
-  vector3_t getJointPosition(size_t jointIndex) const;
-
-  /**
-   * Get the joint orientation in the (pinocchio) world frame
-   * Requires forwardKinematics and updateGlobalPlacements
-   *
-   * @param[in] jointIndex pinocchio joint index
-   * @return the joint orientation
-   */
-  quaternion_t getJointOrientation(size_t jointIndex) const;
-
-  /** Get the joint jacobian wrt. the generalized coordinates. */
-  matrix_t getJointJacobian(size_t jointIndex) const;
-
-  /**
-   * @param[in] bodyName name of the body (corresponds to the pinocchio name, which is usually the URDF link name)
-   * @return body index
-   */
-  size_t getBodyId(const std::string& bodyName) const;
-  void forwardKinematics(const vector_t& q);
-  void updateFramePlacements();
-  void updateGlobalPlacements();
-  void computeJointJacobians(const vector_t& q);
-
   friend std::ostream& operator<<(std::ostream& os, const PinocchioInterfaceTpl<scalar_t>& p);
 
  private:

@@ -27,11 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>
+
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/multibody/geometry.hpp>
+
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-
-#include <pinocchio/multibody/geometry.hpp>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 namespace ocs2 {
 
@@ -107,23 +112,26 @@ std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(const P
 /******************************************************************************************************/
 ad_vector_t SelfCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state,
                                                     const ad_vector_t& points) const {
-  using vector3_t = Eigen::Matrix<ad_scalar_t, 3, 1>;
-  using quaternion_t = Eigen::Quaternion<ad_scalar_t>;
+  const auto& geometryModel = pinocchioGeometryInterface_.getGeometryModel();
+  const auto& model = pinocchioInterfaceAd.getModel();
+  auto& data = pinocchioInterfaceAd.getData();
 
-  pinocchioInterfaceAd.forwardKinematics(state);
-  pinocchioInterfaceAd.updateGlobalPlacements();
+  pinocchio::forwardKinematics(model, data, state);
+  pinocchio::updateGlobalPlacements(model, data);
 
   ad_vector_t pointsInLinkFrames = ad_vector_t::Zero(points.size());
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
-    const auto collisionPair = pinocchioGeometryInterface_.getGeometryModel().collisionPairs[i];
-    const pinocchio::GeometryObject& geometryObject1 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.first];
-    const auto joint1Position = pinocchioInterfaceAd.getJointPosition(geometryObject1.parentJoint);
-    const auto joint1Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject1.parentJoint);
+    const auto collisionPair = geometryModel.collisionPairs[i];
+
+    const auto joint1 = geometryModel.geometryObjects[collisionPair.first].parentJoint;
+    const auto joint1Position = data.oMi[joint1].translation();
+    const auto joint1Orientation = matrixToQuaternion(data.oMi[joint1].rotation());
     const vector3_t joint1PositionInverse = joint1Orientation.conjugate() * -joint1Position;
     const quaternion_t joint1OrientationInverse = joint1Orientation.conjugate();
-    const pinocchio::GeometryObject& geometryObject2 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.second];
-    const auto joint2Position = pinocchioInterfaceAd.getJointPosition(geometryObject2.parentJoint);
-    const auto joint2Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject2.parentJoint);
+
+    const auto joint2 = geometryModel.geometryObjects[collisionPair.second].parentJoint;
+    const auto joint2Position = data.oMi[joint2].translation();
+    const auto joint2Orientation = matrixToQuaternion(data.oMi[joint2].rotation());
     const vector3_t joint2PositionInverse = joint2Orientation.conjugate() * -joint2Position;
     const quaternion_t joint2OrientationInverse = joint2Orientation.conjugate();
 
@@ -143,26 +151,28 @@ ad_vector_t SelfCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pin
 /******************************************************************************************************/
 ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state,
                                                       const ad_vector_t& points) const {
-  pinocchioInterfaceAd.forwardKinematics(state);
-  pinocchioInterfaceAd.updateGlobalPlacements();
+  const auto& geometryModel = pinocchioGeometryInterface_.getGeometryModel();
+  const auto& model = pinocchioInterfaceAd.getModel();
+  auto& data = pinocchioInterfaceAd.getData();
+
+  pinocchio::forwardKinematics(model, data, state);
+  pinocchio::updateGlobalPlacements(model, data);
 
   ad_vector_t results = ad_vector_t::Zero(points.size() / numberOfParamsPerResult_);
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) {
-    const auto collisionPair = pinocchioGeometryInterface_.getGeometryModel().collisionPairs[i];
+    const auto collisionPair = geometryModel.collisionPairs[i];
     ad_vector_t point1 = points.segment(i * numberOfParamsPerResult_, 3);
 
-    const pinocchio::GeometryObject& geometryObject1 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.first];
-
-    const auto joint1Position = pinocchioInterfaceAd.getJointPosition(geometryObject1.parentJoint);
-    const auto joint1Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject1.parentJoint);
+    const auto joint1 = geometryModel.geometryObjects[collisionPair.first].parentJoint;
+    const auto joint1Position = data.oMi[joint1].translation();
+    const auto joint1Orientation = matrixToQuaternion(data.oMi[joint1].rotation());
     ad_vector_t point1InWorld = joint1Position + joint1Orientation * point1;
 
     ad_vector_t point2 = points.segment(i * numberOfParamsPerResult_ + 3, 3);
 
-    const pinocchio::GeometryObject& geometryObject2 = pinocchioGeometryInterface_.getGeometryModel().geometryObjects[collisionPair.second];
-
-    const auto joint2Position = pinocchioInterfaceAd.getJointPosition(geometryObject2.parentJoint);
-    const auto joint2Orientation = pinocchioInterfaceAd.getJointOrientation(geometryObject2.parentJoint);
+    const auto joint2 = geometryModel.geometryObjects[collisionPair.second].parentJoint;
+    const auto joint2Position = data.oMi[joint2].translation();
+    const auto joint2Orientation = matrixToQuaternion(data.oMi[joint2].rotation());
 
     ad_vector_t point2InWorld = joint2Position + joint2Orientation * point2;
 

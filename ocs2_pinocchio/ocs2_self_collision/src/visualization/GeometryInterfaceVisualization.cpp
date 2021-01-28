@@ -27,13 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-/*
- * GeometryInterfaceVisualization.cpp
- *
- *  Created on: 4 Sep 2020
- *      Author: perry
- */
+#include <pinocchio/fwd.hpp>
 
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/multibody/geometry.hpp>
 
 #include <visualization_msgs/MarkerArray.h>
@@ -47,10 +44,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 GeometryInterfaceVisualization::GeometryInterfaceVisualization(PinocchioInterface pinocchioInterface,
-                                                               const PinocchioGeometryInterface& geometryInterface, ros::NodeHandle& nh,
+                                                               PinocchioGeometryInterface geometryInterface, ros::NodeHandle& nh,
                                                                std::string pinocchioWorldFrame)
     : pinocchioInterface_(std::move(pinocchioInterface)),
-      geometryInterface_(geometryInterface),
+      geometryInterface_(std::move(geometryInterface)),
       markerPublisher_(nh.advertise<visualization_msgs::MarkerArray>("distance_markers", 1, true)),
       pinocchioWorldFrame_(std::move(pinocchioWorldFrame)) {}
 
@@ -58,7 +55,9 @@ GeometryInterfaceVisualization::GeometryInterfaceVisualization(PinocchioInterfac
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q) {
-  pinocchioInterface_.forwardKinematics(q);
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  pinocchio::forwardKinematics(model, data, q);
   std::vector<hpp::fcl::DistanceResult> results = geometryInterface_.computeDistances(pinocchioInterface_);
 
   visualization_msgs::MarkerArray markerArray;

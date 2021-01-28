@@ -38,6 +38,9 @@ namespace ocs2 {
 
 class SelfCollisionCppAd {
  public:
+  using vector3_t = Eigen::Matrix<ad_scalar_t, 3, 1>;
+  using quaternion_t = Eigen::Quaternion<ad_scalar_t>;
+
   /**
    * Constructor
    *

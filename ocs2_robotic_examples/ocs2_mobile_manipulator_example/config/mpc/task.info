@@ -131,7 +131,7 @@ finalEndEffector
 
 selfCollision
 {
-  useCppAd false
+  useCppAd true
 
   ; Self Collision raw object pairs
   collisionObjectPairs

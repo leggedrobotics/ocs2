@@ -60,7 +60,7 @@ SelfCollisionCppAd::SelfCollisionCppAd(const SelfCollisionCppAd& rhs)
 /******************************************************************************************************/
 void SelfCollisionCppAd::initialize(const PinocchioInterface& pinocchioInterface, const std::string& modelName,
                                     const std::string& modelFolder, bool recompileLibraries, bool verbose) {
-  PinocchioInterfaceCppAd pinocchioInterfaceAd = castToCppAd(pinocchioInterface);
+  PinocchioInterfaceCppAd pinocchioInterfaceAd = pinocchioInterface.toCppAd();
   setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
   if (recompileLibraries) {
     createModels(verbose);

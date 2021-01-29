@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iosfwd>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/Types.h>
@@ -61,10 +62,9 @@ class PinocchioInterfaceTpl final {
   using Data = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using JointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
-  using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
-  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
-  using vector3_t = Eigen::Matrix<SCALAR, 3, 1>;
-  using quaternion_t = Eigen::Quaternion<SCALAR>;
+  // Template for conditional compilation using SFINAE
+  template <typename T>
+  using EnableIfScalar_t = typename std::enable_if<std::is_same<T, scalar_t>::value, bool>::type;
 
   /**
    * Construct from given pinocchio model
@@ -94,6 +94,10 @@ class PinocchioInterfaceTpl final {
   Data& getData() { return *robotDataPtr_; }
   const Data& getData() const { return *robotDataPtr_; }
 
+  /** Cast pinocchio interface to CppAD scalar type. */
+  template <typename T = SCALAR, EnableIfScalar_t<T> = true>
+  PinocchioInterfaceCppAd toCppAd() const;
+
   friend std::ostream& operator<<(std::ostream& os, const PinocchioInterfaceTpl<scalar_t>& p);
 
  private:
@@ -122,9 +126,6 @@ PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::ur
 /** Factory function from URDF model tree with root joint */
 PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
                                                       const PinocchioInterface::JointModel& rootJoint);
-
-/** Cast pinocchio interface to CppAD scalar type. */
-PinocchioInterfaceCppAd castToCppAd(const PinocchioInterface& interface);
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */
 extern template class PinocchioInterfaceTpl<scalar_t>;

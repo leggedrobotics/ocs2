@@ -89,7 +89,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics
    */
-  dynamicsPtr_.reset(new MobileManipulatorDynamics(ocs2::castToCppAd(*pinocchioInterfacePtr_)));
+  dynamicsPtr_.reset(new MobileManipulatorDynamics(pinocchioInterfacePtr_->toCppAd()));
   dynamicsPtr_->initialize("mobile_manipulator_dynamics", libraryFolder_, recompileLibraries, true);
 
   /*

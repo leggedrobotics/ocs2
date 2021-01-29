@@ -104,7 +104,7 @@ const std::vector<std::string>& PinocchioEndEffectorKinematicsCppAd::getIds() co
 /******************************************************************************************************/
 /******************************************************************************************************/
 ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionsCppAd(const ad_vector_t& state) {
-  auto pinocchioInterfaceCppAd = castToCppAd(pinocchioInterface_);
+  auto pinocchioInterfaceCppAd = pinocchioInterface_.toCppAd();
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
   const ad_vector_t q = mappingPtr_->getPinocchioJointPosition(state);
@@ -155,7 +155,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 /******************************************************************************************************/
 ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocitiesCppAd(const ad_vector_t& state, const ad_vector_t& input) {
   const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
-  auto pinocchioInterfaceCppAd = castToCppAd(pinocchioInterface_);
+  auto pinocchioInterfaceCppAd = pinocchioInterface_.toCppAd();
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
   const ad_vector_t q = mappingPtr_->getPinocchioJointPosition(state);

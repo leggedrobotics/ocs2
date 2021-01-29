@@ -60,7 +60,8 @@ link_directories(
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
   src/PinocchioInterface.cpp
-  src/PinocchioInterfaceAD.cpp
+  src/PinocchioInterfaceCppAd.cpp
+  src/PinocchioInterfaceUrdf.cpp
   src/PinocchioEndEffectorKinematics.cpp
   src/PinocchioEndEffectorKinematicsCppAd.cpp
 )

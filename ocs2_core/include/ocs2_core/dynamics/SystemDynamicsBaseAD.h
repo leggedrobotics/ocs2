@@ -104,7 +104,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: Current time.
    * @return The parameters to be set in the flow map at the start of the horizon
    */
-  virtual vector_t getFlowMapParameters() const { return vector_t(0); }
+  virtual vector_t getFlowMapParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for system flow map.

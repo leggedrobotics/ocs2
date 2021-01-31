@@ -65,7 +65,7 @@ void SystemDynamicsBaseAD::initialize(const std::string& modelName, const std::s
 vector_t SystemDynamicsBaseAD::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
   vector_t tapedTimeStateInput(1 + state.rows() + input.rows());
   tapedTimeStateInput << time, state, input;
-  vector_t parameters = getFlowMapParameters();
+  vector_t parameters = getFlowMapParameters(time);
   return flowMapADInterfacePtr_->getFunctionValue(tapedTimeStateInput, parameters);
 }
 
@@ -95,7 +95,7 @@ vector_t SystemDynamicsBaseAD::computeGuardSurfaces(scalar_t time, const vector_
 VectorFunctionLinearApproximation SystemDynamicsBaseAD::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   vector_t tapedTimeStateInput(1 + x.rows() + u.rows());
   tapedTimeStateInput << t, x, u;
-  vector_t parameters = getFlowMapParameters();
+  vector_t parameters = getFlowMapParameters(t);
   flowJacobian_ = flowMapADInterfacePtr_->getJacobian(tapedTimeStateInput, parameters);
 
   VectorFunctionLinearApproximation approximation;

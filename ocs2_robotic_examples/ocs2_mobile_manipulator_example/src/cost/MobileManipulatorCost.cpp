@@ -341,12 +341,14 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
 
   std::unique_ptr<ocs2::StateConstraint> constraint;
-  if (useCppAd) {
+  if (!useCppAd) {
     constraint = std::unique_ptr<ocs2::StateConstraint>(
         new SelfCollisionConstraint(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
   } else {
     constraint = std::unique_ptr<ocs2::StateConstraint>(
         new SelfCollisionConstraintCppAd(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
+    dynamic_cast<SelfCollisionConstraintCppAd&>(*constraint)
+        .initialize(pinocchioInterface_, "self_collision", libraryFolder, recompileLibraries, false);
   }
 
   auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(

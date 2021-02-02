@@ -121,6 +121,7 @@ scalar_t MobileManipulatorCost::cost(scalar_t t, const vector_t& x, const vector
   auto& data = pinocchioInterface_.getData();
   const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
   pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
 
   scalar_t cost = stateInputCostCollection_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
   cost += stateCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
@@ -132,6 +133,13 @@ scalar_t MobileManipulatorCost::cost(scalar_t t, const vector_t& x, const vector
 /******************************************************************************************************/
 scalar_t MobileManipulatorCost::finalCost(scalar_t t, const vector_t& x) {
   setFinalEndEffectorReference(t);
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+
   return finalCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
 }
 
@@ -144,8 +152,9 @@ ScalarFunctionQuadraticApproximation MobileManipulatorCost::costQuadraticApproxi
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
-  pinocchio::computeJointJacobians(model, data, q);
+  pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
   pinocchio::updateGlobalPlacements(model, data);
 
   auto cost = stateInputCostCollection_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
@@ -161,6 +170,14 @@ ScalarFunctionQuadraticApproximation MobileManipulatorCost::costQuadraticApproxi
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation MobileManipulatorCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   setFinalEndEffectorReference(t);
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
+
   return finalCostCollection_.getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_);
 }
 

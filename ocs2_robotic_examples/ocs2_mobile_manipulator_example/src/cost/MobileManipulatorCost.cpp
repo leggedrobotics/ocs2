@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/QuadraticInputCost.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
@@ -115,7 +114,7 @@ scalar_t MobileManipulatorCost::cost(scalar_t t, const vector_t& x, const vector
 /******************************************************************************************************/
 scalar_t MobileManipulatorCost::finalCost(scalar_t t, const vector_t& x) {
   setFinalEndEffectorReference(t);
-  return stateCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
+  return finalCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/

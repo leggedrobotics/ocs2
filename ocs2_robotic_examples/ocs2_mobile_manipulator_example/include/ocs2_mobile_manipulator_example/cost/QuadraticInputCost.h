@@ -29,38 +29,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/StateInputCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
 namespace mobile_manipulator {
 
-class QuadraticInputCost final : public ocs2::StateInputCost {
+class QuadraticInputCost final : public ocs2::QuadraticStateInputCost {
  public:
-  explicit QuadraticInputCost(matrix_t R) : R_(std::move(R)) {}
+  explicit QuadraticInputCost(matrix_t R) : ocs2::QuadraticStateInputCost(matrix_t::Zero(STATE_DIM, STATE_DIM), std::move(R)) {}
   ~QuadraticInputCost() override = default;
 
   QuadraticInputCost* clone() const override { return new QuadraticInputCost(*this); }
 
-  scalar_t getValue(scalar_t t, const vector_t& x, const vector_t& u,
-                    const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
-    const vector_t uDeviation = u - desiredTrajectory.getDesiredInput(t);
-    return 0.5 * uDeviation.dot(R_ * uDeviation);
+  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                       const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+    const vector_t inputDeviation = input - desiredTrajectory.getDesiredInput(time);
+    return {vector_t::Zero(STATE_DIM), inputDeviation};
   }
-
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                 const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
-    const vector_t uDeviation = u - desiredTrajectory.getDesiredInput(t);
-    const vector_t rDeviation = R_ * uDeviation;
-
-    ScalarFunctionQuadraticApproximation L = ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
-    L.f = 0.5 * uDeviation.dot(rDeviation);
-    L.dfdu = rDeviation;
-    L.dfduu = R_;
-    return L;
-  }
-
- private:
-  matrix_t R_;
 };
 
 }  // namespace mobile_manipulator

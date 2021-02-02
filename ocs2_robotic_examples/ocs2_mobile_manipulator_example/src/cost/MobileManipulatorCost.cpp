@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LoadData.h>
 
+#include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
+#include <ocs2_mobile_manipulator_example/constraint/JointVelocityLimits.h>
 #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraint.h>
 #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
@@ -64,6 +66,9 @@ MobileManipulatorCost::MobileManipulatorCost(ocs2::PinocchioInterface pinocchioI
     : pinocchioInterface_(std::move(pinocchioInterface)) {
   auto inputCost = getQuadraticInputCost(taskFile);
   stateInputCostCollection_.add("Input", std::move(inputCost));
+
+  auto velocityLimits = getJointVelocityLimitCost(taskFile);
+  stateInputCostCollection_.add("VelocityLimits", std::move(velocityLimits));
 
   auto selfCollisionCost = getSelfCollisionCost(taskFile, libraryFolder, recompileLibraries);
   stateCostCollection_.add("SelfCollision", std::move(selfCollisionCost));
@@ -347,6 +352,31 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
 
   return std::unique_ptr<ocs2::StateCost>(
       new ocs2::StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty), ocs2::ConstraintOrder::Linear));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<ocs2::StateInputCost> MobileManipulatorCost::getJointVelocityLimitCost(const std::string& taskFile) {
+  vector_t lowerBound(INPUT_DIM);
+  vector_t upperBound(INPUT_DIM);
+  scalar_t mu = 1e-2;
+  scalar_t delta = 1e-3;
+  ocs2::loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound", lowerBound);
+  ocs2::loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound", upperBound);
+  ocs2::loadData::loadCppDataType(taskFile, "jointVelocityLimits.mu", mu);
+  ocs2::loadData::loadCppDataType(taskFile, "jointVelocityLimits.delta", delta);
+  std::cerr << "jointVelocityLimits.lowerBound:  " << lowerBound.transpose() << std::endl;
+  std::cerr << "jointVelocityLimits.upperBound:  " << upperBound.transpose() << std::endl;
+  std::cerr << "jointVelocityLimits.mu:  " << mu << std::endl;
+  std::cerr << "jointVelocityLimits.delta:  " << delta << std::endl;
+
+  std::unique_ptr<ocs2::StateInputConstraint> constraintPtr(new JointVelocityLimits(lowerBound, upperBound));
+  auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(
+      new ocs2::RelaxedBarrierPenaltyFunction(ocs2::RelaxedBarrierPenaltyFunction::Config(mu, delta)));
+  const auto numConstraints = constraintPtr->getNumConstraints(0.0);
+  return std::unique_ptr<ocs2::StateInputCost>(
+      new ocs2::StateInputSoftConstraint(std::move(constraintPtr), numConstraints, std::move(penalty), ocs2::ConstraintOrder::Linear));
 }
 
 }  // namespace mobile_manipulator

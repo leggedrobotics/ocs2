@@ -68,6 +68,8 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
                                                       const std::string& libraryFolder, bool recompileLibraries);
   std::unique_ptr<ocs2::StateCost> getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
                                                         bool recompileLibraries);
+  std::unique_ptr<ocs2::StateInputCost> getJointVelocityLimitCost(const std::string& taskFile);
+
   ocs2::PinocchioInterface pinocchioInterface_;
   ocs2::CostCollection<ocs2::StateInputCost> stateInputCostCollection_;
   ocs2::CostCollection<ocs2::StateCost> stateCostCollection_;

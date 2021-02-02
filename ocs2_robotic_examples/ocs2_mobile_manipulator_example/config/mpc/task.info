@@ -98,8 +98,8 @@ inputCost
   {
     scaling 1e-2
 
-    (0,0)  1.0  ; forward velocity
-    (1,1)  1.0  ; turning velocity
+    (0,0)  5.0  ; forward velocity
+    (1,1)  5.0  ; turning velocity
     (2,2)  1.0  ; SH_ROT velocity
     (3,3)  1.0  ; SH_FLE velocity
     (4,4)  1.0  ; EL_FLE velocity
@@ -152,6 +152,39 @@ selfCollision
 
   ; minimum distance allowed between the pairs
   minimumDistance  0.1
+
+  ; relaxed log barrier mu
+  mu  0.01
+
+  ; relaxed log barrier delta
+  delta  1e-3
+}
+
+jointVelocityLimits
+{
+  lowerBound
+  {
+    (0,0) -0.5  ; forward velocity
+    (1,0) -0.5  ; turning velocity
+    (2,0) -1.0  ; SH_ROT
+    (3,0) -1.0  ; SH_FLE
+    (4,0) -1.0  ; EL_FLE
+    (5,0) -1.0  ; EL_ROT
+    (6,0) -1.0  ; WR_FLE
+    (7,0) -1.0  ; WR_ROT
+  }
+
+  upperBound
+  {
+    (0,0) 0.5  ; forward velocity
+    (1,0) 0.5  ; turning velocity
+    (2,0) 1.0  ; SH_ROT
+    (3,0) 1.0  ; SH_FLE
+    (4,0) 1.0  ; EL_FLE
+    (5,0) 1.0  ; EL_ROT
+    (6,0) 1.0  ; WR_FLE
+    (7,0) 1.0  ; WR_ROT
+  }
 
   ; relaxed log barrier mu
   mu  0.01

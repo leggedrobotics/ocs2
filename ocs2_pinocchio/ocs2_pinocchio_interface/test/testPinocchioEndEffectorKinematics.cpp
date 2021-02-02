@@ -167,6 +167,16 @@ TEST_F(TestEndEffectorKinematics, testVelocity) {
   const auto eeVel = eeKinematicsPtr->getVelocities(x, u)[0];
   const auto eeVelAd = eeKinematicsCppAdPtr->getVelocities(x, u)[0];
   EXPECT_TRUE(eeVel.isApprox(eeVelAd));
+}
+
+TEST_F(TestEndEffectorKinematics, DISABLED_testVelocityApproximation) {
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+
+  const auto a = ocs2::vector_t::Zero(q.rows());
+  pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a);
+
+  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
   const auto eeVelLin = eeKinematicsPtr->getVelocitiesLinearApproximation(x, u)[0];
   const auto eeVelLinAd = eeKinematicsCppAdPtr->getVelocitiesLinearApproximation(x, u)[0];

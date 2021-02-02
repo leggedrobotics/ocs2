@@ -162,6 +162,9 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 /******************************************************************************************************/
 std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getVelocitiesLinearApproximation(const vector_t& state,
                                                                                                                 const vector_t& input) {
+  // TODO(mspieler): v_partial_dq does not match CppAD reference
+  throw std::runtime_error("[PinocchioEndEffectorKinematics] getVelocitiesLinearApproximation() is not implemented");
+
   if (pinocchioInterfacePtr_ == nullptr) {
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }

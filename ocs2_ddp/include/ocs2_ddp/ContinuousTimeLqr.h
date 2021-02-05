@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
@@ -45,9 +44,9 @@ struct solution {
 };
 
 struct Settings {
-  /** This value determines the absolute tolerance error for ode solvers. */
+  /** CARE iterations are stopped if the norm of the update step is below the specified tolerance */
   scalar_t tolerance = 1e-12;
-  /** Maximum number of interations */
+  /** Maximum number of iterations */
   size_t maxIter = 100;
 };
 

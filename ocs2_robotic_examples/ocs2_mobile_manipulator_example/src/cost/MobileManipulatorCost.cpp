@@ -81,7 +81,8 @@ MobileManipulatorCost::MobileManipulatorCost(ocs2::PinocchioInterface pinocchioI
 /******************************************************************************************************/
 /******************************************************************************************************/
 MobileManipulatorCost::MobileManipulatorCost(const MobileManipulatorCost& rhs)
-    : pinocchioInterface_(rhs.pinocchioInterface_),
+    : ocs2::CostFunctionBase(rhs),
+      pinocchioInterface_(rhs.pinocchioInterface_),
       stateInputCostCollection_(rhs.stateInputCostCollection_),
       stateCostCollection_(rhs.stateCostCollection_),
       finalCostCollection_(rhs.finalCostCollection_) {

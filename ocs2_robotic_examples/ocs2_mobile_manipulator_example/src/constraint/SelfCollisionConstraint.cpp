@@ -44,7 +44,10 @@ SelfCollisionConstraint::SelfCollisionConstraint(const ocs2::PinocchioStateInput
 /******************************************************************************************************/
 /******************************************************************************************************/
 SelfCollisionConstraint::SelfCollisionConstraint(const SelfCollisionConstraint& rhs)
-    : pinocchioInterfacePtr_(nullptr), selfCollision_(rhs.selfCollision_), mappingPtr_(rhs.mappingPtr_->clone()) {}
+    : ocs2::StateConstraint(rhs),
+      pinocchioInterfacePtr_(nullptr),
+      selfCollision_(rhs.selfCollision_),
+      mappingPtr_(rhs.mappingPtr_->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

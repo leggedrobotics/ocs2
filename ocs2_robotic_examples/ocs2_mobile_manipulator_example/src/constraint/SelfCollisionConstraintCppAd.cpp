@@ -45,7 +45,10 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const ocs2::Pinocchio
 /******************************************************************************************************/
 /******************************************************************************************************/
 SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs)
-    : pinocchioInterfacePtr_(nullptr), selfCollision_(rhs.selfCollision_), mappingPtr_(rhs.mappingPtr_->clone()) {}
+    : ocs2::StateConstraint(rhs),
+      pinocchioInterfacePtr_(nullptr),
+      selfCollision_(rhs.selfCollision_),
+      mappingPtr_(rhs.mappingPtr_->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

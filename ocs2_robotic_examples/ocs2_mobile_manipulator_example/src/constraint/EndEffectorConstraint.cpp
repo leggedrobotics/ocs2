@@ -40,14 +40,15 @@ EndEffectorConstraint::EndEffectorConstraint(const ocs2::EndEffectorKinematics<s
     : endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
       eeDesiredPosition_(vector3_t::Zero()),
       eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {
-  assert(endEffectorKinematics.getIds() == 1);
+  assert(endEffectorKinematics.getIds().size() == 1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const EndEffectorConstraint& rhs)
-    : endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
+    : ocs2::StateConstraint(rhs),
+      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
       eeDesiredPosition_(vector3_t::Zero()),
       eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {}
 

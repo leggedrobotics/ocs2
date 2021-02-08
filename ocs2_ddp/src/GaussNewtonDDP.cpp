@@ -74,9 +74,8 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
     operatingTrajectoriesRolloutPtrStock_.emplace_back(new OperatingTrajectoriesRollout(*operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
-    bool makePsdWillBePerformedLater = ddpSettings_.lineSearch_.hessianCorrectionStrategy_ != hessian_correction::Strategy::DIAGONAL_SHIFT;
     linearQuadraticApproximatorPtrStock_.emplace_back(new LinearQuadraticApproximator(
-        *systemDynamicsPtr, *systemConstraintsPtr, *costFunctionPtr, ddpSettings_.checkNumericalStability_, makePsdWillBePerformedLater));
+        *systemDynamicsPtr, *systemConstraintsPtr, *costFunctionPtr, ddpSettings_.checkNumericalStability_));
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {

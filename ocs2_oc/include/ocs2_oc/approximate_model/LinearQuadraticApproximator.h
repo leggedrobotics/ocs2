@@ -52,16 +52,13 @@ class LinearQuadraticApproximator {
    * @param [in] systemConstraints: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunction: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
    * @param [in] checkNumericalCharacteristics: check for the expected numerical characteristics of the model (default true)
-   * @param [in] makePsdWillBePerformedLater: Whether or not the model will be rectified later outside of this class.
    */
   LinearQuadraticApproximator(const SystemDynamicsBase& systemDerivatives, const ConstraintBase& systemConstraints,
-                              const CostFunctionBase& costFunction, bool checkNumericalCharacteristics = true,
-                              bool makePsdWillBePerformedLater = false)
+                              const CostFunctionBase& costFunction, bool checkNumericalCharacteristics = true)
       : systemDynamicsPtr_(systemDerivatives.clone()),
         systemConstraintsPtr_(systemConstraints.clone()),
         costFunctionPtr_(costFunction.clone()),
-        checkNumericalCharacteristics_(checkNumericalCharacteristics),
-        makePsdWillBePerformedLater_(makePsdWillBePerformedLater) {}
+        checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
 
   /**
    * Default destructor.
@@ -146,7 +143,6 @@ class LinearQuadraticApproximator {
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
 
   bool checkNumericalCharacteristics_;
-  bool makePsdWillBePerformedLater_;
 };
 
 }  // namespace ocs2

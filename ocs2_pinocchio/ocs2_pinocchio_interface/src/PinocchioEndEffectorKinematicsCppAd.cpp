@@ -74,17 +74,15 @@ PinocchioEndEffectorKinematicsCppAd* PinocchioEndEffectorKinematicsCppAd::clone(
 /******************************************************************************************************/
 void PinocchioEndEffectorKinematicsCppAd::initialize(size_t stateDim, size_t inputDim, const std::string& modelName,
                                                      const std::string& modelFolder, bool recompileLibraries, bool verbose) {
-  auto positionFunc = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { y = getPositionsCppAd(x); };
-  positionCppAdInterfacePtr_.reset(
-      new CppAdInterface(positionFunc, stateDim, 3 * endEffectorIds_.size(), modelName + "_position", modelFolder));
+  auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) { y = getPositionsCppAd(x); };
+  positionCppAdInterfacePtr_.reset(new CppAdInterface(positionFunc, stateDim, modelName + "_position", modelFolder));
 
-  auto velocityFunc = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+  auto velocityFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
     ad_vector_t state = x.head(stateDim);
     ad_vector_t input = x.tail(inputDim);
     y = getVelocitiesCppAd(state, input);
   };
-  velocityCppAdInterfacePtr_.reset(
-      new CppAdInterface(velocityFunc, stateDim + inputDim, 3 * endEffectorIds_.size(), modelName + "_velocity", modelFolder));
+  velocityCppAdInterfacePtr_.reset(new CppAdInterface(velocityFunc, stateDim + inputDim, modelName + "_velocity", modelFolder));
 
   if (recompileLibraries) {
     positionCppAdInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);

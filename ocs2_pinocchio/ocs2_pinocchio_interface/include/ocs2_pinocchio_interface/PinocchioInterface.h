@@ -59,7 +59,7 @@ template <typename SCALAR>
 class PinocchioInterfaceTpl final {
  public:
   using Model = pinocchio::ModelTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
-  using Data = typename pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
+  using Data = pinocchio::DataTpl<SCALAR, 0, pinocchio::JointCollectionDefaultTpl>;
   using JointModel = pinocchio::JointModelTpl<scalar_t, 0, pinocchio::JointCollectionDefaultTpl>;
 
   // Template for conditional compilation using SFINAE

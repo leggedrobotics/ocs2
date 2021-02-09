@@ -182,3 +182,25 @@ TEST_F(TestEndEffectorKinematics, DISABLED_testVelocityApproximation) {
   const auto eeVelLinAd = eeKinematicsCppAdPtr->getVelocitiesLinearApproximation(x, u)[0];
   compareApproximation(eeVelLin, eeVelLinAd, /* functionOfInput = */ true);
 }
+
+TEST_F(TestEndEffectorKinematics, testClone) {
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+
+  auto clonePtr = std::unique_ptr<ocs2::PinocchioEndEffectorKinematics>(eeKinematicsPtr->clone());
+  auto cloneCppAdPtr = std::unique_ptr<ocs2::PinocchioEndEffectorKinematicsCppAd>(eeKinematicsCppAdPtr->clone());
+
+  const auto a = ocs2::vector_t::Zero(q.rows());
+  pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a);
+  pinocchio::updateFramePlacements(model, data);
+
+  clonePtr->setPinocchioInterface(*pinocchioInterfacePtr);
+
+  const auto eePos = clonePtr->getPositions(x)[0];
+  const auto eePosAd = cloneCppAdPtr->getPositions(x)[0];
+  EXPECT_TRUE(eePos.isApprox(eePosAd));
+
+  const auto eeVel = clonePtr->getVelocities(x, u)[0];
+  const auto eeVelAd = cloneCppAdPtr->getVelocities(x, u)[0];
+  EXPECT_TRUE(eeVel.isApprox(eeVelAd));
+}

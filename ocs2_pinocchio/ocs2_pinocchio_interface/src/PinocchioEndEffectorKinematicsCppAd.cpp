@@ -55,6 +55,7 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(Pinocch
 /******************************************************************************************************/
 PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs)
     : positionCppAdInterfacePtr_(new CppAdInterface(*rhs.positionCppAdInterfacePtr_)),
+      velocityCppAdInterfacePtr_(new CppAdInterface(*rhs.velocityCppAdInterfacePtr_)),
       EndEffectorKinematics<scalar_t>(rhs),
       pinocchioInterface_(rhs.pinocchioInterface_),
       mappingPtr_(rhs.mappingPtr_->clone()),

@@ -29,8 +29,7 @@
 
 #include <pinocchio/fwd.hpp>
 
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/multibody/geometry.hpp>
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>

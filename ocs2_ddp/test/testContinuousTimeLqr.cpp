@@ -34,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
+#include <ocs2_qp_solver/test/testProblemsGeneration.h>
+
 using namespace ocs2;
 
 TEST(testContinousTimeLqr, compareWithMatlab) {
@@ -71,4 +73,42 @@ TEST(testContinousTimeLqr, compareWithMatlab) {
   const scalar_t tolerance = 1e-9;
   ASSERT_TRUE(lqrSolution.feedbackGains.isApprox(K_check, tolerance));
   ASSERT_TRUE(lqrSolution.valueFunction.isApprox(S_check, tolerance));
+}
+
+TEST(testContinousTimeLqr, evaluateCAREresidual) {
+  const scalar_t careResidualNormTolerance = 1e-9;  // CARE needs to be solved up until this tolerance
+
+  // Check random problems of increasing size.
+  for (int n = 2; n < 65; n *= 2) {
+    const int m = n / 2;
+
+    // random dynamics
+    const auto dynamicsMatrices = qp_solver::getRandomDynamics(n, m);
+    const auto dynamics = qp_solver::getOcs2Dynamics(dynamicsMatrices);
+
+    // random costs
+    const auto costMatrices = qp_solver::getRandomCost(n, m);
+    const auto cost = qp_solver::getOcs2Cost(costMatrices, ocs2::ScalarFunctionQuadraticApproximation::Zero(n, m));
+    const scalar_t time = 0.0;
+    const vector_t state = vector_t::Random(n);
+    const vector_t input = vector_t::Random(m);
+    const CostDesiredTrajectories costDesiredTrajectories({time}, {state}, {input});
+    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+
+    // Solve LQR
+    const scalar_t timeLinearization = 0.0;
+    const vector_t stateLinearization = vector_t::Random(n);
+    const vector_t inputLinearization = vector_t::Random(m);
+    const auto lqrSolution = continuous_time_lqr::solve(*dynamics, *cost, timeLinearization, stateLinearization, inputLinearization);
+
+    // Check CARE
+    const auto& A = dynamicsMatrices.dfdx;
+    const auto& B = dynamicsMatrices.dfdu;
+    const auto& Q = costMatrices.dfdxx;
+    const auto& R = costMatrices.dfduu;
+    const auto& P = costMatrices.dfdux;
+    const auto& S = lqrSolution.valueFunction;
+    const matrix_t careResidual = A.transpose() * S + S * A - (S * B + P.transpose()) * R.lu().solve(B.transpose() * S + P) + Q;
+    ASSERT_LT(careResidual.norm(), careResidualNormTolerance);
+  }
 }

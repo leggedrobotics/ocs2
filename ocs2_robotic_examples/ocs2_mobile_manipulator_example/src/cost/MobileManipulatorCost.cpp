@@ -196,11 +196,8 @@ void MobileManipulatorCost::setEndEffectorReference(scalar_t time) {
     throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
   }
 
-  ocs2::vector_t eePosition;
-  quaternion_t eeOrientation;
-  std::tie(eePosition, eeOrientation) = interpolateEndEffectorPose(*costDesiredTrajectoriesPtr_, time);
-
-  eeConstraintPtr_->setDesiredPose(eePosition, eeOrientation);
+  const auto eePositionOrientationPair = interpolateEndEffectorPose(*costDesiredTrajectoriesPtr_, time);
+  eeConstraintPtr_->setDesiredPose(eePositionOrientationPair.first, eePositionOrientationPair.second);
 }
 
 /******************************************************************************************************/
@@ -211,11 +208,8 @@ void MobileManipulatorCost::setFinalEndEffectorReference(scalar_t time) {
     throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
   }
 
-  ocs2::vector_t eePosition;
-  quaternion_t eeOrientation;
-  std::tie(eePosition, eeOrientation) = interpolateEndEffectorPose(*costDesiredTrajectoriesPtr_, time);
-
-  finalEeConstraintPtr_->setDesiredPose(eePosition, eeOrientation);
+  const auto eePositionOrientationPair = interpolateEndEffectorPose(*costDesiredTrajectoriesPtr_, time);
+  finalEeConstraintPtr_->setDesiredPose(eePositionOrientationPair.first, eePositionOrientationPair.second);
 }
 
 /******************************************************************************************************/
@@ -252,8 +246,12 @@ auto MobileManipulatorCost::interpolateEndEffectorPose(const ocs2::CostDesiredTr
 /******************************************************************************************************/
 std::unique_ptr<ocs2::StateInputCost> MobileManipulatorCost::getQuadraticInputCost(const std::string& taskFile) {
   matrix_t R(INPUT_DIM, INPUT_DIM);
+
+  std::cerr << "\n #### Input Cost Settings: ";
+  std::cerr << "\n #### =============================================================================\n";
   ocs2::loadData::loadEigenMatrix(taskFile, "inputCost.R", R);
-  std::cerr << "inputCost.R:  \n" << R << std::endl;
+  std::cerr << "inputCost.R:  \n" << R << '\n';
+  std::cerr << " #### =============================================================================" << std::endl;
 
   return std::unique_ptr<ocs2::StateInputCost>(new QuadraticInputCost(std::move(R)));
 }
@@ -268,15 +266,15 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
   std::string name = "WRIST_2";
   bool useCppAd = false;
 
-  ocs2::loadData::loadCppDataType(taskFile, fieldName + ".muPosition", muPosition);
-  ocs2::loadData::loadCppDataType(taskFile, fieldName + ".muOrientation", muOrientation);
-  ocs2::loadData::loadCppDataType(taskFile, fieldName + ".name", name);
-  ocs2::loadData::loadCppDataType(taskFile, fieldName + ".useCppAd", useCppAd);
-
-  std::cerr << fieldName << ".muPosition:  " << muPosition << std::endl;
-  std::cerr << fieldName << ".muOrientation:  " << muOrientation << std::endl;
-  std::cerr << fieldName << ".name:  " << name << std::endl;
-  std::cerr << fieldName << ".useCppAd:  " << useCppAd << std::endl;
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  std::cerr << "\n #### " << fieldName << " Settings: ";
+  std::cerr << "\n #### =============================================================================\n";
+  ocs2::loadData::loadPtreeValue(pt, useCppAd, fieldName + ".useCppAd", true);
+  ocs2::loadData::loadPtreeValue(pt, muPosition, fieldName + ".muPosition", true);
+  ocs2::loadData::loadPtreeValue(pt, muOrientation, fieldName + ".muOrientation", true);
+  ocs2::loadData::loadPtreeValue(pt, name, fieldName + ".name", true);
+  std::cerr << " #### =============================================================================" << std::endl;
 
   std::unique_ptr<ocs2::StateConstraint> eeConstraint;
   if (!useCppAd) {
@@ -305,40 +303,42 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
 std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
                                                                              bool recompileLibraries) {
   bool useCppAd = false;
-  ocs2::loadData::loadCppDataType(taskFile, "selfCollision.useCppAd", useCppAd);
 
   // TODO(perry) replace with some nice link parser or something
-  std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
-  std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
+  std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
-  scalar_t minimumDistance = 1.0;
+  scalar_t minimumDistance = 0.0;
 
-  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", selfCollisionObjectPairs);
-  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionLinkPairs", selfCollisionLinkPairs);
-  ocs2::loadData::loadCppDataType(taskFile, "selfCollision.mu", mu);
-  ocs2::loadData::loadCppDataType(taskFile, "selfCollision.delta", delta);
-  ocs2::loadData::loadCppDataType(taskFile, "selfCollision.minimumDistance", minimumDistance);
-
-  std::cerr << "selfCollision.mu:  " << mu << std::endl;
-  std::cerr << "selfCollision.delta:  " << delta << std::endl;
-  std::cerr << "selfCollision.minimumDistance:  " << minimumDistance << std::endl;
-  std::cout << "Loaded collision object pairs: ";
-  for (const auto& element : selfCollisionObjectPairs) {
-    std::cout << "[" << element.first << ", " << element.second << "]; ";
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  const std::string prefix = "selfCollision.";
+  std::cerr << "\n #### SelfCollision Settings: ";
+  std::cerr << "\n #### =============================================================================\n";
+  ocs2::loadData::loadPtreeValue(pt, useCppAd, prefix + "useCppAd", true);
+  ocs2::loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
+  ocs2::loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
+  ocs2::loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs);
+  std::cerr << " #### 'collisionObjectPairs': ";
+  for (const auto& element : collisionObjectPairs) {
+    std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
-  std::cout << std::endl;
-  std::cout << "Loaded collision link pairs: ";
-  for (const auto& element : selfCollisionLinkPairs) {
-    std::cout << "[" << element.first << ", " << element.second << "]; ";
+  std::cerr << '\n';
+  std::cerr << " #### 'collisionLinkPairs': ";
+  for (const auto& element : collisionLinkPairs) {
+    std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
-  std::cout << std::endl;
+  std::cerr << '\n';
+  std::cerr << " #### =============================================================================" << std::endl;
 
-  std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
+  const std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
+  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterface_, collisionLinkPairs, collisionObjectPairs);
 
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterface_, selfCollisionLinkPairs, selfCollisionObjectPairs);
-
-  // Note: selfCollisionLinkPairs and selfCollisionObjectPairs might contain invalid pairs.
+  // Note: geometryInterface ignores invalid pairs.
+  //       This is why numCollisionPairs might not be equal to collisionLinkPairs.size() + collisionObjectPairs.size().
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
 
   std::unique_ptr<ocs2::StateConstraint> constraint;
@@ -357,16 +357,6 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
 
   return std::unique_ptr<ocs2::StateCost>(
       new ocs2::StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty), ocs2::ConstraintOrder::Linear));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
-                                                                const std::string& taskFile, const std::string& libraryFolder,
-                                                                bool recompileLibraries) {
-  // TODO(mspieler): use make_unique after switch to C++14
-  return std::unique_ptr<MobileManipulatorCost>(new MobileManipulatorCost(pinocchioInterface, taskFile, libraryFolder, recompileLibraries));
 }
 
 }  // namespace mobile_manipulator

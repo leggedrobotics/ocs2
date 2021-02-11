@@ -79,8 +79,4 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
   EndEffectorConstraint* finalEeConstraintPtr_ = nullptr;
 };
 
-std::unique_ptr<MobileManipulatorCost> getMobileManipulatorCost(const ocs2::PinocchioInterface& pinocchioInterface,
-                                                                const std::string& taskFile, const std::string& libraryFolder,
-                                                                bool recompileLibraries);
-
 }  // namespace mobile_manipulator

@@ -86,14 +86,14 @@ int main(int argc, char** argv) {
   ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
   ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
   for (const auto& element : selfCollisionObjectPairs) {
-    std::cout << "[" << element.first << ", " << element.second << "]; ";
+    std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
-  std::cout << std::endl;
-  std::cout << "Loaded collision link pairs: ";
+  std::cerr << std::endl;
+  std::cerr << "Loaded collision link pairs: ";
   for (const auto& element : selfCollisionLinkPairs) {
-    std::cout << "[" << element.first << ", " << element.second << "]; ";
+    std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
-  std::cout << std::endl;
+  std::cerr << std::endl;
 
   gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 

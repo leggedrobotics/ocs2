@@ -27,14 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>
+
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
-#include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
+#include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
@@ -50,43 +53,30 @@ class TestEndEffectorKinematics : public ::testing::Test {
     eeKinematicsPtr.reset(new ocs2::PinocchioEndEffectorKinematics(*pinocchioInterfacePtr, pinocchioMapping, {"WRIST_2"}));
 
     x << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0;
-    vector_t u = vector_t::Zero(INPUT_DIM);
   }
 
   vector_t x{STATE_DIM};
-  vector_t u{INPUT_DIM};
   std::unique_ptr<ocs2::PinocchioInterface> pinocchioInterfacePtr;
   std::unique_ptr<ocs2::PinocchioEndEffectorKinematics> eeKinematicsPtr;
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
 };
 
-TEST_F(TestEndEffectorKinematics, testKinematics) {
+TEST_F(TestEndEffectorKinematics, testEndEffectorConstraint) {
+  using quaternion_t = EndEffectorConstraint::quaternion_t;
+  using vector3_t = EndEffectorConstraint::vector3_t;
+
   const auto q = pinocchioMapping.getPinocchioJointPosition(x);
-  pinocchioInterfacePtr->forwardKinematics(q);
-  pinocchioInterfacePtr->updateFramePlacements();
-  pinocchioInterfacePtr->computeJointJacobians(q);
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
 
-  const auto id = pinocchioInterfacePtr->getBodyId("WRIST_2");
-  vector_t pos = pinocchioInterfacePtr->getBodyPosition(id);
+  auto eeConstraintPtr = std::make_shared<EndEffectorConstraint>(*eeKinematicsPtr);
+  dynamic_cast<ocs2::PinocchioEndEffectorKinematics&>(eeConstraintPtr->getEndEffectorKinematics())
+      .setPinocchioInterface(*pinocchioInterfacePtr);
+  eeConstraintPtr->setDesiredPose(vector3_t::Zero(), quaternion_t(1, 0, 0, 0));
 
-  const auto eePos = eeKinematicsPtr->getPositions(x)[0];
-  const auto eePosLin = eeKinematicsPtr->getPositionsLinearApproximation(x)[0];
-
-  EXPECT_TRUE(pos.isApprox(eePos));
-  EXPECT_TRUE(pos.isApprox(eePosLin.f));
-
-  std::cerr << "position:\n" << eePos.transpose() << '\n';
-  std::cerr << "linear approximation:\n" << eePosLin;
-}
-
-TEST_F(TestEndEffectorKinematics, testEndEffectorCost) {
-  // ocs2::SmoothAbsolutePenaltyFunction penalty(ocs2::SmoothAbsolutePenaltyFunction::Config(1.0, 1e-2));
-  ocs2::QuadraticPenaltyFunction penalty(1.0);
-
-  auto eeCostPtr = std::make_shared<EndEffectorCost>(*eeKinematicsPtr, penalty);
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectory({0.0}, {vector_t::Zero(7)}, {vector_t::Zero(INPUT_DIM)});
-  eeCostPtr->setCostDesiredTrajectoriesPtr(&initCostDesiredTrajectory);
-
-  std::cerr << "cost:\n" << eeCostPtr->cost(0.0, x, u) << '\n';
-  std::cerr << "quadratic approximation:\n" << eeCostPtr->costQuadraticApproximation(0.0, x, u);
+  std::cerr << "constraint:\n" << eeConstraintPtr->getValue(0.0, x) << '\n';
+  std::cerr << "approximation:\n" << eeConstraintPtr->getLinearApproximation(0.0, x);
 }

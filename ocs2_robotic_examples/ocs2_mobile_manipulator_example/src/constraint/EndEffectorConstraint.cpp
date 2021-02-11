@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/cost/EndEffectorCost.h>
+#include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
@@ -36,90 +36,67 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EndEffectorCost::EndEffectorCost(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                                 const ocs2::PenaltyFunctionBase& penalty)
+EndEffectorConstraint::EndEffectorConstraint(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics)
     : endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
-      constraintPenalty_(3 * endEffectorKinematics.getIds().size(), std::unique_ptr<ocs2::PenaltyFunctionBase>(penalty.clone())) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-EndEffectorCost::EndEffectorCost(const EndEffectorCost& rhs)
-    : endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()), constraintPenalty_(rhs.constraintPenalty_) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t EndEffectorCost::cost(scalar_t time, const vector_t& state, const vector_t& input) {
-  vector_t eeDesiredPosition;
-  Eigen::Quaternion<scalar_t> eeDesiredOrientation;
-  std::tie(eeDesiredPosition, eeDesiredOrientation) = interpolateReference(time);
-
-  const vector_t eePosition = endEffectorKinematicsPtr_->getPositions(state)[0];
-  return constraintPenalty_.getValue(eePosition - eeDesiredPosition);
+      eeDesiredPosition_(vector3_t::Zero()),
+      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {
+  assert(endEffectorKinematics.getIds().size() == 1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t EndEffectorCost::finalCost(scalar_t time, const vector_t& state) {
-  return 0;
+EndEffectorConstraint::EndEffectorConstraint(const EndEffectorConstraint& rhs)
+    : ocs2::StateConstraint(rhs),
+      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
+      eeDesiredPosition_(vector3_t::Zero()),
+      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
+  return 6;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation EndEffectorCost::costQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                 const vector_t& input) {
-  vector_t eeDesiredPosition;
-  Eigen::Quaternion<scalar_t> eeDesiredOrientation;
-  std::tie(eeDesiredPosition, eeDesiredOrientation) = interpolateReference(time);
+vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state) const {
+  const vector3_t eePosition = endEffectorKinematicsPtr_->getPositions(state)[0];
+  const quaternion_t eeOrientation = eeDesiredOrientation_;  // TODO(mspieler); implement end effector kinematics orientation
 
-  auto eePosLin = endEffectorKinematicsPtr_->getPositionsLinearApproximation(state)[0];
-  eePosLin.f -= eeDesiredPosition;
+  vector_t constraint(6);
+  constraint.head<3>() = eePosition - eeDesiredPosition_;
+  constraint.tail<3>() = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation_);
 
-  return constraintPenalty_.getQuadraticApproximation(eePosLin);
+  return constraint;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation EndEffectorCost::finalCostQuadraticApproximation(scalar_t time, const vector_t& state) {
-  return ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
+VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(scalar_t time, const vector_t& state) const {
+  const auto eePosition = endEffectorKinematicsPtr_->getPositionsLinearApproximation(state)[0];
+
+  auto constraintApproximation = VectorFunctionLinearApproximation::Zero(6, state.rows(), 0);
+  constraintApproximation.f.head<3>() = eePosition.f - eeDesiredPosition_;
+  constraintApproximation.dfdx.topRows(3) = eePosition.dfdx;
+
+  // TODO(mspieler); implement end effector kinematics orientation
+  // const quaternion_t eeOrientation = eeDesiredOrientation_;
+  // constraintApproximation.f.tail<3>() = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation_);
+  // constraintApproximation.dfdx.bottomRows(3) =
+
+  return constraintApproximation;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, Eigen::Quaternion<scalar_t>> EndEffectorCost::interpolateReference(scalar_t time) const {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[EndEffectorCost] costDesiredTrajectoriesPtr_ is not set.");
-  }
-
-  std::pair<vector_t, Eigen::Quaternion<scalar_t>> reference;
-
-  const auto& desiredTimeTrajectory = costDesiredTrajectoriesPtr_->desiredTimeTrajectory();
-  const auto& desiredStateTrajectory = costDesiredTrajectoriesPtr_->desiredStateTrajectory();
-
-  auto it = std::lower_bound(desiredTimeTrajectory.begin(), desiredTimeTrajectory.end(), time);
-  int timeAIdx = it - desiredTimeTrajectory.begin() - 1;
-  if (timeAIdx == -1) {
-    reference.first = desiredStateTrajectory[0].head<3>();
-    reference.second.coeffs() = desiredStateTrajectory[0].tail<4>();
-  } else if (timeAIdx == desiredTimeTrajectory.size() - 1) {
-    reference.first = desiredStateTrajectory[timeAIdx].head<3>();
-    reference.second.coeffs() = desiredStateTrajectory[timeAIdx].tail<4>();
-  } else {
-    // interpolation
-    const scalar_t tau = (time - desiredTimeTrajectory[timeAIdx]) / (desiredTimeTrajectory[timeAIdx + 1] - desiredTimeTrajectory[timeAIdx]);
-    const Eigen::Quaternion<scalar_t> quatA(desiredStateTrajectory[timeAIdx].tail<4>());
-    const Eigen::Quaternion<scalar_t> quatB(desiredStateTrajectory[timeAIdx + 1].tail<4>());
-
-    reference.first = (1 - tau) * desiredStateTrajectory[timeAIdx].head<3>() + tau * desiredStateTrajectory[timeAIdx + 1].head<3>();
-    reference.second = quatA.slerp(tau, quatB);
-  }
-
-  return reference;
+void EndEffectorConstraint::setDesiredPose(const vector3_t& position, const quaternion_t& orientation) {
+  eeDesiredPosition_ = position;
+  eeDesiredOrientation_ = orientation;
 }
 
 }  // namespace mobile_manipulator

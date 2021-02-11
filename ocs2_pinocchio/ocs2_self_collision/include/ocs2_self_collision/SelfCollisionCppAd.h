@@ -52,6 +52,9 @@ class SelfCollisionCppAd {
   /** Copy constructor */
   SelfCollisionCppAd(const SelfCollisionCppAd& rhs);
 
+  /** Get the number of collision pairs */
+  size_t getNumCollisionPairs() const { return pinocchioGeometryInterface_.getNumCollisionPairs(); }
+
   /**
    * Initializes model libraries
    *

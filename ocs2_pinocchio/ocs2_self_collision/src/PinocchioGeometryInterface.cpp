@@ -102,4 +102,11 @@ std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistanc
   return std::move(geometryData.distanceResults);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t PinocchioGeometryInterface::getNumCollisionPairs() const {
+  return geometryModelPtr_->collisionPairs.size();
+}
+
 }  // namespace ocs2

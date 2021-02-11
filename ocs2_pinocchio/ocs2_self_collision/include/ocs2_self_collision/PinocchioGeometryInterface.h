@@ -67,9 +67,6 @@ class PinocchioGeometryInterface final {
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
-  pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
-  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
-
   /**
    * Compute collision pair distances
    *
@@ -79,6 +76,13 @@ class PinocchioGeometryInterface final {
    * @return An array of distances between pairs of collision bodies defined in the constructor.
    */
   std::vector<hpp::fcl::DistanceResult> computeDistances(const PinocchioInterface& pinocchioInterface) const;
+
+  /** Get the number of collision pairs */
+  size_t getNumCollisionPairs() const;
+
+  /** Access the pinocchio geometry model */
+  pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
+  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
  private:
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;

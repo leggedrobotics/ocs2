@@ -62,6 +62,7 @@ add_library(${PROJECT_NAME}
   src/PinocchioInterface.cpp
   src/PinocchioInterfaceAD.cpp
   src/PinocchioEndEffectorKinematics.cpp
+  src/PinocchioEndEffectorKinematicsCppAd.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -107,6 +108,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(testPinocchioInterface
   test/testPinocchioInterface.cpp
+  test/testPinocchioEndEffectorKinematics.cpp
 )
 target_link_libraries(testPinocchioInterface
   gtest_main

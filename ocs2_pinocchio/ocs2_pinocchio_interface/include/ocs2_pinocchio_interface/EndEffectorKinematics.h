@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <string>
+#include <utility>
 
 #include <ocs2_core/Types.h>
 
@@ -42,6 +43,7 @@ class EndEffectorKinematics {
   using vector3_t = Eigen::Matrix<SCALAR_T, 3, 1>;
   using matrix3x_t = Eigen::Matrix<SCALAR_T, 3, Eigen::Dynamic>;
   using vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
+  using quaternion_t = Eigen::Quaternion<SCALAR_T>;
 
   EndEffectorKinematics() = default;
   virtual ~EndEffectorKinematics() = default;
@@ -60,6 +62,14 @@ class EndEffectorKinematics {
   virtual std::vector<vector3_t> getPositions(const vector_t& state) = 0;
 
   /**
+   * Get end-effector poses in world frame
+   *
+   * @param [in] state vector
+   * @return array of [position, orientation] pairs
+   */
+  virtual std::vector<std::pair<vector3_t, quaternion_t>> getPoses(const vector_t& state) = 0;
+
+  /**
    * Get end-effector velocity vectors in world frame
    *
    * @param [in] state: state vector
@@ -75,7 +85,18 @@ class EndEffectorKinematics {
    * @return array of position function linear approximations
    */
   virtual std::vector<VectorFunctionLinearApproximation> getPositionsLinearApproximation(const vector_t& state) {
-    throw std::runtime_error("[EndEffectorKinematics] getPositionLinearApproximation() not implemented");
+    throw std::runtime_error("[EndEffectorKinematics] getPositionsLinearApproximation() not implemented");
+  }
+
+  /**
+   * Get end-effector pose linear approximation in world frame
+   *
+   * @param [in] state: state vector
+   * @return array of position and orientation linear approximations
+   */
+  virtual std::vector<std::pair<VectorFunctionLinearApproximation, VectorFunctionLinearApproximation>> getPosesLinearApproximation(
+      const vector_t& state) {
+    throw std::runtime_error("[EndEffectorKinematics] getPosesLinearApproximation() not implemented");
   }
 
   /**
@@ -86,7 +107,7 @@ class EndEffectorKinematics {
    * @return array of velocity function linear approximations
    */
   virtual std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) {
-    throw std::runtime_error("[EndEffectorKinematics] getVelocityLinearApproximation() not implemented");
+    throw std::runtime_error("[EndEffectorKinematics] getVelocitiesLinearApproximation() not implemented");
   }
 
  protected:

@@ -101,7 +101,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Cost function
    */
-  costPtr_ = getMobileManipulatorCost(*pinocchioInterfacePtr_, taskFile, libraryFolder_, recompileLibraries);
+  costPtr_.reset(new MobileManipulatorCost(*pinocchioInterfacePtr_, taskFile, libraryFolder_, recompileLibraries));
 
   /*
    * Constraints

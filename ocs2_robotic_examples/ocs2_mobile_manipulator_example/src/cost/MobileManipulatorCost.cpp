@@ -320,18 +320,8 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
   ocs2::loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
   ocs2::loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
   ocs2::loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
-  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs);
-  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs);
-  std::cerr << " #### 'collisionObjectPairs': ";
-  for (const auto& element : collisionObjectPairs) {
-    std::cerr << "[" << element.first << ", " << element.second << "]; ";
-  }
-  std::cerr << '\n';
-  std::cerr << " #### 'collisionLinkPairs': ";
-  for (const auto& element : collisionLinkPairs) {
-    std::cerr << "[" << element.first << ", " << element.second << "]; ";
-  }
-  std::cerr << '\n';
+  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
+  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs, true);
   std::cerr << " #### =============================================================================" << std::endl;
 
   const std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";

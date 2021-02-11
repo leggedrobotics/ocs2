@@ -75,7 +75,7 @@ add_library(${PROJECT_NAME}
   src/cost/MobileManipulatorCost.cpp
   src/constraint/EndEffectorConstraint.cpp
   src/constraint/SelfCollisionConstraint.cpp
-  # src/constraint/SelfCollisionConstraintCppAd.cpp
+  src/constraint/SelfCollisionConstraintCppAd.cpp
   src/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
 )

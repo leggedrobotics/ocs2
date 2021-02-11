@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
+#include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
@@ -36,67 +36,62 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EndEffectorConstraint::EndEffectorConstraint(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics)
-    : endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
-      eeDesiredPosition_(vector3_t::Zero()),
-      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {
-  assert(endEffectorKinematics.getIds().size() == 1);
-}
+SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
+                                                           ocs2::PinocchioGeometryInterface pinocchioGeometryInterface,
+                                                           scalar_t minimumDistance)
+    : selfCollision_(std::move(pinocchioGeometryInterface), minimumDistance), mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EndEffectorConstraint::EndEffectorConstraint(const EndEffectorConstraint& rhs)
+SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs)
     : ocs2::StateConstraint(rhs),
-      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
-      eeDesiredPosition_(vector3_t::Zero()),
-      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {}
+      pinocchioInterfacePtr_(nullptr),
+      selfCollision_(rhs.selfCollision_),
+      mappingPtr_(rhs.mappingPtr_->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
-  return 6;
+void SelfCollisionConstraintCppAd::initialize(const ocs2::PinocchioInterface& pinocchioInterface, const std::string& modelName,
+                                              const std::string& modelFolder, bool recompileLibraries, bool verbose) {
+  selfCollision_.initialize(pinocchioInterface, modelName, modelFolder, recompileLibraries, verbose);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state) const {
-  const vector3_t eePosition = endEffectorKinematicsPtr_->getPositions(state)[0];
-  const quaternion_t eeOrientation = eeDesiredOrientation_;  // TODO(mspieler); implement end effector kinematics orientation
+size_t SelfCollisionConstraintCppAd::getNumConstraints(scalar_t time) const {
+  return selfCollision_.getNumCollisionPairs();
+}
 
-  vector_t constraint(6);
-  constraint.head<3>() = eePosition - eeDesiredPosition_;
-  constraint.tail<3>() = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state) const {
+  if (pinocchioInterfacePtr_ == nullptr) {
+    throw std::runtime_error("[SelfCollisionConstraintCppAd] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
+  }
 
+  return selfCollision_.getValue(*pinocchioInterfacePtr_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state) const {
+  if (pinocchioInterfacePtr_ == nullptr) {
+    throw std::runtime_error("[SelfCollisionConstraintCppAd] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
+  }
+
+  const auto q = mappingPtr_->getPinocchioJointPosition(state);
+
+  VectorFunctionLinearApproximation constraint;
+  matrix_t dfdq, dfdv;
+  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(*pinocchioInterfacePtr_, q);
+  dfdv.setZero(dfdq.rows(), dfdq.cols());
+  std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
   return constraint;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(scalar_t time, const vector_t& state) const {
-  const auto eePosition = endEffectorKinematicsPtr_->getPositionsLinearApproximation(state)[0];
-
-  auto constraintApproximation = VectorFunctionLinearApproximation::Zero(6, state.rows(), 0);
-  constraintApproximation.f.head<3>() = eePosition.f - eeDesiredPosition_;
-  constraintApproximation.dfdx.topRows(3) = eePosition.dfdx;
-
-  // TODO(mspieler); implement end effector kinematics orientation
-  // const quaternion_t eeOrientation = eeDesiredOrientation_;
-  // constraintApproximation.f.tail<3>() = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation_);
-  // constraintApproximation.dfdx.bottomRows(3) =
-
-  return constraintApproximation;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void EndEffectorConstraint::setDesiredPose(const vector3_t& position, const quaternion_t& orientation) {
-  eeDesiredPosition_ = position;
-  eeDesiredOrientation_ = orientation;
 }
 
 }  // namespace mobile_manipulator

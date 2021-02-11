@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraint.h>
-// #include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
+#include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/QuadraticInputCost.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
@@ -81,7 +81,8 @@ MobileManipulatorCost::MobileManipulatorCost(ocs2::PinocchioInterface pinocchioI
 /******************************************************************************************************/
 /******************************************************************************************************/
 MobileManipulatorCost::MobileManipulatorCost(const MobileManipulatorCost& rhs)
-    : pinocchioInterface_(rhs.pinocchioInterface_),
+    : ocs2::CostFunctionBase(rhs),
+      pinocchioInterface_(rhs.pinocchioInterface_),
       stateInputCostCollection_(rhs.stateInputCostCollection_),
       stateCostCollection_(rhs.stateCostCollection_),
       finalCostCollection_(rhs.finalCostCollection_) {
@@ -96,6 +97,12 @@ void MobileManipulatorCost::setCachePointers() {
       dynamic_cast<SelfCollisionConstraint*>(&stateCostCollection_.get<ocs2::StateSoftConstraint>("SelfCollision").get());
   if (selfCollisionConstraintPtr != nullptr) {
     selfCollisionConstraintPtr->setPinocchioInterface(pinocchioInterface_);
+  } else {
+    auto* selfCollisionConstraintCppAdPtr =
+        dynamic_cast<SelfCollisionConstraintCppAd*>(&stateCostCollection_.get<ocs2::StateSoftConstraint>("SelfCollision").get());
+    if (selfCollisionConstraintCppAdPtr != nullptr) {
+      selfCollisionConstraintCppAdPtr->setPinocchioInterface(pinocchioInterface_);
+    }
   }
 
   eeConstraintPtr_ = &stateCostCollection_.get<ocs2::StateSoftConstraint>("EndEffector").get<EndEffectorConstraint>();
@@ -299,9 +306,6 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
                                                                              bool recompileLibraries) {
   bool useCppAd = false;
   ocs2::loadData::loadCppDataType(taskFile, "selfCollision.useCppAd", useCppAd);
-  if (useCppAd) {
-    throw std::runtime_error("[MobileManipulatorCost] SelfCollisionConstraintCppAd not implemented");
-  }
 
   // TODO(perry) replace with some nice link parser or something
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
@@ -337,8 +341,16 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
   // Note: selfCollisionLinkPairs and selfCollisionObjectPairs might contain invalid pairs.
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
 
-  auto constraint = std::unique_ptr<ocs2::StateConstraint>(
-      new SelfCollisionConstraint(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
+  std::unique_ptr<ocs2::StateConstraint> constraint;
+  if (!useCppAd) {
+    constraint = std::unique_ptr<ocs2::StateConstraint>(
+        new SelfCollisionConstraint(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
+  } else {
+    constraint = std::unique_ptr<ocs2::StateConstraint>(
+        new SelfCollisionConstraintCppAd(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
+    dynamic_cast<SelfCollisionConstraintCppAd&>(*constraint)
+        .initialize(pinocchioInterface_, "self_collision", libraryFolder, recompileLibraries, false);
+  }
 
   auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(
       new ocs2::RelaxedBarrierPenaltyFunction(ocs2::RelaxedBarrierPenaltyFunction::Config(mu, delta)));

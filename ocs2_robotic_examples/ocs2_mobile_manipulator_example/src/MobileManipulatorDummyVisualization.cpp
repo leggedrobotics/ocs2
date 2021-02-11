@@ -27,6 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>
+
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+
 #include <ros/package.h>
 #include <tf/tf.h>
 #include <urdf/model.h>
@@ -167,13 +172,16 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
   // End effector trajectory
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+
   std::vector<geometry_msgs::Point> endEffectorTrajectory;
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
-    pinocchioInterface_.forwardKinematics(state);
-    pinocchioInterface_.updateFramePlacements();
-    const auto eeIndex = pinocchioInterface_.getBodyId("WRIST_2");
-    const auto eePosition = pinocchioInterface_.getBodyPosition(eeIndex);
+    pinocchio::forwardKinematics(model, data, state);
+    pinocchio::updateFramePlacements(model, data);
+    const auto eeIndex = model.getBodyId("WRIST_2");
+    const vector_t eePosition = data.oMf[eeIndex].translation();
     endEffectorTrajectory.push_back(ocs2::getPointMsg(eePosition));
   });
 

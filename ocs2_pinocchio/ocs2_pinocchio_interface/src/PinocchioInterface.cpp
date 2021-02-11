@@ -29,11 +29,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
 #include <ocs2_pinocchio_interface/implementation/PinocchioInterface.h>
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <>
+template <>
+PinocchioInterfaceCppAd PinocchioInterface::toCppAd() const {
+  return PinocchioInterfaceCppAd(getModel().cast<ad_scalar_t>());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 // explicit instantiation
 template class PinocchioInterfaceTpl<scalar_t>;
 
@@ -81,68 +92,6 @@ std::ostream& operator<<(std::ostream& os, const PinocchioInterface& p) {
     os << "\"" << frameType << "\"\n";
   }
   return os;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModel(urdfFile, model);
-  return PinocchioInterface(model);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile, const PinocchioInterface::JointModel& rootJoint) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModel(urdfFile, rootJoint, model);
-  return PinocchioInterface(model);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModelFromXML(xmlString, model);
-  return PinocchioInterface(model);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString, const PinocchioInterface::JointModel& rootJoint) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModelFromXML(xmlString, rootJoint, model);
-  return PinocchioInterface(model);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModel(urdfTree, model);
-  return PinocchioInterface(model);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
-                                                      const PinocchioInterface::JointModel& rootJoint) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModel(urdfTree, rootJoint, model);
-  return PinocchioInterface(model);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterfaceCppAd castToCppAd(const PinocchioInterface& interface) {
-  return PinocchioInterfaceCppAd(interface.getModel().cast<ad_scalar_t>());
 }
 
 }  // namespace ocs2

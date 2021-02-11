@@ -27,6 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>
+
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/multibody/geometry.hpp>
+
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
@@ -34,38 +40,55 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/SelfCollision.h>
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
 
-const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-const std::string libraryFolder = ros::package::getPath("ocs2_mobile_manipulator_example") + "/auto_generated";
-const ocs2::scalar_t minDistance = 0.1;
+class TestSelfCollision : public ::testing::Test {
+ public:
+  TestSelfCollision()
+      : pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)),
+        geometryInterface(urdfPath, pinocchioInterface, collisionPairs) {}
 
-// initial joint configuration
-const ocs2::vector_t jointPositon = (ocs2::vector_t(9) << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0).finished();
+  void computeValue(ocs2::PinocchioInterface& pinocchioInterface, const ocs2::vector_t q) {
+    const auto& model = pinocchioInterface.getModel();
+    auto& data = pinocchioInterface.getData();
+    pinocchio::forwardKinematics(model, data, q);
+  }
 
-TEST(testSelfCollision, AnalyticalVsAutoDiffValue) {
-  ocs2::PinocchioInterface pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath));
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}, {1, 9}});
+  void computeLinearApproximation(ocs2::PinocchioInterface& pinocchioInterface, const ocs2::vector_t q) {
+    const auto& model = pinocchioInterface.getModel();
+    auto& data = pinocchioInterface.getData();
+    pinocchio::computeJointJacobians(model, data, q);  // also computes forwardKinematics
+    pinocchio::updateGlobalPlacements(model, data);
+  }
 
+  // initial joint configuration
+  const ocs2::vector_t jointPositon = (ocs2::vector_t(9) << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0).finished();
+  const std::vector<std::pair<size_t, size_t>> collisionPairs = {{1, 4}, {1, 6}, {1, 9}};
+
+  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
+  const std::string libraryFolder = ros::package::getPath("ocs2_mobile_manipulator_example") + "/auto_generated";
+  const ocs2::scalar_t minDistance = 0.1;
+
+  ocs2::PinocchioInterface pinocchioInterface;
+  ocs2::PinocchioGeometryInterface geometryInterface;
+};
+
+TEST_F(TestSelfCollision, AnalyticalVsAutoDiffValue) {
   ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
   ocs2::SelfCollisionCppAd selfCollisionCppAd(geometryInterface, minDistance);
   selfCollisionCppAd.initialize(pinocchioInterface, "testSelfCollision", libraryFolder, true, false);
 
-  pinocchioInterface.forwardKinematics(jointPositon);
+  computeValue(pinocchioInterface, jointPositon);
 
   const auto dist1 = selfCollision.getValue(pinocchioInterface);
   const auto dist2 = selfCollisionCppAd.getValue(pinocchioInterface);
   EXPECT_TRUE(dist1.isApprox(dist2));
 }
 
-TEST(testSelfCollision, AnalyticalVsAutoDiffApproximation) {
-  ocs2::PinocchioInterface pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath));
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}, {1, 9}});
-
+TEST_F(TestSelfCollision, AnalyticalVsAutoDiffApproximation) {
   ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
   ocs2::SelfCollisionCppAd selfCollisionCppAd(geometryInterface, minDistance);
   selfCollisionCppAd.initialize(pinocchioInterface, "testSelfCollision", libraryFolder, true, false);
 
-  pinocchioInterface.computeJointJacobians(jointPositon);  // also computes forwardKinematics
-  pinocchioInterface.updateGlobalPlacements();
+  computeLinearApproximation(pinocchioInterface, jointPositon);
 
   ocs2::vector_t d1, d2;
   ocs2::matrix_t Jd1, Jd2;
@@ -76,31 +99,24 @@ TEST(testSelfCollision, AnalyticalVsAutoDiffApproximation) {
   EXPECT_TRUE(Jd1.isApprox(Jd2));
 }
 
-TEST(testSelfCollision, AnalyticalValueAndApproximation) {
-  ocs2::PinocchioInterface pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath));
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}, {1, 9}});
-
+TEST_F(TestSelfCollision, AnalyticalValueAndApproximation) {
   ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
-  pinocchioInterface.computeJointJacobians(jointPositon);  // also computes forwardKinematics
-  pinocchioInterface.updateGlobalPlacements();
+
+  computeLinearApproximation(pinocchioInterface, jointPositon);
 
   const auto d1 = selfCollision.getLinearApproximation(pinocchioInterface).first;
   const auto d2 = selfCollision.getValue(pinocchioInterface);
   EXPECT_TRUE(d1.isApprox(d2));
 }
 
-TEST(testSelfCollision, testRandomJointPositions) {
-  ocs2::PinocchioInterface pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath));
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}, {1, 9}});
-
+TEST_F(TestSelfCollision, testRandomJointPositions) {
   ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
   ocs2::SelfCollisionCppAd selfCollisionCppAd(geometryInterface, minDistance);
   selfCollisionCppAd.initialize(pinocchioInterface, "testSelfCollision", libraryFolder, true, false);
 
   for (int i = 0; i < 10; i++) {
     ocs2::vector_t q = ocs2::vector_t::Random(9);
-    pinocchioInterface.computeJointJacobians(q);  // also computes forwardKinematics
-    pinocchioInterface.updateGlobalPlacements();
+    computeLinearApproximation(pinocchioInterface, q);
 
     ocs2::vector_t d1, d2;
     ocs2::matrix_t Jd1, Jd2;

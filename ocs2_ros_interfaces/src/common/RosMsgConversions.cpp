@@ -34,7 +34,7 @@ namespace ros_msg_conversions {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation& observationMsg) {
   observationMsg.time = observation.time;
 
@@ -53,7 +53,7 @@ void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_o
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, SystemObservation& observation) {
   observation.time = observationMsg.time;
 
@@ -68,7 +68,7 @@ void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, System
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_schedule& modeScheduleMsg) {
   // event times
   modeScheduleMsg.eventTimes.clear();
@@ -87,7 +87,7 @@ void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_sch
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg) {
   // event times
   scalar_array_t eventTimes;
@@ -108,7 +108,43 @@ ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
+void createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices,
+                                 ocs2_msgs::mpc_performance_indices& performanceIndicesMsg) {
+  performanceIndicesMsg.initTime = initTime;
+  performanceIndicesMsg.merit = performanceIndices.merit;
+  performanceIndicesMsg.totalCost = performanceIndices.totalCost;
+  performanceIndicesMsg.stateEqConstraintISE = performanceIndices.stateEqConstraintISE;
+  performanceIndicesMsg.stateEqConstraintPenalty = 0.0;
+  performanceIndicesMsg.stateEqFinalConstraintSSE = performanceIndices.stateEqFinalConstraintSSE;
+  performanceIndicesMsg.stateEqFinalConstraintPenalty = 0.0;
+  performanceIndicesMsg.stateInputEqConstraintISE = performanceIndices.stateInputEqConstraintISE;
+  performanceIndicesMsg.inequalityConstraintISE = performanceIndices.inequalityConstraintISE;
+  performanceIndicesMsg.inequalityConstraintPenalty = performanceIndices.inequalityConstraintPenalty;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indices& performanceIndicesMsg) {
+  PerformanceIndex performanceIndices;
+
+  performanceIndices.merit = performanceIndicesMsg.merit;
+  performanceIndices.totalCost = performanceIndicesMsg.totalCost;
+  performanceIndices.stateEqConstraintISE = performanceIndicesMsg.stateEqConstraintISE;
+  //  performanceIndices.stateEqConstraintPenalty = performanceIndicesMsg.stateEqConstraintPenalty;
+  performanceIndices.stateEqFinalConstraintSSE = performanceIndicesMsg.stateEqFinalConstraintSSE;
+  //  performanceIndices.stateEqFinalConstraintPenalty = performanceIndicesMsg.stateEqFinalConstraintPenalty;
+  performanceIndices.stateInputEqConstraintISE = performanceIndicesMsg.stateInputEqConstraintISE;
+  performanceIndices.inequalityConstraintISE = performanceIndicesMsg.inequalityConstraintISE;
+  performanceIndices.inequalityConstraintPenalty = performanceIndicesMsg.inequalityConstraintPenalty;
+
+  return performanceIndices;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTrajectories,
                                  ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
   const auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
@@ -137,7 +173,7 @@ void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTraje
 
 /******************************************************************************************************/
 /******************************************************************************************************/
-/***************************************************************************************************** */
+/******************************************************************************************************/
 void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg,
                                CostDesiredTrajectories& costDesiredTrajectories) {
   auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();

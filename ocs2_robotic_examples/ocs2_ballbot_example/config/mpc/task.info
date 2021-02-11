@@ -64,11 +64,11 @@ rollout
 ; MPC settings
 mpc
 {
-  timeHorizon                    1.0   ; [s]
+  timeHorizon                    2.0   ; [s]
   numPartitions                  4
   solutionTimeWindow             0.2   ; [s]
 
-  debugPrint                     true
+  debugPrint                     false
 
   coldStart                      false
 
@@ -77,7 +77,7 @@ mpc
   initMaxStepLength              1.0
 
   runtimeMaxNumIterations        1
-  runtimeMinStepLength           1.0
+  runtimeMinStepLength           0.1
   runtimeMaxStepLength           1.0
 
   mpcDesiredFrequency            100   ; [Hz]

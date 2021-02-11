@@ -169,9 +169,7 @@ scalar_t PythonInterface::valueFunction(scalar_t t, Eigen::Ref<const vector_t> x
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::valueFunctionStateDerivative(scalar_t t, Eigen::Ref<const vector_t> x) {
-  vector_t dVdx;
-  mpcMrtInterface_->getValueFunctionStateDerivative(t, x, dVdx);
-  return dVdx;
+  return mpcMrtInterface_->getValueFunctionStateDerivative(t, x);
 }
 
 /******************************************************************************************************/

@@ -52,6 +52,7 @@ class EndEffectorConstraint final : public ocs2::StateConstraint {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
   void setDesiredPose(const vector3_t& position, const quaternion_t& orientation);
+  ocs2::EndEffectorKinematics<scalar_t>& getEndEffectorKinematics() { return *endEffectorKinematicsPtr_; }
 
  private:
   EndEffectorConstraint(const EndEffectorConstraint& rhs);

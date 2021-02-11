@@ -111,6 +111,8 @@ inputCost
 
 endEffector
 {
+  useCppAd true
+
   name "WRIST_2" ; name defined in the URDF
 
   ; end effector quadratic penalty scaling
@@ -120,6 +122,8 @@ endEffector
 
 finalEndEffector
 {
+  useCppAd true
+
   name "WRIST_2"
   muPosition  10.0
   muOrientation  0.0

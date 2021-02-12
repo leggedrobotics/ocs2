@@ -36,16 +36,16 @@ namespace ocs2 {
 
 /**
  * Applies the following change of input variables to the quadraticApproximation (stateDim=n, inputDim=m):
- * \delta u = Pu * \tilde{\delta u} + Px * x + u0,
+ * \delta u = Pu * \tilde{\delta u} + Px * \delta x + \delta u_0,
  * with sizes Pu (m x p), Px (m x n), u0 (m x 1)
  *
  * The altered model data will be of size stateDim=n, inputDim=p
  *
- * A Px, or u0 of zeros can be efficiently applied by passing an empty matrix / vector (of size 0).
+ * A Px / u0 of zeros can be efficiently applied by passing an empty matrix / vector (of size 0).
  *
  * @param quadraticApproximation : Approximation to be adapted in-place
  * @param Pu : Matrix defining the range of \tilde{\delta u}
- * @param Px : Matrix defining the range of x
+ * @param Px : Matrix defining the range of \delta x
  * @param u0 : Input offset
  */
 void changeOfInputVariables(ScalarFunctionQuadraticApproximation& quadraticApproximation, const matrix_t& Pu,

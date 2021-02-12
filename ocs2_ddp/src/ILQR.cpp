@@ -109,6 +109,7 @@ void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDa
   modelData.dynamics_.dfdx = matrix_t::Identity(continuousTimeModelData.stateDim_, continuousTimeModelData.stateDim_) +
                              continuousTimeModelData.dynamics_.dfdx * timeStep;
   modelData.dynamics_.dfdu = continuousTimeModelData.dynamics_.dfdu * timeStep;
+  modelData.dynamics_.f.setZero(continuousTimeModelData.stateDim_);
 
   /*
    * quadratic approximation to the cost function

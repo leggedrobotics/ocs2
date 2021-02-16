@@ -184,7 +184,7 @@ install(DIRECTORY config launch
 
 catkin_add_gtest(SelfCollisionTests
   test/testSelfCollision.cpp
-  test/testEndEffectorKinematics.cpp
+  test/testEndEffectorConstraint.cpp
 )
 target_link_libraries(SelfCollisionTests
   gtest_main

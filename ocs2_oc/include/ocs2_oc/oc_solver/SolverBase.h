@@ -188,7 +188,7 @@ class SolverBase {
    *
    * @param [in] time: The inquiry time
    * @param [in] state: The inquiry state.
-   * @return Quadratic approximation at the inquiry time and state.
+   * @return The quadratic approximation of the value function at the requested time and state.
    */
   virtual ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const = 0;
 

@@ -88,7 +88,7 @@ class MPC_MRT_Interface final : public MRT_BASE {
    * @brief Access the solver's internal value function
    * @param time: query time
    * @param state: query state
-   * @return The value function at the requested time and state.
+   * @return The quadratic approximation of the value function at the requested time and state.
    */
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const;
 

@@ -42,8 +42,18 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SelfCollisionCppAd::SelfCollisionCppAd(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
-    : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) {}
+SelfCollisionCppAd::SelfCollisionCppAd(const PinocchioInterface& pinocchioInterface, PinocchioGeometryInterface pinocchioGeometryInterface,
+                                       scalar_t minimumDistance, const std::string& modelName, const std::string& modelFolder,
+                                       bool recompileLibraries, bool verbose)
+    : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) {
+  PinocchioInterfaceCppAd pinocchioInterfaceAd = pinocchioInterface.toCppAd();
+  setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
+  if (recompileLibraries) {
+    createModels(verbose);
+  } else {
+    loadModelsIfAvailable(verbose);
+  }
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -53,20 +63,6 @@ SelfCollisionCppAd::SelfCollisionCppAd(const SelfCollisionCppAd& rhs)
       pinocchioGeometryInterface_(rhs.pinocchioGeometryInterface_),
       cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
       cppAdInterfaceLinkPoints_(new CppAdInterface(*rhs.cppAdInterfaceLinkPoints_)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SelfCollisionCppAd::initialize(const PinocchioInterface& pinocchioInterface, const std::string& modelName,
-                                    const std::string& modelFolder, bool recompileLibraries, bool verbose) {
-  PinocchioInterfaceCppAd pinocchioInterfaceAd = pinocchioInterface.toCppAd();
-  setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
-  if (recompileLibraries) {
-    createModels(verbose);
-  } else {
-    loadModelsIfAvailable(verbose);
-  }
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

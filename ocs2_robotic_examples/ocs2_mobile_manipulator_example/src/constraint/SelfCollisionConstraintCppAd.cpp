@@ -36,11 +36,14 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
+SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const ocs2::PinocchioInterface& pinocchioInterface,
+                                                           const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
                                                            ocs2::PinocchioGeometryInterface pinocchioGeometryInterface,
-                                                           scalar_t minimumDistance)
-    : selfCollision_(std::move(pinocchioGeometryInterface), minimumDistance), mappingPtr_(mapping.clone()) {}
-
+                                                           scalar_t minimumDistance, const std::string& modelName,
+                                                           const std::string& modelFolder, bool recompileLibraries, bool verbose)
+    : selfCollision_(pinocchioInterface, std::move(pinocchioGeometryInterface), minimumDistance, modelName, modelFolder, recompileLibraries,
+                     verbose),
+      mappingPtr_(mapping.clone()) {}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -49,14 +52,6 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const SelfCollisionCo
       pinocchioInterfacePtr_(nullptr),
       selfCollision_(rhs.selfCollision_),
       mappingPtr_(rhs.mappingPtr_->clone()) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SelfCollisionConstraintCppAd::initialize(const ocs2::PinocchioInterface& pinocchioInterface, const std::string& modelName,
-                                              const std::string& modelFolder, bool recompileLibraries, bool verbose) {
-  selfCollision_.initialize(pinocchioInterface, modelName, modelFolder, recompileLibraries, verbose);
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

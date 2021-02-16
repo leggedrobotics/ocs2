@@ -282,8 +282,8 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
     eeConstraint = std::unique_ptr<ocs2::StateConstraint>(new EndEffectorConstraint(eeKinematics));
   } else {
     MobileManipulatorPinocchioMapping<ocs2::ad_scalar_t> pinocchioMappingCppAd;
-    ocs2::PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface_, pinocchioMappingCppAd, {name});
-    eeKinematics.initialize(STATE_DIM, INPUT_DIM, "end_effector_kinematics", libraryFolder, recompileLibraries, false);
+    ocs2::PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface_, pinocchioMappingCppAd, {name}, STATE_DIM, INPUT_DIM,
+                                                           "end_effector_kinematics", libraryFolder, recompileLibraries, false);
     eeConstraint = std::unique_ptr<ocs2::StateConstraint>(new EndEffectorConstraint(eeKinematics));
   }
 
@@ -337,9 +337,8 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
         new SelfCollisionConstraint(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
   } else {
     constraint = std::unique_ptr<ocs2::StateConstraint>(
-        new SelfCollisionConstraintCppAd(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
-    dynamic_cast<SelfCollisionConstraintCppAd&>(*constraint)
-        .initialize(pinocchioInterface_, "self_collision", libraryFolder, recompileLibraries, false);
+        new SelfCollisionConstraintCppAd(pinocchioInterface_, MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface),
+                                         minimumDistance, "self_collision", libraryFolder, recompileLibraries, false));
   }
 
   auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(

@@ -42,13 +42,12 @@ namespace mobile_manipulator {
 
 class SelfCollisionConstraintCppAd final : public ocs2::StateConstraint {
  public:
-  SelfCollisionConstraintCppAd(const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
-                               ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance);
+  SelfCollisionConstraintCppAd(const ocs2::PinocchioInterface& pinocchioInterface,
+                               const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
+                               ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
+                               const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose);
   ~SelfCollisionConstraintCppAd() override = default;
   SelfCollisionConstraintCppAd* clone() const override { return new SelfCollisionConstraintCppAd(*this); }
-
-  void initialize(const ocs2::PinocchioInterface& pinocchioInterface, const std::string& modelName, const std::string& modelFolder,
-                  bool recompileLibraries, bool verbose);
 
   size_t getNumConstraints(scalar_t time) const override;
 

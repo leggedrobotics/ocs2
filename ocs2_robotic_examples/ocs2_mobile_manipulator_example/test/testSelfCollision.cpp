@@ -73,8 +73,8 @@ class TestSelfCollision : public ::testing::Test {
 
 TEST_F(TestSelfCollision, AnalyticalVsAutoDiffValue) {
   ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
-  ocs2::SelfCollisionCppAd selfCollisionCppAd(geometryInterface, minDistance);
-  selfCollisionCppAd.initialize(pinocchioInterface, "testSelfCollision", libraryFolder, true, false);
+  ocs2::SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
+                                              false);
 
   computeValue(pinocchioInterface, jointPositon);
 
@@ -85,8 +85,8 @@ TEST_F(TestSelfCollision, AnalyticalVsAutoDiffValue) {
 
 TEST_F(TestSelfCollision, AnalyticalVsAutoDiffApproximation) {
   ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
-  ocs2::SelfCollisionCppAd selfCollisionCppAd(geometryInterface, minDistance);
-  selfCollisionCppAd.initialize(pinocchioInterface, "testSelfCollision", libraryFolder, true, false);
+  ocs2::SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
+                                              false);
 
   computeLinearApproximation(pinocchioInterface, jointPositon);
 
@@ -111,8 +111,8 @@ TEST_F(TestSelfCollision, AnalyticalValueAndApproximation) {
 
 TEST_F(TestSelfCollision, testRandomJointPositions) {
   ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
-  ocs2::SelfCollisionCppAd selfCollisionCppAd(geometryInterface, minDistance);
-  selfCollisionCppAd.initialize(pinocchioInterface, "testSelfCollision", libraryFolder, true, false);
+  ocs2::SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
+                                              false);
 
   for (int i = 0; i < 10; i++) {
     ocs2::vector_t q = ocs2::vector_t::Random(9);

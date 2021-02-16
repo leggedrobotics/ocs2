@@ -40,11 +40,15 @@ namespace ocs2 {
 
 class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar_t> {
  public:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using matrix3x_t = Eigen::Matrix<scalar_t, 3, Eigen::Dynamic>;
-  using vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using quaternion_t = Eigen::Quaternion<scalar_t>;
+  using vector3_t = EndEffectorKinematics<scalar_t>::vector3_t;
+  using matrix3x_t = EndEffectorKinematics<scalar_t>::matrix3x_t;
+  using quaternion_t = EndEffectorKinematics<scalar_t>::quaternion_t;
 
+  /** Constructor
+   * @param [in] pinocchioInterface pinocchio interface.
+   * @param [in] mapping mapping from OCS2 to pinocchio state.
+   * @param [in] endEffectorIds array of end effector names.
+   */
   PinocchioEndEffectorKinematics(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
                                  std::vector<std::string> endEffectorIds);
 

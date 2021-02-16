@@ -46,6 +46,18 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
   using matrix3x_t = EndEffectorKinematics<scalar_t>::matrix3x_t;
   using quaternion_t = EndEffectorKinematics<scalar_t>::quaternion_t;
 
+  /** Constructor
+   * @param [in] pinocchioInterface pinocchio interface.
+   * @param [in] mapping mapping from OCS2 to pinocchio state.
+   * @param [in] endEffectorIds array of end effector names.
+   * @param [in] stateDim : size of state vector
+   * @param [in] inputDim : size of input vector
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   *                                  available.
+   * @param [in] verbose : print information.
+   */
   PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
                                       std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim,
                                       const std::string& modelName, const std::string& modelFolder, bool recompileLibraries = true,

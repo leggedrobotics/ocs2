@@ -42,20 +42,18 @@ namespace ocs2 {
 
 class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<scalar_t> {
  public:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using matrix3x_t = Eigen::Matrix<scalar_t, 3, Eigen::Dynamic>;
-  using vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
-  using quaternion_t = Eigen::Quaternion<scalar_t>;
+  using vector3_t = EndEffectorKinematics<scalar_t>::vector3_t;
+  using matrix3x_t = EndEffectorKinematics<scalar_t>::matrix3x_t;
+  using quaternion_t = EndEffectorKinematics<scalar_t>::quaternion_t;
 
-  PinocchioEndEffectorKinematicsCppAd(PinocchioInterface pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                      std::vector<std::string> endEffectorIds);
+  PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                      std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim,
+                                      const std::string& modelName, const std::string& modelFolder, bool recompileLibraries = true,
+                                      bool verbose = false);
 
   ~PinocchioEndEffectorKinematicsCppAd() override = default;
   PinocchioEndEffectorKinematicsCppAd* clone() const override;
   PinocchioEndEffectorKinematicsCppAd& operator=(const PinocchioEndEffectorKinematicsCppAd&) = delete;
-
-  void initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder,
-                  bool recompileLibraries = true, bool verbose = false);
 
   const std::vector<std::string>& getIds() const override;
 
@@ -71,14 +69,14 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
  private:
   PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs);
 
-  ad_vector_t getPositionsCppAd(const ad_vector_t& state);
-  ad_vector_t getVelocitiesCppAd(const ad_vector_t& state, const ad_vector_t& input);
+  ad_vector_t getPositionsCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                const ad_vector_t& state);
+  ad_vector_t getVelocitiesCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                 const ad_vector_t& state, const ad_vector_t& input);
 
   std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
   std::unique_ptr<CppAdInterface> velocityCppAdInterfacePtr_;
 
-  PinocchioInterface pinocchioInterface_;
-  std::unique_ptr<PinocchioStateInputMapping<ad_scalar_t>> mappingPtr_;
   const std::vector<std::string> endEffectorIds_;
   std::vector<size_t> endEffectorFrameIds_;
 };

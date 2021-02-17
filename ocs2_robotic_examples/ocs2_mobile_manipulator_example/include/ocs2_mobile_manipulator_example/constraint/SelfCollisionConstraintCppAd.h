@@ -45,7 +45,8 @@ class SelfCollisionConstraintCppAd final : public ocs2::StateConstraint {
   SelfCollisionConstraintCppAd(const ocs2::PinocchioInterface& pinocchioInterface,
                                const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
                                ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
-                               const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose);
+                               const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
+                               bool verbose = true);
   ~SelfCollisionConstraintCppAd() override = default;
   SelfCollisionConstraintCppAd* clone() const override { return new SelfCollisionConstraintCppAd(*this); }
 

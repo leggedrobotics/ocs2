@@ -60,8 +60,8 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
    */
   PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
                                       std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim,
-                                      const std::string& modelName, const std::string& modelFolder, bool recompileLibraries = true,
-                                      bool verbose = false);
+                                      const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
+                                      bool recompileLibraries = true, bool verbose = false);
 
   ~PinocchioEndEffectorKinematicsCppAd() override = default;
   PinocchioEndEffectorKinematicsCppAd* clone() const override;

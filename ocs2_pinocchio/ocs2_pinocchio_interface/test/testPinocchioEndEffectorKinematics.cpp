@@ -67,8 +67,8 @@ class TestEndEffectorKinematics : public ::testing::Test {
 
     pinocchioInterfacePtr.reset(new ocs2::PinocchioInterface(pinocchioInterface));
     eeKinematicsPtr.reset(new ocs2::PinocchioEndEffectorKinematics(pinocchioInterface, pinocchioMapping, {"WRIST_2"}));
-    eeKinematicsCppAdPtr.reset(new ocs2::PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMappingCppAd, {"WRIST_2"}));
-    eeKinematicsCppAdPtr->initialize(6, 6, "pinocchio_end_effector_kinematics", "/tmp/ocs2", true, false);
+    eeKinematicsCppAdPtr.reset(new ocs2::PinocchioEndEffectorKinematicsCppAd(
+        pinocchioInterface, pinocchioMappingCppAd, {"WRIST_2"}, 6, 6, "pinocchio_end_effector_kinematics", "/tmp/ocs2", true, false));
 
     x.resize(6);
     x << 2.5, -1.0, 1.5, 0.0, 1.0, 0.0;

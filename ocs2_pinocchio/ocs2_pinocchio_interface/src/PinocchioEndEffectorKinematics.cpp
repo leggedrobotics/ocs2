@@ -102,8 +102,7 @@ auto PinocchioEndEffectorKinematics::getPoses(const vector_t& state) -> std::vec
 
   std::vector<std::pair<vector3_t, quaternion_t>> poses;
   for (const auto& frameId : endEffectorFrameIds_) {
-    std::pair<vector3_t, quaternion_t> pose = {data.oMf[frameId].translation(), matrixToQuaternion(data.oMf[frameId].rotation())};
-    poses.emplace_back(std::move(pose));
+    poses.emplace_back(data.oMf[frameId].translation(), matrixToQuaternion(data.oMf[frameId].rotation()));
   }
   return poses;
 }
@@ -140,7 +139,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
   const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  // Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
+  // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
   pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
   const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
 
@@ -171,7 +170,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  // Need to copy here because getFrameVelocityDerivatives() modifies data. Will be fixed in pinocchio version 3.
+  // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
   pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
   const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
   const vector_t v = mappingPtr_->getPinocchioJointVelocity(state, input);

@@ -43,9 +43,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace mobile_manipulator;
 
-class TestEndEffectorKinematics : public ::testing::Test {
+class testEndEffectorConstraint : public ::testing::Test {
  public:
-  TestEndEffectorKinematics() {
+  testEndEffectorConstraint() {
     const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
     pinocchioInterfacePtr.reset(new ocs2::PinocchioInterface(MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
@@ -61,7 +61,7 @@ class TestEndEffectorKinematics : public ::testing::Test {
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
 };
 
-TEST_F(TestEndEffectorKinematics, testEndEffectorConstraint) {
+TEST_F(testEndEffectorConstraint, testEndEffectorConstraint) {
   using quaternion_t = EndEffectorConstraint::quaternion_t;
   using vector3_t = EndEffectorConstraint::vector3_t;
 

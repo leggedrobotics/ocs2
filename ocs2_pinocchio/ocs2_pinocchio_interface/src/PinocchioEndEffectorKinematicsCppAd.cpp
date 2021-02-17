@@ -41,46 +41,29 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(PinocchioInterface pinocchioInterface,
+PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface,
                                                                          const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                                                         std::vector<std::string> endEffectorIds)
-    : pinocchioInterface_(std::move(pinocchioInterface)), mappingPtr_(mapping.clone()), endEffectorIds_(std::move(endEffectorIds)) {
+                                                                         std::vector<std::string> endEffectorIds, size_t stateDim,
+                                                                         size_t inputDim, const std::string& modelName,
+                                                                         const std::string& modelFolder, bool recompileLibraries,
+                                                                         bool verbose)
+    : endEffectorIds_(std::move(endEffectorIds)) {
   for (const auto& bodyName : endEffectorIds_) {
-    endEffectorFrameIds_.push_back(pinocchioInterface_.getModel().getBodyId(bodyName));
+    endEffectorFrameIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
   }
-}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs)
-    : positionCppAdInterfacePtr_(new CppAdInterface(*rhs.positionCppAdInterfacePtr_)),
-      velocityCppAdInterfacePtr_(new CppAdInterface(*rhs.velocityCppAdInterfacePtr_)),
-      EndEffectorKinematics<scalar_t>(rhs),
-      pinocchioInterface_(rhs.pinocchioInterface_),
-      mappingPtr_(rhs.mappingPtr_->clone()),
-      endEffectorIds_(rhs.endEffectorIds_),
-      endEffectorFrameIds_(rhs.endEffectorFrameIds_) {}
+  // initialize CppAD interface
+  auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioEndEffectorKinematicsCppAd* PinocchioEndEffectorKinematicsCppAd::clone() const {
-  return new PinocchioEndEffectorKinematicsCppAd(*this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void PinocchioEndEffectorKinematicsCppAd::initialize(size_t stateDim, size_t inputDim, const std::string& modelName,
-                                                     const std::string& modelFolder, bool recompileLibraries, bool verbose) {
-  auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) { y = getPositionsCppAd(x); };
+  // position function
+  auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) { y = getPositionsCppAd(pinocchioInterfaceCppAd, mapping, x); };
   positionCppAdInterfacePtr_.reset(new CppAdInterface(positionFunc, stateDim, modelName + "_position", modelFolder));
 
+  // velocity function
   auto velocityFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
     ad_vector_t state = x.head(stateDim);
     ad_vector_t input = x.tail(inputDim);
-    y = getVelocitiesCppAd(state, input);
+    y = getVelocitiesCppAd(pinocchioInterfaceCppAd, mapping, state, input);
   };
   velocityCppAdInterfacePtr_.reset(new CppAdInterface(velocityFunc, stateDim + inputDim, modelName + "_velocity", modelFolder));
 
@@ -96,6 +79,23 @@ void PinocchioEndEffectorKinematicsCppAd::initialize(size_t stateDim, size_t inp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs)
+    : EndEffectorKinematics<scalar_t>(rhs),
+      positionCppAdInterfacePtr_(new CppAdInterface(*rhs.positionCppAdInterfacePtr_)),
+      velocityCppAdInterfacePtr_(new CppAdInterface(*rhs.velocityCppAdInterfacePtr_)),
+      endEffectorIds_(rhs.endEffectorIds_),
+      endEffectorFrameIds_(rhs.endEffectorFrameIds_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioEndEffectorKinematicsCppAd* PinocchioEndEffectorKinematicsCppAd::clone() const {
+  return new PinocchioEndEffectorKinematicsCppAd(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 const std::vector<std::string>& PinocchioEndEffectorKinematicsCppAd::getIds() const {
   return endEffectorIds_;
 }
@@ -103,11 +103,12 @@ const std::vector<std::string>& PinocchioEndEffectorKinematicsCppAd::getIds() co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionsCppAd(const ad_vector_t& state) {
-  auto pinocchioInterfaceCppAd = pinocchioInterface_.toCppAd();
+ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionsCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
+                                                                   const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                                                   const ad_vector_t& state) {
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
-  const ad_vector_t q = mappingPtr_->getPinocchioJointPosition(state);
+  const ad_vector_t q = mapping.getPinocchioJointPosition(state);
 
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
@@ -153,13 +154,14 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocitiesCppAd(const ad_vector_t& state, const ad_vector_t& input) {
+ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocitiesCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
+                                                                    const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                                                    const ad_vector_t& state, const ad_vector_t& input) {
   const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
-  auto pinocchioInterfaceCppAd = pinocchioInterface_.toCppAd();
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
-  const ad_vector_t q = mappingPtr_->getPinocchioJointPosition(state);
-  const ad_vector_t v = mappingPtr_->getPinocchioJointVelocity(state, input);
+  const ad_vector_t q = mapping.getPinocchioJointPosition(state);
+  const ad_vector_t v = mapping.getPinocchioJointVelocity(state, input);
 
   pinocchio::forwardKinematics(model, data, q, v);
 

@@ -44,10 +44,18 @@ class SelfCollisionCppAd {
   /**
    * Constructor
    *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
    * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @param [in] minimumDistance: minimum allowed distance between each collision pair
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   *                                  available.
+   * @param [in] verbose : print information.
    */
-  SelfCollisionCppAd(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance);
+  SelfCollisionCppAd(const PinocchioInterface& pinocchioInterface, PinocchioGeometryInterface pinocchioGeometryInterface,
+                     scalar_t minimumDistance, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
+                     bool recompileLibraries = true, bool verbose = true);
 
   /** Default destructor */
   ~SelfCollisionCppAd() = default;
@@ -57,19 +65,6 @@ class SelfCollisionCppAd {
 
   /** Get the number of collision pairs */
   size_t getNumCollisionPairs() const { return pinocchioGeometryInterface_.getNumCollisionPairs(); }
-
-  /**
-   * Initializes model libraries
-   *
-   * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] modelName : name of the generate model library
-   * @param [in] modelFolder : folder to save the model library files to
-   * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
-   * available.
-   * @param [in] verbose : print information.
-   */
-  void initialize(const PinocchioInterface& pinocchioInterface, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
-                  bool recompileLibraries = true, bool verbose = true);
 
   /**
    * Evaluate the distance violation

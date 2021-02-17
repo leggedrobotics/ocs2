@@ -53,20 +53,20 @@ QuinticSwing::QuinticSwing(const SwingNode& start, const SwingNode& mid, const S
   matrix_t A(numConditions, numConditions);
   // clang-format off
   A << // Lhs spline
-    0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, // start position
-      0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, // start velocity (normalized)
-      0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, // start acceleration (normalized)
-      1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, // end position
-      5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, // end velocity (normalized)
-      // Rhs spline
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // start position
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, // start velocity (normalized)
-      0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, // end position
-      0, 0, 0, 0, 0, 0, 5, 4, 3, 2, 1, 0, // end velocity (normalized)
-      0, 0, 0, 0, 0, 0, 20, 12, 6, 2, 0, 0, // end acceleration (normalized)
-      // Continuity
-      20, 12, 6, 2, 0, 0, 0, 0, 0, -2 * scaling2, 0, 0, // acceleration (normalized)
-      60, 24, 6, 0, 0, 0, 0, 0, -6 * scaling3, 0, 0, 0; // jerk (normalized)
+       0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, // start position
+       0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, // start velocity (normalized)
+       0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, // start acceleration (normalized)
+       1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, // end position
+       5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, // end velocity (normalized)
+       // Rhs spline
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // start position
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, // start velocity (normalized)
+       0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, // end position
+       0, 0, 0, 0, 0, 0, 5, 4, 3, 2, 1, 0, // end velocity (normalized)
+       0, 0, 0, 0, 0, 0, 20, 12, 6, 2, 0, 0, // end acceleration (normalized)
+       // Continuity
+       20, 12, 6, 2, 0, 0, 0, 0, 0, -2 * scaling2, 0, 0, // acceleration (normalized)
+       60, 24, 6, 0, 0, 0, 0, 0, -6 * scaling3, 0, 0, 0; // jerk (normalized)
   // clang-format on
   vector_t b(numConditions);
   b << start.position, start.velocity * dt_lhs, 0.0, mid.position, mid.velocity * dt_lhs, mid.position, mid.velocity * dt_rhs, end.position,

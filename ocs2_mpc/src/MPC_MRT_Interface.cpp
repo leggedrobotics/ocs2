@@ -156,15 +156,8 @@ void MPC_MRT_Interface::getLinearFeedbackGain(scalar_t time, matrix_t& K) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t MPC_MRT_Interface::getValueFunction(scalar_t time, const vector_t& state) const {
+ScalarFunctionQuadraticApproximation MPC_MRT_Interface::getValueFunction(scalar_t time, const vector_t& state) const {
   return mpc_.getSolverPtr()->getValueFunction(time, state);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t MPC_MRT_Interface::getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const {
-  return mpc_.getSolverPtr()->getValueFunctionStateDerivative(time, state);
 }
 
 /******************************************************************************************************/

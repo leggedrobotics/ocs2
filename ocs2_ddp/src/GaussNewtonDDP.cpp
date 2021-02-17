@@ -314,48 +314,27 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
   size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
   partition = std::max(partition, initActivePartition_);
   partition = std::min(partition, finalActivePartition_);
 
+  // Interpolate value function trajectory
+  ScalarFunctionQuadraticApproximation valueFunction;
   const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
-  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
-  const vector_t Sv = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
-  const scalar_t s = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
+  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
+  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
+  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
 
+  // Re-center around query state
   const vector_t xNominal =
       LinearInterpolation::interpolate(time, cachedTimeTrajectoriesStock_[partition], cachedStateTrajectoriesStock_[partition]);
-
   const vector_t deltaX = state - xNominal;
+  const vector_t SmDeltaX = valueFunction.dfdxx * deltaX;
+  valueFunction.f += deltaX.dot(0.5 * SmDeltaX + valueFunction.dfdx);
+  valueFunction.dfdx += SmDeltaX;  // Adapt dfdx after f!
 
-  vector_t pseudoVx = Sv;
-  pseudoVx.noalias() += 0.5 * Sm * deltaX;
-
-  return s + deltaX.dot(pseudoVx);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const {
-  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
-  partition = std::max(partition, initActivePartition_);
-  partition = std::min(partition, finalActivePartition_);
-
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
-  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
-  const vector_t Sv = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
-
-  const vector_t xNominal =
-      LinearInterpolation::interpolate(time, cachedTimeTrajectoriesStock_[partition], cachedStateTrajectoriesStock_[partition]);
-
-  const vector_t deltaX = state - xNominal;
-
-  vector_t Vx = Sv;
-  Vx.noalias() += Sm * deltaX;
-
-  return Vx;
+  return valueFunction;
 }
 
 /******************************************************************************************************/
@@ -386,7 +365,7 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time
                                                              riccati_modification::constraintRangeProjector);
 
   const vector_t deltaX = state - xNominal;
-  const vector_t costate = getValueFunctionStateDerivative(time, state);
+  const vector_t costate = getValueFunction(time, state).dfdx;
 
   vector_t err = EvProjected;
   err.noalias() += CmProjected * deltaX;

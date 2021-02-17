@@ -75,7 +75,7 @@ vector_t SystemDynamicsBaseAD::computeFlowMap(scalar_t time, const vector_t& sta
 vector_t SystemDynamicsBaseAD::computeJumpMap(scalar_t time, const vector_t& state) {
   vector_t tapedTimeState(1 + state.rows());
   tapedTimeState << time, state;
-  vector_t parameters = getJumpMapParameters();
+  vector_t parameters = getJumpMapParameters(time);
   return jumpMapADInterfacePtr_->getFunctionValue(tapedTimeState, parameters);
 }
 
@@ -85,7 +85,7 @@ vector_t SystemDynamicsBaseAD::computeJumpMap(scalar_t time, const vector_t& sta
 vector_t SystemDynamicsBaseAD::computeGuardSurfaces(scalar_t time, const vector_t& state) {
   vector_t tapedTimeState(1 + state.rows());
   tapedTimeState << time, state;
-  vector_t parameters = getGuardSurfacesParameters();
+  vector_t parameters = getGuardSurfacesParameters(time);
   return guardSurfacesADInterfacePtr_->getFunctionValue(tapedTimeState, parameters);
 }
 
@@ -111,7 +111,7 @@ VectorFunctionLinearApproximation SystemDynamicsBaseAD::linearApproximation(scal
 VectorFunctionLinearApproximation SystemDynamicsBaseAD::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   vector_t tapedTimeState(1 + x.rows());
   tapedTimeState << t, x;
-  vector_t parameters = getJumpMapParameters();
+  vector_t parameters = getJumpMapParameters(t);
   jumpJacobian_ = jumpMapADInterfacePtr_->getJacobian(tapedTimeState, parameters);
 
   VectorFunctionLinearApproximation approximation;
@@ -127,7 +127,7 @@ VectorFunctionLinearApproximation SystemDynamicsBaseAD::jumpMapLinearApproximati
 VectorFunctionLinearApproximation SystemDynamicsBaseAD::guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   vector_t tapedTimeState(1 + x.rows());
   tapedTimeState << t, x;
-  vector_t parameters = getGuardSurfacesParameters();
+  vector_t parameters = getGuardSurfacesParameters(t);
   guardJacobian_ = guardSurfacesADInterfacePtr_->getJacobian(tapedTimeState, parameters);
 
   VectorFunctionLinearApproximation approximation;

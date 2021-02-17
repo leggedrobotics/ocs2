@@ -129,7 +129,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: Current time.
    * @return The parameters to be set in the jump map
    */
-  virtual vector_t getJumpMapParameters() const { return vector_t(0); }
+  virtual vector_t getJumpMapParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for jump map.
@@ -155,7 +155,7 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: Current time.
    * @return The parameters to be set in the guard surfaces
    */
-  virtual vector_t getGuardSurfacesParameters() const { return vector_t(0); }
+  virtual vector_t getGuardSurfacesParameters(scalar_t time) const { return vector_t(0); }
 
   /**
    * Number of parameters for guard surfaces.

@@ -31,45 +31,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/constraint/StateConstraint.h>
-#include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
-#include <ocs2_self_collision/SelfCollisionCppAd.h>
-
 #include <ocs2_mobile_manipulator_example/definitions.h>
+
+#include <ocs2_core/constraint/StateInputConstraint.h>
 
 namespace mobile_manipulator {
 
-class SelfCollisionConstraintCppAd final : public ocs2::StateConstraint {
+class JointVelocityLimits final : public ocs2::StateInputConstraint {
  public:
-  SelfCollisionConstraintCppAd(const ocs2::PinocchioInterface& pinocchioInterface,
-                               const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
-                               ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
-                               const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                               bool verbose = true);
-  ~SelfCollisionConstraintCppAd() override = default;
-  SelfCollisionConstraintCppAd* clone() const override { return new SelfCollisionConstraintCppAd(*this); }
+  JointVelocityLimits(vector_t lowerBound, vector_t upperBound);
+  ~JointVelocityLimits() override = default;
+  JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
 
-  size_t getNumConstraints(scalar_t time) const override;
-
-  /** Get the self collision distance values
-   * @note Requires pinocchio::forwardKinematics().
-   */
-  vector_t getValue(scalar_t time, const vector_t& state) const override;
-
-  /** Get the self collision distance approximation
-   * @note Requires pinocchio::forwardKinematics().
-   */
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
-
-  /** Caches the pointer to the pinocchio interface. */
-  void setPinocchioInterface(ocs2::PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+  size_t getNumConstraints(scalar_t time) const override { return 2 * lowerBound_.size(); }
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
 
  private:
-  SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs);
-
-  ocs2::PinocchioInterface* pinocchioInterfacePtr_ = nullptr;
-  ocs2::SelfCollisionCppAd selfCollision_;
-  std::unique_ptr<ocs2::PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+  vector_t lowerBound_;
+  vector_t upperBound_;
 };
 
 }  // namespace mobile_manipulator

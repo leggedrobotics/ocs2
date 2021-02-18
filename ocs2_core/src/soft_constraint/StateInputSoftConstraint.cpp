@@ -50,7 +50,7 @@ StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateInputSoftConstraint::StateInputSoftConstraint(const StateInputSoftConstraint& other)
-    : constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_), constraintOrder_(other.constraintOrder_) {}
+    : BASE(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_), constraintOrder_(other.constraintOrder_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

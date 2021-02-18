@@ -150,8 +150,6 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector_t& allSs) {
-  OdeBase::numFunctionCalls_++;
-
   // index
   const scalar_t t = -z;  // denormalized time
   const auto indexAlpha = LinearInterpolation::timeSegment(t, *timeStampPtr_);

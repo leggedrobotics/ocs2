@@ -27,64 +27,56 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include <string>
+
+#include <ros/init.h>
+#include <ros/ros.h>
 
 #include <ocs2_core/Types.h>
 
-namespace ocs2 {
+#include <ocs2_msgs/mpc_flattened_controller.h>
+#include <ocs2_msgs/mpc_performance_indices.h>
 
-/**
- * The base class for autonomous system dynamics.
- */
-class OdeBase {
+namespace {
+
+class MultiplotRemap {
  public:
-  /** Default constructor */
-  OdeBase() = default;
+  /** Constructor */
+  explicit MultiplotRemap(const std::string& mpcPolicyTopicName, ::ros::NodeHandle& nodeHandle) {
+    mpcPolicySubscriber_ =
+        nodeHandle.subscribe(mpcPolicyTopicName, 1, &MultiplotRemap::mpcPoicyCallback, this, ::ros::TransportHints().tcpNoDelay());
+    mpcPerformanceIndicesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_performance_indices>("mpc_performance_indices", 1);
+  }
 
-  /** Default destructor */
-  virtual ~OdeBase() = default;
-
-  /** Returns the number of function calls. */
-  size_t getNumFunctionCalls() const { return numFunctionCalls_; }
-
-  /** Resets the number of function calls to zero. */
-  void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
-
-  /** Increments the number of function calls. */
-  size_t incrementNumFunctionCalls() { return ++numFunctionCalls_; }
-
-  /**
-   * Computes the autonomous system dynamics.
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @return Current state time derivative
-   */
-  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x) = 0;
-
-  /**
-   * State map at the transition time
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @return mapped state after transition
-   */
-  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state);
-
-  /**
-   * Interface method to the guard surfaces.
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @return An array of guard surfaces values
-   */
-  virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
-
- protected:
-  /** Copy constructor */
-  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+  /** Default deconstructor */
+  ~MultiplotRemap() = default;
 
  private:
-  size_t numFunctionCalls_ = 0;
+  void mpcPoicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& policyMsg) {
+    mpcPerformanceIndicesPublisher_.publish(policyMsg->performanceIndices);
+  }
+
+  // publishers and subscribers
+  ::ros::Subscriber mpcPolicySubscriber_;
+  ::ros::Publisher mpcPerformanceIndicesPublisher_;
 };
 
-}  // namespace ocs2
+}  // unnamed namespace
+
+int main(int argc, char** argv) {
+  // mpc policy topic name
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() <= 1) {
+    throw std::runtime_error("MPC policy topic name is not specified!");
+  }
+  const std::string mpcPolicyTopicName = std::string(programArgs[1]);
+
+  ::ros::init(argc, argv, "multiplot_remap");
+  ::ros::NodeHandle nodeHandle;
+  MultiplotRemap multiplotRemap(mpcPolicyTopicName, nodeHandle);
+
+  ::ros::spin();
+
+  return 0;
+}

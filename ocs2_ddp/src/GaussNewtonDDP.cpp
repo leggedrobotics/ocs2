@@ -74,9 +74,8 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
     operatingTrajectoriesRolloutPtrStock_.emplace_back(new OperatingTrajectoriesRollout(*operatingTrajectoriesPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
-    bool makePsdWillBePerformedLater = ddpSettings_.lineSearch_.hessianCorrectionStrategy_ != hessian_correction::Strategy::DIAGONAL_SHIFT;
     linearQuadraticApproximatorPtrStock_.emplace_back(new LinearQuadraticApproximator(
-        *systemDynamicsPtr, *systemConstraintsPtr, *costFunctionPtr, ddpSettings_.checkNumericalStability_, makePsdWillBePerformedLater));
+        *systemDynamicsPtr, *systemConstraintsPtr, *costFunctionPtr, ddpSettings_.checkNumericalStability_));
 
     // initialize heuristics functions
     if (heuristicsFunctionPtr != nullptr) {
@@ -315,63 +314,47 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
   size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
   partition = std::max(partition, initActivePartition_);
   partition = std::min(partition, finalActivePartition_);
 
+  // Interpolate value function trajectory
+  ScalarFunctionQuadraticApproximation valueFunction;
   const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
-  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
-  const vector_t Sv = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
-  const scalar_t s = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
+  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
+  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
+  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
 
+  // Re-center around query state
   const vector_t xNominal =
-      LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
-
-  vector_t deltaX = state - xNominal;
-
-  return s + deltaX.dot(Sv) + 0.5 * deltaX.dot(Sm * deltaX);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t GaussNewtonDDP::getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const {
-  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
-  partition = std::max(partition, initActivePartition_);
-  partition = std::min(partition, finalActivePartition_);
-
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
-
-  const matrix_t Sm = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
-
-  // Sv
-  vector_t Vx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
-
-  const vector_t xNominal =
-      LinearInterpolation::interpolate(time, nominalTimeTrajectoriesStock_[partition], nominalStateTrajectoriesStock_[partition]);
-
+      LinearInterpolation::interpolate(time, cachedTimeTrajectoriesStock_[partition], cachedStateTrajectoriesStock_[partition]);
   const vector_t deltaX = state - xNominal;
-  Vx += Sm * deltaX;
+  const vector_t SmDeltaX = valueFunction.dfdxx * deltaX;
+  valueFunction.f += deltaX.dot(0.5 * SmDeltaX + valueFunction.dfdx);
+  valueFunction.dfdx += SmDeltaX;  // Adapt dfdx after f!
 
-  return Vx;
+  return valueFunction;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const {
+vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
   size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
   activeSubsystem = std::max(activeSubsystem, initActivePartition_);
   activeSubsystem = std::min(activeSubsystem, finalActivePartition_);
 
-  auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_[activeSubsystem]);
-  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_[activeSubsystem]);
-  const matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
-  const matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
-  const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, modelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[activeSubsystem]);
+  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[activeSubsystem]);
 
-  indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[activeSubsystem]);
+  const matrix_t Bm =
+      LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_[activeSubsystem], ModelData::dynamics_dfdu);
+  const matrix_t Pm =
+      LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdux);
+  const vector_t Rv =
+      LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_[activeSubsystem], ModelData::cost_dfdu);
+
   const vector_t EvProjected = LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_[activeSubsystem],
                                                                 ModelData::stateInputEqConstr_f);
   const matrix_t CmProjected = LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_[activeSubsystem],
@@ -381,15 +364,20 @@ void GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, co
   const matrix_t DmDagger = LinearInterpolation::interpolate(indexAlpha, cachedRiccatiModificationTrajectoriesStock_[activeSubsystem],
                                                              riccati_modification::constraintRangeProjector);
 
-  const vector_t costate = getValueFunctionStateDerivative(time, state);
-
   const vector_t deltaX = state - xNominal;
-  const matrix_t DmDaggerTransHm = DmDagger.transpose() * Hm;
+  const vector_t costate = getValueFunction(time, state).dfdx;
 
-  nu = DmDaggerTransHm * (CmProjected * deltaX + EvProjected) - DmDagger.transpose() * (Rv + Pm * deltaX + Bm.transpose() * costate);
+  vector_t err = EvProjected;
+  err.noalias() += CmProjected * deltaX;
 
-  //  alternative computation
-  //  nu = DmDagger.transpose() * (Hm * DmDagger.transpose() * CmProjected * deltaX - Rv - Bm.transpose() * costate);
+  vector_t temp = -Rv;
+  temp.noalias() -= Pm * deltaX;
+  temp.noalias() -= Bm.transpose() * costate;
+  temp.noalias() += Hm * err;
+
+  const vector_t nu = DmDagger.transpose() * temp;
+
+  return nu;
 }
 
 /******************************************************************************************************/

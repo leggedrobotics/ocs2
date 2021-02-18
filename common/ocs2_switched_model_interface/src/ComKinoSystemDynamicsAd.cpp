@@ -25,7 +25,7 @@ ComKinoSystemDynamicsAd* ComKinoSystemDynamicsAd::clone() const {
 }
 
 ocs2::ad_vector_t ComKinoSystemDynamicsAd::systemFlowMap(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state,
-                                                         const ocs2::ad_vector_t& input) const {
+                                                         const ocs2::ad_vector_t& input, const ocs2::ad_vector_t& parameters) const {
   const comkino_state_ad_t comkinoState = state;
   const comkino_input_ad_t comkinoInput = input;
   ocs2::ad_vector_t stateDerivative(state.rows());

@@ -104,7 +104,7 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   // interpolate
   const auto indexAlpha = LinearInterpolation::timeSegment(time, BASE::nominalTimeTrajectoriesStock_[i]);
   const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, BASE::nominalStateTrajectoriesStock_[i]);
-  const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, BASE::nominalInputTrajectoriesStock_[i]);
+  vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, BASE::nominalInputTrajectoriesStock_[i]);
 
   // BmProjected
   const matrix_t projectedBm =
@@ -116,10 +116,10 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   const vector_t projectedRv =
       LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdu);
   // EvProjected
-  const vector_t EvProjected =
+  vector_t EvProjected =
       LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_f);
   // CmProjected
-  const matrix_t CmProjected =
+  matrix_t CmProjected =
       LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_dfdx);
 
   // projector
@@ -141,13 +141,13 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   projectedLv.noalias() -= projectedBm.transpose() * BASE::SvTrajectoryStock_[i][k];
 
   // feedback gains
-  BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
+  BASE::nominalControllersStock_[i].gainArray_[k] = std::move(CmProjected);
   BASE::nominalControllersStock_[i].gainArray_[k].noalias() += Qu * projectedKm;
 
   // bias input
-  BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput;
+  BASE::nominalControllersStock_[i].biasArray_[k] = std::move(nominalInput);
   BASE::nominalControllersStock_[i].biasArray_[k].noalias() -= BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = std::move(EvProjected);
   BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLv;
 
   // checking the numerical stability of the controller parameters

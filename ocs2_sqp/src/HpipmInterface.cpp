@@ -21,79 +21,95 @@ class HpipmInterface::Impl {
     ocpSize_.nx[0] = 0;
 
     const int dim_size = d_ocp_qp_dim_memsize(ocpSize_.N);
-    dim_mem = malloc(dim_size);
-    d_ocp_qp_dim_create(ocpSize_.N, &dim, dim_mem);
+    dim_mem_ = malloc(dim_size);
+    d_ocp_qp_dim_create(ocpSize_.N, &dim_, dim_mem_);
     d_ocp_qp_dim_set_all(ocpSize_.nx.data(), ocpSize_.nu.data(), ocpSize_.nbx.data(), ocpSize_.nbu.data(), ocpSize_.ng.data(),
-                         ocpSize_.nsbx.data(), ocpSize_.nsbu.data(), ocpSize_.nsg.data(), &dim);
+                         ocpSize_.nsbx.data(), ocpSize_.nsbu.data(), ocpSize_.nsg.data(), &dim_);
 
-    const int qp_size = d_ocp_qp_memsize(&dim);
-    qp_mem = malloc(qp_size);
-    d_ocp_qp_create(&dim, &qp, qp_mem);
+    const int qp_size = d_ocp_qp_memsize(&dim_);
+    qp_mem_ = malloc(qp_size);
+    d_ocp_qp_create(&dim_, &qp_, qp_mem_);
 
-    const int qp_sol_size = d_ocp_qp_sol_memsize(&dim);
-    qp_sol_mem = malloc(qp_sol_size);
-    d_ocp_qp_sol_create(&dim, &qp_sol, qp_sol_mem);
+    const int qp_sol_size = d_ocp_qp_sol_memsize(&dim_);
+    qp_sol_mem_ = malloc(qp_sol_size);
+    d_ocp_qp_sol_create(&dim_, &qp_sol_, qp_sol_mem_);
 
-    const int ipm_arg_size = d_ocp_qp_ipm_arg_memsize(&dim);
-    ipm_arg_mem = malloc(ipm_arg_size);
-    d_ocp_qp_ipm_arg_create(&dim, &arg, ipm_arg_mem);
-    d_ocp_qp_ipm_arg_set_default(mode, &arg);
-
-    const int ipm_size = d_ocp_qp_ipm_ws_memsize(&dim, &arg);
-    ipm_mem = malloc(ipm_size);
-    d_ocp_qp_ipm_ws_create(&dim, &arg, &workspace, ipm_mem);
+    const int ipm_arg_size = d_ocp_qp_ipm_arg_memsize(&dim_);
+    ipm_arg_mem_ = malloc(ipm_arg_size);
+    d_ocp_qp_ipm_arg_create(&dim_, &arg_, ipm_arg_mem_);
 
     applySettings(settings);
+
+    // Setup workspace after applying the settings
+    const int ipm_size = d_ocp_qp_ipm_ws_memsize(&dim_, &arg_);
+    ipm_mem_ = malloc(ipm_size);
+    d_ocp_qp_ipm_ws_create(&dim_, &arg_, &workspace_, ipm_mem_);
   }
 
   ~Impl() {
     // free the hpipm memories
-    free(dim_mem);
-    free(qp_mem);
-    free(qp_sol_mem);
-    free(ipm_arg_mem);
-    free(ipm_mem);
-    dim_mem = nullptr;
-    qp_mem = nullptr;
-    qp_sol_mem = nullptr;
-    ipm_arg_mem = nullptr;
-    ipm_mem = nullptr;
+    free(dim_mem_);
+    free(qp_mem_);
+    free(qp_sol_mem_);
+    free(ipm_arg_mem_);
+    free(ipm_mem_);
+    dim_mem_ = nullptr;
+    qp_mem_ = nullptr;
+    qp_sol_mem_ = nullptr;
+    ipm_arg_mem_ = nullptr;
+    ipm_mem_ = nullptr;
   }
 
   void applySettings(Settings& settings) {
-    d_ocp_qp_ipm_arg_set_iter_max(&settings.iter_max, &arg);
-    d_ocp_qp_ipm_arg_set_alpha_min(&settings.alpha_min, &arg);
-    d_ocp_qp_ipm_arg_set_mu0(&settings.mu0, &arg);
-    d_ocp_qp_ipm_arg_set_tol_stat(&settings.tol_stat, &arg);
-    d_ocp_qp_ipm_arg_set_tol_eq(&settings.tol_eq, &arg);
-    d_ocp_qp_ipm_arg_set_tol_ineq(&settings.tol_ineq, &arg);
-    d_ocp_qp_ipm_arg_set_tol_comp(&settings.tol_comp, &arg);
-    d_ocp_qp_ipm_arg_set_reg_prim(&settings.reg_prim, &arg);
-    d_ocp_qp_ipm_arg_set_warm_start(&settings.warm_start, &arg);
-    d_ocp_qp_ipm_arg_set_pred_corr(&settings.pred_corr, &arg);
-    d_ocp_qp_ipm_arg_set_ric_alg(&settings.ric_alg, &arg);
+    // TODO: make this a setting
+    ::hpipm_mode mode = ::hpipm_mode::SPEED;  // ROBUST/BALANCED; see also hpipm_common.h
+    d_ocp_qp_ipm_arg_set_default(mode, &arg_);
+
+    d_ocp_qp_ipm_arg_set_iter_max(&settings.iter_max, &arg_);
+    d_ocp_qp_ipm_arg_set_alpha_min(&settings.alpha_min, &arg_);
+    d_ocp_qp_ipm_arg_set_mu0(&settings.mu0, &arg_);
+    d_ocp_qp_ipm_arg_set_tol_stat(&settings.tol_stat, &arg_);
+    d_ocp_qp_ipm_arg_set_tol_eq(&settings.tol_eq, &arg_);
+    d_ocp_qp_ipm_arg_set_tol_ineq(&settings.tol_ineq, &arg_);
+    d_ocp_qp_ipm_arg_set_tol_comp(&settings.tol_comp, &arg_);
+    d_ocp_qp_ipm_arg_set_reg_prim(&settings.reg_prim, &arg_);
+    d_ocp_qp_ipm_arg_set_warm_start(&settings.warm_start, &arg_);
+    d_ocp_qp_ipm_arg_set_pred_corr(&settings.pred_corr, &arg_);
+    d_ocp_qp_ipm_arg_set_ric_alg(&settings.ric_alg, &arg_);
   }
 
   void solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-             std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<vector_t>& stateTrajectory,
+             std::vector<ScalarFunctionQuadraticApproximation>& cost,
+             std::vector<VectorFunctionLinearApproximation>* constraints,
+             std::vector<vector_t>& stateTrajectory,
              std::vector<vector_t>& inputTrajectory, bool verbose) {
     assert(dynamics.size() == ocpSize_.N);
     assert(cost.size() == (ocpSize_.N + 1));
     // TODO: check state input size.
 
+    // Dynamics
     std::vector<scalar_t*> AA(ocpSize_.N);
     std::vector<scalar_t*> BB(ocpSize_.N);
     std::vector<scalar_t*> bb(ocpSize_.N);
-    std::vector<scalar_t*> QQ(ocpSize_.N + 1);
-    std::vector<scalar_t*> RR(ocpSize_.N);
-    std::vector<scalar_t*> SS(ocpSize_.N);
-    std::vector<scalar_t*> qq(ocpSize_.N + 1);
-    std::vector<scalar_t*> rr(ocpSize_.N);
 
-    // Dynamics k = 0
+    // Costs (all must be N+1) eventhough nu[N] = 0;
+    std::vector<scalar_t*> QQ(ocpSize_.N + 1);
+    std::vector<scalar_t*> RR(ocpSize_.N + 1);
+    std::vector<scalar_t*> SS(ocpSize_.N + 1);
+    std::vector<scalar_t*> qq(ocpSize_.N + 1);
+    std::vector<scalar_t*> rr(ocpSize_.N + 1);
+
+    // Constraints (all must be N+1) eventhough nu[N] = 0;
+    std::vector<ocs2::vector_t> boundData;
+    std::vector<scalar_t*> CC(ocpSize_.N + 1);
+    std::vector<scalar_t*> DD(ocpSize_.N + 1);
+    std::vector<scalar_t*> llg(ocpSize_.N + 1);
+    std::vector<scalar_t*> uug(ocpSize_.N + 1);
+
+    // Dynamics k = 0. Absorb initial state into dynamics
     vector_t b0 = dynamics[0].f;
     b0.noalias() += dynamics[0].dfdx * x0;
-    AA[0] = nullptr;
+    AA[0] = dynamics[0].dfdx.data();
     BB[0] = dynamics[0].dfdu.data();
     bb[0] = b0.data();
 
@@ -113,16 +129,30 @@ class HpipmInterface::Impl {
       rr[k] = cost[k].dfdu.data();
     }
 
+    if (constraints != nullptr){
+      auto& constr = *constraints;
+      // for ocs2 --> C*dx + D*du + e = 0
+      // for hpipm --> ug >= C*dx + D*du >= lg
+      boundData.reserve(ocpSize_.N);
+
+      for (int k = 0; k < ocpSize_.N; k++) {
+        CC[k] = constr[k].dfdx.data();
+        DD[k] = constr[k].dfdu.data();
+        boundData.emplace_back(-constr[0].f);
+        if (k == 0) {  // Initial constraint
+          boundData[k].noalias() -= constr[0].dfdx * x0;
+        }
+        llg[k] = boundData[k].data();
+        uug[k] = boundData[k].data();
+      }
+    }
+
     int** hidxbx = nullptr;
     scalar_t** hlbx = nullptr;
     scalar_t** hubx = nullptr;
     int** hidxbu = nullptr;
     scalar_t** hlbu = nullptr;
     scalar_t** hubu = nullptr;
-    scalar_t** hC = nullptr;
-    scalar_t** hD = nullptr;
-    scalar_t** hlg = nullptr;
-    scalar_t** hug = nullptr;
     scalar_t** hZl = nullptr;
     scalar_t** hZu = nullptr;
     scalar_t** hzl = nullptr;
@@ -131,10 +161,9 @@ class HpipmInterface::Impl {
     scalar_t** hlls = nullptr;
     scalar_t** hlus = nullptr;
     d_ocp_qp_set_all(AA.data(), BB.data(), bb.data(), QQ.data(), SS.data(), RR.data(), qq.data(), rr.data(), hidxbx, hlbx, hubx, hidxbu,
-                     hlbu, hubu, hC, hD, hlg, hug, hZl, hZu, hzl, hzu, hidxs, hlls, hlus, &qp);
+                     hlbu, hubu, CC.data(), DD.data(), llg.data(), uug.data(), hZl, hZu, hzl, hzu, hidxs, hlls, hlus, &qp_);
 
-    d_ocp_qp_ipm_solve(&qp, &qp_sol, &arg, &workspace);
-    d_ocp_qp_ipm_get_status(&workspace, &hpipm_status);
+    d_ocp_qp_ipm_solve(&qp_, &qp_sol_, &arg_, &workspace_);
 
     if (verbose) {
       printStatus();
@@ -148,18 +177,22 @@ class HpipmInterface::Impl {
     stateTrajectory.resize(ocpSize_.N + 1);
     stateTrajectory.front() = x0;
     for (int k = 1; k < (ocpSize_.N + 1); ++k) {
-      d_ocp_qp_sol_get_x(k, &qp_sol, stateTrajectory[k].data());
+      stateTrajectory[k].resize(ocpSize_.nx[k]);
+      d_ocp_qp_sol_get_x(k, &qp_sol_, stateTrajectory[k].data());
     }
   }
 
   void getInputSolution(std::vector<vector_t>& inputTrajectory) {
     inputTrajectory.resize(ocpSize_.N);
-    for (int k = 0; k < (ocpSize_.N); ++k) {
-      d_ocp_qp_sol_get_u(k, &qp_sol, inputTrajectory[k].data());
+    for (int k = 0; k < ocpSize_.N; ++k) {
+      inputTrajectory[k].resize(ocpSize_.nu[k]);
+      d_ocp_qp_sol_get_u(k, &qp_sol_, inputTrajectory[k].data());
     }
   }
 
   void printStatus() {
+    int hpipm_status;
+    d_ocp_qp_ipm_get_status(&workspace_, &hpipm_status);
     printf("\nHPIPM returned with flag %i.\n", hpipm_status);
     if (hpipm_status == 0) {
       printf("\n -> QP solved!\n");
@@ -174,19 +207,19 @@ class HpipmInterface::Impl {
     }
 
     int iter;
-    d_ocp_qp_ipm_get_iter(&workspace, &iter);
+    d_ocp_qp_ipm_get_iter(&workspace_, &iter);
     scalar_t res_stat;
-    d_ocp_qp_ipm_get_max_res_stat(&workspace, &res_stat);
+    d_ocp_qp_ipm_get_max_res_stat(&workspace_, &res_stat);
     scalar_t res_eq;
-    d_ocp_qp_ipm_get_max_res_eq(&workspace, &res_eq);
+    d_ocp_qp_ipm_get_max_res_eq(&workspace_, &res_eq);
     scalar_t res_ineq;
-    d_ocp_qp_ipm_get_max_res_ineq(&workspace, &res_ineq);
+    d_ocp_qp_ipm_get_max_res_ineq(&workspace_, &res_ineq);
     scalar_t res_comp;
-    d_ocp_qp_ipm_get_max_res_comp(&workspace, &res_comp);
+    d_ocp_qp_ipm_get_max_res_comp(&workspace_, &res_comp);
     scalar_t* stat;
-    d_ocp_qp_ipm_get_stat(&workspace, &stat);
+    d_ocp_qp_ipm_get_stat(&workspace_, &stat);
     int stat_m;
-    d_ocp_qp_ipm_get_stat_m(&workspace, &stat_m);
+    d_ocp_qp_ipm_get_stat_m(&workspace_, &stat_m);
     printf("\nipm return = %d\n", hpipm_status);
     printf("\nipm residuals max: res_g = %e, res_b = %e, res_d = %e, res_m = %e\n", res_stat, res_eq, res_ineq, res_comp);
     printf("\nipm iter = %d\n", iter);
@@ -199,26 +232,20 @@ class HpipmInterface::Impl {
  private:
   OcpSize ocpSize_;
 
-  void* dim_mem;
-  d_ocp_qp_dim dim;
+  void* dim_mem_;
+  d_ocp_qp_dim dim_;
 
-  void* qp_mem;
-  d_ocp_qp qp;
+  void* qp_mem_;
+  d_ocp_qp qp_;
 
-  void* qp_sol_mem;
-  d_ocp_qp_sol qp_sol;
+  void* qp_sol_mem_;
+  d_ocp_qp_sol qp_sol_;
 
-  void* ipm_arg_mem;
-  d_ocp_qp_ipm_arg arg;
+  void* ipm_arg_mem_;
+  d_ocp_qp_ipm_arg arg_;
 
-  // workspace
-  void* ipm_mem;
-  d_ocp_qp_ipm_ws workspace;
-
-  int hpipm_status;  // status code after solving
-
-  // todo make this a setting
-  ::hpipm_mode mode = ::hpipm_mode::SPEED;  // ROBUST/BALANCED; see also hpipm_common.h
+  void* ipm_mem_;
+  d_ocp_qp_ipm_ws workspace_;
 };
 
 HpipmInterface::HpipmInterface(OcpSize ocpSize, const Settings& settings)
@@ -227,9 +254,10 @@ HpipmInterface::HpipmInterface(OcpSize ocpSize, const Settings& settings)
 HpipmInterface::~HpipmInterface() = default;
 
 void HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                           std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<vector_t>& stateTrajectory,
+                           std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
+                           std::vector<vector_t>& stateTrajectory,
                            std::vector<vector_t>& inputTrajectory, bool verbose) {
-  pImpl_->solve(x0, dynamics, cost, stateTrajectory, inputTrajectory, verbose);
+  pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
 }
 
 }  // namespace ocs2

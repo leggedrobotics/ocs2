@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <ocs2_core/Types.h>
 #include <memory>
 #include <vector>
+
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 class HpipmInterface {
@@ -21,6 +22,19 @@ class HpipmInterface {
     std::vector<int> nsbu;  // Number of slack variables for input box inequalities
     std::vector<int> nsbx;  // Number of slack variables for state box inequalities
     std::vector<int> nsg;   // Number of slack variables for general inequalities
+    OcpSize(int N_, int nx_, int nu_)
+        : N(N_),
+          nx(N_ + 1, nx_),
+          nu(N_ + 1, nu_),
+          nbu(N_ + 1, 0),
+          nbx(N_ + 1, 0),
+          ng(N_ + 1, 0),
+          nsbu(N_ + 1, 0),
+          nsbx(N_ + 1, 0),
+          nsg(N_ + 1, 0) {
+      nu.back() = 0;
+    }
+    OcpSize(){};
   };
 
   struct Settings {
@@ -42,8 +56,8 @@ class HpipmInterface {
   ~HpipmInterface();
 
   void solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-             std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<vector_t>& stateTrajectory,
-             std::vector<vector_t>& inputTrajectory, bool verbose = false);
+             std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
+             std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
 
  private:
   class Impl;

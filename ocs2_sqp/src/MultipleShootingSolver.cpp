@@ -154,7 +154,11 @@ std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShoo
   bool verbose = settings_.printSolverStatus || settings_.printSolverStatistics;
   std::vector<ocs2::vector_t> deltaXSol;
   std::vector<ocs2::vector_t> deltaUSol;
-  hpipmInterface.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, verbose);
+  if (settings_.constrained && !settings_.qr_decomp) {
+    hpipmInterface.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, verbose);
+  } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
+    hpipmInterface.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, verbose);
+  }
   auto endSolve = std::chrono::steady_clock::now();
   auto solveIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSolve - startSolve);
   scalar_t solveTime = std::chrono::duration<scalar_t, std::milli>(solveIntervalTime).count();

@@ -5,6 +5,9 @@
 #include "ocs2_sqp/MultipleShootingSolver.h"
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
+#include <ocs2_sqp/DynamicsDiscretization.h>
+#include <ocs2_sqp/QrConstraintProjection.h>
 #include <Eigen/QR>
 #include <chrono>
 #include <iostream>
@@ -49,9 +52,6 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   // EQ_CONSTRAINT_DIM is not fixed in different modes, get them
   getInfoFromModeSchedule(initTime, finalTime, *constraintPtr_);
 
-  // setup dimension for the coming OCP
-  setupDimension(*constraintPtr_);
-
   // Initialize the state and input containers
   std::vector<ocs2::vector_t> x(settings_.N_real + 1, ocs2::vector_t(settings_.n_state));
   std::vector<ocs2::vector_t> u(settings_.N_real, ocs2::vector_t(settings_.n_input));
@@ -83,7 +83,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
           LinearInterpolation::interpolate(settings_.trueEventTimes[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_);
     }
     x[settings_.N_real] = LinearInterpolation::interpolate(settings_.trueEventTimes[settings_.N_real], primalSolution_.timeTrajectory_,
-                                                               primalSolution_.stateTrajectory_);
+                                                           primalSolution_.stateTrajectory_);
     // std::cout << "using past primal sol init\n";
   }
   settings_.initPrimalSol = true;
@@ -145,27 +145,30 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 }
 
-
 std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
+  // Create solver interface
   HpipmInterface hpipmInterface(ocpSize);
+
+  // Solve the QP
+  auto startSolve = std::chrono::steady_clock::now();
   bool verbose = settings_.printSolverStatus || settings_.printSolverStatistics;
   std::vector<ocs2::vector_t> deltaXSol;
   std::vector<ocs2::vector_t> deltaUSol;
-  
-  hpipm_timer timer;
-  hpipm_tic(&timer);
   hpipmInterface.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, verbose);
-  scalar_t time_ipm = hpipm_toc(&timer);
-  printf("\tSolution time usage: %e [ms]\n", time_ipm * 1e3);
-  
+  auto endSolve = std::chrono::steady_clock::now();
+  auto solveIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSolve - startSolve);
+  scalar_t solveTime = std::chrono::duration<scalar_t, std::milli>(solveIntervalTime).count();
+  printf("\tSolution time usage: %e [ms]\n", solveTime);
+
   // retrieve deltaX, deltaUTilde
   auto startFillTime = std::chrono::steady_clock::now();
-  
+
   // remap the tilde delta u to real delta u
   if (settings_.constrained && settings_.qr_decomp) {
     for (int i = 0; i < settings_.N_real; i++) {
-      deltaUSol[i] =
-          Q2_data[i] * deltaUSol[i] - Q1_data[i] * (R1_data[i].transpose()).inverse() * (C_data[i] * deltaXSol[i] + e_data[i]);
+      deltaUSol[i] = constraints_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
+      deltaUSol[i].noalias() += constraints_[i].dfdx * deltaXSol[i];
+      deltaUSol[i] += constraints_[i].f;
     }
   }
 
@@ -178,8 +181,8 @@ std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShoo
 }
 
 void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamicsObj, CostFunctionBase& costFunctionObj,
-                                                                 ConstraintBase& constraintObj, const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u,
-                                                                 const vector_t& initState) {
+                                                                 ConstraintBase& constraintObj, const std::vector<ocs2::vector_t>& x,
+                                                                 const std::vector<ocs2::vector_t>& u, const vector_t& initState) {
   // x of shape (n_state, N_real + 1), n = n_state;
   // u of shape (n_input, N_real), m = n_input;
   // Matrix pi of shape (n_state, N), this is not used temporarily
@@ -188,7 +191,8 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 
   auto startSetupTime = std::chrono::steady_clock::now();
 
-  scalar_t operTime, delta_t_;
+  // Set up for constant state input size. Will be adapted based on constraint handling.
+  ocpSize = HpipmInterface::OcpSize(settings_.N_real, settings_.n_state, settings_.n_input);
 
   // NOTE: This setup will take longer time if in debug mode
   // the most likely reason is that Eigen QR decomposition and later on calculations are not done in the optimal way in debug mode
@@ -197,88 +201,43 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
   cost_.resize(settings_.N_real + 1);
   constraints_.resize(settings_.N_real + 1);
   for (int i = 0; i < settings_.N_real; i++) {
-    operTime = settings_.trueEventTimes[i];
-    delta_t_ = settings_.trueEventTimes[i + 1] - settings_.trueEventTimes[i];
-    scalar_t delta_t_half_ = delta_t_ / 2.0;
-    ocs2::VectorFunctionLinearApproximation k1 = systemDynamicsObj.linearApproximation(operTime, x[i], u[i]);
-    ocs2::VectorFunctionLinearApproximation k2 =
-        systemDynamicsObj.linearApproximation(operTime + delta_t_half_, x[i] + delta_t_half_ * k1.f, u[i]);
-    ocs2::VectorFunctionLinearApproximation k3 =
-        systemDynamicsObj.linearApproximation(operTime + delta_t_half_, x[i] + delta_t_half_ * k2.f, u[i]);
-    ocs2::VectorFunctionLinearApproximation k4 =
-        systemDynamicsObj.linearApproximation(operTime + delta_t_, x[i] + delta_t_ * k3.f, u[i]);
-    // dx_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
-    // A_{k} = Id + dt * dfdx
-    // B_{k} = dt * dfdu
-    // b_{k} = x_{n} + dt * f(x_{n},u_{n}) - x_{n+1}
-    // TODO here: currently only one-step Euler integration, subject to modification to RK4
-    matrix_t dk1dxk = k1.dfdx;
-    matrix_t dk2dxk = k2.dfdx * (matrix_t::Identity(settings_.n_state, settings_.n_state) + delta_t_half_ * dk1dxk);
-    matrix_t dk3dxk = k3.dfdx * (matrix_t::Identity(settings_.n_state, settings_.n_state) + delta_t_half_ * dk2dxk);
-    matrix_t dk4dxk = k4.dfdx * (matrix_t::Identity(settings_.n_state, settings_.n_state) + delta_t_ * dk3dxk);
-    dynamics_[i].dfdx = matrix_t::Identity(settings_.n_state, settings_.n_state) + (delta_t_ / 6.0) * (dk1dxk + 2 * dk2dxk + 2 * dk3dxk + dk4dxk);
-    matrix_t dk1duk = k1.dfdu;
-    matrix_t dk2duk = k2.dfdu + delta_t_half_ * k2.dfdx * dk1duk;
-    matrix_t dk3duk = k3.dfdu + delta_t_half_ * k3.dfdx * dk2duk;
-    matrix_t dk4duk = k4.dfdu + delta_t_ * k4.dfdx * dk3duk;
-    matrix_t trueBMatrix =
-        (delta_t_ / 6.0) * (dk1duk + 2 * dk2duk + 2 * dk3duk + dk4duk);              // <-- this should be the correct one, but not working
-    dynamics_[i].dfdu = (delta_t_ / 6.0) * (k1.dfdu + 2 * k2.dfdu + 2 * k3.dfdu + k4.dfdu);  // <-- this is working but not the right one
-    std::cout << "difference of B and true B " << (trueBMatrix - dynamics_[i].dfdu).norm() << std::endl;
-    // dynamics_[i].dfdu = trueBMatrix;
-    dynamics_[i].f = x[i] + (delta_t_ / 6.0) * (k1.f + 2 * k2.f + 2 * k3.f + k4.f) - x[i + 1];
+    scalar_t operTime = settings_.trueEventTimes[i];
+    scalar_t delta_t_ = settings_.trueEventTimes[i + 1] - settings_.trueEventTimes[i];
 
+    // Dynamics
+    // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
+    dynamics_[i] = rk4Discretization(systemDynamicsObj, operTime, x[i], u[i], delta_t_);
+    dynamics_[i].f -= x[i + 1];  // make it dx_{k+1} = ...
 
+    // Costs: Approximate the integral with forward euler
     cost_[i] = costFunctionObj.costQuadraticApproximation(operTime, x[i], u[i]);
+    cost_[i].dfdxx *= delta_t_;
+    cost_[i].dfdux *= delta_t_;
+    cost_[i].dfduu *= delta_t_;
+    cost_[i].dfdx *= delta_t_;
+    cost_[i].dfdu *= delta_t_;
+    cost_[i].f *= delta_t_;
 
     if (settings_.constrained) {
-      constraints_[i] = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x[i], u[i]);
       // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
       // C_{k} = constraintApprox.dfdx
       // D_{k} = constraintApprox.dfdu
       // e_{k} = constraintApprox.f
+      constraints_[i] = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x[i], u[i]);
       if (settings_.qr_decomp) {
-        // handle equality constraints using QR decomposition
-        matrix_t C = constraints_[i].dfdx;  // p x n
-        matrix_t D = constraints_[i].dfdu;  // p x m
-        vector_t e = constraints_[i].f;     // p x 1
-        matrix_t D_transpose = D.transpose();  // m x p
-        Eigen::HouseholderQR<matrix_t> qr(D_transpose);
-        matrix_t Q = qr.householderQ();                             // m x m
-        matrix_t R = qr.matrixQR().triangularView<Eigen::Upper>();  // m x p
-        // D_transpose = Q * R
-        matrix_t Q1 = Q.leftCols(e.rows());  // m x p
-        matrix_t Q2 = Q.rightCols(e.rows());                     // m x (m-p)
-        // Q = [Q1, Q2]
-        matrix_t R1 = R.topRows(e.rows());  // p x p
-                                            // R = [R1;
-                                            //      0]
+        // Handle equality constraints using QR decomposition.
 
-        // store the matrices Ck, Q1k, Q2k, R1k and vector ek for later remapping \tilde{\delta uk} -> \delta uk
-        C_data[i] = C;
-        e_data[i] = e;
-        Q1_data[i] = Q1;
-        Q2_data[i] = Q2;
-        R1_data[i] = R1;
+        // reduces number of inputs
+        ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
+        // Projection stored instead of constraint
+        constraints_[i] = qrConstraintProjection(constraints_[i]);
 
-        // some intermediate variables used multiple times
-        matrix_t P_ke = Q1 * (R1.transpose()).inverse();
-        matrix_t P_kx = P_ke * C;
-
-        // see the doc/deduction.pdf for more details
-        dynamics_[i].dfdx = dynamics_[i].dfdx - dynamics_[i].dfdu * P_kx;
-        dynamics_[i].f = dynamics_[i].f - dynamics_[i].dfdu * P_ke * e;
-        dynamics_[i].dfdu = dynamics_[i].dfdu * Q2;
-
-        vector_t q_1 = cost_[i].dfdx - P_kx.transpose() * cost_[i].dfdu;
-        vector_t q_2 = -cost_[i].dfdux.transpose() * P_ke * e - P_kx.transpose() * cost_[i].dfduu * P_ke * e;
-        cost_[i].dfdx = q_1 + q_2;
-        vector_t r_1 = Q2.transpose() * cost_[i].dfdu;
-        vector_t r_2 = -Q2.transpose() * cost_[i].dfduu * P_ke * e;
-        cost_[i].dfdu = r_1 + r_2;
-        cost_[i].dfdxx = cost_[i].dfdxx - P_kx.transpose() * cost_[i].dfdux - cost_[i].dfdux.transpose() * P_kx + P_kx.transpose() * cost_[i].dfduu * P_kx;
-        cost_[i].dfdux = Q2.transpose() * cost_[i].dfdux - Q2.transpose() * cost_[i].dfduu * P_kx;
-        cost_[i].dfduu = Q2.transpose() * cost_[i].dfduu * Q2;
+        // Adapt dynamics and cost
+        changeOfInputVariables(dynamics_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);
+        changeOfInputVariables(cost_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);
+      } else {
+        // Declare as general inequalities
+        ocpSize.ng[i] = constraints_[i].f.rows();
       }
     }
   }
@@ -287,10 +246,10 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
     // we should use the finalCostQuadraticApproximation defined by Q_final matrix
     // but in the case of ballbot, it is zero, which leads to unpenalized ending states
     // so I temporarily used costQuadraticApproximation with a random linearization point of input u
-    cost_[settings_.N_real] = costFunctionObj.costQuadraticApproximation(
-        settings_.trueEventTimes[settings_.N_real], x[settings_.N_real], vector_t::Zero(settings_.n_input));
-    cost_[settings_.N_real].dfdxx *= 10.0;// manually add larger penalty s.t. the final state converges to the ref state
-    cost_[settings_.N_real].dfdx *= 10.0;// 10 is a customized number, subject to adjustment
+    cost_[settings_.N_real] = costFunctionObj.costQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x[settings_.N_real],
+                                                                         vector_t::Zero(settings_.n_input));
+    cost_[settings_.N_real].dfdxx *= 10.0;  // manually add larger penalty s.t. the final state converges to the ref state
+    cost_[settings_.N_real].dfdx *= 10.0;   // 10 is a customized number, subject to adjustment
   } else {
     cost_[settings_.N_real] =
         costFunctionObj.finalCostQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x[settings_.N_real]);
@@ -350,8 +309,8 @@ void MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t
   size_t N_distribution_sum = 0;
   for (int i = 0; i < n_mode; i++) {
     scalar_t division_result = (tempEventTimes[i + 1] - tempEventTimes[i]) / delta_t;
-    scalar_t fractpart, intpart;
-    fractpart = std::modf(division_result, &intpart);
+    scalar_t intpart;
+    scalar_t fractpart = std::modf(division_result, &intpart);
     size_t N_distribution_i = (size_t)(intpart);
     if (std::abs(fractpart) < 1e-4) {
       N_distribution_i -= 1;
@@ -379,35 +338,5 @@ void MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t
   }
   std::cout << "}\n";
 }
-
-void MultipleShootingSolver::setupDimension(ConstraintBase& constraintObj) {
-  // STATE_DIM is always the same
-  ocpSize = HpipmInterface::OcpSize(settings_.N_real, settings_.n_state, settings_.n_input);
-
-  // INPUT_DIM and constraint size may differ
-  if (settings_.constrained) {
-    for (int k = 0; k < settings_.N_real; k++) {
-      scalar_t operTime = settings_.trueEventTimes[k];
-      // TODO: wastefull constraint evaluation
-      ocs2::VectorFunctionLinearApproximation constraintApprox = constraintObj.stateInputEqualityConstraintLinearApproximation(
-          operTime, vector_t::Zero(settings_.n_state), vector_t::Zero(settings_.n_input));
-      vector_t e = constraintApprox.f;
-      if (settings_.qr_decomp) {
-        ocpSize.nu[k] = settings_.n_input - e.rows();
-      } else {
-        ocpSize.ng[k] = e.rows();
-      }
-    }
-  }
-
-  if (settings_.constrained && settings_.qr_decomp) {
-    C_data.resize(settings_.N_real);
-    e_data.resize(settings_.N_real);
-    Q1_data.resize(settings_.N_real);
-    Q2_data.resize(settings_.N_real);
-    R1_data.resize(settings_.N_real);
-  }
-}
-
 
 }  // namespace ocs2

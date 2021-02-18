@@ -11,16 +11,6 @@
 
 #include <ocs2_sqp/HpipmInterface.h>
 
-#include <blasfeo_d_aux_ext_dep.h>
-extern "C" {
-#include <hpipm_d_ocp_qp.h>
-#include <hpipm_d_ocp_qp_dim.h>
-#include <hpipm_d_ocp_qp_ipm.h>
-#include <hpipm_d_ocp_qp_sol.h>
-#include <hpipm_timing.h>
-}
-#include <tuple>
-
 namespace ocs2 {
 
 struct MultipleShootingSolverSettings {
@@ -98,8 +88,8 @@ class MultipleShootingSolver : public SolverBase {
   }
 
   void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamicsObj, CostFunctionBase& costFunctionObj,
-                                           ConstraintBase& constraintObj, const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u, const vector_t& initState);
-  void setupDimension(ConstraintBase& constraintObj);
+                                           ConstraintBase& constraintObj, const std::vector<ocs2::vector_t>& x,
+                                           const std::vector<ocs2::vector_t>& u, const vector_t& initState);
   std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> getOCPSolution(const vector_t& delta_x0);
 
   void getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime, ConstraintBase& constraintObj);
@@ -115,16 +105,6 @@ class MultipleShootingSolver : public SolverBase {
 
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
-
-  // below are useful only when there are equality constraints that handled by QR decomposition
-  matrix_array_t C_data;
-  vector_array_t e_data;
-  matrix_array_t Q1_data;
-  matrix_array_t Q2_data;
-  matrix_array_t R1_data;
-
-  // below are useful when there are equality constraints ug >= C*dx + D*du >= lg, ug == lg
-  // also useful for inequality constraints
   std::vector<VectorFunctionLinearApproximation> constraints_;
 
   // Unused : just to implement the interface

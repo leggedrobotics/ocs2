@@ -6,13 +6,10 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
-  ocs2_ros_interfaces
-  ocs2_robotic_tools
-  ocs2_ballbot_example
+  ocs2_qp_solver
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
@@ -77,14 +74,14 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${HPIPM_LIBS})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-# SQP node for ballbot
-add_executable(${PROJECT_NAME}_ballbot_sqp src/MultipleShootingBallbotNode.cpp)
-add_dependencies(${PROJECT_NAME}_ballbot_sqp ${catkin_EXPORTED_TARGETS})
-target_include_directories(${PROJECT_NAME}_ballbot_sqp INTERFACE
-  ${catkin_INCLUDE_DIRS}
-)
-target_link_libraries(${PROJECT_NAME}_ballbot_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
-target_compile_options(${PROJECT_NAME}_ballbot_sqp PRIVATE ${OCS2_CXX_FLAGS})
+## SQP node for ballbot
+#add_executable(${PROJECT_NAME}_ballbot_sqp src/MultipleShootingBallbotNode.cpp)
+#add_dependencies(${PROJECT_NAME}_ballbot_sqp ${catkin_EXPORTED_TARGETS})
+#target_include_directories(${PROJECT_NAME}_ballbot_sqp INTERFACE
+#  ${catkin_INCLUDE_DIRS}
+#)
+#target_link_libraries(${PROJECT_NAME}_ballbot_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
+#target_compile_options(${PROJECT_NAME}_ballbot_sqp PRIVATE ${OCS2_CXX_FLAGS})
 
 
 # Circular kinematics example 

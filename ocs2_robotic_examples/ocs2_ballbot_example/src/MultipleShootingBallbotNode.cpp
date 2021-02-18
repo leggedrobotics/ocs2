@@ -4,22 +4,20 @@
 
 #include <ros/init.h>
 
+#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include "ocs2_ballbot_example/BallbotInterface.h"
 #include "ocs2_mpc/MPC_Settings.h"
 #include "ocs2_sqp/MultipleShootingMpc.h"
 #include "ocs2_sqp/MultipleShootingSolver.h"
-#include <ocs2_core/constraint/ConstraintBase.h>
 
-int main(int argc, char **argv)
-{
+int main(int argc, char** argv) {
   const std::string robotName = "ballbot";
 
   // task file
   std::vector<std::string> programArgs{};
   ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() <= 1)
-  {
+  if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
   std::string taskFileFolderName = std::string(programArgs[1]);
@@ -49,8 +47,8 @@ int main(int argc, char **argv)
   settings.robotName = "ballbot";
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
-  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(
-      new ocs2::MultipleShootingMpc(mpcSettings, settings, &ballbotInterface.getDynamics(), &ballbotInterface.getCost(), &empty_constraint));
+  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(new ocs2::MultipleShootingMpc(mpcSettings, settings, &ballbotInterface.getDynamics(),
+                                                                               &ballbotInterface.getCost(), &empty_constraint));
 
   ocs2::MPC_ROS_Interface mpcNode(*mpc, robotName);
   mpcNode.launchNodes(nodeHandle);

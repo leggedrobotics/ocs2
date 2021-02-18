@@ -6,7 +6,7 @@
       <include file="$(find ocs2_ballbot_example)/launch/visualize.launch"/>
     </group>
 
-    <node pkg="ocs2_sqp" type="ballbot_sqp" name="ballbot_sqp"
+    <node pkg="ocs2_ballbot_example" type="ocs2_ballbot_example_sqp" name="ballbot_sqp"
           output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_ballbot_example" type="ballbot_dummy_test" name="ballbot_dummy_test"

@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_ddp/GaussNewtonDDP.h"
+
 #include <algorithm>
 #include <numeric>
 
@@ -36,7 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Lookup.h>
 
-#include <ocs2_ddp/GaussNewtonDDP.h>
+#include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
+
 #include <ocs2_ddp/HessianCorrection.h>
 #include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
 #include <ocs2_ddp/search_strategy/LevenbergMarquardtStrategy.h>
@@ -367,8 +370,8 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time
   const vector_t deltaX = state - xNominal;
   const vector_t costate = getValueFunction(time, state).dfdx;
 
-  vector_t err = EvProjected;
-  err.noalias() += CmProjected * deltaX;
+  vector_t err = -EvProjected;
+  err.noalias() -= CmProjected * deltaX;
 
   vector_t temp = -Rv;
   temp.noalias() -= Pm * deltaX;
@@ -1088,72 +1091,53 @@ void GaussNewtonDDP::projectLQ(const ModelDataBase& modelData, const matrix_t& c
   projectedModelData.stateDim_ = modelData.stateDim_;
   projectedModelData.inputDim_ = modelData.inputDim_ - modelData.stateInputEqConstr_.f.rows();
 
-  // dynamics
-  projectedModelData.dynamics_.f = modelData.dynamics_.f;
-  projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
-  projectedModelData.dynamics_.dfdx = modelData.dynamics_.dfdx;
-  projectedModelData.dynamics_.dfdu.noalias() = modelData.dynamics_.dfdu * constraintNullProjector;
-
-  // cost
-  projectedModelData.cost_.f = modelData.cost_.f;
-  projectedModelData.cost_.dfdx = modelData.cost_.dfdx;
-  projectedModelData.cost_.dfdxx = modelData.cost_.dfdxx;
-  projectedModelData.cost_.dfduu = constraintNullProjector.transpose() * modelData.cost_.dfduu * constraintNullProjector;
-
-  // constraints
+  // unhandled constraints
   projectedModelData.ineqConstr_.f.setZero(0);
   projectedModelData.stateEqConstr_.f.setZero(0);
 
   if (modelData.stateInputEqConstr_.f.rows() == 0) {
+    // Change of variables u = Pu * tilde{u}
+    // Pu = constraintNullProjector;
+
     // projected state-input equality constraints
-    projectedModelData.stateInputEqConstr_.f.setZero(modelData.inputDim_);
-    projectedModelData.stateInputEqConstr_.dfdx.setZero(modelData.inputDim_, modelData.stateDim_);
-    projectedModelData.stateInputEqConstr_.dfdu.setZero(modelData.inputDim_, modelData.inputDim_);
+    projectedModelData.stateInputEqConstr_.f.setZero(projectedModelData.inputDim_);
+    projectedModelData.stateInputEqConstr_.dfdx.setZero(projectedModelData.inputDim_, projectedModelData.stateDim_);
+    projectedModelData.stateInputEqConstr_.dfdu = matrix_t();
+
+    // dynamics
+    projectedModelData.dynamics_ = modelData.dynamics_;
+    changeOfInputVariables(projectedModelData.dynamics_, constraintNullProjector);
+
+    // dynamics bias
+    projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
+
     // cost
-    projectedModelData.cost_.dfdu.noalias() = constraintNullProjector.transpose() * modelData.cost_.dfdu;
-    projectedModelData.cost_.dfdux.noalias() = constraintNullProjector.transpose() * modelData.cost_.dfdux;
-
+    projectedModelData.cost_ = modelData.cost_;
+    changeOfInputVariables(projectedModelData.cost_, constraintNullProjector);
   } else {
+    // Change of variables u = Pu * tilde{u} + Px * x + u0
+    // Pu = constraintNullProjector;
+    // Px (= CmProjected) = -constraintRangeProjector * C
+    // u0 (= EvProjected) = -constraintRangeProjector * e
+
     /* projected state-input equality constraints */
-    projectedModelData.stateInputEqConstr_.f.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.f;
-    projectedModelData.stateInputEqConstr_.dfdx.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.dfdx;
-    projectedModelData.stateInputEqConstr_.dfdu.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.dfdu;
+    projectedModelData.stateInputEqConstr_.f.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.f;
+    projectedModelData.stateInputEqConstr_.dfdx.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.dfdx;
+    projectedModelData.stateInputEqConstr_.dfdu = matrix_t();
 
-    // Hv -= BmDmDaggerEv
-    projectedModelData.dynamicsBias_.noalias() -= modelData.dynamics_.dfdu * projectedModelData.stateInputEqConstr_.f;
+    // dynamics
+    projectedModelData.dynamics_ = modelData.dynamics_;
+    changeOfInputVariables(projectedModelData.dynamics_, constraintNullProjector, projectedModelData.stateInputEqConstr_.dfdx,
+                           projectedModelData.stateInputEqConstr_.f);
 
-    // Am -= BmDmDaggerCm
-    projectedModelData.dynamics_.dfdx.noalias() -= modelData.dynamics_.dfdu * projectedModelData.stateInputEqConstr_.dfdx;
+    // dynamics bias
+    projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
+    projectedModelData.dynamicsBias_.noalias() += modelData.dynamics_.dfdu * projectedModelData.stateInputEqConstr_.f;
 
-    // common pre-computations
-    vector_t RmDmDaggerEv = modelData.cost_.dfduu * projectedModelData.stateInputEqConstr_.f;
-    matrix_t RmDmDaggerCm = modelData.cost_.dfduu * projectedModelData.stateInputEqConstr_.dfdx;
-
-    // Rv constrained
-    projectedModelData.cost_.dfdu = constraintNullProjector.transpose() * (modelData.cost_.dfdu - RmDmDaggerEv);
-
-    // Pm constrained
-    projectedModelData.cost_.dfdux = constraintNullProjector.transpose() * (modelData.cost_.dfdux - RmDmDaggerCm);
-
-    // Qm constrained
-    matrix_t PmTransDmDaggerCm = modelData.cost_.dfdux.transpose() * projectedModelData.stateInputEqConstr_.dfdx;
-    projectedModelData.cost_.dfdxx -= PmTransDmDaggerCm + PmTransDmDaggerCm.transpose();
-    // += DmDaggerCm_Trans_Rm_DmDaggerCm
-    projectedModelData.cost_.dfdxx.noalias() += projectedModelData.stateInputEqConstr_.dfdx.transpose() * RmDmDaggerCm;
-
-    // Qv  constrained
-    // -= PmTransDmDaggerEv
-    projectedModelData.cost_.dfdx.noalias() -= modelData.cost_.dfdux.transpose() * projectedModelData.stateInputEqConstr_.f;
-    // -= DmDaggerCmTransRv
-    projectedModelData.cost_.dfdx.noalias() -= projectedModelData.stateInputEqConstr_.dfdx.transpose() * modelData.cost_.dfdu;
-    // += RmDmDaggerCm_Trans_DmDaggerEv
-    projectedModelData.cost_.dfdx.noalias() += RmDmDaggerCm.transpose() * projectedModelData.stateInputEqConstr_.f;
-
-    // q constrained
-    // -= Rv_Trans_DmDaggerEv
-    projectedModelData.cost_.f -= modelData.cost_.dfdu.dot(projectedModelData.stateInputEqConstr_.f);
-    // += 0.5 DmDaggerEv_Trans_RmDmDaggerEv
-    projectedModelData.cost_.f += 0.5 * projectedModelData.stateInputEqConstr_.f.dot(RmDmDaggerEv);
+    // cost
+    projectedModelData.cost_ = modelData.cost_;
+    changeOfInputVariables(projectedModelData.cost_, constraintNullProjector, projectedModelData.stateInputEqConstr_.dfdx,
+                           projectedModelData.stateInputEqConstr_.f);
   }
 }
 

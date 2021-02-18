@@ -109,6 +109,7 @@ void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDa
   modelData.dynamics_.dfdx = matrix_t::Identity(continuousTimeModelData.stateDim_, continuousTimeModelData.stateDim_) +
                              continuousTimeModelData.dynamics_.dfdx * timeStep;
   modelData.dynamics_.dfdu = continuousTimeModelData.dynamics_.dfdu * timeStep;
+  modelData.dynamics_.f.setZero(continuousTimeModelData.stateDim_);
 
   /*
    * quadratic approximation to the cost function
@@ -163,13 +164,13 @@ void ILQR::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, 
   const auto& Qu = BASE::riccatiModificationTrajectoriesStock_[i][k].constraintNullProjector_;
 
   // feedback gains
-  BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
+  BASE::nominalControllersStock_[i].gainArray_[k] = CmProjected;
   BASE::nominalControllersStock_[i].gainArray_[k].noalias() += Qu * projectedKmTrajectoryStock_[i][k];
 
   // bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput;
   BASE::nominalControllersStock_[i].biasArray_[k].noalias() -= BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = EvProjected;
   BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLvTrajectoryStock_[i][k];
 
   // checking the numerical stability of the controller parameters

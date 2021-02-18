@@ -77,7 +77,7 @@ void changeOfInputVariables(ScalarFunctionQuadraticApproximation& quadraticAppro
     quadraticApproximation.f += 0.5 * u0.dot(r_plus_R_u0 + quadraticApproximation.dfdu);  // Before adapting dfdu!
   }
 
-  // P = Pu'*P + Pu'*R*Px) = Pu'*(P + R*Px)
+  // P = Pu'*P + Pu'*R*Px = Pu'*(P + R*Px)
   quadraticApproximation.dfdux.noalias() = Pu.transpose() * P_plus_R_Px;
 
   // R = Pu' * R * Pu

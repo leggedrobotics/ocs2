@@ -27,64 +27,28 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/StateCost.h>
 
 namespace ocs2 {
 
-/**
- * The base class for autonomous system dynamics.
- */
-class OdeBase {
- public:
-  /** Default constructor */
-  OdeBase() = default;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                             const CostDesiredTrajectories& desiredTrajectory) const {
+  return getValue(time, state, desiredTrajectory);
+}
 
-  /** Default destructor */
-  virtual ~OdeBase() = default;
-
-  /** Returns the number of function calls. */
-  size_t getNumFunctionCalls() const { return numFunctionCalls_; }
-
-  /** Resets the number of function calls to zero. */
-  void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
-
-  /** Increments the number of function calls. */
-  size_t incrementNumFunctionCalls() { return ++numFunctionCalls_; }
-
-  /**
-   * Computes the autonomous system dynamics.
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @return Current state time derivative
-   */
-  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x) = 0;
-
-  /**
-   * State map at the transition time
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @return mapped state after transition
-   */
-  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state);
-
-  /**
-   * Interface method to the guard surfaces.
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @return An array of guard surfaces values
-   */
-  virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
-
- protected:
-  /** Copy constructor */
-  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
-
- private:
-  size_t numFunctionCalls_ = 0;
-};
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation StateCost::getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                          const CostDesiredTrajectories& desiredTrajectory) const {
+  auto cost = getQuadraticApproximation(time, state, desiredTrajectory);
+  cost.dfdu.setZero(input.rows());
+  cost.dfduu.setZero(input.rows(), input.rows());
+  cost.dfdux.setZero(input.rows(), state.rows());
+  return cost;
+}
 
 }  // namespace ocs2

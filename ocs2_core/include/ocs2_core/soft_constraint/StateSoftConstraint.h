@@ -54,6 +54,8 @@ namespace ocs2 {
  */
 class StateSoftConstraint final : public StateCost {
  public:
+  using BASE = StateCost;
+
   /**
    * Constructor.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.

@@ -95,18 +95,51 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector.
+   * @param [in] parameters: parameter vector.
    * @return state vector time derivative.
    */
-  virtual ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const = 0;
+  virtual ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                    const ad_vector_t& parameters) const = 0;
+
+  /**
+   * Gets the parameters of the system flow map
+   *
+   * @param [in] time: Current time.
+   * @return The parameters to be set in the flow map at the start of the horizon
+   */
+  virtual vector_t getFlowMapParameters() const { return vector_t(0); }
+
+  /**
+   * Number of parameters for system flow map.
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumFlowMapParameters() const { return 0; }
 
   /**
    * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
+   * @param [in] parameters: parameter vector.
    * @return jumped state.
    */
-  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state) const;
+  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
+
+  /**
+   * Gets the parameters of the jump map
+   *
+   * @param [in] time: Current time.
+   * @return The parameters to be set in the jump map
+   */
+  virtual vector_t getJumpMapParameters() const { return vector_t(0); }
+
+  /**
+   * Number of parameters for jump map.
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumJumpMapParameters() const { return 0; }
 
   /**
    * Interface method to the guard surfaces. This method can be implemented by the derived class.
@@ -114,9 +147,25 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: time.
    * @param [in] state: state.
    * @param [in] input: input vector
+   * @param [in] parameters: parameter vector.
    * @return A vector of guard surfaces values
    */
-  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state) const;
+  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
+
+  /**
+   * Gets the parameters of the guard surfaces
+   *
+   * @param [in] time: Current time.
+   * @return The parameters to be set in the guard surfaces
+   */
+  virtual vector_t getGuardSurfacesParameters() const { return vector_t(0); }
+
+  /**
+   * Number of parameters for guard surfaces.
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumGuardSurfacesParameters() const { return 0; }
 
  private:
   /**

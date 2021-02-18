@@ -70,6 +70,15 @@ class EndEffectorKinematics {
   virtual std::vector<std::pair<vector3_t, quaternion_t>> getPoses(const vector_t& state) = 0;
 
   /**
+   * Get orientation error
+   *
+   * @param [in] state vector
+   * @param [in] referenceOrientation: reference quaternion
+   * @return array of [orientation error] pairs
+   */
+  virtual std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) = 0;
+
+  /**
    * Get end-effector velocity vectors in world frame
    *
    * @param [in] state: state vector
@@ -89,17 +98,6 @@ class EndEffectorKinematics {
   }
 
   /**
-   * Get end-effector pose linear approximation in world frame
-   *
-   * @param [in] state: state vector
-   * @return array of position and orientation linear approximations
-   */
-  virtual std::vector<std::pair<VectorFunctionLinearApproximation, VectorFunctionLinearApproximation>> getPosesLinearApproximation(
-      const vector_t& state) {
-    throw std::runtime_error("[EndEffectorKinematics] getPosesLinearApproximation() not implemented");
-  }
-
-  /**
    * Get end-effector velocity linear approximation in world frame
    *
    * @param [in] state: state vector
@@ -108,6 +106,18 @@ class EndEffectorKinematics {
    */
   virtual std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) {
     throw std::runtime_error("[EndEffectorKinematics] getVelocitiesLinearApproximation() not implemented");
+  }
+
+  /**
+   * Get end-effector pose linear approximation in world frame
+   *
+   * @param [in] state: state vector
+   * @param [in] referenceOrientation: reference quaternion
+   * @return array of orientation error linear approximations
+   */
+  virtual std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
+      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) {
+    throw std::runtime_error("[EndEffectorKinematics] getOrientationErrorLinearApproximation() not implemented");
   }
 
  protected:

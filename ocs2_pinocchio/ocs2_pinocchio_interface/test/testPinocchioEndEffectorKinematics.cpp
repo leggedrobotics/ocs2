@@ -36,6 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
+
 #include <gtest/gtest.h>
 
 #include "ManipulatorArmUrdf.h"
@@ -62,6 +64,8 @@ class ManipulatorMapping final : public ocs2::PinocchioStateInputMapping<SCALAR>
 
 class TestEndEffectorKinematics : public ::testing::Test {
  public:
+  using quaternion_t = Eigen::Quaternion<ocs2::scalar_t>;
+
   TestEndEffectorKinematics() {
     auto pinocchioInterface = ocs2::getPinocchioInterfaceFromUrdfString(manipulatorArmUrdf);
 
@@ -181,6 +185,33 @@ TEST_F(TestEndEffectorKinematics, DISABLED_testVelocityApproximation) {
   const auto eeVelLin = eeKinematicsPtr->getVelocitiesLinearApproximation(x, u)[0];
   const auto eeVelLinAd = eeKinematicsCppAdPtr->getVelocitiesLinearApproximation(x, u)[0];
   compareApproximation(eeVelLin, eeVelLinAd, /* functionOfInput = */ true);
+}
+
+TEST_F(TestEndEffectorKinematics, testOrientationError) {
+  quaternion_t qRef(1, 0, 0, 0);
+  const auto eeOrientationErrorAd = eeKinematicsCppAdPtr->getOrientationError(x, {qRef})[0];
+
+  std::cout << eeOrientationErrorAd.transpose() << '\n';
+}
+
+TEST_F(TestEndEffectorKinematics, testOrientationErrorApproximation) {
+  quaternion_t qRef(1, 0, 0, 0);
+  const auto eeOrientationErrorLinAd = eeKinematicsCppAdPtr->getOrientationErrorLinearApproximation(x, {qRef})[0];
+
+  std::cout << eeOrientationErrorLinAd << '\n';
+}
+
+TEST_F(TestEndEffectorKinematics, testOrientationError_zeroError) {
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  const auto frameId = model.getBodyId("WRIST_2");
+  quaternion_t qRef = ocs2::matrixToQuaternion(data.oMf[frameId].rotation());
+
+  const auto eeOrientationErrorAd = eeKinematicsCppAdPtr->getOrientationError(x, {qRef})[0];
+
+  EXPECT_TRUE(eeOrientationErrorAd.norm() < 1e-9);
 }
 
 TEST_F(TestEndEffectorKinematics, testClone) {

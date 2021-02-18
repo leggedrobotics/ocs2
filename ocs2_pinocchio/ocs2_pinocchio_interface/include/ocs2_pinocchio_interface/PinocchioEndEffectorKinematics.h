@@ -78,6 +78,10 @@ class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar
    */
   std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) override;
 
+  std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) override {
+    throw std::runtime_error("[PinocchioEndEffectorKinematics] getOrientationError() not implemented");
+  }
+
   /** Get the end effector position linear approximation.
    * @note requires pinocchioInterface to be updated with:
    *       pinocchio::forwardKinematics(model, data, q)
@@ -91,6 +95,11 @@ class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar
    *       pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a)
    */
   std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) override;
+
+  std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
+      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) override {
+    throw std::runtime_error("[PinocchioEndEffectorKinematics] getOrientationErrorLinearApproximation() not implemented");
+  }
 
   void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 

@@ -23,7 +23,8 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
 
   ComKinoSystemDynamicsAd* clone() const override;
 
-  ocs2::ad_vector_t systemFlowMap(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state, const ocs2::ad_vector_t& input) const override;
+  ocs2::ad_vector_t systemFlowMap(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state, const ocs2::ad_vector_t& input,
+                                  const ocs2::ad_vector_t& parameters) const override;
 
   template <typename SCALAR_T>
   static com_state_s_t<SCALAR_T> computeComStateDerivative(const ComModelBase<SCALAR_T>& comModel,

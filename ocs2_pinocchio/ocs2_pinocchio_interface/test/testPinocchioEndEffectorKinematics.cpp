@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
+#include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 #include <gtest/gtest.h>
@@ -188,17 +189,40 @@ TEST_F(TestEndEffectorKinematics, DISABLED_testVelocityApproximation) {
 }
 
 TEST_F(TestEndEffectorKinematics, testOrientationError) {
-  quaternion_t qRef(1, 0, 0, 0);
-  const auto eeOrientationErrorAd = eeKinematicsCppAdPtr->getOrientationError(x, {qRef})[0];
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-  std::cout << eeOrientationErrorAd.transpose() << '\n';
+  const quaternion_t qRef(1, 0, 0, 0);
+  const auto eeOrientationError = eeKinematicsPtr->getOrientationError(x, {qRef})[0];
+  const auto eeOrientationErrorAd = eeKinematicsCppAdPtr->getOrientationError(x, {qRef})[0];
+  EXPECT_TRUE(eeOrientationError.isApprox(eeOrientationErrorAd));
 }
 
 TEST_F(TestEndEffectorKinematics, testOrientationErrorApproximation) {
-  quaternion_t qRef(1, 0, 0, 0);
-  const auto eeOrientationErrorLinAd = eeKinematicsCppAdPtr->getOrientationErrorLinearApproximation(x, {qRef})[0];
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
+  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-  std::cout << eeOrientationErrorLinAd << '\n';
+  const quaternion_t qRef(1, 0, 0, 0);
+  const auto eeOrientationErrorLin = eeKinematicsPtr->getOrientationErrorLinearApproximation(x, {qRef})[0];
+  const auto eeOrientationErrorLinAd = eeKinematicsCppAdPtr->getOrientationErrorLinearApproximation(x, {qRef})[0];
+  compareApproximation(eeOrientationErrorLin, eeOrientationErrorLinAd);
+
+  auto func = [&](const ocs2::vector_t& x) -> ocs2::vector_t {
+    const auto q = pinocchioMapping.getPinocchioJointPosition(x);
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+    eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
+    return eeKinematicsPtr->getOrientationError(x, {qRef})[0];
+  };
+  std::cerr << "\nfinite difference jacobian:\n";
+  std::cerr << ocs2::finiteDifferenceDerivative(func, x, 1e-9) << '\n';
 }
 
 TEST_F(TestEndEffectorKinematics, testOrientationError_zeroError) {
@@ -207,10 +231,13 @@ TEST_F(TestEndEffectorKinematics, testOrientationError_zeroError) {
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
   const auto frameId = model.getBodyId("WRIST_2");
-  quaternion_t qRef = ocs2::matrixToQuaternion(data.oMf[frameId].rotation());
+  const quaternion_t qRef = ocs2::matrixToQuaternion(data.oMf[frameId].rotation());
+  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
+  const auto eeOrientationError = eeKinematicsPtr->getOrientationError(x, {qRef})[0];
   const auto eeOrientationErrorAd = eeKinematicsCppAdPtr->getOrientationError(x, {qRef})[0];
 
+  EXPECT_TRUE(eeOrientationError.norm() < 1e-9);
   EXPECT_TRUE(eeOrientationErrorAd.norm() < 1e-9);
 }
 

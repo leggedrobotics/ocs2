@@ -117,7 +117,7 @@ endEffector
 
   ; end effector quadratic penalty scaling
   muPosition  10.0
-  muOrientation  0.0
+  muOrientation  5.0
 }
 
 finalEndEffector
@@ -126,7 +126,7 @@ finalEndEffector
 
   name "WRIST_2"
   muPosition  10.0
-  muOrientation  0.0
+  muOrientation  5.0
 }
 
 selfCollision

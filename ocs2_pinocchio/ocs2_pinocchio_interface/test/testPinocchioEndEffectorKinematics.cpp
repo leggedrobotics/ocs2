@@ -174,7 +174,7 @@ TEST_F(TestEndEffectorKinematics, testVelocity) {
   EXPECT_TRUE(eeVel.isApprox(eeVelAd));
 }
 
-TEST_F(TestEndEffectorKinematics, DISABLED_testVelocityApproximation) {
+TEST_F(TestEndEffectorKinematics, testVelocityApproximation) {
   const auto& model = pinocchioInterfacePtr->getModel();
   auto& data = pinocchioInterfacePtr->getData();
 

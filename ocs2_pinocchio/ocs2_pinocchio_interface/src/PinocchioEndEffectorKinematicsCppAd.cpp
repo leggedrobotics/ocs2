@@ -206,7 +206,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
   vector_t stateInput(state.rows() + input.rows());
   stateInput << state, input;
   const vector_t velocityValues = velocityCppAdInterfacePtr_->getFunctionValue(stateInput);
-  const matrix_t velocityJacobian = velocityCppAdInterfacePtr_->getJacobian(state);
+  const matrix_t velocityJacobian = velocityCppAdInterfacePtr_->getJacobian(stateInput);
 
   std::vector<VectorFunctionLinearApproximation> velocities;
   for (int i = 0; i < endEffectorIds_.size(); i++) {

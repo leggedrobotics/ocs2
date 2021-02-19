@@ -149,7 +149,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 
     VectorFunctionLinearApproximation pos;
     pos.f = data.oMf[frameId].translation();
-    std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.topRows(3), matrix_t::Zero(0, model.nv));
+    std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.topRows<3>(), matrix_t::Zero(0, model.nv));
     positions.emplace_back(std::move(pos));
   }
   return positions;
@@ -160,29 +160,28 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 /******************************************************************************************************/
 std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getVelocitiesLinearApproximation(const vector_t& state,
                                                                                                                 const vector_t& input) {
-  // TODO(mspieler): v_partial_dq does not match CppAD reference
-  throw std::runtime_error("[PinocchioEndEffectorKinematics] getVelocitiesLinearApproximation() is not implemented");
-
   if (pinocchioInterfacePtr_ == nullptr) {
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
+  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
   // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
   pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
-
-  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
 
   std::vector<VectorFunctionLinearApproximation> velocities;
   for (const auto& frameId : endEffectorFrameIds_) {
     matrix_t v_partial_dq = matrix_t::Zero(6, model.nv);
     matrix_t v_partial_dv = matrix_t::Zero(6, model.nv);
     pinocchio::getFrameVelocityDerivatives(model, data, frameId, rf, v_partial_dq, v_partial_dv);
-
+    const auto frameVel = pinocchio::getFrameVelocity(model, data, frameId, rf);
+    for (int i = 0; i < model.nv; i++) {
+      v_partial_dq.col(i).head<3>() += frameVel.angular().cross(v_partial_dv.col(i).head<3>());
+    }
     VectorFunctionLinearApproximation vel;
-    vel.f = pinocchio::getFrameVelocity(model, data, frameId, rf).linear();
-    std::tie(vel.dfdx, vel.dfdu) = mappingPtr_->getOcs2Jacobian(state, v_partial_dq.topRows(3), v_partial_dv.topRows(3));
+    vel.f = frameVel.linear();
+    std::tie(vel.dfdx, vel.dfdu) = mappingPtr_->getOcs2Jacobian(state, v_partial_dq.topRows<3>(), v_partial_dv.topRows<3>());
     velocities.emplace_back(std::move(vel));
   }
   return velocities;
@@ -231,7 +230,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
     err.f = quaternionDistance(matrixToQuaternion(data.oMf[frameId].rotation()), referenceOrientations[i]);
     matrix_t J = matrix_t::Zero(6, model.nq);
     pinocchio::getFrameJacobian(model, data, frameId, rf, J);
-    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.bottomRows(3), matrix_t::Zero(0, model.nv));
+    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.bottomRows<3>(), matrix_t::Zero(0, model.nv));
     errors.emplace_back(std::move(err));
   }
   return errors;

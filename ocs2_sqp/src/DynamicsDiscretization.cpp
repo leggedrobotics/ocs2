@@ -33,7 +33,7 @@ VectorFunctionLinearApproximation rk4Discretization(SystemDynamicsBase& system, 
   const ocs2::VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u);
   const ocs2::VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u);
 
-  // Sensitivity propagation
+  // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
   const auto& dk1dxk = k1.dfdx;
   matrix_t dk2dxk = k2.dfdx;
   dk2dxk.noalias() += dt_halve * k2.dfdx * dk1dxk;
@@ -42,6 +42,7 @@ VectorFunctionLinearApproximation rk4Discretization(SystemDynamicsBase& system, 
   matrix_t dk4dxk = k4.dfdx;
   dk4dxk.noalias() += dt * k4.dfdx * dk3dxk;
 
+  // Input sensitivity \dot{Su} = dfdx(t) Su + dfdu(t), with Su(0) = Zero()
   const auto& dk1duk = k1.dfdu;
   matrix_t dk2duk = k2.dfdu;
   dk2duk.noalias() += dt_halve * k2.dfdx * dk1duk;

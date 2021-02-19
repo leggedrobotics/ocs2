@@ -76,14 +76,15 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   } else {
     // previous N_real may not be the same as the current one, so size mismatch might happen.
     // do linear interpolation here
-    for (int i = 0; i < settings_.N_real; i++) {
+    x[0] = initState; // Force linearization of the first node around the current state
+    for (int i = 1; i < (settings_.N_real + 1); i++) {
       x[i] =
           LinearInterpolation::interpolate(settings_.trueEventTimes[i], primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_);
+    }
+    for (int i = 0; i < settings_.N_real; i++) {
       u[i] =
           LinearInterpolation::interpolate(settings_.trueEventTimes[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_);
     }
-    x[settings_.N_real] = LinearInterpolation::interpolate(settings_.trueEventTimes[settings_.N_real], primalSolution_.timeTrajectory_,
-                                                           primalSolution_.stateTrajectory_);
     // std::cout << "using past primal sol init\n";
   }
   settings_.initPrimalSol = true;

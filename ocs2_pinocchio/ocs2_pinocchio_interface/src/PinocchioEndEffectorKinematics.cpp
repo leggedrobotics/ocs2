@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/kinematics.hpp>
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
+#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
@@ -176,8 +177,9 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
     matrix_t v_partial_dv = matrix_t::Zero(6, model.nv);
     pinocchio::getFrameVelocityDerivatives(model, data, frameId, rf, v_partial_dq, v_partial_dv);
     const auto frameVel = pinocchio::getFrameVelocity(model, data, frameId, rf);
-    for (int i = 0; i < model.nv; i++) {
-      v_partial_dq.col(i).head<3>() += frameVel.angular().cross(v_partial_dv.col(i).head<3>());
+    // For reference frame LOCAL_WORLD_ALIGNED the jacobian needs to be corrected.
+    if (rf == pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED) {
+      v_partial_dq.topRows<3>() += skewSymmetricMatrix(vector3_t(frameVel.angular())) * v_partial_dv.topRows<3>();
     }
     VectorFunctionLinearApproximation vel;
     vel.f = frameVel.linear();

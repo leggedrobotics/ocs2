@@ -110,8 +110,8 @@ void QuadrupedVisualizer::publishJointTransforms(ros::Time timeStamp, const join
                                                  {"RF_HAA", jointAngles[3]}, {"RF_HFE", jointAngles[4]},  {"RF_KFE", jointAngles[5]},
                                                  {"LH_HAA", jointAngles[6]}, {"LH_HFE", jointAngles[7]},  {"LH_KFE", jointAngles[8]},
                                                  {"RH_HAA", jointAngles[9]}, {"RH_HFE", jointAngles[10]}, {"RH_KFE", jointAngles[11]}};
-    robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp, "");
-    robotStatePublisherPtr_->publishFixedTransforms("");
+    robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
+    robotStatePublisherPtr_->publishFixedTransforms();
   }
 }
 

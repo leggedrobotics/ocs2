@@ -361,14 +361,19 @@ std::unique_ptr<ocs2::StateInputCost> MobileManipulatorCost::getJointVelocityLim
   vector_t upperBound(INPUT_DIM);
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  const std::string prefix = "jointVelocityLimits.";
+  std::cerr << "\n #### JointVelocityLimits Settings: ";
+  std::cerr << "\n #### =============================================================================\n";
   ocs2::loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound", lowerBound);
+  std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
   ocs2::loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound", upperBound);
-  ocs2::loadData::loadCppDataType(taskFile, "jointVelocityLimits.mu", mu);
-  ocs2::loadData::loadCppDataType(taskFile, "jointVelocityLimits.delta", delta);
-  std::cerr << "jointVelocityLimits.lowerBound:  " << lowerBound.transpose() << std::endl;
-  std::cerr << "jointVelocityLimits.upperBound:  " << upperBound.transpose() << std::endl;
-  std::cerr << "jointVelocityLimits.mu:  " << mu << std::endl;
-  std::cerr << "jointVelocityLimits.delta:  " << delta << std::endl;
+  std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
+  ocs2::loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
+  ocs2::loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
+  std::cerr << " #### =============================================================================" << std::endl;
 
   std::unique_ptr<ocs2::StateInputConstraint> constraintPtr(new JointVelocityLimits(lowerBound, upperBound));
   auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(

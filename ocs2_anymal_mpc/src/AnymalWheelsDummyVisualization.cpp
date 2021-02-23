@@ -24,8 +24,7 @@ int main(int argc, char* argv[]) {
 
   ros::WallRate rate(50);
   while (ros::ok() && ros::master::check()) {
-    robotStatePublisher.publishTransforms({{"LF_WHEEL", 0.0}, {"RF_WHEEL", 0.0}, {"LH_WHEEL", 0.0}, {"RH_WHEEL", 0.0}}, ros::Time::now(),
-                                          "");
+    robotStatePublisher.publishTransforms({{"LF_WHEEL", 0.0}, {"RF_WHEEL", 0.0}, {"LH_WHEEL", 0.0}, {"RH_WHEEL", 0.0}}, ros::Time::now());
     rate.sleep();
   }
 

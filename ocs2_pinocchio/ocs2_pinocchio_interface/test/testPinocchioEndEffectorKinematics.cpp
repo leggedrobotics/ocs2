@@ -134,15 +134,29 @@ TEST_F(TestEndEffectorKinematics, testKinematicsPosition) {
   pinocchio::getFrameJacobian(model, data, id, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J);
 
   eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
-  const auto eePos = eeKinematicsPtr->getPositions(x)[0];
-  const auto eePosLin = eeKinematicsPtr->getPositionsLinearApproximation(x)[0];
+  const auto eePos = eeKinematicsPtr->getPosition(x)[0];
+  const auto eePosLin = eeKinematicsPtr->getPositionLinearApproximation(x)[0];
 
   EXPECT_TRUE(pos.isApprox(eePos));
   EXPECT_TRUE(pos.isApprox(eePosLin.f));
   EXPECT_TRUE(J.topRows<3>().isApprox(eePosLin.dfdx));
 }
 
-TEST_F(TestEndEffectorKinematics, compareWithCppAd) {
+TEST_F(TestEndEffectorKinematics, testPosition) {
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+
+  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
+
+  const auto eePos = eeKinematicsPtr->getPosition(x)[0];
+  const auto eePosAd = eeKinematicsCppAdPtr->getPosition(x)[0];
+  EXPECT_TRUE(eePos.isApprox(eePosAd));
+}
+
+TEST_F(TestEndEffectorKinematics, testPositionApproximation) {
   const auto& model = pinocchioInterfacePtr->getModel();
   auto& data = pinocchioInterfacePtr->getData();
 
@@ -152,12 +166,8 @@ TEST_F(TestEndEffectorKinematics, compareWithCppAd) {
 
   eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-  const auto eePos = eeKinematicsPtr->getPositions(x)[0];
-  const auto eePosAd = eeKinematicsCppAdPtr->getPositions(x)[0];
-  EXPECT_TRUE(eePos.isApprox(eePosAd));
-
-  const auto eePosLin = eeKinematicsPtr->getPositionsLinearApproximation(x)[0];
-  const auto eePosLinAd = eeKinematicsCppAdPtr->getPositionsLinearApproximation(x)[0];
+  const auto eePosLin = eeKinematicsPtr->getPositionLinearApproximation(x)[0];
+  const auto eePosLinAd = eeKinematicsCppAdPtr->getPositionLinearApproximation(x)[0];
   compareApproximation(eePosLin, eePosLinAd);
 }
 
@@ -170,8 +180,8 @@ TEST_F(TestEndEffectorKinematics, testVelocity) {
 
   eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-  const auto eeVel = eeKinematicsPtr->getVelocities(x, u)[0];
-  const auto eeVelAd = eeKinematicsCppAdPtr->getVelocities(x, u)[0];
+  const auto eeVel = eeKinematicsPtr->getVelocity(x, u)[0];
+  const auto eeVelAd = eeKinematicsCppAdPtr->getVelocity(x, u)[0];
   EXPECT_TRUE(eeVel.isApprox(eeVelAd));
 }
 
@@ -184,8 +194,8 @@ TEST_F(TestEndEffectorKinematics, testVelocityApproximation) {
 
   eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-  const auto eeVelLin = eeKinematicsPtr->getVelocitiesLinearApproximation(x, u)[0];
-  const auto eeVelLinAd = eeKinematicsCppAdPtr->getVelocitiesLinearApproximation(x, u)[0];
+  const auto eeVelLin = eeKinematicsPtr->getVelocityLinearApproximation(x, u)[0];
+  const auto eeVelLinAd = eeKinematicsCppAdPtr->getVelocityLinearApproximation(x, u)[0];
   compareApproximation(eeVelLin, eeVelLinAd, /* functionOfInput = */ true);
 }
 
@@ -245,12 +255,12 @@ TEST_F(TestEndEffectorKinematics, testClone) {
 
   clonePtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-  const auto eePos = clonePtr->getPositions(x)[0];
-  const auto eePosAd = cloneCppAdPtr->getPositions(x)[0];
+  const auto eePos = clonePtr->getPosition(x)[0];
+  const auto eePosAd = cloneCppAdPtr->getPosition(x)[0];
   EXPECT_TRUE(eePos.isApprox(eePosAd));
 
-  const auto eeVel = clonePtr->getVelocities(x, u)[0];
-  const auto eeVelAd = cloneCppAdPtr->getVelocities(x, u)[0];
+  const auto eeVel = clonePtr->getVelocity(x, u)[0];
+  const auto eeVelAd = cloneCppAdPtr->getVelocity(x, u)[0];
   EXPECT_TRUE(eeVel.isApprox(eeVelAd));
 }
 

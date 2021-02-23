@@ -69,25 +69,22 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
 
   const std::vector<std::string>& getIds() const override;
 
-  std::vector<vector3_t> getPositions(const vector_t& state) override;
-  std::vector<std::pair<vector3_t, quaternion_t>> getPoses(const vector_t& state) override {
-    throw std::runtime_error("[PinocchioEndEffectorKinematicsCppAd] getPoses() not implemented");
-  }
-  std::vector<vector3_t> getVelocities(const vector_t& state, const vector_t& input) override;
+  std::vector<vector3_t> getPosition(const vector_t& state) override;
+  std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) override;
   std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) override;
 
-  std::vector<VectorFunctionLinearApproximation> getPositionsLinearApproximation(const vector_t& state) override;
-  std::vector<VectorFunctionLinearApproximation> getVelocitiesLinearApproximation(const vector_t& state, const vector_t& input) override;
+  std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) override;
+  std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state, const vector_t& input) override;
   std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
       const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) override;
 
  private:
   PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs);
 
-  ad_vector_t getPositionsCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                const ad_vector_t& state);
-  ad_vector_t getVelocitiesCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                 const ad_vector_t& state, const ad_vector_t& input);
+  ad_vector_t getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                               const ad_vector_t& state);
+  ad_vector_t getVelocityCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                               const ad_vector_t& state, const ad_vector_t& input);
   ad_vector_t getOrientationErrorCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                        const PinocchioStateInputMapping<ad_scalar_t>& mapping, const ad_vector_t& state,
                                        const ad_vector_t& params);

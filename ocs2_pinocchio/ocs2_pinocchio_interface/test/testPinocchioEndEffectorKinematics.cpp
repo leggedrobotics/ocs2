@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
 #include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
+#include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 #include <gtest/gtest.h>
@@ -213,16 +214,6 @@ TEST_F(TestEndEffectorKinematics, testOrientationErrorApproximation) {
   const auto eeOrientationErrorLin = eeKinematicsPtr->getOrientationErrorLinearApproximation(x, {qRef})[0];
   const auto eeOrientationErrorLinAd = eeKinematicsCppAdPtr->getOrientationErrorLinearApproximation(x, {qRef})[0];
   compareApproximation(eeOrientationErrorLin, eeOrientationErrorLinAd);
-
-  auto func = [&](const ocs2::vector_t& x) -> ocs2::vector_t {
-    const auto q = pinocchioMapping.getPinocchioJointPosition(x);
-    pinocchio::forwardKinematics(model, data, q);
-    pinocchio::updateFramePlacements(model, data);
-    eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
-    return eeKinematicsPtr->getOrientationError(x, {qRef})[0];
-  };
-  std::cerr << "\nfinite difference jacobian:\n";
-  std::cerr << ocs2::finiteDifferenceDerivative(func, x, 1e-9) << '\n';
 }
 
 TEST_F(TestEndEffectorKinematics, testOrientationError_zeroError) {
@@ -261,4 +252,45 @@ TEST_F(TestEndEffectorKinematics, testClone) {
   const auto eeVel = clonePtr->getVelocities(x, u)[0];
   const auto eeVelAd = cloneCppAdPtr->getVelocities(x, u)[0];
   EXPECT_TRUE(eeVel.isApprox(eeVelAd));
+}
+
+/* Test to understand the frame jacobian */
+TEST_F(TestEndEffectorKinematics, testPinocchioOrientationErrorJacoiban) {
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  const auto v = ocs2::vector_t::Zero(model.nv);
+  const auto frameId = model.getBodyId("WRIST_2");
+  const quaternion_t qRef(1, 0, 0, 0);
+  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
+  const ocs2::scalar_t eps = 1e-9;
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+  pinocchio::computeJointJacobians(model, data);
+
+  // Check geometric jacobian
+  ocs2::matrix_t J = ocs2::matrix_t::Zero(6, model.nq);
+  pinocchio::getFrameJacobian(model, data, frameId, rf, J);
+
+  auto func1 = [&](const ocs2::vector_t& v) -> ocs2::vector_t {
+    pinocchio::forwardKinematics(model, data, x, v);
+    pinocchio::updateFramePlacements(model, data);
+    return getFrameVelocity(model, data, frameId, rf).angular();
+  };
+  const ocs2::matrix_t Jgeom_fd = ocs2::finiteDifferenceDerivative(func1, v, eps);
+  EXPECT_TRUE(J.bottomRows<3>().isApprox(Jgeom_fd, sqrt(eps)));
+
+  // Check analytic jacobian
+  quaternion_t q = ocs2::matrixToQuaternion(data.oMf[frameId].rotation());
+  ocs2::matrix_t Janalytic =
+      (ocs2::quaternionDistanceJacobian(q, qRef) * ocs2::angularVelocityToQuaternionTimeDerivative(q)) * J.bottomRows<3>();
+
+  auto func2 = [&](const ocs2::vector_t& x) -> ocs2::vector_t {
+    const auto q = pinocchioMapping.getPinocchioJointPosition(x);
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+    eeKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
+    return eeKinematicsPtr->getOrientationError(x, {qRef})[0];
+  };
+  const ocs2::matrix_t Janalytic_fd = ocs2::finiteDifferenceDerivative(func2, x, eps);
+  EXPECT_TRUE(Janalytic.isApprox(Janalytic_fd, sqrt(eps)));
 }

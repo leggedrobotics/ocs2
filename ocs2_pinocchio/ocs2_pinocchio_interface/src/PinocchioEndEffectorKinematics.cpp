@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
+#include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
@@ -229,10 +230,13 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
     const auto frameId = endEffectorFrameIds_[i];
     VectorFunctionLinearApproximation err;
-    err.f = quaternionDistance(matrixToQuaternion(data.oMf[frameId].rotation()), referenceOrientations[i]);
+    const quaternion_t q = matrixToQuaternion(data.oMf[frameId].rotation());
+    err.f = quaternionDistance(q, referenceOrientations[i]);
     matrix_t J = matrix_t::Zero(6, model.nq);
     pinocchio::getFrameJacobian(model, data, frameId, rf, J);
-    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.bottomRows<3>(), matrix_t::Zero(0, model.nv));
+    const matrix_t Jqdist =
+        (quaternionDistanceJacobian(q, referenceOrientations[i]) * angularVelocityToQuaternionTimeDerivative(q)) * J.bottomRows<3>();
+    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, Jqdist, matrix_t::Zero(0, model.nv));
     errors.emplace_back(std::move(err));
   }
   return errors;

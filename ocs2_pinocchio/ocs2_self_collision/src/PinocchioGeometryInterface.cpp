@@ -95,7 +95,6 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
 std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistances(const PinocchioInterface& pinocchioInterface) const {
   pinocchio::GeometryData geometryData(*geometryModelPtr_);
 
-  // In the future, calling updateGeomtryPlacements without 'q' will avoid the extra forward kinematics call
   pinocchio::updateGeometryPlacements(pinocchioInterface.getModel(), pinocchioInterface.getData(), *geometryModelPtr_, geometryData);
   pinocchio::computeDistances(*geometryModelPtr_, geometryData);
 

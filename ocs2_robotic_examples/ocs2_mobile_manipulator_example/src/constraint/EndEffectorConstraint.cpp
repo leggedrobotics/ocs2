@@ -64,7 +64,7 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state) const {
   vector_t constraint(6);
-  constraint.head<3>() = endEffectorKinematicsPtr_->getPositions(state)[0] - eeDesiredPosition_;
+  constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state)[0] - eeDesiredPosition_;
   constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, {eeDesiredOrientation_})[0];
   return constraint;
 }
@@ -75,7 +75,7 @@ vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state) c
 VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(scalar_t time, const vector_t& state) const {
   auto constraintApproximation = VectorFunctionLinearApproximation(6, state.rows(), 0);
 
-  const auto eePosition = endEffectorKinematicsPtr_->getPositionsLinearApproximation(state)[0];
+  const auto eePosition = endEffectorKinematicsPtr_->getPositionLinearApproximation(state)[0];
   constraintApproximation.f.head<3>() = eePosition.f - eeDesiredPosition_;
   constraintApproximation.dfdx.topRows<3>() = eePosition.dfdx;
 

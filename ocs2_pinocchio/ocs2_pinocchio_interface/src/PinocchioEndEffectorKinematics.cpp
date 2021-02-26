@@ -188,7 +188,7 @@ auto PinocchioEndEffectorKinematics::getOrientationError(const vector_t& state, 
 
   std::vector<vector3_t> errors;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
-    const auto frameId = endEffectorFrameIds_[i];
+    const size_t frameId = endEffectorFrameIds_[i];
     errors.emplace_back(quaternionDistance(matrixToQuaternion(data.oMf[frameId].rotation()), referenceOrientations[i]));
   }
   return errors;
@@ -212,7 +212,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
   std::vector<VectorFunctionLinearApproximation> errors;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
     VectorFunctionLinearApproximation err;
-    const auto frameId = endEffectorFrameIds_[i];
+    const size_t frameId = endEffectorFrameIds_[i];
     const quaternion_t q = matrixToQuaternion(data.oMf[frameId].rotation());
     err.f = quaternionDistance(q, referenceOrientations[i]);
     matrix_t J = matrix_t::Zero(6, model.nq);

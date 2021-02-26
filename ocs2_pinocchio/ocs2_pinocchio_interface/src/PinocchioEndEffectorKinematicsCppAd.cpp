@@ -71,17 +71,17 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
   auto orientationFunc = [&, this](const ad_vector_t& x, const ad_vector_t& params, ad_vector_t& y) {
     y = getOrientationErrorCppAd(pinocchioInterfaceCppAd, mapping, x, params);
   };
-  orientationCppAdInterfacePtr_.reset(
+  orientationErrorCppAdInterfacePtr_.reset(
       new CppAdInterface(orientationFunc, stateDim, 4 * endEffectorFrameIds_.size(), modelName + "_orientation", modelFolder));
 
   if (recompileLibraries) {
     positionCppAdInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
     velocityCppAdInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-    orientationCppAdInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+    orientationErrorCppAdInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
   } else {
     positionCppAdInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
     velocityCppAdInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
-    orientationCppAdInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+    orientationErrorCppAdInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }
 }
 
@@ -92,7 +92,7 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
     : EndEffectorKinematics<scalar_t>(rhs),
       positionCppAdInterfacePtr_(new CppAdInterface(*rhs.positionCppAdInterfacePtr_)),
       velocityCppAdInterfacePtr_(new CppAdInterface(*rhs.velocityCppAdInterfacePtr_)),
-      orientationCppAdInterfacePtr_(new CppAdInterface(*rhs.orientationCppAdInterfacePtr_)),
+      orientationErrorCppAdInterfacePtr_(new CppAdInterface(*rhs.orientationErrorCppAdInterfacePtr_)),
       endEffectorIds_(rhs.endEffectorIds_),
       endEffectorFrameIds_(rhs.endEffectorFrameIds_) {}
 
@@ -125,7 +125,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
 
   ad_vector_t positions(3 * endEffectorFrameIds_.size());
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
-    const auto frameId = endEffectorFrameIds_[i];
+    const size_t frameId = endEffectorFrameIds_[i];
     positions.segment<3>(3 * i) = data.oMf[frameId].translation();
   }
   return positions;
@@ -177,7 +177,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocityCppAd(PinocchioInter
 
   ad_vector_t velocities(3 * endEffectorFrameIds_.size());
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
-    const auto frameId = endEffectorFrameIds_[i];
+    const size_t frameId = endEffectorFrameIds_[i];
     velocities.segment<3>(3 * i) = pinocchio::getFrameVelocity(model, data, frameId, rf).linear();
   }
   return velocities;
@@ -229,7 +229,7 @@ auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& st
     params.segment<4>(i) = referenceOrientations[i].coeffs();
   }
 
-  const vector_t errorValues = orientationCppAdInterfacePtr_->getFunctionValue(state, params);
+  const vector_t errorValues = orientationErrorCppAdInterfacePtr_->getFunctionValue(state, params);
 
   std::vector<vector3_t> errors;
   for (int i = 0; i < endEffectorIds_.size(); i++) {
@@ -248,8 +248,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
     params.segment<4>(i) = referenceOrientations[i].coeffs();
   }
 
-  const vector_t errorValues = orientationCppAdInterfacePtr_->getFunctionValue(state, params);
-  const matrix_t errorJacobian = orientationCppAdInterfacePtr_->getJacobian(state, params);
+  const vector_t errorValues = orientationErrorCppAdInterfacePtr_->getFunctionValue(state, params);
+  const matrix_t errorJacobian = orientationErrorCppAdInterfacePtr_->getJacobian(state, params);
 
   std::vector<VectorFunctionLinearApproximation> errors;
   for (int i = 0; i < endEffectorIds_.size(); i++) {
@@ -278,7 +278,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getOrientationErrorCppAd(Pinocc
 
   ad_vector_t errors(3 * endEffectorFrameIds_.size());
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
-    const auto frameId = endEffectorFrameIds_[i];
+    const size_t frameId = endEffectorFrameIds_[i];
     ad_quaternion_t eeOrientation = matrixToQuaternion(data.oMf[frameId].rotation());
     ad_quaternion_t eeReferenceOrientation;
     eeReferenceOrientation.coeffs() = params.segment<4>(4 * i);

@@ -85,9 +85,7 @@ class EndEffectorKinematics {
    * @param [in] state: state vector
    * @return array of position function linear approximations
    */
-  virtual std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) {
-    throw std::runtime_error("[EndEffectorKinematics] getPositionLinearApproximation() not implemented");
-  }
+  virtual std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) = 0;
 
   /**
    * Get end-effector velocity linear approximation in world frame
@@ -96,9 +94,7 @@ class EndEffectorKinematics {
    * @param [in] input: input vector
    * @return array of velocity function linear approximations
    */
-  virtual std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state, const vector_t& input) {
-    throw std::runtime_error("[EndEffectorKinematics] getVelocityLinearApproximation() not implemented");
-  }
+  virtual std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state, const vector_t& input) = 0;
 
   /**
    * Get end-effector pose linear approximation in world frame
@@ -108,9 +104,7 @@ class EndEffectorKinematics {
    * @return array of orientation error linear approximations
    */
   virtual std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
-      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) {
-    throw std::runtime_error("[EndEffectorKinematics] getOrientationErrorLinearApproximation() not implemented");
-  }
+      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) = 0;
 
  protected:
   EndEffectorKinematics(const EndEffectorKinematics&) = default;

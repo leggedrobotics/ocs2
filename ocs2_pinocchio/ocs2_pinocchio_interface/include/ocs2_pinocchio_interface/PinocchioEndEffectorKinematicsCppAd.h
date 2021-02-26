@@ -91,7 +91,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
 
   std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
   std::unique_ptr<CppAdInterface> velocityCppAdInterfacePtr_;
-  std::unique_ptr<CppAdInterface> orientationCppAdInterfacePtr_;
+  std::unique_ptr<CppAdInterface> orientationErrorCppAdInterfacePtr_;
 
   const std::vector<std::string> endEffectorIds_;
   std::vector<size_t> endEffectorFrameIds_;

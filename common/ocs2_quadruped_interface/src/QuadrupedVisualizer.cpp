@@ -62,14 +62,14 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
     kdl_parser::treeFromUrdfModel(urdfModel, kdlTree);
 
     robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(kdlTree));
-    robotStatePublisherPtr_->publishFixedTransforms("");
+    robotStatePublisherPtr_->publishFixedTransforms(true);
   }
 }
 
 void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& primalSolution,
                                  const ocs2::CommandData& command) {
   if (observation.time - lastTime_ > minPublishTimeDifference_) {
-    const auto timeStamp = ros::Time(observation.time);
+    const auto timeStamp = ros::Time::now();
     publishObservation(timeStamp, observation);
     publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
     publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
@@ -96,9 +96,8 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::Sy
   }
 
   // Publish
-  const auto rosTime = ros::Time::now();
-  publishJointTransforms(rosTime, qJoints);  // TODO (rgrandia) : using mpc timestamp doesn't work for the TFs
-  publishBaseTransform(rosTime, basePose);
+  publishJointTransforms(timeStamp, qJoints);
+  publishBaseTransform(timeStamp, basePose);
   publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode), feetPosition, feetForce);
   publishCenterOfMassPose(timeStamp, comPose);
   publishEndEffectorPoses(timeStamp, feetPosition, feetOrientations);
@@ -111,19 +110,20 @@ void QuadrupedVisualizer::publishJointTransforms(ros::Time timeStamp, const join
                                                  {"LH_HAA", jointAngles[6]}, {"LH_HFE", jointAngles[7]},  {"LH_KFE", jointAngles[8]},
                                                  {"RH_HAA", jointAngles[9]}, {"RH_HFE", jointAngles[10]}, {"RH_KFE", jointAngles[11]}};
     robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
-    robotStatePublisherPtr_->publishFixedTransforms();
   }
 }
 
 void QuadrupedVisualizer::publishBaseTransform(ros::Time timeStamp, const base_coordinate_t& basePose) {
-  geometry_msgs::TransformStamped baseToWorldTransform;
-  baseToWorldTransform.header = getHeaderMsg(frameId_, timeStamp);
-  baseToWorldTransform.child_frame_id = "base";
+  if (robotStatePublisherPtr_ != nullptr) {
+    geometry_msgs::TransformStamped baseToWorldTransform;
+    baseToWorldTransform.header = getHeaderMsg(frameId_, timeStamp);
+    baseToWorldTransform.child_frame_id = "base";
 
-  const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(getOrientation(basePose));
-  baseToWorldTransform.transform.rotation = getOrientationMsg(q_world_base);
-  baseToWorldTransform.transform.translation = getVectorMsg(getPositionInOrigin(basePose));
-  tfBroadcaster_.sendTransform(baseToWorldTransform);
+    const Eigen::Quaternion<scalar_t> q_world_base = quaternionBaseToOrigin<scalar_t>(getOrientation(basePose));
+    baseToWorldTransform.transform.rotation = getOrientationMsg(q_world_base);
+    baseToWorldTransform.transform.translation = getVectorMsg(getPositionInOrigin(basePose));
+    tfBroadcaster_.sendTransform(baseToWorldTransform);
+  }
 }
 
 void QuadrupedVisualizer::publishTrajectory(const std::vector<ocs2::SystemObservation>& system_observation_array, double speed) {

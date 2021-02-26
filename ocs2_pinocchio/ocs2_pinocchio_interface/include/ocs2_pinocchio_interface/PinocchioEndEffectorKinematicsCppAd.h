@@ -69,14 +69,15 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
 
   const std::vector<std::string>& getIds() const override;
 
-  std::vector<vector3_t> getPosition(const vector_t& state) override;
-  std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) override;
-  std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) override;
+  std::vector<vector3_t> getPosition(const vector_t& state) const override;
+  std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override;
+  std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override;
 
-  std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) override;
-  std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state, const vector_t& input) override;
+  std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
+  std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
+                                                                                const vector_t& input) const override;
   std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
-      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) override;
+      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override;
 
  private:
   PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs);

@@ -134,7 +134,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state) -> std::vector<vector3_t> {
+auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state) const -> std::vector<vector3_t> {
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
 
   std::vector<vector3_t> positions;
@@ -147,7 +147,8 @@ auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state) -> 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(const vector_t& state) {
+std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(
+    const vector_t& state) const {
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
   const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state);
 
@@ -186,7 +187,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocityCppAd(PinocchioInter
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto PinocchioEndEffectorKinematicsCppAd::getVelocity(const vector_t& state, const vector_t& input) -> std::vector<vector3_t> {
+auto PinocchioEndEffectorKinematicsCppAd::getVelocity(const vector_t& state, const vector_t& input) const -> std::vector<vector3_t> {
   vector_t stateInput(state.rows() + input.rows());
   stateInput << state, input;
   const vector_t velocityValues = velocityCppAdInterfacePtr_->getFunctionValue(stateInput);
@@ -201,8 +202,8 @@ auto PinocchioEndEffectorKinematicsCppAd::getVelocity(const vector_t& state, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCppAd::getVelocityLinearApproximation(const vector_t& state,
-                                                                                                                   const vector_t& input) {
+std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCppAd::getVelocityLinearApproximation(
+    const vector_t& state, const vector_t& input) const {
   vector_t stateInput(state.rows() + input.rows());
   stateInput << state, input;
   const vector_t velocityValues = velocityCppAdInterfacePtr_->getFunctionValue(stateInput);
@@ -222,7 +223,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations)
+auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& state,
+                                                              const std::vector<quaternion_t>& referenceOrientations) const
     -> std::vector<vector3_t> {
   vector_t params(4 * endEffectorIds_.size());
   for (int i = 0; i < endEffectorIds_.size(); i++) {
@@ -242,7 +244,7 @@ auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& st
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(
-    const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) {
+    const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const {
   vector_t params(4 * endEffectorIds_.size());
   for (int i = 0; i < endEffectorIds_.size(); i++) {
     params.segment<4>(i) = referenceOrientations[i].coeffs();

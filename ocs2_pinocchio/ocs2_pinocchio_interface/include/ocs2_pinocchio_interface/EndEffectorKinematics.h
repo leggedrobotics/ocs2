@@ -59,7 +59,7 @@ class EndEffectorKinematics {
    * @param [in] state vector
    * @return array of position vectors
    */
-  virtual std::vector<vector3_t> getPosition(const vector_t& state) = 0;
+  virtual std::vector<vector3_t> getPosition(const vector_t& state) const = 0;
 
   /**
    * Get end-effector velocity vectors in world frame
@@ -68,16 +68,17 @@ class EndEffectorKinematics {
    * @param [in] input: input vector
    * @return array of velocity vectors
    */
-  virtual std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) = 0;
+  virtual std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const = 0;
 
   /**
-   * Get orientation error
+   * Get orientation error in world frame
    *
    * @param [in] state vector
    * @param [in] referenceOrientation: reference quaternion
-   * @return array of [orientation error] pairs
+   * @return array of orientation errors
    */
-  virtual std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) = 0;
+  virtual std::vector<vector3_t> getOrientationError(const vector_t& state,
+                                                     const std::vector<quaternion_t>& referenceOrientations) const = 0;
 
   /**
    * Get end-effector position linear approximation in world frame
@@ -85,7 +86,7 @@ class EndEffectorKinematics {
    * @param [in] state: state vector
    * @return array of position function linear approximations
    */
-  virtual std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) = 0;
+  virtual std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const = 0;
 
   /**
    * Get end-effector velocity linear approximation in world frame
@@ -94,17 +95,18 @@ class EndEffectorKinematics {
    * @param [in] input: input vector
    * @return array of velocity function linear approximations
    */
-  virtual std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state, const vector_t& input) = 0;
+  virtual std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
+                                                                                        const vector_t& input) const = 0;
 
   /**
-   * Get end-effector pose linear approximation in world frame
+   * Get end-effector orintation error linear approximation in world frame
    *
    * @param [in] state: state vector
    * @param [in] referenceOrientation: reference quaternion
    * @return array of orientation error linear approximations
    */
   virtual std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
-      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) = 0;
+      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const = 0;
 
  protected:
   EndEffectorKinematics(const EndEffectorKinematics&) = default;

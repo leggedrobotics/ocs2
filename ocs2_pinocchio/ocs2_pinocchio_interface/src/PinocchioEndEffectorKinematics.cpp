@@ -33,7 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
+#include <ocs2_robotic_tools/common/AngularVelocityMapping.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
+#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
@@ -78,9 +80,12 @@ const std::vector<std::string>& PinocchioEndEffectorKinematics::getIds() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto PinocchioEndEffectorKinematics::getPositions(const vector_t& state) -> std::vector<vector3_t> {
+auto PinocchioEndEffectorKinematics::getPosition(const vector_t& state) const -> std::vector<vector3_t> {
+  if (pinocchioInterfacePtr_ == nullptr) {
+    throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
+  }
+
   const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
 
   std::vector<vector3_t> positions;
   for (const auto& frameId : endEffectorFrameIds_) {
@@ -92,25 +97,7 @@ auto PinocchioEndEffectorKinematics::getPositions(const vector_t& state) -> std:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto PinocchioEndEffectorKinematics::getPoses(const vector_t& state) -> std::vector<std::pair<vector3_t, quaternion_t>> {
-  if (pinocchioInterfacePtr_ == nullptr) {
-    throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
-  }
-
-  const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
-
-  std::vector<std::pair<vector3_t, quaternion_t>> poses;
-  for (const auto& frameId : endEffectorFrameIds_) {
-    poses.emplace_back(data.oMf[frameId].translation(), matrixToQuaternion(data.oMf[frameId].rotation()));
-  }
-  return poses;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-auto PinocchioEndEffectorKinematics::getVelocities(const vector_t& state, const vector_t& input) -> std::vector<vector3_t> {
+auto PinocchioEndEffectorKinematics::getVelocity(const vector_t& state, const vector_t& input) const -> std::vector<vector3_t> {
   if (pinocchioInterfacePtr_ == nullptr) {
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
@@ -118,8 +105,6 @@ auto PinocchioEndEffectorKinematics::getVelocities(const vector_t& state, const 
   const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
-  const vector_t v = mappingPtr_->getPinocchioJointVelocity(state, input);
 
   std::vector<vector3_t> velocities;
   for (const auto& frameId : endEffectorFrameIds_) {
@@ -131,7 +116,7 @@ auto PinocchioEndEffectorKinematics::getVelocities(const vector_t& state, const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getPositionsLinearApproximation(const vector_t& state) {
+std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getPositionLinearApproximation(const vector_t& state) const {
   if (pinocchioInterfacePtr_ == nullptr) {
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
@@ -141,7 +126,6 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
   // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
   // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
   pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
-  const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
 
   std::vector<VectorFunctionLinearApproximation> positions;
   for (const auto& frameId : endEffectorFrameIds_) {
@@ -150,7 +134,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 
     VectorFunctionLinearApproximation pos;
     pos.f = data.oMf[frameId].translation();
-    std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.topRows(3), matrix_t::Zero(3, model.nv));
+    std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.topRows<3>(), matrix_t::Zero(0, model.nv));
     positions.emplace_back(std::move(pos));
   }
   return positions;
@@ -159,36 +143,86 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getVelocitiesLinearApproximation(const vector_t& state,
-                                                                                                                const vector_t& input) {
-  // TODO(mspieler): v_partial_dq does not match CppAD reference
-  throw std::runtime_error("[PinocchioEndEffectorKinematics] getVelocitiesLinearApproximation() is not implemented");
-
+std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getVelocityLinearApproximation(const vector_t& state,
+                                                                                                              const vector_t& input) const {
   if (pinocchioInterfacePtr_ == nullptr) {
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
+  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
   // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
   pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
-  const vector_t q = mappingPtr_->getPinocchioJointPosition(state);
-  const vector_t v = mappingPtr_->getPinocchioJointVelocity(state, input);
-
-  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
 
   std::vector<VectorFunctionLinearApproximation> velocities;
   for (const auto& frameId : endEffectorFrameIds_) {
     matrix_t v_partial_dq = matrix_t::Zero(6, model.nv);
     matrix_t v_partial_dv = matrix_t::Zero(6, model.nv);
     pinocchio::getFrameVelocityDerivatives(model, data, frameId, rf, v_partial_dq, v_partial_dv);
-
+    const auto frameVel = pinocchio::getFrameVelocity(model, data, frameId, rf);
+    // For reference frame LOCAL_WORLD_ALIGNED the jacobian needs to be corrected.
+    if (rf == pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED) {
+      v_partial_dq.topRows<3>() += skewSymmetricMatrix(vector3_t(frameVel.angular())) * v_partial_dv.topRows<3>();
+    }
     VectorFunctionLinearApproximation vel;
-    vel.f = pinocchio::getFrameVelocity(model, data, frameId, rf).linear();
-    std::tie(vel.dfdx, vel.dfdu) = mappingPtr_->getOcs2Jacobian(state, v_partial_dq.topRows(3), v_partial_dv.topRows(3));
+    vel.f = frameVel.linear();
+    std::tie(vel.dfdx, vel.dfdu) = mappingPtr_->getOcs2Jacobian(state, v_partial_dq.topRows<3>(), v_partial_dv.topRows<3>());
     velocities.emplace_back(std::move(vel));
   }
   return velocities;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+auto PinocchioEndEffectorKinematics::getOrientationError(const vector_t& state,
+                                                         const std::vector<quaternion_t>& referenceOrientations) const
+    -> std::vector<vector3_t> {
+  if (pinocchioInterfacePtr_ == nullptr) {
+    throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
+  }
+
+  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
+  const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
+
+  std::vector<vector3_t> errors;
+  for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
+    const size_t frameId = endEffectorFrameIds_[i];
+    errors.emplace_back(quaternionDistance(matrixToQuaternion(data.oMf[frameId].rotation()), referenceOrientations[i]));
+  }
+  return errors;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getOrientationErrorLinearApproximation(
+    const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const {
+  if (pinocchioInterfacePtr_ == nullptr) {
+    throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
+  }
+
+  const pinocchio::ReferenceFrame rf = pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED;
+  const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
+  // const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
+  // TODO(mspieler): Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
+  pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
+
+  std::vector<VectorFunctionLinearApproximation> errors;
+  for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
+    VectorFunctionLinearApproximation err;
+    const size_t frameId = endEffectorFrameIds_[i];
+    const quaternion_t q = matrixToQuaternion(data.oMf[frameId].rotation());
+    err.f = quaternionDistance(q, referenceOrientations[i]);
+    matrix_t J = matrix_t::Zero(6, model.nq);
+    pinocchio::getFrameJacobian(model, data, frameId, rf, J);
+    const matrix_t Jqdist =
+        (quaternionDistanceJacobian(q, referenceOrientations[i]) * angularVelocityToQuaternionTimeDerivative(q)) * J.bottomRows<3>();
+    std::tie(err.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, Jqdist, matrix_t::Zero(0, model.nv));
+    errors.emplace_back(std::move(err));
+  }
+  return errors;
 }
 
 }  // namespace ocs2

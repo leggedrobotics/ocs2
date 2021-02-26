@@ -35,9 +35,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+/**
+ * Compute the mapping from angular velocity w to rotation quaternion time derivative q_dot.
+ *
+ * @param [in]: q: orientation quaternion
+ * @return mapping matrix E_R inverse, mapping angular velocity to quaternion time derivative.
+ *         The colums are in the order [x, y, z, w] (default Eigen order as in q.coeffs()).
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 4, 3> angularVelocityToQuaternionTimeDerivative(const Eigen::Quaternion<SCALAR_T>& q) {
+  Eigen::Matrix<SCALAR_T, 3, 4> H;
+  // clang-format off
+  // Robot Dynamics 2018, equation (2.97)
+  H <<  q.w(),-q.z(), q.y(), -q.x(),
+        q.z(), q.w(),-q.x(), -q.y(),
+       -q.y(), q.x(), q.w(), -q.z();
+  // clang-format on
+  return 0.5 * H.transpose();
+}
+
 /**
  * @brief Computes the matrix which transforms derivatives of angular velocities in the body frame to euler angles derivatives
  * WARNING: matrix is singular when rotation around y axis is +/- 90 degrees
@@ -58,9 +74,6 @@ inline Eigen::Matrix<SCALAR_T, 3, 3> AngularVelocitiesToEulerAngleDerivativesMat
   return M;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 /**
  * @brief Convert derivatives of ZYX euler angles to angular velocity
  * @param[in] The current orientation (ZYX euler angles)
@@ -84,9 +97,12 @@ inline Eigen::Matrix<SCALAR_T, 3, 1> eulerAngleZyxDerivativesToAngularVelocityIn
   return transform * eulerAnglesTimeDerivative;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+/**
+ * @brief Convert angular velocity to derivatives of ZYX euler angles
+ * @param[in] The current orientation (ZYX euler angles)
+ * @param[in] The derivatives of the ZYX euler angles
+ * @return The angular velocity in world frame
+ */
 template <typename SCALAR_T>
 inline Eigen::Matrix<SCALAR_T, 3, 1> angularVelocityInWorldToEulerAngleZyxDerivatives(
     const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles, const Eigen::Matrix<SCALAR_T, 3, 1>& omega_world_base_inWorld) {
@@ -105,10 +121,6 @@ inline Eigen::Matrix<SCALAR_T, 3, 1> angularVelocityInWorldToEulerAngleZyxDeriva
 
   return transform * omega_world_base_inWorld;
 }
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 
 /**
  * to map local angular velocity \omega_W expressed in body coordinates, to changes in Euler Angles expressed in an inertial frame q_I

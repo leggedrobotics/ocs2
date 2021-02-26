@@ -63,13 +63,9 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state) const {
-  const vector3_t eePosition = endEffectorKinematicsPtr_->getPositions(state)[0];
-  const quaternion_t eeOrientation = eeDesiredOrientation_;  // TODO(mspieler); implement end effector kinematics orientation
-
   vector_t constraint(6);
-  constraint.head<3>() = eePosition - eeDesiredPosition_;
-  constraint.tail<3>() = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation_);
-
+  constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state)[0] - eeDesiredPosition_;
+  constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, {eeDesiredOrientation_})[0];
   return constraint;
 }
 
@@ -77,16 +73,15 @@ vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state) c
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(scalar_t time, const vector_t& state) const {
-  const auto eePosition = endEffectorKinematicsPtr_->getPositionsLinearApproximation(state)[0];
+  auto constraintApproximation = VectorFunctionLinearApproximation(6, state.rows(), 0);
 
-  auto constraintApproximation = VectorFunctionLinearApproximation::Zero(6, state.rows(), 0);
+  const auto eePosition = endEffectorKinematicsPtr_->getPositionLinearApproximation(state)[0];
   constraintApproximation.f.head<3>() = eePosition.f - eeDesiredPosition_;
-  constraintApproximation.dfdx.topRows(3) = eePosition.dfdx;
+  constraintApproximation.dfdx.topRows<3>() = eePosition.dfdx;
 
-  // TODO(mspieler); implement end effector kinematics orientation
-  // const quaternion_t eeOrientation = eeDesiredOrientation_;
-  // constraintApproximation.f.tail<3>() = ocs2::quaternionDistance(eeOrientation, eeDesiredOrientation_);
-  // constraintApproximation.dfdx.bottomRows(3) =
+  const auto eeOrientationError = endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, {eeDesiredOrientation_})[0];
+  constraintApproximation.f.tail<3>() = eeOrientationError.f;
+  constraintApproximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
 
   return constraintApproximation;
 }

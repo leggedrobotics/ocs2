@@ -66,7 +66,7 @@ std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(const Pinocc
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   const auto& model = pinocchioInterface.getModel();
-  auto& data = pinocchioInterface.getData();
+  const auto& data = pinocchioInterface.getData();
 
   const auto& geometryModel = pinocchioGeometryInterface_.getGeometryModel();
 

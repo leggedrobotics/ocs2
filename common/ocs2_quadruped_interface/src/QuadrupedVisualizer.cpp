@@ -129,8 +129,7 @@ void QuadrupedVisualizer::publishBaseTransform(ros::Time timeStamp, const base_c
 void QuadrupedVisualizer::publishTrajectory(const std::vector<ocs2::SystemObservation>& system_observation_array, double speed) {
   for (size_t k = 0; k < system_observation_array.size() - 1; k++) {
     double frameDuration = speed * (system_observation_array[k + 1].time - system_observation_array[k].time);
-    double publishDuration =
-        timedExecutionInSeconds([&]() { publishObservation(ros::Time(system_observation_array[k].time), system_observation_array[k]); });
+    double publishDuration = timedExecutionInSeconds([&]() { publishObservation(ros::Time::now(), system_observation_array[k]); });
     if (frameDuration > publishDuration) {
       ros::WallDuration(frameDuration - publishDuration).sleep();
     }

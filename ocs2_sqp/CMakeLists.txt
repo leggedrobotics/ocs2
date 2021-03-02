@@ -6,13 +6,11 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
-  ocs2_ros_interfaces
-  ocs2_robotic_tools
-  ocs2_ballbot_example
+  ocs2_oc
+  ocs2_qp_solver
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
@@ -31,7 +29,6 @@ if(blasfeo_FOUND AND hpipm_FOUND)
     message(STATUS "Found HPIPM and BLASFEO")
     set(HPIPM ON)
     list(APPEND HPIPM_LIBS hpipm blasfeo)
-    list(APPEND ct_optcon_COMPILE_DEFINITIONS HPIPM)
 else()
     message(WARNING "Could not find HPIPM or BLASFEO")
 endif()
@@ -67,7 +64,11 @@ include_directories(
 
 # Multiple shooting solver library
 # with equality constraint satisfied by QR decomposition, null space method & HPIPM inequality to equality 
-add_library(${PROJECT_NAME} src/MultipleShootingSolver.cpp)
+add_library(${PROJECT_NAME}
+  src/HpipmInterface.cpp
+  src/MultipleShootingSolver.cpp
+  src/DynamicsDiscretization.cpp
+  )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_include_directories(${PROJECT_NAME} INTERFACE
   ${catkin_INCLUDE_DIRS}
@@ -75,24 +76,13 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${HPIPM_LIBS})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-
-# SQP node for ballbot
-add_executable(ballbot_sqp src/MultipleShootingBallbotNode.cpp)
-add_dependencies(ballbot_sqp ${catkin_EXPORTED_TARGETS})
-target_include_directories(ballbot_sqp INTERFACE
-  ${catkin_INCLUDE_DIRS}
-)
-target_link_libraries(ballbot_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
-target_compile_options(ballbot_sqp PRIVATE ${OCS2_CXX_FLAGS})
-
-
 # Circular kinematics example 
-add_executable(circular_kinematics src/MultipleShootingCircularKinematics.cpp)
-target_include_directories(circular_kinematics INTERFACE
+add_executable(${PROJECT_NAME}_circular_kinematics src/MultipleShootingCircularKinematics.cpp)
+target_include_directories(${PROJECT_NAME}_circular_kinematics INTERFACE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME})
-target_compile_options(circular_kinematics PRIVATE ${OCS2_CXX_FLAGS})
+target_link_libraries(${PROJECT_NAME}_circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_compile_options(${PROJECT_NAME}_circular_kinematics PRIVATE ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###
@@ -114,3 +104,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 ## Testing ##
 #############
+
+catkin_add_gtest(test_${PROJECT_NAME}
+  test/testHpipmInterface.cpp
+  test/testProjection.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  gtest_main
+)

@@ -5,17 +5,16 @@
  *      Author: farbod
  */
 
-#include <ocs2_quadruped_interface/QuadrupedMpcNodeSqp.h>
 #include <ros/init.h>
+
+#include <ocs2_quadruped_interface/QuadrupedMpcNodeSqp.h>
 
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
   std::vector<std::string> programArgs{};
   ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() < 3)
-  {
+  if (programArgs.size() < 3) {
     throw std::runtime_error("No robot name and config folder specified. Aborting.");
   }
   const std::string robotName(programArgs[1]);

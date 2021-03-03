@@ -31,17 +31,13 @@ int main(int argc, char** argv) {
 
   // Set this one up.
   ocs2::MultipleShootingSolverSettings settings;
-  settings.N = 10;
+  settings.N = 25;
   settings.n_state = 10;
   settings.n_input = 3;
   settings.sqpIteration = 5;
   settings.deltaTol = 1e-3;
-  settings.qr_decomp = false;
-  settings.printPrimalSol = false;
-  settings.printSolverStatistics = false;
+  settings.printSolverStatistics = true;
   settings.printSolverStatus = false;
-  settings.initPrimalSol = false;
-  settings.robotName = "ballbot";
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
   std::unique_ptr<ocs2::MultipleShootingMpc> mpc(

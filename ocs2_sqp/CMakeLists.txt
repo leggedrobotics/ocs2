@@ -65,6 +65,7 @@ include_directories(
 # Multiple shooting solver library
 # with equality constraint satisfied by QR decomposition, null space method & HPIPM inequality to equality 
 add_library(${PROJECT_NAME}
+  src/ConstraintProjection.cpp
   src/HpipmInterface.cpp
   src/MultipleShootingSolver.cpp
   src/DynamicsDiscretization.cpp

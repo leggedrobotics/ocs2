@@ -6,8 +6,8 @@
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
+#include <ocs2_sqp/ConstraintProjection.h>
 #include <ocs2_sqp/DynamicsDiscretization.h>
-#include <ocs2_sqp/QrConstraintProjection.h>
 #include <Eigen/QR>
 #include <chrono>
 #include <iostream>
@@ -234,8 +234,8 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 
         // reduces number of inputs
         ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
-        // Projection stored instead of constraint
-        constraints_[i] = qrConstraintProjection(constraints_[i]);
+        // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
+        constraints_[i] = luConstraintProjection(constraints_[i]);
 
         // Adapt dynamics and cost
         changeOfInputVariables(dynamics_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);

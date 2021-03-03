@@ -1,22 +1,11 @@
 //
-// Created by rgrandia on 18.02.21.
+// Created by rgrandia on 03.03.21.
 //
 
-#pragma once
-
-#include <ocs2_core/Types.h>
+#include "ocs2_sqp/ConstraintProjection.h"
 
 namespace ocs2 {
 
-/**
- * Returns the linear projection
- *  u = Pu * \tilde{u} + Px * x + Pe
- *
- * s.t. C*x + D*u + e = 0 is satisfied for any \tilde{u}
- *
- * @param constraint : C = dfdx, D = dfdu, e = f;
- * @return Px = dfdx, Pu = dfdu, Pe = f;
- */
 VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
   // Constraint Projectors are based on the QR decomposition
   const auto numConstraints = constraint.dfdu.rows();
@@ -34,6 +23,18 @@ VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLin
   projectionTerms.dfdu = Q.rightCols(numInputs - numConstraints);
   projectionTerms.dfdx.noalias() = -Q1 * RTinvC;
   projectionTerms.f.noalias() = -Q1 * RTinve;
+
+  return projectionTerms;
+}
+
+VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+  // Constraint Projectors are based on the LU decomposition
+  Eigen::FullPivLU<ocs2::matrix_t> lu(constraint.dfdu);
+
+  VectorFunctionLinearApproximation projectionTerms;
+  projectionTerms.dfdu = lu.kernel();
+  projectionTerms.dfdx.noalias() = -lu.solve(constraint.dfdx);
+  projectionTerms.f.noalias() = -lu.solve(constraint.f);
 
   return projectionTerms;
 }

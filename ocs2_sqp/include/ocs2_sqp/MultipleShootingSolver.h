@@ -76,8 +76,10 @@ class MultipleShootingSolver : public SolverBase {
     return ScalarFunctionQuadraticApproximation::Zero(0, 0);
   };
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override { return vector_t::Zero(0); }
-  void rewindOptimizer(size_t firstIndex){};
-  const unsigned long long int& getRewindCounter() const { 0; };
+  void rewindOptimizer(size_t firstIndex) override{};
+  const unsigned long long int& getRewindCounter() const override {
+    throw std::runtime_error("[MultipleShootingSolver] no rewind counter");
+  };
 
  private:
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;

@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(ocs2_anymal_mpc)
 
-# Pybind11 configuration must occur before find_package(catkin)
-option(USE_PYBIND_PYTHON_3 "Use python3-compatible python bindings" OFF)
-if(USE_PYBIND_PYTHON_3)
-  set(PYTHON_EXECUTABLE /usr/bin/python3)
-  set(PYBIND11_PYTHON_VERSION 3.6 CACHE STRING "")
-endif(USE_PYBIND_PYTHON_3)
-
 find_package(catkin REQUIRED COMPONENTS
   roslib
   pybind11_catkin
@@ -156,17 +149,9 @@ target_link_libraries(AnymalPyBindings PRIVATE
   ${catkin_LIBRARIES}
 )
 
-if(USE_PYBIND_PYTHON_3)
-  # unfortunately this appears not to be discoverable yet because the sourcing process assumes python2.7
-  set_target_properties(AnymalPyBindings
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/python3.6/dist-packages/${PROJECT_NAME}
-  )
-else(USE_PYBIND_PYTHON_3)
-  set_target_properties(AnymalPyBindings
-      PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  )
-endif(USE_PYBIND_PYTHON_3)
-
+set_target_properties(AnymalPyBindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
 catkin_python_setup()
 
 #########################
@@ -201,8 +186,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-# TODO handle python2/3 case properly
 install(TARGETS AnymalPyBindings
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}

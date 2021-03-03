@@ -20,7 +20,7 @@ SwingPlanningVisualizer::SwingPlanningVisualizer(const SwingTrajectoryPlanner& s
 
 void SwingPlanningVisualizer::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                                            const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
-  const auto timeStamp = ros::Time(initTime);
+  const auto timeStamp = ros::Time::now();
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
     const auto nominalFootholds = swingTrajectoryPlannerPtr_->getNominalFootholds(leg);
 

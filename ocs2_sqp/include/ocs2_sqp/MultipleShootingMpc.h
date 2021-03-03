@@ -16,7 +16,6 @@ class MultipleShootingMpc : public MPC_BASE {
                       const ocs2::CostFunctionBase* terminalCostPtr = nullptr)
       : MPC_BASE(std::move(mpcSettings)) {
     solverPtr_.reset(new ocs2::MultipleShootingSolver(settings, systemDynamicsPtr, costFunctionPtr, constraintPtr, terminalCostPtr));
-    std::cout << "creating multiple shooting mpc\n";
   };
 
   ~MultipleShootingMpc() override = default;

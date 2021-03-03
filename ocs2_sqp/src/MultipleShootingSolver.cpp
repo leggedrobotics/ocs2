@@ -26,8 +26,8 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
       costFunctionPtr_(costFunctionPtr->clone()),
       constraintPtr_(nullptr),
       terminalCostFunctionPtr_(nullptr),
-      settings_(std::move(settings)) {
-  std::cout << "creating multiple shooting solver\n";
+      settings_(std::move(settings)),
+      totalNumIterations_(0) {
   if (constraintPtr != nullptr) {
     constraintPtr_.reset(constraintPtr->clone());
   }
@@ -37,18 +37,51 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
   }
 }
 
+MultipleShootingSolver::~MultipleShootingSolver() {
+  if (settings_.printSolverStatistics) {
+    std::cerr << getBenchmarkingInformation() << std::endl;
+  }
+}
+
 void MultipleShootingSolver::reset() {
-  // SolverBase::reset();
-  // there is no Solve_BASE::reset() function. One can see GaussNewtonDDP.h. The reset function there only clears some variables of the
-  // solver itself. additional reset
-  std::cout << "resetting\n";
+  // reset timers
+  totalNumIterations_ = 0;
+  linearQuadraticApproximationTimer_.reset();
+  solveQpTimer_.reset();
+  computeControllerTimer_.reset();
+}
+
+std::string MultipleShootingSolver::getBenchmarkingInformation() const {
+  const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
+  const auto solveQpTotal = solveQpTimer_.getTotalInMilliseconds();
+  const auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
+
+  const auto benchmarkTotal = linearQuadraticApproximationTotal + solveQpTotal + computeControllerTotal;
+
+  std::stringstream infoStream;
+  if (benchmarkTotal > 0.0) {
+    const scalar_t inPercent = 100.0;
+    infoStream << "\n########################################################################\n";
+    infoStream << "The benchmarking is computed over " << totalNumIterations_ << " iterations. \n";
+    infoStream << "SQP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
+    infoStream << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << linearQuadraticApproximationTotal / benchmarkTotal * inPercent << "%)\n";
+    infoStream << "\tSolve QP           :\t" << solveQpTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << solveQpTotal / benchmarkTotal * inPercent << "%)\n";
+    infoStream << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << computeControllerTotal / benchmarkTotal * inPercent << "%)\n";
+  }
+  return infoStream.str();
 }
 
 void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
                                      const scalar_array_t& partitioningTimes) {
-  std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-  std::cerr << "\n+++++++++++++ SQP solver is initialized ++++++++++++++";
-  std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  if (settings_.printSolverStatus) {
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++ SQP solver is initialized ++++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  }
+
   // STATE_DIM & INPUT_DIM are fixed, can be retrieved from the Q, R matrices from task.info
 
   // ignore partitioningTimes
@@ -59,32 +92,18 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
   }
 
-  // Solve the problem.
-
   // EQ_CONSTRAINT_DIM is not fixed in different modes, get them
   getInfoFromModeSchedule(initTime, finalTime, *constraintPtr_);
 
   // Initialize the state and input containers
   std::vector<ocs2::vector_t> x(settings_.N_real + 1, ocs2::vector_t(settings_.n_state));
   std::vector<ocs2::vector_t> u(settings_.N_real, ocs2::vector_t(settings_.n_input));
-
-  // need to initialize the u with all zero except contact force along z-axis
-  // here 110 corresponds to the weight of ANYmal, this figure should not be hardcoded
-  // this is not necessary, since zero input now works
-  vector_t stanceInput = vector_t::Zero(settings_.n_input);
-  // stanceInput(2) = 110;
-  // stanceInput(5) = 110;
-  // stanceInput(8) = 110;
-  // stanceInput(11) = 110;
-
-  if (!settings_.initPrimalSol) {
-    // for the first time, do the following init
+  if (totalNumIterations_ == 0) { // first iteration
     for (int i = 0; i < settings_.N_real; i++) {
       x[i] = initState;
-      u[i] = stanceInput;
+      u[i] = vector_t::Zero(settings_.n_input);
     }
     x[settings_.N_real] = initState;
-    // std::cout << "using given initial state and stancing steady input\n";
   } else {
     // previous N_real may not be the same as the current one, so size mismatch might happen.
     // do linear interpolation here
@@ -97,23 +116,29 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
       u[i] =
           LinearInterpolation::interpolate(settings_.trueEventTimes[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_);
     }
-    // std::cout << "using past primal sol init\n";
   }
-  settings_.initPrimalSol = true;
 
-  scalar_t sqpTimeAll = 0.0;
-  for (int i = 0; i < settings_.sqpIteration; i++) {
-    std::cout << "SQP iteration " << i << ":\n";
-    auto startSqpTime = std::chrono::steady_clock::now();
+  for (int iter = 0; iter < settings_.sqpIteration; iter++) {
+    if (settings_.printSolverStatus) {
+      std::cerr << "SQP iteration: " << iter << "\n";
+    }
+    // Make QP approximation
+    linearQuadraticApproximationTimer_.startTimer();
     setupCostDynamicsEqualityConstraint(*systemDynamicsPtr_, *costFunctionPtr_, constraintPtr_.get(), terminalCostFunctionPtr_.get(), x, u,
                                         initState);
+    linearQuadraticApproximationTimer_.endTimer();
 
+    // Solve QP
+    solveQpTimer_.startTimer();
     vector_t delta_x0 = initState - x[0];
     std::vector<ocs2::vector_t> delta_x;
     std::vector<ocs2::vector_t> delta_u;
     std::tie(delta_x, delta_u) = getOCPSolution(delta_x0);
+    solveQpTimer_.endTimer();
 
-    // step size will be used in future // TODO here
+    // Apply step
+    // TODO implement line search
+    computeControllerTimer_.startTimer();
     scalar_t deltaUnorm = 0.0;
     scalar_t deltaXnorm = 0.0;
     for (int i = 0; i < settings_.N_real; i++) {
@@ -124,17 +149,11 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     }
     x[settings_.N_real] += delta_x[settings_.N_real];
 
-    auto endSqpTime = std::chrono::steady_clock::now();
-    auto sqpIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSqpTime - startSqpTime);
-    scalar_t sqpTime = std::chrono::duration<scalar_t, std::milli>(sqpIntervalTime).count();
-    sqpTimeAll += sqpTime;
-    std::cout << "\tSQP total time in this iter: " << sqpTime << "[ms]." << std::endl;
+    totalNumIterations_++;
     if (deltaUnorm < settings_.deltaTol && deltaXnorm < settings_.deltaTol) {
-      std::cout << "exiting the loop earlier\n";
       break;
     }
   }
-  std::cout << "Summary -- SQP time total: " << sqpTimeAll << "[ms]." << std::endl;
 
   // Fill PrimalSolution. time, state , input
   scalar_array_t timeTrajectory;
@@ -154,32 +173,27 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   primalSolution_.modeSchedule_ = this->getModeSchedule();
   primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
 
-  std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-  std::cerr << "\n+++++++++++++ SQP solver has terminated ++++++++++++++";
-  std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  computeControllerTimer_.endTimer();
+
+  if (settings_.printSolverStatus) {
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++ SQP solver has terminated ++++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  }
 }
 
 std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
   // Create solver interface
-  HpipmInterface hpipmInterface(ocpSize);
+  HpipmInterface hpipmInterface(ocpSize_);
 
   // Solve the QP
-  auto startSolve = std::chrono::steady_clock::now();
-  bool verbose = settings_.printSolverStatus || settings_.printSolverStatistics;
   std::vector<ocs2::vector_t> deltaXSol;
   std::vector<ocs2::vector_t> deltaUSol;
   if (constraintPtr_ && !settings_.qr_decomp) {
-    hpipmInterface.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, verbose);
+    hpipmInterface.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
-    hpipmInterface.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, verbose);
+    hpipmInterface.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
   }
-  auto endSolve = std::chrono::steady_clock::now();
-  auto solveIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSolve - startSolve);
-  scalar_t solveTime = std::chrono::duration<scalar_t, std::milli>(solveIntervalTime).count();
-  printf("\tSolution time usage: %e [ms]\n", solveTime);
-
-  // retrieve deltaX, deltaUTilde
-  auto startFillTime = std::chrono::steady_clock::now();
 
   // remap the tilde delta u to real delta u
   if (constraintPtr_ && settings_.qr_decomp) {
@@ -189,11 +203,6 @@ std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShoo
       deltaUSol[i] += constraints_[i].f;
     }
   }
-
-  auto endFillTime = std::chrono::steady_clock::now();
-  auto fillIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endFillTime - startFillTime);
-  scalar_t fillTime = std::chrono::duration<scalar_t, std::milli>(fillIntervalTime).count();
-  std::cout << "\tRetrieve time usage: " << fillTime << "[ms]." << std::endl;
 
   return {deltaXSol, deltaUSol};
 }
@@ -208,10 +217,8 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
   // N_real is the horizon length
   // Vector initState of shape (n_state, 1)
 
-  auto startSetupTime = std::chrono::steady_clock::now();
-
   // Set up for constant state input size. Will be adapted based on constraint handling.
-  ocpSize = HpipmInterface::OcpSize(settings_.N_real, settings_.n_state, settings_.n_input);
+  ocpSize_ = HpipmInterface::OcpSize(settings_.N_real, settings_.n_state, settings_.n_input);
 
   // NOTE: This setup will take longer time if in debug mode
   // the most likely reason is that Eigen QR decomposition and later on calculations are not done in the optimal way in debug mode
@@ -247,7 +254,7 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
         // Handle equality constraints using QR decomposition.
 
         // reduces number of inputs
-        ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
+        ocpSize_.nu[i] = settings_.n_input - constraints_[i].f.rows();
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
         constraints_[i] = luConstraintProjection(constraints_[i]);
 
@@ -256,7 +263,7 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
         changeOfInputVariables(cost_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);
       } else {
         // Declare as general inequalities
-        ocpSize.ng[i] = constraints_[i].f.rows();
+        ocpSize_.ng[i] = constraints_[i].f.rows();
       }
     }
   }
@@ -267,11 +274,6 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
   } else {
     cost_[settings_.N_real] = ScalarFunctionQuadraticApproximation::Zero(settings_.n_state, 0);
   }
-
-  auto endSetupTime = std::chrono::steady_clock::now();
-  auto setupIntervalTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endSetupTime - startSetupTime);
-  scalar_t setupTime = std::chrono::duration<scalar_t, std::milli>(setupIntervalTime).count();
-  std::cout << "\tSetup time usage: " << setupTime << "[ms]." << std::endl;
 }
 
 void MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime, ConstraintBase& constraintObj) {
@@ -324,7 +326,7 @@ void MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t
     scalar_t division_result = (tempEventTimes[i + 1] - tempEventTimes[i]) / delta_t;
     scalar_t intpart;
     scalar_t fractpart = std::modf(division_result, &intpart);
-    size_t N_distribution_i = (size_t)(intpart);
+    auto N_distribution_i = static_cast<size_t>(intpart);
     if (std::abs(fractpart) < 1e-4) {
       N_distribution_i -= 1;
     }
@@ -345,11 +347,13 @@ void MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t
   settings_.trueEventTimes.push_back(finalTime);
   settings_.N_real = settings_.trueEventTimes.size() - 1;
 
-  std::cout << "true event times: {";
-  for (int i = 0; i < settings_.trueEventTimes.size(); i++) {
-    std::cout << settings_.trueEventTimes[i] << ", ";
+  if (settings_.printModeScheduleDebug) {
+    std::cout << "true event times: {";
+    for (const auto t : settings_.trueEventTimes) {
+      std::cout << t << ", ";
+    }
+    std::cout << "}\n";
   }
-  std::cout << "}\n";
 }
 
 }  // namespace ocs2

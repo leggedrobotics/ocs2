@@ -33,12 +33,9 @@ int main(int argc, char* argv[]) {
   sqpSettings.sqpIteration = 1;
   sqpSettings.deltaTol = 1e-4;
   sqpSettings.qr_decomp = true;
-  sqpSettings.printPrimalSol = false;
-  sqpSettings.printSolverStatistics = false;
+  sqpSettings.printSolverStatistics = true;
   sqpSettings.printSolverStatus = false;
   sqpSettings.printModeScheduleDebug = false;
-  sqpSettings.initPrimalSol = false;
-  sqpSettings.robotName = "ANYmal";
   quadrupedMpcNodeSqp(nodeHandle, *anymalInterface, mpcSettings, sqpSettings);
 
   return 0;

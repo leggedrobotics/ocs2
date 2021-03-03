@@ -150,7 +150,7 @@ mpc
   solutionTimeWindow              -1  ; [s]
 
   mpcDesiredFrequency             50  ; [Hz]
-  mrtDesiredFrequency             400 ; [Hz]
+  mrtDesiredFrequency             50 ; [Hz]
 }
 
 ; initial state

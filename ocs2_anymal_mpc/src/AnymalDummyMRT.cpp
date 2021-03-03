@@ -26,8 +26,7 @@ int main(int argc, char* argv[]) {
 
   auto anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolder(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
-  quadrupedDummyNode(nodeHandle, *anymalInterface, &anymalInterface->getRollout(), mpcSettings.mrtDesiredFrequency_,
-                     mpcSettings.mpcDesiredFrequency_);
+  quadrupedDummyNode(nodeHandle, *anymalInterface, nullptr, mpcSettings.mrtDesiredFrequency_, mpcSettings.mpcDesiredFrequency_);
 
   return 0;
 }

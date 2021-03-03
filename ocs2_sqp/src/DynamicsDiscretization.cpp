@@ -55,15 +55,7 @@ VectorFunctionLinearApproximation rk4Discretization(SystemDynamicsBase& system, 
   VectorFunctionLinearApproximation discreteApproximation;
   discreteApproximation.dfdx = dt_sixth * dk1dxk + dt_third * dk2dxk + dt_third * dk3dxk + dt_sixth * dk4dxk;
   discreteApproximation.dfdx.diagonal().array() += 1.0;  // plus Identity()
-
-  //  matrix_t trueBMatrix =
-  //      dt_sixth * dk1duk + dt_third * dk2duk + dt_third * dk3duk + dt_sixth * dk4duk;  // <-- this should be the correct one, but not
-  //      working
-
-  discreteApproximation.dfdu =
-      dt_sixth * k1.dfdu + dt_third * k2.dfdu + dt_third * k3.dfdu + dt_sixth * k4.dfdu;  // <-- this is working but not the right one
-  //  std::cout << "difference of B and true B " << (trueBMatrix - discreteApproximation.dfdu).norm() << std::endl;
-  //  discreteApproximation.dfdu = trueBMatrix;
+  discreteApproximation.dfdu = dt_sixth * dk1duk + dt_third * dk2duk + dt_third * dk3duk + dt_sixth * dk4duk;
   discreteApproximation.f = x + dt_sixth * k1.f + dt_third * k2.f + dt_third * k3.f + dt_sixth * k4.f;
   return discreteApproximation;
 }

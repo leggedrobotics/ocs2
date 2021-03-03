@@ -22,7 +22,6 @@ struct MultipleShootingSolverSettings {
   size_t N_real;                  // real # of partition, >= N, because there are some provided time instances must be covered
   size_t sqpIteration;
   scalar_t deltaTol;
-  bool constrained;  // true for constrained systems, false for unconstrained systems
   bool qr_decomp;  // this variable is meaningful only if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e
                    // <= ug
   bool printSolverStatus;
@@ -38,8 +37,9 @@ class MultipleShootingSolver : public SolverBase {
   /**
    * Pass dynamics costs etc. See what you need.
    */
-  MultipleShootingSolver(MultipleShootingSolverSettings settings, const ocs2::SystemDynamicsBase* systemDynamicsPtr,
-                         const ocs2::CostFunctionBase* costFunctionPtr, const ocs2::ConstraintBase* constraintPtr);
+  MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
+                         const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr = nullptr,
+                         const CostFunctionBase* terminalCostFunctionPtr = nullptr);
 
   ~MultipleShootingSolver() override = default;
 
@@ -89,8 +89,9 @@ class MultipleShootingSolver : public SolverBase {
     runImpl(initTime, initState, finalTime, partitioningTimes);
   }
 
-  void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamicsObj, CostFunctionBase& costFunctionObj,
-                                           ConstraintBase& constraintObj, const std::vector<ocs2::vector_t>& x,
+  void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
+                                           ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
+                                           const std::vector<ocs2::vector_t>& x,
                                            const std::vector<ocs2::vector_t>& u, const vector_t& initState);
   std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> getOCPSolution(const vector_t& delta_x0);
 
@@ -100,6 +101,7 @@ class MultipleShootingSolver : public SolverBase {
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
   std::unique_ptr<ConstraintBase> constraintPtr_;
+  std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
 
   PrimalSolution primalSolution_;
 

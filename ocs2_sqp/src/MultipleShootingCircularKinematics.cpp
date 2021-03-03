@@ -15,7 +15,6 @@ int main(int argc, char **argv)
     settings.n_input = 2;
     // settings.n_constraint = 1;
     settings.sqpIteration = 5;
-    settings.constrained = true;
     settings.qr_decomp = true; // can be either true or false
     settings.printPrimalSol = false;
     settings.printSolverStatistics = false;

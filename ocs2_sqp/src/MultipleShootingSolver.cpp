@@ -19,13 +19,22 @@
 namespace ocs2 {
 
 MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                                               const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr)
+                                               const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr,
+                                               const CostFunctionBase* terminalCostFunctionPtr)
     : SolverBase(),
       systemDynamicsPtr_(systemDynamicsPtr->clone()),
       costFunctionPtr_(costFunctionPtr->clone()),
-      constraintPtr_(constraintPtr->clone()),
+      constraintPtr_(nullptr),
+      terminalCostFunctionPtr_(nullptr),
       settings_(std::move(settings)) {
   std::cout << "creating multiple shooting solver\n";
+  if (constraintPtr != nullptr) {
+    constraintPtr_.reset(constraintPtr->clone());
+  }
+
+  if (terminalCostFunctionPtr != nullptr) {
+    terminalCostFunctionPtr_.reset(terminalCostFunctionPtr->clone());
+  }
 }
 
 void MultipleShootingSolver::reset() {
@@ -46,6 +55,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
   // Initialize cost
   costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  if (terminalCostFunctionPtr_) {
+    terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  }
 
   // Solve the problem.
 
@@ -76,7 +88,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   } else {
     // previous N_real may not be the same as the current one, so size mismatch might happen.
     // do linear interpolation here
-    x[0] = initState; // Force linearization of the first node around the current state
+    x[0] = initState;  // Force linearization of the first node around the current state
     for (int i = 1; i < (settings_.N_real + 1); i++) {
       x[i] =
           LinearInterpolation::interpolate(settings_.trueEventTimes[i], primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_);
@@ -93,7 +105,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   for (int i = 0; i < settings_.sqpIteration; i++) {
     std::cout << "SQP iteration " << i << ":\n";
     auto startSqpTime = std::chrono::steady_clock::now();
-    setupCostDynamicsEqualityConstraint(*systemDynamicsPtr_, *costFunctionPtr_, *constraintPtr_, x, u, initState);
+    setupCostDynamicsEqualityConstraint(*systemDynamicsPtr_, *costFunctionPtr_, constraintPtr_.get(), terminalCostFunctionPtr_.get(), x, u,
+                                        initState);
 
     vector_t delta_x0 = initState - x[0];
     std::vector<ocs2::vector_t> delta_x;
@@ -155,7 +168,7 @@ std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShoo
   bool verbose = settings_.printSolverStatus || settings_.printSolverStatistics;
   std::vector<ocs2::vector_t> deltaXSol;
   std::vector<ocs2::vector_t> deltaUSol;
-  if (settings_.constrained && !settings_.qr_decomp) {
+  if (constraintPtr_ && !settings_.qr_decomp) {
     hpipmInterface.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, verbose);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
     hpipmInterface.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, verbose);
@@ -169,7 +182,7 @@ std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShoo
   auto startFillTime = std::chrono::steady_clock::now();
 
   // remap the tilde delta u to real delta u
-  if (settings_.constrained && settings_.qr_decomp) {
+  if (constraintPtr_ && settings_.qr_decomp) {
     for (int i = 0; i < settings_.N_real; i++) {
       deltaUSol[i] = constraints_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
       deltaUSol[i].noalias() += constraints_[i].dfdx * deltaXSol[i];
@@ -185,9 +198,10 @@ std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShoo
   return {deltaXSol, deltaUSol};
 }
 
-void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamicsObj, CostFunctionBase& costFunctionObj,
-                                                                 ConstraintBase& constraintObj, const std::vector<ocs2::vector_t>& x,
-                                                                 const std::vector<ocs2::vector_t>& u, const vector_t& initState) {
+void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
+                                                                 ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
+                                                                 const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u,
+                                                                 const vector_t& initState) {
   // x of shape (n_state, N_real + 1), n = n_state;
   // u of shape (n_input, N_real), m = n_input;
   // Matrix pi of shape (n_state, N), this is not used temporarily
@@ -211,11 +225,11 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 
     // Dynamics
     // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
-    dynamics_[i] = rk4Discretization(systemDynamicsObj, operTime, x[i], u[i], delta_t_);
+    dynamics_[i] = rk4Discretization(systemDynamics, operTime, x[i], u[i], delta_t_);
     dynamics_[i].f -= x[i + 1];  // make it dx_{k+1} = ...
 
     // Costs: Approximate the integral with forward euler
-    cost_[i] = costFunctionObj.costQuadraticApproximation(operTime, x[i], u[i]);
+    cost_[i] = costFunction.costQuadraticApproximation(operTime, x[i], u[i]);
     cost_[i].dfdxx *= delta_t_;
     cost_[i].dfdux *= delta_t_;
     cost_[i].dfduu *= delta_t_;
@@ -223,12 +237,12 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
     cost_[i].dfdu *= delta_t_;
     cost_[i].f *= delta_t_;
 
-    if (settings_.constrained) {
+    if (constraintPtr != nullptr) {
       // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
       // C_{k} = constraintApprox.dfdx
       // D_{k} = constraintApprox.dfdu
       // e_{k} = constraintApprox.f
-      constraints_[i] = constraintObj.stateInputEqualityConstraintLinearApproximation(operTime, x[i], u[i]);
+      constraints_[i] = constraintPtr->stateInputEqualityConstraintLinearApproximation(operTime, x[i], u[i]);
       if (settings_.qr_decomp) {
         // Handle equality constraints using QR decomposition.
 
@@ -247,17 +261,11 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
     }
   }
 
-  if (settings_.robotName == "ballbot") {
-    // we should use the finalCostQuadraticApproximation defined by Q_final matrix
-    // but in the case of ballbot, it is zero, which leads to unpenalized ending states
-    // so I temporarily used costQuadraticApproximation with a random linearization point of input u
-    cost_[settings_.N_real] = costFunctionObj.costQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x[settings_.N_real],
-                                                                         vector_t::Zero(settings_.n_input));
-    cost_[settings_.N_real].dfdxx *= 10.0;  // manually add larger penalty s.t. the final state converges to the ref state
-    cost_[settings_.N_real].dfdx *= 10.0;   // 10 is a customized number, subject to adjustment
-  } else {
+  if (terminalCostFunctionPtr != nullptr) {
     cost_[settings_.N_real] =
-        costFunctionObj.finalCostQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x[settings_.N_real]);
+        terminalCostFunctionPtr->finalCostQuadraticApproximation(settings_.trueEventTimes[settings_.N_real], x[settings_.N_real]);
+  } else {
+    cost_[settings_.N_real] = ScalarFunctionQuadraticApproximation::Zero(settings_.n_state, 0);
   }
 
   auto endSetupTime = std::chrono::steady_clock::now();

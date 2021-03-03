@@ -29,8 +29,6 @@ int main(int argc, char** argv) {
   // Robot interface
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-  ocs2::ConstraintBase empty_constraint;
-
   // Set this one up.
   ocs2::MultipleShootingSolverSettings settings;
   settings.N = 10;
@@ -38,7 +36,6 @@ int main(int argc, char** argv) {
   settings.n_input = 3;
   settings.sqpIteration = 5;
   settings.deltaTol = 1e-3;
-  settings.constrained = false;
   settings.qr_decomp = false;
   settings.printPrimalSol = false;
   settings.printSolverStatistics = false;
@@ -47,8 +44,9 @@ int main(int argc, char** argv) {
   settings.robotName = "ballbot";
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
-  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(new ocs2::MultipleShootingMpc(mpcSettings, settings, &ballbotInterface.getDynamics(),
-                                                                               &ballbotInterface.getCost(), &empty_constraint));
+  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(
+      new ocs2::MultipleShootingMpc(mpcSettings, settings, &ballbotInterface.getDynamics(), &ballbotInterface.getCost(),
+                                    ballbotInterface.getConstraintPtr(), ballbotInterface.getTerminalCostPtr()));
 
   ocs2::MPC_ROS_Interface mpcNode(*mpc, robotName);
   mpcNode.launchNodes(nodeHandle);

@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 
     // Set this one up.
     ocs2::MultipleShootingSolverSettings settings;
-    settings.N = 20;
+    settings.dt = 0.05;
     settings.n_state = 2;
     settings.n_input = 2;
     settings.sqpIteration = 5;

@@ -107,6 +107,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
+  test/testDiscretization.cpp
   test/testHpipmInterface.cpp
   test/testProjection.cpp
 )

@@ -93,7 +93,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // EQ_CONSTRAINT_DIM is not fixed in different modes, get them
-  auto timeDiscretization = getInfoFromModeSchedule(initTime, finalTime);
+  auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
 
   // Initialize the state and input containers
@@ -261,82 +261,42 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
   }
 }
 
-scalar_array_t MultipleShootingSolver::getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime) {
+scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,
+                                                                    const scalar_array_t& eventTimes) {
   /*
   A simple example here illustrates the mission of this function
 
   Assume:
-    this->getModeSchedule().eventTimes = {3.25, 3.4, 3.88, 4.02, 4.5}
+    eventTimes = {3.25, 3.4, 3.88, 4.02, 4.5}
     initTime = 3.0
     finalTime = 4.0
     user_defined delta_t = 0.1
 
   Then the following variables will be:
-    trueEventTimes = {3.0, 3.1, 3.2, 3.25, 3.35, 3.4, 3.5, 3.6, 3.7, 3.8, 3.88, 3.98, 4.0}
+    timeDiscretization = {3.0, 3.1, 3.2, 3.25, 3.35, 3.4, 3.5, 3.6, 3.7, 3.8, 3.88, 3.98, 4.0}
   */
-  scalar_array_t tempEventTimes = this->getModeSchedule().eventTimes;
-  scalar_t delta_t = (finalTime - initTime) / settings_.N;
+  assert(dt > 0);
+  assert(finalTime > initTime);
+  scalar_array_t timeDiscretization;
 
-  if (settings_.printModeScheduleDebug) {
-    std::cout << "event times original \n";
-    for (int i = 0; i < tempEventTimes.size(); i++) {
-      std::cout << "event time " << i << " is " << tempEventTimes[i] << std::endl;
+  // Initialize
+  timeDiscretization.push_back(initTime);
+  scalar_t nextEventIdx = lookup::findIndexInTimeArray(eventTimes, initTime);
+
+  // Fill iteratively
+  while (timeDiscretization.back() < finalTime) {
+    scalar_t nextTime = timeDiscretization.back() + dt;
+    if (nextEventIdx < eventTimes.size() && nextTime >= eventTimes[nextEventIdx]) {
+      nextTime = eventTimes[nextEventIdx];
+      nextEventIdx++;
     }
+    if (nextTime >= finalTime) {
+      nextTime = finalTime;
+    }
+    timeDiscretization.push_back(nextTime);
   }
 
-  tempEventTimes.insert(tempEventTimes.begin(), initTime);
-  for (int i = 0; i < tempEventTimes.size(); i++) {
-    if (std::abs(tempEventTimes[i] - finalTime) < std::numeric_limits<double>::epsilon() || tempEventTimes[i] > finalTime) {
-      tempEventTimes.erase(tempEventTimes.begin() + i, tempEventTimes.end());
-      break;
-    }
-  }
-  tempEventTimes.push_back(finalTime);
-
-  if (settings_.printModeScheduleDebug) {
-    std::cout << "event times after \n";
-    for (int i = 0; i < tempEventTimes.size(); i++) {
-      std::cout << "event time " << i << " is " << tempEventTimes[i] << std::endl;
-    }
-  }
-
-  size_t n_mode = tempEventTimes.size() - 1;
-  size_array_t N_distribution;
-  N_distribution.resize(n_mode);
-
-  size_t N_distribution_sum = 0;
-  for (int i = 0; i < n_mode; i++) {
-    scalar_t division_result = (tempEventTimes[i + 1] - tempEventTimes[i]) / delta_t;
-    scalar_t intpart;
-    scalar_t fractpart = std::modf(division_result, &intpart);
-    auto N_distribution_i = static_cast<size_t>(intpart);
-    if (std::abs(fractpart) < 1e-4) {
-      N_distribution_i -= 1;
-    }
-    N_distribution[i] = N_distribution_i;
-    if (settings_.printModeScheduleDebug) {
-      std::cout << "mode " << i << " has distribution " << N_distribution_i << std::endl;
-      std::cout << "division result: " << division_result << " intpart: " << intpart << " fracpart:" << fractpart << std::endl;
-    }
-    N_distribution_sum += N_distribution_i;
-  }
-
-  scalar_array_t trueEventTimes;
-  for (int i = 0; i < n_mode; i++) {
-    for (int j = 0; j < N_distribution[i] + 1; j++) {
-      trueEventTimes.push_back(tempEventTimes[i] + delta_t * j);
-    }
-  }
-  trueEventTimes.push_back(finalTime);
-
-  if (settings_.printModeScheduleDebug) {
-    std::cout << "true event times: {";
-    for (const auto t : trueEventTimes) {
-      std::cout << t << ", ";
-    }
-    std::cout << "}\n";
-  }
-  return trueEventTimes;
+  return timeDiscretization;
 }
 
 }  // namespace ocs2

@@ -15,7 +15,7 @@
 namespace ocs2 {
 
 struct MultipleShootingSolverSettings {
-  size_t N = 0;  // user-defined # of partition. finalTime - initTime = 1.0 seconds, so N = 10 -> delta_t = 0.1 s
+  scalar_t dt = 0.01;  // user-defined time discretization
   size_t n_state  = 0;
   size_t n_input  = 0;
   size_t sqpIteration = 1;
@@ -60,6 +60,8 @@ class MultipleShootingSolver : public SolverBase {
     throw std::runtime_error("[MultipleShootingSolver] no rewind counter");
   };
 
+  static scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes);
+
  private:
   std::string getBenchmarkingInformation() const;
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
@@ -73,8 +75,6 @@ class MultipleShootingSolver : public SolverBase {
                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
                                            const scalar_array_t& time, const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u);
   std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> getOCPSolution(const vector_t& delta_x0);
-
-  scalar_array_t getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime);
 
   MultipleShootingSolverSettings settings_;
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;

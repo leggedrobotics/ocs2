@@ -3,18 +3,14 @@
 //
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
+
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_sqp/ConstraintProjection.h>
 #include <ocs2_sqp/DynamicsDiscretization.h>
-#include <Eigen/QR>
-#include <chrono>
-#include <iostream>
 
-// scalar_t is double
-// matrix_t is Eigen::MatrixXd
-// matrix_array_t is std::vector<Eigen::MatrixXd>
+#include <iostream>
 
 namespace ocs2 {
 
@@ -82,40 +78,14 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
   }
 
-  // STATE_DIM & INPUT_DIM are fixed, can be retrieved from the Q, R matrices from task.info
-
-  // ignore partitioningTimes
-
-  // Initialize cost
-  costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
-  if (terminalCostFunctionPtr_) {
-    terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
-  }
-
-  // EQ_CONSTRAINT_DIM is not fixed in different modes, get them
-  auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
+  // Determine time discretization, taking into account event times.
+  std::vector<scalar_t> timeDiscretization =
+      timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
 
-  // Initialize the state and input containers
-  std::vector<ocs2::vector_t> x(N + 1, ocs2::vector_t(settings_.n_state));
-  std::vector<ocs2::vector_t> u(N, ocs2::vector_t(settings_.n_input));
-  if (totalNumIterations_ == 0) {  // first iteration
-    for (int i = 0; i < N; i++) {
-      x[i] = initState;
-      u[i] = vector_t::Zero(settings_.n_input);
-    }
-    x[N] = initState;
-  } else {
-    // previous N_real may not be the same as the current one, so size mismatch might happen.
-    // do linear interpolation here
-    x[0] = initState;  // Force linearization of the first node around the current state
-    for (int i = 1; i < (N + 1); i++) {
-      x[i] = LinearInterpolation::interpolate(timeDiscretization[i], primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_);
-    }
-    for (int i = 0; i < N; i++) {
-      u[i] = LinearInterpolation::interpolate(timeDiscretization[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_);
-    }
-  }
+  // Initialize the state and input
+  std::vector<vector_t> x = initializeStateTrajectory(initState, timeDiscretization, N);
+  std::vector<vector_t> u = initializeInputTrajectory(timeDiscretization, N);
 
   for (int iter = 0; iter < settings_.sqpIteration; iter++) {
     if (settings_.printSolverStatus) {
@@ -129,7 +99,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
     // Solve QP
     solveQpTimer_.startTimer();
-    vector_t delta_x0 = initState - x[0];
+    const vector_t delta_x0 = initState - x[0];
     std::vector<ocs2::vector_t> delta_x;
     std::vector<ocs2::vector_t> delta_u;
     std::tie(delta_x, delta_u) = getOCPSolution(delta_x0);
@@ -139,15 +109,15 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     // TODO implement line search
     computeControllerTimer_.startTimer();
     scalar_t deltaUnorm = 0.0;
-    scalar_t deltaXnorm = 0.0;
     for (int i = 0; i < N; i++) {
-      deltaXnorm += delta_x[i].norm();
-      x[i] += delta_x[i];
       deltaUnorm += delta_u[i].norm();
       u[i] += delta_u[i];
     }
-    x[N] += delta_x[N];
-
+    scalar_t deltaXnorm = 0.0;
+    for (int i = 0; i < (N + 1); i++) {
+      deltaXnorm += delta_x[i].norm();
+      x[i] += delta_x[i];
+    }
     totalNumIterations_++;
     if (deltaUnorm < settings_.deltaTol && deltaXnorm < settings_.deltaTol) {
       break;
@@ -171,10 +141,37 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 }
 
-std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
-  // Prepare solver size
-  hpipmInterface_.resize(ocpSize_);
+std::vector<vector_t> MultipleShootingSolver::initializeInputTrajectory(const scalar_array_t& timeDiscretization, int N) const {
+  if (totalNumIterations_ == 0) {  // first iteration
+    return std::vector<vector_t>(N, vector_t::Zero(settings_.n_input));
+  } else {
+    std::vector<vector_t> u;
+    u.reserve(N);
+    for (int i = 0; i < N; i++) {
+      u.emplace_back(
+          LinearInterpolation::interpolate(timeDiscretization[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
+    }
+    return u;
+  }
+}
 
+std::vector<vector_t> MultipleShootingSolver::initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization,
+                                                                        int N) const {
+  if (totalNumIterations_ == 0) {  // first iteration
+    return std::vector<vector_t>(N + 1, initState);
+  } else {  // interpolation of previous solution
+    std::vector<vector_t> x;
+    x.reserve(N + 1);
+    x.push_back(initState);  // Force linearization of the first node around the current state
+    for (int i = 1; i < (N + 1); i++) {
+      x.emplace_back(
+          LinearInterpolation::interpolate(timeDiscretization[i], primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
+    }
+    return x;
+  }
+}
+
+std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
   // Solve the QP
   std::vector<ocs2::vector_t> deltaXSol;
   std::vector<ocs2::vector_t> deltaUSol;
@@ -200,14 +197,17 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
                                                                  ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
                                                                  const scalar_array_t& time, const std::vector<ocs2::vector_t>& x,
                                                                  const std::vector<ocs2::vector_t>& u) {
-  // x of shape (n_state, N_real + 1), n = n_state;
-  // u of shape (n_input, N_real), m = n_input;
-  // Matrix pi of shape (n_state, N), this is not used temporarily
-  // N_real is the horizon length
+  // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
   // Set up for constant state input size. Will be adapted based on constraint handling.
-  ocpSize_ = HpipmInterface::OcpSize(N, settings_.n_state, settings_.n_input);
+  HpipmInterface::OcpSize ocpSize(N, settings_.n_state, settings_.n_input);
+
+  // Initialize cost
+  costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  if (terminalCostFunctionPtr != nullptr) {
+    terminalCostFunctionPtr->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  }
 
   dynamics_.resize(N);
   cost_.resize(N + 1);
@@ -232,15 +232,10 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 
     if (constraintPtr != nullptr) {
       // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
-      // C_{k} = constraintApprox.dfdx
-      // D_{k} = constraintApprox.dfdu
-      // e_{k} = constraintApprox.f
       constraints_[i] = constraintPtr->stateInputEqualityConstraintLinearApproximation(ti, x[i], u[i]);
-      if (settings_.qr_decomp) {
-        // Handle equality constraints using QR decomposition.
-
-        // reduces number of inputs
-        ocpSize_.nu[i] = settings_.n_input - constraints_[i].f.rows();
+      if (settings_.qr_decomp) { // Handle equality constraints using projection.
+        // Reduces number of inputs
+        ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
         constraints_[i] = luConstraintProjection(constraints_[i]);
 
@@ -249,7 +244,7 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
         changeOfInputVariables(cost_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);
       } else {
         // Declare as general inequalities
-        ocpSize_.ng[i] = constraints_[i].f.rows();
+        ocpSize.ng[i] = constraints_[i].f.rows();
       }
     }
   }
@@ -259,6 +254,9 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
   } else {
     cost_[N] = ScalarFunctionQuadraticApproximation::Zero(settings_.n_state, 0);
   }
+
+  // Prepare solver size
+  hpipmInterface_.resize(std::move(ocpSize));
 }
 
 scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,

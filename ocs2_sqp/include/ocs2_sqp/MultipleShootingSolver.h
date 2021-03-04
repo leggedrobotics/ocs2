@@ -71,6 +71,8 @@ class MultipleShootingSolver : public SolverBase {
     runImpl(initTime, initState, finalTime, partitioningTimes);
   }
 
+  std::vector<vector_t> initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization, int N) const;
+  std::vector<vector_t> initializeInputTrajectory(const scalar_array_t& timeDiscretization, int N) const;
   void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
                                            const scalar_array_t& time, const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u);
@@ -83,7 +85,6 @@ class MultipleShootingSolver : public SolverBase {
   std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
   PrimalSolution primalSolution_;
 
-  HpipmInterface::OcpSize ocpSize_;
   HpipmInterface hpipmInterface_;
 
   // LQ approximation
@@ -91,7 +92,7 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
   std::vector<VectorFunctionLinearApproximation> constraints_;
 
-  // benchmarking
+  // Benchmarking
   size_t totalNumIterations_;
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;

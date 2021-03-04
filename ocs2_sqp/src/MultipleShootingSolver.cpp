@@ -183,16 +183,16 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 }
 
 std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
-  // Create solver interface
-  HpipmInterface hpipmInterface(ocpSize_);
+  // Prepare solver size
+  hpipmInterface_.resize(ocpSize_);
 
   // Solve the QP
   std::vector<ocs2::vector_t> deltaXSol;
   std::vector<ocs2::vector_t> deltaUSol;
   if (constraintPtr_ && !settings_.qr_decomp) {
-    hpipmInterface.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
-    hpipmInterface.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
   }
 
   // remap the tilde delta u to real delta u

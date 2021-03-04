@@ -15,14 +15,14 @@
 namespace ocs2 {
 
 struct MultipleShootingSolverSettings {
-  size_t N;  // user-defined # of partition. finalTime - initTime = 1.0 seconds, so N = 10 -> delta_t = 0.1 s
-  size_t n_state;
-  size_t n_input;
-  scalar_array_t trueEventTimes;  // size (N_real + 1), this is a modification to this->getModeSchedule().eventTimes. More info in function
+  size_t N = 0;  // user-defined # of partition. finalTime - initTime = 1.0 seconds, so N = 10 -> delta_t = 0.1 s
+  size_t n_state  = 0;
+  size_t n_input  = 0;
+  scalar_array_t trueEventTimes = {};  // size (N_real + 1), this is a modification to this->getModeSchedule().eventTimes. More info in function
                                   // getInfoFromModeSchedule.
-  size_t N_real;                  // real # of partition, >= N, because there are some provided time instances must be covered
-  size_t sqpIteration;
-  scalar_t deltaTol;
+  size_t N_real  = 0;                  // real # of partition, >= N, because there are some provided time instances must be covered
+  size_t sqpIteration = 1;
+  scalar_t deltaTol = 1e-6;
   bool qr_decomp = true;  // Only meaningful if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
   bool printSolverStatus = false;
   bool printSolverStatistics = false;
@@ -85,10 +85,10 @@ class MultipleShootingSolver : public SolverBase {
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
   std::unique_ptr<ConstraintBase> constraintPtr_;
   std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
-
   PrimalSolution primalSolution_;
 
   HpipmInterface::OcpSize ocpSize_;
+  HpipmInterface hpipmInterface_;
 
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;

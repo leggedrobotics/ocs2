@@ -52,8 +52,19 @@ class HpipmInterface {
     Settings() {}
   };
 
+  HpipmInterface() : HpipmInterface(OcpSize{0, 0, 0}) {};
   HpipmInterface(OcpSize ocpSize, const Settings& settings = Settings());
   ~HpipmInterface();
+
+  /**
+   * Resize with new settings
+   */
+  void resize(OcpSize ocpSize, const Settings& settings);
+
+  /**
+   * Resize with old settings
+   */
+  void resize(OcpSize ocpSize);
 
   void solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
              std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,

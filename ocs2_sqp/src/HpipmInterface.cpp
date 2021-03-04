@@ -13,51 +13,90 @@ extern "C" {
 #include <hpipm_timing.h>
 }
 
+namespace {
+/**
+ * Manages a block of memory. Allows reuse of memory blocks if the required size does not exceed the old size.
+ */
+class MemoryBlock {
+ public:
+  /** No memory allocated */
+  MemoryBlock() : MemoryBlock(0){};
+
+  /** Allocate memory of requested size */
+  explicit MemoryBlock(size_t size) : ptr_(nullptr), size_(0) { reserve(size); }
+  ~MemoryBlock() noexcept { free(ptr_); }
+
+  /**
+   * Ensure a block of memory of at least the requested size.
+   * Does nothing if the requested size is smaller than equal to the current size.
+   * @param size : minimum size of the memory block.
+   */
+  void reserve(size_t size) {
+    if (size > size_) {
+      free(ptr_);
+      ptr_ = malloc(size);
+      if (ptr_ == nullptr) {
+        throw std::bad_alloc();
+      } else {
+        size_ = size;
+      }
+    }
+  }
+
+  /** Get pointer to the memory, might be nullptr */
+  void* get() { return ptr_; };
+
+  // Prevents copies
+  MemoryBlock(const MemoryBlock&) = delete;
+  MemoryBlock& operator=(const MemoryBlock&) = delete;
+
+  // Default move
+  MemoryBlock(MemoryBlock&&) = default;
+  MemoryBlock& operator=(MemoryBlock&&) = default;
+
+ private:
+  void* ptr_;
+  size_t size_;
+};
+}  // namespace
+
 namespace ocs2 {
 
 class HpipmInterface::Impl {
  public:
-  Impl(OcpSize ocpSize, Settings settings) : ocpSize_(std::move(ocpSize)) {
+  Impl(OcpSize ocpSize, const Settings& settings) { initializeMemory(std::move(ocpSize), settings); }
+
+  void initializeMemory(OcpSize ocpSize) { initializeMemory(std::move(ocpSize), settings_); }
+
+  void initializeMemory(OcpSize ocpSize, const Settings& settings) {
+    settings_ = settings;
+    ocpSize_ = std::move(ocpSize);
     ocpSize_.nx[0] = 0;
 
     const int dim_size = d_ocp_qp_dim_memsize(ocpSize_.N);
-    dim_mem_ = malloc(dim_size);
-    d_ocp_qp_dim_create(ocpSize_.N, &dim_, dim_mem_);
+    dimMem_.reserve(dim_size);
+    d_ocp_qp_dim_create(ocpSize_.N, &dim_, dimMem_.get());
     d_ocp_qp_dim_set_all(ocpSize_.nx.data(), ocpSize_.nu.data(), ocpSize_.nbx.data(), ocpSize_.nbu.data(), ocpSize_.ng.data(),
                          ocpSize_.nsbx.data(), ocpSize_.nsbu.data(), ocpSize_.nsg.data(), &dim_);
 
     const int qp_size = d_ocp_qp_memsize(&dim_);
-    qp_mem_ = malloc(qp_size);
-    d_ocp_qp_create(&dim_, &qp_, qp_mem_);
+    qpMem_.reserve(qp_size);
+    d_ocp_qp_create(&dim_, &qp_, qpMem_.get());
 
     const int qp_sol_size = d_ocp_qp_sol_memsize(&dim_);
-    qp_sol_mem_ = malloc(qp_sol_size);
-    d_ocp_qp_sol_create(&dim_, &qp_sol_, qp_sol_mem_);
+    qpSolMem_.reserve(qp_sol_size);
+    d_ocp_qp_sol_create(&dim_, &qpSol_, qpSolMem_.get());
 
     const int ipm_arg_size = d_ocp_qp_ipm_arg_memsize(&dim_);
-    ipm_arg_mem_ = malloc(ipm_arg_size);
-    d_ocp_qp_ipm_arg_create(&dim_, &arg_, ipm_arg_mem_);
+    ipmArgMem_.reserve(ipm_arg_size);
+    d_ocp_qp_ipm_arg_create(&dim_, &arg_, ipmArgMem_.get());
 
-    applySettings(settings);
+    applySettings(settings_);
 
     // Setup workspace after applying the settings
     const int ipm_size = d_ocp_qp_ipm_ws_memsize(&dim_, &arg_);
-    ipm_mem_ = malloc(ipm_size);
-    d_ocp_qp_ipm_ws_create(&dim_, &arg_, &workspace_, ipm_mem_);
-  }
-
-  ~Impl() {
-    // free the hpipm memories
-    free(dim_mem_);
-    free(qp_mem_);
-    free(qp_sol_mem_);
-    free(ipm_arg_mem_);
-    free(ipm_mem_);
-    dim_mem_ = nullptr;
-    qp_mem_ = nullptr;
-    qp_sol_mem_ = nullptr;
-    ipm_arg_mem_ = nullptr;
-    ipm_mem_ = nullptr;
+    ipmMem_.reserve(ipm_size);
+    d_ocp_qp_ipm_ws_create(&dim_, &arg_, &workspace_, ipmMem_.get());
   }
 
   void applySettings(Settings& settings) {
@@ -79,10 +118,8 @@ class HpipmInterface::Impl {
   }
 
   void solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-             std::vector<ScalarFunctionQuadraticApproximation>& cost,
-             std::vector<VectorFunctionLinearApproximation>* constraints,
-             std::vector<vector_t>& stateTrajectory,
-             std::vector<vector_t>& inputTrajectory, bool verbose) {
+             std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
+             std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose) {
     assert(dynamics.size() == ocpSize_.N);
     assert(cost.size() == (ocpSize_.N + 1));
     // TODO: check state input size.
@@ -129,7 +166,7 @@ class HpipmInterface::Impl {
       rr[k] = cost[k].dfdu.data();
     }
 
-    if (constraints != nullptr){
+    if (constraints != nullptr) {
       auto& constr = *constraints;
       // for ocs2 --> C*dx + D*du + e = 0
       // for hpipm --> ug >= C*dx + D*du >= lg
@@ -163,7 +200,7 @@ class HpipmInterface::Impl {
     d_ocp_qp_set_all(AA.data(), BB.data(), bb.data(), QQ.data(), SS.data(), RR.data(), qq.data(), rr.data(), hidxbx, hlbx, hubx, hidxbu,
                      hlbu, hubu, CC.data(), DD.data(), llg.data(), uug.data(), hZl, hZu, hzl, hzu, hidxs, hlls, hlus, &qp_);
 
-    d_ocp_qp_ipm_solve(&qp_, &qp_sol_, &arg_, &workspace_);
+    d_ocp_qp_ipm_solve(&qp_, &qpSol_, &arg_, &workspace_);
 
     if (verbose) {
       printStatus();
@@ -178,7 +215,7 @@ class HpipmInterface::Impl {
     stateTrajectory.front() = x0;
     for (int k = 1; k < (ocpSize_.N + 1); ++k) {
       stateTrajectory[k].resize(ocpSize_.nx[k]);
-      d_ocp_qp_sol_get_x(k, &qp_sol_, stateTrajectory[k].data());
+      d_ocp_qp_sol_get_x(k, &qpSol_, stateTrajectory[k].data());
     }
   }
 
@@ -186,12 +223,12 @@ class HpipmInterface::Impl {
     inputTrajectory.resize(ocpSize_.N);
     for (int k = 0; k < ocpSize_.N; ++k) {
       inputTrajectory[k].resize(ocpSize_.nu[k]);
-      d_ocp_qp_sol_get_u(k, &qp_sol_, inputTrajectory[k].data());
+      d_ocp_qp_sol_get_u(k, &qpSol_, inputTrajectory[k].data());
     }
   }
 
   void printStatus() {
-    int hpipm_status;
+    int hpipm_status = -1;
     d_ocp_qp_ipm_get_status(&workspace_, &hpipm_status);
     printf("\nHPIPM returned with flag %i.\n", hpipm_status);
     if (hpipm_status == 0) {
@@ -230,21 +267,22 @@ class HpipmInterface::Impl {
   }
 
  private:
+  Settings settings_;
   OcpSize ocpSize_;
 
-  void* dim_mem_;
+  MemoryBlock dimMem_;
   d_ocp_qp_dim dim_;
 
-  void* qp_mem_;
+  MemoryBlock qpMem_;
   d_ocp_qp qp_;
 
-  void* qp_sol_mem_;
-  d_ocp_qp_sol qp_sol_;
+  MemoryBlock qpSolMem_;
+  d_ocp_qp_sol qpSol_;
 
-  void* ipm_arg_mem_;
+  MemoryBlock ipmArgMem_;
   d_ocp_qp_ipm_arg arg_;
 
-  void* ipm_mem_;
+  MemoryBlock ipmMem_;
   d_ocp_qp_ipm_ws workspace_;
 };
 
@@ -253,9 +291,17 @@ HpipmInterface::HpipmInterface(OcpSize ocpSize, const Settings& settings)
 
 HpipmInterface::~HpipmInterface() = default;
 
+void HpipmInterface::resize(OcpSize ocpSize) {
+  pImpl_->initializeMemory(std::move(ocpSize));
+}
+
+void HpipmInterface::resize(OcpSize ocpSize, const Settings& settings) {
+  pImpl_->initializeMemory(std::move(ocpSize), settings);
+}
+
 void HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                           std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-                           std::vector<vector_t>& stateTrajectory,
+                           std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                           std::vector<VectorFunctionLinearApproximation>* constraints, std::vector<vector_t>& stateTrajectory,
                            std::vector<vector_t>& inputTrajectory, bool verbose) {
   pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
 }

@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
   auto anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolder(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
   ocs2::MultipleShootingSolverSettings sqpSettings;
-  sqpSettings.N = 40;
+  sqpSettings.dt = 0.025;
   sqpSettings.n_state = 24;
   sqpSettings.n_input = 24;
   sqpSettings.sqpIteration = 1;

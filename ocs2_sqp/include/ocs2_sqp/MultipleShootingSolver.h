@@ -18,9 +18,6 @@ struct MultipleShootingSolverSettings {
   size_t N = 0;  // user-defined # of partition. finalTime - initTime = 1.0 seconds, so N = 10 -> delta_t = 0.1 s
   size_t n_state  = 0;
   size_t n_input  = 0;
-  scalar_array_t trueEventTimes = {};  // size (N_real + 1), this is a modification to this->getModeSchedule().eventTimes. More info in function
-                                  // getInfoFromModeSchedule.
-  size_t N_real  = 0;                  // real # of partition, >= N, because there are some provided time instances must be covered
   size_t sqpIteration = 1;
   scalar_t deltaTol = 1e-6;
   bool qr_decomp = true;  // Only meaningful if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
@@ -43,7 +40,7 @@ class MultipleShootingSolver : public SolverBase {
   // fill primal solution after solving the problem.
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
   void printPrimalSolution() const {
-    for (int i = 0; i < settings_.N_real; i++) {
+    for (int i = 0; i < primalSolution_.timeTrajectory_.size(); i++) {
       std::cout << "time: " << primalSolution_.timeTrajectory_[i] << "\t state: " << primalSolution_.stateTrajectory_[i].transpose()
                 << "\t input: " << primalSolution_.inputTrajectory_[i].transpose() << std::endl;
     }
@@ -74,11 +71,10 @@ class MultipleShootingSolver : public SolverBase {
 
   void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                           const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u,
-                                           const vector_t& initState);
+                                           const scalar_array_t& time, const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u);
   std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> getOCPSolution(const vector_t& delta_x0);
 
-  void getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime, ConstraintBase& constraintObj);
+  scalar_array_t getInfoFromModeSchedule(scalar_t initTime, scalar_t finalTime);
 
   MultipleShootingSolverSettings settings_;
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
@@ -90,6 +86,7 @@ class MultipleShootingSolver : public SolverBase {
   HpipmInterface::OcpSize ocpSize_;
   HpipmInterface hpipmInterface_;
 
+  // LQ approximation
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
   std::vector<VectorFunctionLinearApproximation> constraints_;

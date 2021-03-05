@@ -31,11 +31,14 @@ int main(int argc, char* argv[]) {
   sqpSettings.n_state = 24;
   sqpSettings.n_input = 24;
   sqpSettings.sqpIteration = 1;
-  sqpSettings.deltaTol = 1e-4;
+  sqpSettings.deltaTol = 1e-2;
+  sqpSettings.inequalityConstraintMu = 0.1;
+  sqpSettings.inequalityConstraintDelta = 5.0;
   sqpSettings.qr_decomp = true;
   sqpSettings.printSolverStatistics = true;
   sqpSettings.printSolverStatus = false;
   sqpSettings.printModeScheduleDebug = false;
+  sqpSettings.printLinesearch = false;
   quadrupedMpcNodeSqp(nodeHandle, *anymalInterface, mpcSettings, sqpSettings);
 
   return 0;

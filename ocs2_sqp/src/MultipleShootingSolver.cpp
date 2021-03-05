@@ -259,6 +259,17 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
     performance.totalCost += dt * cost_[i].f;
 
     if (constraintPtr != nullptr) {
+      // Inequalities as penalty
+      if (penaltyPtr_) {
+        const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(ti, x[i], u[i]);
+        if (ineqConstraints.f.rows() > 0) {
+          auto penaltyCost = penaltyPtr_->penaltyCostQuadraticApproximation(ineqConstraints);
+          cost_[i] += penaltyCost; // add to cost before potential projection.
+          performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
+          performance.inequalityConstraintPenalty += dt * penaltyCost.f;
+        }
+      }
+
       // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
       constraints_[i] = constraintPtr->stateInputEqualityConstraintLinearApproximation(ti, x[i], u[i]);
       performance.stateInputEqConstraintISE += dt * constraints_[i].f.squaredNorm();
@@ -274,17 +285,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
       } else {
         // Declare as general inequalities
         ocpSize.ng[i] = constraints_[i].f.rows();
-      }
-
-      // Inequalities as penalty
-      if (penaltyPtr_) {
-        const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(ti, x[i], u[i]);
-        if (ineqConstraints.f.rows() > 0) {
-          auto penaltyCost = penaltyPtr_->penaltyCostQuadraticApproximation(ineqConstraints);
-          cost_[i] += penaltyCost;
-          performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
-          performance.inequalityConstraintPenalty += dt * penaltyCost.f;
-        }
       }
     }
 

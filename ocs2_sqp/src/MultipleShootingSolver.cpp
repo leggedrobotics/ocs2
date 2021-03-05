@@ -18,7 +18,8 @@ namespace ocs2 {
 
 MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
                                                const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr,
-                                               const CostFunctionBase* terminalCostFunctionPtr)
+                                               const CostFunctionBase* terminalCostFunctionPtr,
+                                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr)
     : SolverBase(),
       systemDynamicsPtr_(systemDynamicsPtr->clone()),
       costFunctionPtr_(costFunctionPtr->clone()),
@@ -37,6 +38,10 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
   if (terminalCostFunctionPtr != nullptr) {
     terminalCostFunctionPtr_.reset(terminalCostFunctionPtr->clone());
   }
+
+  if (operatingTrajectoriesPtr != nullptr) {
+    operatingTrajectoriesPtr_.reset(operatingTrajectoriesPtr->clone());
+  }
 }
 
 MultipleShootingSolver::~MultipleShootingSolver() {
@@ -46,6 +51,9 @@ MultipleShootingSolver::~MultipleShootingSolver() {
 }
 
 void MultipleShootingSolver::reset() {
+  // Clear solution
+  primalSolution_ = PrimalSolution();
+
   // reset timers
   totalNumIterations_ = 0;
   linearQuadraticApproximationTimer_.reset();
@@ -85,13 +93,13 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // Determine time discretization, taking into account event times.
-  std::vector<scalar_t> timeDiscretization = timeDiscretizationWithEvents(
-      initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes, OCS2NumericTraits<scalar_t>::limitEpsilon());
+  scalar_array_t timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes,
+                                                                   OCS2NumericTraits<scalar_t>::limitEpsilon());
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
 
   // Initialize the state and input
-  std::vector<vector_t> x = initializeStateTrajectory(initState, timeDiscretization, N);
-  std::vector<vector_t> u = initializeInputTrajectory(timeDiscretization, N);
+  vector_array_t x = initializeStateTrajectory(initState, timeDiscretization, N);
+  vector_array_t u = initializeInputTrajectory(timeDiscretization, x, N);
 
   // Initialize cost
   costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
@@ -112,26 +120,16 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     // Solve QP
     solveQpTimer_.startTimer();
     const vector_t delta_x0 = initState - x[0];
-    std::vector<ocs2::vector_t> delta_x;
-    std::vector<ocs2::vector_t> delta_u;
+    vector_array_t delta_x;
+    vector_array_t delta_u;
     std::tie(delta_x, delta_u) = getOCPSolution(delta_x0);
     solveQpTimer_.endTimer();
 
     // Apply step
-    // TODO implement line search
-    computeControllerTimer_.startTimer();
-    scalar_t deltaUnorm = 0.0;
-    for (int i = 0; i < N; i++) {
-      deltaUnorm += delta_u[i].norm();
-      u[i] += delta_u[i];
-    }
-    scalar_t deltaXnorm = 0.0;
-    for (int i = 0; i < (N + 1); i++) {
-      deltaXnorm += delta_x[i].norm();
-      x[i] += delta_x[i];
-    }
+    bool converged = takeStep(timeDiscretization, delta_x, delta_u, x, u);
+
     totalNumIterations_++;
-    if (deltaUnorm < settings_.deltaTol && deltaXnorm < settings_.deltaTol) {
+    if (converged) {
       break;
     }
   }
@@ -153,26 +151,43 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 }
 
-std::vector<vector_t> MultipleShootingSolver::initializeInputTrajectory(const scalar_array_t& timeDiscretization, int N) const {
-  if (totalNumIterations_ == 0) {  // first iteration
-    return std::vector<vector_t>(N, vector_t::Zero(settings_.n_input));
-  } else {
-    std::vector<vector_t> u;
-    u.reserve(N);
-    for (int i = 0; i < N; i++) {
+vector_array_t MultipleShootingSolver::initializeInputTrajectory(const scalar_array_t& timeDiscretization,
+                                                                 const vector_array_t& stateTrajectory, int N) const {
+  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front();
+
+  vector_array_t u;
+  u.reserve(N);
+  for (int i = 0; i < N; i++) {
+    const scalar_t ti = timeDiscretization[i];
+    if (ti < interpolateTill) {
+      // Interpolate previous input trajectory
       u.emplace_back(
           LinearInterpolation::interpolate(timeDiscretization[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
+    } else {
+      // No previous control at this time-point -> fall back to heuristics
+      if (operatingTrajectoriesPtr_) {
+        // Ask for operating trajectory between t[k] and t[k+1]. Take the returned input at t[k] as our heuristic.
+        const scalar_t tNext = timeDiscretization[i + 1];
+        scalar_array_t timeArray;
+        vector_array_t stateArray;
+        vector_array_t inputArray;
+        operatingTrajectoriesPtr_->getSystemOperatingTrajectories(stateTrajectory[i], ti, tNext, timeArray, stateArray, inputArray, false);
+        u.push_back(std::move(inputArray.front()));
+      } else {  // No information at all. Set inputs to zero.
+        u.emplace_back(vector_t::Zero(settings_.n_input));
+      }
     }
-    return u;
   }
+
+  return u;
 }
 
-std::vector<vector_t> MultipleShootingSolver::initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization,
-                                                                        int N) const {
+vector_array_t MultipleShootingSolver::initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization,
+                                                                 int N) const {
   if (totalNumIterations_ == 0) {  // first iteration
-    return std::vector<vector_t>(N + 1, initState);
+    return vector_array_t(N + 1, initState);
   } else {  // interpolation of previous solution
-    std::vector<vector_t> x;
+    vector_array_t x;
     x.reserve(N + 1);
     x.push_back(initState);  // Force linearization of the first node around the current state
     for (int i = 1; i < (N + 1); i++) {
@@ -183,10 +198,10 @@ std::vector<vector_t> MultipleShootingSolver::initializeStateTrajectory(const ve
   }
 }
 
-std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
+std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
   // Solve the QP
-  std::vector<ocs2::vector_t> deltaXSol;
-  std::vector<ocs2::vector_t> deltaUSol;
+  vector_array_t deltaXSol;
+  vector_array_t deltaUSol;
   if (constraintPtr_ && !settings_.qr_decomp) {
     hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
@@ -207,8 +222,8 @@ std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> MultipleShoo
 
 void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
                                                                  ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                                                 const scalar_array_t& time, const std::vector<ocs2::vector_t>& x,
-                                                                 const std::vector<ocs2::vector_t>& u) {
+                                                                 const scalar_array_t& time, const vector_array_t& x,
+                                                                 const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -227,14 +242,8 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
     dynamics_[i] = rk4Discretization(systemDynamics, ti, x[i], u[i], dt);
     dynamics_[i].f -= x[i + 1];  // make it dx_{k+1} = ...
 
-    // Costs: Approximate the integral with forward euler
+    // Costs: Approximate the integral with forward euler (correct for dt after adding penalty)
     cost_[i] = costFunction.costQuadraticApproximation(ti, x[i], u[i]);
-    cost_[i].dfdxx *= dt;
-    cost_[i].dfdux *= dt;
-    cost_[i].dfduu *= dt;
-    cost_[i].dfdx *= dt;
-    cost_[i].dfdu *= dt;
-    cost_[i].f *= dt;
 
     if (constraintPtr != nullptr) {
       // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
@@ -261,6 +270,14 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
         }
       }
     }
+
+    // Costs: Approximate the integral with forward euler  (correct for dt HERE, after adding penalty)
+    cost_[i].dfdxx *= dt;
+    cost_[i].dfdux *= dt;
+    cost_[i].dfduu *= dt;
+    cost_[i].dfdx *= dt;
+    cost_[i].dfdu *= dt;
+    cost_[i].f *= dt;
   }
 
   if (terminalCostFunctionPtr != nullptr) {
@@ -271,6 +288,28 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 
   // Prepare solver size
   hpipmInterface_.resize(std::move(ocpSize));
+}
+
+bool MultipleShootingSolver::takeStep(const scalar_array_t& timeDiscretization, const vector_array_t& dx, const vector_array_t& du,
+                                      vector_array_t& x, vector_array_t& u) {
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+
+  // TODO implement line search
+  const scalar_t alpha = 1.0;
+  
+  computeControllerTimer_.startTimer();
+  scalar_t deltaUnorm = 0.0;
+  for (int i = 0; i < N; i++) {
+    deltaUnorm += alpha * du[i].norm();
+    u[i] += alpha * du[i];
+  }
+  scalar_t deltaXnorm = 0.0;
+  for (int i = 0; i < (N + 1); i++) {
+    deltaXnorm += alpha * dx[i].norm();
+    x[i] += alpha * dx[i];
+  }
+
+  return deltaUnorm < settings_.deltaTol && deltaXnorm < settings_.deltaTol;
 }
 
 scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,

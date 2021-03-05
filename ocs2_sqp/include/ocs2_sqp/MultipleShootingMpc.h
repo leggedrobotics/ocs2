@@ -11,11 +11,13 @@
 namespace ocs2 {
 class MultipleShootingMpc : public MPC_BASE {
  public:
-  MultipleShootingMpc(mpc::Settings mpcSettings, MultipleShootingSolverSettings settings, const ocs2::SystemDynamicsBase* systemDynamicsPtr,
-                      const ocs2::CostFunctionBase* costFunctionPtr, const ocs2::ConstraintBase* constraintPtr = nullptr,
-                      const ocs2::CostFunctionBase* terminalCostPtr = nullptr)
+  MultipleShootingMpc(mpc::Settings mpcSettings, MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
+                      const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr = nullptr,
+                      const CostFunctionBase* terminalCostPtr = nullptr,
+                      const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr = nullptr)
       : MPC_BASE(std::move(mpcSettings)) {
-    solverPtr_.reset(new ocs2::MultipleShootingSolver(std::move(settings), systemDynamicsPtr, costFunctionPtr, constraintPtr, terminalCostPtr));
+    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), systemDynamicsPtr, costFunctionPtr, constraintPtr, terminalCostPtr,
+                                                operatingTrajectoriesPtr));
   };
 
   ~MultipleShootingMpc() override = default;
@@ -26,11 +28,11 @@ class MultipleShootingMpc : public MPC_BASE {
  protected:
   void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
     // Hopefully this is enough
-    ocs2::scalar_array_t partitioningTimes = {0.0};
+    scalar_array_t partitioningTimes = {0.0};
     solverPtr_->run(initTime, initState, finalTime, partitioningTimes);
   }
 
  private:
-  std::unique_ptr<ocs2::MultipleShootingSolver> solverPtr_;
+  std::unique_ptr<MultipleShootingSolver> solverPtr_;
 };
 }  // namespace ocs2

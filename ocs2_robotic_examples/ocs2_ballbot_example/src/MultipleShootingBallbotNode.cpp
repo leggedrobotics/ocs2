@@ -40,9 +40,9 @@ int main(int argc, char** argv) {
   settings.printSolverStatus = false;
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
-  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(
-      new ocs2::MultipleShootingMpc(mpcSettings, settings, &ballbotInterface.getDynamics(), &ballbotInterface.getCost(),
-                                    ballbotInterface.getConstraintPtr(), ballbotInterface.getTerminalCostPtr()));
+  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(new ocs2::MultipleShootingMpc(
+      mpcSettings, settings, &ballbotInterface.getDynamics(), &ballbotInterface.getCost(), ballbotInterface.getConstraintPtr(),
+      ballbotInterface.getTerminalCostPtr(), &ballbotInterface.getOperatingPoints()));
 
   ocs2::MPC_ROS_Interface mpcNode(*mpc, robotName);
   mpcNode.launchNodes(nodeHandle);

@@ -7,6 +7,7 @@
 #include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
@@ -36,7 +37,8 @@ class MultipleShootingSolver : public SolverBase {
  public:
   MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
                          const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr = nullptr,
-                         const CostFunctionBase* terminalCostFunctionPtr = nullptr);
+                         const CostFunctionBase* terminalCostFunctionPtr = nullptr,
+                         const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr = nullptr);
 
   ~MultipleShootingSolver() override;
 
@@ -78,19 +80,21 @@ class MultipleShootingSolver : public SolverBase {
     runImpl(initTime, initState, finalTime, partitioningTimes);
   }
 
-  std::vector<vector_t> initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization, int N) const;
-  std::vector<vector_t> initializeInputTrajectory(const scalar_array_t& timeDiscretization, int N) const;
+  vector_array_t initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization, int N) const;
+  vector_array_t initializeInputTrajectory(const scalar_array_t& timeDiscretization, const vector_array_t& stateTrajectory, int N) const;
   void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                           const scalar_array_t& time, const std::vector<ocs2::vector_t>& x,
-                                           const std::vector<ocs2::vector_t>& u);
-  std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> getOCPSolution(const vector_t& delta_x0);
+                                           const scalar_array_t& time, const vector_array_t& x, const vector_array_t& u);
+  std::pair<vector_array_t, vector_array_t> getOCPSolution(const vector_t& delta_x0);
+  bool takeStep(const scalar_array_t& timeDiscretization, const vector_array_t& dx, const vector_array_t& du, vector_array_t& x,
+                vector_array_t& u);
 
   MultipleShootingSolverSettings settings_;
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
   std::unique_ptr<ConstraintBase> constraintPtr_;
   std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
+  std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
   std::unique_ptr<PenaltyBase> penaltyPtr_;
 
   PrimalSolution primalSolution_;

@@ -22,7 +22,7 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);
-  mrt.initRollout(&quadrupedInterface.getRollout());
+  //  mrt.initRollout(&quadrupedInterface.getRollout());
   mrt.launchNodes(nodeHandle);
 
   // Visualization

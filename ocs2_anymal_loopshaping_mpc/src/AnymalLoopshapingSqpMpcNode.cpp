@@ -4,10 +4,9 @@
 
 #include <ros/init.h>
 
-#include <ocs2_ddp/DDP_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpcNode.h>
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSlqMpc.h>
+#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSqpMpc.h>
 
 #include "ocs2_anymal_loopshaping_mpc/AnymalLoopshapingInterface.h"
 
@@ -27,9 +26,21 @@ int main(int argc, char* argv[]) {
   auto anymalInterface =
       anymal::getAnymalLoopshapingInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolderLoopshaping(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
-  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
+  ocs2::MultipleShootingSolverSettings sqpSettings;
+  sqpSettings.dt = 0.02;  // High resolution needed due to loopshaping!
+  sqpSettings.n_state = 48;
+  sqpSettings.n_input = 24;
+  sqpSettings.sqpIteration = 1;
+  sqpSettings.deltaTol = 1e-2;
+  sqpSettings.inequalityConstraintMu = 0.1;
+  sqpSettings.inequalityConstraintDelta = 5.0;
+  sqpSettings.qr_decomp = true;
+  sqpSettings.printSolverStatistics = true;
+  sqpSettings.printSolverStatus = false;
+  sqpSettings.printModeScheduleDebug = false;
+  sqpSettings.printLinesearch = false;
 
-  auto mpcPtr = getMpc(*anymalInterface, mpcSettings, ddpSettings);
+  auto mpcPtr = getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
   quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
 
   return 0;

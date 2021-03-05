@@ -10,12 +10,10 @@
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
 #include <ocs2_quadruped_interface/TerrainPlaneVisualizer.h>
 
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSlqMpc.h>
-
 namespace switched_model_loopshaping {
 
 void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoopshapingInterface& quadrupedInterface,
-                                 const ocs2::mpc::Settings& mpcSettings, const ocs2::ddp::Settings& ddpSettings) {
+                                 std::unique_ptr<ocs2::MPC_BASE> mpcPtr) {
   const std::string robotName = "anymal";
 
   auto loopshapingSolverModule = quadrupedInterface.getLoopshapingSynchronizedModule();
@@ -36,7 +34,6 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
   loopshapingSolverModule->add(swingPlanningVisualizer);
 
   // launch MPC nodes
-  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, ddpSettings);
   mpcPtr->getSolverPtr()->setSynchronizedModules({loopshapingSolverModule});
   ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);

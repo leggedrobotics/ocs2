@@ -117,9 +117,9 @@ class HpipmInterface::Impl {
     d_ocp_qp_ipm_arg_set_ric_alg(&settings.ric_alg, &arg_);
   }
 
-  void solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-             std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-             std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose) {
+  int solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+            std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
+            std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose) {
     assert(dynamics.size() == ocpSize_.N);
     assert(cost.size() == (ocpSize_.N + 1));
     // TODO: check state input size.
@@ -208,6 +208,11 @@ class HpipmInterface::Impl {
 
     getStateSolution(x0, stateTrajectory);
     getInputSolution(inputTrajectory);
+
+    // return true if solved
+    int hpipm_status = -1;
+    d_ocp_qp_ipm_get_status(&workspace_, &hpipm_status);
+    return hpipm_status;
   }
 
   void getStateSolution(const vector_t& x0, std::vector<vector_t>& stateTrajectory) {
@@ -299,11 +304,11 @@ void HpipmInterface::resize(OcpSize ocpSize, const Settings& settings) {
   pImpl_->initializeMemory(std::move(ocpSize), settings);
 }
 
-void HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                           std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                           std::vector<VectorFunctionLinearApproximation>* constraints, std::vector<vector_t>& stateTrajectory,
-                           std::vector<vector_t>& inputTrajectory, bool verbose) {
-  pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
+int HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                          std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                          std::vector<VectorFunctionLinearApproximation>* constraints, std::vector<vector_t>& stateTrajectory,
+                          std::vector<vector_t>& inputTrajectory, bool verbose) {
+  return pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
 }
 
 }  // namespace ocs2

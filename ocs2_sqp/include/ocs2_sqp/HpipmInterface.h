@@ -66,7 +66,15 @@ class HpipmInterface {
    */
   void resize(OcpSize ocpSize);
 
-  void solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+  /**
+   * @return  HPIPM returned with flag:
+   *    0 = QP solved;
+   *    1 = Maximum number of iterations reached;
+   *    2 = Minimum step length reached;
+   *    3 = NaN in computations;
+   *    4 = Unknown return flag;
+   */
+  int solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
              std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
              std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
 

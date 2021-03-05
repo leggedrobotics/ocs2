@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
   settings.deltaTol = 1e-3;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = false;
+  settings.printLinesearch = false;
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
   std::unique_ptr<ocs2::MultipleShootingMpc> mpc(new ocs2::MultipleShootingMpc(

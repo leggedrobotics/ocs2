@@ -6,13 +6,17 @@
 
 namespace ocs2 {
 
-VectorFunctionLinearApproximation eulerDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u,
-                                                      scalar_t dt) {
+vector_t eulerDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t dt) {
+  return x + dt * system.computeFlowMap(t, x, u);
+}
+
+VectorFunctionLinearApproximation eulerSensitivityDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x,
+                                                                 const vector_t& u, scalar_t dt) {
   // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
   // A_{k} = Id + dt * dfdx
   // B_{k} = dt * dfdu
   // b_{k} = x_{n} + dt * f(x_{n},u_{n})
-  VectorFunctionLinearApproximation continuousApproximation = system.linearApproximation(t, x, u);
+  const auto continuousApproximation = system.linearApproximation(t, x, u);
   VectorFunctionLinearApproximation discreteApproximation;
   discreteApproximation.dfdx = dt * continuousApproximation.dfdx;
   discreteApproximation.dfdx.diagonal().array() += 1.0;  // plus Identity()
@@ -21,17 +25,31 @@ VectorFunctionLinearApproximation eulerDiscretization(SystemDynamicsBase& system
   return discreteApproximation;
 }
 
-VectorFunctionLinearApproximation rk4Discretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u,
-                                                    scalar_t dt) {
+vector_t rk4Discretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t dt) {
   const scalar_t dt_halve = dt / 2.0;
   const scalar_t dt_sixth = dt / 6.0;
   const scalar_t dt_third = dt / 3.0;
 
   // System evaluations
-  const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
-  const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u);
-  const ocs2::VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u);
-  const ocs2::VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u);
+  const vector_t k1 = system.computeFlowMap(t, x, u);
+  const vector_t k2 = system.computeFlowMap(t + dt_halve, x + dt_halve * k1, u);
+  const vector_t k3 = system.computeFlowMap(t + dt_halve, x + dt_halve * k2, u);
+  const vector_t k4 = system.computeFlowMap(t + dt, x + dt * k3, u);
+
+  return x + dt_sixth * k1 + dt_third * k2 + dt_third * k3 + dt_sixth * k4;
+}
+
+VectorFunctionLinearApproximation rk4SensitivityDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u,
+                                                               scalar_t dt) {
+  const scalar_t dt_halve = dt / 2.0;
+  const scalar_t dt_sixth = dt / 6.0;
+  const scalar_t dt_third = dt / 3.0;
+
+  // System evaluations
+  const VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
+  const VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u);
+  const VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u);
+  const VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u);
 
   // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
   const auto& dk1dxk = k1.dfdx;

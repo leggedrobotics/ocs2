@@ -20,8 +20,7 @@ TEST(test_discretization, noEvents_plusEps) {
   auto time = MultipleShootingSolver::timeDiscretizationWithEvents(initTime, finalTime, dt, eventTimes, eps);
   ASSERT_EQ(time[0], initTime);
   ASSERT_DOUBLE_EQ(time[1], initTime + dt);
-  ASSERT_DOUBLE_EQ(time[2], initTime + 2.*dt);
-  ASSERT_EQ(time[3], finalTime);
+  ASSERT_EQ(time[2], finalTime); // Absorbs the point at 0.3
 }
 
 TEST(test_discretization, noEvents_minEps) {
@@ -57,6 +56,5 @@ TEST(test_discretization, withEvents) {
   ASSERT_DOUBLE_EQ(time[8], eventTimes[1] + 3.*dt);
   ASSERT_DOUBLE_EQ(time[9], eventTimes[1] + 4.*dt);
   ASSERT_EQ(time[10], eventTimes[2] + eps);
-  ASSERT_DOUBLE_EQ(time[11], eventTimes[2] + dt);
-  ASSERT_EQ(time[12], finalTime);
+  ASSERT_EQ(time[11], finalTime); // Absorbs 3.98
 }

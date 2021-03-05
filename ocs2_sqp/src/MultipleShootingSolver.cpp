@@ -26,7 +26,8 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
       constraintPtr_(nullptr),
       terminalCostFunctionPtr_(nullptr),
       settings_(std::move(settings)),
-      totalNumIterations_(0) {
+      totalNumIterations_(0),
+      performanceIndeces_({PerformanceIndex()}) {
   if (constraintPtr != nullptr) {
     constraintPtr_.reset(constraintPtr->clone());
 
@@ -53,6 +54,7 @@ MultipleShootingSolver::~MultipleShootingSolver() {
 void MultipleShootingSolver::reset() {
   // Clear solution
   primalSolution_ = PrimalSolution();
+  performanceIndeces_ = {PerformanceIndex()};
 
   // reset timers
   totalNumIterations_ = 0;
@@ -107,14 +109,17 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
   }
 
+  // Bookkeeping
+  performanceIndeces_.clear();
+
   for (int iter = 0; iter < settings_.sqpIteration; iter++) {
     if (settings_.printSolverStatus) {
       std::cerr << "SQP iteration: " << iter << "\n";
     }
     // Make QP approximation
     linearQuadraticApproximationTimer_.startTimer();
-    setupCostDynamicsEqualityConstraint(*systemDynamicsPtr_, *costFunctionPtr_, constraintPtr_.get(), terminalCostFunctionPtr_.get(),
-                                        timeDiscretization, x, u);
+    performanceIndeces_.push_back(setupQuadraticSubproblem(*systemDynamicsPtr_, *costFunctionPtr_, constraintPtr_.get(),
+                                                           terminalCostFunctionPtr_.get(), timeDiscretization, x, u));
     linearQuadraticApproximationTimer_.endTimer();
 
     // Solve QP
@@ -126,7 +131,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     solveQpTimer_.endTimer();
 
     // Apply step
-    bool converged = takeStep(timeDiscretization, delta_x, delta_u, x, u);
+    computeControllerTimer_.startTimer();
+    bool converged = takeStep(performanceIndeces_.back(), timeDiscretization, delta_x, delta_u, x, u);
+    computeControllerTimer_.endTimer();
 
     totalNumIterations_++;
     if (converged) {
@@ -141,8 +148,6 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());  // repeat last input to make equal length vectors
   primalSolution_.modeSchedule_ = this->getModeSchedule();
   primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
-
-  computeControllerTimer_.endTimer();
 
   if (settings_.printSolverStatus) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -202,10 +207,15 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   // Solve the QP
   vector_array_t deltaXSol;
   vector_array_t deltaUSol;
+  int status;
   if (constraintPtr_ && !settings_.qr_decomp) {
-    hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
-    hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
+    status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
+  }
+
+  if (status != 0) {
+    throw std::runtime_error("[MultipleShootingSolver] Failed to solve QP");
   }
 
   // remap the tilde delta u to real delta u
@@ -220,16 +230,17 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   return {deltaXSol, deltaUSol};
 }
 
-void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
-                                                                 ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                                                 const scalar_array_t& time, const vector_array_t& x,
-                                                                 const vector_array_t& u) {
+PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
+                                                                  ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
+                                                                  const scalar_array_t& time, const vector_array_t& x,
+                                                                  const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
   // Set up for constant state input size. Will be adapted based on constraint handling.
   HpipmInterface::OcpSize ocpSize(N, settings_.n_state, settings_.n_input);
 
+  PerformanceIndex performance;
   dynamics_.resize(N);
   cost_.resize(N + 1);
   constraints_.resize(N + 1);
@@ -239,15 +250,18 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 
     // Dynamics
     // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
-    dynamics_[i] = rk4Discretization(systemDynamics, ti, x[i], u[i], dt);
+    dynamics_[i] = rk4SensitivityDiscretization(systemDynamics, ti, x[i], u[i], dt);
     dynamics_[i].f -= x[i + 1];  // make it dx_{k+1} = ...
+    performance.stateEqConstraintISE += dt * dynamics_[i].f.squaredNorm();
 
     // Costs: Approximate the integral with forward euler (correct for dt after adding penalty)
     cost_[i] = costFunction.costQuadraticApproximation(ti, x[i], u[i]);
+    performance.totalCost += dt * cost_[i].f;
 
     if (constraintPtr != nullptr) {
       // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
       constraints_[i] = constraintPtr->stateInputEqualityConstraintLinearApproximation(ti, x[i], u[i]);
+      performance.stateInputEqConstraintISE += dt * constraints_[i].f.squaredNorm();
       if (settings_.qr_decomp) {  // Handle equality constraints using projection.
         // Reduces number of inputs
         ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
@@ -266,7 +280,10 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
       if (penaltyPtr_) {
         const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(ti, x[i], u[i]);
         if (ineqConstraints.f.rows() > 0) {
-          cost_[i] += penaltyPtr_->penaltyCostQuadraticApproximation(ineqConstraints);
+          auto penaltyCost = penaltyPtr_->penaltyCostQuadraticApproximation(ineqConstraints);
+          cost_[i] += penaltyCost;
+          performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
+          performance.inequalityConstraintPenalty += dt * penaltyCost.f;
         }
       }
     }
@@ -282,34 +299,161 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 
   if (terminalCostFunctionPtr != nullptr) {
     cost_[N] = terminalCostFunctionPtr->finalCostQuadraticApproximation(time[N], x[N]);
+    performance.totalCost += cost_[N].f;
   } else {
     cost_[N] = ScalarFunctionQuadraticApproximation::Zero(settings_.n_state, 0);
   }
 
   // Prepare solver size
   hpipmInterface_.resize(std::move(ocpSize));
+
+  performance.merit = performance.totalCost + performance.inequalityConstraintPenalty;
+  return performance;
 }
 
-bool MultipleShootingSolver::takeStep(const scalar_array_t& timeDiscretization, const vector_array_t& dx, const vector_array_t& du,
-                                      vector_array_t& x, vector_array_t& u) {
-  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+PerformanceIndex MultipleShootingSolver::computePerformance(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
+                                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
+                                                            const scalar_array_t& time, const vector_array_t& x, const vector_array_t& u) {
+  // Problem horizon
+  const int N = static_cast<int>(time.size()) - 1;
 
-  // TODO implement line search
-  const scalar_t alpha = 1.0;
-  
-  computeControllerTimer_.startTimer();
+  PerformanceIndex performance;
+  for (int i = 0; i < N; i++) {
+    const scalar_t ti = time[i];
+    const scalar_t dt = time[i + 1] - time[i];
+
+    // Dynamics
+    const vector_t dynamicsGap = rk4Discretization(systemDynamics, ti, x[i], u[i], dt) - x[i + 1];
+    performance.stateEqConstraintISE += dt * dynamicsGap.squaredNorm();
+
+    // Costs
+    performance.totalCost += dt * costFunction.cost(ti, x[i], u[i]);
+
+    if (constraintPtr != nullptr) {
+      const vector_t constraints = constraintPtr->stateInputEqualityConstraint(ti, x[i], u[i]);
+      performance.stateInputEqConstraintISE += dt * constraints.squaredNorm();
+
+      // Inequalities as penalty
+      if (penaltyPtr_) {
+        const vector_t ineqConstraints = constraintPtr->inequalityConstraint(ti, x[i], u[i]);
+        if (ineqConstraints.rows() > 0) {
+          scalar_t penaltyCost = penaltyPtr_->penaltyCost(ineqConstraints);
+          performance.inequalityConstraintISE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
+          performance.inequalityConstraintPenalty += dt * penaltyCost;
+        }
+      }
+    }
+  }
+
+  if (terminalCostFunctionPtr != nullptr) {
+    performance.totalCost += terminalCostFunctionPtr->finalCost(time[N], x[N]);
+  }
+
+  performance.merit = performance.totalCost + performance.inequalityConstraintPenalty;
+  return performance;
+}
+
+bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_array_t& dx,
+                                      const vector_array_t& du, vector_array_t& x, vector_array_t& u) {
+  /*
+   * Filter linesearch based on:
+   * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"
+   * https://link.springer.com/article/10.1007/s10107-004-0559-y
+   */
+  if (settings_.printLinesearch) {
+    std::cerr << std::setprecision(9) << std::fixed;
+    std::cerr << "=== Starting Linesearch ===\n";
+    std::cerr << "Baseline:\n";
+    std::cerr << "\tMerit: " << baseline.merit << "\t DynamicsISE: " << baseline.stateEqConstraintISE
+              << "\t StateInputISE: " << baseline.stateInputEqConstraintISE << "\t IneqISE: " << baseline.inequalityConstraintISE
+              << "\t Penalty: " << baseline.inequalityConstraintPenalty << "\n";
+  }
+
+  // Some settings // TODO: Make parameters
+  const scalar_t alpha_decay = 0.5;
+  const scalar_t alpha_min = 1e-4;
+  const scalar_t gamma_c = 1e-6;
+  const scalar_t g_max = 1e6;
+  const scalar_t g_min = 1e-6;
+  const scalar_t costTol = 1e-4;
+
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+  scalar_t baselineConstraintViolation =
+      std::sqrt(baseline.stateEqConstraintISE + baseline.stateInputEqConstraintISE + baseline.inequalityConstraintISE);
+
+  // Update norm
   scalar_t deltaUnorm = 0.0;
   for (int i = 0; i < N; i++) {
-    deltaUnorm += alpha * du[i].norm();
-    u[i] += alpha * du[i];
+    deltaUnorm += du[i].squaredNorm();
   }
+  deltaUnorm = std::sqrt(deltaUnorm);
   scalar_t deltaXnorm = 0.0;
   for (int i = 0; i < (N + 1); i++) {
-    deltaXnorm += alpha * dx[i].norm();
-    x[i] += alpha * dx[i];
+    deltaXnorm += dx[i].squaredNorm();
+  }
+  deltaXnorm = std::sqrt(deltaXnorm);
+
+  scalar_t alpha = 1.0;
+  vector_array_t xNew(x.size());
+  vector_array_t uNew(u.size());
+  while (alpha > alpha_min) {
+    // Compute step
+    for (int i = 0; i < N; i++) {
+      uNew[i] = u[i] + alpha * du[i];
+    }
+    for (int i = 0; i < (N + 1); i++) {
+      xNew[i] = x[i] + alpha * dx[i];
+    }
+
+    // Compute cost and constraints
+    PerformanceIndex performanceNew = computePerformance(*systemDynamicsPtr_, *costFunctionPtr_, constraintPtr_.get(),
+                                                         terminalCostFunctionPtr_.get(), timeDiscretization, xNew, uNew);
+    scalar_t newConstraintViolation =
+        std::sqrt(performanceNew.stateEqConstraintISE + performanceNew.stateInputEqConstraintISE + performanceNew.inequalityConstraintISE);
+
+    bool stepAccepted = [&]() {
+      if (newConstraintViolation > g_max) {
+        return false;
+      } else if (newConstraintViolation < g_min) {
+        // With low violation only care about cost, reference paper implements here armijo condition
+        return (performanceNew.merit < baseline.merit);
+      } else {
+        // Medium violation: either merit or constraints decrease (with small gamma_c mixing of old constraints)
+        return performanceNew.merit < (baseline.merit - gamma_c * baselineConstraintViolation) ||
+               newConstraintViolation < ((1.0 - gamma_c) * baselineConstraintViolation);
+      }
+    }();
+
+    if (settings_.printLinesearch) {
+      std::cerr << "Stepsize = " << alpha << (stepAccepted ? std::string{" (Accepted)"} : std::string{" (Rejected)"}) << "\n";
+      std::cerr << "|dx| = " << alpha * deltaXnorm << "\t|du| = " << alpha * deltaUnorm << "\n";
+      std::cerr << "\tMerit: " << performanceNew.merit << "\t DynamicsISE: " << performanceNew.stateEqConstraintISE
+                << "\t StateInputISE: " << performanceNew.stateInputEqConstraintISE
+                << "\t IneqISE: " << performanceNew.inequalityConstraintISE << "\t Penalty: " << performanceNew.inequalityConstraintPenalty
+                << "\n";
+    }
+
+    // Exit conditions
+    bool stepSizeBelowTol = alpha * deltaUnorm < settings_.deltaTol && alpha * deltaXnorm < settings_.deltaTol;
+    // Return if step accepted
+    if (stepAccepted) {
+      x = std::move(xNew);
+      u = std::move(uNew);
+      bool improvementBelowTol = std::abs(baseline.merit - performanceNew.merit) < costTol && newConstraintViolation < g_min;
+      return stepSizeBelowTol || improvementBelowTol;
+    }
+    // Return if steps get too small without being accepted
+    if (stepSizeBelowTol) {
+      if (settings_.printLinesearch) {
+        std::cerr << "Stepsize is smaller than provided deltaTol -> converged \n";
+      }
+      return true;
+    }
+    // Try smaller step
+    alpha *= alpha_decay;
   }
 
-  return deltaUnorm < settings_.deltaTol && deltaXnorm < settings_.deltaTol;
+  return true;  // Alpha_min reached and no improvement found -> Converged
 }
 
 scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,
@@ -322,7 +466,7 @@ scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t ini
     initTime = 3.0
     finalTime = 4.0
     user_defined delta_t = 0.1
-    eps = eventDelta. : time added after an event to take the discretization after the mode transition.
+    eps = eventDelta : time added after an event to take the discretization after the mode transition.
 
   Then the following variables will be:
     timeDiscretization = {3.0, 3.1, 3.2, 3.25 + eps, 3.35, 3.4 + eps, 3.5, 3.6, 3.7, 3.8, 3.88 + eps, 3.98, 4.0}
@@ -354,11 +498,11 @@ scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t ini
       nextTimeIsEvent = false;
     }
 
-    // Add discretization point (after event for eventTimes)
-    if (nextTimeIsEvent) {
-      timeDiscretization.push_back(nextTime + eventDelta);
-    } else {
-      timeDiscretization.push_back(nextTime);
+    scalar_t newTimePoint = nextTimeIsEvent ? nextTime + eventDelta : nextTime;
+    if (newTimePoint > timeDiscretization.back() + 0.5 * dt) {  // Minimum spacing hardcoded here to 0.5*dt, TODO: make parameter.
+      timeDiscretization.push_back(newTimePoint);
+    } else {  // Points are close together -> overwrite the old point
+      timeDiscretization.back() = newTimePoint;
     }
   }
 

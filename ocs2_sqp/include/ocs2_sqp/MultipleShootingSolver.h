@@ -31,6 +31,7 @@ struct MultipleShootingSolverSettings {
   bool printSolverStatus = false;
   bool printSolverStatistics = false;
   bool printModeScheduleDebug = false;
+  bool printLinesearch = false;
 };
 
 class MultipleShootingSolver : public SolverBase {
@@ -42,7 +43,6 @@ class MultipleShootingSolver : public SolverBase {
 
   ~MultipleShootingSolver() override;
 
-  // TODO
   void reset() override;
   scalar_t getFinalTime() const override { return primalSolution_.timeTrajectory_.back(); };  // horizon is [t0, T] return T;
   // fill primal solution after solving the problem.
@@ -54,40 +54,58 @@ class MultipleShootingSolver : public SolverBase {
     }
   }
 
-  // Maybe Ignore
-  const PerformanceIndex& getPerformanceIndeces() const override { return performanceIndex_; }
-  size_t getNumIterations() const override { return 1; }
+  const PerformanceIndex& getPerformanceIndeces() const override { return performanceIndeces_.back(); }
+  size_t getNumIterations() const override { return totalNumIterations_; }
   const std::vector<PerformanceIndex>& getIterationsLog() const override { return performanceIndeces_; };
+
+  /** Decides on time discretization along the horizon */
+  static scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
+                                                     scalar_t eventDelta);
+
+  /** Irrelevant baseclass stuff */
+  void rewindOptimizer(size_t firstIndex) override{};
+  const unsigned long long int& getRewindCounter() const override {
+    throw std::runtime_error("[MultipleShootingSolver] no rewind counter");
+  };
   const scalar_array_t& getPartitioningTimes() const override { return partitionTime_; };
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
     return ScalarFunctionQuadraticApproximation::Zero(0, 0);
   };
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override { return vector_t::Zero(0); }
-  void rewindOptimizer(size_t firstIndex) override{};
-  const unsigned long long int& getRewindCounter() const override {
-    throw std::runtime_error("[MultipleShootingSolver] no rewind counter");
-  };
-
-  static scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
-                                                     scalar_t eventDelta);
 
  private:
+  /** Get profiling information as a string */
   std::string getBenchmarkingInformation() const;
-  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
 
+  /** Entrypoint for this solver, called by the base class */
+  void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
                const std::vector<ControllerBase*>& controllersPtrStock) override {
     runImpl(initTime, initState, finalTime, partitioningTimes);
   }
 
+  /** Returns initial guess for the state trajectory */
   vector_array_t initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization, int N) const;
+
+  /** Returns initial guess for the input trajectory */
   vector_array_t initializeInputTrajectory(const scalar_array_t& timeDiscretization, const vector_array_t& stateTrajectory, int N) const;
-  void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
-                                           ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                           const scalar_array_t& time, const vector_array_t& x, const vector_array_t& u);
+
+  /** Creates QP around t, x, u. Returns performance metrics at the current {t, x, u} */
+  PerformanceIndex setupQuadraticSubproblem(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
+                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
+                                            const scalar_array_t& time, const vector_array_t& x, const vector_array_t& u);
+
+  /** Computes only the performance metrics at the current {t, x, u} */
+  PerformanceIndex computePerformance(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction, ConstraintBase* constraintPtr,
+                                      CostFunctionBase* terminalCostFunctionPtr, const scalar_array_t& time, const vector_array_t& x,
+                                      const vector_array_t& u);
+
+  /** Returns solution of the QP subproblem in delta coordinates: {delta_x, delta_u} */
   std::pair<vector_array_t, vector_array_t> getOCPSolution(const vector_t& delta_x0);
-  bool takeStep(const scalar_array_t& timeDiscretization, const vector_array_t& dx, const vector_array_t& du, vector_array_t& x,
-                vector_array_t& u);
+
+  /** Decides on the step to take and overrides given trajectories {x, u} <- {x + a*dx, u + a*du} */
+  bool takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_array_t& dx,
+                const vector_array_t& du, vector_array_t& x, vector_array_t& u);
 
   MultipleShootingSolverSettings settings_;
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
@@ -114,8 +132,7 @@ class MultipleShootingSolver : public SolverBase {
   benchmark::RepeatedTimer computeControllerTimer_;
 
   // Unused : just to implement the interface
-  PerformanceIndex performanceIndex_;
-  std::vector<PerformanceIndex> performanceIndeces_ = {PerformanceIndex()};
+  std::vector<PerformanceIndex> performanceIndeces_;
   scalar_array_t partitionTime_;
 };
 

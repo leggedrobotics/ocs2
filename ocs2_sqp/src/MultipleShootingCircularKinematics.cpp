@@ -10,13 +10,14 @@ int main(int argc, char **argv)
 
     // Set this one up.
     ocs2::MultipleShootingSolverSettings settings;
-    settings.dt = 0.05;
+    settings.dt = 0.01;
     settings.n_state = 2;
     settings.n_input = 2;
-    settings.sqpIteration = 5;
+    settings.sqpIteration = 20;
     settings.qr_decomp = true;
     settings.printSolverStatistics = true;
     settings.printSolverStatus = false;
+    settings.printLinesearch = true;
     ocs2::MultipleShootingSolver solver(settings, &system, &cost, &constraint);
 
     const ocs2::scalar_t startTime = 0.0;

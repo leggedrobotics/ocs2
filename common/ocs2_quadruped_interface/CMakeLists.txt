@@ -71,7 +71,6 @@ add_library(${PROJECT_NAME}
   src/QuadrupedInterface.cpp
   src/QuadrupedLogger.cpp
   src/QuadrupedMpcNode.cpp
-  src/QuadrupedMpcNodeSqp.cpp
   src/QuadrupedPointfootInterface.cpp
   src/QuadrupedSlqMpc.cpp
   src/QuadrupedSqpMpc.cpp

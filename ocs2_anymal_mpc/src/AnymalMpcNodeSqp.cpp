@@ -7,7 +7,10 @@
 
 #include <ros/init.h>
 
-#include <ocs2_quadruped_interface/QuadrupedMpcNodeSqp.h>
+#include <ocs2_quadruped_interface/QuadrupedMpcNode.h>
+
+#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_quadruped_interface/QuadrupedSqpMpc.h>
 
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
@@ -27,7 +30,7 @@ int main(int argc, char* argv[]) {
   auto anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolder(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
   ocs2::MultipleShootingSolverSettings sqpSettings;
-  sqpSettings.dt = 0.025;
+  sqpSettings.dt = 0.02;
   sqpSettings.n_state = 24;
   sqpSettings.n_input = 24;
   sqpSettings.sqpIteration = 1;
@@ -39,7 +42,9 @@ int main(int argc, char* argv[]) {
   sqpSettings.printSolverStatus = false;
   sqpSettings.printModeScheduleDebug = false;
   sqpSettings.printLinesearch = false;
-  quadrupedMpcNodeSqp(nodeHandle, *anymalInterface, mpcSettings, sqpSettings);
+
+  auto mpcPtr = getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
+  quadrupedMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
 
   return 0;
 }

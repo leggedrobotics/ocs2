@@ -8,6 +8,10 @@
 #include <ocs2_quadruped_interface/QuadrupedMpcNode.h>
 #include <ros/init.h>
 
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
+
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
 int main(int argc, char* argv[]) {
@@ -26,7 +30,9 @@ int main(int argc, char* argv[]) {
   auto anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolder(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
   const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePath(configName));
-  quadrupedMpcNode(nodeHandle, *anymalInterface, mpcSettings, ddpSettings);
+
+  auto mpcPtr = getMpc(*anymalInterface, mpcSettings, ddpSettings);
+  quadrupedMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
 
   return 0;
 }

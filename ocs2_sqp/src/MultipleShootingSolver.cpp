@@ -4,12 +4,14 @@
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
+#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_sqp/ConstraintProjection.h>
-#include <ocs2_sqp/DynamicsDiscretization.h>
 
+#include <ocs2_sqp/DynamicsDiscretization.h>
 #include <iostream>
 
 namespace ocs2 {
@@ -26,6 +28,10 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
       totalNumIterations_(0) {
   if (constraintPtr != nullptr) {
     constraintPtr_.reset(constraintPtr->clone());
+
+    if (settings_.inequalityConstraintMu > 0) {
+      penaltyPtr_.reset(new RelaxedBarrierPenalty(settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta));
+    }
   }
 
   if (terminalCostFunctionPtr != nullptr) {
@@ -79,13 +85,19 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // Determine time discretization, taking into account event times.
-  std::vector<scalar_t> timeDiscretization =
-      timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
+  std::vector<scalar_t> timeDiscretization = timeDiscretizationWithEvents(
+      initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes, OCS2NumericTraits<scalar_t>::limitEpsilon());
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
 
   // Initialize the state and input
   std::vector<vector_t> x = initializeStateTrajectory(initState, timeDiscretization, N);
   std::vector<vector_t> u = initializeInputTrajectory(timeDiscretization, N);
+
+  // Initialize cost
+  costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  if (terminalCostFunctionPtr_) {
+    terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  }
 
   for (int iter = 0; iter < settings_.sqpIteration; iter++) {
     if (settings_.printSolverStatus) {
@@ -203,12 +215,6 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
   // Set up for constant state input size. Will be adapted based on constraint handling.
   HpipmInterface::OcpSize ocpSize(N, settings_.n_state, settings_.n_input);
 
-  // Initialize cost
-  costFunction.setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
-  if (terminalCostFunctionPtr != nullptr) {
-    terminalCostFunctionPtr->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
-  }
-
   dynamics_.resize(N);
   cost_.resize(N + 1);
   constraints_.resize(N + 1);
@@ -233,7 +239,7 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
     if (constraintPtr != nullptr) {
       // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
       constraints_[i] = constraintPtr->stateInputEqualityConstraintLinearApproximation(ti, x[i], u[i]);
-      if (settings_.qr_decomp) { // Handle equality constraints using projection.
+      if (settings_.qr_decomp) {  // Handle equality constraints using projection.
         // Reduces number of inputs
         ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
@@ -245,6 +251,14 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
       } else {
         // Declare as general inequalities
         ocpSize.ng[i] = constraints_[i].f.rows();
+      }
+
+      // Inequalities as penalty
+      if (penaltyPtr_) {
+        const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(ti, x[i], u[i]);
+        if (ineqConstraints.f.rows() > 0) {
+          cost_[i] += penaltyPtr_->penaltyCostQuadraticApproximation(ineqConstraints);
+        }
       }
     }
   }
@@ -260,7 +274,7 @@ void MultipleShootingSolver::setupCostDynamicsEqualityConstraint(SystemDynamicsB
 }
 
 scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,
-                                                                    const scalar_array_t& eventTimes) {
+                                                                    const scalar_array_t& eventTimes, scalar_t eventDelta) {
   /*
   A simple example here illustrates the mission of this function
 
@@ -269,9 +283,10 @@ scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t ini
     initTime = 3.0
     finalTime = 4.0
     user_defined delta_t = 0.1
+    eps = eventDelta. : time added after an event to take the discretization after the mode transition.
 
   Then the following variables will be:
-    timeDiscretization = {3.0, 3.1, 3.2, 3.25, 3.35, 3.4, 3.5, 3.6, 3.7, 3.8, 3.88, 3.98, 4.0}
+    timeDiscretization = {3.0, 3.1, 3.2, 3.25 + eps, 3.35, 3.4 + eps, 3.5, 3.6, 3.7, 3.8, 3.88 + eps, 3.98, 4.0}
   */
   assert(dt > 0);
   assert(finalTime > initTime);
@@ -282,16 +297,30 @@ scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t ini
   scalar_t nextEventIdx = lookup::findIndexInTimeArray(eventTimes, initTime);
 
   // Fill iteratively
+  scalar_t nextTime = timeDiscretization.back();
   while (timeDiscretization.back() < finalTime) {
-    scalar_t nextTime = timeDiscretization.back() + dt;
+    nextTime = nextTime + dt;
+    bool nextTimeIsEvent = false;
+
+    // Check if an event has passed
     if (nextEventIdx < eventTimes.size() && nextTime >= eventTimes[nextEventIdx]) {
       nextTime = eventTimes[nextEventIdx];
+      nextTimeIsEvent = true;
       nextEventIdx++;
     }
+
+    // Check if final time has passed
     if (nextTime >= finalTime) {
       nextTime = finalTime;
+      nextTimeIsEvent = false;
     }
-    timeDiscretization.push_back(nextTime);
+
+    // Add discretization point (after event for eventTimes)
+    if (nextTimeIsEvent) {
+      timeDiscretization.push_back(nextTime + eventDelta);
+    } else {
+      timeDiscretization.push_back(nextTime);
+    }
   }
 
   return timeDiscretization;

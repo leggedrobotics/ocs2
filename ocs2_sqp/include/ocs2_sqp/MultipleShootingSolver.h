@@ -4,22 +4,28 @@
 
 #pragma once
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
-#include <iostream>
 
 #include <ocs2_sqp/HpipmInterface.h>
+#include <iostream>
 
 namespace ocs2 {
 
 struct MultipleShootingSolverSettings {
   scalar_t dt = 0.01;  // user-defined time discretization
-  size_t n_state  = 0;
-  size_t n_input  = 0;
+  size_t n_state = 0;
+  size_t n_input = 0;
   size_t sqpIteration = 1;
   scalar_t deltaTol = 1e-6;
+
+  // Inequality penalty method
+  scalar_t inequalityConstraintMu = 0.0;
+  scalar_t inequalityConstraintDelta = 1e-6;
+
   bool qr_decomp = true;  // Only meaningful if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
   bool printSolverStatus = false;
   bool printSolverStatistics = false;
@@ -60,7 +66,8 @@ class MultipleShootingSolver : public SolverBase {
     throw std::runtime_error("[MultipleShootingSolver] no rewind counter");
   };
 
-  static scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes);
+  static scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
+                                                     scalar_t eventDelta);
 
  private:
   std::string getBenchmarkingInformation() const;
@@ -75,7 +82,8 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<vector_t> initializeInputTrajectory(const scalar_array_t& timeDiscretization, int N) const;
   void setupCostDynamicsEqualityConstraint(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                           const scalar_array_t& time, const std::vector<ocs2::vector_t>& x, const std::vector<ocs2::vector_t>& u);
+                                           const scalar_array_t& time, const std::vector<ocs2::vector_t>& x,
+                                           const std::vector<ocs2::vector_t>& u);
   std::pair<std::vector<ocs2::vector_t>, std::vector<ocs2::vector_t>> getOCPSolution(const vector_t& delta_x0);
 
   MultipleShootingSolverSettings settings_;
@@ -83,6 +91,8 @@ class MultipleShootingSolver : public SolverBase {
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
   std::unique_ptr<ConstraintBase> constraintPtr_;
   std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
+  std::unique_ptr<PenaltyBase> penaltyPtr_;
+
   PrimalSolution primalSolution_;
 
   HpipmInterface hpipmInterface_;

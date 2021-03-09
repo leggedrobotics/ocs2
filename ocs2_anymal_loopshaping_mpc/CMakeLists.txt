@@ -62,7 +62,7 @@ add_executable(${PROJECT_NAME}_sqp_mpc_node
 target_link_libraries(${PROJECT_NAME}_sqp_mpc_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  )
+)
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
   src/AnymalLoopshapingDummyMrt.cpp

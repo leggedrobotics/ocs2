@@ -40,7 +40,7 @@ class HpipmInterface {
           nsg(N_ + 1, 0) {
       nu.back() = 0;
     }
-    OcpSize(){};
+    OcpSize() : OcpSize(0, 0, 0) {};
   };
 
   struct Settings {

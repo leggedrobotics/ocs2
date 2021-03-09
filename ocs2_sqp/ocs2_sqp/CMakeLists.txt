@@ -18,8 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-message(STATUS "catkin_INCLUDE_DIRS: " ${catkin_INCLUDE_DIRS})
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -86,7 +84,7 @@ catkin_add_gtest(test_${PROJECT_NAME}
   test/testProjection.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}
-  ${catkin_LIBRARIES}
   ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
   gtest_main
 )

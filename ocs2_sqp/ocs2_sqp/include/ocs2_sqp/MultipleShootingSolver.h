@@ -46,12 +46,6 @@ class MultipleShootingSolver : public SolverBase {
   scalar_t getFinalTime() const override { return primalSolution_.timeTrajectory_.back(); };  // horizon is [t0, T] return T;
   // fill primal solution after solving the problem.
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
-  void printPrimalSolution() const {
-    for (int i = 0; i < primalSolution_.timeTrajectory_.size(); i++) {
-      std::cout << "time: " << primalSolution_.timeTrajectory_[i] << "\t state: " << primalSolution_.stateTrajectory_[i].transpose()
-                << "\t input: " << primalSolution_.inputTrajectory_[i].transpose() << std::endl;
-    }
-  }
 
   const PerformanceIndex& getPerformanceIndeces() const override { return performanceIndeces_.back(); }
   size_t getNumIterations() const override { return totalNumIterations_; }

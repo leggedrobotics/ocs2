@@ -10,6 +10,11 @@
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
+
+/**
+ * This class implements the interface between Linear Quadratic optimal control problems defined in OCS2 and the HPIPM solver.
+ * If the problem dimensions change, resize needs to be called to re-initialize HPIPM.
+ */
 class HpipmInterface {
  public:
   struct OcpSize {

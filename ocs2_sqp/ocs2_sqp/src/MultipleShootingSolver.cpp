@@ -27,7 +27,7 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
       terminalCostFunctionPtr_(nullptr),
       settings_(std::move(settings)),
       totalNumIterations_(0),
-      performanceIndeces_({PerformanceIndex()}) {
+      performanceIndeces_() {
   if (constraintPtr != nullptr) {
     constraintPtr_.reset(constraintPtr->clone());
 
@@ -54,7 +54,7 @@ MultipleShootingSolver::~MultipleShootingSolver() {
 void MultipleShootingSolver::reset() {
   // Clear solution
   primalSolution_ = PrimalSolution();
-  performanceIndeces_ = {PerformanceIndex()};
+  performanceIndeces_.clear();
 
   // reset timers
   totalNumIterations_ = 0;
@@ -86,9 +86,17 @@ std::string MultipleShootingSolver::getBenchmarkingInformation() const {
   return infoStream.str();
 }
 
+const std::vector<PerformanceIndex>& MultipleShootingSolver::getIterationsLog() const {
+  if (performanceIndeces_.empty()) {
+    throw std::runtime_error("[MultipleShootingSolver]: No performance log yet, no problem solved yet?");
+  } else {
+    return performanceIndeces_;
+  }
+}
+
 void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
                                      const scalar_array_t& partitioningTimes) {
-  if (settings_.printSolverStatus) {
+  if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver is initialized ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -113,8 +121,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   performanceIndeces_.clear();
 
   for (int iter = 0; iter < settings_.sqpIteration; iter++) {
-    if (settings_.printSolverStatus) {
-      std::cerr << "SQP iteration: " << iter << "\n";
+    if (settings_.printSolverStatus || settings_.printLinesearch) {
+      std::cerr << "\nSQP iteration: " << iter << "\n";
     }
     // Make QP approximation
     linearQuadraticApproximationTimer_.startTimer();
@@ -149,7 +157,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   primalSolution_.modeSchedule_ = this->getModeSchedule();
   primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
 
-  if (settings_.printSolverStatus) {
+  if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver has terminated ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -264,7 +272,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
         const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(ti, x[i], u[i]);
         if (ineqConstraints.f.rows() > 0) {
           auto penaltyCost = penaltyPtr_->penaltyCostQuadraticApproximation(ineqConstraints);
-          cost_[i] += penaltyCost; // add to cost before potential projection.
+          cost_[i] += penaltyCost;  // add to cost before potential projection.
           performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
           performance.inequalityConstraintPenalty += dt * penaltyCost.f;
         }
@@ -362,7 +370,7 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const sc
    */
   if (settings_.printLinesearch) {
     std::cerr << std::setprecision(9) << std::fixed;
-    std::cerr << "=== Starting Linesearch ===\n";
+    std::cerr << "\n=== Linesearch ===\n";
     std::cerr << "Baseline:\n";
     std::cerr << "\tMerit: " << baseline.merit << "\t DynamicsISE: " << baseline.stateEqConstraintISE
               << "\t StateInputISE: " << baseline.stateInputEqConstraintISE << "\t IneqISE: " << baseline.inequalityConstraintISE

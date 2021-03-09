@@ -28,9 +28,9 @@ struct MultipleShootingSolverSettings {
   scalar_t inequalityConstraintDelta = 1e-6;
 
   bool qr_decomp = true;  // Only meaningful if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
-  bool printSolverStatus = false;
-  bool printSolverStatistics = false;
-  bool printLinesearch = false;
+  bool printSolverStatus = false; // Print HPIPM status after solving the QP subproblem
+  bool printSolverStatistics = false; // Print benchmarking of the multiple shooting method
+  bool printLinesearch = false; // Print linesearch information
 };
 
 class MultipleShootingSolver : public SolverBase {
@@ -43,13 +43,13 @@ class MultipleShootingSolver : public SolverBase {
   ~MultipleShootingSolver() override;
 
   void reset() override;
+
   scalar_t getFinalTime() const override { return primalSolution_.timeTrajectory_.back(); };  // horizon is [t0, T] return T;
-  // fill primal solution after solving the problem.
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalSolution_; }
 
-  const PerformanceIndex& getPerformanceIndeces() const override { return performanceIndeces_.back(); }
   size_t getNumIterations() const override { return totalNumIterations_; }
-  const std::vector<PerformanceIndex>& getIterationsLog() const override { return performanceIndeces_; };
+  const PerformanceIndex& getPerformanceIndeces() const override { return getIterationsLog().back(); };
+  const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
   /** Decides on time discretization along the horizon */
   static scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
@@ -100,6 +100,7 @@ class MultipleShootingSolver : public SolverBase {
   bool takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_array_t& dx,
                 const vector_array_t& du, vector_array_t& x, vector_array_t& u);
 
+  // Problem definition
   MultipleShootingSolverSettings settings_;
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
@@ -108,14 +109,19 @@ class MultipleShootingSolver : public SolverBase {
   std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
   std::unique_ptr<PenaltyBase> penaltyPtr_;
 
+  // Solution
   PrimalSolution primalSolution_;
 
+  // Solver interface
   HpipmInterface hpipmInterface_;
 
   // LQ approximation
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
   std::vector<VectorFunctionLinearApproximation> constraints_;
+
+  // Iteration performance log
+  std::vector<PerformanceIndex> performanceIndeces_;
 
   // Benchmarking
   size_t totalNumIterations_;
@@ -124,9 +130,7 @@ class MultipleShootingSolver : public SolverBase {
   benchmark::RepeatedTimer solveQpTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
 
-  // Unused : just to implement the interface
-  std::vector<PerformanceIndex> performanceIndeces_;
-  scalar_array_t partitionTime_;
+  scalar_array_t partitionTime_ = {};
 };
 
 }  // namespace ocs2

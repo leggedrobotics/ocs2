@@ -4,7 +4,6 @@
 
 #include "ocs2_sqp/HpipmInterface.h"
 
-#include <blasfeo_d_aux_ext_dep.h>
 extern "C" {
 #include <hpipm_d_ocp_qp.h>
 #include <hpipm_d_ocp_qp_dim.h>
@@ -235,17 +234,18 @@ class HpipmInterface::Impl {
   void printStatus() {
     int hpipm_status = -1;
     d_ocp_qp_ipm_get_status(&workspace_, &hpipm_status);
-    printf("\nHPIPM returned with flag %i.\n", hpipm_status);
+    fprintf(stderr, "\n=== HPIPM ===\n");
+    fprintf(stderr, "HPIPM returned with flag %i. -> ", hpipm_status);
     if (hpipm_status == 0) {
-      printf("\n -> QP solved!\n");
+      fprintf(stderr, "QP solved!\n");
     } else if (hpipm_status == 1) {
-      printf("\n -> Solver failed! Maximum number of iterations reached\n");
+      fprintf(stderr, "Solver failed! Maximum number of iterations reached\n");
     } else if (hpipm_status == 2) {
-      printf("\n -> Solver failed! Minimum step length reached\n");
+      fprintf(stderr, "Solver failed! Minimum step length reached\n");
     } else if (hpipm_status == 3) {
-      printf("\n -> Solver failed! NaN in computations\n");
+      fprintf(stderr, "Solver failed! NaN in computations\n");
     } else {
-      printf("\n -> Solver failed! Unknown return flag\n");
+      fprintf(stderr, "Solver failed! Unknown return flag\n");
     }
 
     int iter;
@@ -262,13 +262,19 @@ class HpipmInterface::Impl {
     d_ocp_qp_ipm_get_stat(&workspace_, &stat);
     int stat_m;
     d_ocp_qp_ipm_get_stat_m(&workspace_, &stat_m);
-    printf("\nipm return = %d\n", hpipm_status);
-    printf("\nipm residuals max: res_g = %e, res_b = %e, res_d = %e, res_m = %e\n", res_stat, res_eq, res_ineq, res_comp);
-    printf("\nipm iter = %d\n", iter);
-    printf(
-        "\nalpha_aff\tmu_aff\t\tsigma\t\talpha_prim\talpha_dual\tmu\t\tres_stat\tres_eq\t\tres_ineq\tres_comp\tlq fact\t\titref "
-        "pred\titref corr\tlin res stat\tlin res eq\tlin res ineq\tlin res comp\n");
-    d_print_exp_tran_mat(stat_m, iter + 1, stat, stat_m);
+    fprintf(stderr, "ipm iter = %d\n", iter);
+    fprintf(stderr, "ipm residuals max: res_g = %e, res_b = %e, res_d = %e, res_m = %e\n", res_stat, res_eq, res_ineq, res_comp);
+    fprintf(stderr,
+            "\nalpha_aff\tmu_aff\t\tsigma\t\talpha_prim\talpha_dual\tmu\t\tres_stat\tres_eq\t\tres_ineq\tres_comp\tlq fact\t\titref "
+            "pred\titref corr\tlin res stat\tlin res eq\tlin res ineq\tlin res comp\n");
+    {  // print Stats. Implementation adapted from d_print_exp_tran_mat
+      for (int j = 0; j < iter + 1; j++) {
+        for (int i = 0; i < stat_m; i++) {
+          fprintf(stderr, "%e\t", stat[i + stat_m * j]);
+        }
+        fprintf(stderr, "\n");
+      }
+    }
   }
 
  private:

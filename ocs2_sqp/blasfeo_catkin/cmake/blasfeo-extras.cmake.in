@@ -1,0 +1,4 @@
+# Makes find_package(blasfeo) available
+list(APPEND CMAKE_MODULE_PATH $ENV{HOME}/.local/blasfeo/cmake)
+
+set(BLASFEO_PATH $ENV{HOME}/.local/blasfeo)

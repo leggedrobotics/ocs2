@@ -14,5 +14,7 @@
   <depend>ocs2_mpc</depend>
   <depend>ocs2_oc</depend>
   <depend>ocs2_qp_solver</depend>
+  <depend>blasfeo_catkin</depend>
+  <depend>hpipm_catkin</depend>
 
 </package>

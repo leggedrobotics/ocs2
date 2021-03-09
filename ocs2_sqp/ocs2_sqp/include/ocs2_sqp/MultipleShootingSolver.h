@@ -30,7 +30,6 @@ struct MultipleShootingSolverSettings {
   bool qr_decomp = true;  // Only meaningful if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
   bool printSolverStatus = false;
   bool printSolverStatistics = false;
-  bool printModeScheduleDebug = false;
   bool printLinesearch = false;
 };
 

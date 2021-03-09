@@ -1,0 +1,2 @@
+# Makes find_package(hpipm) available
+list(APPEND CMAKE_MODULE_PATH $ENV{HOME}/.local/hpipm/cmake)

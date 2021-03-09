@@ -8,47 +8,30 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_mpc
   ocs2_oc
   ocs2_qp_solver
+  blasfeo_catkin
+  hpipm_catkin
 )
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
-)
-
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# here it is assumed that BLASFEO and HPIPM are all installed under /opt
-list(APPEND CMAKE_PREFIX_PATH "/opt")
-find_package(blasfeo QUIET)
-find_package(hpipm QUIET)
-if(blasfeo_FOUND AND hpipm_FOUND)
-    message(STATUS "Found HPIPM and BLASFEO")
-    set(HPIPM ON)
-    list(APPEND HPIPM_LIBS hpipm blasfeo)
-else()
-    message(WARNING "Could not find HPIPM or BLASFEO")
-endif()
+message(STATUS "catkin_INCLUDE_DIRS: " ${catkin_INCLUDE_DIRS})
 
-# something that might cause troubles 
-# if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
+###################################
+## catkin specific configuration ##
+###################################
 
 catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
-    # below should be working for every package that depends on ocs2_sqp ${catkin_INCLUDE_DIR} will contains this 
-    ${blasfeo_INCLUDE_DIRS}
-    ${hpipm_INCLUDE_DIRS}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   LIBRARIES
     ${PROJECT_NAME}
-  DEPENDS
-    Boost
 )
 
 ###########
@@ -57,13 +40,11 @@ catkin_package(
 
 include_directories(
   include
-  ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
 # Multiple shooting solver library
-# with equality constraint satisfied by QR decomposition, null space method & HPIPM inequality to equality 
 add_library(${PROJECT_NAME}
   src/ConstraintProjection.cpp
   src/HpipmInterface.cpp
@@ -74,7 +55,7 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_include_directories(${PROJECT_NAME} INTERFACE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${HPIPM_LIBS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 # Circular kinematics example 
@@ -82,8 +63,7 @@ add_executable(${PROJECT_NAME}_circular_kinematics src/MultipleShootingCircularK
 target_include_directories(${PROJECT_NAME}_circular_kinematics INTERFACE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME}_circular_kinematics ${HPIPM_LIBS} ${catkin_LIBRARIES} ${PROJECT_NAME})
-target_compile_options(${PROJECT_NAME}_circular_kinematics PRIVATE ${OCS2_CXX_FLAGS})
+target_link_libraries(${PROJECT_NAME}_circular_kinematics ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 #########################
 ###   CLANG TOOLING   ###

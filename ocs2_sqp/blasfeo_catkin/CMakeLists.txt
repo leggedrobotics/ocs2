@@ -25,6 +25,9 @@ ExternalProject_Add(blasfeoDownload
 
 add_library(${PROJECT_NAME} SHARED IMPORTED)
 set_target_properties(${PROJECT_NAME} PROPERTIES IMPORTED_LOCATION ${BLASFEO_LIB_DIR}/libblasfeo.so)
+add_dependencies(${PROJECT_NAME} blasfeoDownload)
+
+list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS blasfeoDownload)
 
 catkin_package(
   INCLUDE_DIRS ${BLASFEO_INCLUDE_DIR}

@@ -1,2 +1,5 @@
 # Makes find_package(hpipm) available
 list(APPEND CMAKE_MODULE_PATH $ENV{HOME}/.local/hpipm/cmake)
+
+set(${PROJECT_NAME}_LIBRARIES $ENV{HOME}/.local/hpipm/lib/libhpipm.so)
+set(${PROJECT_NAME}_INCLUDE_DIR $ENV{HOME}/.local/hpipm/include)

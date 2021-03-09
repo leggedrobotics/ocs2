@@ -29,6 +29,10 @@ ExternalProject_Add(hpipmDownload
 add_library(${PROJECT_NAME} SHARED IMPORTED)
 set_target_properties(${PROJECT_NAME} PROPERTIES IMPORTED_LOCATION ${HPIPM_LIB_DIR}/libhpipm.so)
 
+add_dependencies(${PROJECT_NAME} hpipmDownload)
+
+list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS hpipmDownload)
+
 catkin_package(
   INCLUDE_DIRS ${HPIPM_INCLUDE_DIR}
   CATKIN_DEPENDS blasfeo_catkin

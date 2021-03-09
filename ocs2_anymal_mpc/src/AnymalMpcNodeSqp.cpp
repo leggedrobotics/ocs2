@@ -40,7 +40,6 @@ int main(int argc, char* argv[]) {
   sqpSettings.qr_decomp = true;
   sqpSettings.printSolverStatistics = true;
   sqpSettings.printSolverStatus = false;
-  sqpSettings.printModeScheduleDebug = false;
   sqpSettings.printLinesearch = false;
 
   auto mpcPtr = getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);

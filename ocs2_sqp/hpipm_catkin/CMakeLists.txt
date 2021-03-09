@@ -21,6 +21,7 @@ ExternalProject_Add(hpipmDownload
     -DCMAKE_INSTALL_PREFIX=${HPIPM_INSTALL_PREFIX}
     -DBUILD_SHARED_LIBS:STRING=ON
     -DBLASFEO_PATH:STRING=${BLASFEO_PATH} # Find blasfeo through exported path from blasfeo_catkin
+    -DHPIPM_TESTING:BOOL=OFF # Don't build tests
   BUILD_COMMAND $(MAKE)
   INSTALL_COMMAND $(MAKE) install
 )

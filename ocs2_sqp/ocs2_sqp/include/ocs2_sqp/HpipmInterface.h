@@ -40,7 +40,7 @@ class HpipmInterface {
           nsg(N_ + 1, 0) {
       nu.back() = 0;
     }
-    OcpSize() : OcpSize(0, 0, 0) {};
+    OcpSize() : OcpSize(0, 0, 0){};
   };
 
   struct Settings {
@@ -59,7 +59,7 @@ class HpipmInterface {
     Settings() {}
   };
 
-  HpipmInterface() : HpipmInterface(OcpSize{0, 0, 0}) {};
+  HpipmInterface() : HpipmInterface(OcpSize{0, 0, 0}){};
   HpipmInterface(OcpSize ocpSize, const Settings& settings = Settings());
   ~HpipmInterface();
 
@@ -82,8 +82,8 @@ class HpipmInterface {
    *    4 = Unknown return flag;
    */
   int solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-             std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-             std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
+            std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
+            std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
 
  private:
   class Impl;

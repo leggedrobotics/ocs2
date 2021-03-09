@@ -28,9 +28,9 @@ struct MultipleShootingSolverSettings {
   scalar_t inequalityConstraintDelta = 1e-6;
 
   bool qr_decomp = true;  // Only meaningful if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
-  bool printSolverStatus = false; // Print HPIPM status after solving the QP subproblem
-  bool printSolverStatistics = false; // Print benchmarking of the multiple shooting method
-  bool printLinesearch = false; // Print linesearch information
+  bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
+  bool printSolverStatistics = false;  // Print benchmarking of the multiple shooting method
+  bool printLinesearch = false;        // Print linesearch information
 };
 
 class MultipleShootingSolver : public SolverBase {

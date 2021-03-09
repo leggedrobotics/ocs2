@@ -5,7 +5,7 @@ find_package(catkin REQUIRED)
 
 include(ExternalProject)
 
-set(BLASFEO_INSTALL_PREFIX $ENV{HOME}/.local/blasfeo CACHE STRING "Blasfeo install path")
+set(BLASFEO_INSTALL_PREFIX ${CATKIN_DEVEL_PREFIX} CACHE STRING "Blasfeo install path")
 SET(BLASFEO_INCLUDE_DIR ${BLASFEO_INSTALL_PREFIX}/include)
 SET(BLASFEO_LIB_DIR ${BLASFEO_INSTALL_PREFIX}/lib)
 
@@ -23,6 +23,7 @@ ExternalProject_Add(blasfeoDownload
   INSTALL_COMMAND $(MAKE) install
 )
 
+# Create a library to be used in the catkin_package LIBRARIES
 add_library(${PROJECT_NAME} SHARED IMPORTED)
 set_target_properties(${PROJECT_NAME} PROPERTIES IMPORTED_LOCATION ${BLASFEO_LIB_DIR}/libblasfeo.so)
 add_dependencies(${PROJECT_NAME} blasfeoDownload)
@@ -34,6 +35,14 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CFG_EXTRAS blasfeo-extras.cmake
 )
+
+install(DIRECTORY ${BLASFEO_INCLUDE_DIR}
+  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+)
+install(DIRECTORY ${BLASFEO_LIB_DIR}
+  DESTINATION ${CATKIN_GLOBAL_LIB_DESTINATION}
+)
+
 
 
 

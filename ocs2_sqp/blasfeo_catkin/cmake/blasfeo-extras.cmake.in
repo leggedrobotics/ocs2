@@ -1,7 +1,4 @@
 # Makes find_package(blasfeo) available
-list(APPEND CMAKE_MODULE_PATH $ENV{HOME}/.local/blasfeo/cmake)
+list(APPEND CMAKE_MODULE_PATH @CATKIN_DEVEL_PREFIX@/cmake)
 
-set(BLASFEO_PATH $ENV{HOME}/.local/blasfeo)
-
-set(${PROJECT_NAME}_LIBRARIES $ENV{HOME}/.local/blasfeo/lib/libblasfeo.so)
-set(${PROJECT_NAME}_INCLUDE_DIR $ENV{HOME}/.local/blasfeo/include)
+set(BLASFEO_PATH @CATKIN_DEVEL_PREFIX@)

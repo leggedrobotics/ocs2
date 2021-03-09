@@ -68,6 +68,10 @@ TEST(test_hpiphm_interface, solve_after_resize) {
   std::vector<ocs2::vector_t> uSol;
   hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
 
+  // Solve again!
+  hpipmInterface.resize(ocpSize);
+  hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+
   // Initial condition
   ASSERT_TRUE(xSol[0].isApprox(x0));
 

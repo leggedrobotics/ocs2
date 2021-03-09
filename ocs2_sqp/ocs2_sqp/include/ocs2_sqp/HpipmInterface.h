@@ -18,6 +18,7 @@ namespace ocs2 {
 class HpipmInterface {
  public:
   struct OcpSize {
+    /// !Need to adapt isSizeEqual in implementation if this struct changes!
     int N;                  // Number of stages
     std::vector<int> nu;    // Number of inputs
     std::vector<int> nx;    // Number of states
@@ -43,6 +44,7 @@ class HpipmInterface {
   };
 
   struct Settings {
+    /// !Need to adapt isSettingsEqual in implementation if this struct changes!
     int iter_max = 30;
     scalar_t alpha_min = 1e-8;
     scalar_t mu0 = 1e4;

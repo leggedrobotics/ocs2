@@ -68,9 +68,14 @@ class HpipmInterface::Impl {
   void initializeMemory(OcpSize ocpSize) { initializeMemory(std::move(ocpSize), settings_); }
 
   void initializeMemory(OcpSize ocpSize, const Settings& settings) {
+    ocpSize.nx[0] = 0;
+
+    if (isSizeEqual(ocpSize) && isSettingsEqual(settings)) {
+      return;
+    }
+
     settings_ = settings;
     ocpSize_ = std::move(ocpSize);
-    ocpSize_.nx[0] = 0;
 
     const int dim_size = d_ocp_qp_dim_memsize(ocpSize_.N);
     dimMem_.reserve(dim_size);
@@ -96,6 +101,36 @@ class HpipmInterface::Impl {
     const int ipm_size = d_ocp_qp_ipm_ws_memsize(&dim_, &arg_);
     ipmMem_.reserve(ipm_size);
     d_ocp_qp_ipm_ws_create(&dim_, &arg_, &workspace_, ipmMem_.get());
+  }
+
+  bool isSizeEqual(const OcpSize& ocpSize) const {
+    // use && instead of &= to enable short-circuit evaluation
+    bool same = ocpSize_.N == ocpSize.N;
+    same = same && (ocpSize_.nu == ocpSize.nu);
+    same = same && (ocpSize_.nx == ocpSize.nx);
+    same = same && (ocpSize_.nbu == ocpSize.nbu);
+    same = same && (ocpSize_.nbx == ocpSize.nbx);
+    same = same && (ocpSize_.ng == ocpSize.ng);
+    same = same && (ocpSize_.nsbu == ocpSize.nsbu);
+    same = same && (ocpSize_.nsbx == ocpSize.nsbx);
+    same = same && (ocpSize_.nsg == ocpSize.nsg);
+    return same;
+  }
+
+  bool isSettingsEqual(const Settings& settings) {
+    // use && instead of &= to enable short-circuit evaluation
+    bool same = settings_.iter_max == settings.iter_max;
+    same = same && (settings_.alpha_min == settings.alpha_min);
+    same = same && (settings_.mu0 == settings.mu0);
+    same = same && (settings_.tol_stat == settings.tol_stat);
+    same = same && (settings_.tol_eq == settings.tol_eq);
+    same = same && (settings_.tol_ineq == settings.tol_ineq);
+    same = same && (settings_.tol_comp == settings.tol_comp);
+    same = same && (settings_.reg_prim == settings.reg_prim);
+    same = same && (settings_.warm_start == settings.warm_start);
+    same = same && (settings_.pred_corr == settings.pred_corr);
+    same = same && (settings_.ric_alg == settings.ric_alg);
+    return same;
   }
 
   void applySettings(Settings& settings) {

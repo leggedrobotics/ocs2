@@ -25,19 +25,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## Eigen3
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# here it is assumed that BLASFEO and HPIPM are all installed under /opt
-list(APPEND CMAKE_PREFIX_PATH "/opt")
-find_package(blasfeo QUIET)
-find_package(hpipm QUIET)
-if(blasfeo_FOUND AND hpipm_FOUND)
-    message(STATUS "Found HPIPM and BLASFEO")
-    set(HPIPM ON)
-    list(APPEND HPIPM_LIBS hpipm blasfeo)
-    list(APPEND ct_optcon_COMPILE_DEFINITIONS HPIPM)
-else()
-    message(WARNING "Could not find HPIPM or BLASFEO")
-endif()
-
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -88,7 +75,7 @@ add_dependencies(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} INTERFACE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #########################

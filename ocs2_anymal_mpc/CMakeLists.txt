@@ -16,19 +16,6 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
-# here it is assumed that BLASFEO and HPIPM are all installed under /opt
-list(APPEND CMAKE_PREFIX_PATH "/opt")
-find_package(blasfeo QUIET)
-find_package(hpipm QUIET)
-if(blasfeo_FOUND AND hpipm_FOUND)
-    message(STATUS "Found HPIPM and BLASFEO")
-    set(HPIPM ON)
-    list(APPEND HPIPM_LIBS hpipm blasfeo)
-    list(APPEND ct_optcon_COMPILE_DEFINITIONS HPIPM)
-else()
-    message(WARNING "Could not find HPIPM or BLASFEO")
-endif()
-
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -97,7 +84,7 @@ add_dependencies(${PROJECT_NAME}_mpc_node_sqp
 target_include_directories(${PROJECT_NAME}_mpc_node_sqp INTERFACE
   ${catkin_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME}_mpc_node_sqp ${PROJECT_NAME} ${catkin_LIBRARIES} ${HPIPM_LIBS})
+target_link_libraries(${PROJECT_NAME}_mpc_node_sqp ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_dummy_mrt_node
   src/AnymalDummyMRT.cpp

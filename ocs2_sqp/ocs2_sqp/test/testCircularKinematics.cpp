@@ -1,0 +1,43 @@
+//
+// Created by rgrandia on 09.03.21.
+//
+
+#include <gtest/gtest.h>
+
+#include "ocs2_sqp/MultipleShootingSolver.h"
+
+#include <ocs2_oc/test/circular_kinematics.h>
+
+TEST(test_circular_kinematics, solve) {
+  ocs2::CircularKinematicsSystem system;
+  ocs2::CircularKinematicsCost cost;
+  cost.initialize("circular_kinematics_cost", "/tmp/ocs2", true, false);
+  ocs2::CircularKinematicsConstraints constraint;
+
+  // Solver settings
+  ocs2::MultipleShootingSolverSettings settings;
+  settings.dt = 0.01;
+  settings.n_state = 2;
+  settings.n_input = 2;
+  settings.sqpIteration = 20;
+  settings.qr_decomp = true;
+  settings.printSolverStatistics = true;
+  settings.printSolverStatus = false;
+  settings.printLinesearch = true;
+  ocs2::MultipleShootingSolver solver(settings, &system, &cost, &constraint);
+
+  // Additional problem definitions
+  const ocs2::scalar_t startTime = 0.0;
+  const ocs2::scalar_t finalTime = 1.0;
+  const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
+  const ocs2::scalar_array_t partitioningTimes{};                               // doesn't matter
+
+  // Solve
+  solver.run(startTime, initState, finalTime, partitioningTimes);
+  solver.printPrimalSolution();
+
+  // Check constraint satisfaction.
+  const auto performance = solver.getPerformanceIndeces();
+  ASSERT_LT(performance.stateEqConstraintISE, 1e-6);
+  ASSERT_LT(performance.stateInputEqConstraintISE, 1e-6);
+}

@@ -58,13 +58,6 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-# Circular kinematics example 
-add_executable(${PROJECT_NAME}_circular_kinematics src/MultipleShootingCircularKinematics.cpp)
-target_include_directories(${PROJECT_NAME}_circular_kinematics INTERFACE
-  ${catkin_INCLUDE_DIRS}
-)
-target_link_libraries(${PROJECT_NAME}_circular_kinematics ${catkin_LIBRARIES} ${PROJECT_NAME})
-
 #########################
 ###   CLANG TOOLING   ###
 #########################
@@ -87,6 +80,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
+  test/testCircularKinematics.cpp
   test/testDiscretization.cpp
   test/testHpipmInterface.cpp
   test/testProjection.cpp

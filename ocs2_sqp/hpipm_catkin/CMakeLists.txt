@@ -9,8 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
 include(ExternalProject)
 
 set(HPIPM_INSTALL_PREFIX ${CATKIN_DEVEL_PREFIX} CACHE STRING "HPIPM install path")
-SET(HPIPM_INCLUDE_DIR ${HPIPM_INSTALL_PREFIX}/include)
-SET(HPIPM_LIB_DIR ${HPIPM_INSTALL_PREFIX}/lib)
+set(HPIPM_INCLUDE_DIR ${HPIPM_INSTALL_PREFIX}/include)
+set(HPIPM_LIB_DIR ${HPIPM_INSTALL_PREFIX}/lib)
 
 file(MAKE_DIRECTORY ${HPIPM_INCLUDE_DIR})
 
@@ -31,7 +31,7 @@ ExternalProject_Add(hpipmDownload
 # Create a library to be used in the catkin_package LIBRARIES
 add_library(${PROJECT_NAME} SHARED IMPORTED)
 set_target_properties(${PROJECT_NAME} PROPERTIES IMPORTED_LOCATION ${HPIPM_LIB_DIR}/libhpipm.so)
-add_dependencies(${PROJECT_NAME} hpipmDownload)
+add_dependencies(${PROJECT_NAME} hpipmDownload ${catkin_EXPORTED_TARGETS})
 
 list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS hpipmDownload)
 

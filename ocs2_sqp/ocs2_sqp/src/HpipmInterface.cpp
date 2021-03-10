@@ -204,12 +204,12 @@ class HpipmInterface::Impl {
       auto& constr = *constraints;
       // for ocs2 --> C*dx + D*du + e = 0
       // for hpipm --> ug >= C*dx + D*du >= lg
-      boundData.reserve(ocpSize_.N);
+      boundData.reserve(ocpSize_.N + 1);
 
-      for (int k = 0; k < ocpSize_.N; k++) {
+      for (int k = 0; k < ocpSize_.N + 1; k++) {
         CC[k] = constr[k].dfdx.data();
         DD[k] = constr[k].dfdu.data();
-        boundData.emplace_back(-constr[0].f);
+        boundData.emplace_back(-constr[k].f);
         if (k == 0) {  // Initial constraint
           boundData[k].noalias() -= constr[0].dfdx * x0;
         }

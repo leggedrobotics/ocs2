@@ -305,12 +305,15 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
     cost_[i].f *= dt;
   }
 
+  // Terminal conditions
   if (terminalCostFunctionPtr != nullptr) {
     cost_[N] = terminalCostFunctionPtr->finalCostQuadraticApproximation(time[N], x[N]);
     performance.totalCost += cost_[N].f;
   } else {
     cost_[N] = ScalarFunctionQuadraticApproximation::Zero(settings_.n_state, 0);
   }
+
+  constraints_[N] = VectorFunctionLinearApproximation::Zero(0, settings_.n_state, 0);
 
   // Prepare solver size
   hpipmInterface_.resize(std::move(ocpSize));

@@ -7,6 +7,7 @@
 #include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_sqp/ConstraintProjection.h>
@@ -155,7 +156,28 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   primalSolution_.inputTrajectory_ = std::move(u);
   primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());  // repeat last input to make equal length vectors
   primalSolution_.modeSchedule_ = this->getModeSchedule();
-  primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
+
+  if (constraintPtr_ && settings_.qr_decomp) {
+    // TODO: Add feedback in u_tilde space. Currently only have feedback arising from stateInputEquality
+    vector_array_t uff;
+    matrix_array_t controllerGain;
+    uff.reserve(N + 1);
+    controllerGain.reserve(N + 1);
+    for (int i = 0; i < N; i++) {
+      // Linear controller has convention u = uff + K * x;
+      // We computed u = u'(t) + K (x - x'(t));
+      // >> uff = u'(t) - K x'(t)
+      uff.push_back(primalSolution_.inputTrajectory_[i]);
+      uff.back().noalias() -= constraints_[i].dfdx * primalSolution_.stateTrajectory_[i];
+      controllerGain.push_back(std::move(constraints_[i].dfdx));  // Steal! the feedback matrix, don't use after this.
+    }
+    // Copy last one the get correct length
+    uff.push_back(uff.back());
+    controllerGain.push_back(controllerGain.back());
+    primalSolution_.controllerPtr_.reset(new LinearController(primalSolution_.timeTrajectory_, std::move(uff), std::move(controllerGain)));
+  } else {
+    primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
+  }
 
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";

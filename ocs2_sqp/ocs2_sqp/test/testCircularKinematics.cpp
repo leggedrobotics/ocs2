@@ -7,6 +7,7 @@
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
 #include <ocs2_oc/test/circular_kinematics.h>
+#include <ocs2_core/control/LinearController.h>
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   ocs2::CircularKinematicsSystem system;
@@ -51,6 +52,29 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   const auto performance = solver.getPerformanceIndeces();
   ASSERT_LT(performance.stateEqConstraintISE, 1e-6);
   ASSERT_LT(performance.stateInputEqConstraintISE, 1e-6);
+
+  // Check feedback controller
+  for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
+    const auto t = primalSolution.timeTrajectory_[i];
+    const auto& x = primalSolution.stateTrajectory_[i];
+    const auto& u = primalSolution.inputTrajectory_[i];
+    // Feed forward part
+    ASSERT_TRUE(u.isApprox(primalSolution.controllerPtr_->computeInput(t, x)));
+
+    // Feedback part
+    auto* linearController = dynamic_cast<ocs2::LinearController*>(primalSolution.controllerPtr_.get());
+    ASSERT_NE(linearController, nullptr);
+    if (linearController != nullptr) {
+      // Solve constraint as least squares -> gives feedback matrix for constraints
+      const auto linConstraint = constraint.stateInputEqualityConstraintLinearApproximation(t, x, u);
+      ocs2::matrix_t gainCheck = linConstraint.dfdu.fullPivHouseholderQr().solve(-linConstraint.dfdx);
+
+      // Check!
+      ocs2::matrix_t gain;
+      linearController->getFeedbackGain(t, gain);
+      ASSERT_TRUE(gain.isApprox(gainCheck, 1e-6));
+    }
+  }
 }
 
 TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {

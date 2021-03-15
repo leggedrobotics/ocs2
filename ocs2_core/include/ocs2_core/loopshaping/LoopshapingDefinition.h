@@ -20,9 +20,16 @@ enum class LoopshapingType { outputpattern, inputpattern, eliminatepattern };
 class LoopshapingDefinition {
  public:
   LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, scalar_t gamma = 0.9)
-      : gamma_(gamma), loopshapingType_(loopshapingType), filter_(std::move(filter)) {}
+      : gamma_(gamma), loopshapingType_(loopshapingType), filter_(std::move(filter)) {
+    diagonal_ = true;
+    diagonal_ = diagonal_ && filter_.getA().isDiagonal();
+    diagonal_ = diagonal_ && filter_.getB().isDiagonal();
+    diagonal_ = diagonal_ && filter_.getC().isDiagonal();
+    diagonal_ = diagonal_ && filter_.getD().isDiagonal();
+  }
 
   LoopshapingType getType() const { return loopshapingType_; };
+  bool isDiagonal() const { return diagonal_; };
   const Filter& getInputFilter() const { return filter_; };
 
   void print() const { filter_.print(); };
@@ -39,10 +46,14 @@ class LoopshapingDefinition {
           return input;
         }
       case LoopshapingType::eliminatepattern: {
-        // u = C*x + D*v. Use noalias to prevent temporaries.
-        vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
-        u.noalias() += filter_.getD() * input;
-        return u;
+        if (diagonal_) {
+          return filter_.getCdiag().cwiseProduct(state.tail(filter_.getNumStates())) + filter_.getDdiag().cwiseProduct(input);
+        } else {
+          // u = C*x + D*v. Use noalias to prevent temporaries.
+          vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
+          u.noalias() += filter_.getD() * input;
+          return u;
+        }
       }
       default:
         throw std::runtime_error("[LoopshapingDefinition::getSystemInput] invalid loopshaping type");
@@ -54,7 +65,14 @@ class LoopshapingDefinition {
   vector_t getFilteredInput(const vector_t& state, const vector_t& input) const {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
-        return filter_.getC() * state.tail(filter_.getNumStates()) + filter_.getD() * input.head(filter_.getNumInputs());
+        if (diagonal_) {
+          return filter_.getCdiag().cwiseProduct(state.tail(filter_.getNumStates())) +
+                 filter_.getDdiag().cwiseProduct(input.head(filter_.getNumInputs()));
+        } else {
+          vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
+          u.noalias() += filter_.getD() * input.head(filter_.getNumInputs());
+          return u;
+        }
       case LoopshapingType::inputpattern: /* fall through */
       case LoopshapingType::eliminatepattern:
         return input.tail(filter_.getNumInputs());
@@ -107,6 +125,7 @@ class LoopshapingDefinition {
  private:
   Filter filter_;
   LoopshapingType loopshapingType_;
+  bool diagonal_;
 };
 
 }  // namespace ocs2

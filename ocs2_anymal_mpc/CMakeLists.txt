@@ -182,3 +182,13 @@ install(TARGETS AnymalPyBindings
 #############
 
 catkin_add_nosetests(test)
+
+# Build unit tests
+catkin_add_gtest(${PROJECT_NAME}_test
+  test/testProblemFormulation.cpp
+  )
+target_link_libraries(${PROJECT_NAME}_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+  )

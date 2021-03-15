@@ -5,7 +5,11 @@ namespace ocs2 {
 
 vector_t LoopshapingDynamicsOutputPattern::filterFlowmap(const vector_t& x_filter, const vector_t& u_filter, const vector_t& u_system) {
   const auto& r_filter = loopshapingDefinition_->getInputFilter();
-  return r_filter.getA() * x_filter + r_filter.getB() * u_system;
+  if (loopshapingDefinition_->isDiagonal()) {
+    return r_filter.getAdiag().cwiseProduct(x_filter) + r_filter.getBdiag().cwiseProduct(u_system);
+  } else {
+    return r_filter.getA() * x_filter + r_filter.getB() * u_system;
+  }
 }
 
 VectorFunctionLinearApproximation LoopshapingDynamicsOutputPattern::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {

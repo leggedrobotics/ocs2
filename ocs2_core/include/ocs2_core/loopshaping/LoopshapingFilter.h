@@ -23,6 +23,12 @@ class Filter {
   const matrix_t& getC() const { return C_; };
   const matrix_t& getD() const { return D_; };
 
+  /// Get the diagonal of the filter matrices
+  const vector_t& getAdiag() const { return a_; };
+  const vector_t& getBdiag() const { return b_; };
+  const vector_t& getCdiag() const { return c_; };
+  const vector_t& getDdiag() const { return d_; };
+
   void print() const;
 
   void findEquilibriumForOutput(const vector_t& y, vector_t& x, vector_t& u) const;
@@ -32,6 +38,7 @@ class Filter {
   void checkSize() const;
 
   matrix_t A_, B_, C_, D_;
+  vector_t a_, b_, c_, d_;
   size_t numStates_ = 0;
   size_t numInputs_ = 0;
   size_t numOutputs_ = 0;

@@ -8,10 +8,14 @@ namespace ocs2 {
 
 vector_t LoopshapingDynamicsInputPattern::filterFlowmap(const vector_t& x_filter, const vector_t& u_filter, const vector_t& u_system) {
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  vector_t filterStateDerivative;
-  filterStateDerivative.noalias() = s_filter.getA() * x_filter;
-  filterStateDerivative.noalias() += s_filter.getB() * u_filter;
-  return filterStateDerivative;
+  if (loopshapingDefinition_->isDiagonal()) {
+    return s_filter.getAdiag().cwiseProduct(x_filter) + s_filter.getBdiag().cwiseProduct(u_filter);
+  } else {
+    vector_t filterStateDerivative;
+    filterStateDerivative.noalias() = s_filter.getA() * x_filter;
+    filterStateDerivative.noalias() += s_filter.getB() * u_filter;
+    return filterStateDerivative;
+  }
 }
 
 VectorFunctionLinearApproximation LoopshapingDynamicsInputPattern::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {

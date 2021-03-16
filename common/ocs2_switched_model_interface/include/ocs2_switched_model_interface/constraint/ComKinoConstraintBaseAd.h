@@ -11,6 +11,12 @@
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
+// Constraints
+#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
+#include "ocs2_switched_model_interface/constraint/FootNormalConstraint.h"
+#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
+#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
+
 namespace switched_model {
 
 class ComKinoConstraintBaseAd : public ocs2::ConstraintBase {
@@ -44,6 +50,9 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase {
   /** Initialize Constraint Terms */
   void initializeConstraintTerms();
 
+  /** Get pointer from constraint collection */
+  void collectConstraintPointers();
+
   /** Sets up the state-input constraints for a query at time t */
   void updateStateInputEqualityConstraints(scalar_t t);
 
@@ -53,6 +62,12 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase {
   using ConstraintCollection_t = ConstraintCollection<STATE_DIM, INPUT_DIM>;
   ConstraintCollection_t equalityStateInputConstraintCollection_;  // state input equality constraints
   ConstraintCollection_t inequalityConstraintCollection_;          // inequality constraints
+
+  // Individual constraint access (non-owning)
+  feet_array_t<FootNormalConstraint*> eeNormalConstraints_;
+  feet_array_t<EndEffectorVelocityConstraint*> eeVelConstraints_;
+  feet_array_t<ZeroForceConstraint*> zeroForceConstraints_;
+  feet_array_t<FrictionConeConstraint*> frictionConeConstraints_;
 
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;

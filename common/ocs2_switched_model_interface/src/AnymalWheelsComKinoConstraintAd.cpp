@@ -1,11 +1,5 @@
 #include <ocs2_switched_model_interface/constraint/AnymalWheelsComKinoConstraintAd.h>
 
-// Constraints
-#include "ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h"
-#include "ocs2_switched_model_interface/constraint/FootNormalConstraint.h"
-#include "ocs2_switched_model_interface/constraint/FrictionConeConstraint.h"
-#include "ocs2_switched_model_interface/constraint/ZeroForceConstraint.h"
-
 namespace switched_model {
 
 AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel,
@@ -19,6 +13,7 @@ AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinema
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       options_(std::move(options)) {
   initializeConstraintTerms();
+  collectConstraintPointers();
 }
 
 /******************************************************************************************************/
@@ -32,7 +27,9 @@ AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const AnymalWhe
       swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
       options_(rhs.options_),
       inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
-      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_) {}
+      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_) {
+  collectConstraintPointers();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -76,6 +73,23 @@ void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void AnymalWheelsComKinoConstraintAd::collectConstraintPointers() {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+    auto footName = feetNames[i];
+
+    // Inequalities
+    frictionConeConstraints_[i] = &inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
+
+    // State input equalities
+    zeroForceConstraints_[i] = &equalityStateInputConstraintCollection_.get<ZeroForceConstraint>(footName + "_ZeroForce");
+    eeNormalConstraints_[i] = &equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
+    eeVelConstraints_[i] = &equalityStateInputConstraintCollection_.get<EndEffectorVelocityInFootFrameConstraint>(footName + "_f_EEVel");
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     const auto& footName = feetNames[i];
@@ -83,16 +97,15 @@ void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar
     const bool inContact = footPhase.contactFlag();
 
     // Zero forces active for swing legs
-    equalityStateInputConstraintCollection_.get(footName + "_ZeroForce").setActivity(!inContact);
+    zeroForceConstraints_[i]->setActivity(!inContact);
 
     // Foot normal constraint always active
-    auto& EENormalConstraint = equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
+    auto& EENormalConstraint = *eeNormalConstraints_[i];
     EENormalConstraint.setActivity(true);
     EENormalConstraint.configure(footPhase.getFootNormalConstraintInWorldFrame(t));
 
     // Rolling InFootFrame Velocity constraint for stance legs
-    auto& EEVelInFootFrameConstraint =
-        equalityStateInputConstraintCollection_.get<EndEffectorVelocityInFootFrameConstraint>(footName + "_f_EEVel");
+    auto& EEVelInFootFrameConstraint = *eeVelConstraints_[i];
     EEVelInFootFrameConstraint.setActivity(inContact);
     if (inContact) {
       // EE velocities in lateral direction (y) in foot frame should be zero.
@@ -114,7 +127,7 @@ void AnymalWheelsComKinoConstraintAd::updateInequalityConstraints(scalar_t t) {
     const bool inContact = footPhase.contactFlag();
 
     // Active friction cone constraint for stanceLegs
-    auto& frictionConeConstraint = inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
+    auto& frictionConeConstraint = *frictionConeConstraints_[i];
     frictionConeConstraint.setActivity(inContact);
     if (inContact) {
       frictionConeConstraint.setSurfaceNormalInWorld(footPhase.normalDirectionInWorldFrame(t));

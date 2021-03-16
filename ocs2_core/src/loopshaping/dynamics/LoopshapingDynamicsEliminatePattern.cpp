@@ -61,8 +61,11 @@ VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::jumpMapLi
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, u_system);
 
+  // Filter doesn't Jump
+  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(x);
+
   VectorFunctionLinearApproximation jumpMap;
-  jumpMap.f = this->computeJumpMap(t, x);
+  jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
 
   jumpMap.dfdx.resize(x.rows(), x.rows());
   jumpMap.dfdx.topLeftCorner(x_system.rows(), x_system.rows()) = jumpMap_system.dfdx;

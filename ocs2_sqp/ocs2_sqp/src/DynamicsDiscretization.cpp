@@ -6,6 +6,32 @@
 
 namespace ocs2 {
 
+DynamicsDiscretizer selectDynamicsDiscretization(SensitivityIntegratorType integratorType) {
+  switch (integratorType) {
+    case SensitivityIntegratorType::EULER:
+      return eulerDiscretization;
+    case SensitivityIntegratorType::RK2:
+      return rk2Discretization;
+    case SensitivityIntegratorType::RK4:
+      return rk4Discretization;
+    default:
+      throw std::runtime_error("Integrator not supported.");
+  }
+}
+
+DynamicsSensitivityDiscretizer selectDynamicsSensitivityDiscretization(SensitivityIntegratorType integratorType) {
+  switch (integratorType) {
+    case SensitivityIntegratorType::EULER:
+      return eulerSensitivityDiscretization;
+    case SensitivityIntegratorType::RK2:
+      return rk2SensitivityDiscretization;
+    case SensitivityIntegratorType::RK4:
+      return rk4SensitivityDiscretization;
+    default:
+      throw std::runtime_error("Integrator not supported.");
+  }
+}
+
 vector_t eulerDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t dt) {
   return x + dt * system.computeFlowMap(t, x, u);
 }
@@ -16,13 +42,49 @@ VectorFunctionLinearApproximation eulerSensitivityDiscretization(SystemDynamicsB
   // A_{k} = Id + dt * dfdx
   // B_{k} = dt * dfdu
   // b_{k} = x_{n} + dt * f(x_{n},u_{n})
-  const auto continuousApproximation = system.linearApproximation(t, x, u);
-  VectorFunctionLinearApproximation discreteApproximation;
-  discreteApproximation.dfdx = dt * continuousApproximation.dfdx;
-  discreteApproximation.dfdx.diagonal().array() += 1.0;  // plus Identity()
-  discreteApproximation.dfdu = dt * continuousApproximation.dfdu;
-  discreteApproximation.f = x + dt * continuousApproximation.f;
-  return discreteApproximation;
+  auto continuousApproximation = system.linearApproximation(t, x, u);
+  continuousApproximation.dfdx *= dt;
+  continuousApproximation.dfdx.diagonal().array() += 1.0;  // plus Identity()
+  continuousApproximation.dfdu *= dt;
+  continuousApproximation.f = x + dt * continuousApproximation.f;
+  return continuousApproximation;
+}
+
+vector_t rk2Discretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t dt) {
+  const scalar_t dt_halve = dt / 2.0;
+
+  // System evaluations
+  const vector_t k1 = system.computeFlowMap(t, x, u);
+  const vector_t k2 = system.computeFlowMap(t + dt, x + dt * k1, u);
+
+  return x + dt_halve * k1 + dt_halve * k2;
+}
+
+VectorFunctionLinearApproximation rk2SensitivityDiscretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u,
+                                                               scalar_t dt) {
+  const scalar_t dt_halve = dt / 2.0;
+
+  // System evaluations
+  VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
+  VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt, x + dt * k1.f, u);
+
+  // Input sensitivity \dot{Su} = dfdx(t) Su + dfdu(t), with Su(0) = Zero()
+  // Re-use memory from k.dfdu as dkduk
+  // dk1duk = k1.dfdu
+  k2.dfdu.noalias() += dt * k2.dfdx * k1.dfdu;
+
+  // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
+  // Re-use memory from k.dfdx as dkdxk
+  // dk1dxk = k1.dfdx;
+  k2.dfdx += dt * k2.dfdx * k1.dfdx;  // need one temporary to avoid alias
+
+  // Assemble discrete approximation
+  // Re-use k1 to collect the result
+  k1.dfdx = dt_halve * k1.dfdx + dt_halve * k2.dfdx;
+  k1.dfdx.diagonal().array() += 1.0;  // plus Identity()
+  k1.dfdu = dt_halve * k1.dfdu + dt_halve * k2.dfdu;
+  k1.f = x + dt_halve * k1.f + dt_halve * k2.f;
+  return k1;
 }
 
 vector_t rk4Discretization(SystemDynamicsBase& system, scalar_t t, const vector_t& x, const vector_t& u, scalar_t dt) {

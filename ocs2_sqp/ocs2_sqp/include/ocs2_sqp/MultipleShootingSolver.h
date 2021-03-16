@@ -3,16 +3,20 @@
 //
 
 #pragma once
+
+#include <iostream>
+
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
+#include <ocs2_sqp/DynamicsDiscretization.h>
 #include <ocs2_sqp/HpipmInterface.h>
-#include <iostream>
 
 namespace ocs2 {
 
@@ -22,6 +26,9 @@ struct MultipleShootingSolverSettings {
   size_t n_input = 0;
   size_t sqpIteration = 1;
   scalar_t deltaTol = 1e-6;
+
+  // Discretization method
+  SensitivityIntegratorType integratorType = SensitivityIntegratorType::RK2;
 
   // Inequality penalty method
   scalar_t inequalityConstraintMu = 0.0;
@@ -102,6 +109,8 @@ class MultipleShootingSolver : public SolverBase {
 
   // Problem definition
   MultipleShootingSolverSettings settings_;
+  DynamicsDiscretizer discretizer_;
+  DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
   std::unique_ptr<CostFunctionBase> costFunctionPtr_;
   std::unique_ptr<ConstraintBase> constraintPtr_;

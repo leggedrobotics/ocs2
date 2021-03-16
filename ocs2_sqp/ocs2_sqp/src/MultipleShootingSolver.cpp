@@ -12,7 +12,6 @@
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_sqp/ConstraintProjection.h>
 
-#include <ocs2_sqp/DynamicsDiscretization.h>
 #include <iostream>
 
 namespace ocs2 {
@@ -29,6 +28,9 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
       settings_(std::move(settings)),
       totalNumIterations_(0),
       performanceIndeces_() {
+  discretizer_ = selectDynamicsDiscretization(settings.integratorType);
+  sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(settings.integratorType);
+
   if (constraintPtr != nullptr) {
     constraintPtr_.reset(constraintPtr->clone());
 
@@ -280,7 +282,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
 
     // Dynamics
     // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
-    dynamics_[i] = rk4SensitivityDiscretization(systemDynamics, ti, x[i], u[i], dt);
+    dynamics_[i] = sensitivityDiscretizer_(systemDynamics, ti, x[i], u[i], dt);
     dynamics_[i].f -= x[i + 1];  // make it dx_{k+1} = ...
     performance.stateEqConstraintISE += dt * dynamics_[i].f.squaredNorm();
 
@@ -356,7 +358,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(SystemDynamicsBase& 
     const scalar_t dt = time[i + 1] - time[i];
 
     // Dynamics
-    const vector_t dynamicsGap = rk4Discretization(systemDynamics, ti, x[i], u[i], dt) - x[i + 1];
+    const vector_t dynamicsGap = discretizer_(systemDynamics, ti, x[i], u[i], dt) - x[i + 1];
     performance.stateEqConstraintISE += dt * dynamicsGap.squaredNorm();
 
     // Costs

@@ -6,8 +6,8 @@
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
-#include <ocs2_oc/test/circular_kinematics.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_oc/test/circular_kinematics.h>
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   ocs2::CircularKinematicsSystem system;
@@ -89,7 +89,7 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   settings.n_state = 2;
   settings.n_input = 2;
   settings.sqpIteration = 20;
-  settings.qr_decomp = false; // <- false to turn off projection of state-input equalities
+  settings.qr_decomp = false;  // <- false to turn off projection of state-input equalities
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;

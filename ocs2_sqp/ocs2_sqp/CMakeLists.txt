@@ -88,6 +88,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
   test/testDiscretization.cpp
+  test/testDynamics.cpp
   test/testHpipmInterface.cpp
   test/testProjection.cpp
 )

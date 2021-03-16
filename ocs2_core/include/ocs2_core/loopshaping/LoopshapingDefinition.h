@@ -47,7 +47,7 @@ class LoopshapingDefinition {
         }
       case LoopshapingType::eliminatepattern: {
         if (diagonal_) {
-          return filter_.getCdiag().cwiseProduct(state.tail(filter_.getNumStates())) + filter_.getDdiag().cwiseProduct(input);
+          return filter_.getCdiag() * state.tail(filter_.getNumStates()) + filter_.getDdiag() * input;
         } else {
           // u = C*x + D*v. Use noalias to prevent temporaries.
           vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
@@ -66,8 +66,7 @@ class LoopshapingDefinition {
     switch (loopshapingType_) {
       case LoopshapingType::outputpattern:
         if (diagonal_) {
-          return filter_.getCdiag().cwiseProduct(state.tail(filter_.getNumStates())) +
-                 filter_.getDdiag().cwiseProduct(input.head(filter_.getNumInputs()));
+          return filter_.getCdiag() * state.tail(filter_.getNumStates()) + filter_.getDdiag() * input.head(filter_.getNumInputs());
         } else {
           vector_t u = filter_.getC() * state.tail(filter_.getNumStates());
           u.noalias() += filter_.getD() * input.head(filter_.getNumInputs());

@@ -81,7 +81,7 @@ vector_t LoopshapingConstraintInputPattern::stateInputEqualityConstraint(scalar_
   vector_t g(g_system.rows() + u_system.rows());
   g.head(g_system.rows()) = g_system;
   if (isDiagonal) {
-    g.tail(u_system.rows()) = s_filter.getCdiag().cwiseProduct(x_filter) + s_filter.getDdiag().cwiseProduct(u_filter) - u_system;
+    g.tail(u_system.rows()) = s_filter.getCdiag() * x_filter + s_filter.getDdiag() * u_filter - u_system;
   } else {
     g.tail(u_system.rows()) = s_filter.getC() * x_filter + s_filter.getD() * u_filter - u_system;
   }
@@ -104,7 +104,7 @@ VectorFunctionLinearApproximation LoopshapingConstraintInputPattern::stateInputE
   g.f.resize(g_system.f.rows() + u_system.rows());
   g.f.head(g_system.f.rows()) = g_system.f;
   if (isDiagonal) {
-    g.f.tail(u_system.rows()) = s_filter.getCdiag().cwiseProduct(x_filter) + s_filter.getDdiag().cwiseProduct(u_filter) - u_system;
+    g.f.tail(u_system.rows()) = s_filter.getCdiag() * x_filter + s_filter.getDdiag() * u_filter - u_system;
   } else {
     g.f.tail(u_system.rows()) = s_filter.getC() * x_filter + s_filter.getD() * u_filter - u_system;
   }

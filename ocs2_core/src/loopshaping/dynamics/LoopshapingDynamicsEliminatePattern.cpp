@@ -6,7 +6,7 @@ namespace ocs2 {
 vector_t LoopshapingDynamicsEliminatePattern::filterFlowmap(const vector_t& x_filter, const vector_t& u_filter, const vector_t& u_system) {
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
   if (loopshapingDefinition_->isDiagonal()) {
-    return s_filter.getAdiag().cwiseProduct(x_filter) + s_filter.getBdiag().cwiseProduct(u_filter);
+    return s_filter.getAdiag() * x_filter + s_filter.getBdiag() * u_filter;
   } else {
     vector_t dynamics_filter;
     dynamics_filter.noalias() = s_filter.getA() * x_filter;
@@ -33,7 +33,7 @@ VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::linearApp
   dynamics.dfdx.resize(x.rows(), x.rows());
   dynamics.dfdx.topLeftCorner(x_system.rows(), x_system.rows()) = dynamics_system.dfdx;
   if (isDiagonal) {
-    dynamics.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = dynamics_system.dfdu * s_filter.getCdiag().asDiagonal();
+    dynamics.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = dynamics_system.dfdu * s_filter.getCdiag();
   } else {
     dynamics.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = dynamics_system.dfdu * s_filter.getC();
   }
@@ -42,7 +42,7 @@ VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::linearApp
 
   dynamics.dfdu.resize(x.rows(), u.rows());
   if (isDiagonal) {
-    dynamics.dfdu.topRows(x_system.rows()).noalias() = dynamics_system.dfdu * s_filter.getDdiag().asDiagonal();
+    dynamics.dfdu.topRows(x_system.rows()).noalias() = dynamics_system.dfdu * s_filter.getDdiag();
   } else {
     dynamics.dfdu.topRows(x_system.rows()).noalias() = dynamics_system.dfdu * s_filter.getD();
   }
@@ -61,13 +61,16 @@ VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::jumpMapLi
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, u_system);
 
+  // Filter doesn't Jump
+  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(x);
+
   VectorFunctionLinearApproximation jumpMap;
-  jumpMap.f = this->computeJumpMap(t, x);
+  jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
 
   jumpMap.dfdx.resize(x.rows(), x.rows());
   jumpMap.dfdx.topLeftCorner(x_system.rows(), x_system.rows()) = jumpMap_system.dfdx;
   if (isDiagonal) {
-    jumpMap.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = jumpMap_system.dfdu * s_filter.getCdiag().asDiagonal();
+    jumpMap.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = jumpMap_system.dfdu * s_filter.getCdiag();
   } else {
     jumpMap.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = jumpMap_system.dfdu * s_filter.getC();
   }
@@ -77,7 +80,7 @@ VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::jumpMapLi
   jumpMap.dfdu.resize(x.rows(), u.rows());
 
   if (isDiagonal) {
-    jumpMap.dfdu.topRows(x_system.rows()).noalias() = jumpMap_system.dfdu * s_filter.getDdiag().asDiagonal();
+    jumpMap.dfdu.topRows(x_system.rows()).noalias() = jumpMap_system.dfdu * s_filter.getDdiag();
   } else {
     jumpMap.dfdu.topRows(x_system.rows()).noalias() = jumpMap_system.dfdu * s_filter.getD();
   }

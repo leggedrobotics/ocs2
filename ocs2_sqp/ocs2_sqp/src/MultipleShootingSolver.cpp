@@ -28,6 +28,9 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
       settings_(std::move(settings)),
       totalNumIterations_(0),
       performanceIndeces_() {
+  // Multithreading
+  Eigen::setNbThreads(1);  // No multithreading within Eigen.
+
   discretizer_ = selectDynamicsDiscretization(settings.integratorType);
   sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(settings.integratorType);
 

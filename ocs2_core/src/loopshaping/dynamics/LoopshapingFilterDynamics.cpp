@@ -21,7 +21,7 @@ vector_t LoopshapingFilterDynamics::computeFlowMap(scalar_t time, const vector_t
   switch (loopshapingDefinition_->getType()) {
     case LoopshapingType::outputpattern:
       if (isDiagonal) {
-        return filter.getAdiag().cwiseProduct(filter_state) + filter.getBdiag().cwiseProduct(input);
+        return filter.getAdiag() * filter_state + filter.getBdiag() * input;
       } else {
         vector_t filterStateDerivative = filter.getA() * filter_state;
         filterStateDerivative.noalias() += filter.getB() * input;
@@ -30,7 +30,7 @@ vector_t LoopshapingFilterDynamics::computeFlowMap(scalar_t time, const vector_t
     case LoopshapingType::inputpattern: /* fall through */
     case LoopshapingType::eliminatepattern:
       if (isDiagonal) {
-        return filter.getAdiag().cwiseProduct(filter_state) + filter.getBdiag().cwiseProduct(input.tail(filter.getNumInputs()));
+        return filter.getAdiag() * filter_state + filter.getBdiag() * input.tail(filter.getNumInputs());
       } else {
         vector_t filterStateDerivative = filter.getA() * filter_state;
         filterStateDerivative.noalias() += filter.getB() * input.tail(filter.getNumInputs());

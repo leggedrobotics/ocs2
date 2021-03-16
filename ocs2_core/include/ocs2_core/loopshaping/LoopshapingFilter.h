@@ -10,6 +10,8 @@ namespace ocs2 {
 
 class Filter {
  public:
+  using diag_matrix_t = Eigen::DiagonalMatrix<ocs2::scalar_t, Eigen::Dynamic>;
+
   Filter();
 
   Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D);
@@ -24,10 +26,10 @@ class Filter {
   const matrix_t& getD() const { return D_; };
 
   /// Get the diagonal of the filter matrices
-  const vector_t& getAdiag() const { return a_; };
-  const vector_t& getBdiag() const { return b_; };
-  const vector_t& getCdiag() const { return c_; };
-  const vector_t& getDdiag() const { return d_; };
+  const diag_matrix_t& getAdiag() const { return a_; };
+  const diag_matrix_t& getBdiag() const { return b_; };
+  const diag_matrix_t& getCdiag() const { return c_; };
+  const diag_matrix_t& getDdiag() const { return d_; };
 
   void print() const;
 
@@ -38,7 +40,7 @@ class Filter {
   void checkSize() const;
 
   matrix_t A_, B_, C_, D_;
-  vector_t a_, b_, c_, d_;
+  diag_matrix_t a_, b_, c_, d_;
   size_t numStates_ = 0;
   size_t numInputs_ = 0;
   size_t numOutputs_ = 0;

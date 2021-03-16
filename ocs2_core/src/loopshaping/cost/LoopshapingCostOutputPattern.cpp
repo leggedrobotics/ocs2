@@ -49,7 +49,7 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::costQuadratic
   L.dfdx.resize(x.rows());
   L.dfdx.head(x_system.rows()) = gamma * L_filter.dfdx + (1.0 - gamma) * L_system.dfdx;
   if (isDiagonal) {
-    L.dfdx.tail(x_filter.rows()) = gamma * r_filter.getCdiag().asDiagonal() * L_filter.dfdu;
+    L.dfdx.tail(x_filter.rows()) = gamma * r_filter.getCdiag() * L_filter.dfdu;
   } else {
     L.dfdx.tail(x_filter.rows()) = gamma * r_filter.getC().transpose() * L_filter.dfdu;
   }
@@ -57,9 +57,8 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::costQuadratic
   L.dfdxx.resize(x.rows(), x.rows());
   L.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = gamma * L_filter.dfdxx + (1.0 - gamma) * L_system.dfdxx;
   if (isDiagonal) {
-    L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()) = gamma * L_filter.dfdux.transpose() * r_filter.getCdiag().asDiagonal();
-    L.dfdxx.bottomRightCorner(x_filter.rows(), x_filter.rows()) =
-        gamma * r_filter.getCdiag().asDiagonal() * L_filter.dfduu * r_filter.getCdiag().asDiagonal();
+    L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()) = gamma * L_filter.dfdux.transpose() * r_filter.getCdiag();
+    L.dfdxx.bottomRightCorner(x_filter.rows(), x_filter.rows()) = gamma * r_filter.getCdiag() * L_filter.dfduu * r_filter.getCdiag();
   } else {
     L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()) = gamma * L_filter.dfdux.transpose() * r_filter.getC();
     L.dfdxx.bottomRightCorner(x_filter.rows(), x_filter.rows()) = gamma * r_filter.getC().transpose() * L_filter.dfduu * r_filter.getC();
@@ -67,8 +66,8 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::costQuadratic
   L.dfdxx.bottomLeftCorner(x_filter.rows(), x_system.rows()) = L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()).transpose();
 
   if (isDiagonal) {
-    L.dfdu = gamma * r_filter.getDdiag().asDiagonal() * L_filter.dfdu + (1.0 - gamma) * L_system.dfdu;
-    L.dfduu = gamma * r_filter.getDdiag().asDiagonal() * L_filter.dfduu * r_filter.getDdiag().asDiagonal() + (1.0 - gamma) * L_system.dfduu;
+    L.dfdu = gamma * r_filter.getDdiag() * L_filter.dfdu + (1.0 - gamma) * L_system.dfdu;
+    L.dfduu = gamma * r_filter.getDdiag() * L_filter.dfduu * r_filter.getDdiag() + (1.0 - gamma) * L_system.dfduu;
   } else {
     L.dfdu = gamma * r_filter.getD().transpose() * L_filter.dfdu + (1.0 - gamma) * L_system.dfdu;
     L.dfduu = gamma * r_filter.getD().transpose() * L_filter.dfduu * r_filter.getD() + (1.0 - gamma) * L_system.dfduu;
@@ -76,8 +75,8 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::costQuadratic
 
   L.dfdux.resize(u.rows(), x.rows());
   if (isDiagonal) {
-    L.dfdux.leftCols(x_system.rows()) = gamma * r_filter.getDdiag().asDiagonal() * L_filter.dfdux + (1.0 - gamma) * L_system.dfdux;
-    L.dfdux.rightCols(x_filter.rows()) = gamma * r_filter.getDdiag().asDiagonal() * L_filter.dfduu * r_filter.getCdiag().asDiagonal();
+    L.dfdux.leftCols(x_system.rows()) = gamma * r_filter.getDdiag() * L_filter.dfdux + (1.0 - gamma) * L_system.dfdux;
+    L.dfdux.rightCols(x_filter.rows()) = gamma * r_filter.getDdiag() * L_filter.dfduu * r_filter.getCdiag();
   } else {
     L.dfdux.leftCols(x_system.rows()) = gamma * r_filter.getD().transpose() * L_filter.dfdux + (1.0 - gamma) * L_system.dfdux;
     L.dfdux.rightCols(x_filter.rows()) = gamma * r_filter.getD().transpose() * L_filter.dfduu * r_filter.getC();

@@ -1,48 +1,58 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(blasfeo_catkin)
 
 find_package(catkin REQUIRED)
 
-include(ExternalProject)
+include(FetchContent)
 
-set(BLASFEO_INSTALL_PREFIX $ENV{HOME}/.local CACHE STRING "Blasfeo install path")
+# Define directories
+set(BLASFEO_INSTALL_PREFIX ${CATKIN_DEVEL_PREFIX} CACHE STRING "Blasfeo install path")
 set(BLASFEO_INCLUDE_DIR ${BLASFEO_INSTALL_PREFIX}/include)
 set(BLASFEO_LIB_DIR ${BLASFEO_INSTALL_PREFIX}/lib)
+set(BLASFEO_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/download)
+set(BLASFEO_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
 
+# Create directories if they do not exist
 file(MAKE_DIRECTORY ${BLASFEO_INCLUDE_DIR})
 file(MAKE_DIRECTORY ${BLASFEO_LIB_DIR})
+file(MAKE_DIRECTORY ${BLASFEO_DOWNLOAD_DIR})
+file(MAKE_DIRECTORY ${BLASFEO_BUILD_DIR})
 
-ExternalProject_Add(blasfeoDownload
-  GIT_REPOSITORY https://github.com/giaf/blasfeo
-  UPDATE_COMMAND ""
-  CMAKE_ARGS
-    -DCMAKE_INSTALL_PREFIX=${BLASFEO_INSTALL_PREFIX}
-    -DCMAKE_BUILD_TYPE=Release
-    -DBUILD_SHARED_LIBS:STRING=ON
-    -DTARGET:STRING=X64_AUTOMATIC
-    -DBLASFEO_EXAMPLES:BOOL=OFF # Don't build examples
-  BUILD_COMMAND $(MAKE)
-  INSTALL_COMMAND $(MAKE) install
+# BLASFEO Settings
+set(CMAKE_INSTALL_PREFIX ${BLASFEO_INSTALL_PREFIX} CACHE STRING "Installation path" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE STRING "Build shared libraries" FORCE)
+set(TARGET X64_AUTOMATIC CACHE STRING "Target architecture" FORCE)
+set(BLASFEO_EXAMPLES OFF CACHE BOOL "Examples enabled")
+
+# Download & build source
+FetchContent_Declare(blasfeoDownload
+	GIT_REPOSITORY https://github.com/giaf/blasfeo
+	UPDATE_COMMAND ""
+	SOURCE_DIR ${BLASFEO_DOWNLOAD_DIR}
+	BINARY_DIR ${BLASFEO_BUILD_DIR}
+	BUILD_COMMAND $(MAKE)
+	INSTALL_COMMAND "$(MAKE) install"
 )
+FetchContent_MakeAvailable(blasfeoDownload)
 
-# Create a library to be used in the catkin_package LIBRARIES
-add_library(${PROJECT_NAME} SHARED IMPORTED)
-set_target_properties(${PROJECT_NAME} PROPERTIES IMPORTED_LOCATION ${BLASFEO_LIB_DIR}/libblasfeo.so)
-add_dependencies(${PROJECT_NAME} blasfeoDownload)
+# Copy header to where catkin expects them
+file(COPY ${BLASFEO_DOWNLOAD_DIR}/include/ DESTINATION ${BLASFEO_INCLUDE_DIR})
 
-list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS blasfeoDownload)
+# Install the library where catkin expects them
+set_target_properties(blasfeo PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${BLASFEO_LIB_DIR})
 
+# Propagate dependencies
 catkin_package(
-  INCLUDE_DIRS ${BLASFEO_INCLUDE_DIR}
-  LIBRARIES ${PROJECT_NAME}
-  CFG_EXTRAS blasfeo-extras.cmake
+	INCLUDE_DIRS ${BLASFEO_INCLUDE_DIR}
+	LIBRARIES blasfeo
+	CFG_EXTRAS blasfeo-extras.cmake
 )
 
-install(DIRECTORY ${BLASFEO_INCLUDE_DIR}/
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+install(DIRECTORY ${BLASFEO_INCLUDE_DIR}
+	DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
 )
 install(DIRECTORY ${BLASFEO_LIB_DIR}/
-  DESTINATION ${CATKIN_GLOBAL_LIB_DESTINATION}
+	DESTINATION ${CATKIN_GLOBAL_LIB_DESTINATION}
 )
 
 

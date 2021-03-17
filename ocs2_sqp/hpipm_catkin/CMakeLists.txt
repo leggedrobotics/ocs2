@@ -42,7 +42,10 @@ FetchContent_Declare(hpipmDownload
 FetchContent_MakeAvailable(hpipmDownload)
 
 # Copy header to where catkin expects them
-file(COPY ${HPIPM_DOWNLOAD_DIR}/include/ DESTINATION ${HPIPM_INCLUDE_DIR})
+file(GLOB_RECURSE HEADERS "${HPIPM_DOWNLOAD_DIR}/include/*.h")
+foreach(HEADER_FILE ${HEADERS})
+  file(COPY ${HEADER_FILE} DESTINATION ${HPIPM_INCLUDE_DIR})
+endforeach()
 
 # Install the library where catkin expects them
 set_target_properties(hpipm PROPERTIES

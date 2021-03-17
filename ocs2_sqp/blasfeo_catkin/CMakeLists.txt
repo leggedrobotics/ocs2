@@ -36,7 +36,10 @@ FetchContent_Declare(blasfeoDownload
 FetchContent_MakeAvailable(blasfeoDownload)
 
 # Copy header to where catkin expects them
-file(COPY ${BLASFEO_DOWNLOAD_DIR}/include/ DESTINATION ${BLASFEO_INCLUDE_DIR})
+file(GLOB_RECURSE HEADERS "${BLASFEO_DOWNLOAD_DIR}/include/*.h")
+foreach(HEADER_FILE ${HEADERS})
+	file(COPY ${HEADER_FILE} DESTINATION ${BLASFEO_INCLUDE_DIR})
+endforeach()
 
 # Install the library where catkin expects them
 set_target_properties(blasfeo PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${BLASFEO_LIB_DIR})

@@ -88,17 +88,9 @@ class MPC_MRT_Interface final : public MRT_BASE {
    * @brief Access the solver's internal value function
    * @param time: query time
    * @param state: query state
-   * @return The value function at the requested time and state.
+   * @return The quadratic approximation of the value function at the requested time and state.
    */
-  scalar_t getValueFunction(scalar_t time, const vector_t& state) const;
-
-  /**
-   * @brief Calculates the state derivative of the value function
-   * @param [in] time: the query time
-   * @param [in] state: query state
-   * @return The partial derivative of the value function at the requested time and state.
-   */
-  vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const;
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const;
 
   /**
    * @brief Computes the Lagrange multiplier related to the state-input constraints

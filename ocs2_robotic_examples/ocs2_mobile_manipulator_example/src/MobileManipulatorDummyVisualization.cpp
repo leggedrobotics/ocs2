@@ -87,7 +87,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   }
 
   robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
-  robotStatePublisherPtr_->publishFixedTransforms("", true);
+  robotStatePublisherPtr_->publishFixedTransforms(true);
 
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
@@ -133,7 +133,7 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   const auto j_arm = getArmJointPositions(observation.state);
   std::map<std::string, scalar_t> jointPositions{{"SH_ROT", j_arm(0)}, {"SH_FLE", j_arm(1)}, {"EL_FLE", j_arm(2)},
                                                  {"EL_ROT", j_arm(3)}, {"WR_FLE", j_arm(4)}, {"WR_ROT", j_arm(5)}};
-  robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp, "");
+  robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
 }
 
 /******************************************************************************************************/

@@ -162,14 +162,14 @@ ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::valueFunction(scalar_t t, Eigen::Ref<const vector_t> x) {
-  return mpcMrtInterface_->getValueFunction(t, x);
+  return mpcMrtInterface_->getValueFunction(t, x).f;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::valueFunctionStateDerivative(scalar_t t, Eigen::Ref<const vector_t> x) {
-  return mpcMrtInterface_->getValueFunctionStateDerivative(t, x);
+  return mpcMrtInterface_->getValueFunction(t, x).dfdx;
 }
 
 /******************************************************************************************************/

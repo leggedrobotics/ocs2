@@ -8,11 +8,12 @@ find_package(catkin REQUIRED COMPONENTS
 
 include(ExternalProject)
 
-set(HPIPM_INSTALL_PREFIX ${CATKIN_DEVEL_PREFIX} CACHE STRING "HPIPM install path")
+set(HPIPM_INSTALL_PREFIX $ENV{HOME}/.local CACHE STRING "HPIPM install path")
 set(HPIPM_INCLUDE_DIR ${HPIPM_INSTALL_PREFIX}/include)
 set(HPIPM_LIB_DIR ${HPIPM_INSTALL_PREFIX}/lib)
 
 file(MAKE_DIRECTORY ${HPIPM_INCLUDE_DIR})
+file(MAKE_DIRECTORY ${HPIPM_LIB_DIR})
 
 message(STATUS "BLASFEO_PATH: " ${BLASFEO_PATH})
 
@@ -21,6 +22,7 @@ ExternalProject_Add(hpipmDownload
   UPDATE_COMMAND ""
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX=${HPIPM_INSTALL_PREFIX}
+    -DCMAKE_BUILD_TYPE=Release
     -DBUILD_SHARED_LIBS:STRING=ON
     -DBLASFEO_PATH:STRING=${BLASFEO_PATH} # Find blasfeo through exported path from blasfeo_catkin
     -DHPIPM_TESTING:BOOL=OFF # Don't build tests

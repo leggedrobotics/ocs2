@@ -1,4 +1,2 @@
-# Makes find_package(blasfeo) available
-list(APPEND CMAKE_MODULE_PATH @CATKIN_DEVEL_PREFIX@/cmake)
-
-set(BLASFEO_PATH @CATKIN_DEVEL_PREFIX@)
+# Forward BLASFEO_PATH explicitly
+set(BLASFEO_PATH @BLASFEO_DEVEL_PREFIX@)

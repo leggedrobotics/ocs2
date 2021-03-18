@@ -266,7 +266,7 @@ class HpipmInterface::Impl {
     getStateSolution(x0, stateTrajectory);
     getInputSolution(inputTrajectory);
 
-    // return true if solved
+    // Return solver status
     int hpipmStatus = -1;
     d_ocp_qp_ipm_get_status(&workspace_, &hpipmStatus);
     return hpipm_status(hpipmStatus);

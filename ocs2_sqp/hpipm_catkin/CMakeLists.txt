@@ -124,5 +124,3 @@ target_link_libraries(test_${PROJECT_NAME}
   hpipm
   gtest_main
 )
-
-

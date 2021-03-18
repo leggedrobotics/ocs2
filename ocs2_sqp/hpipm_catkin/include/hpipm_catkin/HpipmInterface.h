@@ -1,6 +1,31 @@
-//
-// Created by rgrandia on 18.02.21.
-//
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #pragma once
 
@@ -49,7 +74,7 @@ class HpipmInterface {
 
   struct Settings {
     /// !Need to adapt isSettingsEqual in implementation if this struct changes!
-    hpipm_mode hpipmMode = hpipm_mode::SPEED_ABS;
+    hpipm_mode hpipmMode = hpipm_mode::SPEED;
     int iter_max = 30;
     scalar_t alpha_min = 1e-8;
     scalar_t mu0 = 1e4;
@@ -64,8 +89,19 @@ class HpipmInterface {
     Settings(){};
   };
 
+  /**
+   * Construct the Hpipm interface with the minimal size and default settings.
+   * Will need to call resize() with the correct problem dimensions before calling solve()
+   */
   HpipmInterface() : HpipmInterface(OcpSize{0, 0, 0}){};
+
+  /**
+   * Construct the Hpipm interface with given size and settings.
+   * Can directly call solve() for a problem with consistent size.
+   */
   explicit HpipmInterface(OcpSize ocpSize, const Settings& settings = Settings());
+
+  /** Destructor */
   ~HpipmInterface();
 
   /**
@@ -79,7 +115,19 @@ class HpipmInterface {
   void resize(OcpSize ocpSize);
 
   /**
-   * @return  HPIPM returned with flag:
+   * Solves a discrete linear quadratic optimal control problem. The interface needs to be resized to a consistent OcpSize before calling
+   * this function
+   *
+   * The problem should be consistently defined in absolute or delta decision variables in x and u.
+   *
+   * @param x0 : Initial state (deviation).
+   * @param dynamics : Linearized approximation of the discrete dynamics.
+   * @param cost : Quadratic approximation of the discrete dynamics.
+   * @param constraints : Linearized approximation of constraints, all constraints are mapped to inequality constraints in HPIPM.
+   * @param [out] stateTrajectory : Solution state (deviation) trajectory.
+   * @param [out] inputTrajectory : Solution input (deviation) trajectory.
+   * @param verbose : Prints the HPIPM iteration statistics if true.
+   * @return HPIPM returned with flag:
    *    0 = QP solved;
    *    1 = Maximum number of iterations reached;
    *    2 = Minimum step length reached;

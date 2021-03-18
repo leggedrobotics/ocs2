@@ -46,8 +46,6 @@ class CostDesiredTrajectories {
 
   explicit CostDesiredTrajectories(size_t trajectorySize);
 
-  ~CostDesiredTrajectories() = default;
-
   bool empty() const;
 
   void clear();

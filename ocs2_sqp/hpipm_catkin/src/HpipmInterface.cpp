@@ -214,8 +214,17 @@ class HpipmInterface::Impl {
       bb[k] = dynamics[k].f.data();
     }
 
-    // Cost k = 0 -> N
-    for (int k = 0; k < (ocpSize_.N + 1); k++) {
+    // Cost k = 0. Elimination of initial state requires cost adaptation
+    vector_t r0 = cost[0].dfdu;
+    r0 += cost[0].dfdux * x0;
+    QQ[0] = cost[0].dfdxx.data();
+    RR[0] = cost[0].dfduu.data();
+    SS[0] = cost[0].dfdux.data();
+    qq[0] = cost[0].dfdx.data();  // q[0] would change, but it doesn't matter because x[0] is not a decision variable.
+    rr[0] = r0.data();
+
+    // Cost k = 1 -> N
+    for (int k = 1; k < (ocpSize_.N + 1); k++) {
       QQ[k] = cost[k].dfdxx.data();
       RR[k] = cost[k].dfduu.data();
       SS[k] = cost[k].dfdux.data();

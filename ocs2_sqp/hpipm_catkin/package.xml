@@ -8,6 +8,8 @@
   <license>See package</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>ocs2_core</depend>
+  <depend>ocs2_qp_solver</depend>
   <depend>blasfeo_catkin</depend>
 
 </package>

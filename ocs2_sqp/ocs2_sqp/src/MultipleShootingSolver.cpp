@@ -242,14 +242,14 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   // Solve the QP
   vector_array_t deltaXSol;
   vector_array_t deltaUSol;
-  int status;
+  hpipm_status status;
   if (constraintPtr_ && !settings_.qr_decomp) {
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
   }
 
-  if (status != 0) {
+  if (status != hpipm_status::SUCCESS) {
     throw std::runtime_error("[MultipleShootingSolver] Failed to solve QP");
   }
 

@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "ocs2_sqp/HpipmInterface.h"
+#include "hpipm_catkin/HpipmInterface.h"
 
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
 

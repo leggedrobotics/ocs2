@@ -15,7 +15,7 @@
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
-#include <ocs2_sqp/HpipmInterface.h>
+#include <hpipm_catkin/HpipmInterface.h>
 
 namespace ocs2 {
 

@@ -7,6 +7,10 @@
 #include <memory>
 #include <vector>
 
+extern "C" {
+#include <hpipm_common.h>
+}
+
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
@@ -45,6 +49,7 @@ class HpipmInterface {
 
   struct Settings {
     /// !Need to adapt isSettingsEqual in implementation if this struct changes!
+    hpipm_mode hpipmMode = hpipm_mode::SPEED_ABS;
     int iter_max = 30;
     scalar_t alpha_min = 1e-8;
     scalar_t mu0 = 1e4;
@@ -56,11 +61,11 @@ class HpipmInterface {
     int warm_start = 0;
     int pred_corr = 1;
     int ric_alg = 0;
-    Settings() {}
+    Settings(){};
   };
 
   HpipmInterface() : HpipmInterface(OcpSize{0, 0, 0}){};
-  HpipmInterface(OcpSize ocpSize, const Settings& settings = Settings());
+  explicit HpipmInterface(OcpSize ocpSize, const Settings& settings = Settings());
   ~HpipmInterface();
 
   /**
@@ -79,11 +84,11 @@ class HpipmInterface {
    *    1 = Maximum number of iterations reached;
    *    2 = Minimum step length reached;
    *    3 = NaN in computations;
-   *    4 = Unknown return flag;
+   *    4 = Unconsistent equality constraints;
    */
-  int solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-            std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-            std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
+  hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                     std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
+                     std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
 
  private:
   class Impl;

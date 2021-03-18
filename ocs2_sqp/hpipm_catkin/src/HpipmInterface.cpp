@@ -2,7 +2,7 @@
 // Created by rgrandia on 18.02.21.
 //
 
-#include "ocs2_sqp/HpipmInterface.h"
+#include "hpipm_catkin/HpipmInterface.h"
 
 extern "C" {
 #include <hpipm_d_ocp_qp.h>
@@ -117,9 +117,10 @@ class HpipmInterface::Impl {
     return same;
   }
 
-  bool isSettingsEqual(const Settings& settings) {
+  bool isSettingsEqual(const Settings& settings) const {
     // use && instead of &= to enable short-circuit evaluation
-    bool same = settings_.iter_max == settings.iter_max;
+    bool same = (settings_.hpipmMode == settings.hpipmMode);
+    same = same && (settings_.iter_max == settings.iter_max);
     same = same && (settings_.alpha_min == settings.alpha_min);
     same = same && (settings_.mu0 == settings.mu0);
     same = same && (settings_.tol_stat == settings.tol_stat);
@@ -134,10 +135,7 @@ class HpipmInterface::Impl {
   }
 
   void applySettings(Settings& settings) {
-    // TODO: make this a setting
-    ::hpipm_mode mode = ::hpipm_mode::SPEED;  // ROBUST/BALANCED; see also hpipm_common.h
-    d_ocp_qp_ipm_arg_set_default(mode, &arg_);
-
+    d_ocp_qp_ipm_arg_set_default(settings.hpipmMode, &arg_);
     d_ocp_qp_ipm_arg_set_iter_max(&settings.iter_max, &arg_);
     d_ocp_qp_ipm_arg_set_alpha_min(&settings.alpha_min, &arg_);
     d_ocp_qp_ipm_arg_set_mu0(&settings.mu0, &arg_);
@@ -151,9 +149,9 @@ class HpipmInterface::Impl {
     d_ocp_qp_ipm_arg_set_ric_alg(&settings.ric_alg, &arg_);
   }
 
-  int solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-            std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-            std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose) {
+  hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                     std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
+                     std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose) {
     assert(dynamics.size() == ocpSize_.N);
     assert(cost.size() == (ocpSize_.N + 1));
     // TODO: check state input size.
@@ -244,9 +242,9 @@ class HpipmInterface::Impl {
     getInputSolution(inputTrajectory);
 
     // return true if solved
-    int hpipm_status = -1;
-    d_ocp_qp_ipm_get_status(&workspace_, &hpipm_status);
-    return hpipm_status;
+    int hpipmStatus = -1;
+    d_ocp_qp_ipm_get_status(&workspace_, &hpipmStatus);
+    return hpipm_status(hpipmStatus);
   }
 
   void getStateSolution(const vector_t& x0, std::vector<vector_t>& stateTrajectory) {
@@ -267,18 +265,20 @@ class HpipmInterface::Impl {
   }
 
   void printStatus() {
-    int hpipm_status = -1;
-    d_ocp_qp_ipm_get_status(&workspace_, &hpipm_status);
+    int hpipmStatus = -1;
+    d_ocp_qp_ipm_get_status(&workspace_, &hpipmStatus);
     fprintf(stderr, "\n=== HPIPM ===\n");
-    fprintf(stderr, "HPIPM returned with flag %i. -> ", hpipm_status);
-    if (hpipm_status == 0) {
+    fprintf(stderr, "HPIPM returned with flag %i. -> ", hpipmStatus);
+    if (hpipmStatus == 0) {
       fprintf(stderr, "QP solved!\n");
-    } else if (hpipm_status == 1) {
+    } else if (hpipmStatus == 1) {
       fprintf(stderr, "Solver failed! Maximum number of iterations reached\n");
-    } else if (hpipm_status == 2) {
+    } else if (hpipmStatus == 2) {
       fprintf(stderr, "Solver failed! Minimum step length reached\n");
-    } else if (hpipm_status == 3) {
+    } else if (hpipmStatus == 3) {
       fprintf(stderr, "Solver failed! NaN in computations\n");
+    } else if (hpipmStatus == 4) {
+      fprintf(stderr, "Solver failed! Unconsistent equality constraints\n");
     } else {
       fprintf(stderr, "Solver failed! Unknown return flag\n");
     }
@@ -345,10 +345,10 @@ void HpipmInterface::resize(OcpSize ocpSize, const Settings& settings) {
   pImpl_->initializeMemory(std::move(ocpSize), settings);
 }
 
-int HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                          std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                          std::vector<VectorFunctionLinearApproximation>* constraints, std::vector<vector_t>& stateTrajectory,
-                          std::vector<vector_t>& inputTrajectory, bool verbose) {
+hpipm_status HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                   std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                                   std::vector<VectorFunctionLinearApproximation>* constraints, std::vector<vector_t>& stateTrajectory,
+                                   std::vector<vector_t>& inputTrajectory, bool verbose) {
   return pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
 }
 

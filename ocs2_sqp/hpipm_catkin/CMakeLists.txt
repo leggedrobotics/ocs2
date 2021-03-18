@@ -4,7 +4,11 @@ project(hpipm_catkin)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   blasfeo_catkin
+  ocs2_core
+  ocs2_qp_solver
 )
+
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 include(FetchContent)
 
@@ -50,10 +54,75 @@ endforeach()
 # Install the library where catkin expects them
 set_target_properties(hpipm PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${HPIPM_LIB_DIR})
 
+###################################
+## catkin specific configuration ##
+###################################
+
 catkin_package(
-  INCLUDE_DIRS ${HPIPM_INCLUDE_DIR}
+  INCLUDE_DIRS include ${HPIPM_INCLUDE_DIR}
   CATKIN_DEPENDS blasfeo_catkin
-  LIBRARIES hpipm
+  LIBRARIES ${PROJECT_NAME} hpipm
+)
+
+###########
+## Build ##
+###########
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+)
+
+# Hpipm interface
+add_library(${PROJECT_NAME}
+  src/HpipmInterface.cpp
+)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} hpipm)
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
+  add_clang_tooling(
+    TARGETS
+    ${PROJECT_NAME}
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
+  )
+endif(cmake_clang_tools_FOUND)
+
+#############
+## Install ##
+#############
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(test_${PROJECT_NAME}
+  test/testHpipmInterface.cpp
+)
+add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_${PROJECT_NAME}
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  hpipm
+  gtest_main
 )
 
 

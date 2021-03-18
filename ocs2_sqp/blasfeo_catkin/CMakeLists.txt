@@ -50,8 +50,3 @@ catkin_package(
 	LIBRARIES blasfeo
 	CFG_EXTRAS blasfeo-extras.cmake
 )
-
-
-
-
-

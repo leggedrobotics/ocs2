@@ -38,6 +38,7 @@ FetchContent_MakeAvailable(blasfeoDownload)
 # Copy header to where catkin expects them
 file(GLOB_RECURSE HEADERS "${BLASFEO_DOWNLOAD_DIR}/include/*.h")
 foreach(HEADER_FILE ${HEADERS})
+	message(STATUS "FOUND HEADER: " ${HEADER_FILE})
 	file(COPY ${HEADER_FILE} DESTINATION ${BLASFEO_INCLUDE_DIR})
 endforeach()
 

@@ -44,6 +44,7 @@ FetchContent_MakeAvailable(hpipmDownload)
 # Copy header to where catkin expects them
 file(GLOB_RECURSE HEADERS "${HPIPM_DOWNLOAD_DIR}/include/*.h")
 foreach(HEADER_FILE ${HEADERS})
+  message(STATUS "FOUND HEADER: " ${HEADER_FILE})
   file(COPY ${HEADER_FILE} DESTINATION ${HPIPM_INCLUDE_DIR})
 endforeach()
 

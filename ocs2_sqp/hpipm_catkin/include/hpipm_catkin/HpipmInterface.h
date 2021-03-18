@@ -74,7 +74,7 @@ class HpipmInterface {
 
   struct Settings {
     /// !Need to adapt isSettingsEqual in implementation if this struct changes!
-    hpipm_mode hpipmMode = hpipm_mode::SPEED_ABS;
+    hpipm_mode hpipmMode = hpipm_mode::SPEED;
     int iter_max = 30;
     scalar_t alpha_min = 1e-8;
     scalar_t mu0 = 1e4;

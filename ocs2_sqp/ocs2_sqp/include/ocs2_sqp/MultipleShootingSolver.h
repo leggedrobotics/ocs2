@@ -10,12 +10,11 @@
 #include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
-#include <ocs2_sqp/DynamicsDiscretization.h>
 #include <ocs2_sqp/HpipmInterface.h>
 
 namespace ocs2 {

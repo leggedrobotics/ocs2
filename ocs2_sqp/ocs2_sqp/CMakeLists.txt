@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_sqp)
 
-# set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
@@ -47,7 +46,6 @@ add_library(${PROJECT_NAME}
   src/ConstraintProjection.cpp
   src/HpipmInterface.cpp
   src/MultipleShootingSolver.cpp
-  src/DynamicsDiscretization.cpp
   )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -88,7 +86,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
   test/testDiscretization.cpp
-  test/testDynamics.cpp
   test/testHpipmInterface.cpp
   test/testProjection.cpp
 )

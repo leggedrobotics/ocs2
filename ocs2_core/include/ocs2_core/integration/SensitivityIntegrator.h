@@ -56,10 +56,10 @@ SensitivityIntegratorType fromString(const std::string& name);
  * A function handle to computes the discrete approximation of the system's flowmap.
  * @param system : system to be discretized
  * @param t : starting time of the discretization interval
- * @param x : starting state x(t)
- * @param u : input, assumed constant over the entire interval
+ * @param x : starting state x_{k}
+ * @param u : input u_{k}, assumed constant over the entire interval
  * @param dt : interval duration
- * Returns x(t+dt)
+ * Returns x_{k+1}
  */
 using DynamicsDiscretizer = std::function<vector_t(SystemDynamicsBase&, scalar_t, const vector_t&, const vector_t&, scalar_t)>;
 
@@ -73,8 +73,8 @@ DynamicsDiscretizer selectDynamicsDiscretization(SensitivityIntegratorType integ
  *
  * @param system : system to be discretized
  * @param t : starting time of the discretization interval
- * @param x : starting state x(t)
- * @param u : input, assumed constant over the entire interval
+ * @param x : starting state x_{k}
+ * @param u : input u_{k}, assumed constant over the entire interval
  * @param dt : interval duration
  * Returns an approximation of the form:
  *      x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}

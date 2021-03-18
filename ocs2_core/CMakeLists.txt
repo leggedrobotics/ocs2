@@ -97,6 +97,7 @@ add_library(${PROJECT_NAME}
   src/dynamics/TransferFunctionBase.cpp
   src/initialization/OperatingPoints.cpp
   src/integration/SensitivityIntegrator.cpp
+  src/integration/SensitivityIntegratorImpl.cpp
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
   src/integration/RungeKuttaDormandPrince5.cpp

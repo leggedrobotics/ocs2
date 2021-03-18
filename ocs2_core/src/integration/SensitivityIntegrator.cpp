@@ -74,9 +74,7 @@ namespace sensitivity_integrator_type {
 /******************************************************************************************************/
 std::string toString(SensitivityIntegratorType integratorType) {
   static const std::unordered_map<SensitivityIntegratorType, std::string> integratorMap = {
-      {SensitivityIntegratorType::EULER, "EULER"},
-      {SensitivityIntegratorType::RK2, "RK2"},
-      {SensitivityIntegratorType::RK4, "RK4"}};
+      {SensitivityIntegratorType::EULER, "EULER"}, {SensitivityIntegratorType::RK2, "RK2"}, {SensitivityIntegratorType::RK4, "RK4"}};
 
   return integratorMap.at(integratorType);
 }
@@ -86,9 +84,7 @@ std::string toString(SensitivityIntegratorType integratorType) {
 /******************************************************************************************************/
 SensitivityIntegratorType fromString(const std::string& name) {
   static const std::unordered_map<std::string, SensitivityIntegratorType> integratorMap = {
-      {"EULER", SensitivityIntegratorType::EULER},
-      {"RK2", SensitivityIntegratorType::RK2},
-      {"RK4", SensitivityIntegratorType::RK4}};
+      {"EULER", SensitivityIntegratorType::EULER}, {"RK2", SensitivityIntegratorType::RK2}, {"RK4", SensitivityIntegratorType::RK4}};
 
   return integratorMap.at(name);
 }

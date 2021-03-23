@@ -134,6 +134,18 @@ inline bool isEqual(const vector_t& lhs, const vector_t& rhs, scalar_t tol = Eig
 }
 
 /**
+ * Compares to Eigen matrices on equality.
+ * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
+ */
+inline bool isEqual(const matrix_t& lhs, const matrix_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+  if (lhs.norm() > tol && rhs.norm() > tol) {
+    return lhs.isApprox(rhs, tol);
+  } else {
+    return (lhs - rhs).norm() < tol;
+  }
+}
+
+/**
  * Compares two trajectories on element-wise approximate equality
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  * @return Vectors are of equal length and equal values.
@@ -141,6 +153,16 @@ inline bool isEqual(const vector_t& lhs, const vector_t& rhs, scalar_t tol = Eig
 inline bool isEqual(const vector_array_t& v0, const vector_array_t& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   return (v0.size() == v1.size()) &&
          std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const vector_t& lhs, const vector_t& rhs) { return isEqual(lhs, rhs, tol); });
+}
+
+/**
+ * Compares two trajectories on element-wise approximate equality
+ * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
+ * @return Matrices are of equal length and equal values.
+ */
+inline bool isEqual(const matrix_array_t& v0, const matrix_array_t& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+  return (v0.size() == v1.size()) &&
+         std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const matrix_t& lhs, const matrix_t& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
 /** Checks QP feasibility and numerical conditioning */

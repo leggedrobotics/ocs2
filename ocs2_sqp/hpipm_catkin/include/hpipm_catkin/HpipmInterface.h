@@ -138,6 +138,12 @@ class HpipmInterface {
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
                      std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
 
+  void getRiccatiInfo(std::vector<matrix_t>& PMatrics, std::vector<matrix_t>& KMatrics, std::vector<vector_t>& pVectors,
+                      std::vector<vector_t>& kVectors);
+  void getRiccatiInfoZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0, const matrix_t& R0,
+                               const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0, matrix_t& K0, vector_t& p0,
+                               vector_t& k0);
+
  private:
   class Impl;
   std::unique_ptr<Impl> pImpl_;

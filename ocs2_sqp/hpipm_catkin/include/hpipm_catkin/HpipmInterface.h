@@ -76,16 +76,16 @@ class HpipmInterface {
     /// !Need to adapt isSettingsEqual in implementation if this struct changes!
     hpipm_mode hpipmMode = hpipm_mode::SPEED;
     int iter_max = 30;
-    scalar_t alpha_min = 1e-8;
-    scalar_t mu0 = 1e4;
-    scalar_t tol_stat = 1e-5;
-    scalar_t tol_eq = 1e-5;
-    scalar_t tol_ineq = 1e-5;
-    scalar_t tol_comp = 1e-5;
+    scalar_t alpha_min = 1e-12;
+    scalar_t mu0 = 1e1;
+    scalar_t tol_stat = 1e-6;  // res_g_max
+    scalar_t tol_eq = 1e-8;    // res_b_max
+    scalar_t tol_ineq = 1e-8;  // res_d_max
+    scalar_t tol_comp = 1e-8;  // res_m_max
     scalar_t reg_prim = 1e-12;
     int warm_start = 0;
     int pred_corr = 1;
-    int ric_alg = 0;
+    int ric_alg = 0;  // square root ricatti recursion
     Settings(){};
   };
 

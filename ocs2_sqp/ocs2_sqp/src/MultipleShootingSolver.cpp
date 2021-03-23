@@ -20,26 +20,27 @@ MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings se
                                                const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr,
                                                const CostFunctionBase* terminalCostFunctionPtr,
                                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr)
-    : SolverBase(),
-      systemDynamicsPtr_(systemDynamicsPtr->clone()),
-      costFunctionPtr_(costFunctionPtr->clone()),
-      constraintPtr_(nullptr),
-      terminalCostFunctionPtr_(nullptr),
-      settings_(std::move(settings)),
-      totalNumIterations_(0),
-      performanceIndeces_() {
+    : SolverBase(), terminalCostFunctionPtr_(nullptr), settings_(std::move(settings)), totalNumIterations_(0), performanceIndeces_() {
   // Multithreading
+  Eigen::initParallel();
+  threadPoolPtr_.reset(new ThreadPool(settings_.nThreads, settings_.threadPriority));
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
 
   discretizer_ = selectDynamicsDiscretization(settings.integratorType);
   sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(settings.integratorType);
 
-  if (constraintPtr != nullptr) {
-    constraintPtr_.reset(constraintPtr->clone());
-
-    if (settings_.inequalityConstraintMu > 0) {
-      penaltyPtr_.reset(new RelaxedBarrierPenalty(settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta));
+  for (int w = 0; w < settings.nThreads; w++) {
+    systemDynamicsPtr_.emplace_back(systemDynamicsPtr->clone());
+    costFunctionPtr_.emplace_back(costFunctionPtr->clone());
+    if (constraintPtr != nullptr) {
+      constraintPtr_.emplace_back(constraintPtr->clone());
+    } else {
+      constraintPtr_.emplace_back(nullptr);
     }
+  }
+
+  if (constraintPtr != nullptr && settings_.inequalityConstraintMu > 0) {
+    penaltyPtr_.reset(new RelaxedBarrierPenalty(settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta));
   }
 
   if (terminalCostFunctionPtr != nullptr) {
@@ -118,7 +119,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   vector_array_t u = initializeInputTrajectory(timeDiscretization, x, N);
 
   // Initialize cost
-  costFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  for (auto& cost : costFunctionPtr_) {
+    cost->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+  }
   if (terminalCostFunctionPtr_) {
     terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
   }
@@ -132,8 +135,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     }
     // Make QP approximation
     linearQuadraticApproximationTimer_.startTimer();
-    performanceIndeces_.push_back(setupQuadraticSubproblem(*systemDynamicsPtr_, *costFunctionPtr_, constraintPtr_.get(),
-                                                           terminalCostFunctionPtr_.get(), timeDiscretization, x, u));
+    performanceIndeces_.push_back(setupQuadraticSubproblem(timeDiscretization, x, u));
     linearQuadraticApproximationTimer_.endTimer();
 
     // Solve QP
@@ -162,7 +164,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());  // repeat last input to make equal length vectors
   primalSolution_.modeSchedule_ = this->getModeSchedule();
 
-  if (constraintPtr_ && settings_.qr_decomp) {
+  if (constraintPtr_.front() && settings_.qr_decomp) {
     // TODO: Add feedback in u_tilde space. Currently only have feedback arising from stateInputEquality
     vector_array_t uff;
     matrix_array_t controllerGain;
@@ -243,7 +245,7 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   vector_array_t deltaXSol;
   vector_array_t deltaUSol;
   hpipm_status status;
-  if (constraintPtr_ && !settings_.qr_decomp) {
+  if (constraintPtr_.front() && !settings_.qr_decomp) {
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
@@ -254,7 +256,7 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   }
 
   // remap the tilde delta u to real delta u
-  if (constraintPtr_ && settings_.qr_decomp) {
+  if (constraintPtr_.front() && settings_.qr_decomp) {
     for (int i = 0; i < deltaUSol.size(); i++) {
       deltaUSol[i] = constraints_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
       deltaUSol[i].noalias() += constraints_[i].dfdx * deltaXSol[i];
@@ -265,9 +267,7 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   return {deltaXSol, deltaUSol};
 }
 
-PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
-                                                                  ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                                                  const scalar_array_t& time, const vector_array_t& x,
+PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_array_t& time, const vector_array_t& x,
                                                                   const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
@@ -275,85 +275,161 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
   // Set up for constant state input size. Will be adapted based on constraint handling.
   HpipmInterface::OcpSize ocpSize(N, settings_.n_state, settings_.n_input);
 
-  PerformanceIndex performance;
+  std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   dynamics_.resize(N);
   cost_.resize(N + 1);
   constraints_.resize(N + 1);
-  for (int i = 0; i < N; i++) {
-    const scalar_t ti = time[i];
-    const scalar_t dt = time[i + 1] - time[i];
 
-    // Dynamics
-    // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
-    dynamics_[i] = sensitivityDiscretizer_(systemDynamics, ti, x[i], u[i], dt);
-    dynamics_[i].f -= x[i + 1];  // make it dx_{k+1} = ...
-    performance.stateEqConstraintISE += dt * dynamics_[i].f.squaredNorm();
+  std::atomic_int workerId{0};
+  std::atomic_int timeIndex{0};
+  auto parallelTask = [&](int) {
+    // Get worker specific resources
+    int thisWorker = workerId++;  // assign worker ID (atomic)
+    SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_[thisWorker];
+    CostFunctionBase& costFunction = *costFunctionPtr_[thisWorker];
+    ConstraintBase* constraintPtr = constraintPtr_[thisWorker].get();
+    PerformanceIndex workerPerformance;
+    const bool qpDecomp = settings_.qr_decomp;
 
-    // Costs: Approximate the integral with forward euler (correct for dt after adding penalty)
-    cost_[i] = costFunction.costQuadraticApproximation(ti, x[i], u[i]);
-    performance.totalCost += dt * cost_[i].f;
+    int i = timeIndex++;
+    while (i < N) {
+      VectorFunctionLinearApproximation dynamics;
+      ScalarFunctionQuadraticApproximation cost;
+      VectorFunctionLinearApproximation constraints;
 
-    if (constraintPtr != nullptr) {
-      // Inequalities as penalty
-      if (penaltyPtr_) {
-        const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(ti, x[i], u[i]);
-        if (ineqConstraints.f.rows() > 0) {
-          auto penaltyCost = penaltyPtr_->penaltyCostQuadraticApproximation(ineqConstraints);
-          cost_[i] += penaltyCost;  // add to cost before potential projection.
-          performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
-          performance.inequalityConstraintPenalty += dt * penaltyCost.f;
-        }
-      }
+      const scalar_t ti = time[i];
+      const scalar_t dt = time[i + 1] - time[i];
 
-      // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
-      constraints_[i] = constraintPtr->stateInputEqualityConstraintLinearApproximation(ti, x[i], u[i]);
-      performance.stateInputEqConstraintISE += dt * constraints_[i].f.squaredNorm();
-      if (settings_.qr_decomp) {  // Handle equality constraints using projection.
-        // Reduces number of inputs
-        ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
-        // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
-        constraints_[i] = luConstraintProjection(constraints_[i]);
+      setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr, penaltyPtr_.get(), qpDecomp, ti, dt, x[i],
+                            x[i + 1], u[i], workerPerformance, dynamics, cost, constraints);
 
-        // Adapt dynamics and cost
-        changeOfInputVariables(dynamics_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);
-        changeOfInputVariables(cost_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);
-      } else {
-        // Declare as general inequalities
-        ocpSize.ng[i] = constraints_[i].f.rows();
-      }
+      dynamics_[i] = std::move(dynamics);
+      cost_[i] = std::move(cost);
+      constraints_[i] = std::move(constraints);
+      i = timeIndex++;
     }
 
-    // Costs: Approximate the integral with forward euler  (correct for dt HERE, after adding penalty)
-    cost_[i].dfdxx *= dt;
-    cost_[i].dfdux *= dt;
-    cost_[i].dfduu *= dt;
-    cost_[i].dfdx *= dt;
-    cost_[i].dfdu *= dt;
-    cost_[i].f *= dt;
+    if (i == N) {  // Only one worker will execute this
+      CostFunctionBase* terminalCostFunctionPtr = terminalCostFunctionPtr_.get();
+      setTerminalNode(terminalCostFunctionPtr, time[N], x[N], performance.front(), cost_[N], constraints_[N]);
+    }
+
+    performance[thisWorker] = workerPerformance;
+  };
+  //  threadPoolPtr_->runParallel(parallelTask, settings_.nThreads);
+  // Run parallel task
+  std::vector<std::future<void>> futures;
+  futures.reserve(settings_.nThreads - 1);
+  for (int i = 0; i < settings_.nThreads - 1; i++) {
+    futures.emplace_back(threadPoolPtr_->run(parallelTask));
+  }
+  parallelTask(0);
+  for (auto&& fut : futures) {
+    fut.get();
   }
 
-  // Terminal conditions
-  if (terminalCostFunctionPtr != nullptr) {
-    cost_[N] = terminalCostFunctionPtr->finalCostQuadraticApproximation(time[N], x[N]);
-    performance.totalCost += cost_[N].f;
-  } else {
-    cost_[N] = ScalarFunctionQuadraticApproximation::Zero(settings_.n_state, 0);
+  // det
+  for (int i = 0; i < N; i++) {
+    if (constraintPtr_.front() != nullptr) {
+      if (settings_.qr_decomp) {
+        ocpSize.nu[i] = constraints_[i].dfdu.cols();  // obtain size of u_tilde from constraint projection.
+      } else {
+        ocpSize.ng[i] = constraints_[i].f.rows();  // Declare as general inequalities
+      }
+    }
   }
-
-  constraints_[N] = VectorFunctionLinearApproximation::Zero(0, settings_.n_state, 0);
 
   // Prepare solver size
   hpipmInterface_.resize(std::move(ocpSize));
 
-  performance.merit = performance.totalCost + performance.inequalityConstraintPenalty;
-  return performance;
+  // Accumulate performance
+  PerformanceIndex totalPerformance;
+  for (int w = 0; w < settings_.nThreads; w++) {
+    totalPerformance.totalCost += performance[w].totalCost;
+    totalPerformance.stateEqConstraintISE += performance[w].stateEqConstraintISE;
+    totalPerformance.stateEqFinalConstraintSSE += performance[w].stateEqFinalConstraintSSE;
+    totalPerformance.stateInputEqConstraintISE += performance[w].stateInputEqConstraintISE;
+    totalPerformance.inequalityConstraintISE += performance[w].inequalityConstraintISE;
+    totalPerformance.inequalityConstraintPenalty += performance[w].inequalityConstraintPenalty;
+    totalPerformance.merit = performance[w].totalCost + performance[w].inequalityConstraintPenalty;
+  }
+  return totalPerformance;
 }
 
-PerformanceIndex MultipleShootingSolver::computePerformance(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
-                                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                                            const scalar_array_t& time, const vector_array_t& x, const vector_array_t& u) {
+void MultipleShootingSolver::setupIntermediateNode(SystemDynamicsBase& systemDynamics,
+                                                   DynamicsSensitivityDiscretizer& sensitivityDiscretizer, CostFunctionBase& costFunction,
+                                                   ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
+                                                   bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
+                                                   const vector_t& x_next, const vector_t& u, PerformanceIndex& performance,
+                                                   VectorFunctionLinearApproximation& dynamics, ScalarFunctionQuadraticApproximation& cost,
+                                                   VectorFunctionLinearApproximation& constraints) {
+  // Dynamics
+  // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
+  dynamics = sensitivityDiscretizer(systemDynamics, t, x, u, dt);
+  dynamics.f -= x_next;  // make it dx_{k+1} = ...
+  performance.stateEqConstraintISE += dt * dynamics.f.squaredNorm();
+
+  // Costs: Approximate the integral with forward euler (correct for dt after adding penalty)
+  cost = costFunction.costQuadraticApproximation(t, x, u);
+  performance.totalCost += dt * cost.f;
+
+  if (constraintPtr != nullptr) {
+    // Inequalities as penalty
+    if (penaltyPtr != nullptr) {
+      const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(t, x, u);
+      if (ineqConstraints.f.rows() > 0) {
+        auto penaltyCost = penaltyPtr->penaltyCostQuadraticApproximation(ineqConstraints);
+        cost += penaltyCost;  // add to cost before potential projection.
+        performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
+        performance.inequalityConstraintPenalty += dt * penaltyCost.f;
+      }
+    }
+
+    // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
+    constraints = constraintPtr->stateInputEqualityConstraintLinearApproximation(t, x, u);
+    performance.stateInputEqConstraintISE += dt * constraints.f.squaredNorm();
+    if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
+      // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
+      constraints = luConstraintProjection(constraints);
+
+      // Adapt dynamics and cost
+      changeOfInputVariables(dynamics, constraints.dfdu, constraints.dfdx, constraints.f);
+      changeOfInputVariables(cost, constraints.dfdu, constraints.dfdx, constraints.f);
+    }
+  }
+
+  // Costs: Approximate the integral with forward euler  (correct for dt HERE, after adding penalty)
+  cost.dfdxx *= dt;
+  cost.dfdux *= dt;
+  cost.dfduu *= dt;
+  cost.dfdx *= dt;
+  cost.dfdu *= dt;
+  cost.f *= dt;
+}
+
+void MultipleShootingSolver::setTerminalNode(CostFunctionBase* terminalCostFunctionPtr, scalar_t t, const vector_t& x,
+                                             PerformanceIndex& performance, ScalarFunctionQuadraticApproximation& cost,
+                                             VectorFunctionLinearApproximation& constraints) {
+  // Terminal conditions
+  if (terminalCostFunctionPtr != nullptr) {
+    cost = terminalCostFunctionPtr->finalCostQuadraticApproximation(t, x);
+    performance.totalCost += cost.f;
+  } else {
+    cost = ScalarFunctionQuadraticApproximation::Zero(x.size(), 0);
+  }
+
+  constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+}
+
+PerformanceIndex MultipleShootingSolver::computePerformance(const scalar_array_t& time, const vector_array_t& x, const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
+
+  // Single threaded for now, pick one set of resources.
+  SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_.front();
+  CostFunctionBase& costFunction = *costFunctionPtr_.front();
+  ConstraintBase* constraintPtr = constraintPtr_.front().get();
+  CostFunctionBase* terminalCostFunctionPtr = terminalCostFunctionPtr_.get();
 
   PerformanceIndex performance;
   for (int i = 0; i < N; i++) {
@@ -444,8 +520,7 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const sc
     }
 
     // Compute cost and constraints
-    PerformanceIndex performanceNew = computePerformance(*systemDynamicsPtr_, *costFunctionPtr_, constraintPtr_.get(),
-                                                         terminalCostFunctionPtr_.get(), timeDiscretization, xNew, uNew);
+    PerformanceIndex performanceNew = computePerformance(timeDiscretization, xNew, uNew);
     scalar_t newConstraintViolation =
         std::sqrt(performanceNew.stateEqConstraintISE + performanceNew.stateInputEqConstraintISE + performanceNew.inequalityConstraintISE);
 

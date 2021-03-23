@@ -176,8 +176,8 @@ matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const
   model_->SparseJacobian(xpArrayView, sparseJacobianArrayView, &rows, &cols);
 
   // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
-  // to parameters. Write to rowMajor type because sparsity is specified as row major.
-  rowMajor_matrix_t jacobian = rowMajor_matrix_t::Zero(model_->Range(), variableDim_);
+  // to parameters.
+  matrix_t jacobian = matrix_t::Zero(model_->Range(), variableDim_);
   for (size_t i = 0; i < nnzJacobian_; i++) {
     jacobian(rows[i], cols[i]) = sparseJacobian[i];
   }
@@ -215,8 +215,8 @@ matrix_t CppAdInterface::getHessian(const vector_t& w, const vector_t& x, const 
   // Call this particular SparseHessian. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
   model_->SparseHessian(xpArrayView, wArrayView, sparseHessianArrayView, &rows, &cols);
 
-  // Fills upper triangular sparsity of hessian w.r.t variables. Write to rowMajor type because sparsity is specified as row major.
-  rowMajor_matrix_t hessian = rowMajor_matrix_t::Zero(variableDim_, variableDim_);
+  // Fills upper triangular sparsity of hessian w.r.t variables.
+  matrix_t hessian = matrix_t::Zero(variableDim_, variableDim_);
   for (size_t i = 0; i < nnzHessian_; i++) {
     hessian(rows[i], cols[i]) = sparseHessian[i];
   }

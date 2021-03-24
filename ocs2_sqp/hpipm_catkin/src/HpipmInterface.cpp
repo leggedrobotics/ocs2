@@ -298,9 +298,11 @@ class HpipmInterface::Impl {
     }
   }
 
-  void getRiccatiInfoZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0, const matrix_t& R0,
-                               const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0, matrix_t& K0, vector_t& p0,
-                               vector_t& k0) {
+  void getRiccatiZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0, const matrix_t& R0,
+                           const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0, matrix_t& K0, vector_t& p0,
+                           vector_t& k0) {
+    // at zero stage, I think P, p, K, k should be computed together -- Yang
+
     // fake_k0 is directly returned by hpipm, I haven't figure out its meaning yet.
     vector_t fake_k0;
     fake_k0.resize(ocpSize_.nu[0]);
@@ -332,33 +334,37 @@ class HpipmInterface::Impl {
              (r0 + B0.transpose() * p1 + B0.transpose() * P1 * b0);
   }
 
-  void getRiccatiInfo(std::vector<matrix_t>& PMatrics, std::vector<matrix_t>& KMatrics, std::vector<vector_t>& pVectors,
-                      std::vector<vector_t>& kVectors) {
-    PMatrics.resize(ocpSize_.N + 1);
+  void getRiccatiFeedbackFeedforward(std::vector<matrix_t>& KMatrics, std::vector<vector_t>& kVectors) {
     KMatrics.resize(ocpSize_.N);
-    pVectors.resize(ocpSize_.N + 1);
     kVectors.resize(ocpSize_.N);
+    matrix_t Lr, Ls;
+    for (int k = 1; k < ocpSize_.N; ++k) {
+      Lr.resize(ocpSize_.nu[k], ocpSize_.nu[k]);
+      Ls.resize(ocpSize_.nx[k], ocpSize_.nu[k]);
+      KMatrics[k].resize(ocpSize_.nu[k], ocpSize_.nx[k]);
+      d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, k, Lr.data());
+      d_ocp_qp_ipm_get_ric_Ls(&qp_, &arg_, &workspace_, k, Ls.data());
+      KMatrics[k] = -(Ls * Lr.inverse()).transpose();
+
+      kVectors[k].resize(ocpSize_.nu[k]);
+      d_ocp_qp_ipm_get_ric_k(&qp_, &arg_, &workspace_, k, kVectors[k].data());
+    }
+  }
+
+  void getRiccatiCostToGo(std::vector<matrix_t>& PMatrics, std::vector<vector_t>& pVectors) {
+    PMatrics.resize(ocpSize_.N + 1);
+    pVectors.resize(ocpSize_.N + 1);
 
     PMatrics[ocpSize_.N].resize(ocpSize_.nx[ocpSize_.N], ocpSize_.nx[ocpSize_.N]);
     pVectors[ocpSize_.N].resize(ocpSize_.nx[ocpSize_.N]);
     d_ocp_qp_ipm_get_ric_P(&qp_, &arg_, &workspace_, ocpSize_.N, PMatrics[ocpSize_.N].data());
     d_ocp_qp_ipm_get_ric_p(&qp_, &arg_, &workspace_, ocpSize_.N, pVectors[ocpSize_.N].data());
 
-    matrix_t Lr, Ls;
-
     for (int k = 1; k < ocpSize_.N; ++k) {
-      Lr.resize(ocpSize_.nu[k], ocpSize_.nu[k]);
-      Ls.resize(ocpSize_.nx[k], ocpSize_.nu[k]);
       PMatrics[k].resize(ocpSize_.nx[k], ocpSize_.nx[k]);
       pVectors[k].resize(ocpSize_.nx[k]);
-      KMatrics[k].resize(ocpSize_.nu[k], ocpSize_.nx[k]);
-      kVectors[k].resize(ocpSize_.nu[k]);
       d_ocp_qp_ipm_get_ric_P(&qp_, &arg_, &workspace_, k, PMatrics[k].data());
       d_ocp_qp_ipm_get_ric_p(&qp_, &arg_, &workspace_, k, pVectors[k].data());
-      d_ocp_qp_ipm_get_ric_k(&qp_, &arg_, &workspace_, k, kVectors[k].data());
-      d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, k, Lr.data());
-      d_ocp_qp_ipm_get_ric_Ls(&qp_, &arg_, &workspace_, k, Ls.data());
-      KMatrics[k] = -(Ls * Lr.inverse()).transpose();
     }
   }
 
@@ -450,15 +456,18 @@ hpipm_status HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctio
   return pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
 }
 
-void HpipmInterface::getRiccatiInfo(std::vector<matrix_t>& PMatrics, std::vector<matrix_t>& KMatrics, std::vector<vector_t>& pVectors,
-                                    std::vector<vector_t>& kVectors) {
-  pImpl_->getRiccatiInfo(PMatrics, KMatrics, pVectors, kVectors);
+void HpipmInterface::getRiccatiCostToGo(std::vector<matrix_t>& PMatrics, std::vector<vector_t>& pVectors) {
+  pImpl_->getRiccatiCostToGo(PMatrics, pVectors);
 }
 
-void HpipmInterface::getRiccatiInfoZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0,
-                                             const matrix_t& R0, const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0,
-                                             matrix_t& K0, vector_t& p0, vector_t& k0) {
-  pImpl_->getRiccatiInfoZeroStage(A0, B0, b0, Q0, R0, S0, q0, r0, P0, K0, p0, k0);
+void HpipmInterface::getRiccatiFeedbackFeedforward(std::vector<matrix_t>& KMatrics, std::vector<vector_t>& kVectors) {
+  pImpl_->getRiccatiFeedbackFeedforward(KMatrics, kVectors);
+}
+
+void HpipmInterface::getRiccatiZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0, const matrix_t& R0,
+                                         const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0, matrix_t& K0,
+                                         vector_t& p0, vector_t& k0) {
+  pImpl_->getRiccatiZeroStage(A0, B0, b0, Q0, R0, S0, q0, r0, P0, K0, p0, k0);
 }
 
 }  // namespace ocs2

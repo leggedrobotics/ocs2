@@ -163,6 +163,7 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   }
   cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
 
+  // store the true cost-to-go and feedback/feedforward terms
   std::vector<ocs2::matrix_t> PSolGiven;
   std::vector<ocs2::matrix_t> KSolGiven;
   std::vector<ocs2::vector_t> pSolGiven;
@@ -211,41 +212,24 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   std::vector<ocs2::vector_t> uSol;
   hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
 
-  // get Riccati info
+  // get Riccati info from hpipm interface
   std::vector<ocs2::matrix_t> PSol;
   std::vector<ocs2::matrix_t> KSol;
   std::vector<ocs2::vector_t> pSol;
   std::vector<ocs2::vector_t> kSol;
-  hpipmInterface.getRiccatiInfo(PSol, KSol, pSol, kSol);
-  hpipmInterface.getRiccatiInfoZeroStage(system[0].dfdx, system[0].dfdu, system[0].f, cost[0].dfdxx, cost[0].dfduu, cost[0].dfdux,
-                                         cost[0].dfdx, cost[0].dfdu, PSol[0], KSol[0], pSol[0], kSol[0]);
+  hpipmInterface.getRiccatiCostToGo(PSol, pSol);
+  hpipmInterface.getRiccatiFeedbackFeedforward(KSol, kSol);
+  hpipmInterface.getRiccatiZeroStage(system[0].dfdx, system[0].dfdu, system[0].f, cost[0].dfdxx, cost[0].dfduu, cost[0].dfdux, cost[0].dfdx,
+                                     cost[0].dfdu, PSol[0], KSol[0], pSol[0], kSol[0]);
 
+  // compare the two vector/matrix trajectory
   ASSERT_TRUE(ocs2::qp_solver::isEqual(PSolGiven, PSol, 1e-9));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(KSolGiven, KSol, 1e-9));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(pSolGiven, pSol, 1e-9));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(kSolGiven, kSol, 1e-9));
 
-  // for (int k = 0; k < N; k++) {
-  //   std::cout << "----------------------Iteration " << k << std::endl;
-
-  //   std::cout << "true feedback matrix K:\n";
-  //   std::cout << KSolGiven[k] << std::endl;
-  //   std::cout << "feedback matrix K from hpipm:\n";
-  //   std::cout << KSol[k] << std::endl;
-
-  //   std::cout << "true feedforward vector k:\n";
-  //   std::cout << kSolGiven[k] << std::endl;
-  //   std::cout << "feedforward vector k from hpipm:\n";
-  //   std::cout << kSol[k] << std::endl;
-
-  //   std::cout << "true state matrix P:\n";
-  //   std::cout << PSolGiven[k] << std::endl;
-  //   std::cout << "matrix P from hpipm:\n";
-  //   std::cout << PSol[k] << std::endl;
-
-  //   std::cout << "true state vector p:\n";
-  //   std::cout << pSolGiven[k] << std::endl;
-  //   std::cout << "vector P from hpipm:\n";
-  //   std::cout << pSol[k] << std::endl;
-  // }
+  for (int k = 0; k < N; k++) {
+    // u* = Kx* + k
+    ASSERT_TRUE(uSol[k].isApprox(KSol[k] * xSol[k] + kSol[k]));
+  }
 }

@@ -96,6 +96,8 @@ add_library(${PROJECT_NAME}
   src/dynamics/SystemDynamicsLinearizer.cpp
   src/dynamics/TransferFunctionBase.cpp
   src/initialization/OperatingPoints.cpp
+  src/integration/SensitivityIntegrator.cpp
+  src/integration/SensitivityIntegratorImpl.cpp
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
   src/integration/RungeKuttaDormandPrince5.cpp
@@ -209,6 +211,7 @@ target_link_libraries(initialization_unittest
 )
 
 catkin_add_gtest(test_integration
+  test/integration/testSensitivityIntegrator.cpp
   test/integration/IntegrationTest.cpp
   test/integration/testRungeKuttaDormandPrince5.cpp
   test/integration/TrapezoidalIntegrationTest.cpp

@@ -36,6 +36,7 @@ set(HPIPM_TESTING OFF CACHE BOOL "Examples enabled")
 # Download & build source
 FetchContent_Declare(hpipmDownload
   GIT_REPOSITORY https://github.com/giaf/hpipm
+  GIT_TAG 255ffdf38d3a5e2c3285b29568ce65ae286e5faf
   UPDATE_COMMAND ""
   SOURCE_DIR ${HPIPM_DOWNLOAD_DIR}
   BINARY_DIR ${HPIPM_BUILD_DIR}

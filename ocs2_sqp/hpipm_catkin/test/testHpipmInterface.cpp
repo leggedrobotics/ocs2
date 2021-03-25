@@ -115,7 +115,6 @@ TEST(test_hpiphm_interface, knownSolution) {
   std::vector<ocs2::vector_t> xSolGiven;
   std::vector<ocs2::vector_t> uSolGiven;
   xSolGiven.emplace_back(ocs2::vector_t::Random(nx));
-//  xSolGiven.emplace_back(ocs2::vector_t::Zero(nx));
   std::vector<ocs2::VectorFunctionLinearApproximation> system;
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
   for (int k = 0; k < N; k++) {

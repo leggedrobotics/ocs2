@@ -43,11 +43,8 @@ namespace {
  */
 class MemoryBlock {
  public:
-  /** No memory allocated */
-  MemoryBlock() : MemoryBlock(0){};
-
   /** Allocate memory of requested size */
-  explicit MemoryBlock(size_t size) : ptr_(nullptr), size_(0) { reserve(size); }
+  explicit MemoryBlock(size_t size = 0) : ptr_(nullptr), size_(0) { reserve(size); }
   ~MemoryBlock() noexcept { free(ptr_); }
 
   /**
@@ -88,25 +85,26 @@ namespace ocs2 {
 
 class HpipmInterface::Impl {
  public:
-  Impl(OcpSize ocpSize, const Settings& settings) { initializeMemory(std::move(ocpSize), settings); }
+  Impl(OcpSize ocpSize, const Settings& settings) : settings_(settings) { initializeMemory(std::move(ocpSize), true); }
 
-  void initializeMemory(OcpSize ocpSize) { initializeMemory(std::move(ocpSize), settings_); }
+  void initializeMemory(OcpSize ocpSize, bool forceInitialization = false) {
+    // We will remove the initial state from the decision variables before passing the data to HPIPM.
+    // This removes the need for adding constraints to enforce x[0] = x_init
+    ocpSize.numStates[0] = 0;
 
-  void initializeMemory(OcpSize ocpSize, const Settings& settings) {
-    ocpSize.nx[0] = 0;
-
-    if (isSizeEqual(ocpSize) && isSettingsEqual(settings)) {
+    // Skip memory initialization if problem size didn't change.
+    if (!forceInitialization && ocpSize_ == ocpSize) {
       return;
     }
 
-    settings_ = settings;
     ocpSize_ = std::move(ocpSize);
 
-    const int dim_size = d_ocp_qp_dim_memsize(ocpSize_.N);
+    const int dim_size = d_ocp_qp_dim_memsize(ocpSize_.numStages);
     dimMem_.reserve(dim_size);
-    d_ocp_qp_dim_create(ocpSize_.N, &dim_, dimMem_.get());
-    d_ocp_qp_dim_set_all(ocpSize_.nx.data(), ocpSize_.nu.data(), ocpSize_.nbx.data(), ocpSize_.nbu.data(), ocpSize_.ng.data(),
-                         ocpSize_.nsbx.data(), ocpSize_.nsbu.data(), ocpSize_.nsg.data(), &dim_);
+    d_ocp_qp_dim_create(ocpSize_.numStages, &dim_, dimMem_.get());
+    d_ocp_qp_dim_set_all(ocpSize_.numStates.data(), ocpSize_.numInputs.data(), ocpSize_.numStateBoxConstraints.data(),
+                         ocpSize_.numInputBoxConstraints.data(), ocpSize_.numIneqConstraints.data(), ocpSize_.numStateBoxSlack.data(),
+                         ocpSize_.numInputBoxSlack.data(), ocpSize_.numIneqSlack.data(), &dim_);
 
     const int qp_size = d_ocp_qp_memsize(&dim_);
     qpMem_.reserve(qp_size);
@@ -128,37 +126,6 @@ class HpipmInterface::Impl {
     d_ocp_qp_ipm_ws_create(&dim_, &arg_, &workspace_, ipmMem_.get());
   }
 
-  bool isSizeEqual(const OcpSize& ocpSize) const {
-    // use && instead of &= to enable short-circuit evaluation
-    bool same = ocpSize_.N == ocpSize.N;
-    same = same && (ocpSize_.nu == ocpSize.nu);
-    same = same && (ocpSize_.nx == ocpSize.nx);
-    same = same && (ocpSize_.nbu == ocpSize.nbu);
-    same = same && (ocpSize_.nbx == ocpSize.nbx);
-    same = same && (ocpSize_.ng == ocpSize.ng);
-    same = same && (ocpSize_.nsbu == ocpSize.nsbu);
-    same = same && (ocpSize_.nsbx == ocpSize.nsbx);
-    same = same && (ocpSize_.nsg == ocpSize.nsg);
-    return same;
-  }
-
-  bool isSettingsEqual(const Settings& settings) const {
-    // use && instead of &= to enable short-circuit evaluation
-    bool same = (settings_.hpipmMode == settings.hpipmMode);
-    same = same && (settings_.iter_max == settings.iter_max);
-    same = same && (settings_.alpha_min == settings.alpha_min);
-    same = same && (settings_.mu0 == settings.mu0);
-    same = same && (settings_.tol_stat == settings.tol_stat);
-    same = same && (settings_.tol_eq == settings.tol_eq);
-    same = same && (settings_.tol_ineq == settings.tol_ineq);
-    same = same && (settings_.tol_comp == settings.tol_comp);
-    same = same && (settings_.reg_prim == settings.reg_prim);
-    same = same && (settings_.warm_start == settings.warm_start);
-    same = same && (settings_.pred_corr == settings.pred_corr);
-    same = same && (settings_.ric_alg == settings.ric_alg);
-    return same;
-  }
-
   void applySettings(Settings& settings) {
     d_ocp_qp_ipm_arg_set_default(settings.hpipmMode, &arg_);
     d_ocp_qp_ipm_arg_set_iter_max(&settings.iter_max, &arg_);
@@ -174,33 +141,55 @@ class HpipmInterface::Impl {
     d_ocp_qp_ipm_arg_set_ric_alg(&settings.ric_alg, &arg_);
   }
 
+  void verifySizes(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
+                   std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints) {
+    if (dynamics.size() != ocpSize_.numStages) {
+      throw std::runtime_error("[HpipmInterface] Inconsistent size of dynamics: " + std::to_string(dynamics.size()) + " with " +
+                               std::to_string(ocpSize_.numStages) + " number of stages.");
+    }
+    if (cost.size() != ocpSize_.numStages + 1) {
+      throw std::runtime_error("[HpipmInterface] Inconsistent size of cost: " + std::to_string(cost.size()) + " with " +
+                               std::to_string(ocpSize_.numStages + 1) + " nodes.");
+    }
+    if (constraints != nullptr) {
+      if (constraints->size() != ocpSize_.numStages + 1) {
+        throw std::runtime_error("[HpipmInterface] Inconsistent size of constraints: " + std::to_string(constraints->size()) + " with " +
+                                 std::to_string(ocpSize_.numStages + 1) + " nodes.");
+      }
+    }
+    // TODO: expand with state-input size checks
+  }
+
   hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-                     std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose) {
-    assert(dynamics.size() == ocpSize_.N);
-    assert(cost.size() == (ocpSize_.N + 1));
-    // TODO: check state input size.
+                     vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, bool verbose) {
+    verifySizes(x0, dynamics, cost, constraints);
 
     // Dynamics
-    std::vector<scalar_t*> AA(ocpSize_.N);
-    std::vector<scalar_t*> BB(ocpSize_.N);
-    std::vector<scalar_t*> bb(ocpSize_.N);
+    std::vector<scalar_t*> AA(ocpSize_.numStages);
+    std::vector<scalar_t*> BB(ocpSize_.numStages);
+    std::vector<scalar_t*> bb(ocpSize_.numStages);
 
     // Costs (all must be N+1) eventhough nu[N] = 0;
-    std::vector<scalar_t*> QQ(ocpSize_.N + 1);
-    std::vector<scalar_t*> RR(ocpSize_.N + 1);
-    std::vector<scalar_t*> SS(ocpSize_.N + 1);
-    std::vector<scalar_t*> qq(ocpSize_.N + 1);
-    std::vector<scalar_t*> rr(ocpSize_.N + 1);
+    std::vector<scalar_t*> QQ(ocpSize_.numStages + 1);
+    std::vector<scalar_t*> RR(ocpSize_.numStages + 1);
+    std::vector<scalar_t*> SS(ocpSize_.numStages + 1);
+    std::vector<scalar_t*> qq(ocpSize_.numStages + 1);
+    std::vector<scalar_t*> rr(ocpSize_.numStages + 1);
 
     // Constraints (all must be N+1) eventhough nu[N] = 0;
     std::vector<ocs2::vector_t> boundData;
-    std::vector<scalar_t*> CC(ocpSize_.N + 1);
-    std::vector<scalar_t*> DD(ocpSize_.N + 1);
-    std::vector<scalar_t*> llg(ocpSize_.N + 1);
-    std::vector<scalar_t*> uug(ocpSize_.N + 1);
+    std::vector<scalar_t*> CC(ocpSize_.numStages + 1);
+    std::vector<scalar_t*> DD(ocpSize_.numStages + 1);
+    std::vector<scalar_t*> llg(ocpSize_.numStages + 1);
+    std::vector<scalar_t*> uug(ocpSize_.numStages + 1);
 
     // Dynamics k = 0. Absorb initial state into dynamics
+    // The initial state is removed from the decision variables
+    // The first dynamics becomes:
+    //    x[1] = A[0]*x[0] + B[0]*u[0] + b[0]
+    //         = B[0]*u[0] + (b[0] + A[0]*x[0])
+    //         = B[0]*u[0] + \tilde{b}[0]
     vector_t b0 = dynamics[0].f;
     b0.noalias() += dynamics[0].dfdx * x0;
     AA[0] = dynamics[0].dfdx.data();
@@ -208,7 +197,7 @@ class HpipmInterface::Impl {
     bb[0] = b0.data();
 
     // Dynamics k = 1 -> N-1
-    for (int k = 1; k < ocpSize_.N; k++) {
+    for (int k = 1; k < ocpSize_.numStages; k++) {
       AA[k] = dynamics[k].dfdx.data();
       BB[k] = dynamics[k].dfdu.data();
       bb[k] = dynamics[k].f.data();
@@ -224,7 +213,7 @@ class HpipmInterface::Impl {
     rr[0] = r0.data();
 
     // Cost k = 1 -> N
-    for (int k = 1; k < (ocpSize_.N + 1); k++) {
+    for (int k = 1; k < (ocpSize_.numStages + 1); k++) {
       QQ[k] = cost[k].dfdxx.data();
       RR[k] = cost[k].dfduu.data();
       SS[k] = cost[k].dfdux.data();
@@ -236,9 +225,9 @@ class HpipmInterface::Impl {
       auto& constr = *constraints;
       // for ocs2 --> C*dx + D*du + e = 0
       // for hpipm --> ug >= C*dx + D*du >= lg
-      boundData.reserve(ocpSize_.N + 1);
+      boundData.reserve(ocpSize_.numStages + 1);
 
-      for (int k = 0; k < ocpSize_.N + 1; k++) {
+      for (int k = 0; k < ocpSize_.numStages + 1; k++) {
         CC[k] = constr[k].dfdx.data();
         DD[k] = constr[k].dfdu.data();
         boundData.emplace_back(-constr[k].f);
@@ -281,19 +270,19 @@ class HpipmInterface::Impl {
     return hpipm_status(hpipmStatus);
   }
 
-  void getStateSolution(const vector_t& x0, std::vector<vector_t>& stateTrajectory) {
-    stateTrajectory.resize(ocpSize_.N + 1);
+  void getStateSolution(const vector_t& x0, vector_array_t& stateTrajectory) {
+    stateTrajectory.resize(ocpSize_.numStages + 1);
     stateTrajectory.front() = x0;
-    for (int k = 1; k < (ocpSize_.N + 1); ++k) {
-      stateTrajectory[k].resize(ocpSize_.nx[k]);
+    for (int k = 1; k < (ocpSize_.numStages + 1); ++k) {
+      stateTrajectory[k].resize(ocpSize_.numStates[k]);
       d_ocp_qp_sol_get_x(k, &qpSol_, stateTrajectory[k].data());
     }
   }
 
-  void getInputSolution(std::vector<vector_t>& inputTrajectory) {
-    inputTrajectory.resize(ocpSize_.N);
-    for (int k = 0; k < ocpSize_.N; ++k) {
-      inputTrajectory[k].resize(ocpSize_.nu[k]);
+  void getInputSolution(vector_array_t& inputTrajectory) {
+    inputTrajectory.resize(ocpSize_.numStages);
+    for (int k = 0; k < ocpSize_.numStages; ++k) {
+      inputTrajectory[k].resize(ocpSize_.numInputs[k]);
       d_ocp_qp_sol_get_u(k, &qpSol_, inputTrajectory[k].data());
     }
   }
@@ -303,15 +292,15 @@ class HpipmInterface::Impl {
     d_ocp_qp_ipm_get_status(&workspace_, &hpipmStatus);
     fprintf(stderr, "\n=== HPIPM ===\n");
     fprintf(stderr, "HPIPM returned with flag %i. -> ", hpipmStatus);
-    if (hpipmStatus == 0) {
+    if (hpipmStatus == hpipm_status::SUCCESS) {
       fprintf(stderr, "QP solved!\n");
-    } else if (hpipmStatus == 1) {
+    } else if (hpipmStatus == hpipm_status::MAX_ITER) {
       fprintf(stderr, "Solver failed! Maximum number of iterations reached\n");
-    } else if (hpipmStatus == 2) {
+    } else if (hpipmStatus == hpipm_status::MIN_STEP) {
       fprintf(stderr, "Solver failed! Minimum step length reached\n");
-    } else if (hpipmStatus == 3) {
+    } else if (hpipmStatus == hpipm_status::NAN_SOL) {
       fprintf(stderr, "Solver failed! NaN in computations\n");
-    } else if (hpipmStatus == 4) {
+    } else if (hpipmStatus == hpipm_status::INCONS_EQ) {
       fprintf(stderr, "Solver failed! Unconsistent equality constraints\n");
     } else {
       fprintf(stderr, "Solver failed! Unknown return flag\n");
@@ -375,14 +364,10 @@ void HpipmInterface::resize(OcpSize ocpSize) {
   pImpl_->initializeMemory(std::move(ocpSize));
 }
 
-void HpipmInterface::resize(OcpSize ocpSize, const Settings& settings) {
-  pImpl_->initializeMemory(std::move(ocpSize), settings);
-}
-
 hpipm_status HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                                    std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                   std::vector<VectorFunctionLinearApproximation>* constraints, std::vector<vector_t>& stateTrajectory,
-                                   std::vector<vector_t>& inputTrajectory, bool verbose) {
+                                   std::vector<VectorFunctionLinearApproximation>* constraints, vector_array_t& stateTrajectory,
+                                   vector_array_t& inputTrajectory, bool verbose) {
   return pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
 }
 

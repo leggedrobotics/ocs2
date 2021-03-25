@@ -142,7 +142,8 @@ class HpipmInterface::Impl {
   }
 
   void verifySizes(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
-                   std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints) {
+                   std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                   std::vector<VectorFunctionLinearApproximation>* constraints) const {
     if (dynamics.size() != ocpSize_.numStages) {
       throw std::runtime_error("[HpipmInterface] Inconsistent size of dynamics: " + std::to_string(dynamics.size()) + " with " +
                                std::to_string(ocpSize_.numStages) + " number of stages.");
@@ -163,28 +164,15 @@ class HpipmInterface::Impl {
   hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
                      vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, bool verbose) {
+    const int N = ocpSize_.numStages;
     verifySizes(x0, dynamics, cost, constraints);
 
-    // Dynamics
-    std::vector<scalar_t*> AA(ocpSize_.numStages);
-    std::vector<scalar_t*> BB(ocpSize_.numStages);
-    std::vector<scalar_t*> bb(ocpSize_.numStages);
+    // === Dynamics ===
+    std::vector<scalar_t*> AA(N, nullptr);
+    std::vector<scalar_t*> BB(N, nullptr);
+    std::vector<scalar_t*> bb(N, nullptr);
 
-    // Costs (all must be N+1) eventhough nu[N] = 0;
-    std::vector<scalar_t*> QQ(ocpSize_.numStages + 1);
-    std::vector<scalar_t*> RR(ocpSize_.numStages + 1);
-    std::vector<scalar_t*> SS(ocpSize_.numStages + 1);
-    std::vector<scalar_t*> qq(ocpSize_.numStages + 1);
-    std::vector<scalar_t*> rr(ocpSize_.numStages + 1);
-
-    // Constraints (all must be N+1) eventhough nu[N] = 0;
-    std::vector<ocs2::vector_t> boundData;
-    std::vector<scalar_t*> CC(ocpSize_.numStages + 1);
-    std::vector<scalar_t*> DD(ocpSize_.numStages + 1);
-    std::vector<scalar_t*> llg(ocpSize_.numStages + 1);
-    std::vector<scalar_t*> uug(ocpSize_.numStages + 1);
-
-    // Dynamics k = 0. Absorb initial state into dynamics
+    // k = 0. Absorb initial state into dynamics
     // The initial state is removed from the decision variables
     // The first dynamics becomes:
     //    x[1] = A[0]*x[0] + B[0]*u[0] + b[0]
@@ -192,28 +180,31 @@ class HpipmInterface::Impl {
     //         = B[0]*u[0] + \tilde{b}[0]
     vector_t b0 = dynamics[0].f;
     b0.noalias() += dynamics[0].dfdx * x0;
-    AA[0] = dynamics[0].dfdx.data();
     BB[0] = dynamics[0].dfdu.data();
     bb[0] = b0.data();
 
-    // Dynamics k = 1 -> N-1
-    for (int k = 1; k < ocpSize_.numStages; k++) {
+    // k = 1 -> N-1
+    for (int k = 1; k < N; k++) {
       AA[k] = dynamics[k].dfdx.data();
       BB[k] = dynamics[k].dfdu.data();
       bb[k] = dynamics[k].f.data();
     }
 
-    // Cost k = 0. Elimination of initial state requires cost adaptation
+    // === Costs ===
+    std::vector<scalar_t*> QQ(N + 1, nullptr);
+    std::vector<scalar_t*> RR(N + 1, nullptr);
+    std::vector<scalar_t*> SS(N + 1, nullptr);
+    std::vector<scalar_t*> qq(N + 1, nullptr);
+    std::vector<scalar_t*> rr(N + 1, nullptr);
+
+    // k = 0. Elimination of initial state requires cost adaptation
     vector_t r0 = cost[0].dfdu;
     r0 += cost[0].dfdux * x0;
-    QQ[0] = cost[0].dfdxx.data();
     RR[0] = cost[0].dfduu.data();
-    SS[0] = cost[0].dfdux.data();
-    qq[0] = cost[0].dfdx.data();  // q[0] would change, but it doesn't matter because x[0] is not a decision variable.
     rr[0] = r0.data();
 
-    // Cost k = 1 -> N
-    for (int k = 1; k < (ocpSize_.numStages + 1); k++) {
+    // k = 1 -> (N-1)
+    for (int k = 1; k < N; k++) {
       QQ[k] = cost[k].dfdxx.data();
       RR[k] = cost[k].dfduu.data();
       SS[k] = cost[k].dfdux.data();
@@ -221,24 +212,47 @@ class HpipmInterface::Impl {
       rr[k] = cost[k].dfdu.data();
     }
 
+    // k = N, no inputs
+    QQ[N] = cost[N].dfdxx.data();
+    qq[N] = cost[N].dfdx.data();
+
+    // === Constraints ===
+    // for ocs2 --> C*dx + D*du + e = 0
+    // for hpipm --> ug >= C*dx + D*du >= lg
+    std::vector<scalar_t*> CC(N + 1, nullptr);
+    std::vector<scalar_t*> DD(N + 1, nullptr);
+    std::vector<scalar_t*> llg(N + 1, nullptr);
+    std::vector<scalar_t*> uug(N + 1, nullptr);
+    std::vector<ocs2::vector_t> boundData;  // Declare at this scope to keep the data alive while HPIPM has the pointers
+
     if (constraints != nullptr) {
       auto& constr = *constraints;
-      // for ocs2 --> C*dx + D*du + e = 0
-      // for hpipm --> ug >= C*dx + D*du >= lg
-      boundData.reserve(ocpSize_.numStages + 1);
+      boundData.reserve(N + 1);
 
-      for (int k = 0; k < ocpSize_.numStages + 1; k++) {
+      // k = 0, eliminate initial state
+      DD[0] = constr[0].dfdu.data();
+      boundData.emplace_back(-constr[0].f);
+      boundData[0].noalias() -= constr[0].dfdx * x0;
+      llg[0] = boundData[0].data();
+      uug[0] = boundData[0].data();
+
+      // k = 1 -> (N-1)
+      for (int k = 1; k < N; k++) {
         CC[k] = constr[k].dfdx.data();
         DD[k] = constr[k].dfdu.data();
         boundData.emplace_back(-constr[k].f);
-        if (k == 0) {  // Initial constraint
-          boundData[k].noalias() -= constr[0].dfdx * x0;
-        }
         llg[k] = boundData[k].data();
         uug[k] = boundData[k].data();
       }
+
+      // k = N, no inputs
+      CC[N] = constr[N].dfdx.data();
+      boundData.emplace_back(-constr[N].f);
+      llg[N] = boundData[N].data();
+      uug[N] = boundData[N].data();
     }
 
+    // === Unused ===
     int** hidxbx = nullptr;
     scalar_t** hlbx = nullptr;
     scalar_t** hubx = nullptr;
@@ -252,9 +266,10 @@ class HpipmInterface::Impl {
     int** hidxs = nullptr;
     scalar_t** hlls = nullptr;
     scalar_t** hlus = nullptr;
+
+    // === Set and solve ===
     d_ocp_qp_set_all(AA.data(), BB.data(), bb.data(), QQ.data(), SS.data(), RR.data(), qq.data(), rr.data(), hidxbx, hlbx, hubx, hidxbu,
                      hlbu, hubu, CC.data(), DD.data(), llg.data(), uug.data(), hZl, hZu, hzl, hzu, hidxs, hlls, hlus, &qp_);
-
     d_ocp_qp_ipm_solve(&qp_, &qpSol_, &arg_, &workspace_);
 
     if (verbose) {

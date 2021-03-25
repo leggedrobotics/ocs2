@@ -59,8 +59,8 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
 bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                              PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                             vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+                             vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                             std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(settings_.minStepLength_, settings_.maxStepLength_)) {
@@ -164,8 +164,8 @@ void LineSearchStrategy::lineSearchTask() {
   size_array2_t postEventIndicesStock(numPartitions_);
   vector_array2_t stateTrajectoriesStock(numPartitions_);
   vector_array2_t inputTrajectoriesStock(numPartitions_);
-  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock(numPartitions_);
-  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock(numPartitions_);
+  std::vector<std::vector<ModelData>> modelDataTrajectoriesStock(numPartitions_);
+  std::vector<std::vector<ModelData>> modelDataEventTimesStock(numPartitions_);
 
   while (true) {
     size_t alphaExp = lineSearchModule_.alphaExpNext++;
@@ -330,7 +330,7 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LineSearchStrategy::computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
+void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                                     matrix_t& deltaGm) const {
   const auto& QmProjected = projectedModelData.cost_.dfdxx;
   const auto& PmProjected = projectedModelData.cost_.dfdux;

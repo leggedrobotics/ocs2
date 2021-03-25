@@ -75,11 +75,11 @@ class ILQR : public GaussNewtonDDP {
 
   void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
 
-  matrix_t computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const override;
+  matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 
   void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                  const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                 std::vector<ModelDataBase>& modelDataTrajectory) override;
+                                 std::vector<ModelData>& modelDataTrajectory) override;
 
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
@@ -88,7 +88,7 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] continuousTimeModelData: Time partition index.
    * @param [out] modelData: Time index in the partition.
    */
-  void discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData, ModelDataBase& modelData);
+  void discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData);
 
   /****************
    *** Variables **

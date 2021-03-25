@@ -71,7 +71,7 @@
 #include <ocs2_core/misc/randomMatrices.h>
 
 // model_data
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 // soft_constraint

@@ -146,3 +146,49 @@ TEST(test_hpiphm_interface, knownSolution) {
   ASSERT_TRUE(ocs2::qp_solver::isEqual(xSolGiven, xSol, 1e-9));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(uSolGiven, uSol, 1e-9));
 }
+
+TEST(test_hpiphm_interface, with_constraints) {
+  // Initialize without size
+  ocs2::HpipmInterface hpipmInterface;
+
+  int nx = 3;
+  int nu = 2;
+  int nc = 1;
+  int N = 5;
+
+  // Problem setup
+  ocs2::vector_t x0 = ocs2::vector_t::Random(nx);
+  std::vector<ocs2::VectorFunctionLinearApproximation> system;
+  std::vector<ocs2::VectorFunctionLinearApproximation> constraints;
+  std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
+  for (int k = 0; k < N; k++) {
+    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    constraints.emplace_back(ocs2::qp_solver::getRandomConstraints(nx, nu, nc));
+  }
+  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  constraints.emplace_back(ocs2::qp_solver::getRandomConstraints(nx, 0, nc));
+
+  // Resize Interface
+  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  std::fill(ocpSize.numIneqConstraints.begin(), ocpSize.numIneqConstraints.end(), nc);
+  hpipmInterface.resize(ocpSize);
+
+  // Solve!
+  std::vector<ocs2::vector_t> xSol;
+  std::vector<ocs2::vector_t> uSol;
+  hpipmInterface.solve(x0, system, cost, &constraints, xSol, uSol, true);
+
+  // Initial condition
+  ASSERT_TRUE(xSol[0].isApprox(x0));
+
+  // Check dynamic feasibility
+  for (int k = 0; k < N; k++) {
+    ASSERT_TRUE(xSol[k + 1].isApprox(system[k].dfdx * xSol[k] + system[k].dfdu * uSol[k] + system[k].f, 1e-9));
+  }
+
+  // Check constraints
+  for (int k = 0; k < N; k++) {
+    ASSERT_TRUE(constraints[k].f.isApprox(-constraints[k].dfdx * xSol[k] - constraints[k].dfdu * uSol[k], 1e-9));
+  }
+}

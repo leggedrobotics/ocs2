@@ -39,15 +39,15 @@ namespace hpipm_interface {
  *
  * The number of stages (N) is defined as the number of transitions, the number of nodes, including terminal node, is therefore (N+1).
  *
- * For example a problem with:
+ * For example, a problem with:
  * (t0, x0) -> dynamics driven by u0 ->  (t1, x1) -> dynamics driven by u1 -> (t2, x2)
  * Has 2 stages, and 3 nodes.
  *
- * HPIPM requires all sizes do be declared per node. All vectors therefore need to be of size N+1.
+ * HPIPM requires all sizes to be declared per node. All vectors therefore need to be of size N+1.
  * For the optimal control problems we are currently solving, we therefore set numInput(N+1) = 0.
  */
 struct OcpSize {
-  int numStages;                            // Number of stages, all vectors below must be of size N+1
+  int numStages;                            // Number of stages (N), all vectors below must be of size N+1
   std::vector<int> numInputs;               // Number of inputs
   std::vector<int> numStates;               // Number of states
   std::vector<int> numInputBoxConstraints;  // Number of input box inequality constraints

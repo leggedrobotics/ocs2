@@ -48,7 +48,7 @@ solution solve(const SystemDynamicsBase& systemDynamics, const CostFunctionBase&
   LinearQuadraticApproximator lqapprox(systemDynamics, noConstraint, costFunctionBase, checkNumericalCharacteristics);
 
   // Obtain model data at the provided reference
-  ModelDataBase modelData;
+  ModelData modelData;
   modelData.time_ = time;
   modelData.stateDim_ = stateDim;
   modelData.inputDim_ = input.size();

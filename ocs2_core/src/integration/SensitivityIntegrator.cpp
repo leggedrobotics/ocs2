@@ -47,7 +47,7 @@ DynamicsDiscretizer selectDynamicsDiscretization(SensitivityIntegratorType integ
     case SensitivityIntegratorType::RK4:
       return rk4Discretization;
     default:
-      throw std::runtime_error("Integrator of type " + sensitivity_integrator_type::toString(integratorType) + " not supported.");
+      throw std::runtime_error("Integrator of type " + sensitivity_integrator::toString(integratorType) + " not supported.");
   }
 }
 
@@ -63,11 +63,11 @@ DynamicsSensitivityDiscretizer selectDynamicsSensitivityDiscretization(Sensitivi
     case SensitivityIntegratorType::RK4:
       return rk4SensitivityDiscretization;
     default:
-      throw std::runtime_error("Integrator of type " + sensitivity_integrator_type::toString(integratorType) + " not supported.");
+      throw std::runtime_error("Integrator of type " + sensitivity_integrator::toString(integratorType) + " not supported.");
   }
 }
 
-namespace sensitivity_integrator_type {
+namespace sensitivity_integrator {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -89,6 +89,6 @@ SensitivityIntegratorType fromString(const std::string& name) {
   return integratorMap.at(name);
 }
 
-}  // namespace sensitivity_integrator_type
+}  // namespace sensitivity_integrator
 
 }  // namespace ocs2

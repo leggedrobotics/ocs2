@@ -66,14 +66,14 @@ ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynami
 /******************************************************************************************************/
 void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                      const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                     std::vector<ModelDataBase>& modelDataTrajectory) {
+                                     std::vector<ModelData>& modelDataTrajectory) {
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {
     size_t timeIndex;
     size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
 
-    ModelDataBase continuousTimeModelData;
+    ModelData continuousTimeModelData;
 
     // get next time index is atomic
     while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
@@ -102,7 +102,7 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData, ModelDataBase& modelData) {
+void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData) {
   /*
    * linearize system dynamics
    */
@@ -164,13 +164,13 @@ void ILQR::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, 
   const auto& Qu = BASE::riccatiModificationTrajectoriesStock_[i][k].constraintNullProjector_;
 
   // feedback gains
-  BASE::nominalControllersStock_[i].gainArray_[k] = CmProjected;
+  BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
   BASE::nominalControllersStock_[i].gainArray_[k].noalias() += Qu * projectedKmTrajectoryStock_[i][k];
 
   // bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput;
   BASE::nominalControllersStock_[i].biasArray_[k].noalias() -= BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = EvProjected;
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
   BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLvTrajectoryStock_[i][k];
 
   // checking the numerical stability of the controller parameters
@@ -198,7 +198,7 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t ILQR::computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const {
+matrix_t ILQR::computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const {
   const matrix_t BmTransSm = modelData.dynamics_.dfdu.transpose() * Sm;
   matrix_t Hm = modelData.cost_.dfduu;
   Hm.noalias() += BmTransSm * modelData.dynamics_.dfdu;

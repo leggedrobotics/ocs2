@@ -36,7 +36,7 @@ namespace ocs2 {
 
 enum class SensitivityIntegratorType { EULER, RK2, RK4 };
 
-namespace sensitivity_integrator_type {
+namespace sensitivity_integrator {
 
 /**
  * Get string name of integrator type
@@ -50,7 +50,7 @@ std::string toString(SensitivityIntegratorType integratorType);
  */
 SensitivityIntegratorType fromString(const std::string& name);
 
-}  // namespace sensitivity_integrator_type
+}  // namespace sensitivity_integrator
 
 /**
  * A function handle to computes the discrete approximation of the system's flowmap.

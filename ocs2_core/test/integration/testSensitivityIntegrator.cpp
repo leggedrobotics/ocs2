@@ -30,9 +30,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include "ocs2_core/integration/SensitivityIntegrator.h"
+#include "ocs2_core/integration/Integrator.h"
 
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/control/FeedforwardController.h>
 
 namespace {
 ocs2::LinearSystemDynamics getSystem() {
@@ -53,8 +55,8 @@ TEST(test_sensitivity_integrator, eulerSensitivity) {
   auto system = getSystem();
   ocs2::scalar_t t = 0.5;
   ocs2::vector_t x = ocs2::vector_t::Random(2);
-  ocs2::vector_t u = ocs2::vector_t::Random(2);
-  ocs2::scalar_t dt = 0.0;
+  ocs2::vector_t u = ocs2::vector_t::Random(1);
+  ocs2::scalar_t dt = 0.1;
 
   // Check with more readable version of sensitivity computation.
   const auto eulerdynamics_check = [&]() {
@@ -91,8 +93,8 @@ TEST(test_sensitivity_integrator, rk2Sensitivity) {
   auto system = getSystem();
   ocs2::scalar_t t = 0.5;
   ocs2::vector_t x = ocs2::vector_t::Random(2);
-  ocs2::vector_t u = ocs2::vector_t::Random(2);
-  ocs2::scalar_t dt = 0.0;
+  ocs2::vector_t u = ocs2::vector_t::Random(1);
+  ocs2::scalar_t dt = 0.1;
 
   // Check with more readable version of sensitivity computation.
   const auto rk2dynamics_check = [&]() {
@@ -134,8 +136,8 @@ TEST(test_sensitivity_integrator, rk4Sensitivity) {
   auto system = getSystem();
   ocs2::scalar_t t = 0.5;
   ocs2::vector_t x = ocs2::vector_t::Random(2);
-  ocs2::vector_t u = ocs2::vector_t::Random(2);
-  ocs2::scalar_t dt = 0.0;
+  ocs2::vector_t u = ocs2::vector_t::Random(1);
+  ocs2::scalar_t dt = 0.1;
 
   // Check with more readable version of sensitivity computation.
   const auto rk4dynamics_check = [&]() {
@@ -176,4 +178,31 @@ TEST(test_sensitivity_integrator, rk4Sensitivity) {
   ASSERT_TRUE(rk4LinearizedDynamics.f.isApprox(rk4dynamics_check.f));
   ASSERT_TRUE(rk4LinearizedDynamics.dfdx.isApprox(rk4dynamics_check.dfdx));
   ASSERT_TRUE(rk4LinearizedDynamics.dfdu.isApprox(rk4dynamics_check.dfdu));
+}
+
+TEST(test_sensitivity_integrator, vsBoostRK4) {
+  auto system = getSystem();
+  ocs2::scalar_t t = 0.5;
+  ocs2::vector_t x = ocs2::vector_t::Random(2);
+  ocs2::vector_t u = ocs2::vector_t::Random(1);
+  ocs2::scalar_t dt = 0.1;
+
+  // Boost version
+  auto integrator = newIntegrator(ocs2::IntegratorType::RK4);
+  ocs2::scalar_array_t timeTrajectory;
+  ocs2::vector_array_t stateTrajectory;
+  auto observer = ocs2::Observer(&stateTrajectory, &timeTrajectory);
+  ocs2::FeedforwardController controller({t, t}, {u, u});
+  system.setController(&controller);
+  int maxNumSteps = 4;
+  integrator->integrateConst(system, observer, x, t, t+dt, dt, maxNumSteps);
+  const auto boostRk4ForwardDynamics = stateTrajectory.back();
+
+  // This version
+  auto type = ocs2::SensitivityIntegratorType::RK4;
+  auto rk4Discretization = ocs2::selectDynamicsDiscretization(type);
+  const auto rk4ForwardDynamics = rk4Discretization(system, t, x, u, dt);
+
+  // Check
+  ASSERT_TRUE(rk4ForwardDynamics.isApprox(boostRk4ForwardDynamics));
 }

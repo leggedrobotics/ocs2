@@ -310,7 +310,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
       performance.stateInputEqConstraintISE += dt * constraints_[i].f.squaredNorm();
       if (settings_.qr_decomp) {  // Handle equality constraints using projection.
         // Reduces number of inputs
-        ocpSize.nu[i] = settings_.n_input - constraints_[i].f.rows();
+        ocpSize.numInputs[i] = settings_.n_input - constraints_[i].f.rows();
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
         constraints_[i] = luConstraintProjection(constraints_[i]);
 
@@ -319,7 +319,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(SystemDynamics
         changeOfInputVariables(cost_[i], constraints_[i].dfdu, constraints_[i].dfdx, constraints_[i].f);
       } else {
         // Declare as general inequalities
-        ocpSize.ng[i] = constraints_[i].f.rows();
+        ocpSize.numIneqConstraints[i] = constraints_[i].f.rows();
       }
     }
 

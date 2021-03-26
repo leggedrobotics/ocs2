@@ -35,22 +35,21 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr,
-                                                   std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray,
-                                                   ConstraintOrder constraintOrder)
-    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyFunctionPtrArray)), constraintOrder_(constraintOrder) {}
+                                                   std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyPtrArray)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyPtrArray)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, size_t numConstraints,
-                                                   std::unique_ptr<PenaltyFunctionBase> penaltyFunction, ConstraintOrder constraintOrder)
-    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)), constraintOrder_(constraintOrder) {}
+                                                   std::unique_ptr<PenaltyFunctionBase> penaltyFunction)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateInputSoftConstraint::StateInputSoftConstraint(const StateInputSoftConstraint& other)
-    : BASE(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_), constraintOrder_(other.constraintOrder_) {}
+    : BASE(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -73,9 +72,9 @@ scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state
 ScalarFunctionQuadraticApproximation StateInputSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                          const vector_t& input,
                                                                                          const CostDesiredTrajectories&) const {
-  if (constraintOrder_ == ConstraintOrder::Linear) {
+  if (constraintPtr_->getOrder() == ConstraintOrder::Linear) {
     return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, input));
-  } else {  // constraintOrder_ == ConstraintOrder::Quadratic
+  } else {  // constraintPtr_->getOrder() == ConstraintOrder::Quadratic
     return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, input));
   }
 }

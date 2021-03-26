@@ -38,7 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /******************************************************************************************************/
 class TestStateConstraint : public ocs2::StateConstraint {
  public:
-  TestStateConstraint(size_t numConstraints) : numConstraints_(numConstraints) {}
+  TestStateConstraint(ocs2::ConstraintOrder constraintOrder, size_t numConstraints)
+      : StateConstraint(constraintOrder), numConstraints_(numConstraints) {}
   ~TestStateConstraint() override = default;
   TestStateConstraint* clone() const override { return new TestStateConstraint(*this); }
 
@@ -60,7 +61,8 @@ class TestStateConstraint : public ocs2::StateConstraint {
 /******************************************************************************************************/
 class TestStateInputConstraint : public ocs2::StateInputConstraint {
  public:
-  TestStateInputConstraint(size_t numConstraints) : numConstraints_(numConstraints) {}
+  TestStateInputConstraint(ocs2::ConstraintOrder constraintOrder, size_t numConstraints)
+      : ocs2::StateInputConstraint(constraintOrder), numConstraints_(numConstraints) {}
   ~TestStateInputConstraint() override = default;
   TestStateInputConstraint* clone() const override { return new TestStateInputConstraint(*this); }
 
@@ -88,21 +90,19 @@ template <class Constraint, class SoftConstraint>
 std::unique_ptr<SoftConstraint> softConstraintFactory(size_t numConstraints, ocs2::ConstraintOrder constraintOrder,
                                                       bool useSimilarPenalty) {
   // constraint
-  std::unique_ptr<Constraint> constraintPtr(new Constraint(numConstraints));
+  std::unique_ptr<Constraint> constraintPtr(new Constraint(constraintOrder, numConstraints));
 
   if (useSimilarPenalty) {
     // penalty function
     std::unique_ptr<ocs2::RelaxedBarrierPenaltyFunction> penaltyFunctionPtr(new ocs2::RelaxedBarrierPenaltyFunction({10.0, 1.0}));
-    return std::unique_ptr<SoftConstraint>(
-        new SoftConstraint(std::move(constraintPtr), numConstraints, std::move(penaltyFunctionPtr), constraintOrder));
+    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), numConstraints, std::move(penaltyFunctionPtr)));
 
   } else {
     std::vector<std::unique_ptr<ocs2::PenaltyFunctionBase>> penaltyFunctionPtrArry;
     for (size_t i = 0; i < numConstraints; i++) {
       penaltyFunctionPtrArry.emplace_back(new ocs2::RelaxedBarrierPenaltyFunction({10.0, 1.0}));
     }  // end of i loop
-    return std::unique_ptr<SoftConstraint>(
-        new SoftConstraint(std::move(constraintPtr), std::move(penaltyFunctionPtrArry), constraintOrder));
+    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), std::move(penaltyFunctionPtrArry)));
   }
 }
 

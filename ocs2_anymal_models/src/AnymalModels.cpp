@@ -20,6 +20,8 @@
 #include <ocs2_anymal_models/croc/WholebodyDynamicsCroc.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsCom.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
+#include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraCom.h>
+#include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraKinematics.h>
 
 namespace anymal {
 
@@ -28,7 +30,8 @@ std::string toString(AnymalModel model) {
                                                                 {AnymalModel::Cerberus, "cerberus"},
                                                                 {AnymalModel::Chimera, "chimera"},
                                                                 {AnymalModel::Croc, "croc"},
-                                                                {AnymalModel::Wheels, "wheels"}};
+                                                                {AnymalModel::Wheels, "wheels"},
+                                                                {AnymalModel::WheelsChimera, "wheels_chimera"}};
   return map.at(model);
 }
 
@@ -37,7 +40,7 @@ AnymalModel stringToAnymalModel(const std::string& name) {
                                                                 {"cerberus", AnymalModel::Cerberus},
                                                                 {"chimera", AnymalModel::Chimera},
                                                                 {"croc", AnymalModel::Croc},
-                                                                {"wheels", AnymalModel::Wheels}};
+                                                                {"wheels_chimera", AnymalModel::WheelsChimera}};
   return map.at(name);
 }
 
@@ -53,6 +56,8 @@ std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKi
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalCrocKinematics());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalWheelsKinematics());
+    case AnymalModel::WheelsChimera:
+      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalWheelsChimeraKinematics());
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }
@@ -70,6 +75,8 @@ std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnyma
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalCrocKinematicsAd());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsKinematicsAd());
+    case AnymalModel::WheelsChimera:
+      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsChimeraKinematicsAd());
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }
@@ -87,6 +94,8 @@ std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalCrocCom());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalWheelsCom());
+    case AnymalModel::WheelsChimera:
+      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalWheelsChimeraCom());
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }
@@ -104,6 +113,8 @@ std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComMod
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalCrocComAd());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsComAd());
+    case AnymalModel::WheelsChimera:
+      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsChimeraComAd());
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }
@@ -121,6 +132,8 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>> getWholebodyD
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCroc());
     case AnymalModel::Wheels:
       throw std::runtime_error("[getWholebodyDynamics] not implemented for wheels");
+    case AnymalModel::WheelsChimera:
+      throw std::runtime_error("[getWholebodyDynamics] not implemented for wheels");
     default:
       throw std::runtime_error("[AnymalModels] unkown model");
   }
@@ -137,6 +150,8 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>> getWholebo
     case AnymalModel::Croc:
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsCrocAd());
     case AnymalModel::Wheels:
+      throw std::runtime_error("[getWholebodyDynamicsAd] not implemented for wheels");
+    case AnymalModel::WheelsChimera:
       throw std::runtime_error("[getWholebodyDynamicsAd] not implemented for wheels");
     default:
       throw std::runtime_error("[AnymalModels] unkown model");

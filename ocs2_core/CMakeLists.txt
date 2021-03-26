@@ -129,7 +129,7 @@ add_library(${PROJECT_NAME}
   src/soft_constraint/SoftConstraintPenalty.cpp
   src/soft_constraint/StateSoftConstraint.cpp
   src/soft_constraint/StateInputSoftConstraint.cpp
-  src/soft_constraint/penalties/BoxConstraintPenalty.cpp
+  src/soft_constraint/penalties/DoubleSidedPenalty.cpp
   src/soft_constraint/penalties/QuadraticPenaltyFunction.cpp
   src/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.cpp
   src/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.cpp
@@ -340,7 +340,7 @@ target_link_libraries(test_Logging
 
 catkin_add_gtest(test_softConstraint
   test/soft_constraint/testSoftConstraint.cpp
-  test/soft_constraint/testBoxConstraint.cpp
+  test/soft_constraint/testDoubleSidedPenalty.cpp
 )
 target_link_libraries(test_softConstraint
   ${PROJECT_NAME}

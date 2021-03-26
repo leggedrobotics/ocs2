@@ -27,34 +27,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/BoxConstraintPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-BoxConstraintPenalty::BoxConstraintPenalty(const BoxConstraintPenalty& other)
+DoubleSidedPenalty::DoubleSidedPenalty(const DoubleSidedPenalty& other)
     : lowerBound_(other.lowerBound_), upperBound_(other.upperBound_), penaltyPtr_(other.penaltyPtr_->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t BoxConstraintPenalty::getValue(scalar_t h) const {
+scalar_t DoubleSidedPenalty::getValue(scalar_t h) const {
   return penaltyPtr_->getValue(h - lowerBound_) + penaltyPtr_->getValue(upperBound_ - h);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t BoxConstraintPenalty::getDerivative(scalar_t h) const {
+scalar_t DoubleSidedPenalty::getDerivative(scalar_t h) const {
   return penaltyPtr_->getDerivative(h - lowerBound_) - penaltyPtr_->getDerivative(upperBound_ - h);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t BoxConstraintPenalty::getSecondDerivative(scalar_t h) const {
+scalar_t DoubleSidedPenalty::getSecondDerivative(scalar_t h) const {
   return penaltyPtr_->getSecondDerivative(h - lowerBound_) + penaltyPtr_->getSecondDerivative(upperBound_ - h);
 }
 

@@ -29,41 +29,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/soft_constraint/penalties/BoxConstraintPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
 #include <ocs2_core/soft_constraint/penalties/SquaredHingePenaltyFunction.h>
 
-TEST(testBoxConstraint, value) {
+TEST(testDoubleSidedPenalty, value) {
   const ocs2::scalar_t eps = 1e-9;
   const ocs2::scalar_t l = -1.0;
   const ocs2::scalar_t u = 1.0;
   ocs2::SquaredHingePenaltyFunction penalty(ocs2::SquaredHingePenaltyFunction::Config(1.0, 0.0));
-  ocs2::BoxConstraintPenalty box(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
+  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
 
-  EXPECT_NEAR(box.getValue(0.0), 0.0, eps);
-  EXPECT_NEAR(box.getValue(2.0), penalty.getValue(u - 2.0), eps);
-  EXPECT_NEAR(box.getValue(-3.0), penalty.getValue(-3.0 - l), eps);
+  EXPECT_NEAR(bounds.getValue(0.0), 0.0, eps);
+  EXPECT_NEAR(bounds.getValue(2.0), penalty.getValue(u - 2.0), eps);
+  EXPECT_NEAR(bounds.getValue(-3.0), penalty.getValue(-3.0 - l), eps);
 }
 
-TEST(testBoxConstraint, derivative) {
+TEST(testDoubleSidedPenalty, derivative) {
   const ocs2::scalar_t eps = 1e-9;
   const ocs2::scalar_t l = -1.0;
   const ocs2::scalar_t u = 1.0;
   ocs2::SquaredHingePenaltyFunction penalty(ocs2::SquaredHingePenaltyFunction::Config(1.0, 0.0));
-  ocs2::BoxConstraintPenalty box(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
+  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
 
-  EXPECT_NEAR(box.getDerivative(0.0), 0.0, eps);
-  EXPECT_NEAR(box.getDerivative(2.0), -penalty.getDerivative(u - 2.0), eps);
-  EXPECT_NEAR(box.getDerivative(-3.0), penalty.getDerivative(-3.0 - l), eps);
+  EXPECT_NEAR(bounds.getDerivative(0.0), 0.0, eps);
+  EXPECT_NEAR(bounds.getDerivative(2.0), -penalty.getDerivative(u - 2.0), eps);
+  EXPECT_NEAR(bounds.getDerivative(-3.0), penalty.getDerivative(-3.0 - l), eps);
 }
 
-TEST(testBoxConstraint, secondDerivative) {
+TEST(testDoubleSidedPenalty, secondDerivative) {
   const ocs2::scalar_t eps = 1e-9;
   const ocs2::scalar_t l = -1.0;
   const ocs2::scalar_t u = 1.0;
   ocs2::SquaredHingePenaltyFunction penalty(ocs2::SquaredHingePenaltyFunction::Config(1.0, 0.0));
-  ocs2::BoxConstraintPenalty box(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
+  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
 
-  EXPECT_NEAR(box.getSecondDerivative(0.0), 0.0, eps);
-  EXPECT_NEAR(box.getSecondDerivative(2.0), penalty.getSecondDerivative(u - 2.0), eps);
-  EXPECT_NEAR(box.getSecondDerivative(-3.0), penalty.getSecondDerivative(-3.0 - l), eps);
+  EXPECT_NEAR(bounds.getSecondDerivative(0.0), 0.0, eps);
+  EXPECT_NEAR(bounds.getSecondDerivative(2.0), penalty.getSecondDerivative(u - 2.0), eps);
+  EXPECT_NEAR(bounds.getSecondDerivative(-3.0), penalty.getSecondDerivative(-3.0 - l), eps);
 }

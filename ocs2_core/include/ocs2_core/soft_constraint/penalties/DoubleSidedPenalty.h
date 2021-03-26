@@ -36,13 +36,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Implements the box constraint \f$ l \leq h \leq u \f$ with a given inequality penalty function \f$ p() \f$.
+ * Implements the double sided inequality \f$ l \leq h \leq u \f$ with a given penalty function \f$ p() \f$.
  *
  * \f[
  *   p_{box}(h) = p(h - l) + p(u - h)
  * \f]
  */
-class BoxConstraintPenalty final : public PenaltyFunctionBase {
+class DoubleSidedPenalty final : public PenaltyFunctionBase {
  public:
   /**
    * Constructor
@@ -50,20 +50,20 @@ class BoxConstraintPenalty final : public PenaltyFunctionBase {
    * @param [in] upperBound: The upper bound.
    * @param [in] penalty: The penalty for the two inequality constraint.
    */
-  BoxConstraintPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyFunctionBase> penalty)
+  DoubleSidedPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyFunctionBase> penalty)
       : lowerBound_(lowerBound), upperBound_(upperBound), penaltyPtr_(std::move(penalty)) {}
 
   /** Default destructor */
-  ~BoxConstraintPenalty() override = default;
+  ~DoubleSidedPenalty() override = default;
 
-  BoxConstraintPenalty* clone() const override { return new BoxConstraintPenalty(*this); }
+  DoubleSidedPenalty* clone() const override { return new DoubleSidedPenalty(*this); }
 
   scalar_t getValue(scalar_t h) const override;
   scalar_t getDerivative(scalar_t h) const override;
   scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  BoxConstraintPenalty(const BoxConstraintPenalty& other);
+  DoubleSidedPenalty(const DoubleSidedPenalty& other);
 
   std::unique_ptr<PenaltyFunctionBase> penaltyPtr_;
   scalar_t lowerBound_;

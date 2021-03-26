@@ -20,6 +20,10 @@ Filter::Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D)
       B_(std::move(B)),
       C_(std::move(C)),
       D_(std::move(D)),
+      a_(A_.diagonal()),
+      b_(B_.diagonal()),
+      c_(C_.diagonal()),
+      d_(D_.diagonal()),
       numStates_(A_.rows()),
       numInputs_(B_.cols()),
       numOutputs_(C_.rows()) {

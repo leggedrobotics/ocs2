@@ -366,7 +366,7 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
 
   // Observation subscriber
   mpcObservationSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this,
-                                                   ::ros::TransportHints().udp());
+                                                   ::ros::TransportHints().tcpNoDelay());
 
   // Goal subscriber
   mpcTargetTrajectoriesSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback,

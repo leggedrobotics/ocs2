@@ -1,5 +1,5 @@
 library 'continuous_integration_pipeline'
-ciPipeline("--publish-doxygen --recipes raisimlib")
+ciPipeline("--ros-distro noetic --publish-doxygen --recipes raisimlib")
 
 node {
     stage('Artifacts') {

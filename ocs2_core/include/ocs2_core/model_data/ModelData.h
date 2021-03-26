@@ -38,20 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * The base class for model data.
+ * The optimal control problem model data.
  */
-struct ModelDataBase {
-  /**
-   * Creates a deep copy of the object.
-   * @warning Cloning implies that the caller takes ownership and deletes the created object.
-   * @return Pointer to a new instance.
-   */
-  virtual ModelDataBase* clone() const;
-
+struct ModelData {
   /**
    * Displays all variables
    */
-  virtual void display() const;
+  void display() const;
 
   /**
    * Checks whether the size of the member variables matches the state and input dimension.
@@ -104,6 +97,6 @@ struct ModelDataBase {
   VectorFunctionQuadraticApproximation ineqConstr_;
 };
 
-std::ostream& operator<<(std::ostream& out, const ModelDataBase& data);
+std::ostream& operator<<(std::ostream& out, const ModelData& data);
 
 }  // namespace ocs2

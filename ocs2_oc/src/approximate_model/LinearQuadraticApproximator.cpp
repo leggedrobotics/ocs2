@@ -38,7 +38,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                       ModelDataBase& modelData) const {
+                                                       ModelData& modelData) const {
   // dynamics
   approximateDynamics(time, state, input, modelData);
 
@@ -56,7 +56,7 @@ void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                                  ModelDataBase& modelData) const {
+                                                                  ModelData& modelData) const {
   // Jump map
   modelData.dynamics_ = systemDynamicsPtr_->jumpMapLinearApproximation(time, state, input);
 
@@ -74,7 +74,7 @@ void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                      ModelDataBase& modelData) const {
+                                                      ModelData& modelData) const {
   // get results
   modelData.dynamics_ = systemDynamicsPtr_->linearApproximation(time, state, input);
   modelData.dynamicsCovariance_ = systemDynamicsPtr_->dynamicsCovariance(time, state, input);
@@ -97,7 +97,7 @@ void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                         ModelDataBase& modelData) const {
+                                                         ModelData& modelData) const {
   // State-input equality constraint
   modelData.stateInputEqConstr_ = systemConstraintsPtr_->stateInputEqualityConstraintLinearApproximation(time, state, input);
   if (modelData.stateInputEqConstr_.f.rows() > input.rows()) {
@@ -133,7 +133,7 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                  ModelDataBase& modelData) const {
+                                                  ModelData& modelData) const {
   // get results
   modelData.cost_ = costFunctionPtr_->costQuadraticApproximation(time, state, input);
 

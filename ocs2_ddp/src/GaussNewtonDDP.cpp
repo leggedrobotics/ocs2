@@ -1101,7 +1101,7 @@ void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& const
     // projected state-input equality constraints
     projectedModelData.stateInputEqConstr_.f.setZero(projectedModelData.inputDim_);
     projectedModelData.stateInputEqConstr_.dfdx.setZero(projectedModelData.inputDim_, projectedModelData.stateDim_);
-    projectedModelData.stateInputEqConstr_.dfdu = matrix_t();
+    projectedModelData.stateInputEqConstr_.dfdu.setZero(modelData.inputDim_, modelData.inputDim_);
 
     // dynamics
     projectedModelData.dynamics_ = modelData.dynamics_;
@@ -1116,13 +1116,13 @@ void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& const
   } else {
     // Change of variables u = Pu * tilde{u} + Px * x + u0
     // Pu = constraintNullProjector;
-    // Px (= CmProjected) = -constraintRangeProjector * C
-    // u0 (= EvProjected) = -constraintRangeProjector * e
+    // Px (= -CmProjected) = -constraintRangeProjector * C
+    // u0 (= -EvProjected) = -constraintRangeProjector * e
 
     /* projected state-input equality constraints */
     projectedModelData.stateInputEqConstr_.f.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.f;
     projectedModelData.stateInputEqConstr_.dfdx.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.dfdx;
-    projectedModelData.stateInputEqConstr_.dfdu = matrix_t();
+    projectedModelData.stateInputEqConstr_.dfdu.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.dfdu;
 
     // dynamics
     projectedModelData.dynamics_ = modelData.dynamics_;

@@ -30,28 +30,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModelDataBase* ModelDataBase::clone() const {
-  return new ModelDataBase(*this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ModelDataBase::display() const {
+void ModelData::display() const {
   std::cerr << *this;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ModelDataBase::checkSizes(int stateDim, int inputDim) const {
+void ModelData::checkSizes(int stateDim, int inputDim) const {
   assert(stateDim_ == stateDim);
   assert(inputDim_ == inputDim);
 
@@ -104,7 +97,7 @@ void ModelDataBase::checkSizes(int stateDim, int inputDim) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string ModelDataBase::checkCostProperties() const {
+std::string ModelData::checkCostProperties() const {
   std::stringstream errorDescription;
 
   if (cost_.f != cost_.f) {
@@ -150,7 +143,7 @@ std::string ModelDataBase::checkCostProperties() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string ModelDataBase::checkDynamicsDerivativsProperties() const {
+std::string ModelData::checkDynamicsDerivativsProperties() const {
   std::stringstream errorDescription;
 
   if (!dynamics_.f.allFinite()) {
@@ -172,7 +165,7 @@ std::string ModelDataBase::checkDynamicsDerivativsProperties() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string ModelDataBase::checkConstraintProperties() const {
+std::string ModelData::checkConstraintProperties() const {
   std::stringstream errorDescription;
 
   if (stateInputEqConstr_.f.rows() > 0) {
@@ -251,7 +244,7 @@ std::string ModelDataBase::checkConstraintProperties() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::ostream& operator<<(std::ostream& out, const ModelDataBase& data) {
+std::ostream& operator<<(std::ostream& out, const ModelData& data) {
   out << '\n';
   out << "time: " << data.time_ << '\n';
   out << "Dynamics: " << data.dynamics_.f.transpose() << '\n';

@@ -358,7 +358,9 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
   hpipmInterface_.resize(std::move(ocpSize));
 
   // Sum performance of the threads
-  return std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
+  PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
+  totalPerformance.merit = totalPerformance.totalCost + totalPerformance.inequalityConstraintPenalty;
+  return totalPerformance;
 }
 
 void MultipleShootingSolver::setupIntermediateNode(SystemDynamicsBase& systemDynamics,
@@ -410,9 +412,6 @@ void MultipleShootingSolver::setupIntermediateNode(SystemDynamicsBase& systemDyn
   cost.dfdx *= dt;
   cost.dfdu *= dt;
   cost.f *= dt;
-
-  // Merit
-  performance.merit = performance.totalCost + performance.inequalityConstraintPenalty;
 }
 
 void MultipleShootingSolver::setTerminalNode(CostFunctionBase* terminalCostFunctionPtr, scalar_t t, const vector_t& x,
@@ -468,7 +467,9 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const scalar_array_t
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
 
   // Sum performance of the threads
-  return std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
+  PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
+  totalPerformance.merit = totalPerformance.totalCost + totalPerformance.inequalityConstraintPenalty;
+  return totalPerformance;
 }
 
 void MultipleShootingSolver::computePerformance(SystemDynamicsBase& systemDynamics, DynamicsDiscretizer& discretizer,
@@ -496,9 +497,6 @@ void MultipleShootingSolver::computePerformance(SystemDynamicsBase& systemDynami
       }
     }
   }
-
-  // Merit
-  performance.merit = performance.totalCost + performance.inequalityConstraintPenalty;
 }
 
 bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_t& initState,

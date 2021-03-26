@@ -78,6 +78,7 @@ include_directories(
 # Hpipm interface
 add_library(${PROJECT_NAME}
   src/HpipmInterface.cpp
+  src/HpipmInterfaceSettings.cpp
   src/OcpSize.cpp
 )
 add_dependencies(${PROJECT_NAME}

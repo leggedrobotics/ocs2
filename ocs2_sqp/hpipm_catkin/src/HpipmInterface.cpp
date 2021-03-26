@@ -85,7 +85,7 @@ namespace ocs2 {
 
 class HpipmInterface::Impl {
  public:
-  Impl(OcpSize ocpSize, const Settings& settings) : settings_(settings) { initializeMemory(std::move(ocpSize), true); }
+  Impl(OcpSize ocpSize, Settings settings) : settings_(std::move(settings)) { initializeMemory(std::move(ocpSize), true); }
 
   void initializeMemory(OcpSize ocpSize, bool forceInitialization = false) {
     // We will remove the initial state from the decision variables before passing the data to HPIPM.

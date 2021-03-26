@@ -56,5 +56,7 @@ struct Settings {
   int ric_alg = 0;  // square root ricatti recursion
 };
 
+std::ostream& operator<<(std::ostream& stream, const Settings& settings);
+
 }  // namespace hpipm_interface
 }  // namespace ocs2

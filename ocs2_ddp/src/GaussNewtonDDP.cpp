@@ -370,8 +370,8 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time
   const vector_t deltaX = state - xNominal;
   const vector_t costate = getValueFunction(time, state).dfdx;
 
-  vector_t err = -EvProjected;
-  err.noalias() -= CmProjected * deltaX;
+  vector_t err = EvProjected;
+  err.noalias() += CmProjected * deltaX;
 
   vector_t temp = -Rv;
   temp.noalias() -= Pm * deltaX;
@@ -1120,14 +1120,18 @@ void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& const
     // u0 (= -EvProjected) = -constraintRangeProjector * e
 
     /* projected state-input equality constraints */
-    projectedModelData.stateInputEqConstr_.f.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.f;
-    projectedModelData.stateInputEqConstr_.dfdx.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.dfdx;
-    projectedModelData.stateInputEqConstr_.dfdu.noalias() = -constraintRangeProjector * modelData.stateInputEqConstr_.dfdu;
+    projectedModelData.stateInputEqConstr_.f.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.f;
+    projectedModelData.stateInputEqConstr_.dfdx.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.dfdx;
+    projectedModelData.stateInputEqConstr_.dfdu.noalias() = constraintRangeProjector * modelData.stateInputEqConstr_.dfdu;
+
+    // Change of variable matrices
+    const auto& Pu = constraintNullProjector;
+    const matrix_t Px = -projectedModelData.stateInputEqConstr_.dfdx;
+    const matrix_t u0 = -projectedModelData.stateInputEqConstr_.f;
 
     // dynamics
     projectedModelData.dynamics_ = modelData.dynamics_;
-    changeOfInputVariables(projectedModelData.dynamics_, constraintNullProjector, projectedModelData.stateInputEqConstr_.dfdx,
-                           projectedModelData.stateInputEqConstr_.f);
+    changeOfInputVariables(projectedModelData.dynamics_, Pu, Px, u0);
 
     // dynamics bias
     projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
@@ -1135,8 +1139,7 @@ void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& const
 
     // cost
     projectedModelData.cost_ = modelData.cost_;
-    changeOfInputVariables(projectedModelData.cost_, constraintNullProjector, projectedModelData.stateInputEqConstr_.dfdx,
-                           projectedModelData.stateInputEqConstr_.f);
+    changeOfInputVariables(projectedModelData.cost_, Pu, Px, u0);
   }
 }
 

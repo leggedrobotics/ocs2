@@ -141,13 +141,13 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
   projectedLv.noalias() -= projectedBm.transpose() * BASE::SvTrajectoryStock_[i][k];
 
   // feedback gains
-  BASE::nominalControllersStock_[i].gainArray_[k] = CmProjected;
+  BASE::nominalControllersStock_[i].gainArray_[k] = -CmProjected;
   BASE::nominalControllersStock_[i].gainArray_[k].noalias() += Qu * projectedKm;
 
   // bias input
   BASE::nominalControllersStock_[i].biasArray_[k] = nominalInput;
   BASE::nominalControllersStock_[i].biasArray_[k].noalias() -= BASE::nominalControllersStock_[i].gainArray_[k] * nominalState;
-  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = EvProjected;
+  BASE::nominalControllersStock_[i].deltaBiasArray_[k] = -EvProjected;
   BASE::nominalControllersStock_[i].deltaBiasArray_[k].noalias() += Qu * projectedLv;
 
   // checking the numerical stability of the controller parameters

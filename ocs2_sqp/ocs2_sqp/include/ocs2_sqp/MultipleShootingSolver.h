@@ -13,6 +13,7 @@
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_core/misc/ThreadPool.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include <hpipm_catkin/HpipmInterface.h>
@@ -37,6 +38,10 @@ struct MultipleShootingSolverSettings {
   bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
   bool printSolverStatistics = false;  // Print benchmarking of the multiple shooting method
   bool printLinesearch = false;        // Print linesearch information
+
+  // Threading
+  size_t nThreads = 4;
+  int threadPriority = 50;
 };
 
 class MultipleShootingSolver : public SolverBase {
@@ -73,6 +78,9 @@ class MultipleShootingSolver : public SolverBase {
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override { return vector_t::Zero(0); }
 
  private:
+  /** Run a task in parallel with settings.nThreads */
+  void runParallel(std::function<void(int)> taskFunction);
+
   /** Get profiling information as a string */
   std::string getBenchmarkingInformation() const;
 
@@ -90,32 +98,48 @@ class MultipleShootingSolver : public SolverBase {
   vector_array_t initializeInputTrajectory(const scalar_array_t& timeDiscretization, const vector_array_t& stateTrajectory, int N) const;
 
   /** Creates QP around t, x, u. Returns performance metrics at the current {t, x, u} */
-  PerformanceIndex setupQuadraticSubproblem(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction,
-                                            ConstraintBase* constraintPtr, CostFunctionBase* terminalCostFunctionPtr,
-                                            const scalar_array_t& time, const vector_array_t& x, const vector_array_t& u);
+  PerformanceIndex setupQuadraticSubproblem(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
+                                            const vector_array_t& u);
+
+  static void setupIntermediateNode(SystemDynamicsBase& systemDynamics, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
+                                    CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
+                                    bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
+                                    const vector_t& x_next, const vector_t& u, PerformanceIndex& performance,
+                                    VectorFunctionLinearApproximation& dynamics, ScalarFunctionQuadraticApproximation& cost,
+                                    VectorFunctionLinearApproximation& constraints);
+
+  static void setTerminalNode(CostFunctionBase* terminalCostFunctionPtr, scalar_t t, const vector_t& x, PerformanceIndex& performance,
+                              ScalarFunctionQuadraticApproximation& cost, VectorFunctionLinearApproximation& constraints);
 
   /** Computes only the performance metrics at the current {t, x, u} */
-  PerformanceIndex computePerformance(SystemDynamicsBase& systemDynamics, CostFunctionBase& costFunction, ConstraintBase* constraintPtr,
-                                      CostFunctionBase* terminalCostFunctionPtr, const scalar_array_t& time, const vector_array_t& x,
+  PerformanceIndex computePerformance(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
                                       const vector_array_t& u);
+
+  /** Computes performance at an intermediate node */
+  static void computePerformance(SystemDynamicsBase& systemDynamics, DynamicsDiscretizer& discretizer, CostFunctionBase& costFunction,
+                                 ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr, scalar_t t, scalar_t dt, const vector_t& x,
+                                 const vector_t& x_next, const vector_t& u, PerformanceIndex& performance);
 
   /** Returns solution of the QP subproblem in delta coordinates: {delta_x, delta_u} */
   std::pair<vector_array_t, vector_array_t> getOCPSolution(const vector_t& delta_x0);
 
   /** Decides on the step to take and overrides given trajectories {x, u} <- {x + a*dx, u + a*du} */
-  bool takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_array_t& dx,
-                const vector_array_t& du, vector_array_t& x, vector_array_t& u);
+  bool takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_t& initState,
+                const vector_array_t& dx, const vector_array_t& du, vector_array_t& x, vector_array_t& u);
 
   // Problem definition
   MultipleShootingSolverSettings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
-  std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
-  std::unique_ptr<CostFunctionBase> costFunctionPtr_;
-  std::unique_ptr<ConstraintBase> constraintPtr_;
+  std::vector<std::unique_ptr<SystemDynamicsBase>> systemDynamicsPtr_;
+  std::vector<std::unique_ptr<CostFunctionBase>> costFunctionPtr_;
+  std::vector<std::unique_ptr<ConstraintBase>> constraintPtr_;
   std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
   std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
   std::unique_ptr<PenaltyBase> penaltyPtr_;
+
+  // Threading
+  std::unique_ptr<ThreadPool> threadPoolPtr_;
 
   // Solution
   PrimalSolution primalSolution_;

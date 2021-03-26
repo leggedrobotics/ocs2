@@ -27,42 +27,32 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
+#include <cmath>
+
+#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenalty.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenaltyFunction::getValue(scalar_t h) const {
-  if (h > config_.delta) {
-    return -config_.mu * log(h);
-  } else {
-    const scalar_t delta_h = (h - 2.0 * config_.delta) / config_.delta;
-    return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
-  };
+scalar_t SmoothAbsolutePenalty::getValue(scalar_t h) const {
+  return config_.mu * sqrt(h * h + config_.delta * config_.delta);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenaltyFunction::getDerivative(scalar_t h) const {
-  if (h > config_.delta) {
-    return -config_.mu / h;
-  } else {
-    return config_.mu * ((h - 2.0 * config_.delta) / (config_.delta * config_.delta));
-  };
+scalar_t SmoothAbsolutePenalty::getDerivative(scalar_t h) const {
+  return config_.mu * h / sqrt(h * h + config_.delta * config_.delta);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenaltyFunction::getSecondDerivative(scalar_t h) const {
-  if (h > config_.delta) {
-    return config_.mu / (h * h);
-  } else {
-    return config_.mu / (config_.delta * config_.delta);
-  };
+scalar_t SmoothAbsolutePenalty::getSecondDerivative(scalar_t h) const {
+  const scalar_t deltaSquare = config_.delta * config_.delta;
+  return config_.mu * deltaSquare / pow(h * h + deltaSquare, 1.5);
 }
 
 }  // namespace ocs2

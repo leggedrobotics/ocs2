@@ -29,57 +29,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
 /**
- * Implements the smooth-absolute function for a single equality constraint \f$ h = 0 \f$
+ * Implements the Quadratic function for a single equality constraint \f$ h = 0 \f$
  *
  * \f[
- *   p(h) = \mu sqrt(x^2 + \delta^2).
+ *   p(h) = \frac{\mu}{2} x^2.
  * \f]
  *
- * where \f$ \mu > 0 \f$, and \f$ \delta > 0 \f$ are user defined parameters. Note that
- * \f$ \delta \f$ defines the error bound between the absolute function and its approximation:
- *
- * \f[
- *   | x - sqrt(x^2 + \delta^2) | \leq \delta, \quad \forall x \in R
- * \f]
+ * where \f$ \mu > 0 \f$ is a user defined parameter.
  */
-class SmoothAbsolutePenaltyFunction final : public PenaltyFunctionBase {
+class QuadraticPenalty final : public PenaltyBase {
  public:
   /**
-   * Configuration object for the smooth absolute penalty.
-   * mu : scaling factor
-   * delta: relaxation parameter, see class description
-   */
-  struct Config {
-    Config() : Config(1.0, 1e-2) {}
-    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
-    scalar_t mu;
-    scalar_t delta;
-  };
-
-  /**
    * Constructor
-   * @param [in] config: Configuration object containing mu and delta.
+   * @param [in] mu: Scaling of the cost.
    */
-  explicit SmoothAbsolutePenaltyFunction(Config config) : config_(std::move(config)) {}
+  explicit QuadraticPenalty(scalar_t mu) : mu_(mu) {}
 
   /** Default destructor */
-  ~SmoothAbsolutePenaltyFunction() override = default;
+  ~QuadraticPenalty() override = default;
 
-  SmoothAbsolutePenaltyFunction* clone() const override { return new SmoothAbsolutePenaltyFunction(*this); }
+  QuadraticPenalty* clone() const override { return new QuadraticPenalty(*this); }
 
   scalar_t getValue(scalar_t h) const override;
   scalar_t getDerivative(scalar_t h) const override;
   scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  SmoothAbsolutePenaltyFunction(const SmoothAbsolutePenaltyFunction& other) = default;
+  QuadraticPenalty(const QuadraticPenalty& other) = default;
 
-  Config config_;
+  scalar_t mu_;
 };
 
 }  // namespace ocs2

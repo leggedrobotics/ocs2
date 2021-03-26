@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
@@ -50,16 +50,16 @@ class SoftConstraintPenalty {
  public:
   /**
    * Constructor
-   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
+   * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
-  SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray);
+  SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
   /**
    * Constructor
    * @param [in] numConstraints: The number of constraints.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
-  SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr);
+  SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyBase> penaltyFunctionPtr);
 
   /** Default destructor */
   ~SoftConstraintPenalty() = default;
@@ -96,7 +96,7 @@ class SoftConstraintPenalty {
  private:
   std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(const vector_t& h) const;
 
-  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray_;
+  std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray_;
 };
 
 }  // namespace ocs2

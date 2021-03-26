@@ -29,37 +29,57 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/constraint/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
 /**
- *  Implements the relaxed barrier function for a single inequality constraint \f$ h \geq 0 \f$
+ * Implements the smooth-absolute function for a single equality constraint \f$ h = 0 \f$
  *
- *   \f[
- *   p(h)=\left\lbrace
- *               \begin{array}{ll}
- *                 -\mu \ln(h) & if \quad  h > \delta, \\
- *                 -\mu \ln(\delta) + \mu \frac{1}{2} \left( \left( \frac{h-2\delta}{\delta} \right)^2 - 1 \right) & otherwise,
- *               \end{array}
- *             \right.
+ * \f[
+ *   p(h) = \mu sqrt(x^2 + \delta^2).
  * \f]
  *
- *  where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
+ * where \f$ \mu > 0 \f$, and \f$ \delta > 0 \f$ are user defined parameters. Note that
+ * \f$ \delta \f$ defines the error bound between the absolute function and its approximation:
  *
+ * \f[
+ *   | x - sqrt(x^2 + \delta^2) | \leq \delta, \quad \forall x \in R
+ * \f]
  */
-class RelaxedBarrierPenalty final : public PenaltyBase {
+class SmoothAbsolutePenalty final : public PenaltyBase {
  public:
-  RelaxedBarrierPenalty(scalar_t mu, scalar_t delta) : mu_(mu), delta_(delta) {}
-  virtual ~RelaxedBarrierPenalty() = default;
+  /**
+   * Configuration object for the smooth absolute penalty.
+   * mu : scaling factor
+   * delta: relaxation parameter, see class description
+   */
+  struct Config {
+    Config() : Config(1.0, 1e-2) {}
+    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+    scalar_t mu;
+    scalar_t delta;
+  };
+
+  /**
+   * Constructor
+   * @param [in] config: Configuration object containing mu and delta.
+   */
+  explicit SmoothAbsolutePenalty(Config config) : config_(std::move(config)) {}
+
+  /** Default destructor */
+  ~SmoothAbsolutePenalty() override = default;
+
+  SmoothAbsolutePenalty* clone() const override { return new SmoothAbsolutePenalty(*this); }
+
+  scalar_t getValue(scalar_t h) const override;
+  scalar_t getDerivative(scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  scalar_t mu_;
-  scalar_t delta_;
+  SmoothAbsolutePenalty(const SmoothAbsolutePenalty& other) = default;
 
-  scalar_t getPenaltyFunctionValue(scalar_t h) const override;
-  scalar_t getPenaltyFunctionDerivative(scalar_t h) const override;
-  scalar_t getPenaltyFunctionSecondDerivative(scalar_t h) const override;
+  Config config_;
 };
 
 }  // namespace ocs2

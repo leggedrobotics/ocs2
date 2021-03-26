@@ -56,6 +56,18 @@ struct PerformanceIndex {
   scalar_t inequalityConstraintPenalty = 0.0;
 };
 
+inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
+  // Copy lhs and add rhs to it.
+  lhs.totalCost += rhs.totalCost;
+  lhs.stateEqConstraintISE += rhs.stateEqConstraintISE;
+  lhs.stateEqFinalConstraintSSE += rhs.stateEqFinalConstraintSSE;
+  lhs.stateInputEqConstraintISE += rhs.stateInputEqConstraintISE;
+  lhs.inequalityConstraintISE += rhs.inequalityConstraintISE;
+  lhs.inequalityConstraintPenalty += rhs.inequalityConstraintPenalty;
+  lhs.merit += rhs.merit;
+  return lhs;
+}
+
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
   const size_t tabSpace = 12;
   const auto indentation = stream.width();

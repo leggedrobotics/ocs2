@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/OdeBase.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 
 #include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
@@ -153,8 +153,8 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    * @param [in] modelDataEventTimesPtr: A pointer to the model data at event times.
    * @param [in] riccatiModificationPtr: A pointer to the RiccatiModification trajectory.
    */
-  void setData(const scalar_array_t* timeStampPtr, const std::vector<ModelDataBase>* projectedModelDataPtr,
-               const size_array_t* eventsPastTheEndIndecesPtr, const std::vector<ModelDataBase>* modelDataEventTimesPtr,
+  void setData(const scalar_array_t* timeStampPtr, const std::vector<ModelData>* projectedModelDataPtr,
+               const size_array_t* eventsPastTheEndIndecesPtr, const std::vector<ModelData>* modelDataEventTimesPtr,
                const std::vector<riccati_modification::Data>* riccatiModificationPtr);
 
   /**
@@ -213,8 +213,8 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
 
   // array pointers
   const scalar_array_t* timeStampPtr_ = nullptr;
-  const std::vector<ModelDataBase>* projectedModelDataPtr_ = nullptr;
-  const std::vector<ModelDataBase>* modelDataEventTimesPtr_ = nullptr;
+  const std::vector<ModelData>* projectedModelDataPtr_ = nullptr;
+  const std::vector<ModelData>* modelDataEventTimesPtr_ = nullptr;
   const std::vector<riccati_modification::Data>* riccatiModificationPtr_ = nullptr;
   scalar_array_t eventTimes_;
 

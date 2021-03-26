@@ -36,11 +36,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-TEST(testModelDataBase, testModelDataLinearInterpolation) {
+TEST(testModelData, testModelDataLinearInterpolation) {
   // create data
   const size_t N = 10;
   std::vector<double> timeArray(N);
-  std::vector<ModelDataBase> modelDataBaseArray(N);
+  std::vector<ModelData> modelDataBaseArray(N);
 
   for (size_t i = 0; i < N; i++) {
     double t = 2.0 * i;
@@ -54,17 +54,17 @@ TEST(testModelDataBase, testModelDataLinearInterpolation) {
   // get (index, alpha) pair
   const auto indexAlpha = LinearInterpolation::timeSegment(time, timeArray);
 
-  const scalar_t enquiryScalar = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::time);
-  const vector_t enquiryVector = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_f);
-  const matrix_t enquiryMatrix = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_dfdx);
+  const scalar_t enquiryScalar = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, model_data::time);
+  const vector_t enquiryVector = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, model_data::dynamics_f);
+  const matrix_t enquiryMatrix = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, model_data::dynamics_dfdx);
 
   EXPECT_TRUE(enquiryScalar == time);
   EXPECT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));
   EXPECT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones() * time));
 }
 
-TEST(testModelDataBase, testMovableCopyable) {
-  ASSERT_TRUE(std::is_copy_constructible<ModelDataBase>::value);
-  ASSERT_TRUE(std::is_move_constructible<ModelDataBase>::value);
-  ASSERT_TRUE(std::is_nothrow_move_constructible<ModelDataBase>::value);
+TEST(testModelData, testMovableCopyable) {
+  ASSERT_TRUE(std::is_copy_constructible<ModelData>::value);
+  ASSERT_TRUE(std::is_move_constructible<ModelData>::value);
+  ASSERT_TRUE(std::is_nothrow_move_constructible<ModelData>::value);
 }

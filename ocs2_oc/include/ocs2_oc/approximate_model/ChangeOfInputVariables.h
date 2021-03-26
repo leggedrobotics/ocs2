@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,30 +29,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
-#include <tuple>
-
 #include <ocs2_core/Types.h>
-#include <ocs2_core/model_data/ModelData.h>
 
 namespace ocs2 {
 
-static inline std::tuple<matrix_t, vector_t, scalar_t> riccatiTransversalityConditions(const ModelData& jumpModelData, const matrix_t& Sm,
-                                                                                       const vector_t& Sv, scalar_t s) {
-  // Sm
-  const matrix_t SmTransAm = Sm.transpose() * jumpModelData.dynamics_.dfdx;
-  matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;
-  SmPreEvent.noalias() += SmTransAm.transpose() * jumpModelData.dynamics_.dfdx;
+/**
+ * Applies the following change of input variables to the quadraticApproximation (stateDim=n, inputDim=m):
+ * \delta u = Pu * \tilde{\delta u} + Px * \delta x + \delta u_0,
+ * with sizes Pu (m x p), Px (m x n), u0 (m x 1)
+ *
+ * The altered model data will be of size stateDim=n, inputDim=p
+ *
+ * A Px / u0 of zeros can be efficiently applied by passing an empty matrix / vector (of size 0).
+ *
+ * @param quadraticApproximation : Approximation to be adapted in-place
+ * @param Pu : Matrix defining the range of \tilde{\delta u}
+ * @param Px : Matrix defining the range of \delta x
+ * @param u0 : Input offset
+ */
+void changeOfInputVariables(ScalarFunctionQuadraticApproximation& quadraticApproximation, const matrix_t& Pu,
+                            const matrix_t& Px = matrix_t(), const vector_t& u0 = vector_t());
 
-  // Sv
-  const vector_t SmHv = Sm * jumpModelData.dynamicsBias_;
-  vector_t SvPreEvent = jumpModelData.cost_.dfdx;
-  SvPreEvent.noalias() += jumpModelData.dynamics_.dfdx.transpose() * (Sv + SmHv);
-
-  // s
-  const scalar_t sPreEvent = s + jumpModelData.cost_.f + jumpModelData.dynamicsBias_.dot(Sv + 0.5 * SmHv);
-
-  return {SmPreEvent, SvPreEvent, sPreEvent};
-}
+/** Applies the change of input variables to a linear system */
+void changeOfInputVariables(VectorFunctionLinearApproximation& linearApproximation, const matrix_t& Pu, const matrix_t& Px = matrix_t(),
+                            const vector_t& u0 = vector_t());
 
 }  // namespace ocs2

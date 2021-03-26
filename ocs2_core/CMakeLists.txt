@@ -96,6 +96,8 @@ add_library(${PROJECT_NAME}
   src/dynamics/SystemDynamicsLinearizer.cpp
   src/dynamics/TransferFunctionBase.cpp
   src/initialization/OperatingPoints.cpp
+  src/integration/SensitivityIntegrator.cpp
+  src/integration/SensitivityIntegratorImpl.cpp
   src/integration/Integrator.cpp
   src/integration/IntegratorBase.cpp
   src/integration/RungeKuttaDormandPrince5.cpp
@@ -120,7 +122,7 @@ add_library(${PROJECT_NAME}
   src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
-  src/model_data/ModelDataBase.cpp
+  src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
   src/misc/Log.cpp
@@ -209,6 +211,7 @@ target_link_libraries(initialization_unittest
 )
 
 catkin_add_gtest(test_integration
+  test/integration/testSensitivityIntegrator.cpp
   test/integration/IntegrationTest.cpp
   test/integration/testRungeKuttaDormandPrince5.cpp
   test/integration/TrapezoidalIntegrationTest.cpp
@@ -315,10 +318,10 @@ target_link_libraries(test_constraint
   gtest_main
 )
 
-catkin_add_gtest(test_ModelDataBase
-  test/model_data/testModelDataBase.cpp
+catkin_add_gtest(test_ModelData
+  test/model_data/testModelData.cpp
 )
-target_link_libraries(test_ModelDataBase
+target_link_libraries(test_ModelData
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main

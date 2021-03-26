@@ -30,13 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <memory>
-#include <vector>
 
 extern "C" {
 #include <hpipm_common.h>
 }
 
 #include <ocs2_core/Types.h>
+
+#include "hpipm_catkin/HpipmInterfaceSettings.h"
+#include "hpipm_catkin/OcpSize.h"
 
 namespace ocs2 {
 
@@ -46,72 +48,19 @@ namespace ocs2 {
  */
 class HpipmInterface {
  public:
-  struct OcpSize {
-    /// !Need to adapt isSizeEqual in implementation if this struct changes!
-    int N;                  // Number of stages
-    std::vector<int> nu;    // Number of inputs
-    std::vector<int> nx;    // Number of states
-    std::vector<int> nbu;   // Number of input box inequality constraints
-    std::vector<int> nbx;   // Number of state box inequality constraints
-    std::vector<int> ng;    // Number of general inequality constraints
-    std::vector<int> nsbu;  // Number of slack variables for input box inequalities
-    std::vector<int> nsbx;  // Number of slack variables for state box inequalities
-    std::vector<int> nsg;   // Number of slack variables for general inequalities
-    OcpSize(int N_, int nx_, int nu_)
-        : N(N_),
-          nx(N_ + 1, nx_),
-          nu(N_ + 1, nu_),
-          nbu(N_ + 1, 0),
-          nbx(N_ + 1, 0),
-          ng(N_ + 1, 0),
-          nsbu(N_ + 1, 0),
-          nsbx(N_ + 1, 0),
-          nsg(N_ + 1, 0) {
-      nu.back() = 0;
-    }
-    OcpSize() : OcpSize(0, 0, 0){};
-  };
-
-  struct Settings {
-    /// !Need to adapt isSettingsEqual in implementation if this struct changes!
-    hpipm_mode hpipmMode = hpipm_mode::SPEED;
-    int iter_max = 30;
-    scalar_t alpha_min = 1e-8;
-    scalar_t mu0 = 1e4;
-    scalar_t tol_stat = 1e-5;
-    scalar_t tol_eq = 1e-5;
-    scalar_t tol_ineq = 1e-5;
-    scalar_t tol_comp = 1e-5;
-    scalar_t reg_prim = 1e-12;
-    int warm_start = 0;
-    int pred_corr = 1;
-    int ric_alg = 0;
-    Settings(){};
-  };
-
-  /**
-   * Construct the Hpipm interface with the minimal size and default settings.
-   * Will need to call resize() with the correct problem dimensions before calling solve()
-   */
-  HpipmInterface() : HpipmInterface(OcpSize{0, 0, 0}){};
+  using OcpSize = hpipm_interface::OcpSize;
+  using Settings = hpipm_interface::Settings;
 
   /**
    * Construct the Hpipm interface with given size and settings.
    * Can directly call solve() for a problem with consistent size.
    */
-  explicit HpipmInterface(OcpSize ocpSize, const Settings& settings = Settings());
+  explicit HpipmInterface(OcpSize ocpSize = OcpSize(), const Settings& settings = Settings());
 
   /** Destructor */
   ~HpipmInterface();
 
-  /**
-   * Resize with new settings
-   */
-  void resize(OcpSize ocpSize, const Settings& settings);
-
-  /**
-   * Resize with old settings
-   */
+  /** Resize the problem */
   void resize(OcpSize ocpSize);
 
   /**
@@ -122,21 +71,21 @@ class HpipmInterface {
    *
    * @param x0 : Initial state (deviation).
    * @param dynamics : Linearized approximation of the discrete dynamics.
-   * @param cost : Quadratic approximation of the discrete dynamics.
+   * @param cost : Quadratic approximation of the cost.
    * @param constraints : Linearized approximation of constraints, all constraints are mapped to inequality constraints in HPIPM.
    * @param [out] stateTrajectory : Solution state (deviation) trajectory.
    * @param [out] inputTrajectory : Solution input (deviation) trajectory.
    * @param verbose : Prints the HPIPM iteration statistics if true.
-   * @return HPIPM returned with flag:
-   *    0 = QP solved;
-   *    1 = Maximum number of iterations reached;
-   *    2 = Minimum step length reached;
-   *    3 = NaN in computations;
-   *    4 = Unconsistent equality constraints;
+   * @return HPIPM returned with flag hpipm_status::
+   *    SUCCESS = QP solved;
+   *    MAX_ITER = Maximum number of iterations reached;
+   *    MIN_STEP = Minimum step length reached;
+   *    NAN_SOL = NaN in computations;
+   *    INCONS_EQ = Unconsistent equality constraints;
    */
   hpipm_status solve(const vector_t& x0, std::vector<VectorFunctionLinearApproximation>& dynamics,
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
-                     std::vector<vector_t>& stateTrajectory, std::vector<vector_t>& inputTrajectory, bool verbose = false);
+                     vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, bool verbose = false);
 
   void getRiccatiCostToGo(std::vector<matrix_t>& PMatrics, std::vector<vector_t>& pVectors);
   void getRiccatiFeedbackFeedforward(std::vector<matrix_t>& KMatrics, std::vector<vector_t>& kVectors);

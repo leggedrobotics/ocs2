@@ -328,13 +328,13 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
     fut.get();
   }
 
-  // det
+  // determine sizes
   for (int i = 0; i < N; i++) {
     if (constraintPtr_.front() != nullptr) {
       if (settings_.qr_decomp) {
-        ocpSize.nu[i] = constraints_[i].dfdu.cols();  // obtain size of u_tilde from constraint projection.
+        ocpSize.numInputs[i] = constraints_[i].dfdu.cols();  // obtain size of u_tilde from constraint projection.
       } else {
-        ocpSize.ng[i] = constraints_[i].f.rows();  // Declare as general inequalities
+        ocpSize.numIneqConstraints[i] = constraints_[i].f.rows();  // Declare as general inequalities
       }
     }
   }

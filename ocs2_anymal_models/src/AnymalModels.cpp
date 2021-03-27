@@ -40,6 +40,7 @@ AnymalModel stringToAnymalModel(const std::string& name) {
                                                                 {"cerberus", AnymalModel::Cerberus},
                                                                 {"chimera", AnymalModel::Chimera},
                                                                 {"croc", AnymalModel::Croc},
+                                                                {"wheels", AnymalModel::Wheels},
                                                                 {"wheels_chimera", AnymalModel::WheelsChimera}};
   return map.at(name);
 }

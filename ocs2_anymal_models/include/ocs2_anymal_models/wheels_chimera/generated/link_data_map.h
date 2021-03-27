@@ -1,10 +1,10 @@
-#ifndef IIT_WHEELS_LINK_DATA_MAP_H_
-#define IIT_WHEELS_LINK_DATA_MAP_H_
+#ifndef IIT_WHEELS_CHIMERA_LINK_DATA_MAP_H_
+#define IIT_WHEELS_CHIMERA_LINK_DATA_MAP_H_
 
 #include "declarations.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 
 /**
  * A very simple container to associate a generic data item to each link

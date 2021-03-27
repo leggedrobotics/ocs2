@@ -5,7 +5,7 @@
 //#include "miscellaneous.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 
   template<typename SCALAR_T>
   typename iit::rbd::Core<SCALAR_T>::Vector3 getWholeBodyCOM(

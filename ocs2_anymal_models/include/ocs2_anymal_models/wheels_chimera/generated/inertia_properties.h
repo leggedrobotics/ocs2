@@ -1,5 +1,5 @@
-#ifndef IIT_ROBOT_WHEELS_INERTIA_PROPERTIES_H_
-#define IIT_ROBOT_WHEELS_INERTIA_PROPERTIES_H_
+#ifndef IIT_ROBOT_WHEELS_CHIMERA_INERTIA_PROPERTIES_H_
+#define IIT_ROBOT_WHEELS_CHIMERA_INERTIA_PROPERTIES_H_
 
 #include <iit/rbd/rbd.h>
 #include <iit/rbd/InertiaMatrix.h>
@@ -9,10 +9,10 @@
 #include "declarations.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 /**
  * This namespace encloses classes and functions related to the Dynamics
- * of the robot wheels.
+ * of the robot wheels_chimera.
  */
 namespace dyn {
 
@@ -333,7 +333,7 @@ inline const typename InertiaProperties<TRAIT>::Vec3d& InertiaProperties<TRAIT>:
 
 template <typename TRAIT>
 inline typename InertiaProperties<TRAIT>::Scalar InertiaProperties<TRAIT>::getTotalMass() const {
-    return Scalar(23.355284 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391 + 1.8623549 + 2.3501198 + 0.41052794 + 0.6363391);
+    return Scalar(31.397486 + 2.781 + 3.071 + 0.42760074 + 0.65391314 + 2.781 + 3.071 + 0.42760074 + 0.65391314 + 2.781 + 3.071 + 0.42760074 + 0.65391314 + 2.781 + 3.071 + 0.42760074 + 0.65391314);
 }
 
 }

@@ -1,11 +1,11 @@
 
 // Initialization of static-const data
 template <typename TRAIT>
-const typename iit::wheels::dyn::tpl::ForwardDynamics<TRAIT>::ExtForces
-    iit::wheels::dyn::tpl::ForwardDynamics<TRAIT>::zeroExtForces(Force::Zero());
+const typename iit::wheels_chimera::dyn::tpl::ForwardDynamics<TRAIT>::ExtForces
+    iit::wheels_chimera::dyn::tpl::ForwardDynamics<TRAIT>::zeroExtForces(Force::Zero());
 
 template <typename TRAIT>
-iit::wheels::dyn::tpl::ForwardDynamics<TRAIT>::ForwardDynamics(iit::wheels::dyn::tpl::InertiaProperties<TRAIT>& inertia, MTransforms& transforms) :
+iit::wheels_chimera::dyn::tpl::ForwardDynamics<TRAIT>::ForwardDynamics(iit::wheels_chimera::dyn::tpl::InertiaProperties<TRAIT>& inertia, MTransforms& transforms) :
     inertiaProps( & inertia ),
     motionTransforms( & transforms )
 {
@@ -48,7 +48,7 @@ iit::wheels::dyn::tpl::ForwardDynamics<TRAIT>::ForwardDynamics(iit::wheels::dyn:
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::ForwardDynamics<TRAIT>::fd(
+void iit::wheels_chimera::dyn::tpl::ForwardDynamics<TRAIT>::fd(
     JointState& qdd,
     Acceleration& base_a,
     const Velocity& base_v,

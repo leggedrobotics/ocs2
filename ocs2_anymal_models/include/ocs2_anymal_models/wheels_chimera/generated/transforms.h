@@ -1,5 +1,5 @@
-#ifndef WHEELS_TRANSFORMS_H_
-#define WHEELS_TRANSFORMS_H_
+#ifndef WHEELS_CHIMERA_TRANSFORMS_H_
+#define WHEELS_CHIMERA_TRANSFORMS_H_
 
 #include <Eigen/Dense>
 #include <iit/rbd/TransformsBase.h>
@@ -8,7 +8,7 @@
 #include "kinematics_parameters.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 
 template<typename SCALAR, class M>
 class TransformMotion : public iit::rbd::SpatialTransformBase<tpl::JointState<SCALAR>, M> {

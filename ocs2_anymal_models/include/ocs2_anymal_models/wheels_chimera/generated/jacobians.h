@@ -1,5 +1,5 @@
-#ifndef WHEELS_JACOBIANS_H_
-#define WHEELS_JACOBIANS_H_
+#ifndef WHEELS_CHIMERA_JACOBIANS_H_
+#define WHEELS_CHIMERA_JACOBIANS_H_
 
 		#include <iit/rbd/rbd.h>
 #include <iit/rbd/TransformsBase.h>
@@ -8,7 +8,7 @@
 #include "kinematics_parameters.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 
 template<typename SCALAR, int COLS, class M>
 class JacobianT : public iit::rbd::JacobianBase<tpl::JointState<SCALAR>, COLS, M>

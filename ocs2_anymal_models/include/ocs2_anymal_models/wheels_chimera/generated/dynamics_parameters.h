@@ -1,13 +1,13 @@
-#ifndef _WHEELS_RUNTIME_INERTIA_PARAMETERS_
-#define _WHEELS_RUNTIME_INERTIA_PARAMETERS_
+#ifndef _WHEELS_CHIMERA_RUNTIME_INERTIA_PARAMETERS_
+#define _WHEELS_CHIMERA_RUNTIME_INERTIA_PARAMETERS_
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 namespace dyn {
 /**
  * \defgroup dynparams Dynamics-parameters
  * Facilities related to the parameters of the inertia properties of the
- * robot wheels.
+ * robot wheels_chimera.
  *
  * Inertia parameters are non-constants used in the robot model, where the
  * inertia properties (mass, center of mass, intertia tensor) of the links
@@ -22,7 +22,7 @@ namespace dyn {
  */
 
     /**
-     * A container for the set of non-constant inertia parameters of the robot wheels
+     * A container for the set of non-constant inertia parameters of the robot wheels_chimera
      * \ingroup dynparams
      */
     struct RuntimeInertiaParams {
@@ -30,7 +30,7 @@ namespace dyn {
 
     /**
      * The interface for classes that can compute the actual value of the
-     * non-constant inertia parameters of the robot wheels.
+     * non-constant inertia parameters of the robot wheels_chimera.
      * \ingroup dynparams
      */
     class RuntimeParamsGetter {

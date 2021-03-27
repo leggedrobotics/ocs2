@@ -1,10 +1,10 @@
-#ifndef IIT_ROBOT_WHEELS_DECLARATIONS_H_
-#define IIT_ROBOT_WHEELS_DECLARATIONS_H_
+#ifndef IIT_ROBOT_WHEELS_CHIMERA_DECLARATIONS_H_
+#define IIT_ROBOT_WHEELS_CHIMERA_DECLARATIONS_H_
 
 #include <iit/rbd/rbd.h>
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 
 static const int JointSpaceDimension = 16;
 static const int jointsCount = 16;

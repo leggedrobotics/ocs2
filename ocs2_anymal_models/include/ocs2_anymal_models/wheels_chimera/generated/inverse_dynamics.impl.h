@@ -1,10 +1,10 @@
 // Initialization of static-const data
 template <typename TRAIT>
-const typename iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::ExtForces
-iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::zeroExtForces(Force::Zero());
+const typename iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::ExtForces
+iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::zeroExtForces(Force::Zero());
 
 template <typename TRAIT>
-iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::InverseDynamics(IProperties& inertia, MTransforms& transforms) :
+iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::InverseDynamics(IProperties& inertia, MTransforms& transforms) :
     inertiaProps( & inertia ),
     xm( & transforms ),
     LF_HIP_I(inertiaProps->getTensor_LF_HIP() ),
@@ -31,7 +31,7 @@ iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::InverseDynamics(IProperties& iner
         RH_WHEEL_L_Ic(RH_WHEEL_L_I)
 {
 #ifndef EIGEN_NO_DEBUG
-    std::cout << "Robot wheels, InverseDynamics<TRAIT>::InverseDynamics()" << std::endl;
+    std::cout << "Robot wheels_chimera, InverseDynamics<TRAIT>::InverseDynamics()" << std::endl;
     std::cout << "Compiled with Eigen debug active" << std::endl;
 #endif
     LF_HIP_v.setZero();
@@ -55,7 +55,7 @@ iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::InverseDynamics(IProperties& iner
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::id(
+void iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::id(
     JointState& jForces, Acceleration& base_a,
     const Acceleration& g, const Velocity& base_v,
     const JointState& qd, const JointState& qdd,
@@ -379,7 +379,7 @@ void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::id(
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::G_terms_fully_actuated(
+void iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::G_terms_fully_actuated(
     Force& baseWrench, JointState& jForces,
     const Acceleration& g)
 {
@@ -442,7 +442,7 @@ void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::G_terms_fully_actuated(
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::C_terms_fully_actuated(
+void iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::C_terms_fully_actuated(
     Force& baseWrench, JointState& jForces,
     const Velocity& base_v, const JointState& qd)
 {
@@ -567,7 +567,7 @@ void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::C_terms_fully_actuated(
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::id_fully_actuated(
+void iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::id_fully_actuated(
         Force& baseWrench, JointState& jForces,
         const Acceleration& g, const Velocity& base_v, const Acceleration& baseAccel,
         const JointState& qd, const JointState& qdd, const ExtForces& fext)
@@ -760,7 +760,7 @@ void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::id_fully_actuated(
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::InverseDynamics<TRAIT>::secondPass_fullyActuated(JointState& jForces)
+void iit::wheels_chimera::dyn::tpl::InverseDynamics<TRAIT>::secondPass_fullyActuated(JointState& jForces)
 {
     // Link 'RH_WHEEL_L'
     jForces(RH_WHEEL) = RH_WHEEL_L_f(iit::rbd::AZ);

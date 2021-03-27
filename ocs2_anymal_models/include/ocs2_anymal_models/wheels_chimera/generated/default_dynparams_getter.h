@@ -1,10 +1,10 @@
-#ifndef _WHEELS_DEFAULT_GETTER_INERTIA_PARAMETERS_
-#define _WHEELS_DEFAULT_GETTER_INERTIA_PARAMETERS_
+#ifndef _WHEELS_CHIMERA_DEFAULT_GETTER_INERTIA_PARAMETERS_
+#define _WHEELS_CHIMERA_DEFAULT_GETTER_INERTIA_PARAMETERS_
 
 #include "dynamics_parameters.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 namespace dyn {
 
 class DefaultParamsGetter : public RuntimeParamsGetter

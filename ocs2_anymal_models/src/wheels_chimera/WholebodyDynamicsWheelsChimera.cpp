@@ -17,11 +17,11 @@ namespace tpl {
 template <typename SCALAR_T>
 auto WholebodyDynamicsWheelsChimera<SCALAR_T>::getDynamicsTerms(const switched_model::rbd_state_s_t<SCALAR_T>& rbdState) const -> DynamicsTerms {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-  iit::wheels::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
-  iit::wheels::tpl::ForceTransforms<trait_t> forceTransforms_;
-  iit::wheels::tpl::MotionTransforms<trait_t> motionTransforms_;
-  iit::wheels::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
-  iit::wheels::dyn::tpl::InverseDynamics<trait_t> inverseDynamics_(inertiaProperties_, motionTransforms_);
+  iit::wheels_chimera::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
+  iit::wheels_chimera::tpl::ForceTransforms<trait_t> forceTransforms_;
+  iit::wheels_chimera::tpl::MotionTransforms<trait_t> motionTransforms_;
+  iit::wheels_chimera::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
+  iit::wheels_chimera::dyn::tpl::InverseDynamics<trait_t> inverseDynamics_(inertiaProperties_, motionTransforms_);
 
   // TODO (rgrandia) : doesn't work for wheels because of the extra wheel joint.
   return anymal::robcogen_helpers::getDynamicsTermsImpl(inverseDynamics_, jointSpaceInertiaMatrix_, rbdState);

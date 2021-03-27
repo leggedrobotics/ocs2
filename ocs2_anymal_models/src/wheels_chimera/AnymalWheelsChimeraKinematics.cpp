@@ -6,7 +6,7 @@
  */
 
 #include "ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraKinematics.h"
-#include <ocs2_anymal_models/wheels/WheelsSwitchedModel.h>
+#include <ocs2_anymal_models/wheels_chimera/WheelsChimeraSwitchedModel.h>
 
 #include <iit/rbd/traits/TraitSelector.h>
 
@@ -29,23 +29,23 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::p
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
-  const auto q = wheels::getExtendedJointCoordinates(jointPositions);
+  const auto q = wheels_chimera::getExtendedJointCoordinates(jointPositions);
 
   switch (footIndex) {
     case LF: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L p;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     case RF: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L p;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     case LH: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L p;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     case RH: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L p;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L p;
       return p(q).template topRightCorner<3, 1>();
     }
     default:
@@ -86,26 +86,26 @@ typename AnymalWheelsChimeraKinematics<SCALAR_T>::joint_jacobian_t AnymalWheelsC
   wheelOffsetJacobian(4, 0) = wheelRadius_ * cos(haa);
   wheelOffsetJacobian(5, 0) = wheelRadius_ * sin(haa);
 
-  const auto q = wheels::getExtendedJointCoordinates(jointPositions);
+  const auto q = wheels_chimera::getExtendedJointCoordinates(jointPositions);
 
   switch (footIndex) {
     case LF: {
-      typename iit::wheels::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_base_J_fr_LF_foot_;
+      typename iit::wheels_chimera::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_WHEEL_L fr_base_J_fr_LF_foot_;
       footJacobian.template block<6, 3>(0, 0) = fr_base_J_fr_LF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RF: {
-      typename iit::wheels::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_base_J_fr_RF_foot_;
+      typename iit::wheels_chimera::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_WHEEL_L fr_base_J_fr_RF_foot_;
       footJacobian.template block<6, 3>(0, 3) = fr_base_J_fr_RF_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case LH: {
-      typename iit::wheels::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_base_J_fr_LH_foot_;
+      typename iit::wheels_chimera::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_WHEEL_L fr_base_J_fr_LH_foot_;
       footJacobian.template block<6, 3>(0, 6) = fr_base_J_fr_LH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
     case RH: {
-      typename iit::wheels::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_base_J_fr_RH_foot_;
+      typename iit::wheels_chimera::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_WHEEL_L fr_base_J_fr_RH_foot_;
       footJacobian.template block<6, 3>(0, 9) = fr_base_J_fr_RH_foot_(q).template leftCols<3>() + wheelOffsetJacobian;
       break;
     }
@@ -125,22 +125,22 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::w
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
 
-  const auto q = wheels::getExtendedJointCoordinates(jointPositions);
+  const auto q = wheels_chimera::getExtendedJointCoordinates(jointPositions);
   switch (footIndex) {
     case LF: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_base_X_fr_LF_WHEEL_L;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_WHEEL_L fr_base_X_fr_LF_WHEEL_L;
       return fr_base_X_fr_LF_WHEEL_L(q).template topLeftCorner<3, 3>();
     }
     case RF: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_base_X_fr_RF_WHEEL_L;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_WHEEL_L fr_base_X_fr_RF_WHEEL_L;
       return fr_base_X_fr_RF_WHEEL_L(q).template topLeftCorner<3, 3>();
     }
     case LH: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_base_X_fr_LH_WHEEL_L;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_WHEEL_L fr_base_X_fr_LH_WHEEL_L;
       return fr_base_X_fr_LH_WHEEL_L(q).template topLeftCorner<3, 3>();
     }
     case RH: {
-      typename iit::wheels::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L fr_base_X_fr_RH_WHEEL_L;
+      typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_WHEEL_L fr_base_X_fr_RH_WHEEL_L;
       return fr_base_X_fr_RH_WHEEL_L(q).template topLeftCorner<3, 3>();
     }
     default: {

@@ -1,5 +1,5 @@
-#ifndef IIT_WHEELS_INVERSE_DYNAMICS_H_
-#define IIT_WHEELS_INVERSE_DYNAMICS_H_
+#ifndef IIT_WHEELS_CHIMERA_INVERSE_DYNAMICS_H_
+#define IIT_WHEELS_CHIMERA_INVERSE_DYNAMICS_H_
 
 #include <iit/rbd/rbd.h>
 #include <iit/rbd/InertiaMatrix.h>
@@ -13,11 +13,11 @@
 #include "link_data_map.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 namespace dyn {
 
 /**
- * The Inverse Dynamics routine for the robot wheels.
+ * The Inverse Dynamics routine for the robot wheels_chimera.
  *
  * In addition to the full Newton-Euler algorithm, specialized versions to compute
  * only certain terms are provided.
@@ -51,9 +51,9 @@ public:
     typedef typename CoreS::VelocityVector Acceleration;
     typedef typename CoreS::Matrix66 Matrix66s;
     typedef iit::rbd::tpl::InertiaMatrixDense<Scalar> InertiaMatrix;
-    typedef iit::wheels::tpl::JointState<Scalar> JointState;
+    typedef iit::wheels_chimera::tpl::JointState<Scalar> JointState;
     typedef LinkDataMap<Force> ExtForces;
-    typedef iit::wheels::tpl::MotionTransforms<TRAIT> MTransforms;
+    typedef iit::wheels_chimera::tpl::MotionTransforms<TRAIT> MTransforms;
     typedef InertiaProperties<TRAIT> IProperties;
 
 public:
@@ -61,7 +61,7 @@ public:
      * Default constructor
      * \param in the inertia properties of the links
      * \param tr the container of all the spatial motion transforms of
-     *     the robot wheels, which will be used by this instance
+     *     the robot wheels_chimera, which will be used by this instance
      *     to compute inverse-dynamics.
      */
     InverseDynamics(IProperties& in, MTransforms& tr);

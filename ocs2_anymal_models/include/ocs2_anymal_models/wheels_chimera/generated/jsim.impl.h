@@ -2,7 +2,7 @@
 
 //Implementation of default constructor
 template <typename TRAIT>
-iit::wheels::dyn::tpl::JSIM<TRAIT>::JSIM(IProperties& inertiaProperties, FTransforms& forceTransforms) :
+iit::wheels_chimera::dyn::tpl::JSIM<TRAIT>::JSIM(IProperties& inertiaProperties, FTransforms& forceTransforms) :
     linkInertias(inertiaProperties),
     frcTransf( &forceTransforms ),
     LF_WHEEL_L_Ic(linkInertias.getTensor_LF_WHEEL_L()),
@@ -19,7 +19,7 @@ iit::wheels::dyn::tpl::JSIM<TRAIT>::JSIM(IProperties& inertiaProperties, FTransf
 #define F(i,j) DATA((i),(j)+6)
 
 template <typename TRAIT>
-const typename iit::wheels::dyn::tpl::JSIM<TRAIT>& iit::wheels::dyn::tpl::JSIM<TRAIT>::update(const JointState& state) {
+const typename iit::wheels_chimera::dyn::tpl::JSIM<TRAIT>& iit::wheels_chimera::dyn::tpl::JSIM<TRAIT>::update(const JointState& state) {
 
     // Precomputes only once the coordinate transforms:
     frcTransf -> fr_RH_SHANK_X_fr_RH_WHEEL_L(state);
@@ -283,7 +283,7 @@ const typename iit::wheels::dyn::tpl::JSIM<TRAIT>& iit::wheels::dyn::tpl::JSIM<T
 #undef F
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::JSIM<TRAIT>::computeL() {
+void iit::wheels_chimera::dyn::tpl::JSIM<TRAIT>::computeL() {
     L = this -> template triangularView<Eigen::Lower>();
     // Joint RH_WHEEL, index 15 :
     L(15, 15) = std::sqrt(L(15, 15));
@@ -400,7 +400,7 @@ void iit::wheels::dyn::tpl::JSIM<TRAIT>::computeL() {
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::JSIM<TRAIT>::computeInverse() {
+void iit::wheels_chimera::dyn::tpl::JSIM<TRAIT>::computeInverse() {
     computeLInverse();
 
     inverse(0, 0) =  + (Linv(0, 0) * Linv(0, 0));
@@ -470,7 +470,7 @@ void iit::wheels::dyn::tpl::JSIM<TRAIT>::computeInverse() {
 }
 
 template <typename TRAIT>
-void iit::wheels::dyn::tpl::JSIM<TRAIT>::computeLInverse() {
+void iit::wheels_chimera::dyn::tpl::JSIM<TRAIT>::computeLInverse() {
     //assumes L has been computed already
     Linv(0, 0) = 1 / L(0, 0);
     Linv(1, 1) = 1 / L(1, 1);

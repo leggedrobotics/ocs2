@@ -1,5 +1,5 @@
-#ifndef IIT_ROBOT_WHEELS_FORWARD_DYNAMICS_H_
-#define IIT_ROBOT_WHEELS_FORWARD_DYNAMICS_H_
+#ifndef IIT_ROBOT_WHEELS_CHIMERA_FORWARD_DYNAMICS_H_
+#define IIT_ROBOT_WHEELS_CHIMERA_FORWARD_DYNAMICS_H_
 
 #include <iit/rbd/rbd.h>
 #include <iit/rbd/utils.h>
@@ -11,11 +11,11 @@
 #include "link_data_map.h"
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 namespace dyn {
 
 /**
- * The Forward Dynamics routine for the robot wheels.
+ * The Forward Dynamics routine for the robot wheels_chimera.
  *
  * The parameters common to most of the methods are the joint status \c q, the
  * joint velocities \c qd and the joint forces \c tau. The accelerations \c qdd
@@ -44,15 +44,15 @@ public:
     typedef typename CoreS::Column6D Column6DS;
     typedef typename CoreS::Matrix66 Matrix66S;
     typedef LinkDataMap<Force> ExtForces;
-    typedef typename iit::wheels::tpl::JointState<Scalar> JointState;
-    typedef iit::wheels::tpl::MotionTransforms<TRAIT> MTransforms;
+    typedef typename iit::wheels_chimera::tpl::JointState<Scalar> JointState;
+    typedef iit::wheels_chimera::tpl::MotionTransforms<TRAIT> MTransforms;
 
 public:
     /**
      * Default constructor
      * \param in the inertia properties of the links
      * \param tr the container of all the spatial motion transforms of
-     *     the robot wheels, which will be used by this instance
+     *     the robot wheels_chimera, which will be used by this instance
      *     to compute the dynamics.
      */
     ForwardDynamics(InertiaProperties<TRAIT>& in, MTransforms& tr);

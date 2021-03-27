@@ -1,5 +1,5 @@
-#ifndef IIT_ROBOGEN__WHEELS_TRAITS_H_
-#define IIT_ROBOGEN__WHEELS_TRAITS_H_
+#ifndef IIT_ROBOGEN__WHEELS_CHIMERA_TRAITS_H_
+#define IIT_ROBOGEN__WHEELS_CHIMERA_TRAITS_H_
 
 #include "declarations.h"
 #include "transforms.h"
@@ -12,7 +12,7 @@
 
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 
 namespace tpl {
 
@@ -22,26 +22,26 @@ struct Traits {
 
     typedef SCALAR S;
 
-    typedef typename wheels::JointIdentifiers JointID;
-    typedef typename wheels::LinkIdentifiers  LinkID;
+    typedef typename wheels_chimera::JointIdentifiers JointID;
+    typedef typename wheels_chimera::LinkIdentifiers  LinkID;
     typedef typename iit::rbd::tpl::TraitSelector<SCALAR>::Trait Trait;
 
-    typedef typename wheels::tpl::JointState<SCALAR> JointState;
+    typedef typename wheels_chimera::tpl::JointState<SCALAR> JointState;
 
 
 
-    typedef typename wheels::tpl::HomogeneousTransforms<Trait> HomogeneousTransforms;
-    typedef typename wheels::tpl::MotionTransforms<Trait> MotionTransforms;
-    typedef typename wheels::tpl::ForceTransforms<Trait> ForceTransforms;
-    typedef typename wheels::tpl::Jacobians<Trait> Jacobians;
+    typedef typename wheels_chimera::tpl::HomogeneousTransforms<Trait> HomogeneousTransforms;
+    typedef typename wheels_chimera::tpl::MotionTransforms<Trait> MotionTransforms;
+    typedef typename wheels_chimera::tpl::ForceTransforms<Trait> ForceTransforms;
+    typedef typename wheels_chimera::tpl::Jacobians<Trait> Jacobians;
 
-    typedef typename iit::wheels::dyn::tpl::InertiaProperties<Trait> InertiaProperties;
-    typedef typename iit::wheels::dyn::tpl::ForwardDynamics<Trait> FwdDynEngine;
-    typedef typename iit::wheels::dyn::tpl::InverseDynamics<Trait> InvDynEngine;
-    typedef typename iit::wheels::dyn::tpl::JSIM<Trait> JSIM;
+    typedef typename iit::wheels_chimera::dyn::tpl::InertiaProperties<Trait> InertiaProperties;
+    typedef typename iit::wheels_chimera::dyn::tpl::ForwardDynamics<Trait> FwdDynEngine;
+    typedef typename iit::wheels_chimera::dyn::tpl::InverseDynamics<Trait> InvDynEngine;
+    typedef typename iit::wheels_chimera::dyn::tpl::JSIM<Trait> JSIM;
 
-    static const int joints_count = wheels::jointsCount;
-    static const int links_count  = wheels::linksCount;
+    static const int joints_count = wheels_chimera::jointsCount;
+    static const int links_count  = wheels_chimera::linksCount;
     static const bool floating_base = true;
 
     static inline const JointID* orderedJointIDs();
@@ -50,11 +50,11 @@ struct Traits {
 
 template <typename SCALAR>
 inline const typename Traits<SCALAR>::JointID*  Traits<SCALAR>::orderedJointIDs() {
-    return wheels::orderedJointIDs;
+    return wheels_chimera::orderedJointIDs;
 }
 template <typename SCALAR>
 inline const typename Traits<SCALAR>::LinkID*  Traits<SCALAR>::orderedLinkIDs() {
-    return wheels::orderedLinkIDs;
+    return wheels_chimera::orderedLinkIDs;
 }
 
 }

@@ -1,5 +1,5 @@
-#ifndef IIT_WHEELS_JSIM_H_
-#define IIT_WHEELS_JSIM_H_
+#ifndef IIT_WHEELS_CHIMERA_JSIM_H_
+#define IIT_WHEELS_CHIMERA_JSIM_H_
 
 #include <iit/rbd/rbd.h>
 #include <iit/rbd/StateDependentMatrix.h>
@@ -12,24 +12,24 @@
 
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 namespace dyn {
 
 namespace tpl {
 
 /**
- * The type of the Joint Space Inertia Matrix (JSIM) of the robot wheels.
+ * The type of the Joint Space Inertia Matrix (JSIM) of the robot wheels_chimera.
  */
 template <typename TRAIT>
-class JSIM : public iit::rbd::StateDependentMatrix<iit::wheels::tpl::JointState<typename TRAIT::Scalar>, 22, 22, JSIM<TRAIT>>
+class JSIM : public iit::rbd::StateDependentMatrix<iit::wheels_chimera::tpl::JointState<typename TRAIT::Scalar>, 22, 22, JSIM<TRAIT>>
 {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
-        typedef iit::rbd::StateDependentMatrix<iit::wheels::tpl::JointState<typename TRAIT::Scalar>, 22, 22, JSIM<TRAIT>> Base;
+        typedef iit::rbd::StateDependentMatrix<iit::wheels_chimera::tpl::JointState<typename TRAIT::Scalar>, 22, 22, JSIM<TRAIT>> Base;
     public:
         typedef typename TRAIT::Scalar Scalar;
-        typedef typename iit::wheels::tpl::JointState<Scalar> JointState;
+        typedef typename iit::wheels_chimera::tpl::JointState<Scalar> JointState;
         typedef iit::rbd::Core<Scalar> CoreS;
         typedef typename Base::Index Index;
         typedef typename iit::rbd::PlainMatrix<Scalar, 22, 22> MatrixType;
@@ -38,7 +38,7 @@ class JSIM : public iit::rbd::StateDependentMatrix<iit::wheels::tpl::JointState<
         /** The type of the fixed-base sub-block of the JSIM */
         typedef const Eigen::Block<const MatrixType,16,16> BlockFixedBase_t;
         typedef InertiaProperties<TRAIT> IProperties;
-        typedef iit::wheels::tpl::ForceTransforms<TRAIT> FTransforms;
+        typedef iit::wheels_chimera::tpl::ForceTransforms<TRAIT> FTransforms;
         typedef iit::rbd::tpl::InertiaMatrixDense<Scalar> InertiaMatrix;
 
     public:

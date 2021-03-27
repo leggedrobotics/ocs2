@@ -6,7 +6,7 @@
  */
 
 #include "ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraCom.h"
-#include <ocs2_anymal_models/wheels/WheelsSwitchedModel.h>
+#include <ocs2_anymal_models/wheels_chimera/WheelsChimeraSwitchedModel.h>
 
 #include <iit/rbd/traits/TraitSelector.h>
 #include "ocs2_anymal_models/wheels_chimera/generated/inertia_properties.h"
@@ -45,14 +45,14 @@ AnymalWheelsChimeraCom<SCALAR_T>* AnymalWheelsChimeraCom<SCALAR_T>::clone() cons
 template <typename SCALAR_T>
 void AnymalWheelsChimeraCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-  iit::wheels::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
-  iit::wheels::tpl::HomogeneousTransforms<trait_t> homTransforms_;
-  iit::wheels::tpl::ForceTransforms<trait_t> forceTransforms_;
-  iit::wheels::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
+  iit::wheels_chimera::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
+  iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t> homTransforms_;
+  iit::wheels_chimera::tpl::ForceTransforms<trait_t> forceTransforms_;
+  iit::wheels_chimera::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
 
-  const auto qExtended = wheels::getExtendedJointCoordinates(q);
+  const auto qExtended = wheels_chimera::getExtendedJointCoordinates(q);
   jointSpaceInertiaMatrix_.update(qExtended);
-  comPositionBaseFrame_ = iit::wheels::getWholeBodyCOM(inertiaProperties_, qExtended, homTransforms_);
+  comPositionBaseFrame_ = iit::wheels_chimera::getWholeBodyCOM(inertiaProperties_, qExtended, homTransforms_);
 
   comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
   SCALAR_T mass = comInertia_(5, 5);

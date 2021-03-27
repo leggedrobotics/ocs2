@@ -1,12 +1,12 @@
-#ifndef IIT_ROBCOGEN__WHEELS_MISCELLANEOUS_H_
-#define IIT_ROBCOGEN__WHEELS_MISCELLANEOUS_H_
+#ifndef IIT_ROBCOGEN__WHEELS_CHIMERA_MISCELLANEOUS_H_
+#define IIT_ROBCOGEN__WHEELS_CHIMERA_MISCELLANEOUS_H_
 
 #include "inertia_properties.h"
 #include "transforms.h"
 #include <iit/rbd/traits/TraitSelector.h>
 
 namespace iit {
-namespace wheels {
+namespace wheels_chimera {
 
 /** \name Center of mass calculation
  * Computes the Center Of Mass (COM) position of the whole robot, in

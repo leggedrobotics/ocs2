@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
+
 #include "hpipm_catkin/HpipmInterface.h"
 
 extern "C" {
@@ -178,6 +180,7 @@ class HpipmInterface::Impl {
     //    x[1] = A[0]*x[0] + B[0]*u[0] + b[0]
     //         = B[0]*u[0] + (b[0] + A[0]*x[0])
     //         = B[0]*u[0] + \tilde{b}[0]
+    // numState[0] = 0 --> No need to specify A[0] here
     vector_t b0 = dynamics[0].f;
     b0.noalias() += dynamics[0].dfdx * x0;
     BB[0] = dynamics[0].dfdu.data();
@@ -198,6 +201,7 @@ class HpipmInterface::Impl {
     std::vector<scalar_t*> rr(N + 1, nullptr);
 
     // k = 0. Elimination of initial state requires cost adaptation
+    // numState[0] = 0 --> No need to specify Q[0], S[0], q[0] here
     vector_t r0 = cost[0].dfdu;
     r0 += cost[0].dfdux * x0;
     RR[0] = cost[0].dfduu.data();
@@ -230,6 +234,7 @@ class HpipmInterface::Impl {
       boundData.reserve(N + 1);
 
       // k = 0, eliminate initial state
+      // numState[0] = 0 --> No need to specify C[0] here
       DD[0] = constr[0].dfdu.data();
       boundData.emplace_back(-constr[0].f);
       boundData[0].noalias() -= constr[0].dfdx * x0;
@@ -302,74 +307,120 @@ class HpipmInterface::Impl {
     }
   }
 
-  void getRiccatiZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0, const matrix_t& R0,
-                           const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0, matrix_t& K0, vector_t& p0,
-                           vector_t& k0) {
-    // at zero stage, I think P, p, K, k should be computed together -- Yang
+  matrix_array_t getRiccatiFeedback(const VectorFunctionLinearApproximation& dynamics0, const ScalarFunctionQuadraticApproximation& cost0) {
+    const int N = ocpSize_.numStages;
+    matrix_array_t RiccatiFeedback;
+    RiccatiFeedback.resize(N);
+    matrix_t Lr, Ls;
+    for (int k = 1; k < N; ++k) {
+      Lr.resize(ocpSize_.numInputs[k], ocpSize_.numInputs[k]);
+      Ls.resize(ocpSize_.numStates[k], ocpSize_.numInputs[k]);
+      RiccatiFeedback[k].resize(ocpSize_.numInputs[k], ocpSize_.numStates[k]);
+      d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, k, Lr.data());
+      d_ocp_qp_ipm_get_ric_Ls(&qp_, &arg_, &workspace_, k, Ls.data());
+      // Lr matrix is lower triangular
+      // https://eigen.tuxfamily.org/dox/classEigen_1_1TriangularViewImpl_3_01__MatrixType_00_01__Mode_00_01Dense_01_4.html#a911664ccf5522c778ffc5405247e8a59
 
-    // fake_k0 is directly returned by hpipm, I haven't figure out its meaning yet.
-    vector_t fake_k0;
-    fake_k0.resize(ocpSize_.nu[0]);
-    d_ocp_qp_ipm_get_ric_k(&qp_, &arg_, &workspace_, 0, fake_k0.data());
+      // RiccatiFeedback[k] = -(Ls * Lr.inverse()).transpose();
+      RiccatiFeedback[k] = -(Lr.triangularView<Eigen::Lower>().solve<Eigen::OnTheRight>(Ls)).transpose();
+    }
+    matrix_t P1, Lr0, Lr0_inv;
+    P1.resize(ocpSize_.numStates[1], ocpSize_.numStates[1]);
+    Lr0.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    Lr0_inv.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    d_ocp_qp_ipm_get_ric_P(&qp_, &arg_, &workspace_, 1, P1.data());
+    d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, 0, Lr0.data());
+    matrix_t eye = matrix_t::Identity(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    Lr0_inv = Lr0.triangularView<Eigen::Lower>().solve<Eigen::OnTheRight>(eye);
+
+    matrix_t A0 = dynamics0.dfdx;
+    matrix_t B0 = dynamics0.dfdu;
+    matrix_t S0 = cost0.dfdux;
+    int numStates0 = A0.rows();  // in hpipm setting, numStates0 = 0, so we need to get it from A0 matrix dimension
+
+    RiccatiFeedback[0].resize(ocpSize_.numInputs[0], numStates0);
+    RiccatiFeedback[0] = -(Lr0_inv.transpose() * Lr0_inv) * (S0 + B0.transpose() * P1 * A0);
+    return RiccatiFeedback;
+  }
+
+  vector_array_t getRiccatiFeedforward(const VectorFunctionLinearApproximation& dynamics0,
+                                       const ScalarFunctionQuadraticApproximation& cost0) {
+    const int N = ocpSize_.numStages;
+    vector_array_t RiccatiFeedforward;
+    RiccatiFeedforward.resize(N);
+    for (int k = 1; k < N; ++k) {
+      RiccatiFeedforward[k].resize(ocpSize_.numInputs[k]);
+      d_ocp_qp_ipm_get_ric_k(&qp_, &arg_, &workspace_, k, RiccatiFeedforward[k].data());
+    }
 
     matrix_t P1, Lr0, Lr0_inv;
     vector_t p1;
-    P1.resize(ocpSize_.nx[1], ocpSize_.nx[1]);
-    Lr0.resize(ocpSize_.nu[0], ocpSize_.nu[0]);
-    Lr0_inv.resize(ocpSize_.nu[0], ocpSize_.nu[0]);
-    p1.resize(ocpSize_.nx[1]);
+    P1.resize(ocpSize_.numStates[1], ocpSize_.numStates[1]);
+    Lr0.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    Lr0_inv.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    p1.resize(ocpSize_.numStates[1]);
     d_ocp_qp_ipm_get_ric_P(&qp_, &arg_, &workspace_, 1, P1.data());
     d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, 0, Lr0.data());
     d_ocp_qp_ipm_get_ric_p(&qp_, &arg_, &workspace_, 1, p1.data());
-    Lr0_inv = Lr0.inverse();
+    matrix_t eye = matrix_t::Identity(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    Lr0_inv = Lr0.triangularView<Eigen::Lower>().solve<Eigen::OnTheRight>(eye);
 
-    int nx0 = A0.rows();  // in hpipm setting, nx0 = 0, so we need to get it from A0 matrix dimension
-    K0.resize(ocpSize_.nu[0], nx0);
-    P0.resize(nx0, nx0);
-    k0.resize(ocpSize_.nu[0]);
-    p0.resize(nx0);
+    matrix_t B0 = dynamics0.dfdu;
+    vector_t r0 = cost0.dfdu;
+    vector_t b0 = dynamics0.f;
 
-    K0 = -(Lr0_inv.transpose() * Lr0_inv) * (S0 + B0.transpose() * P1 * A0);
-    k0 = -(Lr0_inv.transpose() * Lr0_inv) * (r0 + B0.transpose() * p1 + B0.transpose() * P1 * b0);
-    P0 = Q0 + A0.transpose() * P1 * A0 -
-         (S0 + B0.transpose() * P1 * A0).transpose() * (Lr0_inv.transpose() * Lr0_inv) * (S0 + B0.transpose() * P1 * A0);
-    p0 = q0 + A0.transpose() * p1 + A0.transpose() * P1 * b0 -
-         (S0 + B0.transpose() * P1 * A0).transpose() * (Lr0_inv.transpose() * Lr0_inv) *
-             (r0 + B0.transpose() * p1 + B0.transpose() * P1 * b0);
+    RiccatiFeedforward[0].resize(ocpSize_.numInputs[0]);
+    RiccatiFeedforward[0] = -(Lr0_inv.transpose() * Lr0_inv) * (r0 + B0.transpose() * p1 + B0.transpose() * P1 * b0);
+    return RiccatiFeedforward;
   }
 
-  void getRiccatiFeedbackFeedforward(std::vector<matrix_t>& KMatrics, std::vector<vector_t>& kVectors) {
-    KMatrics.resize(ocpSize_.N);
-    kVectors.resize(ocpSize_.N);
-    matrix_t Lr, Ls;
-    for (int k = 1; k < ocpSize_.N; ++k) {
-      Lr.resize(ocpSize_.nu[k], ocpSize_.nu[k]);
-      Ls.resize(ocpSize_.nx[k], ocpSize_.nu[k]);
-      KMatrics[k].resize(ocpSize_.nu[k], ocpSize_.nx[k]);
-      d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, k, Lr.data());
-      d_ocp_qp_ipm_get_ric_Ls(&qp_, &arg_, &workspace_, k, Ls.data());
-      KMatrics[k] = -(Ls * Lr.inverse()).transpose();
-
-      kVectors[k].resize(ocpSize_.nu[k]);
-      d_ocp_qp_ipm_get_ric_k(&qp_, &arg_, &workspace_, k, kVectors[k].data());
+  std::vector<ScalarFunctionQuadraticApproximation> getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,
+                                                                       const ScalarFunctionQuadraticApproximation& cost0) {
+    /**
+     * return N+1 element of Riccati cost-to-go information
+     * Value function at stage i is: V_i(z) = z' * P_i * z + z' * p_i + c_i
+     * RiccatiCostToGo[i].dfdxx = P_i
+     * RiccatiCostToGo[i].dfdx = p_i
+     * RiccatiCostToGo[i].f = c_i (not implemented yet, because no direct getter from hpipm)
+     * RiccatiCostToGo[i].dfduu, RiccatiCostToGo[i].dfdu contains nothing
+     */
+    const int N = ocpSize_.numStages;
+    std::vector<ScalarFunctionQuadraticApproximation> RiccatiCostToGo;
+    RiccatiCostToGo.resize(N + 1);
+    for (int k = 1; k <= N; k++) {
+      RiccatiCostToGo[k].dfdxx.resize(ocpSize_.numStates[k], ocpSize_.numStates[k]);
+      RiccatiCostToGo[k].dfdx.resize(ocpSize_.numStates[k]);
+      d_ocp_qp_ipm_get_ric_P(&qp_, &arg_, &workspace_, k, RiccatiCostToGo[k].dfdxx.data());
+      d_ocp_qp_ipm_get_ric_p(&qp_, &arg_, &workspace_, k, RiccatiCostToGo[k].dfdx.data());
     }
-  }
+    matrix_t Lr0, Lr0_inv;
+    Lr0.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    Lr0_inv.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, 0, Lr0.data());
+    matrix_t eye = matrix_t::Identity(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    Lr0_inv = Lr0.triangularView<Eigen::Lower>().solve<Eigen::OnTheRight>(eye);
 
-  void getRiccatiCostToGo(std::vector<matrix_t>& PMatrics, std::vector<vector_t>& pVectors) {
-    PMatrics.resize(ocpSize_.N + 1);
-    pVectors.resize(ocpSize_.N + 1);
+    matrix_t P1 = RiccatiCostToGo[1].dfdxx;
+    vector_t p1 = RiccatiCostToGo[1].dfdx;
 
-    PMatrics[ocpSize_.N].resize(ocpSize_.nx[ocpSize_.N], ocpSize_.nx[ocpSize_.N]);
-    pVectors[ocpSize_.N].resize(ocpSize_.nx[ocpSize_.N]);
-    d_ocp_qp_ipm_get_ric_P(&qp_, &arg_, &workspace_, ocpSize_.N, PMatrics[ocpSize_.N].data());
-    d_ocp_qp_ipm_get_ric_p(&qp_, &arg_, &workspace_, ocpSize_.N, pVectors[ocpSize_.N].data());
+    matrix_t A0 = dynamics0.dfdx;
+    matrix_t B0 = dynamics0.dfdu;
+    vector_t b0 = dynamics0.f;
+    matrix_t Q0 = cost0.dfdxx;
+    matrix_t S0 = cost0.dfdux;
+    vector_t q0 = cost0.dfdx;
+    vector_t r0 = cost0.dfdu;
 
-    for (int k = 1; k < ocpSize_.N; ++k) {
-      PMatrics[k].resize(ocpSize_.nx[k], ocpSize_.nx[k]);
-      pVectors[k].resize(ocpSize_.nx[k]);
-      d_ocp_qp_ipm_get_ric_P(&qp_, &arg_, &workspace_, k, PMatrics[k].data());
-      d_ocp_qp_ipm_get_ric_p(&qp_, &arg_, &workspace_, k, pVectors[k].data());
-    }
+    int numStates0 = A0.rows();  // in hpipm setting, numStates0 = 0, so we need to get it from A0 matrix dimension
+    RiccatiCostToGo[0].dfdxx.resize(numStates0, numStates0);
+    RiccatiCostToGo[0].dfdx.resize(numStates0);
+
+    matrix_t temp1 = S0 + B0.transpose() * P1 * A0;
+    matrix_t temp2 = Lr0_inv.transpose() * Lr0_inv;  // (R_{1} + B_{0}^{T} * P_{1} * B_{0})^{-1}
+    RiccatiCostToGo[0].dfdxx = Q0 + A0.transpose() * P1 * A0 - temp1.transpose() * temp2 * temp1;
+    RiccatiCostToGo[0].dfdx = q0 + A0.transpose() * p1 + A0.transpose() * P1 * b0 -
+                              temp1.transpose() * temp2 * (r0 + B0.transpose() * p1 + B0.transpose() * P1 * b0);
+    return RiccatiCostToGo;
   }
 
   void printStatus() {
@@ -456,18 +507,17 @@ hpipm_status HpipmInterface::solve(const vector_t& x0, std::vector<VectorFunctio
   return pImpl_->solve(x0, dynamics, cost, constraints, stateTrajectory, inputTrajectory, verbose);
 }
 
-void HpipmInterface::getRiccatiCostToGo(std::vector<matrix_t>& PMatrics, std::vector<vector_t>& pVectors) {
-  pImpl_->getRiccatiCostToGo(PMatrics, pVectors);
+std::vector<ScalarFunctionQuadraticApproximation> HpipmInterface::getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,
+                                                                                     const ScalarFunctionQuadraticApproximation& cost0) {
+  return pImpl_->getRiccatiCostToGo(dynamics0, cost0);
 }
-
-void HpipmInterface::getRiccatiFeedbackFeedforward(std::vector<matrix_t>& KMatrics, std::vector<vector_t>& kVectors) {
-  pImpl_->getRiccatiFeedbackFeedforward(KMatrics, kVectors);
+matrix_array_t HpipmInterface::getRiccatiFeedback(const VectorFunctionLinearApproximation& dynamics0,
+                                                  const ScalarFunctionQuadraticApproximation& cost0) {
+  return pImpl_->getRiccatiFeedback(dynamics0, cost0);
 }
-
-void HpipmInterface::getRiccatiZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0, const matrix_t& R0,
-                                         const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0, matrix_t& K0,
-                                         vector_t& p0, vector_t& k0) {
-  pImpl_->getRiccatiZeroStage(A0, B0, b0, Q0, R0, S0, q0, r0, P0, K0, p0, k0);
+vector_array_t HpipmInterface::getRiccatiFeedforward(const VectorFunctionLinearApproximation& dynamics0,
+                                                     const ScalarFunctionQuadraticApproximation& cost0) {
+  return pImpl_->getRiccatiFeedforward(dynamics0, cost0);
 }
 
 }  // namespace ocs2

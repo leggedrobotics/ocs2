@@ -87,11 +87,15 @@ class HpipmInterface {
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
                      vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, bool verbose = false);
 
-  void getRiccatiCostToGo(std::vector<matrix_t>& PMatrics, std::vector<vector_t>& pVectors);
-  void getRiccatiFeedbackFeedforward(std::vector<matrix_t>& KMatrics, std::vector<vector_t>& kVectors);
-  void getRiccatiZeroStage(const matrix_t& A0, const matrix_t& B0, const vector_t& b0, const matrix_t& Q0, const matrix_t& R0,
-                           const matrix_t& S0, const vector_t& q0, const vector_t& r0, matrix_t& P0, matrix_t& K0, vector_t& p0,
-                           vector_t& k0);
+  /**
+   * The zero stage dynamics and cost are included as input because numStates[0] = 0 and hpipm knows nothing about 0-th stage.
+   * TODO:
+   */
+  std::vector<ScalarFunctionQuadraticApproximation> getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,
+                                                                       const ScalarFunctionQuadraticApproximation& cost0);
+  matrix_array_t getRiccatiFeedback(const VectorFunctionLinearApproximation& dynamics0, const ScalarFunctionQuadraticApproximation& cost0);
+  vector_array_t getRiccatiFeedforward(const VectorFunctionLinearApproximation& dynamics0,
+                                       const ScalarFunctionQuadraticApproximation& cost0);
 
  private:
   class Impl;

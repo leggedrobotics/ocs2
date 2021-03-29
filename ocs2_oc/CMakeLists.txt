@@ -5,6 +5,7 @@ project(ocs2_oc)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
+  ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -46,6 +47,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
   src/oc_solver/SolverBase.cpp
@@ -122,6 +124,16 @@ target_link_libraries(test_time_triggered_rollout
   ${PROJECT_NAME}
   gtest_main
 )
+
+catkin_add_gtest(test_change_of_variables
+  test/testChangeOfInputVariables.cpp
+  )
+target_link_libraries(test_change_of_variables
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  gtest_main
+  )
 
 catkin_add_gtest(state_triggered_rollout_test
   test/state_triggered_rollout_test.cpp

@@ -16,18 +16,26 @@ void LoopshapingFilterDynamics::integrate(scalar_t dt, const vector_t& input) {
 }
 
 vector_t LoopshapingFilterDynamics::computeFlowMap(scalar_t time, const vector_t& filter_state, const vector_t& input) const {
+  const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& filter = loopshapingDefinition_->getInputFilter();
-  vector_t filterStateDerivative(filter_state.rows());
   switch (loopshapingDefinition_->getType()) {
     case LoopshapingType::outputpattern:
-      filterStateDerivative.noalias() = filter.getA() * filter_state;
-      filterStateDerivative.noalias() += filter.getB() * input;
-      return filterStateDerivative;
+      if (isDiagonal) {
+        return filter.getAdiag() * filter_state + filter.getBdiag() * input;
+      } else {
+        vector_t filterStateDerivative = filter.getA() * filter_state;
+        filterStateDerivative.noalias() += filter.getB() * input;
+        return filterStateDerivative;
+      }
     case LoopshapingType::inputpattern: /* fall through */
     case LoopshapingType::eliminatepattern:
-      filterStateDerivative.noalias() = filter.getA() * filter_state;
-      filterStateDerivative.noalias() += filter.getB() * input.tail(filter.getNumInputs());
-      return filterStateDerivative;
+      if (isDiagonal) {
+        return filter.getAdiag() * filter_state + filter.getBdiag() * input.tail(filter.getNumInputs());
+      } else {
+        vector_t filterStateDerivative = filter.getA() * filter_state;
+        filterStateDerivative.noalias() += filter.getB() * input.tail(filter.getNumInputs());
+        return filterStateDerivative;
+      }
     default:
       throw std::runtime_error("[LoopshapingFilterDynamics::computeFlowMap] invalid loopshaping type");
   }

@@ -47,9 +47,9 @@ template <typename SCALAR>
 Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix(Eigen::Matrix<SCALAR, 3, 1> v) {
   Eigen::Matrix<SCALAR, 3, 3> skewSymmetricMatrix;
   // clang-format off
-  skewSymmetricMatrix <<    0, -v(2),  v(1),
-                         v(2),     0, -v(0),
-                        -v(1),  v(0),     0;
+  skewSymmetricMatrix << SCALAR(0.0),       -v(2),        v(1),
+                                v(2), SCALAR(0.0),       -v(0),
+                               -v(1),        v(0), SCALAR(0.0);
   // clan-format on
   return skewSymmetricMatrix;
 }

@@ -27,44 +27,47 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
-#include <type_traits>
+#pragma once
 
-#include <gtest/gtest.h>
+#include <memory>
 
-#include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
 
-using namespace ocs2;
+namespace ocs2 {
 
-TEST(testModelDataBase, testModelDataLinearInterpolation) {
-  // create data
-  const size_t N = 10;
-  std::vector<double> timeArray(N);
-  std::vector<ModelDataBase> modelDataBaseArray(N);
+/**
+ * Implements the double sided inequality \f$ l \leq h \leq u \f$ with a given penalty function \f$ p() \f$.
+ *
+ * \f[
+ *   p_{box}(h) = p(h - l) + p(u - h)
+ * \f]
+ */
+class DoubleSidedPenalty final : public PenaltyFunctionBase {
+ public:
+  /**
+   * Constructor
+   * @param [in] lowerBound: The lower bound.
+   * @param [in] upperBound: The upper bound.
+   * @param [in] penalty: The penalty for the two inequality constraint.
+   */
+  DoubleSidedPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyFunctionBase> penalty)
+      : lowerBound_(lowerBound), upperBound_(upperBound), penaltyPtr_(std::move(penalty)) {}
 
-  for (size_t i = 0; i < N; i++) {
-    double t = 2.0 * i;
-    timeArray[i] = t;
-    modelDataBaseArray[i].time_ = t;
-    modelDataBaseArray[i].dynamics_.f = Eigen::Vector3d::Ones() * t;
-    modelDataBaseArray[i].dynamics_.dfdx = Eigen::Matrix3d::Ones() * t;
-  }
+  /** Default destructor */
+  ~DoubleSidedPenalty() override = default;
 
-  double time = 5.0;
-  // get (index, alpha) pair
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, timeArray);
+  DoubleSidedPenalty* clone() const override { return new DoubleSidedPenalty(*this); }
 
-  const scalar_t enquiryScalar = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::time);
-  const vector_t enquiryVector = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_f);
-  const matrix_t enquiryMatrix = LinearInterpolation::interpolate(indexAlpha, modelDataBaseArray, ModelData::dynamics_dfdx);
+  scalar_t getValue(scalar_t h) const override;
+  scalar_t getDerivative(scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t h) const override;
 
-  EXPECT_TRUE(enquiryScalar == time);
-  EXPECT_TRUE(enquiryVector.isApprox(Eigen::Vector3d::Ones() * time));
-  EXPECT_TRUE(enquiryMatrix.isApprox(Eigen::Matrix3d::Ones() * time));
-}
+ private:
+  DoubleSidedPenalty(const DoubleSidedPenalty& other);
 
-TEST(testModelDataBase, testMovableCopyable) {
-  ASSERT_TRUE(std::is_copy_constructible<ModelDataBase>::value);
-  ASSERT_TRUE(std::is_move_constructible<ModelDataBase>::value);
-  ASSERT_TRUE(std::is_nothrow_move_constructible<ModelDataBase>::value);
-}
+  std::unique_ptr<PenaltyFunctionBase> penaltyPtr_;
+  scalar_t lowerBound_;
+  scalar_t upperBound_;
+};
+
+}  // namespace ocs2

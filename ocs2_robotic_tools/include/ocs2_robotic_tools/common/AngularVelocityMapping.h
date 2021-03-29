@@ -44,14 +44,19 @@ namespace ocs2 {
  */
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 4, 3> angularVelocityToQuaternionTimeDerivative(const Eigen::Quaternion<SCALAR_T>& q) {
-  Eigen::Matrix<SCALAR_T, 3, 4> H;
+  const SCALAR_T qx = SCALAR_T(0.5) * q.x();
+  const SCALAR_T qy = SCALAR_T(0.5) * q.y();
+  const SCALAR_T qz = SCALAR_T(0.5) * q.z();
+  const SCALAR_T qw = SCALAR_T(0.5) * q.w();
+  Eigen::Matrix<SCALAR_T, 4, 3> M;
   // clang-format off
   // Robot Dynamics 2018, equation (2.97)
-  H <<  q.w(),-q.z(), q.y(), -q.x(),
-        q.z(), q.w(),-q.x(), -q.y(),
-       -q.y(), q.x(), q.w(), -q.z();
+  M <<  qw,  qz, -qy,
+       -qz,  qw,  qx,
+        qy, -qx,  qw,
+       -qx, -qy, -qz;
   // clang-format on
-  return 0.5 * H.transpose();
+  return M;
 }
 
 /**

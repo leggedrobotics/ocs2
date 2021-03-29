@@ -26,9 +26,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
-
-#include <iostream>
-
 #include "hpipm_catkin/HpipmInterface.h"
 
 extern "C" {
@@ -381,7 +378,7 @@ class HpipmInterface::Impl {
      * Value function at stage i is: V_i(z) = z' * P_i * z + z' * p_i + c_i
      * RiccatiCostToGo[i].dfdxx = P_i
      * RiccatiCostToGo[i].dfdx = p_i
-     * RiccatiCostToGo[i].f = c_i (not implemented yet, because no direct getter from hpipm)
+     * RiccatiCostToGo[i].f = c_i (TODO: not implemented yet, because no direct getter from hpipm)
      * RiccatiCostToGo[i].dfduu, RiccatiCostToGo[i].dfdu contains nothing
      */
     const int N = ocpSize_.numStages;

@@ -223,6 +223,8 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   PSolGiven[N] = cost[N].dfdxx;
   pSolGiven[N] = cost[N].dfdx;
   // cSolGiven[N] = 0;
+
+  // Farbod said there exists a function providing ground-truth to a full LQR problem, but I did not find it.
   for (int k = N - 1; k >= 0; k--) {
     ocs2::matrix_t Ak = system[k].dfdx;
     ocs2::matrix_t Bk = system[k].dfdu;

@@ -18,37 +18,16 @@
 
 #include <hpipm_catkin/HpipmInterface.h>
 
+#include "ocs2_sqp/MultipleShootingSettings.h"
+
 namespace ocs2 {
-
-struct MultipleShootingSolverSettings {
-  scalar_t dt = 0.01;  // user-defined time discretization
-  size_t n_state = 0;
-  size_t n_input = 0;
-  size_t sqpIteration = 1;
-  scalar_t deltaTol = 1e-6;
-
-  // Discretization method
-  SensitivityIntegratorType integratorType = SensitivityIntegratorType::RK2;
-
-  // Inequality penalty method
-  scalar_t inequalityConstraintMu = 0.0;
-  scalar_t inequalityConstraintDelta = 1e-6;
-
-  bool qr_decomp = true;  // Only meaningful if the system is constrained. True to use QR decomposiion, False to use lg <= Cx+Du+e <= ug
-  bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
-  bool printSolverStatistics = false;  // Print benchmarking of the multiple shooting method
-  bool printLinesearch = false;        // Print linesearch information
-
-  // Threading
-  size_t nThreads = 4;
-  int threadPriority = 50;
-};
 
 class MultipleShootingSolver : public SolverBase {
  public:
-  MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                         const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr = nullptr,
-                         const CostFunctionBase* terminalCostFunctionPtr = nullptr,
+  using Settings = multiple_shooting::Settings;
+
+  MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr, const CostFunctionBase* costFunctionPtr,
+                         const ConstraintBase* constraintPtr = nullptr, const CostFunctionBase* terminalCostFunctionPtr = nullptr,
                          const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr = nullptr);
 
   ~MultipleShootingSolver() override;
@@ -128,7 +107,7 @@ class MultipleShootingSolver : public SolverBase {
                 const vector_array_t& dx, const vector_array_t& du, vector_array_t& x, vector_array_t& u);
 
   // Problem definition
-  MultipleShootingSolverSettings settings_;
+  Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<std::unique_ptr<SystemDynamicsBase>> systemDynamicsPtr_;

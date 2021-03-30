@@ -44,6 +44,7 @@ include_directories(
 # Multiple shooting solver library
 add_library(${PROJECT_NAME}
   src/ConstraintProjection.cpp
+  src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp
   )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})

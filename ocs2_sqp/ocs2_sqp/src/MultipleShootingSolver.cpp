@@ -17,11 +17,16 @@
 
 namespace ocs2 {
 
-MultipleShootingSolver::MultipleShootingSolver(MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
+MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
                                                const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr,
                                                const CostFunctionBase* terminalCostFunctionPtr,
                                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr)
-    : SolverBase(), terminalCostFunctionPtr_(nullptr), settings_(std::move(settings)), totalNumIterations_(0), performanceIndeces_() {
+    : SolverBase(),
+      terminalCostFunctionPtr_(nullptr),
+      settings_(std::move(settings)),
+      totalNumIterations_(0),
+      performanceIndeces_(),
+      hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings) {
   // Multithreading, set up threadpool for N-1 helpers, our main thread is the N-th one.
   if (settings_.nThreads > 1) {
     threadPoolPtr_.reset(new ThreadPool(settings_.nThreads - 1, settings_.threadPriority));
@@ -167,7 +172,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());  // repeat last input to make equal length vectors
   primalSolution_.modeSchedule_ = this->getModeSchedule();
 
-  if (constraintPtr_.front() && settings_.qr_decomp) {
+  if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
     // TODO: Add feedback in u_tilde space. Currently only have feedback arising from stateInputEquality
     vector_array_t uff;
     matrix_array_t controllerGain;
@@ -267,7 +272,7 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   vector_array_t deltaXSol;
   vector_array_t deltaUSol;
   hpipm_status status;
-  if (constraintPtr_.front() && !settings_.qr_decomp) {
+  if (constraintPtr_.front() && !settings_.projectStateInputEqualityConstraints) {
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using QR decomposition, we have an unconstrained QP.
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
@@ -278,7 +283,7 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   }
 
   // remap the tilde delta u to real delta u
-  if (constraintPtr_.front() && settings_.qr_decomp) {
+  if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
     for (int i = 0; i < deltaUSol.size(); i++) {
       deltaUSol[i] = constraints_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
       deltaUSol[i].noalias() += constraints_[i].dfdx * deltaXSol[i];
@@ -311,7 +316,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
     CostFunctionBase& costFunction = *costFunctionPtr_[thisWorker];
     ConstraintBase* constraintPtr = constraintPtr_[thisWorker].get();
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
-    const bool qpDecomp = settings_.qr_decomp;
+    const bool project = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
@@ -322,7 +327,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
       const scalar_t ti = time[i];
       const scalar_t dt = time[i + 1] - ti;
 
-      setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr, penaltyPtr_.get(), qpDecomp, ti, dt, x[i],
+      setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr, penaltyPtr_.get(), project, ti, dt, x[i],
                             x[i + 1], u[i], workerPerformance, dynamics, cost, constraints);
 
       dynamics_[i] = std::move(dynamics);
@@ -346,7 +351,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
   // determine sizes
   for (int i = 0; i < N; i++) {
     if (constraintPtr_.front() != nullptr) {
-      if (settings_.qr_decomp) {
+      if (settings_.projectStateInputEqualityConstraints) {
         ocpSize.numInputs[i] = constraints_[i].dfdu.cols();  // obtain size of u_tilde from constraint projection.
       } else {
         ocpSize.numIneqConstraints[i] = constraints_[i].f.rows();  // Declare as general inequalities
@@ -515,13 +520,13 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const sc
               << "\t Penalty: " << baseline.inequalityConstraintPenalty << "\n";
   }
 
-  // Some settings // TODO: Make parameters
-  const scalar_t alpha_decay = 0.5;
-  const scalar_t alpha_min = 1e-4;
-  const scalar_t gamma_c = 1e-6;
-  const scalar_t g_max = 1e6;
-  const scalar_t g_min = 1e-6;
-  const scalar_t costTol = 1e-4;
+  // Some settings
+  const scalar_t alpha_decay = settings_.alpha_decay;
+  const scalar_t alpha_min = settings_.alpha_min;
+  const scalar_t gamma_c = settings_.gamma_c;
+  const scalar_t g_max = settings_.g_max;
+  const scalar_t g_min = settings_.g_min;
+  const scalar_t costTol = settings_.costTol;
 
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   scalar_t baselineConstraintViolation =

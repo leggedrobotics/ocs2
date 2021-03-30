@@ -16,12 +16,12 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   ocs2::CircularKinematicsConstraints constraint;
 
   // Solver settings
-  ocs2::MultipleShootingSolverSettings settings;
+  ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.01;
   settings.n_state = 2;
   settings.n_input = 2;
   settings.sqpIteration = 20;
-  settings.qr_decomp = true;
+  settings.projectStateInputEqualityConstraints = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;
@@ -84,12 +84,12 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   ocs2::CircularKinematicsConstraints constraint;
 
   // Solver settings
-  ocs2::MultipleShootingSolverSettings settings;
+  ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.01;
   settings.n_state = 2;
   settings.n_input = 2;
   settings.sqpIteration = 20;
-  settings.qr_decomp = false;  // <- false to turn off projection of state-input equalities
+  settings.projectStateInputEqualityConstraints = false;  // <- false to turn off projection of state-input equalities
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;

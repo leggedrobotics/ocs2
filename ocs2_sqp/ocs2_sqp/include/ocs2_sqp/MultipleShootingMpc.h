@@ -11,7 +11,7 @@
 namespace ocs2 {
 class MultipleShootingMpc : public MPC_BASE {
  public:
-  MultipleShootingMpc(mpc::Settings mpcSettings, MultipleShootingSolverSettings settings, const SystemDynamicsBase* systemDynamicsPtr,
+  MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
                       const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr = nullptr,
                       const CostFunctionBase* terminalCostPtr = nullptr,
                       const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr = nullptr)

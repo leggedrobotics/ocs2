@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Set this one up.
-  ocs2::MultipleShootingSolverSettings settings;
+  ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.1;
   settings.n_state = 10;
   settings.n_input = 3;

@@ -389,12 +389,8 @@ class HpipmInterface::Impl {
     }
 
     // k = 0
-    matrix_t Lr0, Lr0_inv;
-    Lr0.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
-    Lr0_inv.resize(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
+    matrix_t Lr0(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
     d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, 0, Lr0.data());
-    matrix_t eye = matrix_t::Identity(ocpSize_.numInputs[0], ocpSize_.numInputs[0]);
-    Lr0_inv = Lr0.triangularView<Eigen::Lower>().solve<Eigen::OnTheRight>(eye);
 
     // Shorthand notation
     const matrix_t& A0 = dynamics0.dfdx;
@@ -411,7 +407,7 @@ class HpipmInterface::Impl {
     // RiccatiCostToGo[0].dfdxx = Q0 + A0.transpose() * P1 * A0 -
     //                              (S0.transpose() + A0.transpose() * P1 * B0) * (R0 + B0.transpose() * P1 * B0).inverse() *
     //                                  (S0.transpose() + A0.transpose() * P1 * B0)
-    // Use that (inv(Lr0)^T * inv(Lr0) = (R0 + B0.transpose() * P1 * B0).inverse();
+    // Use that inv(Lr0)^T * inv(Lr0) = (R0 + B0.transpose() * P1 * B0).inverse();
     matrix_t P1_A0 = P1 * A0;
     tmp1.noalias() += B0.transpose() * P1_A0;
     Lr0.triangularView<Eigen::Lower>().solveInPlace(tmp1);  // tmp1 = inv(Lr0) * (S0.transpose() + A0.transpose() * P1 * B0)

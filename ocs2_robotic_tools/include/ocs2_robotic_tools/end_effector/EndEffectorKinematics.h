@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/** The Kinematics function which maps state-input pair to the end-effector (position, velocity) */
+/** The Kinematics function which maps state-input pair to the end-effector (position, velocity, orientation error) */
 template <typename SCALAR_T>
 class EndEffectorKinematics {
  public:
@@ -73,6 +73,8 @@ class EndEffectorKinematics {
   /**
    * Get orientation error in world frame
    *
+   * @note: To calculate the error use quaternionDistance() from ocs2_robotic_tools/common/RotationTransforms.h
+   *
    * @param [in] state vector
    * @param [in] referenceOrientation: reference quaternion
    * @return array of orientation errors
@@ -100,6 +102,9 @@ class EndEffectorKinematics {
 
   /**
    * Get end-effector orintation error linear approximation in world frame
+   *
+   * @note: To calculate the error and Jacobian use quaternionDistance() and quaternionDistanceJacobian() from
+   *        ocs2_robotic_tools/common/RotationTransforms.h
    *
    * @param [in] state: state vector
    * @param [in] referenceOrientation: reference quaternion

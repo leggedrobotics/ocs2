@@ -1,5 +1,6 @@
 model_settings
 {
+  useCaching                    true
   recompileLibraries            true
 }
 
@@ -45,8 +46,8 @@ ddp
 ; Rollout settings
 rollout
 {
-  AbsTolODE                     1e-5    ;1e-6
-  RelTolODE                     1e-3    ;1e-4
+  AbsTolODE                     1e-5
+  RelTolODE                     1e-3
   minTimeStep                   1e-3
   maxNumStepsPerSecond          100000
   checkNumericalStability       false
@@ -111,8 +112,6 @@ inputCost
 
 endEffector
 {
-  useCppAd true
-
   name "WRIST_2" ; name defined in the URDF
 
   ; end effector quadratic penalty scaling
@@ -122,8 +121,6 @@ endEffector
 
 finalEndEffector
 {
-  useCppAd true
-
   name "WRIST_2"
   muPosition  10.0
   muOrientation  5.0
@@ -131,8 +128,6 @@ finalEndEffector
 
 selfCollision
 {
-  useCppAd true
-
   ; Self Collision raw object pairs
   collisionObjectPairs
   {

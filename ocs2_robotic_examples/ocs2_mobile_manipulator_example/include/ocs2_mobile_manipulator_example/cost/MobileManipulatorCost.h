@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
@@ -44,8 +45,8 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
  public:
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-  MobileManipulatorCost(ocs2::PinocchioInterface pinocchioInterface, const std::string& taskFile, const std::string& libraryFolder,
-                        bool recompileLibraries);
+  MobileManipulatorCost(ocs2::PinocchioInterface pinocchioInterface, const std::string& taskFile, bool useCaching,
+                        const std::string& libraryFolder, bool recompileLibraries);
   ~MobileManipulatorCost() override = default;
   MobileManipulatorCost* clone() const override { return new MobileManipulatorCost(*this); }
 
@@ -69,6 +70,8 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
   std::unique_ptr<ocs2::StateCost> getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
                                                         bool recompileLibraries);
   std::unique_ptr<ocs2::StateInputCost> getJointVelocityLimitCost(const std::string& taskFile);
+
+  bool useCaching_;
 
   ocs2::PinocchioInterface pinocchioInterface_;
   ocs2::CostCollection<ocs2::StateInputCost> stateInputCostCollection_;

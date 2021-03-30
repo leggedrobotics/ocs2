@@ -77,31 +77,37 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   pinocchioInterfacePtr_.reset(new ocs2::PinocchioInterface(buildPinocchioInterface(urdfPath_)));
   std::cerr << *pinocchioInterfacePtr_;
 
+  bool useCaching = true;
+  bool recompileLibraries = true;
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  std::cerr << "\n #### model_settings: \n";
+  std::cerr << "#### =============================================================================\n";
+  ocs2::loadData::loadPtreeValue(pt, useCaching, "model_settings.useCaching", true);
+  ocs2::loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
+  std::cerr << " #### =============================================================================" << std::endl;
+
   /*
    * DDP-MPC settings
    */
   ddpSettings_ = ocs2::ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = ocs2::mpc::loadSettings(taskFile, "mpc");
 
-  bool recompileLibraries;
-  ocs2::loadData::loadCppDataType(taskFile_, "model_settings.recompileLibraries", recompileLibraries);
-
   /*
    * Dynamics
    */
-  dynamicsPtr_.reset(new MobileManipulatorDynamics(pinocchioInterfacePtr_->toCppAd()));
-  dynamicsPtr_->initialize("mobile_manipulator_dynamics", libraryFolder_, recompileLibraries, true);
+  dynamicsPtr_.reset(new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder_, recompileLibraries, true));
 
   /*
    * Rollout
    */
-  auto rolloutSettings = ocs2::rollout::loadSettings(taskFile, "rollout");
+  const auto rolloutSettings = ocs2::rollout::loadSettings(taskFile, "rollout");
   rolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
    */
-  costPtr_.reset(new MobileManipulatorCost(*pinocchioInterfacePtr_, taskFile, libraryFolder_, recompileLibraries));
+  costPtr_.reset(new MobileManipulatorCost(*pinocchioInterfacePtr_, taskFile, useCaching, libraryFolder_, recompileLibraries));
 
   /*
    * Constraints
@@ -109,10 +115,10 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   constraintPtr_.reset(new ocs2::ConstraintBase());
 
   /*
-   * Initialization
+   * Initialization state
    */
   ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
+  std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
   operatingPointPtr_.reset(new ocs2::OperatingPoints(initialState_, ocs2::vector_t::Zero(INPUT_DIM)));
 }
 

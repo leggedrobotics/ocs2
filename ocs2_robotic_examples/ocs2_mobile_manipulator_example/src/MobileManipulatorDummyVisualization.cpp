@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include <ocs2_self_collision/visualization/VisualizationHelpers.h>
+#include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorDummyVisualization.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
@@ -69,6 +69,26 @@ Eigen::Vector3d getBasePosition(Eigen::VectorXd state) {
 /******************************************************************************************************/
 Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state) {
   return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename It>
+void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
+  for (; firstIt != lastIt; ++firstIt) {
+    firstIt->header = header;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename It>
+void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
+  for (; firstIt != lastIt; ++firstIt) {
+    firstIt->id = startId++;
+  }
 }
 
 /******************************************************************************************************/
@@ -125,8 +145,8 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
   base_tf.child_frame_id = "base";
-  base_tf.transform.translation = ocs2::getVectorMsg(position);
-  base_tf.transform.rotation = ocs2::getOrientationMsg(orientation);
+  base_tf.transform.translation = ocs2::ros_msg_helpers::getVectorMsg(position);
+  base_tf.transform.rotation = ocs2::ros_msg_helpers::getOrientationMsg(orientation);
   tfBroadcaster_.sendTransform(base_tf);
 
   // publish joints transforms
@@ -149,8 +169,8 @@ void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Ti
   command_tf.header.stamp = timeStamp;
   command_tf.header.frame_id = "world";
   command_tf.child_frame_id = "command";
-  command_tf.transform.translation = ocs2::getVectorMsg(eeDesiredPosition);
-  command_tf.transform.rotation = ocs2::getOrientationMsg(eeDesiredOrientation);
+  command_tf.transform.translation = ocs2::ros_msg_helpers::getVectorMsg(eeDesiredPosition);
+  command_tf.transform.rotation = ocs2::ros_msg_helpers::getOrientationMsg(eeDesiredOrientation);
   tfBroadcaster_.sendTransform(command_tf);
 }
 
@@ -182,27 +202,27 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
     pinocchio::updateFramePlacements(model, data);
     const auto eeIndex = model.getBodyId("WRIST_2");
     const vector_t eePosition = data.oMf[eeIndex].translation();
-    endEffectorTrajectory.push_back(ocs2::getPointMsg(eePosition));
+    endEffectorTrajectory.push_back(ocs2::ros_msg_helpers::getPointMsg(eePosition));
   });
 
-  markerArray.markers.emplace_back(ocs2::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
+  markerArray.markers.emplace_back(ocs2::ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "EE Trajectory";
 
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     geometry_msgs::Pose pose;
-    pose.position = ocs2::getPointMsg(getBasePosition(state));
-    pose.orientation = ocs2::getOrientationMsg(getBaseOrientation(state));
+    pose.position = ocs2::ros_msg_helpers::getPointMsg(getBasePosition(state));
+    pose.orientation = ocs2::ros_msg_helpers::getOrientationMsg(getBaseOrientation(state));
     baseTrajectory.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
   });
 
-  markerArray.markers.emplace_back(ocs2::getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
+  markerArray.markers.emplace_back(ocs2::ros_msg_helpers::getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "Base Trajectory";
 
-  ocs2::assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ocs2::getHeaderMsg("world", timeStamp));
-  ocs2::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
-  poseArray.header = ocs2::getHeaderMsg("world", timeStamp);
+  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ocs2::ros_msg_helpers::getHeaderMsg("world", timeStamp));
+  assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
+  poseArray.header = ocs2::ros_msg_helpers::getHeaderMsg("world", timeStamp);
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);

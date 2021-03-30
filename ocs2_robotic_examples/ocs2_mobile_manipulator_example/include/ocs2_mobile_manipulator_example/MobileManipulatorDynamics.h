@@ -38,25 +38,20 @@ namespace mobile_manipulator {
 
 class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
  public:
+  using Base = ocs2::SystemDynamicsBaseAD;
   using ad_scalar_t = ocs2::ad_scalar_t;
   using ad_vector_t = ocs2::ad_vector_t;
 
-  explicit MobileManipulatorDynamics(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface);
+  explicit MobileManipulatorDynamics(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
+                                     bool recompileLibraries = true, bool verbose = true);
   ~MobileManipulatorDynamics() override = default;
-
-  /* Copy constructor */
-  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) : ocs2::SystemDynamicsBaseAD(rhs) {
-    pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(*rhs.pinocchioInterface_));
-  }
-
-  /* Clone */
   MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
 
   ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                             const ad_vector_t& parameters) const override;
 
  private:
-  std::unique_ptr<ocs2::PinocchioInterfaceCppAd> pinocchioInterface_;
+  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) = default;
 };
 
 }  // namespace mobile_manipulator

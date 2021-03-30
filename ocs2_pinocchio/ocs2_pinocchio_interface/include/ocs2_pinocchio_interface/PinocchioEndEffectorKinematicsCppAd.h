@@ -32,19 +32,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
-#include <ocs2_pinocchio_interface/EndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
+#include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace ocs2 {
 
+/**
+ * End-effector Kinematics implmentation using pinocchio and CppAD.
+ *
+ * See also PinocchioEndEffectorKinematics, which uses analytical computation and caching.
+ */
 class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<scalar_t> {
  public:
-  using vector3_t = EndEffectorKinematics<scalar_t>::vector3_t;
-  using matrix3x_t = EndEffectorKinematics<scalar_t>::matrix3x_t;
-  using quaternion_t = EndEffectorKinematics<scalar_t>::quaternion_t;
+  using EndEffectorKinematics<scalar_t>::vector3_t;
+  using EndEffectorKinematics<scalar_t>::matrix3x_t;
+  using EndEffectorKinematics<scalar_t>::quaternion_t;
 
   /** Constructor
    * @param [in] pinocchioInterface pinocchio interface.

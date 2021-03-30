@@ -43,7 +43,8 @@ class PinocchioStateInputMapping {
 
   PinocchioStateInputMapping() = default;
   virtual ~PinocchioStateInputMapping() = default;
-  virtual PinocchioStateInputMapping* clone() const = 0;
+  PinocchioStateInputMapping<SCALAR>& operator=(const PinocchioStateInputMapping<SCALAR>& rhs) = delete;
+  virtual PinocchioStateInputMapping<SCALAR>* clone() const = 0;
 
   /* Get the pinocchio joint configuration from OCS2 state and input vectors. */
   virtual vector_t getPinocchioJointPosition(const vector_t& state) const = 0;
@@ -55,7 +56,7 @@ class PinocchioStateInputMapping {
   virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const = 0;
 
  protected:
-  PinocchioStateInputMapping(const PinocchioStateInputMapping& rhs) = default;
+  PinocchioStateInputMapping(const PinocchioStateInputMapping<SCALAR>& rhs) = default;
 };
 
 }  // namespace ocs2

@@ -61,9 +61,9 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorCost::MobileManipulatorCost(ocs2::PinocchioInterface pinocchioInterface, const std::string& taskFile,
+MobileManipulatorCost::MobileManipulatorCost(ocs2::PinocchioInterface pinocchioInterface, const std::string& taskFile, bool useCaching,
                                              const std::string& libraryFolder, bool recompileLibraries)
-    : pinocchioInterface_(std::move(pinocchioInterface)) {
+    : useCaching_(useCaching), pinocchioInterface_(std::move(pinocchioInterface)) {
   auto inputCost = getQuadraticInputCost(taskFile);
   stateInputCostCollection_.add("Input", std::move(inputCost));
 
@@ -98,28 +98,19 @@ MobileManipulatorCost::MobileManipulatorCost(const MobileManipulatorCost& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorCost::setCachePointers() {
-  auto* selfCollisionConstraintPtr =
-      dynamic_cast<SelfCollisionConstraint*>(&stateCostCollection_.get<ocs2::StateSoftConstraint>("SelfCollision").get());
-  if (selfCollisionConstraintPtr != nullptr) {
-    selfCollisionConstraintPtr->setPinocchioInterface(pinocchioInterface_);
-  } else {
-    auto* selfCollisionConstraintCppAdPtr =
-        dynamic_cast<SelfCollisionConstraintCppAd*>(&stateCostCollection_.get<ocs2::StateSoftConstraint>("SelfCollision").get());
-    if (selfCollisionConstraintCppAdPtr != nullptr) {
-      selfCollisionConstraintCppAdPtr->setPinocchioInterface(pinocchioInterface_);
-    }
-  }
-
   eeConstraintPtr_ = &stateCostCollection_.get<ocs2::StateSoftConstraint>("EndEffector").get<EndEffectorConstraint>();
-  auto* kinematicsPtr = dynamic_cast<ocs2::PinocchioEndEffectorKinematics*>(&eeConstraintPtr_->getEndEffectorKinematics());
-  if (kinematicsPtr != nullptr) {
-    kinematicsPtr->setPinocchioInterface(pinocchioInterface_);
-  }
-
   finalEeConstraintPtr_ = &finalCostCollection_.get<ocs2::StateSoftConstraint>("FinalEndEffector").get<EndEffectorConstraint>();
-  kinematicsPtr = dynamic_cast<ocs2::PinocchioEndEffectorKinematics*>(&finalEeConstraintPtr_->getEndEffectorKinematics());
-  if (kinematicsPtr != nullptr) {
-    kinematicsPtr->setPinocchioInterface(pinocchioInterface_);
+
+  // Set shared pinocchioInterface for caching
+  if (useCaching_) {
+    dynamic_cast<SelfCollisionConstraint&>(stateCostCollection_.get<ocs2::StateSoftConstraint>("SelfCollision").get())
+        .setPinocchioInterface(pinocchioInterface_);
+
+    dynamic_cast<ocs2::PinocchioEndEffectorKinematics&>(eeConstraintPtr_->getEndEffectorKinematics())
+        .setPinocchioInterface(pinocchioInterface_);
+
+    dynamic_cast<ocs2::PinocchioEndEffectorKinematics&>(finalEeConstraintPtr_->getEndEffectorKinematics())
+        .setPinocchioInterface(pinocchioInterface_);
   }
 }
 
@@ -129,11 +120,13 @@ void MobileManipulatorCost::setCachePointers() {
 scalar_t MobileManipulatorCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
   setEndEffectorReference(t);
 
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
+  if (useCaching_) {
+    const auto& model = pinocchioInterface_.getModel();
+    auto& data = pinocchioInterface_.getData();
+    const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+  }
 
   scalar_t cost = stateInputCostCollection_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
   cost += stateCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
@@ -146,11 +139,14 @@ scalar_t MobileManipulatorCost::cost(scalar_t t, const vector_t& x, const vector
 scalar_t MobileManipulatorCost::finalCost(scalar_t t, const vector_t& x) {
   setFinalEndEffectorReference(t);
 
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
+  if (useCaching_) {
+    const auto& model = pinocchioInterface_.getModel();
+    auto& data = pinocchioInterface_.getData();
+    const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+  }
 
   return finalCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
 }
@@ -161,13 +157,16 @@ scalar_t MobileManipulatorCost::finalCost(scalar_t t, const vector_t& x) {
 ScalarFunctionQuadraticApproximation MobileManipulatorCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   setEndEffectorReference(t);
 
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
-  pinocchio::computeJointJacobians(model, data);
-  pinocchio::updateGlobalPlacements(model, data);
+  if (useCaching_) {
+    const auto& model = pinocchioInterface_.getModel();
+    auto& data = pinocchioInterface_.getData();
+    const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+    pinocchio::computeJointJacobians(model, data);
+    pinocchio::updateGlobalPlacements(model, data);
+  }
 
   auto cost = stateInputCostCollection_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
   const auto stateCost = stateCostCollection_.getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_);
@@ -183,12 +182,15 @@ ScalarFunctionQuadraticApproximation MobileManipulatorCost::costQuadraticApproxi
 ScalarFunctionQuadraticApproximation MobileManipulatorCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
   setFinalEndEffectorReference(t);
 
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
-  pinocchio::computeJointJacobians(model, data);
+  if (useCaching_) {
+    const auto& model = pinocchioInterface_.getModel();
+    auto& data = pinocchioInterface_.getData();
+    const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+    pinocchio::computeJointJacobians(model, data);
+  }
 
   return finalCostCollection_.getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_);
 }
@@ -269,27 +271,25 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
   std::string name = "WRIST_2";
-  bool useCppAd = false;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
   std::cerr << "\n #### " << fieldName << " Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  ocs2::loadData::loadPtreeValue(pt, useCppAd, fieldName + ".useCppAd", true);
   ocs2::loadData::loadPtreeValue(pt, muPosition, fieldName + ".muPosition", true);
   ocs2::loadData::loadPtreeValue(pt, muOrientation, fieldName + ".muOrientation", true);
   ocs2::loadData::loadPtreeValue(pt, name, fieldName + ".name", true);
   std::cerr << " #### =============================================================================" << std::endl;
 
-  std::unique_ptr<ocs2::StateConstraint> eeConstraint;
-  if (!useCppAd) {
+  std::unique_ptr<ocs2::StateConstraint> constraint;
+  if (useCaching_) {
     ocs2::PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface_, pinocchioMapping_, {name});
-    eeConstraint = std::unique_ptr<ocs2::StateConstraint>(new EndEffectorConstraint(eeKinematics));
+    constraint.reset(new EndEffectorConstraint(eeKinematics));
   } else {
     MobileManipulatorPinocchioMapping<ocs2::ad_scalar_t> pinocchioMappingCppAd;
     ocs2::PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface_, pinocchioMappingCppAd, {name}, STATE_DIM, INPUT_DIM,
                                                            "end_effector_kinematics", libraryFolder, recompileLibraries, false);
-    eeConstraint = std::unique_ptr<ocs2::StateConstraint>(new EndEffectorConstraint(eeKinematics));
+    constraint.reset(new EndEffectorConstraint(eeKinematics));
   }
 
   std::vector<std::unique_ptr<ocs2::PenaltyFunctionBase>> penaltyArray(6);
@@ -299,7 +299,7 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
                   [&] { return std::unique_ptr<ocs2::PenaltyFunctionBase>(new ocs2::QuadraticPenaltyFunction(muOrientation)); });
 
   return std::unique_ptr<ocs2::StateCost>(
-      new ocs2::StateSoftConstraint(std::move(eeConstraint), std::move(penaltyArray), ocs2::ConstraintOrder::Linear));
+      new ocs2::StateSoftConstraint(std::move(constraint), std::move(penaltyArray), ocs2::ConstraintOrder::Linear));
 }
 
 /******************************************************************************************************/
@@ -307,9 +307,6 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
 /******************************************************************************************************/
 std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
                                                                              bool recompileLibraries) {
-  bool useCppAd = false;
-
-  // TODO(perry) replace with some nice link parser or something
   std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
   scalar_t mu = 1e-2;
@@ -321,7 +318,6 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
   const std::string prefix = "selfCollision.";
   std::cerr << "\n #### SelfCollision Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  ocs2::loadData::loadPtreeValue(pt, useCppAd, prefix + "useCppAd", true);
   ocs2::loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
   ocs2::loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
   ocs2::loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
@@ -337,13 +333,13 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
 
   std::unique_ptr<ocs2::StateConstraint> constraint;
-  if (!useCppAd) {
-    constraint = std::unique_ptr<ocs2::StateConstraint>(
+  if (useCaching_) {
+    constraint.reset(
         new SelfCollisionConstraint(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
   } else {
-    constraint = std::unique_ptr<ocs2::StateConstraint>(
-        new SelfCollisionConstraintCppAd(pinocchioInterface_, MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface),
-                                         minimumDistance, "self_collision", libraryFolder, recompileLibraries, false));
+    constraint.reset(new SelfCollisionConstraintCppAd(pinocchioInterface_, MobileManipulatorPinocchioMapping<scalar_t>(),
+                                                      std::move(geometryInterface), minimumDistance, "self_collision", libraryFolder,
+                                                      recompileLibraries, false));
   }
 
   auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(

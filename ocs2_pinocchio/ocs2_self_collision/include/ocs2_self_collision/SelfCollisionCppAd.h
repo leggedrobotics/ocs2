@@ -95,20 +95,6 @@ class SelfCollisionCppAd {
    */
   void setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const std::string& modelName, const std::string& modelFolder);
 
-  /**
-   * Create the forward model and derivatives.
-   *
-   * @param [in] verbose: display information.
-   */
-  void createModels(bool verbose);
-
-  /**
-   * Loads the forward model and derivatives if available. Constructs them otherwise.
-   *
-   * @param [in] verbose: display information
-   */
-  void loadModelsIfAvailable(bool verbose);
-
   // From the current state of the robot, and the closest points in world frame, compute the positions of the points in link frame
   // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
   // Returns a vector that is of length |3*2*number of collision pairs + 1 (for sign indicator)|

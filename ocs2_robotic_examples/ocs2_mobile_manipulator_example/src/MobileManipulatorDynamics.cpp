@@ -31,9 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace mobile_manipulator {
 
-MobileManipulatorDynamics::MobileManipulatorDynamics(const ocs2::PinocchioInterfaceCppAd& pinocchioInterface)
+MobileManipulatorDynamics::MobileManipulatorDynamics(const std::string& modelName, const std::string& modelFolder /*= "/tmp/ocs2"*/,
+                                                     bool recompileLibraries /*= true*/, bool verbose /*= true*/)
     : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
-  pinocchioInterface_.reset(new ocs2::PinocchioInterfaceCppAd(pinocchioInterface));
+  Base::initialize(modelName, modelFolder, recompileLibraries, verbose);
 }
 
 MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,

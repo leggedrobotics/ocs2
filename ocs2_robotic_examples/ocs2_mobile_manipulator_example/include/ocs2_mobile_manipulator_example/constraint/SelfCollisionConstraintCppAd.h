@@ -41,8 +41,7 @@ namespace mobile_manipulator {
 
 class SelfCollisionConstraintCppAd final : public ocs2::StateConstraint {
  public:
-  SelfCollisionConstraintCppAd(const ocs2::PinocchioInterface& pinocchioInterface,
-                               const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
+  SelfCollisionConstraintCppAd(ocs2::PinocchioInterface pinocchioInterface, const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
                                ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
                                const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                                bool verbose = true);
@@ -61,13 +60,14 @@ class SelfCollisionConstraintCppAd final : public ocs2::StateConstraint {
    */
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
-  /** Caches the pointer to the pinocchio interface. */
-  void setPinocchioInterface(ocs2::PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+  /** Caches the pointer to the pinocchio interface with pre-computed kinematics. (optional) */
+  void setPinocchioInterface(ocs2::PinocchioInterface& pinocchioInterface) { pinocchioInterfaceCachePtr_ = &pinocchioInterface; }
 
  private:
   SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs);
 
-  ocs2::PinocchioInterface* pinocchioInterfacePtr_ = nullptr;
+  ocs2::PinocchioInterface pinocchioInterface_;
+  ocs2::PinocchioInterface* pinocchioInterfaceCachePtr_ = nullptr;
   ocs2::SelfCollisionCppAd selfCollision_;
   std::unique_ptr<ocs2::PinocchioStateInputMapping<scalar_t>> mappingPtr_;
 };

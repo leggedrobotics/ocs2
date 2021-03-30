@@ -27,14 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
-
-#include <ocs2_robotic_tools/common/RotationTransforms.h>
-
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
 namespace ocs2 {
 
@@ -281,7 +280,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getOrientationErrorCppAd(Pinocc
   ad_vector_t errors(3 * endEffectorFrameIds_.size());
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) {
     const size_t frameId = endEffectorFrameIds_[i];
-    ad_quaternion_t eeOrientation = matrixToQuaternion(data.oMf[frameId].rotation());
+    const ad_quaternion_t eeOrientation = matrixToQuaternion(data.oMf[frameId].rotation());
     ad_quaternion_t eeReferenceOrientation;
     eeReferenceOrientation.coeffs() = params.segment<4>(4 * i);
     errors.segment<3>(3 * i) = ocs2::quaternionDistance(eeOrientation, eeReferenceOrientation);

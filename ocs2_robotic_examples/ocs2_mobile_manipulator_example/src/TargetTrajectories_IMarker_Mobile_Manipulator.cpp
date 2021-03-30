@@ -1,11 +1,34 @@
-/*
- * TargetTrajectories_IMarker_Mobile_Manipulator.cpp
- *
- *  Created on: 31 Aug 2020
- *      Author: perry
- */
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include <ocs2_mobile_manipulator_example/TargetTrajectories_IMarker_Mobile_Manipulator.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ros/ros.h>
 
@@ -107,32 +130,22 @@ void TargetTrajectories_IMarker_Mobile_Manipulator::processFeedback(const visual
   ocs2::SystemObservation observation;
   ocs2::ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
 
-  // Target reaching duration
-  const ocs2::scalar_t averageSpeed = 2.0;
-  ocs2::scalar_t targetReachingDuration = 10;  // relativeState.template head<3>().norm() / averageSpeed;
-
   // Desired time trajectory
-  ocs2::CostDesiredTrajectories costDesiredTrajectories(2);
+  ocs2::CostDesiredTrajectories costDesiredTrajectories(1);
   ocs2::scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
-  tDesiredTrajectory.resize(1);
   tDesiredTrajectory[0] = observation.time;
-  //  tDesiredTrajectory[1] = observation.time + targetReachingDuration;
 
   // Desired state trajectory
   ocs2::vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
-  xDesiredTrajectory.resize(1);
-  //  xDesiredTrajectory[0] = observation.state;
-  xDesiredTrajectory[0].resize(7);
-  xDesiredTrajectory[0].template tail<4>() = Eigen::Quaterniond(feedback->pose.orientation.w, feedback->pose.orientation.x,
-                                                                feedback->pose.orientation.y, feedback->pose.orientation.z)
-                                                 .coeffs();
-  xDesiredTrajectory[0].template head<3>() << feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z;
+  xDesiredTrajectory[0].resize(7);  // 3 + 4 for desired position vector and orientation quaternion
+  xDesiredTrajectory[0].tail<4>() = Eigen::Quaterniond(feedback->pose.orientation.w, feedback->pose.orientation.x,
+                                                       feedback->pose.orientation.y, feedback->pose.orientation.z)
+                                        .coeffs();
+  xDesiredTrajectory[0].head<3>() << feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z;
 
   // Desired input trajectory
   ocs2::vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
-  uDesiredTrajectory.resize(1);
-  uDesiredTrajectory[0].setZero(8);
-  //  uDesiredTrajectory[1].setZero(8);
+  uDesiredTrajectory[0].setZero(INPUT_DIM);
 
   this->publishTargetTrajectories(costDesiredTrajectories);
 }

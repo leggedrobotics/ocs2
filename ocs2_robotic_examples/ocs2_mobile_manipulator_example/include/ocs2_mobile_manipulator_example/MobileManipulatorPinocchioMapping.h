@@ -37,9 +37,9 @@ namespace mobile_manipulator {
 template <typename SCALAR>
 class MobileManipulatorPinocchioMapping final : public ocs2::PinocchioStateInputMapping<SCALAR> {
  public:
-  using scalar_t = SCALAR;
-  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
-  using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+  using Base = ocs2::PinocchioStateInputMapping<SCALAR>;
+  using typename Base::matrix_t;
+  using typename Base::vector_t;
 
   MobileManipulatorPinocchioMapping() = default;
   ~MobileManipulatorPinocchioMapping() override = default;
@@ -57,8 +57,8 @@ class MobileManipulatorPinocchioMapping final : public ocs2::PinocchioStateInput
 
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override {
     matrix_t dfdu(Jv.rows(), INPUT_DIM);
-    Eigen::Matrix<scalar_t, 3, 2> dvdu_base;
-    const scalar_t theta = state(2);
+    Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
+    const SCALAR theta = state(2);
     // clang-format off
     dvdu_base << cos(theta), 0,
                  sin(theta), 0,

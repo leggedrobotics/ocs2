@@ -48,6 +48,8 @@ class JointVelocityLimits final : public ocs2::StateInputConstraint {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
 
  private:
+  JointVelocityLimits(const JointVelocityLimits& other) = default;
+
   vector_t lowerBound_;
   vector_t upperBound_;
 };

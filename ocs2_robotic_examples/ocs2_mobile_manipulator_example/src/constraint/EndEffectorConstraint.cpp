@@ -37,9 +37,9 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics)
-    : endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
-      eeDesiredPosition_(vector3_t::Zero()),
-      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {
+    : eeDesiredPosition_(vector3_t::Zero()),
+      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0),
+      endEffectorKinematicsPtr_(endEffectorKinematics.clone()) {
   assert(endEffectorKinematics.getIds().size() == 1);
 }
 
@@ -48,9 +48,9 @@ EndEffectorConstraint::EndEffectorConstraint(const ocs2::EndEffectorKinematics<s
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const EndEffectorConstraint& rhs)
     : ocs2::StateConstraint(rhs),
-      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
       eeDesiredPosition_(vector3_t::Zero()),
-      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0) {}
+      eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0),
+      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

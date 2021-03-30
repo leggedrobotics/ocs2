@@ -32,22 +32,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
-#include <ocs2_pinocchio_interface/EndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
+#include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
 
 namespace ocs2 {
 
+/**
+ * End-effector Kinematics implmentation using pinocchio.
+ *
+ * This class uses caching of computation done on the pinocchio::Data in PinocchiInterface.
+ * See in the method documentation which pinocchio functions are required to update pinocchio::Data.
+ *
+ * Example:
+ *   PinocchioEndEffectorKinematics kinematics(pinocchioInterface, mapping, {"END_EFFECTOR_NAME"});
+ *   pinocchio::forwardKinematics(pinocchioInterface.getModel(), pinocchioInterface.getData(), q);
+ *   pinocchio::updateFramePlacements(pinocchioInterface.getModel(), pinocchioInterface.getData());
+ *   kinematics.setPinocchioInterface(pinocchioInterface);
+ *   const auto pos = kinematics.getPosition(x);
+ */
 class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar_t> {
  public:
-  using vector3_t = EndEffectorKinematics<scalar_t>::vector3_t;
-  using matrix3x_t = EndEffectorKinematics<scalar_t>::matrix3x_t;
-  using quaternion_t = EndEffectorKinematics<scalar_t>::quaternion_t;
+  using EndEffectorKinematics<scalar_t>::vector3_t;
+  using EndEffectorKinematics<scalar_t>::matrix3x_t;
+  using EndEffectorKinematics<scalar_t>::quaternion_t;
 
   /** Constructor
-   * @param [in] pinocchioInterface pinocchio interface.
-   * @param [in] mapping mapping from OCS2 to pinocchio state.
-   * @param [in] endEffectorIds array of end effector names.
+   * @param [in] pinocchioInterface: pinocchio interface.
+   * @param [in] mapping: mapping from OCS2 to pinocchio state.
+   * @param [in] endEffectorIds: array of end effector names.
    */
   PinocchioEndEffectorKinematics(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
                                  std::vector<std::string> endEffectorIds);
@@ -56,6 +69,13 @@ class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar
   PinocchioEndEffectorKinematics* clone() const override;
   PinocchioEndEffectorKinematics& operator=(const PinocchioEndEffectorKinematics&) = delete;
 
+  /** Set the pinocchio interface for caching.
+   * @note The pinocchio interface must be set before calling the getters.
+   * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
+   */
+  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+
+  /** Get end-effector IDs (names) */
   const std::vector<std::string>& getIds() const override;
 
   /** Get the end effector position vectors.
@@ -101,8 +121,6 @@ class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar
    */
   std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
       const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override;
-
-  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 
  private:
   PinocchioEndEffectorKinematics(const PinocchioEndEffectorKinematics& rhs);

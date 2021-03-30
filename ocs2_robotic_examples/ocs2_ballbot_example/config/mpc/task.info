@@ -12,6 +12,20 @@ templateSwitchingTimes
 {
 }
 
+; multiple_shooting settings
+multiple_shooting
+{
+  dt                            0.5
+  n_state                       10
+  n_input                       3
+  sqpIteration                  5
+  deltaTol                      1e-3
+  printSolverStatistics         true
+  printSolverStatus             false
+  printLinesearch               false
+  controllerFeedback            false
+}
+
 ; DDP settings
 ddp
 {
@@ -88,6 +102,8 @@ mpc
 ballbot_interface
 {
   recompileLibraries       0    ; put this flag to 1 to force recompilation of dynamics library
+  solverDDP                false
+  solverSQP                true
 }
 
 

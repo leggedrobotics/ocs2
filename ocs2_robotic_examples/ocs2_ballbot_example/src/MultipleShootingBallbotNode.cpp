@@ -3,6 +3,7 @@
 //
 
 #include <ros/init.h>
+#include <ros/package.h>
 
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
@@ -30,15 +31,7 @@ int main(int argc, char** argv) {
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
   // Set this one up.
-  ocs2::multiple_shooting::Settings settings;
-  settings.dt = 0.1;
-  settings.n_state = 10;
-  settings.n_input = 3;
-  settings.sqpIteration = 5;
-  settings.deltaTol = 1e-3;
-  settings.printSolverStatistics = true;
-  settings.printSolverStatus = false;
-  settings.printLinesearch = false;
+  ocs2::multiple_shooting::Settings settings = ballbotInterface.sqpSettings();
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
   std::unique_ptr<ocs2::MultipleShootingMpc> mpc(new ocs2::MultipleShootingMpc(

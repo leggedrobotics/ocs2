@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
   auto anymalInterface =
       anymal::getAnymalLoopshapingInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolderLoopshaping(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
-  ocs2::MultipleShootingSolverSettings sqpSettings;
+  ocs2::multiple_shooting::Settings sqpSettings;
   sqpSettings.dt = 0.02;  // High resolution needed due to loopshaping!
   sqpSettings.n_state = 48;
   sqpSettings.n_input = 24;
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
   sqpSettings.deltaTol = 1e-2;
   sqpSettings.inequalityConstraintMu = 0.1;
   sqpSettings.inequalityConstraintDelta = 5.0;
-  sqpSettings.qr_decomp = true;
+  sqpSettings.projectStateInputEqualityConstraints = true;
   sqpSettings.printSolverStatistics = true;
   sqpSettings.printSolverStatus = false;
   sqpSettings.printLinesearch = false;

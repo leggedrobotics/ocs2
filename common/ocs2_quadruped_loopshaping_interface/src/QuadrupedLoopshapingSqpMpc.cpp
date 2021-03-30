@@ -8,7 +8,7 @@ namespace switched_model_loopshaping {
 
 std::unique_ptr<ocs2::MultipleShootingMpc> getSqpMpc(const QuadrupedLoopshapingInterface& quadrupedInterface,
                                                      const ocs2::mpc::Settings& mpcSettings,
-                                                     const ocs2::MultipleShootingSolverSettings& sqpSettings) {
+                                                     const ocs2::multiple_shooting::Settings& sqpSettings) {
   auto mpcPtr = std::unique_ptr<ocs2::MultipleShootingMpc>(new ocs2::MultipleShootingMpc(
       mpcSettings, sqpSettings, &quadrupedInterface.getDynamics(), &quadrupedInterface.getCost(), quadrupedInterface.getConstraintPtr(),
       quadrupedInterface.getTerminalCostPtr(), &quadrupedInterface.getOperatingPoints()));

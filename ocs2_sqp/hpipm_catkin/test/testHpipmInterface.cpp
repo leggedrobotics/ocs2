@@ -192,3 +192,97 @@ TEST(test_hpiphm_interface, with_constraints) {
     ASSERT_TRUE(constraints[k].f.isApprox(-constraints[k].dfdx * xSol[k] - constraints[k].dfdu * uSol[k], 1e-9));
   }
 }
+
+TEST(test_hpiphm_interface, retrieveRiccati) {
+  int nx = 3;
+  int nu = 2;
+  int N = 5;
+
+  // Problem setup
+  ocs2::vector_t x0 = ocs2::vector_t::Random(nx);
+  std::vector<ocs2::VectorFunctionLinearApproximation> system;
+  std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
+  for (int k = 0; k < N; k++) {
+    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+  }
+  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+
+  // store the true cost-to-go and feedback/feedforward terms
+  std::vector<ocs2::matrix_t> PSolGiven;
+  std::vector<ocs2::matrix_t> KSolGiven;
+  std::vector<ocs2::vector_t> pSolGiven;
+  std::vector<ocs2::vector_t> kSolGiven;
+  // std::vector<double> cSolGiven;
+  PSolGiven.resize(N + 1);
+  KSolGiven.resize(N);
+  pSolGiven.resize(N + 1);
+  kSolGiven.resize(N);
+  // cSolGiven.resize(N + 1);
+
+  PSolGiven[N] = cost[N].dfdxx;
+  pSolGiven[N] = cost[N].dfdx;
+  // cSolGiven[N] = 0;
+
+  // Farbod said there exists a function providing ground-truth to a full LQR problem, but I did not find it.
+  for (int k = N - 1; k >= 0; k--) {
+    ocs2::matrix_t Ak = system[k].dfdx;
+    ocs2::matrix_t Bk = system[k].dfdu;
+    ocs2::matrix_t bk = system[k].f;
+    ocs2::matrix_t Qk = cost[k].dfdxx;
+    ocs2::matrix_t Rk = cost[k].dfduu;
+    ocs2::matrix_t Sk = cost[k].dfdux;
+    ocs2::vector_t qk = cost[k].dfdx;
+    ocs2::vector_t rk = cost[k].dfdu;
+
+    PSolGiven[k] = Qk + Ak.transpose() * PSolGiven[k + 1] * Ak -
+                   (Sk.transpose() + Ak.transpose() * PSolGiven[k + 1] * Bk) * (Rk + Bk.transpose() * PSolGiven[k + 1] * Bk).inverse() *
+                       (Sk + Bk.transpose() * PSolGiven[k + 1] * Ak);
+    pSolGiven[k] = qk + Ak.transpose() * pSolGiven[k + 1] + Ak.transpose() * PSolGiven[k + 1] * bk -
+                   (Sk.transpose() + Ak.transpose() * PSolGiven[k + 1] * Bk) * (Rk + Bk.transpose() * PSolGiven[k + 1] * Bk).inverse() *
+                       (rk + Bk.transpose() * pSolGiven[k + 1] + Bk.transpose() * PSolGiven[k + 1] * bk);
+    // cSolGiven[k] = cSolGiven[k + 1] + bk.transpose() * pSolGiven[k + 1] + 0.5
+    // * bk.transpose() * PSolGiven[k + 1] * bk -
+    //                0.5 * (rk + Bk.transpose() * pSolGiven[k + 1] +
+    //                Bk.transpose() * PSolGiven[k + 1] * bk).transpose() *
+    //                    (Rk + Bk.transpose() * PSolGiven[k + 1] *
+    //                    Bk).inverse() * (rk + Bk.transpose() * pSolGiven[k +
+    //                    1] + Bk.transpose() * PSolGiven[k + 1] * bk);
+    KSolGiven[k] = -(Rk + Bk.transpose() * PSolGiven[k + 1] * Bk).inverse() * (Sk + Bk.transpose() * PSolGiven[k + 1] * Ak);
+    kSolGiven[k] = -(Rk + Bk.transpose() * PSolGiven[k + 1] * Bk).inverse() *
+                   (rk + Bk.transpose() * pSolGiven[k + 1] + Bk.transpose() * PSolGiven[k + 1] * bk);
+  }
+
+  // Interface
+  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  ocs2::HpipmInterface hpipmInterface(ocpSize);
+
+  // Solve!
+  std::vector<ocs2::vector_t> xSol;
+  std::vector<ocs2::vector_t> uSol;
+  hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+
+  // get Riccati info from hpipm interface
+  std::vector<ocs2::matrix_t> KSol = hpipmInterface.getRiccatiFeedback(system[0], cost[0]);
+  std::vector<ocs2::vector_t> kSol = hpipmInterface.getRiccatiFeedforward(system[0], cost[0]);
+  std::vector<ocs2::ScalarFunctionQuadraticApproximation> CostToGo = hpipmInterface.getRiccatiCostToGo(system[0], cost[0]);
+  std::vector<ocs2::matrix_t> PSol;
+  std::vector<ocs2::vector_t> pSol;
+  PSol.resize(N + 1);
+  pSol.resize(N + 1);
+  for (int i = 0; i < (N + 1); i++) {
+    PSol[i] = CostToGo[i].dfdxx;
+    pSol[i] = CostToGo[i].dfdx;
+  }
+
+  // compare the two vector/matrix trajectory
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(PSolGiven, PSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(KSolGiven, KSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(pSolGiven, pSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(kSolGiven, kSol, 1e-9));
+
+  for (int k = 0; k < N; k++) {
+    // u* = Kx* + k
+    ASSERT_TRUE(uSol[k].isApprox(KSol[k] * xSol[k] + kSol[k]));
+  }
+}

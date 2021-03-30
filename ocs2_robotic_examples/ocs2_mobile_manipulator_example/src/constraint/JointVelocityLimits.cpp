@@ -35,17 +35,8 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-JointVelocityLimits::JointVelocityLimits(vector_t lowerBound, vector_t upperBound)
-    : lowerBound_(std::move(lowerBound)), upperBound_(std::move(upperBound)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 vector_t JointVelocityLimits::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
-  vector_t limits(2 * input.rows());
-  limits.head(input.rows()) = input - lowerBound_;  // lowerBound_ < input
-  limits.tail(input.rows()) = upperBound_ - input;  // input < upperBound_
-  return limits;
+  return input;
 }
 
 /******************************************************************************************************/
@@ -53,11 +44,10 @@ vector_t JointVelocityLimits::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 VectorFunctionLinearApproximation JointVelocityLimits::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                               const vector_t& input) const {
-  VectorFunctionLinearApproximation limits(2 * input.rows(), state.rows(), input.rows());
-  limits.f = getValue(time, state, input);
+  VectorFunctionLinearApproximation limits(input.rows(), state.rows(), input.rows());
+  limits.f = input;
   limits.dfdx.setZero();
-  limits.dfdu.topRows(input.rows()).setIdentity();
-  limits.dfdu.bottomRows(input.rows()) = -matrix_t::Identity(input.rows(), input.rows());
+  limits.dfdu.setIdentity();
   return limits;
 }
 

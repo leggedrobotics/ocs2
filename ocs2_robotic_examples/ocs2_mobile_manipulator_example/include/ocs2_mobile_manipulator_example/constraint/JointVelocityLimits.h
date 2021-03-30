@@ -40,19 +40,16 @@ namespace mobile_manipulator {
 
 class JointVelocityLimits final : public StateInputConstraint {
  public:
-  JointVelocityLimits(vector_t lowerBound, vector_t upperBound);
+  JointVelocityLimits() = default;
   ~JointVelocityLimits() override = default;
   JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
 
-  size_t getNumConstraints(scalar_t time) const override { return 2 * lowerBound_.size(); }
+  size_t getNumConstraints(scalar_t time) const override { return INPUT_DIM; }
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
 
  private:
   JointVelocityLimits(const JointVelocityLimits& other) = default;
-
-  vector_t lowerBound_;
-  vector_t upperBound_;
 };
 
 }  // namespace mobile_manipulator

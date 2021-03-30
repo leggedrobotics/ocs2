@@ -48,6 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
+#include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
 #include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -88,6 +89,7 @@ MobileManipulatorCost::MobileManipulatorCost(PinocchioInterface pinocchioInterfa
 /******************************************************************************************************/
 MobileManipulatorCost::MobileManipulatorCost(const MobileManipulatorCost& rhs)
     : CostFunctionBase(rhs),
+      useCaching_(rhs.useCaching_),
       pinocchioInterface_(rhs.pinocchioInterface_),
       stateInputCostCollection_(rhs.stateInputCostCollection_),
       stateCostCollection_(rhs.stateCostCollection_),
@@ -368,11 +370,16 @@ std::unique_ptr<StateInputCost> MobileManipulatorCost::getJointVelocityLimitCost
   loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
   std::cerr << " #### =============================================================================" << std::endl;
 
-  std::unique_ptr<StateInputConstraint> constraintPtr(new JointVelocityLimits(lowerBound, upperBound));
-  auto penalty = std::unique_ptr<PenaltyFunctionBase>(new RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyFunction::Config(mu, delta)));
-  const auto numConstraints = constraintPtr->getNumConstraints(0.0);
+  std::unique_ptr<PenaltyFunctionBase> penaltyFunction;
+  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyArray(INPUT_DIM);
+  for (int i = 0; i < INPUT_DIM; i++) {
+    penaltyFunction.reset(new RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyFunction::Config(mu, delta)));
+    penaltyArray[i].reset(new DoubleSidedPenalty(lowerBound(i), upperBound(i), std::move(penaltyFunction)));
+  }
+
+  std::unique_ptr<StateInputConstraint> constraintPtr(new JointVelocityLimits);
   return std::unique_ptr<StateInputCost>(
-      new StateInputSoftConstraint(std::move(constraintPtr), numConstraints, std::move(penalty), ConstraintOrder::Linear));
+      new StateInputSoftConstraint(std::move(constraintPtr), std::move(penaltyArray), ConstraintOrder::Linear));
 }
 
 }  // namespace mobile_manipulator

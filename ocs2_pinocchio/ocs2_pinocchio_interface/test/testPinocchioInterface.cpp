@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_pinocchio_interface/urdf.h>
 #include "CartPoleUrdf.h"
 
 TEST(testPinocchioInterface, buildFromXml) {

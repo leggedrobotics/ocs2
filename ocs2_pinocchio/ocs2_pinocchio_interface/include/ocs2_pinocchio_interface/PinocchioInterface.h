@@ -41,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Forward declaration of main pinocchio types */
 #include <ocs2_pinocchio_interface/pinocchio_forward_declaration.h>
-#include <urdf_model/model.h>
 
 namespace ocs2 {
 
@@ -107,25 +106,6 @@ class PinocchioInterfaceTpl final {
 
 /** Print PinocchioInterfaceTpl info to stream */
 std::ostream& operator<<(std::ostream& os, const PinocchioInterface& p);
-
-/** Factory function from URDF file */
-PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile);
-
-/** Factory function from URDF file with root joint */
-PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile, const PinocchioInterface::JointModel& rootJoint);
-
-/** Factory function from URDF string */
-PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString);
-
-/** Factory function from URDF string with root joint */
-PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString, const PinocchioInterface::JointModel& rootJoint);
-
-/** Factory function from URDF model tree */
-PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree);
-
-/** Factory function from URDF model tree with root joint */
-PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
-                                                      const PinocchioInterface::JointModel& rootJoint);
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */
 extern template class PinocchioInterfaceTpl<scalar_t>;

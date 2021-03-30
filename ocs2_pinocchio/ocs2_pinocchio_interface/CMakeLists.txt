@@ -61,9 +61,9 @@ link_directories(
 add_library(${PROJECT_NAME}
   src/PinocchioInterface.cpp
   src/PinocchioInterfaceCppAd.cpp
-  src/PinocchioInterfaceUrdf.cpp
   src/PinocchioEndEffectorKinematics.cpp
   src/PinocchioEndEffectorKinematicsCppAd.cpp
+  src/urdf.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

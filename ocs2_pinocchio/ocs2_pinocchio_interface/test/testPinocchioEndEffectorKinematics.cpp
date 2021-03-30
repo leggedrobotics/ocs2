@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
+#include <ocs2_pinocchio_interface/urdf.h>
 
 #include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 #include <ocs2_robotic_tools/common/AngularVelocityMapping.h>

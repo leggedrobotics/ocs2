@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/model.hpp>
 
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_pinocchio_interface/urdf.h>
 
 #include <ros/package.h>
 

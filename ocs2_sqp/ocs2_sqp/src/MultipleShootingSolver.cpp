@@ -204,7 +204,28 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
   // Compute controller
   if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
-    // TODO: Add feedback in u_tilde space. Currently only have feedback arising from stateInputEquality
+    matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
+    vector_array_t uff;
+    matrix_array_t controllerGain;
+    uff.reserve(N + 1);
+    controllerGain.reserve(N + 1);
+    for (int i = 0; i < N; i++) {
+      // Add feedback in u_tilde space
+      controllerGain.push_back(std::move(constraints_[i].dfdx));
+      controllerGain.back().noalias() += constraints_[i].dfdu * KMatrices[i];
+      uff.push_back(primalSolution_.inputTrajectory_[i]);
+      uff.back().noalias() -= controllerGain.back() * primalSolution_.stateTrajectory_[i];
+    }
+    // Copy last one to get correct length
+    uff.push_back(uff.back());
+    controllerGain.push_back(controllerGain.back());
+    primalSolution_.controllerPtr_.reset(new LinearController(primalSolution_.timeTrajectory_, std::move(uff), std::move(controllerGain)));
+  } else {
+    // pure feedforward controller
+    // primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
+
+    // feedback controller
+    matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
     vector_array_t uff;
     matrix_array_t controllerGain;
     uff.reserve(N + 1);
@@ -214,15 +235,13 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
       // We computed u = u'(t) + K (x - x'(t));
       // >> uff = u'(t) - K x'(t)
       uff.push_back(primalSolution_.inputTrajectory_[i]);
-      uff.back().noalias() -= constraints_[i].dfdx * primalSolution_.stateTrajectory_[i];
-      controllerGain.push_back(std::move(constraints_[i].dfdx));  // Steal! the feedback matrix, don't use after this.
+      uff.back().noalias() -= KMatrices[i] * primalSolution_.stateTrajectory_[i];
+      controllerGain.push_back(std::move(KMatrices[i]));
     }
-    // Copy last one the get correct length
+    // Copy last one to get correct length
     uff.push_back(uff.back());
     controllerGain.push_back(controllerGain.back());
     primalSolution_.controllerPtr_.reset(new LinearController(primalSolution_.timeTrajectory_, std::move(uff), std::move(controllerGain)));
-  } else {
-    primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
   }
   computeControllerTimer_.endTimer();
 

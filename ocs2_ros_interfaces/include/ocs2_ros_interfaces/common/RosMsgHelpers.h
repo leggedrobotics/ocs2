@@ -40,22 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <visualization_msgs/MarkerArray.h>
 
 namespace ocs2 {
-
-/* Helpers by Ruben Grandia from ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h */
-
-template <typename It>
-void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
-  for (; firstIt != lastIt; ++firstIt) {
-    firstIt->header = header;
-  }
-}
-
-template <typename It>
-void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
-  for (; firstIt != lastIt; ++firstIt) {
-    firstIt->id = startId++;
-  }
-}
+namespace ros_msg_helpers {
 
 geometry_msgs::Vector3 getVectorMsg(const Eigen::Vector3d& vec);
 
@@ -69,4 +54,5 @@ visualization_msgs::Marker getLineMsg(std::vector<geometry_msgs::Point>&& points
 
 std_msgs::ColorRGBA getColor(std::array<double, 3> rgb, double alpha = 1.0);
 
+}  // namespace ros_msg_helpers
 }  // namespace ocs2

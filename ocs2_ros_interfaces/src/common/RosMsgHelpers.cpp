@@ -27,9 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_self_collision/visualization/VisualizationHelpers.h>
+#include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
 
 namespace ocs2 {
+namespace ros_msg_helpers {
 
 geometry_msgs::Point getPointMsg(const Eigen::Vector3d& point) {
   geometry_msgs::Point pointMsg;
@@ -82,4 +83,5 @@ std_msgs::ColorRGBA getColor(std::array<double, 3> rgb, double alpha /* = 1.0*/)
   return colorMsg;
 }
 
+}  // namespace ros_msg_helpers
 }  // namespace ocs2

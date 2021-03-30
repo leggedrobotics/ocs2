@@ -71,7 +71,6 @@ link_directories(
 add_library(${PROJECT_NAME}
   src/PinocchioGeometryInterface.cpp
   src/visualization/GeometryInterfaceVisualization.cpp
-  src/visualization/VisualizationHelpers.cpp
   src/loadStdVectorOfPair.cpp
   src/SelfCollision.cpp
   src/SelfCollisionCppAd.cpp

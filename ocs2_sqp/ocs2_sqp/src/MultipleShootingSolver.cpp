@@ -59,9 +59,11 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
+  // Dynamics discretization
   discretizer_ = selectDynamicsDiscretization(settings.integratorType);
   sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(settings.integratorType);
 
+  // Clone objects to have one for each worker
   for (int w = 0; w < settings.nThreads; w++) {
     systemDynamicsPtr_.emplace_back(systemDynamicsPtr->clone());
     costFunctionPtr_.emplace_back(costFunctionPtr->clone());
@@ -190,13 +192,14 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     }
   }
 
-  // Store result in PrimalSolution. time, state , input
+  // Store result in PrimalSolution.
   primalSolution_.timeTrajectory_ = std::move(timeDiscretization);
   primalSolution_.stateTrajectory_ = std::move(x);
   primalSolution_.inputTrajectory_ = std::move(u);
   primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());  // repeat last input to make equal length vectors
   primalSolution_.modeSchedule_ = this->getModeSchedule();
 
+  // Compute controller
   if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
     // TODO: Add feedback in u_tilde space. Currently only have feedback arising from stateInputEquality
     vector_array_t uff;
@@ -228,7 +231,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
 void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) {
   // Launch tasks in helper threads
-  std::vector<std::future<void>> futures{};
+  std::vector<std::future<void>> futures;
   if (threadPoolPtr_) {
     int numHelpers = settings_.nThreads - 1;
     futures.reserve(numHelpers);
@@ -345,20 +348,21 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
 
     int i = timeIndex++;
     while (i < N) {
-      auto res = multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr,
-                                                          penaltyPtr_.get(), project, time[i], time[i + 1] - time[i], x[i], x[i + 1], u[i]);
-      workerPerformance += res.performance;
-      dynamics_[i] = std::move(res.dynamics);
-      cost_[i] = std::move(res.cost);
-      constraints_[i] = std::move(res.constraints);
+      auto result =
+          multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr, penaltyPtr_.get(),
+                                                   project, time[i], time[i + 1] - time[i], x[i], x[i + 1], u[i]);
+      workerPerformance += result.performance;
+      dynamics_[i] = std::move(result.dynamics);
+      cost_[i] = std::move(result.cost);
+      constraints_[i] = std::move(result.constraints);
       i = timeIndex++;
     }
 
     if (i == N) {  // Only one worker will execute this
-      auto res = multiple_shooting::setupTerminalNode(terminalCostFunctionPtr_.get(), constraintPtr, time[N], x[N]);
-      workerPerformance += res.performance;
-      cost_[i] = std::move(res.cost);
-      constraints_[i] = std::move(res.constraints);
+      auto result = multiple_shooting::setupTerminalNode(terminalCostFunctionPtr_.get(), constraintPtr, time[N], x[N]);
+      workerPerformance += result.performance;
+      cost_[i] = std::move(result.cost);
+      constraints_[i] = std::move(result.constraints);
     }
 
     performance[thisWorker] = workerPerformance;

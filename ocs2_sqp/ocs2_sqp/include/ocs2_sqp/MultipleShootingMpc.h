@@ -36,6 +36,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 class MultipleShootingMpc : public MPC_BASE {
  public:
+  /**
+   * Constructor
+   *
+   * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use multiple shooting
+   * settings directly.
+   * @param settings : settings for the multiple shooting solver.
+   * @param systemDynamicsPtr : The system dynamics.
+   * @param costFunctionPtr : The cost function used for the intermediate costs.
+   * @param constraintPtr : The system constraint function.
+   * @param terminalCostPtr : The cost function used for the terminal (=at the end of the horizon) costs.
+   * @param operatingTrajectoriesPtr : The operating trajectories of system used for initialization.
+   */
   MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
                       const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr = nullptr,
                       const CostFunctionBase* terminalCostPtr = nullptr,

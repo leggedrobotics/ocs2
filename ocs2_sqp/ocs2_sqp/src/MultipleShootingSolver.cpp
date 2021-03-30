@@ -1,6 +1,31 @@
-//
-// Created by rgrandia on 09.11.20.
-//
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
@@ -12,8 +37,8 @@
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
-#include <ocs2_sqp/ConstraintProjection.h>
+
+#include "ocs2_sqp/MultipleShootingTranscription.h"
 
 namespace ocs2 {
 
@@ -118,8 +143,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // Determine time discretization, taking into account event times.
-  scalar_array_t timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes,
-                                                                   OCS2NumericTraits<scalar_t>::limitEpsilon());
+  scalar_array_t timeDiscretization = multiple_shooting::timeDiscretizationWithEvents(
+      initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes, OCS2NumericTraits<scalar_t>::limitEpsilon());
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
 
   // Initialize the state and input
@@ -320,25 +345,20 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
 
     int i = timeIndex++;
     while (i < N) {
-      VectorFunctionLinearApproximation dynamics;
-      ScalarFunctionQuadraticApproximation cost;
-      VectorFunctionLinearApproximation constraints;
-
-      const scalar_t ti = time[i];
-      const scalar_t dt = time[i + 1] - ti;
-
-      setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr, penaltyPtr_.get(), project, ti, dt, x[i],
-                            x[i + 1], u[i], workerPerformance, dynamics, cost, constraints);
-
-      dynamics_[i] = std::move(dynamics);
-      cost_[i] = std::move(cost);
-      constraints_[i] = std::move(constraints);
+      auto res = multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr,
+                                                          penaltyPtr_.get(), project, time[i], time[i + 1] - time[i], x[i], x[i + 1], u[i]);
+      workerPerformance += res.performance;
+      dynamics_[i] = std::move(res.dynamics);
+      cost_[i] = std::move(res.cost);
+      constraints_[i] = std::move(res.constraints);
       i = timeIndex++;
     }
 
     if (i == N) {  // Only one worker will execute this
-      CostFunctionBase* terminalCostFunctionPtr = terminalCostFunctionPtr_.get();
-      setTerminalNode(terminalCostFunctionPtr, time[N], x[N], performance.front(), cost_[N], constraints_[N]);
+      auto res = multiple_shooting::setupTerminalNode(terminalCostFunctionPtr_.get(), constraintPtr, time[N], x[N]);
+      workerPerformance += res.performance;
+      cost_[i] = std::move(res.cost);
+      constraints_[i] = std::move(res.constraints);
     }
 
     performance[thisWorker] = workerPerformance;
@@ -368,71 +388,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
   return totalPerformance;
 }
 
-void MultipleShootingSolver::setupIntermediateNode(SystemDynamicsBase& systemDynamics,
-                                                   DynamicsSensitivityDiscretizer& sensitivityDiscretizer, CostFunctionBase& costFunction,
-                                                   ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
-                                                   bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
-                                                   const vector_t& x_next, const vector_t& u, PerformanceIndex& performance,
-                                                   VectorFunctionLinearApproximation& dynamics, ScalarFunctionQuadraticApproximation& cost,
-                                                   VectorFunctionLinearApproximation& constraints) {
-  // Dynamics
-  // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
-  dynamics = sensitivityDiscretizer(systemDynamics, t, x, u, dt);
-  dynamics.f -= x_next;  // make it dx_{k+1} = ...
-  performance.stateEqConstraintISE += dt * dynamics.f.squaredNorm();
-
-  // Costs: Approximate the integral with forward euler (correct for dt after adding penalty)
-  cost = costFunction.costQuadraticApproximation(t, x, u);
-  performance.totalCost += dt * cost.f;
-
-  if (constraintPtr != nullptr) {
-    // Inequalities as penalty
-    if (penaltyPtr != nullptr) {
-      const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(t, x, u);
-      if (ineqConstraints.f.rows() > 0) {
-        auto penaltyCost = penaltyPtr->penaltyCostQuadraticApproximation(ineqConstraints);
-        cost += penaltyCost;  // add to cost before potential projection.
-        performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
-        performance.inequalityConstraintPenalty += dt * penaltyCost.f;
-      }
-    }
-
-    // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
-    constraints = constraintPtr->stateInputEqualityConstraintLinearApproximation(t, x, u);
-    performance.stateInputEqConstraintISE += dt * constraints.f.squaredNorm();
-    if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
-      // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
-      constraints = luConstraintProjection(constraints);
-
-      // Adapt dynamics and cost
-      changeOfInputVariables(dynamics, constraints.dfdu, constraints.dfdx, constraints.f);
-      changeOfInputVariables(cost, constraints.dfdu, constraints.dfdx, constraints.f);
-    }
-  }
-
-  // Costs: Approximate the integral with forward euler  (correct for dt HERE, after adding penalty)
-  cost.dfdxx *= dt;
-  cost.dfdux *= dt;
-  cost.dfduu *= dt;
-  cost.dfdx *= dt;
-  cost.dfdu *= dt;
-  cost.f *= dt;
-}
-
-void MultipleShootingSolver::setTerminalNode(CostFunctionBase* terminalCostFunctionPtr, scalar_t t, const vector_t& x,
-                                             PerformanceIndex& performance, ScalarFunctionQuadraticApproximation& cost,
-                                             VectorFunctionLinearApproximation& constraints) {
-  // Terminal conditions
-  if (terminalCostFunctionPtr != nullptr) {
-    cost = terminalCostFunctionPtr->finalCostQuadraticApproximation(t, x);
-    performance.totalCost += cost.f;
-  } else {
-    cost = ScalarFunctionQuadraticApproximation::Zero(x.size(), 0);
-  }
-
-  constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
-}
-
 PerformanceIndex MultipleShootingSolver::computePerformance(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
                                                             const vector_array_t& u) {
   // Problem horizon
@@ -451,17 +406,14 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const scalar_array_t
 
     int i = timeIndex++;
     while (i < N) {
-      const scalar_t ti = time[i];
-      const scalar_t dt = time[i + 1] - ti;
-
-      computePerformance(systemDynamics, discretizer_, costFunction, constraintPtr, penaltyPtr_.get(), ti, dt, x[i], x[i + 1], u[i],
-                         workerPerformance);
-
+      workerPerformance +=
+          multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr, penaltyPtr_.get(),
+                                                            time[i], time[i + 1] - time[i], x[i], x[i + 1], u[i]);
       i = timeIndex++;
     }
 
     if (i == N && terminalCostFunctionPtr_) {  // Only one worker will execute this
-      workerPerformance.totalCost += terminalCostFunctionPtr_->finalCost(time[N], x[N]);
+      workerPerformance += multiple_shooting::computeTerminalPerformance(terminalCostFunctionPtr_.get(), constraintPtr, time[N], x[N]);
     }
 
     performance[thisWorker] = workerPerformance;
@@ -477,31 +429,12 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const scalar_array_t
   return totalPerformance;
 }
 
-void MultipleShootingSolver::computePerformance(SystemDynamicsBase& systemDynamics, DynamicsDiscretizer& discretizer,
-                                                CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u,
-                                                PerformanceIndex& performance) {
-  // Dynamics
-  const vector_t dynamicsGap = discretizer(systemDynamics, t, x, u, dt) - x_next;
-  performance.stateEqConstraintISE += dt * dynamicsGap.squaredNorm();
-
-  // Costs
-  performance.totalCost += dt * costFunction.cost(t, x, u);
-
-  if (constraintPtr != nullptr) {
-    const vector_t constraints = constraintPtr->stateInputEqualityConstraint(t, x, u);
-    performance.stateInputEqConstraintISE += dt * constraints.squaredNorm();
-
-    // Inequalities as penalty
-    if (penaltyPtr) {
-      const vector_t ineqConstraints = constraintPtr->inequalityConstraint(t, x, u);
-      if (ineqConstraints.rows() > 0) {
-        scalar_t penaltyCost = penaltyPtr->penaltyCost(ineqConstraints);
-        performance.inequalityConstraintISE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
-        performance.inequalityConstraintPenalty += dt * penaltyCost;
-      }
-    }
+scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
+  scalar_t norm = 0.0;
+  for (const auto& vi : v) {
+    norm += vi.squaredNorm();
   }
+  return std::sqrt(norm);
 }
 
 bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_t& initState,
@@ -529,20 +462,12 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const sc
   const scalar_t costTol = settings_.costTol;
 
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
-  scalar_t baselineConstraintViolation =
+  const scalar_t baselineConstraintViolation =
       std::sqrt(baseline.stateEqConstraintISE + baseline.stateInputEqConstraintISE + baseline.inequalityConstraintISE);
 
   // Update norm
-  scalar_t deltaUnorm = 0.0;
-  for (int i = 0; i < N; i++) {
-    deltaUnorm += du[i].squaredNorm();
-  }
-  deltaUnorm = std::sqrt(deltaUnorm);
-  scalar_t deltaXnorm = 0.0;
-  for (int i = 0; i < (N + 1); i++) {
-    deltaXnorm += dx[i].squaredNorm();
-  }
-  deltaXnorm = std::sqrt(deltaXnorm);
+  const scalar_t deltaUnorm = trajectoryNorm(du);
+  const scalar_t deltaXnorm = trajectoryNorm(dx);
 
   scalar_t alpha = 1.0;
   vector_array_t xNew(x.size());
@@ -557,8 +482,8 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const sc
     }
 
     // Compute cost and constraints
-    PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
-    scalar_t newConstraintViolation =
+    const PerformanceIndex performanceNew = computePerformance(timeDiscretization, initState, xNew, uNew);
+    const scalar_t newConstraintViolation =
         std::sqrt(performanceNew.stateEqConstraintISE + performanceNew.stateInputEqConstraintISE + performanceNew.inequalityConstraintISE);
 
     bool stepAccepted = [&]() {
@@ -584,12 +509,12 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const sc
     }
 
     // Exit conditions
-    bool stepSizeBelowTol = alpha * deltaUnorm < settings_.deltaTol && alpha * deltaXnorm < settings_.deltaTol;
+    const bool stepSizeBelowTol = alpha * deltaUnorm < settings_.deltaTol && alpha * deltaXnorm < settings_.deltaTol;
     // Return if step accepted
     if (stepAccepted) {
       x = std::move(xNew);
       u = std::move(uNew);
-      bool improvementBelowTol = std::abs(baseline.merit - performanceNew.merit) < costTol && newConstraintViolation < g_min;
+      const bool improvementBelowTol = std::abs(baseline.merit - performanceNew.merit) < costTol && newConstraintViolation < g_min;
       return stepSizeBelowTol || improvementBelowTol;
     }
     // Return if steps get too small without being accepted
@@ -604,59 +529,6 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const sc
   }
 
   return true;  // Alpha_min reached and no improvement found -> Converged
-}
-
-scalar_array_t MultipleShootingSolver::timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,
-                                                                    const scalar_array_t& eventTimes, scalar_t eventDelta) {
-  /*
-  A simple example here illustrates the mission of this function
-
-  Assume:
-    eventTimes = {3.25, 3.4, 3.88, 4.02, 4.5}
-    initTime = 3.0
-    finalTime = 4.0
-    user_defined delta_t = 0.1
-    eps = eventDelta : time added after an event to take the discretization after the mode transition.
-
-  Then the following variables will be:
-    timeDiscretization = {3.0, 3.1, 3.2, 3.25 + eps, 3.35, 3.4 + eps, 3.5, 3.6, 3.7, 3.8, 3.88 + eps, 3.98, 4.0}
-  */
-  assert(dt > 0);
-  assert(finalTime > initTime);
-  scalar_array_t timeDiscretization;
-
-  // Initialize
-  timeDiscretization.push_back(initTime);
-  scalar_t nextEventIdx = lookup::findIndexInTimeArray(eventTimes, initTime);
-
-  // Fill iteratively
-  scalar_t nextTime = timeDiscretization.back();
-  while (timeDiscretization.back() < finalTime) {
-    nextTime = nextTime + dt;
-    bool nextTimeIsEvent = false;
-
-    // Check if an event has passed
-    if (nextEventIdx < eventTimes.size() && nextTime >= eventTimes[nextEventIdx]) {
-      nextTime = eventTimes[nextEventIdx];
-      nextTimeIsEvent = true;
-      nextEventIdx++;
-    }
-
-    // Check if final time has passed
-    if (nextTime >= finalTime) {
-      nextTime = finalTime;
-      nextTimeIsEvent = false;
-    }
-
-    scalar_t newTimePoint = nextTimeIsEvent ? nextTime + eventDelta : nextTime;
-    if (newTimePoint > timeDiscretization.back() + 0.5 * dt) {  // Minimum spacing hardcoded here to 0.5*dt, TODO: make parameter.
-      timeDiscretization.push_back(newTimePoint);
-    } else {  // Points are close together -> overwrite the old point
-      timeDiscretization.back() = newTimePoint;
-    }
-  }
-
-  return timeDiscretization;
 }
 
 }  // namespace ocs2

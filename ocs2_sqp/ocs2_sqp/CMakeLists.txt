@@ -46,6 +46,7 @@ add_library(${PROJECT_NAME}
   src/ConstraintProjection.cpp
   src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp
+  src/MultipleShootingTranscription.cpp
   )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -87,6 +88,7 @@ catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
   test/testDiscretization.cpp
   test/testProjection.cpp
+  test/testTranscription.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_${PROJECT_NAME}

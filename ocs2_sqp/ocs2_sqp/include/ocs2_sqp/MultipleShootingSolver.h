@@ -1,10 +1,33 @@
-//
-// Created by rgrandia on 09.11.20.
-//
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #pragma once
-
-#include <iostream>
 
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/PenaltyBase.h>
@@ -41,10 +64,6 @@ class MultipleShootingSolver : public SolverBase {
   const PerformanceIndex& getPerformanceIndeces() const override { return getIterationsLog().back(); };
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  /** Decides on time discretization along the horizon */
-  static scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
-                                                     scalar_t eventDelta);
-
   /** Irrelevant baseclass stuff */
   void rewindOptimizer(size_t firstIndex) override{};
   const unsigned long long int& getRewindCounter() const override {
@@ -80,27 +99,15 @@ class MultipleShootingSolver : public SolverBase {
   PerformanceIndex setupQuadraticSubproblem(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
                                             const vector_array_t& u);
 
-  static void setupIntermediateNode(SystemDynamicsBase& systemDynamics, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
-                                    CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
-                                    bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
-                                    const vector_t& x_next, const vector_t& u, PerformanceIndex& performance,
-                                    VectorFunctionLinearApproximation& dynamics, ScalarFunctionQuadraticApproximation& cost,
-                                    VectorFunctionLinearApproximation& constraints);
-
-  static void setTerminalNode(CostFunctionBase* terminalCostFunctionPtr, scalar_t t, const vector_t& x, PerformanceIndex& performance,
-                              ScalarFunctionQuadraticApproximation& cost, VectorFunctionLinearApproximation& constraints);
-
   /** Computes only the performance metrics at the current {t, x, u} */
   PerformanceIndex computePerformance(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
                                       const vector_array_t& u);
 
-  /** Computes performance at an intermediate node */
-  static void computePerformance(SystemDynamicsBase& systemDynamics, DynamicsDiscretizer& discretizer, CostFunctionBase& costFunction,
-                                 ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr, scalar_t t, scalar_t dt, const vector_t& x,
-                                 const vector_t& x_next, const vector_t& u, PerformanceIndex& performance);
-
   /** Returns solution of the QP subproblem in delta coordinates: {delta_x, delta_u} */
   std::pair<vector_array_t, vector_array_t> getOCPSolution(const vector_t& delta_x0);
+
+  /** Compute sqrt(sum_i v(i)^2)  */
+  static scalar_t trajectoryNorm(const vector_array_t& v);
 
   /** Decides on the step to take and overrides given trajectories {x, u} <- {x + a*dx, u + a*du} */
   bool takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_t& initState,

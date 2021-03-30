@@ -54,18 +54,29 @@ struct PerformanceIndex {
   scalar_t inequalityConstraintISE = 0.0;
   /** The total penalty of the intermediate inequality constraints violation. */
   scalar_t inequalityConstraintPenalty = 0.0;
+
+  /** Add performance indices */
+  PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
+    this->merit += rhs.merit;
+    this->totalCost += rhs.totalCost;
+    this->stateEqConstraintISE += rhs.stateEqConstraintISE;
+    this->stateEqFinalConstraintSSE += rhs.stateEqFinalConstraintSSE;
+    this->stateInputEqConstraintISE += rhs.stateInputEqConstraintISE;
+    this->inequalityConstraintISE += rhs.inequalityConstraintISE;
+    this->inequalityConstraintPenalty += rhs.inequalityConstraintPenalty;
+    return *this;
+  }
 };
 
 inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
-  // Copy lhs and add rhs to it.
-  lhs.totalCost += rhs.totalCost;
-  lhs.stateEqConstraintISE += rhs.stateEqConstraintISE;
-  lhs.stateEqFinalConstraintSSE += rhs.stateEqFinalConstraintSSE;
-  lhs.stateInputEqConstraintISE += rhs.stateInputEqConstraintISE;
-  lhs.inequalityConstraintISE += rhs.inequalityConstraintISE;
-  lhs.inequalityConstraintPenalty += rhs.inequalityConstraintPenalty;
-  lhs.merit += rhs.merit;
+  lhs += rhs;  // Copied lhs, add rhs to it.
   return lhs;
+}
+
+inline bool operator==(const PerformanceIndex& lhs, const PerformanceIndex& rhs) {
+  return lhs.merit == rhs.merit && lhs.totalCost == rhs.totalCost && lhs.stateEqConstraintISE == rhs.stateEqConstraintISE &&
+         lhs.stateEqFinalConstraintSSE == rhs.stateEqFinalConstraintSSE && lhs.stateInputEqConstraintISE == rhs.stateInputEqConstraintISE &&
+         lhs.inequalityConstraintISE == rhs.inequalityConstraintISE && lhs.inequalityConstraintPenalty == rhs.inequalityConstraintPenalty;
 }
 
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {

@@ -42,12 +42,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /**
  * Mobile Manipulator Robot Interface class
  */
-class MobileManipulatorInterface final : public ocs2::RobotInterface {
+class MobileManipulatorInterface final : public RobotInterface {
  public:
   /**
    * Constructor
@@ -59,22 +60,22 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
 
   const vector_t& getInitialState() { return initialState_; }
 
-  ocs2::ddp::Settings& ddpSettings() { return ddpSettings_; }
+  ddp::Settings& ddpSettings() { return ddpSettings_; }
 
-  ocs2::mpc::Settings& mpcSettings() { return mpcSettings_; }
+  mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<ocs2::MPC_DDP> getMpc();
+  std::unique_ptr<MPC_DDP> getMpc();
 
   const MobileManipulatorDynamics& getDynamics() const override { return *dynamicsPtr_; }
   const MobileManipulatorCost& getCost() const override { return *costPtr_; }
-  const ocs2::RolloutBase& getRollout() const { return *rolloutPtr_; }
-  const ocs2::OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
-  const ocs2::ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
+  const ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
 
-  const ocs2::PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
+  const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
   /** MobileManipulator PinocchioInterface factory */
-  static ocs2::PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
+  static PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
 
  protected:
   void loadSettings(const std::string& taskFile);
@@ -83,18 +84,19 @@ class MobileManipulatorInterface final : public ocs2::RobotInterface {
   std::string libraryFolder_;
   std::string urdfPath_;
 
-  ocs2::ddp::Settings ddpSettings_;
-  ocs2::mpc::Settings mpcSettings_;
+  ddp::Settings ddpSettings_;
+  mpc::Settings mpcSettings_;
 
-  std::unique_ptr<ocs2::RolloutBase> rolloutPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr_;
   std::unique_ptr<MobileManipulatorCost> costPtr_;
-  std::unique_ptr<ocs2::ConstraintBase> constraintPtr_;
-  std::unique_ptr<ocs2::OperatingPoints> operatingPointPtr_;
+  std::unique_ptr<ConstraintBase> constraintPtr_;
+  std::unique_ptr<OperatingPoints> operatingPointPtr_;
 
-  std::unique_ptr<ocs2::PinocchioInterface> pinocchioInterfacePtr_;
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
 
   vector_t initialState_{STATE_DIM};
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

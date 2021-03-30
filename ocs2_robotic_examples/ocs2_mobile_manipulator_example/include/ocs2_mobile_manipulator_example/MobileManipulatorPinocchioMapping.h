@@ -32,12 +32,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 template <typename SCALAR>
-class MobileManipulatorPinocchioMapping final : public ocs2::PinocchioStateInputMapping<SCALAR> {
+class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
  public:
-  using Base = ocs2::PinocchioStateInputMapping<SCALAR>;
+  using Base = PinocchioStateInputMapping<SCALAR>;
   using typename Base::matrix_t;
   using typename Base::vector_t;
 
@@ -71,3 +72,4 @@ class MobileManipulatorPinocchioMapping final : public ocs2::PinocchioStateInput
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

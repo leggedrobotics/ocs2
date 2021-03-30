@@ -39,13 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
 #include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
-class MobileManipulatorCost : public ocs2::CostFunctionBase {
+class MobileManipulatorCost : public CostFunctionBase {
  public:
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-  MobileManipulatorCost(ocs2::PinocchioInterface pinocchioInterface, const std::string& taskFile, bool useCaching,
+  MobileManipulatorCost(PinocchioInterface pinocchioInterface, const std::string& taskFile, bool useCaching,
                         const std::string& libraryFolder, bool recompileLibraries);
   ~MobileManipulatorCost() override = default;
   MobileManipulatorCost* clone() const override { return new MobileManipulatorCost(*this); }
@@ -61,22 +62,20 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
   void setCachePointers();
   void setEndEffectorReference(scalar_t time);
   void setFinalEndEffectorReference(scalar_t time);
-  std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
-                                                               scalar_t time) const;
+  std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(const CostDesiredTrajectories& costDesiredTrajectory, scalar_t time) const;
 
-  std::unique_ptr<ocs2::StateInputCost> getQuadraticInputCost(const std::string& taskFile);
-  std::unique_ptr<ocs2::StateCost> getEndEffectorCost(const std::string& taskFile, const std::string& fieldName,
-                                                      const std::string& libraryFolder, bool recompileLibraries);
-  std::unique_ptr<ocs2::StateCost> getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
-                                                        bool recompileLibraries);
-  std::unique_ptr<ocs2::StateInputCost> getJointVelocityLimitCost(const std::string& taskFile);
+  std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
+  std::unique_ptr<StateCost> getEndEffectorCost(const std::string& taskFile, const std::string& fieldName, const std::string& libraryFolder,
+                                                bool recompileLibraries);
+  std::unique_ptr<StateCost> getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder, bool recompileLibraries);
+  std::unique_ptr<StateInputCost> getJointVelocityLimitCost(const std::string& taskFile);
 
   bool useCaching_;
 
-  ocs2::PinocchioInterface pinocchioInterface_;
-  ocs2::CostCollection<ocs2::StateInputCost> stateInputCostCollection_;
-  ocs2::CostCollection<ocs2::StateCost> stateCostCollection_;
-  ocs2::CostCollection<ocs2::StateCost> finalCostCollection_;
+  PinocchioInterface pinocchioInterface_;
+  CostCollection<StateInputCost> stateInputCostCollection_;
+  CostCollection<StateCost> stateCostCollection_;
+  CostCollection<StateCost> finalCostCollection_;
 
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping_;
 
@@ -85,3 +84,4 @@ class MobileManipulatorCost : public ocs2::CostFunctionBase {
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

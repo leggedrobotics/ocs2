@@ -37,9 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_self_collision/visualization/GeometryInterfaceVisualization.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
-class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
+class MobileManipulatorDummyVisualization final : public DummyObserver {
  public:
   MobileManipulatorDummyVisualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
       : pinocchioInterface_(interface.getPinocchioInterface()) {
@@ -48,16 +49,16 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
 
   ~MobileManipulatorDummyVisualization() override = default;
 
-  void update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& policy, const ocs2::CommandData& command) override;
+  void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
 
  private:
   void launchVisualizerNode(ros::NodeHandle& nodeHandle);
 
-  void publishObservation(const ros::Time& timeStamp, const ocs2::SystemObservation& observation);
-  void publishDesiredTrajectory(const ros::Time& timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory);
-  void publishOptimizedTrajectory(const ros::Time& timeStamp, const ocs2::PrimalSolution& policy);
+  void publishObservation(const ros::Time& timeStamp, const SystemObservation& observation);
+  void publishDesiredTrajectory(const ros::Time& timeStamp, const CostDesiredTrajectories& costDesiredTrajectory);
+  void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
-  ocs2::PinocchioInterface pinocchioInterface_;
+  PinocchioInterface pinocchioInterface_;
 
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   tf::TransformBroadcaster tfBroadcaster_;
@@ -65,7 +66,7 @@ class MobileManipulatorDummyVisualization final : public ocs2::DummyObserver {
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher stateOptimizedPosePublisher_;
 
-  std::unique_ptr<ocs2::GeometryInterfaceVisualization> geometryVisualization_;
+  std::unique_ptr<GeometryInterfaceVisualization> geometryVisualization_;
 };
 
 // TODO(mspieler): move somewhere else
@@ -74,3 +75,4 @@ Eigen::Vector3d getBasePosition(Eigen::VectorXd state);
 Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state);
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

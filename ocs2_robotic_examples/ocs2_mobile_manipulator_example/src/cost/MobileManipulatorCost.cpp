@@ -56,12 +56,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/package.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorCost::MobileManipulatorCost(ocs2::PinocchioInterface pinocchioInterface, const std::string& taskFile, bool useCaching,
+MobileManipulatorCost::MobileManipulatorCost(PinocchioInterface pinocchioInterface, const std::string& taskFile, bool useCaching,
                                              const std::string& libraryFolder, bool recompileLibraries)
     : useCaching_(useCaching), pinocchioInterface_(std::move(pinocchioInterface)) {
   auto inputCost = getQuadraticInputCost(taskFile);
@@ -86,7 +87,7 @@ MobileManipulatorCost::MobileManipulatorCost(ocs2::PinocchioInterface pinocchioI
 /******************************************************************************************************/
 /******************************************************************************************************/
 MobileManipulatorCost::MobileManipulatorCost(const MobileManipulatorCost& rhs)
-    : ocs2::CostFunctionBase(rhs),
+    : CostFunctionBase(rhs),
       pinocchioInterface_(rhs.pinocchioInterface_),
       stateInputCostCollection_(rhs.stateInputCostCollection_),
       stateCostCollection_(rhs.stateCostCollection_),
@@ -98,18 +99,17 @@ MobileManipulatorCost::MobileManipulatorCost(const MobileManipulatorCost& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorCost::setCachePointers() {
-  eeConstraintPtr_ = &stateCostCollection_.get<ocs2::StateSoftConstraint>("EndEffector").get<EndEffectorConstraint>();
-  finalEeConstraintPtr_ = &finalCostCollection_.get<ocs2::StateSoftConstraint>("FinalEndEffector").get<EndEffectorConstraint>();
+  eeConstraintPtr_ = &stateCostCollection_.get<StateSoftConstraint>("EndEffector").get<EndEffectorConstraint>();
+  finalEeConstraintPtr_ = &finalCostCollection_.get<StateSoftConstraint>("FinalEndEffector").get<EndEffectorConstraint>();
 
   // Set shared pinocchioInterface for caching
   if (useCaching_) {
-    dynamic_cast<SelfCollisionConstraint&>(stateCostCollection_.get<ocs2::StateSoftConstraint>("SelfCollision").get())
+    dynamic_cast<SelfCollisionConstraint&>(stateCostCollection_.get<StateSoftConstraint>("SelfCollision").get())
         .setPinocchioInterface(pinocchioInterface_);
 
-    dynamic_cast<ocs2::PinocchioEndEffectorKinematics&>(eeConstraintPtr_->getEndEffectorKinematics())
-        .setPinocchioInterface(pinocchioInterface_);
+    dynamic_cast<PinocchioEndEffectorKinematics&>(eeConstraintPtr_->getEndEffectorKinematics()).setPinocchioInterface(pinocchioInterface_);
 
-    dynamic_cast<ocs2::PinocchioEndEffectorKinematics&>(finalEeConstraintPtr_->getEndEffectorKinematics())
+    dynamic_cast<PinocchioEndEffectorKinematics&>(finalEeConstraintPtr_->getEndEffectorKinematics())
         .setPinocchioInterface(pinocchioInterface_);
   }
 }
@@ -222,7 +222,7 @@ void MobileManipulatorCost::setFinalEndEffectorReference(scalar_t time) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto MobileManipulatorCost::interpolateEndEffectorPose(const ocs2::CostDesiredTrajectories& costDesiredTrajectory, scalar_t time) const
+auto MobileManipulatorCost::interpolateEndEffectorPose(const CostDesiredTrajectories& costDesiredTrajectory, scalar_t time) const
     -> std::pair<vector_t, quaternion_t> {
   const auto& desiredTrajectory = costDesiredTrajectory.desiredStateTrajectory();
   std::pair<vector_t, Eigen::Quaternion<scalar_t>> reference;
@@ -231,7 +231,7 @@ auto MobileManipulatorCost::interpolateEndEffectorPose(const ocs2::CostDesiredTr
     // Normal interpolation case
     int index;
     scalar_t alpha;
-    std::tie(index, alpha) = ocs2::LinearInterpolation::timeSegment(time, costDesiredTrajectory.desiredTimeTrajectory());
+    std::tie(index, alpha) = LinearInterpolation::timeSegment(time, costDesiredTrajectory.desiredTimeTrajectory());
 
     const auto& lhs = desiredTrajectory[index];
     const auto& rhs = desiredTrajectory[index + 1];
@@ -251,23 +251,23 @@ auto MobileManipulatorCost::interpolateEndEffectorPose(const ocs2::CostDesiredTr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<ocs2::StateInputCost> MobileManipulatorCost::getQuadraticInputCost(const std::string& taskFile) {
+std::unique_ptr<StateInputCost> MobileManipulatorCost::getQuadraticInputCost(const std::string& taskFile) {
   matrix_t R(INPUT_DIM, INPUT_DIM);
 
   std::cerr << "\n #### Input Cost Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  ocs2::loadData::loadEigenMatrix(taskFile, "inputCost.R", R);
+  loadData::loadEigenMatrix(taskFile, "inputCost.R", R);
   std::cerr << "inputCost.R:  \n" << R << '\n';
   std::cerr << " #### =============================================================================" << std::endl;
 
-  return std::unique_ptr<ocs2::StateInputCost>(new QuadraticInputCost(std::move(R)));
+  return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const std::string& taskFile, const std::string& fieldName,
-                                                                           const std::string& libraryFolder, bool recompileLibraries) {
+std::unique_ptr<StateCost> MobileManipulatorCost::getEndEffectorCost(const std::string& taskFile, const std::string& fieldName,
+                                                                     const std::string& libraryFolder, bool recompileLibraries) {
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
   std::string name = "WRIST_2";
@@ -276,37 +276,35 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getEndEffectorCost(const
   boost::property_tree::read_info(taskFile, pt);
   std::cerr << "\n #### " << fieldName << " Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  ocs2::loadData::loadPtreeValue(pt, muPosition, fieldName + ".muPosition", true);
-  ocs2::loadData::loadPtreeValue(pt, muOrientation, fieldName + ".muOrientation", true);
-  ocs2::loadData::loadPtreeValue(pt, name, fieldName + ".name", true);
+  loadData::loadPtreeValue(pt, muPosition, fieldName + ".muPosition", true);
+  loadData::loadPtreeValue(pt, muOrientation, fieldName + ".muOrientation", true);
+  loadData::loadPtreeValue(pt, name, fieldName + ".name", true);
   std::cerr << " #### =============================================================================" << std::endl;
 
-  std::unique_ptr<ocs2::StateConstraint> constraint;
+  std::unique_ptr<StateConstraint> constraint;
   if (useCaching_) {
-    ocs2::PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface_, pinocchioMapping_, {name});
+    PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface_, pinocchioMapping_, {name});
     constraint.reset(new EndEffectorConstraint(eeKinematics));
   } else {
-    MobileManipulatorPinocchioMapping<ocs2::ad_scalar_t> pinocchioMappingCppAd;
-    ocs2::PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface_, pinocchioMappingCppAd, {name}, STATE_DIM, INPUT_DIM,
-                                                           "end_effector_kinematics", libraryFolder, recompileLibraries, false);
+    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd;
+    PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface_, pinocchioMappingCppAd, {name}, STATE_DIM, INPUT_DIM,
+                                                     "end_effector_kinematics", libraryFolder, recompileLibraries, false);
     constraint.reset(new EndEffectorConstraint(eeKinematics));
   }
 
-  std::vector<std::unique_ptr<ocs2::PenaltyFunctionBase>> penaltyArray(6);
-  std::generate_n(penaltyArray.begin(), 3,
-                  [&] { return std::unique_ptr<ocs2::PenaltyFunctionBase>(new ocs2::QuadraticPenaltyFunction(muPosition)); });
+  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyArray(6);
+  std::generate_n(penaltyArray.begin(), 3, [&] { return std::unique_ptr<PenaltyFunctionBase>(new QuadraticPenaltyFunction(muPosition)); });
   std::generate_n(penaltyArray.begin() + 3, 3,
-                  [&] { return std::unique_ptr<ocs2::PenaltyFunctionBase>(new ocs2::QuadraticPenaltyFunction(muOrientation)); });
+                  [&] { return std::unique_ptr<PenaltyFunctionBase>(new QuadraticPenaltyFunction(muOrientation)); });
 
-  return std::unique_ptr<ocs2::StateCost>(
-      new ocs2::StateSoftConstraint(std::move(constraint), std::move(penaltyArray), ocs2::ConstraintOrder::Linear));
+  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penaltyArray), ConstraintOrder::Linear));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
-                                                                             bool recompileLibraries) {
+std::unique_ptr<StateCost> MobileManipulatorCost::getSelfCollisionCost(const std::string& taskFile, const std::string& libraryFolder,
+                                                                       bool recompileLibraries) {
   std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
   scalar_t mu = 1e-2;
@@ -318,21 +316,21 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
   const std::string prefix = "selfCollision.";
   std::cerr << "\n #### SelfCollision Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  ocs2::loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
-  ocs2::loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
-  ocs2::loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
-  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
-  ocs2::loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs, true);
+  loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
+  loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
+  loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
+  loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
+  loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs, true);
   std::cerr << " #### =============================================================================" << std::endl;
 
   const std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-  ocs2::PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterface_, collisionLinkPairs, collisionObjectPairs);
+  PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterface_, collisionLinkPairs, collisionObjectPairs);
 
   // Note: geometryInterface ignores invalid pairs.
   //       This is why numCollisionPairs might not be equal to collisionLinkPairs.size() + collisionObjectPairs.size().
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
 
-  std::unique_ptr<ocs2::StateConstraint> constraint;
+  std::unique_ptr<StateConstraint> constraint;
   if (useCaching_) {
     constraint.reset(
         new SelfCollisionConstraint(MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
@@ -342,17 +340,16 @@ std::unique_ptr<ocs2::StateCost> MobileManipulatorCost::getSelfCollisionCost(con
                                                       recompileLibraries, false));
   }
 
-  auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(
-      new ocs2::RelaxedBarrierPenaltyFunction(ocs2::RelaxedBarrierPenaltyFunction::Config(mu, delta)));
+  auto penalty = std::unique_ptr<PenaltyFunctionBase>(new RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyFunction::Config(mu, delta)));
 
-  return std::unique_ptr<ocs2::StateCost>(
-      new ocs2::StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty), ocs2::ConstraintOrder::Linear));
+  return std::unique_ptr<StateCost>(
+      new StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty), ConstraintOrder::Linear));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<ocs2::StateInputCost> MobileManipulatorCost::getJointVelocityLimitCost(const std::string& taskFile) {
+std::unique_ptr<StateInputCost> MobileManipulatorCost::getJointVelocityLimitCost(const std::string& taskFile) {
   vector_t lowerBound(INPUT_DIM);
   vector_t upperBound(INPUT_DIM);
   scalar_t mu = 1e-2;
@@ -363,20 +360,20 @@ std::unique_ptr<ocs2::StateInputCost> MobileManipulatorCost::getJointVelocityLim
   const std::string prefix = "jointVelocityLimits.";
   std::cerr << "\n #### JointVelocityLimits Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  ocs2::loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound", lowerBound);
+  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.lowerBound", lowerBound);
   std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
-  ocs2::loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound", upperBound);
+  loadData::loadEigenMatrix(taskFile, "jointVelocityLimits.upperBound", upperBound);
   std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
-  ocs2::loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
-  ocs2::loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
+  loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
+  loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
   std::cerr << " #### =============================================================================" << std::endl;
 
-  std::unique_ptr<ocs2::StateInputConstraint> constraintPtr(new JointVelocityLimits(lowerBound, upperBound));
-  auto penalty = std::unique_ptr<ocs2::PenaltyFunctionBase>(
-      new ocs2::RelaxedBarrierPenaltyFunction(ocs2::RelaxedBarrierPenaltyFunction::Config(mu, delta)));
+  std::unique_ptr<StateInputConstraint> constraintPtr(new JointVelocityLimits(lowerBound, upperBound));
+  auto penalty = std::unique_ptr<PenaltyFunctionBase>(new RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyFunction::Config(mu, delta)));
   const auto numConstraints = constraintPtr->getNumConstraints(0.0);
-  return std::unique_ptr<ocs2::StateInputCost>(
-      new ocs2::StateInputSoftConstraint(std::move(constraintPtr), numConstraints, std::move(penalty), ocs2::ConstraintOrder::Linear));
+  return std::unique_ptr<StateInputCost>(
+      new StateInputSoftConstraint(std::move(constraintPtr), numConstraints, std::move(penalty), ConstraintOrder::Linear));
 }
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

@@ -37,12 +37,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
-class SelfCollisionConstraintCppAd final : public ocs2::StateConstraint {
+class SelfCollisionConstraintCppAd final : public StateConstraint {
  public:
-  SelfCollisionConstraintCppAd(ocs2::PinocchioInterface pinocchioInterface, const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
-                               ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
+  SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
+                               PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
                                const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                                bool verbose = true);
   ~SelfCollisionConstraintCppAd() override = default;
@@ -61,15 +62,16 @@ class SelfCollisionConstraintCppAd final : public ocs2::StateConstraint {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
   /** Caches the pointer to the pinocchio interface with pre-computed kinematics. (optional) */
-  void setPinocchioInterface(ocs2::PinocchioInterface& pinocchioInterface) { pinocchioInterfaceCachePtr_ = &pinocchioInterface; }
+  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) { pinocchioInterfaceCachePtr_ = &pinocchioInterface; }
 
  private:
   SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs);
 
-  ocs2::PinocchioInterface pinocchioInterface_;
-  ocs2::PinocchioInterface* pinocchioInterfaceCachePtr_ = nullptr;
-  ocs2::SelfCollisionCppAd selfCollision_;
-  std::unique_ptr<ocs2::PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+  PinocchioInterface pinocchioInterface_;
+  PinocchioInterface* pinocchioInterfaceCachePtr_ = nullptr;
+  SelfCollisionCppAd selfCollision_;
+  std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

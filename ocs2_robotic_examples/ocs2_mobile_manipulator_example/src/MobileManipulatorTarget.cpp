@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, char* argv[]) {
   ros::init(argc, argv, "mobile_manipulator_target");
 
-  mobile_manipulator::TargetTrajectories_IMarker_Mobile_Manipulator targetPoseCommand(argc, argv, "mobile_manipulator");
+  ocs2::mobile_manipulator::TargetTrajectories_IMarker_Mobile_Manipulator targetPoseCommand(argc, argv, "mobile_manipulator");
 
   targetPoseCommand.launchNodes();
 

@@ -34,13 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
-class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
+class MobileManipulatorDynamics final : public SystemDynamicsBaseAD {
  public:
-  using Base = ocs2::SystemDynamicsBaseAD;
-  using ad_scalar_t = ocs2::ad_scalar_t;
-  using ad_vector_t = ocs2::ad_vector_t;
+  using Base = SystemDynamicsBaseAD;
 
   explicit MobileManipulatorDynamics(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
                                      bool recompileLibraries = true, bool verbose = true);
@@ -55,3 +54,4 @@ class MobileManipulatorDynamics final : public ocs2::SystemDynamicsBaseAD {
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

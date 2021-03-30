@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /******************************************************************************************************/
@@ -58,14 +59,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2::PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfPath) {
+PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfPath) {
   // add 3 DOF for wheelbase
   pinocchio::JointModelComposite rootJoint(3);
   rootJoint.addJoint(pinocchio::JointModelPX());
   rootJoint.addJoint(pinocchio::JointModelPY());
   rootJoint.addJoint(pinocchio::JointModelRZ());
 
-  return ocs2::getPinocchioInterfaceFromUrdfFile(urdfPath, rootJoint);
+  return getPinocchioInterfaceFromUrdfFile(urdfPath, rootJoint);
 }
 
 /******************************************************************************************************/
@@ -74,7 +75,7 @@ ocs2::PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(con
 void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "Load Pinocchio model from " << urdfPath_ << '\n';
 
-  pinocchioInterfacePtr_.reset(new ocs2::PinocchioInterface(buildPinocchioInterface(urdfPath_)));
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfPath_)));
   std::cerr << *pinocchioInterfacePtr_;
 
   bool useCaching = true;
@@ -83,15 +84,15 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   boost::property_tree::read_info(taskFile, pt);
   std::cerr << "\n #### model_settings: \n";
   std::cerr << "#### =============================================================================\n";
-  ocs2::loadData::loadPtreeValue(pt, useCaching, "model_settings.useCaching", true);
-  ocs2::loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
+  loadData::loadPtreeValue(pt, useCaching, "model_settings.useCaching", true);
+  loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
   std::cerr << " #### =============================================================================" << std::endl;
 
   /*
    * DDP-MPC settings
    */
-  ddpSettings_ = ocs2::ddp::loadSettings(taskFile, "ddp");
-  mpcSettings_ = ocs2::mpc::loadSettings(taskFile, "mpc");
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * Dynamics
@@ -101,8 +102,8 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Rollout
    */
-  const auto rolloutSettings = ocs2::rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
+  const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
 
   /*
    * Cost function
@@ -112,22 +113,23 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Constraints
    */
-  constraintPtr_.reset(new ocs2::ConstraintBase());
+  constraintPtr_.reset(new ConstraintBase());
 
   /*
    * Initialization state
    */
-  ocs2::loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
-  operatingPointPtr_.reset(new ocs2::OperatingPoints(initialState_, ocs2::vector_t::Zero(INPUT_DIM)));
+  operatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<ocs2::MPC_DDP> MobileManipulatorInterface::getMpc() {
-  return std::unique_ptr<ocs2::MPC_DDP>(new ocs2::MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
-                                                          operatingPointPtr_.get(), ddpSettings_, mpcSettings_));
+std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
+                                              operatingPointPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

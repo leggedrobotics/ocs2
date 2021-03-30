@@ -34,13 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <interactive_markers/interactive_marker_server.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 TargetTrajectories_IMarker_Mobile_Manipulator::TargetTrajectories_IMarker_Mobile_Manipulator(int argc, char* argv[], std::string robotName)
-    : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName), server("simple_marker") {
+    : TargetTrajectories_ROS_Interface(argc, argv, robotName), server("simple_marker") {
   observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
                                                         &TargetTrajectories_IMarker_Mobile_Manipulator::observationCallback, this);
   // create an interactive marker for our server
@@ -127,16 +128,16 @@ TargetTrajectories_IMarker_Mobile_Manipulator::TargetTrajectories_IMarker_Mobile
 /******************************************************************************************************/
 /******************************************************************************************************/
 void TargetTrajectories_IMarker_Mobile_Manipulator::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) {
-  ocs2::SystemObservation observation;
-  ocs2::ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
+  SystemObservation observation;
+  ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
 
   // Desired time trajectory
-  ocs2::CostDesiredTrajectories costDesiredTrajectories(1);
-  ocs2::scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+  CostDesiredTrajectories costDesiredTrajectories(1);
+  scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
   tDesiredTrajectory[0] = observation.time;
 
   // Desired state trajectory
-  ocs2::vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+  vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
   xDesiredTrajectory[0].resize(7);  // 3 + 4 for desired position vector and orientation quaternion
   xDesiredTrajectory[0].tail<4>() = Eigen::Quaterniond(feedback->pose.orientation.w, feedback->pose.orientation.x,
                                                        feedback->pose.orientation.y, feedback->pose.orientation.z)
@@ -144,7 +145,7 @@ void TargetTrajectories_IMarker_Mobile_Manipulator::processFeedback(const visual
   xDesiredTrajectory[0].head<3>() << feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z;
 
   // Desired input trajectory
-  ocs2::vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+  vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
   uDesiredTrajectory[0].setZero(INPUT_DIM);
 
   this->publishTargetTrajectories(costDesiredTrajectories);
@@ -157,4 +158,5 @@ void TargetTrajectories_IMarker_Mobile_Manipulator::observationCallback(const oc
   latestObservation_ = msg;
 }
 
-} /* namespace mobile_manipulator */
+}  // namespace mobile_manipulator
+}  // namespace ocs2

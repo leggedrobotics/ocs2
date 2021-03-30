@@ -29,17 +29,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 MobileManipulatorDynamics::MobileManipulatorDynamics(const std::string& modelName, const std::string& modelFolder /*= "/tmp/ocs2"*/,
                                                      bool recompileLibraries /*= true*/, bool verbose /*= true*/)
-    : ocs2::SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
+    : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
   Base::initialize(modelName, modelFolder, recompileLibraries, verbose);
 }
 
-MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state,
-                                                                                const ad_vector_t& input,
-                                                                                const ad_vector_t& parameters) const {
+ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                                     const ad_vector_t& parameters) const {
   ad_vector_t dxdt(STATE_DIM);
   const auto theta = state(2);
   const auto v = input(0);  // forward velocity in base frame
@@ -48,3 +48,4 @@ MobileManipulatorDynamics::ad_vector_t MobileManipulatorDynamics::systemFlowMap(
 }
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

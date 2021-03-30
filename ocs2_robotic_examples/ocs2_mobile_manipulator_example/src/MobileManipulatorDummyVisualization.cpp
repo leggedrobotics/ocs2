@@ -46,6 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /******************************************************************************************************/
@@ -113,18 +114,18 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-  ocs2::PinocchioInterface pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
+  PinocchioInterface pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
-  ocs2::PinocchioGeometryInterface geomInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}});
+  PinocchioGeometryInterface geomInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}});
 
-  geometryVisualization_.reset(new ocs2::GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
+  geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::update(const ocs2::SystemObservation& observation, const ocs2::PrimalSolution& policy,
-                                                 const ocs2::CommandData& command) {
+void MobileManipulatorDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy,
+                                                 const CommandData& command) {
   const ros::Time timeStamp = ros::Time::now();
 
   publishObservation(timeStamp, observation);
@@ -136,7 +137,7 @@ void MobileManipulatorDummyVisualization::update(const ocs2::SystemObservation& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const ocs2::SystemObservation& observation) {
+void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) {
   // publish world -> base transform
   const auto position = getBasePosition(observation.state);
   const auto orientation = getBaseOrientation(observation.state);
@@ -145,8 +146,8 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
   base_tf.child_frame_id = "base";
-  base_tf.transform.translation = ocs2::ros_msg_helpers::getVectorMsg(position);
-  base_tf.transform.rotation = ocs2::ros_msg_helpers::getOrientationMsg(orientation);
+  base_tf.transform.translation = ros_msg_helpers::getVectorMsg(position);
+  base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(orientation);
   tfBroadcaster_.sendTransform(base_tf);
 
   // publish joints transforms
@@ -160,7 +161,7 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Time& timeStamp,
-                                                                   const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+                                                                   const CostDesiredTrajectories& costDesiredTrajectory) {
   // publish command transform
   const Eigen::Vector3d eeDesiredPosition = costDesiredTrajectory.desiredStateTrajectory().back().head(3);
   Eigen::Quaterniond eeDesiredOrientation;
@@ -169,15 +170,15 @@ void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Ti
   command_tf.header.stamp = timeStamp;
   command_tf.header.frame_id = "world";
   command_tf.child_frame_id = "command";
-  command_tf.transform.translation = ocs2::ros_msg_helpers::getVectorMsg(eeDesiredPosition);
-  command_tf.transform.rotation = ocs2::ros_msg_helpers::getOrientationMsg(eeDesiredOrientation);
+  command_tf.transform.translation = ros_msg_helpers::getVectorMsg(eeDesiredPosition);
+  command_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(eeDesiredOrientation);
   tfBroadcaster_.sendTransform(command_tf);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const ocs2::PrimalSolution& policy) {
+void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) {
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
   const std::array<scalar_t, 3> blue{0, 0.4470, 0.7410};
@@ -202,30 +203,31 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
     pinocchio::updateFramePlacements(model, data);
     const auto eeIndex = model.getBodyId("WRIST_2");
     const vector_t eePosition = data.oMf[eeIndex].translation();
-    endEffectorTrajectory.push_back(ocs2::ros_msg_helpers::getPointMsg(eePosition));
+    endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
   });
 
-  markerArray.markers.emplace_back(ocs2::ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
+  markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "EE Trajectory";
 
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     geometry_msgs::Pose pose;
-    pose.position = ocs2::ros_msg_helpers::getPointMsg(getBasePosition(state));
-    pose.orientation = ocs2::ros_msg_helpers::getOrientationMsg(getBaseOrientation(state));
+    pose.position = ros_msg_helpers::getPointMsg(getBasePosition(state));
+    pose.orientation = ros_msg_helpers::getOrientationMsg(getBaseOrientation(state));
     baseTrajectory.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
   });
 
-  markerArray.markers.emplace_back(ocs2::ros_msg_helpers::getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
+  markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "Base Trajectory";
 
-  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ocs2::ros_msg_helpers::getHeaderMsg("world", timeStamp));
+  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ros_msg_helpers::getHeaderMsg("world", timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
-  poseArray.header = ocs2::ros_msg_helpers::getHeaderMsg("world", timeStamp);
+  poseArray.header = ros_msg_helpers::getHeaderMsg("world", timeStamp);
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
 }
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

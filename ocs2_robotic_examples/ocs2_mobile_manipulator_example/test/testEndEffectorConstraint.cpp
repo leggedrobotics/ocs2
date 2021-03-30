@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
+using namespace ocs2;
 using namespace mobile_manipulator;
 
 class testEndEffectorConstraint : public ::testing::Test {
@@ -48,16 +49,16 @@ class testEndEffectorConstraint : public ::testing::Test {
   testEndEffectorConstraint() {
     const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
-    pinocchioInterfacePtr.reset(new ocs2::PinocchioInterface(MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
+    pinocchioInterfacePtr.reset(new PinocchioInterface(MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
 
-    eeKinematicsPtr.reset(new ocs2::PinocchioEndEffectorKinematics(*pinocchioInterfacePtr, pinocchioMapping, {"WRIST_2"}));
+    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematics(*pinocchioInterfacePtr, pinocchioMapping, {"WRIST_2"}));
 
     x << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0;
   }
 
   vector_t x{STATE_DIM};
-  std::unique_ptr<ocs2::PinocchioInterface> pinocchioInterfacePtr;
-  std::unique_ptr<ocs2::PinocchioEndEffectorKinematics> eeKinematicsPtr;
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
+  std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr;
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
 };
 
@@ -73,8 +74,7 @@ TEST_F(testEndEffectorConstraint, testEndEffectorConstraint) {
   pinocchio::computeJointJacobians(model, data);
 
   auto eeConstraintPtr = std::make_shared<EndEffectorConstraint>(*eeKinematicsPtr);
-  dynamic_cast<ocs2::PinocchioEndEffectorKinematics&>(eeConstraintPtr->getEndEffectorKinematics())
-      .setPinocchioInterface(*pinocchioInterfacePtr);
+  dynamic_cast<PinocchioEndEffectorKinematics&>(eeConstraintPtr->getEndEffectorKinematics()).setPinocchioInterface(*pinocchioInterfacePtr);
   eeConstraintPtr->setDesiredPose(vector3_t::Zero(), quaternion_t(1, 0, 0, 0));
 
   std::cerr << "constraint:\n" << eeConstraintPtr->getValue(0.0, x) << '\n';

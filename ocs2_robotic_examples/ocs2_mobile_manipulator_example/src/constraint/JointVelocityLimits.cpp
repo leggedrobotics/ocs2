@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/constraint/JointVelocityLimits.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /******************************************************************************************************/
@@ -61,3 +62,4 @@ VectorFunctionLinearApproximation JointVelocityLimits::getLinearApproximation(sc
 }
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

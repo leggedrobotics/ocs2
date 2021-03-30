@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ros/init.h>
 
+using namespace ocs2;
+using namespace mobile_manipulator;
+
 int main(int argc, char** argv) {
   const std::string robotName = "mobile_manipulator";
 
@@ -48,11 +51,11 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  mobile_manipulator::MobileManipulatorInterface interface(taskFileFolderName);
+  MobileManipulatorInterface interface(taskFileFolderName);
 
   // Launch MPC ROS node
   auto mpcPtr = interface.getMpc();
-  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
+  MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   return 0;

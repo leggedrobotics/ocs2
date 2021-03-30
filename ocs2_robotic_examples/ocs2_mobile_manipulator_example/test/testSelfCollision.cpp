@@ -40,19 +40,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/SelfCollision.h>
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
 
+using namespace ocs2;
+using namespace mobile_manipulator;
+
 class TestSelfCollision : public ::testing::Test {
  public:
   TestSelfCollision()
       : pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)),
         geometryInterface(urdfPath, pinocchioInterface, collisionPairs) {}
 
-  void computeValue(ocs2::PinocchioInterface& pinocchioInterface, const ocs2::vector_t q) {
+  void computeValue(PinocchioInterface& pinocchioInterface, const vector_t q) {
     const auto& model = pinocchioInterface.getModel();
     auto& data = pinocchioInterface.getData();
     pinocchio::forwardKinematics(model, data, q);
   }
 
-  void computeLinearApproximation(ocs2::PinocchioInterface& pinocchioInterface, const ocs2::vector_t q) {
+  void computeLinearApproximation(PinocchioInterface& pinocchioInterface, const vector_t q) {
     const auto& model = pinocchioInterface.getModel();
     auto& data = pinocchioInterface.getData();
     pinocchio::computeJointJacobians(model, data, q);  // also computes forwardKinematics
@@ -60,21 +63,21 @@ class TestSelfCollision : public ::testing::Test {
   }
 
   // initial joint configuration
-  const ocs2::vector_t jointPositon = (ocs2::vector_t(9) << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0).finished();
+  const vector_t jointPositon = (vector_t(9) << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0).finished();
   const std::vector<std::pair<size_t, size_t>> collisionPairs = {{1, 4}, {1, 6}, {1, 9}};
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
   const std::string libraryFolder = ros::package::getPath("ocs2_mobile_manipulator_example") + "/auto_generated";
-  const ocs2::scalar_t minDistance = 0.1;
+  const scalar_t minDistance = 0.1;
 
-  ocs2::PinocchioInterface pinocchioInterface;
-  ocs2::PinocchioGeometryInterface geometryInterface;
+  PinocchioInterface pinocchioInterface;
+  PinocchioGeometryInterface geometryInterface;
 };
 
 TEST_F(TestSelfCollision, AnalyticalVsAutoDiffValue) {
-  ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
-  ocs2::SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
-                                              false);
+  SelfCollision selfCollision(geometryInterface, minDistance);
+  SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
+                                        false);
 
   computeValue(pinocchioInterface, jointPositon);
 
@@ -84,14 +87,14 @@ TEST_F(TestSelfCollision, AnalyticalVsAutoDiffValue) {
 }
 
 TEST_F(TestSelfCollision, AnalyticalVsAutoDiffApproximation) {
-  ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
-  ocs2::SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
-                                              false);
+  SelfCollision selfCollision(geometryInterface, minDistance);
+  SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
+                                        false);
 
   computeLinearApproximation(pinocchioInterface, jointPositon);
 
-  ocs2::vector_t d1, d2;
-  ocs2::matrix_t Jd1, Jd2;
+  vector_t d1, d2;
+  matrix_t Jd1, Jd2;
 
   std::tie(d1, Jd1) = selfCollision.getLinearApproximation(pinocchioInterface);
   std::tie(d2, Jd2) = selfCollisionCppAd.getLinearApproximation(pinocchioInterface, jointPositon);
@@ -100,7 +103,7 @@ TEST_F(TestSelfCollision, AnalyticalVsAutoDiffApproximation) {
 }
 
 TEST_F(TestSelfCollision, AnalyticalValueAndApproximation) {
-  ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
+  SelfCollision selfCollision(geometryInterface, minDistance);
 
   computeLinearApproximation(pinocchioInterface, jointPositon);
 
@@ -110,16 +113,16 @@ TEST_F(TestSelfCollision, AnalyticalValueAndApproximation) {
 }
 
 TEST_F(TestSelfCollision, testRandomJointPositions) {
-  ocs2::SelfCollision selfCollision(geometryInterface, minDistance);
-  ocs2::SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
-                                              false);
+  SelfCollision selfCollision(geometryInterface, minDistance);
+  SelfCollisionCppAd selfCollisionCppAd(pinocchioInterface, geometryInterface, minDistance, "testSelfCollision", libraryFolder, true,
+                                        false);
 
   for (int i = 0; i < 10; i++) {
-    ocs2::vector_t q = ocs2::vector_t::Random(9);
+    vector_t q = vector_t::Random(9);
     computeLinearApproximation(pinocchioInterface, q);
 
-    ocs2::vector_t d1, d2;
-    ocs2::matrix_t Jd1, Jd2;
+    vector_t d1, d2;
+    matrix_t Jd1, Jd2;
 
     std::tie(d1, Jd1) = selfCollision.getLinearApproximation(pinocchioInterface);
     std::tie(d2, Jd2) = selfCollisionCppAd.getLinearApproximation(pinocchioInterface, q);

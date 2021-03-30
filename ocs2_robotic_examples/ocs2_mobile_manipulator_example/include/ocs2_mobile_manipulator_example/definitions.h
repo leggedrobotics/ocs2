@@ -31,33 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstddef>
 
-#include <cppad/cg.hpp>
-
-#include <ocs2_core/Types.h>
-
+namespace ocs2 {
 namespace mobile_manipulator {
 
 constexpr size_t STATE_DIM = 6 + 3;  // 6 DOF arm + 2D position + heading
 constexpr size_t INPUT_DIM = 6 + 2;  // 6 DOF arm vel. + forward vel. + rotational vel.
 
-/* Import ocs2 types into the mobile_manipulator namespace */
-using ocs2::matrix_array_t;
-using ocs2::matrix_t;
-using ocs2::scalar_array_t;
-using ocs2::scalar_t;
-using ocs2::size_array_t;
-using ocs2::vector_array_t;
-using ocs2::vector_t;
-
-using ocs2::ScalarFunctionQuadraticApproximation;
-using ocs2::VectorFunctionLinearApproximation;
-using ocs2::VectorFunctionQuadraticApproximation;
-
-/* Define fixed-size types */
-using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM, 1>;
-using input_vector_t = Eigen::Matrix<scalar_t, INPUT_DIM, 1>;
-using state_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM, STATE_DIM>;
-using input_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, INPUT_DIM>;
-using input_state_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM, STATE_DIM>;
-
 }  // namespace mobile_manipulator
+}  // namespace ocs2

@@ -42,11 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
-using scalar_t = ocs2::scalar_t;
+using namespace ocs2;
+using namespace mobile_manipulator;
 
-std::unique_ptr<ocs2::PinocchioInterface> pInterface;
-std::shared_ptr<ocs2::PinocchioGeometryInterface> gInterface;
-std::unique_ptr<ocs2::GeometryInterfaceVisualization> vInterface;
+std::unique_ptr<PinocchioInterface> pInterface;
+std::shared_ptr<PinocchioGeometryInterface> gInterface;
+std::unique_ptr<GeometryInterfaceVisualization> vInterface;
 
 sensor_msgs::JointState lastMsg;
 
@@ -78,12 +79,12 @@ int main(int argc, char** argv) {
 
   std::cerr << "Loading task file: " << taskFile << std::endl;
 
-  pInterface.reset(new ocs2::PinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
+  pInterface.reset(new PinocchioInterface(MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
 
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
-  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
-  ocs2::loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
+  loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
+  loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
   for (const auto& element : selfCollisionObjectPairs) {
     std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
@@ -94,9 +95,9 @@ int main(int argc, char** argv) {
   }
   std::cerr << std::endl;
 
-  gInterface.reset(new ocs2::PinocchioGeometryInterface(urdfPath, *pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
+  gInterface.reset(new PinocchioGeometryInterface(urdfPath, *pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
-  vInterface.reset(new ocs2::GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base"));
+  vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base"));
 
   ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);
 

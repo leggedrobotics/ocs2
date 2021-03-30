@@ -36,14 +36,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/constraint/StateConstraint.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
-class EndEffectorConstraint final : public ocs2::StateConstraint {
+class EndEffectorConstraint final : public StateConstraint {
  public:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-  explicit EndEffectorConstraint(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics);
+  explicit EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics);
   ~EndEffectorConstraint() override = default;
   EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*this); }
 
@@ -52,14 +53,15 @@ class EndEffectorConstraint final : public ocs2::StateConstraint {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
   void setDesiredPose(const vector3_t& position, const quaternion_t& orientation);
-  ocs2::EndEffectorKinematics<scalar_t>& getEndEffectorKinematics() { return *endEffectorKinematicsPtr_; }
+  EndEffectorKinematics<scalar_t>& getEndEffectorKinematics() { return *endEffectorKinematicsPtr_; }
 
  private:
   EndEffectorConstraint(const EndEffectorConstraint& rhs);
 
   vector3_t eeDesiredPosition_;
   quaternion_t eeDesiredOrientation_;
-  std::unique_ptr<ocs2::EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
+  std::unique_ptr<EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

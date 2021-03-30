@@ -35,9 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/constraint/StateInputConstraint.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
-class JointVelocityLimits final : public ocs2::StateInputConstraint {
+class JointVelocityLimits final : public StateInputConstraint {
  public:
   JointVelocityLimits(vector_t lowerBound, vector_t upperBound);
   ~JointVelocityLimits() override = default;
@@ -55,3 +56,4 @@ class JointVelocityLimits final : public ocs2::StateInputConstraint {
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

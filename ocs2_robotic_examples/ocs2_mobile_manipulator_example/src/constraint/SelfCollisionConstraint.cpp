@@ -31,23 +31,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SelfCollisionConstraint::SelfCollisionConstraint(const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
-                                                 ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
+SelfCollisionConstraint::SelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
+                                                 PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
     : selfCollision_(std::move(pinocchioGeometryInterface), minimumDistance), mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SelfCollisionConstraint::SelfCollisionConstraint(const SelfCollisionConstraint& rhs)
-    : ocs2::StateConstraint(rhs),
-      pinocchioInterfacePtr_(nullptr),
-      selfCollision_(rhs.selfCollision_),
-      mappingPtr_(rhs.mappingPtr_->clone()) {}
+    : StateConstraint(rhs), pinocchioInterfacePtr_(nullptr), selfCollision_(rhs.selfCollision_), mappingPtr_(rhs.mappingPtr_->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -84,3 +82,4 @@ VectorFunctionLinearApproximation SelfCollisionConstraint::getLinearApproximatio
 }
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

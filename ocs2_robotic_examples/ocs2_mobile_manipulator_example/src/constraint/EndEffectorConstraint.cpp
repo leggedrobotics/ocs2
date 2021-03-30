@@ -31,12 +31,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EndEffectorConstraint::EndEffectorConstraint(const ocs2::EndEffectorKinematics<scalar_t>& endEffectorKinematics)
+EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics)
     : eeDesiredPosition_(vector3_t::Zero()),
       eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0),
       endEffectorKinematicsPtr_(endEffectorKinematics.clone()) {
@@ -47,7 +48,7 @@ EndEffectorConstraint::EndEffectorConstraint(const ocs2::EndEffectorKinematics<s
 /******************************************************************************************************/
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const EndEffectorConstraint& rhs)
-    : ocs2::StateConstraint(rhs),
+    : StateConstraint(rhs),
       eeDesiredPosition_(vector3_t::Zero()),
       eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0),
       endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()) {}
@@ -95,3 +96,4 @@ void EndEffectorConstraint::setDesiredPose(const vector3_t& position, const quat
 }
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

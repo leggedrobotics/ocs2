@@ -37,12 +37,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
+namespace ocs2 {
 namespace mobile_manipulator {
 
-class SelfCollisionConstraint final : public ocs2::StateConstraint {
+class SelfCollisionConstraint final : public StateConstraint {
  public:
-  SelfCollisionConstraint(const ocs2::PinocchioStateInputMapping<scalar_t>& mapping,
-                          ocs2::PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance);
+  SelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping, PinocchioGeometryInterface pinocchioGeometryInterface,
+                          scalar_t minimumDistance);
   ~SelfCollisionConstraint() override = default;
   SelfCollisionConstraint* clone() const override { return new SelfCollisionConstraint(*this); }
 
@@ -59,14 +60,15 @@ class SelfCollisionConstraint final : public ocs2::StateConstraint {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
   /** Caches the pointer to the pinocchio interface. */
-  void setPinocchioInterface(ocs2::PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 
  private:
   SelfCollisionConstraint(const SelfCollisionConstraint& rhs);
 
-  ocs2::PinocchioInterface* pinocchioInterfacePtr_ = nullptr;
-  ocs2::SelfCollision selfCollision_;
-  std::unique_ptr<ocs2::PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+  PinocchioInterface* pinocchioInterfacePtr_ = nullptr;
+  SelfCollision selfCollision_;
+  std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
 };
 
 }  // namespace mobile_manipulator
+}  // namespace ocs2

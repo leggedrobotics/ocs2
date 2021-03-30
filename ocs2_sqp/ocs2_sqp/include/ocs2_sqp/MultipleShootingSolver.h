@@ -163,6 +163,7 @@ class MultipleShootingSolver : public SolverBase {
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer solveQpTimer_;
+  benchmark::RepeatedTimer linesearchTimer_;
   benchmark::RepeatedTimer computeControllerTimer_;
 
   scalar_array_t partitionTime_ = {};

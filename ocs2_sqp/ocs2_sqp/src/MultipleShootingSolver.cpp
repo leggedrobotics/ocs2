@@ -47,10 +47,8 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
                                                const CostFunctionBase* terminalCostFunctionPtr,
                                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr)
     : SolverBase(),
-      terminalCostFunctionPtr_(nullptr),
       settings_(std::move(settings)),
       totalNumIterations_(0),
-      performanceIndeces_(),
       hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings) {
   // Multithreading, set up threadpool for N-1 helpers, our main thread is the N-th one.
   if (settings_.nThreads > 1) {
@@ -102,15 +100,17 @@ void MultipleShootingSolver::reset() {
   totalNumIterations_ = 0;
   linearQuadraticApproximationTimer_.reset();
   solveQpTimer_.reset();
+  linesearchTimer_.reset();
   computeControllerTimer_.reset();
 }
 
 std::string MultipleShootingSolver::getBenchmarkingInformation() const {
   const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   const auto solveQpTotal = solveQpTimer_.getTotalInMilliseconds();
+  const auto linesearchTotal = linesearchTimer_.getTotalInMilliseconds();
   const auto computeControllerTotal = computeControllerTimer_.getTotalInMilliseconds();
 
-  const auto benchmarkTotal = linearQuadraticApproximationTotal + solveQpTotal + computeControllerTotal;
+  const auto benchmarkTotal = linearQuadraticApproximationTotal + solveQpTotal + linesearchTotal + computeControllerTotal;
 
   std::stringstream infoStream;
   if (benchmarkTotal > 0.0) {
@@ -122,6 +122,8 @@ std::string MultipleShootingSolver::getBenchmarkingInformation() const {
                << linearQuadraticApproximationTotal / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tSolve QP           :\t" << solveQpTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << solveQpTotal / benchmarkTotal * inPercent << "%)\n";
+    infoStream << "\tLinesearch         :\t" << linesearchTimer_.getAverageInMilliseconds() << " [ms] \t\t("
+               << linesearchTotal / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tCompute Controller :\t" << computeControllerTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << computeControllerTotal / benchmarkTotal * inPercent << "%)\n";
   }
@@ -182,9 +184,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     solveQpTimer_.endTimer();
 
     // Apply step
-    computeControllerTimer_.startTimer();
+    linesearchTimer_.startTimer();
     bool converged = takeStep(performanceIndeces_.back(), timeDiscretization, initState, delta_x, delta_u, x, u);
-    computeControllerTimer_.endTimer();
+    linesearchTimer_.endTimer();
 
     totalNumIterations_++;
     if (converged) {
@@ -192,6 +194,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     }
   }
 
+  computeControllerTimer_.startTimer();
   // Store result in PrimalSolution.
   primalSolution_.timeTrajectory_ = std::move(timeDiscretization);
   primalSolution_.stateTrajectory_ = std::move(x);
@@ -221,6 +224,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   } else {
     primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
   }
+  computeControllerTimer_.endTimer();
 
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";

@@ -60,13 +60,17 @@ class StateInputConstraint {
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const {
-    throw std::runtime_error("[StateInputConstraint] Linear approximation not implemented");
+    if (order_ == ConstraintOrder::Linear) {
+      throw std::runtime_error("[StateInputConstraint] Linear approximation not implemented!");
+    } else {
+      throw std::runtime_error("[StateInputConstraint] The class only provides Quadratic approximationn! call getQuadraticApproximation()");
+    }
   }
 
   /** Get the constraint quadratic approximation */
   virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                          const vector_t& input) const {
-    throw std::runtime_error("[StateInputConstraint] Quadratic approximation not implemented");
+    throw std::runtime_error("[StateInputConstraint] Quadratic approximation not implemented!");
   }
 
  protected:

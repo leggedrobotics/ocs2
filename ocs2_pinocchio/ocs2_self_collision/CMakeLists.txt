@@ -74,6 +74,8 @@ add_library(${PROJECT_NAME}
   src/loadStdVectorOfPair.cpp
   src/SelfCollision.cpp
   src/SelfCollisionCppAd.cpp
+  src/SelfCollisionConstraint.cpp
+  src/SelfCollisionConstraintCppAd.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

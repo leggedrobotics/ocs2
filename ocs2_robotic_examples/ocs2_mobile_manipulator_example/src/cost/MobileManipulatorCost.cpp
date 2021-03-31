@@ -33,19 +33,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
-#include <ocs2_core/misc/LoadData.h>
-
 #include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
 #include <ocs2_mobile_manipulator_example/constraint/JointVelocityLimits.h>
-#include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraint.h>
-#include <ocs2_mobile_manipulator_example/constraint/SelfCollisionConstraintCppAd.h>
 #include <ocs2_mobile_manipulator_example/cost/MobileManipulatorCost.h>
 #include <ocs2_mobile_manipulator_example/cost/QuadraticInputCost.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
 
-#include <ocs2_self_collision/loadStdVectorOfPair.h>
-
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
@@ -54,6 +49,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
+#include <ocs2_self_collision/SelfCollisionConstraint.h>
+#include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
+#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include <ros/package.h>
 

@@ -11,6 +11,7 @@
 #include <ocs2_ddp/DDP_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
+#include <ocs2_quadruped_interface/QuadrupedSqpMpc.h>
 
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
@@ -29,10 +30,21 @@ int main(int argc, char* argv[]) {
 
   auto anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolder(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePath(configName));
-  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePath(configName));
 
-  auto mpcPtr = getMpc(*anymalInterface, mpcSettings, ddpSettings);
-  quadrupedMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
+  switch (anymalInterface->modelSettings().algorithm_) {
+    case switched_model::Algorithm::DDP: {
+      const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePath(configName));
+      auto mpcPtr = getMpc(*anymalInterface, mpcSettings, ddpSettings);
+      quadrupedMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
+      break;
+    }
+    case switched_model::Algorithm::SQP: {
+      const auto sqpSettings = ocs2::multiple_shooting::loadSettings(anymal::getConfigFolder(configName) + "/multiple_shooting.info");
+      auto mpcPtr = getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
+      quadrupedMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
+      break;
+    }
+  }
 
   return 0;
 }

@@ -29,6 +29,7 @@ model_settings
   gaitOptimization              false
 
   recompileLibraries            true
+  algorithm                     SQP
 }
 
 terrainPlane
@@ -150,7 +151,7 @@ mpc
   solutionTimeWindow              -1  ; [s]
 
   mpcDesiredFrequency             50  ; [Hz]
-  mrtDesiredFrequency             50 ; [Hz]
+  mrtDesiredFrequency             400 ; [Hz]
 }
 
 ; initial state

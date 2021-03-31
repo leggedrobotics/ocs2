@@ -8,6 +8,7 @@
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpcNode.h>
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSlqMpc.h>
+#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSqpMpc.h>
 
 #include "ocs2_anymal_loopshaping_mpc/AnymalLoopshapingInterface.h"
 
@@ -27,10 +28,22 @@ int main(int argc, char* argv[]) {
   auto anymalInterface =
       anymal::getAnymalLoopshapingInterface(anymal::stringToAnymalModel(robotName), anymal::getConfigFolderLoopshaping(configName));
   const auto mpcSettings = ocs2::mpc::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
-  const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
 
-  auto mpcPtr = getMpc(*anymalInterface, mpcSettings, ddpSettings);
-  quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
+  switch (anymalInterface->modelSettings().algorithm_) {
+    case switched_model::Algorithm::DDP: {
+      const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
+      auto mpcPtr = getMpc(*anymalInterface, mpcSettings, ddpSettings);
+      quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
+      break;
+    }
+    case switched_model::Algorithm::SQP: {
+      const auto sqpSettings =
+          ocs2::multiple_shooting::loadSettings(anymal::getConfigFolderLoopshaping(configName) + "/multiple_shooting.info");
+      auto mpcPtr = getSqpMpc(*anymalInterface, mpcSettings, sqpSettings);
+      quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
+      break;
+    }
+  }
 
   return 0;
 }

@@ -5,6 +5,7 @@
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 
 #include <iostream>
+#include <unordered_map>
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -12,6 +13,17 @@
 #include <ocs2_core/misc/LoadData.h>
 
 namespace switched_model {
+
+std::string toAlgorithmName(Algorithm type) {
+  static const std::unordered_map<Algorithm, std::string> map{{Algorithm::DDP, "DDP"}, {Algorithm::SQP, "SQP"}};
+  return map.at(type);
+}
+
+Algorithm fromAlgorithmName(std::string name) {
+  static const std::unordered_map<std::string, Algorithm> map{{"DDP", Algorithm::DDP}, {"SQP", Algorithm::SQP}};
+  std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+  return map.at(name);
+}
 
 ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ModelSettings modelSettings;
@@ -41,6 +53,10 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceTorqueConstraint_, prefix + "enforceTorqueConstraint", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.torqueLimit_, prefix + "torqueLimit", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
+
+  std::string algorithmName = toAlgorithmName(modelSettings.algorithm_);
+  ocs2::loadData::loadPtreeValue(pt, algorithmName, prefix + "algorithm", verbose);
+  modelSettings.algorithm_ = fromAlgorithmName(algorithmName);
 
   if (verbose) {
     std::cerr << " #### ================================================ ####" << std::endl;

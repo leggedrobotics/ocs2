@@ -62,16 +62,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * DDP SQP MPC settings
    */
-  bool solverDDP, solverSQP;
-  ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.solverDDP", solverDDP);
-  ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.solverSQP", solverSQP);
-
-  if (solverSQP) {
-    sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting");
-  }
-  if (solverDDP) {
-    ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
-  }
+  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting");
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*

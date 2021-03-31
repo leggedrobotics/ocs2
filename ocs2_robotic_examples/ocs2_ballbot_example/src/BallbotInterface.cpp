@@ -60,8 +60,9 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
-   * DDP-MPC settings
+   * DDP SQP MPC settings
    */
+  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting");
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 

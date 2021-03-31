@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <hpipm_catkin/HpipmInterface.h>
 
 #include "ocs2_sqp/MultipleShootingSettings.h"
+#include "ocs2_sqp/TimeDiscretization.h"
 
 namespace ocs2 {
 
@@ -107,27 +108,31 @@ class MultipleShootingSolver : public SolverBase {
   std::string getBenchmarkingInformation() const;
 
   /** Returns initial guess for the state trajectory */
-  vector_array_t initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization, int N) const;
+  vector_array_t initializeStateTrajectory(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization, int N) const;
 
   /** Returns initial guess for the input trajectory */
-  vector_array_t initializeInputTrajectory(const scalar_array_t& timeDiscretization, const vector_array_t& stateTrajectory, int N) const;
+  vector_array_t initializeInputTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& stateTrajectory,
+                                           int N) const;
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
-  PerformanceIndex setupQuadraticSubproblem(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
+  PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
                                             const vector_array_t& u);
 
   /** Computes only the performance metrics at the current {t, x(t), u(t)} */
-  PerformanceIndex computePerformance(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
+  PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
                                       const vector_array_t& u);
 
   /** Returns solution of the QP subproblem in delta coordinates: {delta_x(t), delta_u(t)} */
   std::pair<vector_array_t, vector_array_t> getOCPSolution(const vector_t& delta_x0);
 
+  /** Set up the primal solution based on the optimized state and input trajectories */
+  void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
+
   /** Compute 2-norm of the trajectory: sqrt(sum_i v[i]^2)  */
   static scalar_t trajectoryNorm(const vector_array_t& v);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  bool takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_t& initState,
+  bool takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
                 const vector_array_t& dx, const vector_array_t& du, vector_array_t& x, vector_array_t& u);
 
   // Problem definition
@@ -154,6 +159,7 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<VectorFunctionLinearApproximation> dynamics_;
   std::vector<ScalarFunctionQuadraticApproximation> cost_;
   std::vector<VectorFunctionLinearApproximation> constraints_;
+  std::vector<VectorFunctionLinearApproximation> constraintsProjection_;
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;

@@ -37,46 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
-                                            scalar_t eventDelta) {
-  assert(dt > 0);
-  assert(finalTime > initTime);
-  scalar_array_t timeDiscretization;
-
-  // Initialize
-  timeDiscretization.push_back(initTime);
-  scalar_t nextEventIdx = lookup::findIndexInTimeArray(eventTimes, initTime);
-
-  // Fill iteratively
-  scalar_t nextTime = timeDiscretization.back();
-  while (timeDiscretization.back() < finalTime) {
-    nextTime = nextTime + dt;
-    bool nextTimeIsEvent = false;
-
-    // Check if an event has passed
-    if (nextEventIdx < eventTimes.size() && nextTime >= eventTimes[nextEventIdx]) {
-      nextTime = eventTimes[nextEventIdx];
-      nextTimeIsEvent = true;
-      nextEventIdx++;
-    }
-
-    // Check if final time has passed
-    if (nextTime >= finalTime) {
-      nextTime = finalTime;
-      nextTimeIsEvent = false;
-    }
-
-    const scalar_t newTimePoint = nextTimeIsEvent ? nextTime + eventDelta : nextTime;
-    if (newTimePoint > timeDiscretization.back() + 0.5 * dt) {  // Minimum spacing hardcoded here to 0.5*dt, TODO: make parameter.
-      timeDiscretization.push_back(newTimePoint);
-    } else {  // Points are close together -> overwrite the old point
-      timeDiscretization.back() = newTimePoint;
-    }
-  }
-
-  return timeDiscretization;
-}
-
 Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
                                     CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
                                     bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
@@ -87,6 +47,7 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
   auto& performance = transcription.performance;
   auto& cost = transcription.cost;
   auto& constraints = transcription.constraints;
+  auto& projection = transcription.constraintsProjection;
 
   // Dynamics
   // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
@@ -103,7 +64,7 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
     // Inequalities as penalty
     if (penaltyPtr != nullptr) {
       const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(t, x, u);
-      if (ineqConstraints.f.rows() > 0) {
+      if (ineqConstraints.f.size() > 0) {
         const auto penaltyCost = penaltyPtr->penaltyCostQuadraticApproximation(ineqConstraints);
         cost += penaltyCost;  // add to cost before potential projection.
         performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
@@ -113,14 +74,17 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
 
     // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
     constraints = constraintPtr->stateInputEqualityConstraintLinearApproximation(t, x, u);
-    performance.stateInputEqConstraintISE += dt * constraints.f.squaredNorm();
-    if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
-      // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
-      constraints = luConstraintProjection(constraints);
+    if (constraints.f.size() > 0) {
+      performance.stateInputEqConstraintISE += dt * constraints.f.squaredNorm();
+      if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
+        // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
+        projection = luConstraintProjection(constraints);
+        constraints = VectorFunctionLinearApproximation();
 
-      // Adapt dynamics and cost
-      changeOfInputVariables(dynamics, constraints.dfdu, constraints.dfdx, constraints.f);
-      changeOfInputVariables(cost, constraints.dfdu, constraints.dfdx, constraints.f);
+        // Adapt dynamics and cost
+        changeOfInputVariables(dynamics, projection.dfdu, projection.dfdx, projection.f);
+        changeOfInputVariables(cost, projection.dfdu, projection.dfdx, projection.f);
+      }
     }
   }
 
@@ -150,12 +114,14 @@ PerformanceIndex computeIntermediatePerformance(SystemDynamicsBase& systemDynami
   // Constraints
   if (constraintPtr != nullptr) {
     const vector_t constraints = constraintPtr->stateInputEqualityConstraint(t, x, u);
-    performance.stateInputEqConstraintISE += dt * constraints.squaredNorm();
+    if (constraints.size() > 0) {
+      performance.stateInputEqConstraintISE += dt * constraints.squaredNorm();
+    }
 
     // Inequalities as penalty
     if (penaltyPtr) {
       const vector_t ineqConstraints = constraintPtr->inequalityConstraint(t, x, u);
-      if (ineqConstraints.rows() > 0) {
+      if (ineqConstraints.size() > 0) {
         const scalar_t penaltyCost = penaltyPtr->penaltyCost(ineqConstraints);
         performance.inequalityConstraintISE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
         performance.inequalityConstraintPenalty += dt * penaltyCost;

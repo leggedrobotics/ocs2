@@ -228,30 +228,36 @@ class HpipmInterface::Impl {
 
     if (constraints != nullptr) {
       auto& constr = *constraints;
-      boundData.reserve(N + 1);
+      boundData.resize(N + 1);
 
       // k = 0, eliminate initial state
       // numState[0] = 0 --> No need to specify C[0] here
-      DD[0] = constr[0].dfdu.data();
-      boundData.emplace_back(-constr[0].f);
-      boundData[0].noalias() -= constr[0].dfdx * x0;
-      llg[0] = boundData[0].data();
-      uug[0] = boundData[0].data();
+      if (constr[0].f.size() > 0) {
+        boundData[0] = -constr[0].f;
+        boundData[0].noalias() -= constr[0].dfdx * x0;
+        llg[0] = boundData[0].data();
+        uug[0] = boundData[0].data();
+        DD[0] = constr[0].dfdu.data();
+      }
 
       // k = 1 -> (N-1)
       for (int k = 1; k < N; k++) {
-        CC[k] = constr[k].dfdx.data();
-        DD[k] = constr[k].dfdu.data();
-        boundData.emplace_back(-constr[k].f);
-        llg[k] = boundData[k].data();
-        uug[k] = boundData[k].data();
+        if (constr[k].f.size() > 0) {
+          CC[k] = constr[k].dfdx.data();
+          DD[k] = constr[k].dfdu.data();
+          boundData[k] = -constr[k].f;
+          llg[k] = boundData[k].data();
+          uug[k] = boundData[k].data();
+        }
       }
 
       // k = N, no inputs
-      CC[N] = constr[N].dfdx.data();
-      boundData.emplace_back(-constr[N].f);
-      llg[N] = boundData[N].data();
-      uug[N] = boundData[N].data();
+      if (constr[N].f.size() > 0) {
+        CC[N] = constr[N].dfdx.data();
+        boundData[N] = -constr[N].f;
+        llg[N] = boundData[N].data();
+        uug[N] = boundData[N].data();
+      }
     }
 
     // === Unused ===

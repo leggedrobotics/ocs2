@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <numeric>
 
-#include <ocs2_core/OCS2NumericTraits.h>
 #include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
@@ -70,6 +69,10 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
     } else {
       constraintPtr_.emplace_back(nullptr);
     }
+  }
+
+  if (constraintPtr == nullptr) {
+    settings_.projectStateInputEqualityConstraints = false; // True does not make sense if there are no constraints.
   }
 
   if (constraintPtr != nullptr && settings_.inequalityConstraintMu > 0) {
@@ -147,8 +150,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // Determine time discretization, taking into account event times.
-  scalar_array_t timeDiscretization = multiple_shooting::timeDiscretizationWithEvents(
-      initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes, OCS2NumericTraits<scalar_t>::limitEpsilon());
+  const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
 
   // Initialize the state and input
@@ -195,35 +197,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   computeControllerTimer_.startTimer();
-  // Store result in PrimalSolution.
-  primalSolution_.timeTrajectory_ = std::move(timeDiscretization);
-  primalSolution_.stateTrajectory_ = std::move(x);
-  primalSolution_.inputTrajectory_ = std::move(u);
-  primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());  // repeat last input to make equal length vectors
-  primalSolution_.modeSchedule_ = this->getModeSchedule();
-
-  // Compute controller
-  if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
-    // TODO: Add feedback in u_tilde space. Currently only have feedback arising from stateInputEquality
-    vector_array_t uff;
-    matrix_array_t controllerGain;
-    uff.reserve(N + 1);
-    controllerGain.reserve(N + 1);
-    for (int i = 0; i < N; i++) {
-      // Linear controller has convention u = uff + K * x;
-      // We computed u = u'(t) + K (x - x'(t));
-      // >> uff = u'(t) - K x'(t)
-      uff.push_back(primalSolution_.inputTrajectory_[i]);
-      uff.back().noalias() -= constraints_[i].dfdx * primalSolution_.stateTrajectory_[i];
-      controllerGain.push_back(std::move(constraints_[i].dfdx));  // Steal! the feedback matrix, don't use after this.
-    }
-    // Copy last one the get correct length
-    uff.push_back(uff.back());
-    controllerGain.push_back(controllerGain.back());
-    primalSolution_.controllerPtr_.reset(new LinearController(primalSolution_.timeTrajectory_, std::move(uff), std::move(controllerGain)));
-  } else {
-    primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
-  }
+  setPrimalSolution(timeDiscretization, std::move(x), std::move(u));
   computeControllerTimer_.endTimer();
 
   if (settings_.printSolverStatus || settings_.printLinesearch) {
@@ -252,23 +226,22 @@ void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) 
   }
 }
 
-vector_array_t MultipleShootingSolver::initializeInputTrajectory(const scalar_array_t& timeDiscretization,
+vector_array_t MultipleShootingSolver::initializeInputTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
                                                                  const vector_array_t& stateTrajectory, int N) const {
-  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front();
+  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
 
   vector_array_t u;
   u.reserve(N);
   for (int i = 0; i < N; i++) {
-    const scalar_t ti = timeDiscretization[i];
+    const scalar_t ti = getInterpolationTime(timeDiscretization[i]);
     if (ti < interpolateTill) {
       // Interpolate previous input trajectory
-      u.emplace_back(
-          LinearInterpolation::interpolate(timeDiscretization[i], primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
+      u.emplace_back(primalSolution_.controllerPtr_->computeInput(ti, stateTrajectory[i]));
     } else {
       // No previous control at this time-point -> fall back to heuristics
       if (operatingTrajectoriesPtr_) {
         // Ask for operating trajectory between t[k] and t[k+1]. Take the returned input at t[k] as our heuristic.
-        const scalar_t tNext = timeDiscretization[i + 1];
+        const scalar_t tNext = getIntervalEnd(timeDiscretization[i + 1]);
         scalar_array_t timeArray;
         vector_array_t stateArray;
         vector_array_t inputArray;
@@ -283,8 +256,8 @@ vector_array_t MultipleShootingSolver::initializeInputTrajectory(const scalar_ar
   return u;
 }
 
-vector_array_t MultipleShootingSolver::initializeStateTrajectory(const vector_t& initState, const scalar_array_t& timeDiscretization,
-                                                                 int N) const {
+vector_array_t MultipleShootingSolver::initializeStateTrajectory(const vector_t& initState,
+                                                                 const std::vector<AnnotatedTime>& timeDiscretization, int N) const {
   if (totalNumIterations_ == 0) {  // first iteration
     return vector_array_t(N + 1, initState);
   } else {  // interpolation of previous solution
@@ -292,8 +265,8 @@ vector_array_t MultipleShootingSolver::initializeStateTrajectory(const vector_t&
     x.reserve(N + 1);
     x.push_back(initState);  // Force linearization of the first node around the current state
     for (int i = 1; i < (N + 1); i++) {
-      x.emplace_back(
-          LinearInterpolation::interpolate(timeDiscretization[i], primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
+      const scalar_t ti = getInterpolationTime(timeDiscretization[i]);
+      x.emplace_back(LinearInterpolation::interpolate(ti, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
     }
     return x;
   }
@@ -315,18 +288,88 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   }
 
   // remap the tilde delta u to real delta u
-  if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
+  if (settings_.projectStateInputEqualityConstraints) {
     for (int i = 0; i < deltaUSol.size(); i++) {
-      deltaUSol[i] = constraints_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
-      deltaUSol[i].noalias() += constraints_[i].dfdx * deltaXSol[i];
-      deltaUSol[i] += constraints_[i].f;
+      if (constraintsProjection_[i].f.size() > 0) {
+        deltaUSol[i] = constraintsProjection_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
+        deltaUSol[i].noalias() += constraintsProjection_[i].dfdx * deltaXSol[i];
+        deltaUSol[i] += constraintsProjection_[i].f;
+      }
     }
   }
 
   return {deltaXSol, deltaUSol};
 }
 
-PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_array_t& time, const vector_t& initState,
+void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
+  // Clear old solution
+  primalSolution_ = PrimalSolution();
+
+  // Reserve size
+  const int NupperBound = 2 * static_cast<int>(time.size());
+  primalSolution_.timeTrajectory_.reserve(NupperBound);
+  primalSolution_.stateTrajectory_.reserve(NupperBound);
+  primalSolution_.inputTrajectory_.reserve(NupperBound);
+
+  // Repeat last input to make equal length vectors
+  u.push_back(u.back());
+
+  // Compute feedback, before x and u are moved to primal solution
+  vector_array_t uff;
+  matrix_array_t controllerGain;
+  if (settings_.useFeedbackPolicy) {
+	// see doc/LQR_full.pdf for detailed derivation for feedback terms
+    uff.reserve(NupperBound);
+    controllerGain.reserve(NupperBound);
+    matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
+    for (int i = 0; (i + 1) < time.size(); i++) {
+      if (time[i].isEvent && !uff.empty()) {
+        // Duplicate pre-event controller
+        uff.push_back(uff.back());
+        controllerGain.push_back(controllerGain.back());
+      }
+      // Linear controller has convention u = uff + K * x;
+      // We computed u = u'(t) + K (x - x'(t));
+      // >> uff = u'(t) - K x'(t)
+      if (constraintsProjection_[i].f.size() > 0) {
+        controllerGain.push_back(std::move(constraintsProjection_[i].dfdx));  // Steal! Don't use after this.
+        controllerGain.back().noalias() += constraintsProjection_[i].dfdu * KMatrices[i];
+      } else {
+        controllerGain.push_back(std::move(KMatrices[i]));
+      }
+      uff.push_back(u[i]);
+      uff.back().noalias() -= controllerGain.back() * x[i];
+    }
+    // Copy last one to get correct length
+    uff.push_back(uff.back());
+    controllerGain.push_back(controllerGain.back());
+  }
+
+  // Construct nominal state and inputs
+  for (int i = 0; i < time.size(); ++i) {
+    if (time[i].isEvent && !primalSolution_.inputTrajectory_.empty()) {
+      // Add pre event time, state at event time, and pre-event input
+      // Needs adaptation when jumps are considered because x[i] is post jump.
+      primalSolution_.timeTrajectory_.push_back(getIntervalEnd(time[i]));
+      primalSolution_.stateTrajectory_.push_back(x[i]);
+      primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());
+    }
+    // Add data, post-event in case time[i] is an event.
+    primalSolution_.timeTrajectory_.push_back(getIntervalStart(time[i]));
+    primalSolution_.stateTrajectory_.push_back(std::move(x[i]));
+    primalSolution_.inputTrajectory_.push_back(std::move(u[i]));
+  }
+  primalSolution_.modeSchedule_ = this->getModeSchedule();
+
+  // Assign controller
+  if (settings_.useFeedbackPolicy) {
+    primalSolution_.controllerPtr_.reset(new LinearController(primalSolution_.timeTrajectory_, std::move(uff), std::move(controllerGain)));
+  } else {
+    primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
+  }
+}
+
+PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState,
                                                                   const vector_array_t& x, const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
@@ -338,6 +381,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
   dynamics_.resize(N);
   cost_.resize(N + 1);
   constraints_.resize(N + 1);
+  constraintsProjection_.resize(N);
 
   std::atomic_int workerId{0};
   std::atomic_int timeIndex{0};
@@ -348,22 +392,25 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
     CostFunctionBase& costFunction = *costFunctionPtr_[thisWorker];
     ConstraintBase* constraintPtr = constraintPtr_[thisWorker].get();
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
-    const bool project = settings_.projectStateInputEqualityConstraints;
+    const bool projection = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
-      auto result =
-          multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr, penaltyPtr_.get(),
-                                                   project, time[i], time[i + 1] - time[i], x[i], x[i + 1], u[i]);
+      const scalar_t ti = getIntervalStart(time[i]);
+      const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
+      auto result = multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr,
+                                                             penaltyPtr_.get(), projection, ti, dt, x[i], x[i + 1], u[i]);
       workerPerformance += result.performance;
       dynamics_[i] = std::move(result.dynamics);
       cost_[i] = std::move(result.cost);
       constraints_[i] = std::move(result.constraints);
+      constraintsProjection_[i] = std::move(result.constraintsProjection);
       i = timeIndex++;
     }
 
     if (i == N) {  // Only one worker will execute this
-      auto result = multiple_shooting::setupTerminalNode(terminalCostFunctionPtr_.get(), constraintPtr, time[N], x[N]);
+      const scalar_t tN = getIntervalStart(time[N]);
+      auto result = multiple_shooting::setupTerminalNode(terminalCostFunctionPtr_.get(), constraintPtr, tN, x[N]);
       workerPerformance += result.performance;
       cost_[i] = std::move(result.cost);
       constraints_[i] = std::move(result.constraints);
@@ -376,16 +423,12 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
 
-  // determine sizes
+  // Determine sizes
   for (int i = 0; i < N; i++) {
-    if (constraintPtr_.front() != nullptr) {
-      if (settings_.projectStateInputEqualityConstraints) {
-        ocpSize.numInputs[i] = constraints_[i].dfdu.cols();  // obtain size of u_tilde from constraint projection.
-      } else {
-        ocpSize.numIneqConstraints[i] = constraints_[i].f.rows();  // Declare as general inequalities
-      }
-    }
+    ocpSize.numIneqConstraints[i] = constraints_[i].f.size();
+    ocpSize.numInputs[i] = dynamics_[i].dfdu.cols();
   }
+  ocpSize.numIneqConstraints[N] = constraints_[N].f.size();
 
   // Prepare solver size
   hpipmInterface_.resize(std::move(ocpSize));
@@ -396,8 +439,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const scalar_a
   return totalPerformance;
 }
 
-PerformanceIndex MultipleShootingSolver::computePerformance(const scalar_array_t& time, const vector_t& initState, const vector_array_t& x,
-                                                            const vector_array_t& u) {
+PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState,
+                                                            const vector_array_t& x, const vector_array_t& u) {
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
@@ -414,14 +457,16 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const scalar_array_t
 
     int i = timeIndex++;
     while (i < N) {
-      workerPerformance +=
-          multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr, penaltyPtr_.get(),
-                                                            time[i], time[i + 1] - time[i], x[i], x[i + 1], u[i]);
+      const scalar_t ti = getIntervalStart(time[i]);
+      const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
+      workerPerformance += multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr,
+                                                                             penaltyPtr_.get(), ti, dt, x[i], x[i + 1], u[i]);
       i = timeIndex++;
     }
 
     if (i == N && terminalCostFunctionPtr_) {  // Only one worker will execute this
-      workerPerformance += multiple_shooting::computeTerminalPerformance(terminalCostFunctionPtr_.get(), constraintPtr, time[N], x[N]);
+      const scalar_t tN = getIntervalStart(time[N]);
+      workerPerformance += multiple_shooting::computeTerminalPerformance(terminalCostFunctionPtr_.get(), constraintPtr, tN, x[N]);
     }
 
     performance[thisWorker] = workerPerformance;
@@ -445,8 +490,9 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
   return std::sqrt(norm);
 }
 
-bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const scalar_array_t& timeDiscretization, const vector_t& initState,
-                                      const vector_array_t& dx, const vector_array_t& du, vector_array_t& x, vector_array_t& u) {
+bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                      const vector_t& initState, const vector_array_t& dx, const vector_array_t& du, vector_array_t& x,
+                                      vector_array_t& u) {
   /*
    * Filter linesearch based on:
    * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"

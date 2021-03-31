@@ -172,6 +172,11 @@ TEST(test_hpiphm_interface, with_constraints) {
   // Resize Interface
   ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
   std::fill(ocpSize.numIneqConstraints.begin(), ocpSize.numIneqConstraints.end(), nc);
+
+  // Set one of the constraints to empty
+  constraints[1] = ocs2::VectorFunctionLinearApproximation();
+  ocpSize.numIneqConstraints[1] = 0;
+
   hpipmInterface.resize(ocpSize);
 
   // Solve!
@@ -189,7 +194,9 @@ TEST(test_hpiphm_interface, with_constraints) {
 
   // Check constraints
   for (int k = 0; k < N; k++) {
-    ASSERT_TRUE(constraints[k].f.isApprox(-constraints[k].dfdx * xSol[k] - constraints[k].dfdu * uSol[k], 1e-9));
+    if (constraints[k].f.size() > 0) {
+      ASSERT_TRUE(constraints[k].f.isApprox(-constraints[k].dfdx * xSol[k] - constraints[k].dfdu * uSol[k], 1e-9));
+    }
   }
 }
 

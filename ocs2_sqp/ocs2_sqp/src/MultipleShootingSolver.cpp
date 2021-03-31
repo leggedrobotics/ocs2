@@ -72,7 +72,7 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
   }
 
   if (constraintPtr == nullptr) {
-    settings_.projectStateInputEqualityConstraints = false; // True does not make sense if there are no constraints.
+    settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
   }
 
   if (constraintPtr != nullptr && settings_.inequalityConstraintMu > 0) {
@@ -318,7 +318,7 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   vector_array_t uff;
   matrix_array_t controllerGain;
   if (settings_.useFeedbackPolicy) {
-	// see doc/LQR_full.pdf for detailed derivation for feedback terms
+    // see doc/LQR_full.pdf for detailed derivation for feedback terms
     uff.reserve(NupperBound);
     controllerGain.reserve(NupperBound);
     matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);

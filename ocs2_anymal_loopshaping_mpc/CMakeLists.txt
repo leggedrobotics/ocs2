@@ -71,7 +71,7 @@ find_package(cmake_clang_tools QUIET)
 if (cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling")
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_sqp_mpc_node ${PROJECT_NAME}_dummy_mrt_node
+    TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR

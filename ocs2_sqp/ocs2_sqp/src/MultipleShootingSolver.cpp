@@ -204,6 +204,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
   // Compute controller
   if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
+    // see doc/LQR_full.pdf for detailed derivation for feedback terms
     if (settings_.controllerFeedback) {
       matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
       vector_array_t uff;
@@ -247,7 +248,6 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
       primalSolution_.controllerPtr_.reset(
           new LinearController(primalSolution_.timeTrajectory_, std::move(uff), std::move(controllerGain)));
     } else {
-      // pure feedforward controller
       primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
     }
   }

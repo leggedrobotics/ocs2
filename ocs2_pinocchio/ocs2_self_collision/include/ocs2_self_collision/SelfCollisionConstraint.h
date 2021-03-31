@@ -35,10 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 #include <ocs2_self_collision/SelfCollision.h>
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
-
 namespace ocs2 {
-namespace mobile_manipulator {
 
 class SelfCollisionConstraint final : public StateConstraint {
  public:
@@ -70,5 +67,4 @@ class SelfCollisionConstraint final : public StateConstraint {
   std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
 };
 
-}  // namespace mobile_manipulator
 }  // namespace ocs2

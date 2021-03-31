@@ -59,7 +59,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.g_min, fieldName + ".g_min", verbose);
   loadData::loadPtreeValue(pt, settings.costTol, fieldName + ".costTol", verbose);
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
-  loadData::loadPtreeValue(pt, settings.controllerFeedback, fieldName + ".controllerFeedback", verbose);
+  loadData::loadPtreeValue(pt, settings.useFeedbackPolicy, fieldName + ".useFeedbackPolicy", verbose);
   auto integratorName = sensitivity_integrator::toString(settings.integratorType);
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);
   settings.integratorType = sensitivity_integrator::fromString(integratorName);

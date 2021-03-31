@@ -53,7 +53,7 @@ struct Settings {
   scalar_t costTol = 1e-4;
 
   // controller type
-  bool controllerFeedback = true;  // true to use feedback, false to use feedforward
+  bool useFeedbackPolicy = true;  // true to use feedback, false to use feedforward
 
   // QP subproblem solver settings
   hpipm_interface::Settings hpipmSettings = hpipm_interface::Settings();

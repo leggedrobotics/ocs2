@@ -103,7 +103,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMap(const ModelData projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+  void computeMap(const ModelData& projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
                   const vector_t& SvNext, const scalar_t& sNext, matrix_t& projectedKm, vector_t& projectedLv, matrix_t& Sm, vector_t& Sv,
                   scalar_t& s);
 
@@ -123,7 +123,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMapILQR(const ModelData projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+  void computeMapILQR(const ModelData& projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
                       const vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache, matrix_t& projectedKm,
                       vector_t& projectedLv, matrix_t& Sm, vector_t& Sv, scalar_t& s) const;
 
@@ -142,7 +142,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMapILEG(const ModelData projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+  void computeMapILEG(const ModelData& projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
                       const vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache, matrix_t& projectedKm,
                       vector_t& projectedLv, matrix_t& Sm, vector_t& Sv, scalar_t& s) const;
 

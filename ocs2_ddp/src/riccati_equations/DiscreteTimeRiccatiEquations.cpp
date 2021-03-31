@@ -47,7 +47,7 @@ void DiscreteTimeRiccatiEquations::setRiskSensitiveCoefficient(scalar_t riskSens
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DiscreteTimeRiccatiEquations::computeMap(const ModelData projectedModelData, const riccati_modification::Data& riccatiModification,
+void DiscreteTimeRiccatiEquations::computeMap(const ModelData& projectedModelData, const riccati_modification::Data& riccatiModification,
                                               const matrix_t& SmNext, const vector_t& SvNext, const scalar_t& sNext, matrix_t& projectedKm,
                                               vector_t& projectedLv, matrix_t& Sm, vector_t& Sv, scalar_t& s) {
   if (isRiskSensitive_) {
@@ -62,10 +62,11 @@ void DiscreteTimeRiccatiEquations::computeMap(const ModelData projectedModelData
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData projectedModelData, const riccati_modification::Data& riccatiModification,
-                                                  const matrix_t& SmNext, const vector_t& SvNext, const scalar_t& sNext,
-                                                  DiscreteTimeRiccatiData& dreCache, matrix_t& projectedKm, vector_t& projectedLv,
-                                                  matrix_t& Sm, vector_t& Sv, scalar_t& s) const {
+void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData& projectedModelData,
+                                                  const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+                                                  const vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache,
+                                                  matrix_t& projectedKm, vector_t& projectedLv, matrix_t& Sm, vector_t& Sv,
+                                                  scalar_t& s) const {
   // precomputation (1)
   dreCache.Sm_projectedHv_.noalias() = SmNext * projectedModelData.dynamicsBias_;
   dreCache.Sm_projectedAm_.noalias() = SmNext * projectedModelData.dynamics_.dfdx;
@@ -155,10 +156,11 @@ void DiscreteTimeRiccatiEquations::computeMapILQR(const ModelData projectedModel
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void DiscreteTimeRiccatiEquations::computeMapILEG(const ModelData projectedModelData, const riccati_modification::Data& riccatiModification,
-                                                  const matrix_t& SmNext, const vector_t& SvNext, const scalar_t& sNext,
-                                                  DiscreteTimeRiccatiData& dreCache, matrix_t& projectedKm, vector_t& projectedLv,
-                                                  matrix_t& Sm, vector_t& Sv, scalar_t& s) const {
+void DiscreteTimeRiccatiEquations::computeMapILEG(const ModelData& projectedModelData,
+                                                  const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+                                                  const vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache,
+                                                  matrix_t& projectedKm, vector_t& projectedLv, matrix_t& Sm, vector_t& Sv,
+                                                  scalar_t& s) const {
   dreCache.Sigma_Sv_.noalias() = projectedModelData.dynamicsCovariance_ * SvNext;
   dreCache.I_minus_Sm_Sigma_.setIdentity(projectedModelData.stateDim_, projectedModelData.stateDim_);
   dreCache.I_minus_Sm_Sigma_.noalias() -= SmNext * projectedModelData.dynamicsCovariance_;

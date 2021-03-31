@@ -3,7 +3,6 @@
 //
 
 #include <ros/init.h>
-#include <ros/package.h>
 
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
@@ -30,7 +29,6 @@ int main(int argc, char** argv) {
   // Robot interface
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-  // Set this one up.
   ocs2::multiple_shooting::Settings settings = ballbotInterface.sqpSettings();
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();

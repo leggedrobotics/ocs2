@@ -37,46 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
-                                            scalar_t eventDelta) {
-  assert(dt > 0);
-  assert(finalTime > initTime);
-  scalar_array_t timeDiscretization;
-
-  // Initialize
-  timeDiscretization.push_back(initTime);
-  scalar_t nextEventIdx = lookup::findIndexInTimeArray(eventTimes, initTime);
-
-  // Fill iteratively
-  scalar_t nextTime = timeDiscretization.back();
-  while (timeDiscretization.back() < finalTime) {
-    nextTime = nextTime + dt;
-    bool nextTimeIsEvent = false;
-
-    // Check if an event has passed
-    if (nextEventIdx < eventTimes.size() && nextTime >= eventTimes[nextEventIdx]) {
-      nextTime = eventTimes[nextEventIdx];
-      nextTimeIsEvent = true;
-      nextEventIdx++;
-    }
-
-    // Check if final time has passed
-    if (nextTime >= finalTime) {
-      nextTime = finalTime;
-      nextTimeIsEvent = false;
-    }
-
-    const scalar_t newTimePoint = nextTimeIsEvent ? nextTime + eventDelta : nextTime;
-    if (newTimePoint > timeDiscretization.back() + 0.5 * dt) {  // Minimum spacing hardcoded here to 0.5*dt, TODO: make parameter.
-      timeDiscretization.push_back(newTimePoint);
-    } else {  // Points are close together -> overwrite the old point
-      timeDiscretization.back() = newTimePoint;
-    }
-  }
-
-  return timeDiscretization;
-}
-
 Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
                                     CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
                                     bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,

@@ -47,7 +47,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   settings.n_input = 2;
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = true;
-  settings.controllerFeedback = true;
+  settings.useFeedbackPolicy = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;
@@ -102,7 +102,7 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   settings.n_input = 2;
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = false;  // <- false to turn off projection of state-input equalities
-  settings.controllerFeedback = true;
+  settings.useFeedbackPolicy = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;

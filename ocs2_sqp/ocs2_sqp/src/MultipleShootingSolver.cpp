@@ -71,6 +71,10 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
     }
   }
 
+  if (constraintPtr == nullptr) {
+    settings_.projectStateInputEqualityConstraints = false; // True does not make sense if there are no constraints.
+  }
+
   if (constraintPtr != nullptr && settings_.inequalityConstraintMu > 0) {
     penaltyPtr_.reset(new RelaxedBarrierPenalty(settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta));
   }

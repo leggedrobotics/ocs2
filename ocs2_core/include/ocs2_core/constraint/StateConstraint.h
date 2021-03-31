@@ -32,13 +32,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <type_traits>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/constraint/ConstraintOrder.h>
 
 namespace ocs2 {
 
 /** State-only constraint function base class */
 class StateConstraint {
  public:
-  StateConstraint() = default;
+  explicit StateConstraint(ConstraintOrder order) : order_(order) {}
   virtual ~StateConstraint() = default;
   virtual StateConstraint* clone() const = 0;
 
@@ -48,6 +49,9 @@ class StateConstraint {
   /** Check constraint activity */
   bool isActive() const { return active_; }
 
+  /** Get the constraint order (Linear or Quadratic) */
+  constexpr ConstraintOrder getOrder() const { return order_; };
+
   /** Get the size of the constraint vector at given time */
   virtual size_t getNumConstraints(scalar_t time) const = 0;
 
@@ -56,18 +60,23 @@ class StateConstraint {
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Linear approximation not implemented");
+    if (order_ == ConstraintOrder::Linear) {
+      throw std::runtime_error("[StateConstraint] Linear approximation not implemented!");
+    } else {
+      throw std::runtime_error("[StateConstraint] The class only provides Quadratic approximationn! call getQuadraticApproximation()");
+    }
   }
 
   /** Get the constraint quadratic approximation */
   virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented");
+    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented!");
   }
 
  protected:
   StateConstraint(const StateConstraint& rhs) = default;
 
  private:
+  ConstraintOrder order_;
   bool active_ = true;
 };
 

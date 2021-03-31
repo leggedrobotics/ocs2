@@ -36,8 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-enum class ConstraintOrder { Linear, Quadratic };
-
 /**
  *   A helper class that implements the cost penalty for general constraint
  *   \f$ h_i(x, u) \quad \forall  i \in [1,..,M] \f$

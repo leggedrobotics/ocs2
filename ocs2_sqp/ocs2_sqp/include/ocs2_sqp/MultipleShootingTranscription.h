@@ -41,32 +41,6 @@ namespace ocs2 {
 namespace multiple_shooting {
 
 /**
- * Decides on time discretization along the horizon. Tries to makes step of dt, but will also ensure that eventtimes are part of the
- * discretization.
- *
- *   A simple example here illustrates the mission of this function
- *
- *  Assume:
- *    eventTimes = {3.25, 3.4, 3.88, 4.02, 4.5}
- *    initTime = 3.0
- *    finalTime = 4.0
- *    dt = 0.1
- *    eps = eventDelta
- *
- *  Then the following variables will be:
- *    timeDiscretization = {3.0, 3.1, 3.2, 3.25 + eps, 3.35, 3.4 + eps, 3.5, 3.6, 3.7, 3.8, 3.88 + eps, 3.98, 4.0}
- *
- * @param initTime : start time.
- * @param finalTime : final time.
- * @param dt : desired descretization step.
- * @param eventTimes : Event times where a time discretization must be made.
- * @param eventDelta : Time added after a event time, to make lookup work.
- * @return vector of discrete time points
- */
-scalar_array_t timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt, const scalar_array_t& eventTimes,
-                                            scalar_t eventDelta);
-
-/**
  * Results of the transcription at an intermediate node
  */
 struct Transcription {

@@ -47,6 +47,7 @@ add_library(${PROJECT_NAME}
   src/MultipleShootingSettings.cpp
   src/MultipleShootingSolver.cpp
   src/MultipleShootingTranscription.cpp
+  src/TimeDiscretization.cpp
   )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -92,6 +93,7 @@ catkin_add_gtest(test_${PROJECT_NAME}
   test/testCircularKinematics.cpp
   test/testDiscretization.cpp
   test/testProjection.cpp
+  test/testSwitchedProblem.cpp
   test/testTranscription.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})

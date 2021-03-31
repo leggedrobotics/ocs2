@@ -39,7 +39,9 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 SelfCollisionConstraint::SelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
                                                  PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
-    : selfCollision_(std::move(pinocchioGeometryInterface), minimumDistance), mappingPtr_(mapping.clone()) {}
+    : StateConstraint(ConstraintOrder::Linear),
+      selfCollision_(std::move(pinocchioGeometryInterface), minimumDistance),
+      mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

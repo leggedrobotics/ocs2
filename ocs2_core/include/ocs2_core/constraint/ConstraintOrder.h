@@ -4,14 +4,14 @@ Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- * Redistributions of source code must retain the above copyright notice, this
+* Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
- * Redistributions in binary form must reproduce the above copyright notice,
+* Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
- * Neither the name of the copyright holder nor the names of its
+* Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -29,28 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-
-#include <ocs2_mobile_manipulator_example/definitions.h>
-
-#include <ocs2_core/constraint/StateInputConstraint.h>
-
 namespace ocs2 {
-namespace mobile_manipulator {
 
-class JointVelocityLimits final : public StateInputConstraint {
- public:
-  JointVelocityLimits() : StateInputConstraint(ConstraintOrder::Linear) {}
-  ~JointVelocityLimits() override = default;
-  JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
+enum class ConstraintOrder { Linear, Quadratic };
 
-  size_t getNumConstraints(scalar_t time) const override { return INPUT_DIM; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
-
- private:
-  JointVelocityLimits(const JointVelocityLimits& other) = default;
-};
-
-}  // namespace mobile_manipulator
 }  // namespace ocs2

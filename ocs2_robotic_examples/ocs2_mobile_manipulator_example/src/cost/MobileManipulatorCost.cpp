@@ -299,7 +299,7 @@ std::unique_ptr<StateCost> MobileManipulatorCost::getEndEffectorCost(const std::
   std::generate_n(penaltyArray.begin() + 3, 3,
                   [&] { return std::unique_ptr<PenaltyFunctionBase>(new QuadraticPenaltyFunction(muOrientation)); });
 
-  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penaltyArray), ConstraintOrder::Linear));
+  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penaltyArray)));
 }
 
 /******************************************************************************************************/
@@ -344,8 +344,7 @@ std::unique_ptr<StateCost> MobileManipulatorCost::getSelfCollisionCost(const std
 
   auto penalty = std::unique_ptr<PenaltyFunctionBase>(new RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyFunction::Config(mu, delta)));
 
-  return std::unique_ptr<StateCost>(
-      new StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty), ConstraintOrder::Linear));
+  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty)));
 }
 
 /******************************************************************************************************/
@@ -378,8 +377,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorCost::getJointVelocityLimitCost
   }
 
   std::unique_ptr<StateInputConstraint> constraintPtr(new JointVelocityLimits);
-  return std::unique_ptr<StateInputCost>(
-      new StateInputSoftConstraint(std::move(constraintPtr), std::move(penaltyArray), ConstraintOrder::Linear));
+  return std::unique_ptr<StateInputCost>(new StateInputSoftConstraint(std::move(constraintPtr), std::move(penaltyArray)));
 }
 
 }  // namespace mobile_manipulator

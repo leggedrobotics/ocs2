@@ -72,10 +72,13 @@ scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state
 ScalarFunctionQuadraticApproximation StateInputSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                          const vector_t& input,
                                                                                          const CostDesiredTrajectories&) const {
-  if (constraintPtr_->getOrder() == ConstraintOrder::Linear) {
-    return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, input));
-  } else {  // constraintPtr_->getOrder() == ConstraintOrder::Quadratic
-    return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, input));
+  switch (constraintPtr_->getOrder()) {
+    case ConstraintOrder::Linear:
+      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, input));
+    case ConstraintOrder::Quadratic:
+      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, input));
+    default:
+      throw std::runtime_error("[StateInputSoftConstraint] Unknown constraint Order");
   }
 }
 

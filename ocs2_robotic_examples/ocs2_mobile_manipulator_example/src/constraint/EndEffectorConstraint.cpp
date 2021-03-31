@@ -38,7 +38,8 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics)
-    : eeDesiredPosition_(vector3_t::Zero()),
+    : StateConstraint(ConstraintOrder::Linear),
+      eeDesiredPosition_(vector3_t::Zero()),
       eeDesiredOrientation_(1.0, 0.0, 0.0, 0.0),
       endEffectorKinematicsPtr_(endEffectorKinematics.clone()) {
   assert(endEffectorKinematics.getIds().size() == 1);

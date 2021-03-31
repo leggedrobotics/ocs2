@@ -284,11 +284,13 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   }
 
   // remap the tilde delta u to real delta u
-  if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
+  if (settings_.projectStateInputEqualityConstraints) {
     for (int i = 0; i < deltaUSol.size(); i++) {
-      deltaUSol[i] = constraints_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
-      deltaUSol[i].noalias() += constraints_[i].dfdx * deltaXSol[i];
-      deltaUSol[i] += constraints_[i].f;
+      if (constraintsProjection_[i].f.size() > 0) {
+        deltaUSol[i] = constraintsProjection_[i].dfdu * deltaUSol[i];  // creates a temporary because of alias
+        deltaUSol[i].noalias() += constraintsProjection_[i].dfdx * deltaXSol[i];
+        deltaUSol[i] += constraintsProjection_[i].f;
+      }
     }
   }
 
@@ -311,7 +313,7 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   // Compute feedback, before x and u are moved to primal solution
   vector_array_t uff;
   matrix_array_t controllerGain;
-  if (settings_.controllerFeedback) {
+  if (settings_.useFeedbackPolicy) {
     uff.reserve(NupperBound);
     controllerGain.reserve(NupperBound);
     matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
@@ -324,9 +326,9 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
       // Linear controller has convention u = uff + K * x;
       // We computed u = u'(t) + K (x - x'(t));
       // >> uff = u'(t) - K x'(t)
-      if (constraintPtr_.front() && settings_.projectStateInputEqualityConstraints) {
-        controllerGain.push_back(std::move(constraints_[i].dfdx));  // Steal! the constrained-space feedback matrix, don't use after this.
-        controllerGain.back().noalias() += constraints_[i].dfdu * KMatrices[i];
+      if (constraintsProjection_[i].f.size() > 0) {
+        controllerGain.push_back(std::move(constraintsProjection_[i].dfdx));  // Steal! Don't use after this.
+        controllerGain.back().noalias() += constraintsProjection_[i].dfdu * KMatrices[i];
       } else {
         controllerGain.push_back(std::move(KMatrices[i]));
       }
@@ -355,7 +357,7 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   primalSolution_.modeSchedule_ = this->getModeSchedule();
 
   // Assign controller
-  if (settings_.controllerFeedback) {
+  if (settings_.useFeedbackPolicy) {
     primalSolution_.controllerPtr_.reset(new LinearController(primalSolution_.timeTrajectory_, std::move(uff), std::move(controllerGain)));
   } else {
     primalSolution_.controllerPtr_.reset(new FeedforwardController(primalSolution_.timeTrajectory_, primalSolution_.inputTrajectory_));
@@ -374,6 +376,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   dynamics_.resize(N);
   cost_.resize(N + 1);
   constraints_.resize(N + 1);
+  constraintsProjection_.resize(N);
 
   std::atomic_int workerId{0};
   std::atomic_int timeIndex{0};
@@ -384,18 +387,19 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
     CostFunctionBase& costFunction = *costFunctionPtr_[thisWorker];
     ConstraintBase* constraintPtr = constraintPtr_[thisWorker].get();
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
-    const bool project = settings_.projectStateInputEqualityConstraints;
+    const bool projection = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
     while (i < N) {
       const scalar_t ti = getIntervalStart(time[i]);
       const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
       auto result = multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr,
-                                                             penaltyPtr_.get(), project, ti, dt, x[i], x[i + 1], u[i]);
+                                                             penaltyPtr_.get(), projection, ti, dt, x[i], x[i + 1], u[i]);
       workerPerformance += result.performance;
       dynamics_[i] = std::move(result.dynamics);
       cost_[i] = std::move(result.cost);
       constraints_[i] = std::move(result.constraints);
+      constraintsProjection_[i] = std::move(result.constraintsProjection);
       i = timeIndex++;
     }
 
@@ -414,16 +418,12 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
 
-  // determine sizes
+  // Determine sizes
   for (int i = 0; i < N; i++) {
-    if (constraintPtr_.front() != nullptr) {
-      if (settings_.projectStateInputEqualityConstraints) {
-        ocpSize.numInputs[i] = constraints_[i].dfdu.cols();  // obtain size of u_tilde from constraint projection.
-      } else {
-        ocpSize.numIneqConstraints[i] = constraints_[i].f.rows();  // Declare as general inequalities
-      }
-    }
+    ocpSize.numIneqConstraints[i] = constraints_[i].f.size();
+    ocpSize.numInputs[i] = dynamics_[i].dfdu.cols();
   }
+  ocpSize.numIneqConstraints[N] = constraints_[N].f.size();
 
   // Prepare solver size
   hpipmInterface_.resize(std::move(ocpSize));

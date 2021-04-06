@@ -108,11 +108,11 @@ class MultipleShootingSolver : public SolverBase {
   std::string getBenchmarkingInformation() const;
 
   /** Returns initial guess for the state trajectory */
-  vector_array_t initializeStateTrajectory(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization, int N) const;
+  vector_array_t initializeStateTrajectory(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization) const;
 
   /** Returns initial guess for the input trajectory */
-  vector_array_t initializeInputTrajectory(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& stateTrajectory,
-                                           int N) const;
+  vector_array_t initializeInputTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
+                                           const vector_array_t& stateTrajectory) const;
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,

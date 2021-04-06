@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class TestStateConstraint : public ocs2::StateConstraintCppAd {
  public:
   TestStateConstraint() : ocs2::StateConstraintCppAd(ocs2::ConstraintOrder::Quadratic) {
-    initialize(2, "TestStateConstraint", "/tmp/ocs2", true, false);
+    initialize(2, 0, "TestStateConstraint", "/tmp/ocs2", true, false);
   }
   ~TestStateConstraint() override = default;
   TestStateConstraint* clone() const override { return new TestStateConstraint(*this); }
@@ -77,7 +77,7 @@ TEST(TestStateConstraintCppAd, getValue) {
 class TestStateInputConstraint : public ocs2::StateInputConstraintCppAd {
  public:
   TestStateInputConstraint() : ocs2::StateInputConstraintCppAd(ocs2::ConstraintOrder::Quadratic) {
-    initialize(2, 1, "TestStateInputConstraint", "/tmp/ocs2", true, false);
+    initialize(2, 1, 0, "TestStateInputConstraint", "/tmp/ocs2", true, false);
   }
   ~TestStateInputConstraint() override = default;
   TestStateInputConstraint* clone() const override { return new TestStateInputConstraint(*this); }

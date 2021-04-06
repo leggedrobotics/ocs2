@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StateConstraintCppAd::initialize(size_t stateDim, const std::string& modelName, const std::string& modelFolder,
+void StateConstraintCppAd::initialize(size_t stateDim, size_t parameterDim, const std::string& modelName, const std::string& modelFolder,
                                       bool recompileLibraries, bool verbose) {
   auto constraintAd = [=](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     assert(x.rows() = 1 + stateDim);
@@ -42,7 +42,7 @@ void StateConstraintCppAd::initialize(size_t stateDim, const std::string& modelN
     const ad_vector_t state = x.tail(stateDim);
     y = this->constraintFunction(time, state, p);
   };
-  adInterfacePtr_.reset(new ocs2::CppAdInterface(constraintAd, 1 + stateDim, getNumParameters(), modelName, modelFolder));
+  adInterfacePtr_.reset(new ocs2::CppAdInterface(constraintAd, 1 + stateDim, parameterDim, modelName, modelFolder));
 
   ocs2::CppAdInterface::ApproximationOrder orderCppAd;
   if (getOrder() == ConstraintOrder::Linear) {
@@ -85,8 +85,6 @@ VectorFunctionLinearApproximation StateConstraintCppAd::getLinearApproximation(s
   tapedTimeState << time, state;
 
   constraint.f = adInterfacePtr_->getFunctionValue(tapedTimeState, params);
-  const size_t numConstraints = constraint.f.rows();
-
   const matrix_t J = adInterfacePtr_->getJacobian(tapedTimeState, params);
   constraint.dfdx = J.rightCols(stateDim);
 
@@ -109,17 +107,16 @@ VectorFunctionQuadraticApproximation StateConstraintCppAd::getQuadraticApproxima
   tapedTimeState << time, state;
 
   constraint.f = adInterfacePtr_->getFunctionValue(tapedTimeState, params);
-  const size_t numConstraints = constraint.f.rows();
-
   const matrix_t J = adInterfacePtr_->getJacobian(tapedTimeState, params);
   constraint.dfdx = J.rightCols(stateDim);
 
+  const size_t numConstraints = constraint.f.rows();
   constraint.dfdxx.resize(numConstraints);
   constraint.dfdux.resize(numConstraints);
   constraint.dfduu.resize(numConstraints);
   for (int i = 0; i < numConstraints; i++) {
     const matrix_t H = adInterfacePtr_->getHessian(i, tapedTimeState, params);
-    constraint.dfdxx[i] = H.block(1, 1, stateDim, stateDim);
+    constraint.dfdxx[i] = H.bottomRightCorner(stateDim, stateDim);
   }
 
   return constraint;

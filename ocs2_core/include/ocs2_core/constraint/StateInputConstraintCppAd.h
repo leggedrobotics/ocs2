@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/** CppAD state-input constraint base class*/
 class StateInputConstraintCppAd : public StateInputConstraint {
  public:
   explicit StateInputConstraintCppAd(ConstraintOrder order) : StateInputConstraint(order) {}
@@ -46,25 +47,19 @@ class StateInputConstraintCppAd : public StateInputConstraint {
   /** Initialize the CppAd interface
    * @param stateDim : state vector dimension.
    * @param inputDim : input vector dimension.
+   * @param parameterDim : parameter vector dimension, set to 0 if getParameters() is not used.
    * @param modelName : Name of the generate model library.
    * @param modelFolder : Folder where the model library files are saved.
    * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
    * @param verbose : Print information.
    */
-  void initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
-                  bool recompileLibraries = true, bool verbose = true);
+  void initialize(size_t stateDim, size_t inputDim, size_t parameterDim, const std::string& modelName,
+                  const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
-  /** The CppAD constraint function */
-  virtual ad_vector_t constraintFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                         const ad_vector_t& parameters) const = 0;
-
-  /* Get the number of parameters */
-  virtual size_t getNumParameters() const { return 0; };
-
-  /* Get the parameter vector */
+  /** Get the parameter vector */
   virtual vector_t getParameters(scalar_t time) const { return vector_t(0); };
 
-  /* Constraint evaluation */
+  /** Constraint evaluation */
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
@@ -72,6 +67,10 @@ class StateInputConstraintCppAd : public StateInputConstraint {
 
  protected:
   StateInputConstraintCppAd(const StateInputConstraintCppAd& rhs);
+
+  /** The CppAD constraint function */
+  virtual ad_vector_t constraintFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                         const ad_vector_t& parameters) const = 0;
 
  private:
   std::unique_ptr<ocs2::CppAdInterface> adInterfacePtr_;

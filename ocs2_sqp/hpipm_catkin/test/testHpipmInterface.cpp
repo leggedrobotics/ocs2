@@ -221,8 +221,9 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
 
   // store the true cost-to-go and feedback/feedforward terms
   std::vector<ocs2::matrix_t> SmSolGiven(N + 1);
-  std::vector<ocs2::matrix_t> KSolGiven(N);
   std::vector<ocs2::vector_t> svSolGiven(N + 1);
+  std::vector<ocs2::scalar_t> s0SolGiven(N + 1, 0.0);  // Currently always returns zero, but we check that it exactly does.
+  std::vector<ocs2::matrix_t> KSolGiven(N);
   std::vector<ocs2::vector_t> kSolGiven(N);
 
   // Discrete time Riccati recursion
@@ -267,15 +268,18 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   const auto CostToGo = hpipmInterface.getRiccatiCostToGo(system[0], cost[0]);
   std::vector<ocs2::matrix_t> SmSol(N + 1);
   std::vector<ocs2::vector_t> svSol(N + 1);
+  std::vector<ocs2::scalar_t> s0Sol(N + 1);
   for (int i = 0; i < (N + 1); i++) {
     SmSol[i] = CostToGo[i].dfdxx;
     svSol[i] = CostToGo[i].dfdx;
+    s0Sol[i] = CostToGo[i].f;
   }
 
   // Compare the two vector/matrix trajectory
   ASSERT_TRUE(ocs2::qp_solver::isEqual(SmSolGiven, SmSol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(KSolGiven, KSol, 1e-9));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(svSolGiven, svSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(s0SolGiven, s0Sol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(KSolGiven, KSol, 1e-9));
   ASSERT_TRUE(ocs2::qp_solver::isEqual(kSolGiven, kSol, 1e-9));
 
   // Check self-consistency of returned elements in u = K * x + k

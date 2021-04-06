@@ -91,12 +91,12 @@ class HpipmInterface {
    * Return the Riccati cost-to-go for the previously solved problem.
    * Extra information about the initial stage is needed to complete calculation.
    *
-   * Cost-to-go at node i is: V_k(x) = 0.5 * x' * dfdxx * x + x' * dfdx + f
-   * The value for f is set to 0.0 because it is expensive to compute and often not needed.
+   * Cost-to-go at a node is: V_k(x) = 0.5 * x' * dfdxx * x + x' * dfdx + f
+   * For the moment, the value for f is set to 0.0 because it is expensive to compute and often not needed.
    *
    * @param dynamics0 : dynamics at k = 0
    * @param cost0 : cost at k = 0
-   * @return The quadratic cost-to-go function.
+   * @return Sequence quadratic cost-to-go's.
    */
   std::vector<ScalarFunctionQuadraticApproximation> getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,
                                                                        const ScalarFunctionQuadraticApproximation& cost0);

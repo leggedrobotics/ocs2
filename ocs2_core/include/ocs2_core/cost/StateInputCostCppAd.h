@@ -34,40 +34,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/Types.h>
-#include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/StateInputCost.h>
 
 namespace ocs2 {
 
-/** CppAD state-only cost base class*/
-class StateCostCppAd : public StateCost {
+/** CppAD state-input cost base class*/
+class StateInputCostCppAd : public StateInputCost {
  public:
-  StateCostCppAd() = default;
-  ~StateCostCppAd() override = default;
+  StateInputCostCppAd() = default;
+  ~StateInputCostCppAd() override = default;
 
   /** Initialize the CppAd interface
    * @param stateDim : state vector dimension.
+   * @param inputDim : state vector dimension.
    * @param parameterDim : paramter vector dimension, set to 0 if getParameters() is not used.
    * @param modelName : Name of the generate model library.
    * @param modelFolder : Folder where the model library files are saved.
    * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
    * @param verbose : Print information.
    */
-  void initialize(size_t stateDim, size_t parameterDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
-                  bool recompileLibraries = true, bool verbose = true);
+  void initialize(size_t stateDim, size_t inputDim, size_t parameterDim, const std::string& modelName,
+                  const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
   /** The CppAD cost function */
-  virtual ad_scalar_t costFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const = 0;
+  virtual ad_scalar_t costFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                   const ad_vector_t& parameters) const = 0;
 
-  /* Get the parameter vector */
+  /** Get the parameter vector */
   virtual vector_t getParameters(scalar_t time, const CostDesiredTrajectories& desiredTrajectory) const { return vector_t(0); };
 
-  /* Cost evaluation */
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const override;
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+  /** Cost evaluation */
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                    const CostDesiredTrajectories& desiredTrajectory) const override;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                  const CostDesiredTrajectories& desiredTrajectory) const override;
 
  protected:
-  StateCostCppAd(const StateCostCppAd& rhs);
+  StateInputCostCppAd(const StateInputCostCppAd& rhs);
 
  private:
   std::unique_ptr<ocs2::CppAdInterface> adInterfacePtr_;

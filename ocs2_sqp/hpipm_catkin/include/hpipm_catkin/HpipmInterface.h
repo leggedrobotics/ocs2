@@ -96,7 +96,7 @@ class HpipmInterface {
    *
    * @param dynamics0 : dynamics at k = 0
    * @param cost0 : cost at k = 0
-   * @return Sequence quadratic cost-to-go's.
+   * @return Sequence of quadratic cost-to-go's.
    */
   std::vector<ScalarFunctionQuadraticApproximation> getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,
                                                                        const ScalarFunctionQuadraticApproximation& cost0);

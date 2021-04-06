@@ -134,6 +134,14 @@ inline bool isEqual(const vector_t& lhs, const vector_t& rhs, scalar_t tol = Eig
 }
 
 /**
+ * Compares two scalars on equality in way that is consistent with the check for vectors.
+ * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
+ */
+inline bool isEqual(const scalar_t& lhs, const scalar_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+  return isEqual((vector_t(1) << lhs).finished(), (vector_t(1) << rhs).finished(), tol);
+}
+
+/**
  * Compares two Eigen matrices on equality.
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  */
@@ -150,19 +158,10 @@ inline bool isEqual(const matrix_t& lhs, const matrix_t& rhs, scalar_t tol = Eig
  * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
  * @return Vectors are of equal length and equal values.
  */
-inline bool isEqual(const vector_array_t& v0, const vector_array_t& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+template <typename T>
+inline bool isEqual(const std::vector<T>& v0, const std::vector<T>& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
   return (v0.size() == v1.size()) &&
-         std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const vector_t& lhs, const vector_t& rhs) { return isEqual(lhs, rhs, tol); });
-}
-
-/**
- * Compares two trajectories on element-wise approximate equality
- * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
- * @return Matrices are of equal length and equal values.
- */
-inline bool isEqual(const matrix_array_t& v0, const matrix_array_t& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
-  return (v0.size() == v1.size()) &&
-         std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const matrix_t& lhs, const matrix_t& rhs) { return isEqual(lhs, rhs, tol); });
+         std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const T& lhs, const T& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
 /** Checks QP feasibility and numerical conditioning */

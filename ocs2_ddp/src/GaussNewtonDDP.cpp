@@ -1135,7 +1135,7 @@ void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& const
 
     // dynamics bias
     projectedModelData.dynamicsBias_ = modelData.dynamicsBias_;
-    projectedModelData.dynamicsBias_.noalias() += modelData.dynamics_.dfdu * projectedModelData.stateInputEqConstr_.f;
+    projectedModelData.dynamicsBias_.noalias() += modelData.dynamics_.dfdu * u0;
 
     // cost
     projectedModelData.cost_ = modelData.cost_;

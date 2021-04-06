@@ -26,6 +26,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
+
 #include "hpipm_catkin/HpipmInterface.h"
 
 extern "C" {
@@ -312,8 +313,7 @@ class HpipmInterface::Impl {
 
   matrix_array_t getRiccatiFeedback(const VectorFunctionLinearApproximation& dynamics0, const ScalarFunctionQuadraticApproximation& cost0) {
     const int N = ocpSize_.numStages;
-    matrix_array_t RiccatiFeedback;
-    RiccatiFeedback.resize(N);
+    matrix_array_t RiccatiFeedback(N);
 
     // k = 0, state is not a decision variable. Reconstruct backward pass from k = 1
     matrix_t P1(ocpSize_.numStates[1], ocpSize_.numStates[1]);
@@ -345,8 +345,7 @@ class HpipmInterface::Impl {
   vector_array_t getRiccatiFeedforward(const VectorFunctionLinearApproximation& dynamics0,
                                        const ScalarFunctionQuadraticApproximation& cost0) {
     const int N = ocpSize_.numStages;
-    vector_array_t RiccatiFeedforward;
-    RiccatiFeedforward.resize(N);
+    vector_array_t RiccatiFeedforward(N);
 
     // k = 0, state is not a decision variable. Reconstruct backward pass from k = 1
     matrix_t P1(ocpSize_.numStates[1], ocpSize_.numStates[1]);
@@ -374,19 +373,13 @@ class HpipmInterface::Impl {
 
   std::vector<ScalarFunctionQuadraticApproximation> getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,
                                                                        const ScalarFunctionQuadraticApproximation& cost0) {
-    /**
-     * return N+1 element of Riccati cost-to-go information
-     * Value function at stage i is: V_i(z) = z' * P_i * z + z' * p_i + c_i
-     * RiccatiCostToGo[i].dfdxx = P_i
-     * RiccatiCostToGo[i].dfdx = p_i
-     * RiccatiCostToGo[i].f = c_i (TODO: not implemented yet, because no direct getter from hpipm)
-     * RiccatiCostToGo[i].dfduu, RiccatiCostToGo[i].dfdu contains nothing
+    /*
+     * Note on notation: HPIPM uses P, p for the cost-to-go, where we use Sm, sv
      */
     const int N = ocpSize_.numStages;
-    std::vector<ScalarFunctionQuadraticApproximation> RiccatiCostToGo;
-    RiccatiCostToGo.resize(N + 1);
+    std::vector<ScalarFunctionQuadraticApproximation> RiccatiCostToGo(N + 1);
 
-    // k > 1, this first so we have P[1] ready for P[0].
+    // k > 0, this first so we have P[1] ready for P[0].
     for (int k = 1; k <= N; k++) {
       RiccatiCostToGo[k].dfdxx.resize(ocpSize_.numStates[k], ocpSize_.numStates[k]);
       RiccatiCostToGo[k].dfdx.resize(ocpSize_.numStates[k]);

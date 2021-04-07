@@ -44,8 +44,7 @@ solution solve(const SystemDynamicsBase& systemDynamics, const CostFunctionBase&
 
   // --- Form the Linear quadratic approximation ---
   ConstraintBase noConstraint;
-  bool checkNumericalCharacteristics = true;
-  LinearQuadraticApproximator lqapprox(systemDynamics, noConstraint, costFunctionBase, checkNumericalCharacteristics);
+  LinearQuadraticApproximator lqapprox(systemDynamics, noConstraint, costFunctionBase, settings.checkNumericalCharacteristics);
 
   // Obtain model data at the provided reference
   ModelData modelData;
@@ -70,8 +69,7 @@ solution solve(const SystemDynamicsBase& systemDynamics, const CostFunctionBase&
   const matrix_t Q = modelData.cost_.dfdxx - PT_Rinv_P;
 
   // The permuted Hamiltonian is the initial point of the iterative algorithm
-  matrix_t W(2 * stateDim, 2 * stateDim);
-  W << -Q, -A.transpose(), -A, B_Rinv_BT;
+  matrix_t W = (matrix_t(2 * stateDim, 2 * stateDim) << -Q, -A.transpose(), -A, B_Rinv_BT).finished();
 
   // --- Solve CARE ---
 
@@ -80,19 +78,22 @@ solution solve(const SystemDynamicsBase& systemDynamics, const CostFunctionBase&
   matrix_t dW(2 * stateDim, 2 * stateDim);
   matrix_t JWinvJ(2 * stateDim, 2 * stateDim);
 
-  const scalar_t exponent = 1.0 / (2.0 * stateDim);
-  scalar_t Wnorm = 0.0;
+  const scalar_t exponent = 0.5 / stateDim;
+  scalar_t Wnorm;
   size_t iter = 0;
   do {
     // Store scale of current iteration
     Wnorm = W.norm();
 
     // Prepare update: W(k+1) = 1/(2c) * (W(k) + c^2 * J *  inv(W(k)) * J)
-    scalar_t c = std::pow(std::abs(W.determinant()), exponent);
-    Winv = W.inverse();
+    // W(k+1) - W(k) = c1 * W(k) + c2 *  J *  inv(W(k)) * J
+    const scalar_t c = std::pow(std::abs(W.determinant()), exponent);
+    const scalar_t c1 = 0.5 / c - 1.0;
+    const scalar_t c2 = 0.5 * c;
+    Winv = W.partialPivLu().inverse();
     JWinvJ << -Winv.bottomRightCorner(stateDim, stateDim), Winv.bottomLeftCorner(stateDim, stateDim),
         Winv.topRightCorner(stateDim, stateDim), -Winv.topLeftCorner(stateDim, stateDim);  // Implement J * Winv * J, with J = [0, I; -I 0]
-    dW = (1.0 - 2.0 * c) / (2.0 * c) * W + 0.5 * c * JWinvJ;
+    dW = c1 * W + c2 * JWinvJ;
 
     // Apply update
     W += dW;

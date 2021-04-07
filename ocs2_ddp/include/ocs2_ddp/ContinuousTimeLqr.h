@@ -48,6 +48,8 @@ struct Settings {
   scalar_t tolerance = 1e-12;
   /** Maximum number of iterations */
   size_t maxIter = 100;
+  /** Check numerical characteristic of the linear quadratic approximation */
+  bool checkNumericalCharacteristics = true;
 };
 
 /**
@@ -56,7 +58,7 @@ struct Settings {
  * The problem is solved based on the linear quadratic approximation at a given time, state, and input.
  * It is assumed that the provided linearization point is an equilibrium of the system and the minimum of the cost function.
  *
- * The solution is provided in terms the feedback gain \delta u = -K \delta x, and value function matrix S s.t. J = 0.5 \delta x S \delta x
+ * The solution is provided in terms the feedback gain \delta u = K \delta x, and value function matrix S s.t. J = 0.5 \delta x S \delta x
  *
  *  Implements "Algorithm 13.5.6. The Matrix Sign Function Algorithm for the CARE" from the following reference:
  *      CHAPTER 13 - NUMERICAL SOLUTIONS AND CONDITIONING OF ALGEBRAIC RICCATI EQUATIONS,

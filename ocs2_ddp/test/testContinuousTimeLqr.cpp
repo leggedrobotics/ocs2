@@ -40,35 +40,28 @@ using namespace ocs2;
 
 TEST(testContinousTimeLqr, compareWithMatlab) {
   // Set up problem with arbitrary values
-  matrix_t A(2, 2);
-  A << 1.0, 2.0, 3.0, 4.0;
-  matrix_t B(2, 1);
-  B << 5.0, 6.0;
+  const matrix_t A = (matrix_t(2, 2) << 1.0, 2.0, 3.0, 4.0).finished();
+  const matrix_t B = (matrix_t(2, 1) << 5.0, 6.0).finished();
   LinearSystemDynamics dynamics(A, B);
 
-  matrix_t Q(2, 2);
-  Q << 3.0, 2.0, 2.0, 4.0;
-  matrix_t R(1, 1);
-  R << 5.0;
-  matrix_t P(1, 2);
-  P << 0.1, 0.2;
-  matrix_t QFinal = matrix_t::Zero(2, 2);
+  const matrix_t Q = (matrix_t(2, 2) << 3.0, 2.0, 2.0, 4.0).finished();
+  const matrix_t R = (matrix_t(1, 1) << 5.0).finished();
+  const matrix_t P = (matrix_t(1, 2) << 0.1, 0.2).finished();
+  const matrix_t QFinal = matrix_t::Zero(2, 2);
   QuadraticCostFunction cost(Q, R, QFinal, P);
 
-  scalar_t time = 0.0;
-  vector_t state = vector_t::Zero(2);
-  vector_t input = vector_t::Zero(1);
-  CostDesiredTrajectories costDesiredTrajectories({time}, {state}, {input});
+  const scalar_t time = 0.0;
+  const vector_t state = vector_t::Zero(2);
+  const vector_t input = vector_t::Zero(1);
+  const CostDesiredTrajectories costDesiredTrajectories({time}, {state}, {input});
   cost.setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
 
   // Solve LQR
-  auto lqrSolution = continuous_time_lqr::solve(dynamics, cost, time, state, input);
+  const auto lqrSolution = continuous_time_lqr::solve(dynamics, cost, time, state, input);
 
-  // MATLAB results
-  matrix_t K_check(1, 2);
-  K_check << -0.905054653909129, -1.802904101100247;  // Matlab returns positive gains, ocs2 computes the negative gains.
-  matrix_t S_check(2, 2);
-  S_check << 1.109884545577592, -0.187358243057052, -0.187358243057052, 1.625218620131083;
+  // MATLAB results, notice sign difference with MATLAB, ocs2 computes K for u = K * x
+  const matrix_t K_check = (matrix_t(1, 2) << -0.905054653909129, -1.802904101100247).finished();
+  const matrix_t S_check = (matrix_t(2, 2) << 1.109884545577592, -0.187358243057052, -0.187358243057052, 1.625218620131083).finished();
 
   const scalar_t tolerance = 1e-9;
   ASSERT_TRUE(lqrSolution.feedbackGains.isApprox(K_check, tolerance));

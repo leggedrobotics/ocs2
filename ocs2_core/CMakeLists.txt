@@ -91,6 +91,8 @@ add_library(${PROJECT_NAME}
   src/cost/QuadraticStateInputCost.cpp
   src/cost/QuadraticGaussNewtonCostBaseAD.cpp
   src/cost/StateCost.cpp
+  src/cost/StateCostCppAd.cpp
+  src/cost/StateInputCostCppAd.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
   src/dynamics/SystemDynamicsBase.cpp
@@ -303,6 +305,7 @@ catkin_add_gtest(test_cost
   test/cost/testRelaxedBarrierCost.cpp
   test/cost/testCostFunctionLinearCombination.cpp
   test/cost/testQuadraticCostFunction.cpp
+  test/cost/testCostCppAd.cpp
 )
 target_link_libraries(test_cost
   ${PROJECT_NAME}

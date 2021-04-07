@@ -323,7 +323,7 @@ class HpipmInterface::Impl {
 
     // RiccatiFeedback[0] = - (inv(Lr)^T * inv(Lr)) * (S0 + B0^T * P1 * A0)
     RiccatiFeedback[0] = -cost0.dfdux;
-    matrix_t P1_A0 = P1 * dynamics0.dfdx;
+    const matrix_t P1_A0 = P1 * dynamics0.dfdx;
     RiccatiFeedback[0].noalias() -= dynamics0.dfdu.transpose() * P1_A0;
     Lr.triangularView<Eigen::Lower>().solveInPlace(RiccatiFeedback[0]);
     Lr.triangularView<Eigen::Lower>().transpose().solveInPlace(RiccatiFeedback[0]);
@@ -404,10 +404,10 @@ class HpipmInterface::Impl {
 
     // Matrix terms
     // RiccatiCostToGo[0].dfdxx = Q0 + A0.transpose() * P1 * A0 -
-    //                              (S0.transpose() + A0.transpose() * P1 * B0) * (R0 + B0.transpose() * P1 * B0).inverse() *
-    //                                  (S0.transpose() + A0.transpose() * P1 * B0)
+    //                              (S0 + B0.transpose() * P1 * A0).transpose() * (R0 + B0.transpose() * P1 * B0).inverse() *
+    //                                  (S0 + B0.transpose() * P1 * A0)
     // Use that inv(Lr0)^T * inv(Lr0) = (R0 + B0.transpose() * P1 * B0).inverse();
-    matrix_t P1_A0 = P1 * A0;
+    const matrix_t P1_A0 = P1 * A0;
     tmp1.noalias() += B0.transpose() * P1_A0;
     Lr0.triangularView<Eigen::Lower>().solveInPlace(tmp1);  // tmp1 = inv(Lr0) * (S0.transpose() + A0.transpose() * P1 * B0)
     RiccatiCostToGo[0].dfdxx = Q0;

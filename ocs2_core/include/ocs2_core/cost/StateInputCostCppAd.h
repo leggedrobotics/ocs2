@@ -47,7 +47,7 @@ class StateInputCostCppAd : public StateInputCost {
   /** Initialize the CppAd interface
    * @param stateDim : state vector dimension.
    * @param inputDim : state vector dimension.
-   * @param parameterDim : paramter vector dimension, set to 0 if getParameters() is not used.
+   * @param parameterDim : parameter vector dimension, set to 0 if getParameters() is not used.
    * @param modelName : Name of the generate model library.
    * @param modelFolder : Folder where the model library files are saved.
    * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
@@ -55,10 +55,6 @@ class StateInputCostCppAd : public StateInputCost {
    */
   void initialize(size_t stateDim, size_t inputDim, size_t parameterDim, const std::string& modelName,
                   const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
-
-  /** The CppAD cost function */
-  virtual ad_scalar_t costFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                   const ad_vector_t& parameters) const = 0;
 
   /** Get the parameter vector */
   virtual vector_t getParameters(scalar_t time, const CostDesiredTrajectories& desiredTrajectory) const { return vector_t(0); };
@@ -71,6 +67,10 @@ class StateInputCostCppAd : public StateInputCost {
 
  protected:
   StateInputCostCppAd(const StateInputCostCppAd& rhs);
+
+  /** The CppAD cost function */
+  virtual ad_scalar_t costFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                   const ad_vector_t& parameters) const = 0;
 
  private:
   std::unique_ptr<ocs2::CppAdInterface> adInterfacePtr_;

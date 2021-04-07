@@ -71,6 +71,8 @@ add_library(${PROJECT_NAME}
   src/constraint/ConstraintBase.cpp
   src/constraint/ConstraintBaseAD.cpp
   src/constraint/ConstraintCollection.cpp
+  src/constraint/StateConstraintCppAd.cpp
+  src/constraint/StateInputConstraintCppAd.cpp
   src/constraint/LinearConstraint.cpp
   src/constraint/PenaltyBase.cpp
   src/constraint/RelaxedBarrierPenalty.cpp
@@ -311,6 +313,7 @@ target_link_libraries(test_cost
 
 catkin_add_gtest(test_constraint
   test/constraint/testConstraintCollection.cpp
+  test/constraint/testConstraintCppAd.cpp
 )
 target_link_libraries(test_constraint
   ${PROJECT_NAME}

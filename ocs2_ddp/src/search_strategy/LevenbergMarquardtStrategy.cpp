@@ -65,8 +65,8 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
                                      std::vector<LinearController>& controllersStock, PerformanceIndex& performanceIndex,
                                      scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                                      vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                                     std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                     std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+                                     std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                     std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
@@ -244,7 +244,7 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
+void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                                             matrix_t& deltaGm) const {
   const auto& HvProjected = projectedModelData.dynamicsBias_;
   const auto& AmProjected = projectedModelData.dynamics_.dfdx;
@@ -259,7 +259,7 @@ void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelDataBase&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t LevenbergMarquardtStrategy::augmentHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Hm) const {
+matrix_t LevenbergMarquardtStrategy::augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const {
   matrix_t HmAug = Hm;
   HmAug.noalias() += levenbergMarquardtModule_.riccatiMultiple * modelData.dynamics_.dfdu.transpose() * modelData.dynamics_.dfdu;
   return HmAug;

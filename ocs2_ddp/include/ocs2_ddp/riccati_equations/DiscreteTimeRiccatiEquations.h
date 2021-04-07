@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/StdVector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 
 #include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
@@ -103,7 +103,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMap(const ModelDataBase projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+  void computeMap(const ModelData& projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
                   const vector_t& SvNext, const scalar_t& sNext, matrix_t& projectedKm, vector_t& projectedLv, matrix_t& Sm, vector_t& Sv,
                   scalar_t& s);
 
@@ -123,7 +123,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMapILQR(const ModelDataBase projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+  void computeMapILQR(const ModelData& projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
                       const vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache, matrix_t& projectedKm,
                       vector_t& projectedLv, matrix_t& Sm, vector_t& Sv, scalar_t& s) const;
 
@@ -142,7 +142,7 @@ class DiscreteTimeRiccatiEquations {
    * @param [out] Sv: The current Riccati vector.
    * @param [out] s: The current Riccati scalar.
    */
-  void computeMapILEG(const ModelDataBase projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
+  void computeMapILEG(const ModelData& projectedModelData, const riccati_modification::Data& riccatiModification, const matrix_t& SmNext,
                       const vector_t& SvNext, const scalar_t& sNext, DiscreteTimeRiccatiData& dreCache, matrix_t& projectedKm,
                       vector_t& projectedLv, matrix_t& Sm, vector_t& Sv, scalar_t& s) const;
 

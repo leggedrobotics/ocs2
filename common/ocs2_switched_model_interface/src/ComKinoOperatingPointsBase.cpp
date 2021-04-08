@@ -32,30 +32,7 @@ ComKinoOperatingPointsBase* ComKinoOperatingPointsBase::clone() const {
 /******************************************************************************************************/
 input_vector_t ComKinoOperatingPointsBase::computeInputOperatingPoints(const contact_flag_t& contactFlags,
                                                                        const state_vector_t& nominalState) const {
-  // Distribute total mass equally over active stance legs.
-  input_vector_t inputs = input_vector_t::Zero();
-
-  const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
-  size_t numStanceLegs(0);
-
-  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-    if (contactFlags[i]) {
-      ++numStanceLegs;
-    }
-  }
-
-  if (numStanceLegs > 0) {
-    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(nominalState)));
-    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalMass / numStanceLegs};
-
-    for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-      if (contactFlags[i]) {
-        inputs.segment<3>(3 * i) = forceInBase;
-      }
-    }
-  }
-
-  return inputs;
+  return weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getComPose(nominalState)));
 }
 
 /******************************************************************************************************/

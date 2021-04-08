@@ -37,8 +37,6 @@ class SwitchedModelCostBase : public ocs2::QuadraticCostFunction {
   SwitchedModelCostBase(const SwitchedModelCostBase& rhs);
 
  private:
-  void inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState, vector_t& inputs);
-
   std::unique_ptr<com_model_t> comModelPtr_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
 };

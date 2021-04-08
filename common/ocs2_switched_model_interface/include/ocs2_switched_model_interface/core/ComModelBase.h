@@ -79,4 +79,12 @@ class ComModelBase {
 extern template class ComModelBase<scalar_t>;
 extern template class ComModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 
+/**
+ * Distribute the weight equally among all stance feet.
+ *
+ * @return model inputs with {Forces in base, joint velocies}
+ */
+comkino_input_t weightCompensatingInputs(const ComModelBase<scalar_t>& comModel, const contact_flag_t& contactFlags,
+                                         const vector3_t& baseOrientation);
+
 }  // end of namespace switched_model

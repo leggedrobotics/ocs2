@@ -160,7 +160,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
    * Sets data
    */
   void setData(const scalar_t& learningRate, const scalar_array_t* SsTimePtr, const state_matrix_array_t* SmPtr,
-               const state_vector_array_t* SvPtr, const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr,
+               const state_vector_array_t* SvPtr, const scalar_array_t* timeStampPtr, const ModelData::array_t* modelDataPtr,
                const dynamic_matrix_array_t* RmInversePtr, const scalar_array_t* nablaqPtr, const state_vector_array_t* nablaQvPtr,
                const input_vector_array_t* nablaRvPtr) {
     alpha_ = learningRate;
@@ -257,7 +257,7 @@ class SensitivitySequentialRiccatiEquations final : public OdeBase<STATE_DIM*(ST
   const state_matrix_array_t* SmPtr_;
   const state_vector_array_t* SvPtr_;
   const scalar_array_t* timeStampPtr_;
-  const ModelDataBase::array_t* modelDataPtr_;
+  const ModelData::array_t* modelDataPtr_;
   const dynamic_matrix_array_t* RmInversePtr_;
   const scalar_array_t* nablaqPtr_;
   const state_vector_array_t* nablaQvPtr_;

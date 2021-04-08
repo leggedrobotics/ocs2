@@ -7,6 +7,9 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
+  std_msgs
+  visualization_msgs
+  geometry_msgs
 )
 
 ## Find catkin macros and libraries
@@ -52,11 +55,12 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/command/TargetTrajectories_ROS_Interface.cpp
   src/common/RosMsgConversions.cpp
+  src/common/RosMsgHelpers.cpp
   src/mpc/MPC_ROS_Interface.cpp
   src/mrt/LoopshapingDummyObserver.cpp
   src/mrt/MRT_ROS_Dummy_Loop.cpp
   src/mrt/MRT_ROS_Interface.cpp
-  )
+)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )

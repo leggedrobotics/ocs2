@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 
 namespace ocs2 {
 
@@ -95,7 +95,7 @@ class LinearQuadraticApproximator {
    * @param [in] input: The current input.
    * @param [out] modelData: The output data model.
    */
-  void approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
+  void approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
   /**
    * Calculates an LQ approximate of the constrained optimal control problem at an event time.
@@ -105,7 +105,7 @@ class LinearQuadraticApproximator {
    * @param [in] input: The current input.
    * @param [out] modelData: The output data model.
    */
-  void approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
+  void approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
   /**
    * Calculates linearized system dynamics.
@@ -115,7 +115,7 @@ class LinearQuadraticApproximator {
    * @param [in] input: The current input.
    * @param [in] modelData: Model data object.
    */
-  void approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
+  void approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
   /**
    * Calculates the constraints and its linearized approximation.
@@ -125,7 +125,7 @@ class LinearQuadraticApproximator {
    * @param [in] input: The current input.
    * @param [in] modelData: Model data object.
    */
-  void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
+  void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
   /**
    * Calculates the cost function and its quadratic approximation.
@@ -135,7 +135,7 @@ class LinearQuadraticApproximator {
    * @param [in] input: The current input.
    * @param [in] modelData: Model data object.
    */
-  void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelDataBase& modelData) const;
+  void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
  private:
   std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;

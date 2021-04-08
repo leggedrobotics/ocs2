@@ -80,10 +80,7 @@ ScalarFunctionQuadraticApproximation StateInputCostGaussNewtonAd::getQuadraticAp
   timeStateInput << time, state, input;
   const auto parameters = getParameters(time, desiredTrajectory);
   const auto costVector = costVectorFunctionADInterfacePtr_->getFunctionValue(timeStateInput, parameters);
-  auto costVectorJacobian = costVectorFunctionADInterfacePtr_->getJacobian(timeStateInput, parameters);
-
-  matrix_t JtJ = matrix_t::Zero(1 + stateDim_ + inputDim_, 1 + stateDim_ + inputDim_);
-  JtJ.selfadjointView<Eigen::Lower>().rankUpdate(costVectorJacobian.adjoint());
+  const auto costVectorJacobian = costVectorFunctionADInterfacePtr_->getJacobian(timeStateInput, parameters);
 
   ScalarFunctionQuadraticApproximation L;
   L.f = 0.5 * costVector.squaredNorm();

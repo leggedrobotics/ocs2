@@ -36,7 +36,7 @@ class TestEmptyConstraint final : public ocs2::StateInputConstraint {
  public:
   using LinearApproximation_t = ocs2::VectorFunctionLinearApproximation;
 
-  TestEmptyConstraint() = default;
+  TestEmptyConstraint() : ocs2::StateInputConstraint(ocs2::ConstraintOrder::Linear) {}
   ~TestEmptyConstraint() override = default;
   TestEmptyConstraint* clone() const override { return new TestEmptyConstraint(*this); }
 
@@ -60,7 +60,7 @@ class TestLinearConstraint final : public ocs2::StateInputConstraint {
   using LinearApproximation_t = ocs2::VectorFunctionLinearApproximation;
   using QuadraticApproximation_t = ocs2::VectorFunctionQuadraticApproximation;
 
-  TestLinearConstraint() = default;
+  TestLinearConstraint() : ocs2::StateInputConstraint(ocs2::ConstraintOrder::Quadratic){};
   ~TestLinearConstraint() override = default;
   TestLinearConstraint* clone() const override { return new TestLinearConstraint(*this); }
 
@@ -92,6 +92,42 @@ class TestLinearConstraint final : public ocs2::StateInputConstraint {
     quadraticApproximation.dfdxx[1].setOnes();
     quadraticApproximation.dfdux[1].setOnes();
     quadraticApproximation.dfduu[1].setOnes();
+    return quadraticApproximation;
+  }
+};
+
+/** Dummy state-only constraint with 2 entries */
+class TestDummyStateConstraint final : public ocs2::StateConstraint {
+ public:
+  using LinearApproximation_t = ocs2::VectorFunctionLinearApproximation;
+  using QuadraticApproximation_t = ocs2::VectorFunctionQuadraticApproximation;
+
+  TestDummyStateConstraint() : ocs2::StateConstraint(ocs2::ConstraintOrder::Quadratic) {}
+  ~TestDummyStateConstraint() override = default;
+  TestDummyStateConstraint* clone() const override { return new TestDummyStateConstraint(*this); }
+
+  size_t getNumConstraints(ocs2::scalar_t time) const override { return 2; }
+
+  ocs2::vector_t getValue(ocs2::scalar_t time, const ocs2::vector_t& state) const override {
+    ocs2::vector_t constraintValues(2);
+    constraintValues << 1, 2;
+    return constraintValues;
+  }
+
+  LinearApproximation_t getLinearApproximation(ocs2::scalar_t time, const ocs2::vector_t& state) const override {
+    LinearApproximation_t linearApproximation;
+    linearApproximation.setZero(2, state.rows(), 0);
+    linearApproximation.f = getValue(time, state);
+    linearApproximation.dfdx.row(1).setOnes();
+    return linearApproximation;
+  }
+
+  QuadraticApproximation_t getQuadraticApproximation(ocs2::scalar_t time, const ocs2::vector_t& state) const override {
+    QuadraticApproximation_t quadraticApproximation;
+    quadraticApproximation.setZero(2, state.rows(), 0);
+    quadraticApproximation.f = getValue(time, state);
+    quadraticApproximation.dfdx.row(1).setOnes();
+    quadraticApproximation.dfdxx[1].setOnes();
     return quadraticApproximation;
   }
 };

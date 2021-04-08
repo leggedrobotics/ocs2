@@ -30,7 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBaseAD.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/cost/StateInputCostCppAd.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 
@@ -70,22 +71,41 @@ class CircularKinematicsSystem final : public SystemDynamicsBase {
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsCost final : public CostFunctionBaseAD {
+class CircularKinematicsCost final : public CostFunctionBase {
  public:
-  CircularKinematicsCost() : CostFunctionBaseAD(2, 2) {}
+  CircularKinematicsCost() {}
   ~CircularKinematicsCost() override = default;
 
   CircularKinematicsCost* clone() const override { return new CircularKinematicsCost(*this); }
 
- protected:
-  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override {
-    return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
+  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override {
+    return costFunction_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
   }
 
-  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
-    return ad_scalar_t(0.0);
+  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override {
+    return costFunction_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
   }
+
+  scalar_t finalCost(scalar_t t, const vector_t& x) override { return 0.0; }
+
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0);
+  }
+
+ private:
+  class Impl : public StateInputCostCppAd {
+   public:
+    Impl() { initialize(2, 2, 0, "circular_kinematics_cost", "/tmp/ocs2", true, false); }
+
+    Impl* clone() const override { return new Impl(*this); }
+
+    ad_scalar_t costFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                             const ad_vector_t& parameters) const override {
+      return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
+    }
+  };
+
+  Impl costFunction_;
 };
 
 /******************************************************************************************************/

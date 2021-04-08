@@ -65,7 +65,6 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     boost::filesystem::path filePath(__FILE__);
     std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
     costPtr.reset(new ocs2::CircularKinematicsCost);
-    costPtr->initialize("circular_kinematics_cost", "/tmp/ocs2", true, false);
 
     // constraint
     constraintPtr.reset(new ocs2::CircularKinematicsConstraints);
@@ -128,7 +127,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
 
   std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
-  std::unique_ptr<ocs2::CostFunctionBaseAD> costPtr;
+  std::unique_ptr<ocs2::CircularKinematicsCost> costPtr;
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
 };

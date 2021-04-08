@@ -129,14 +129,7 @@ VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  scalar_t L = cost_->cost(t, x, u);
-
-  if (constraints_) {
-    const auto h = constraints_->inequalityConstraint(t, x, u);
-    L += penalty_->penaltyCost(h);
-  }
-
-  return L;
+  return cost_->cost(t, x, u);
 }
 
 /******************************************************************************************************/
@@ -144,18 +137,7 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
-  auto L = cost_->costQuadraticApproximation(t, x, u);
-
-  const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);
-  const auto penalty = penalty_->penaltyCostQuadraticApproximation(h);
-  L.f += penalty.f;
-  L.dfdx += penalty.dfdx;
-  L.dfdu += penalty.dfdu;
-  L.dfdxx += penalty.dfdxx;
-  L.dfdux += penalty.dfdux;
-  L.dfduu += penalty.dfduu;
-
-  return L;
+  return cost_->costQuadraticApproximation(t, x, u);
 }
 
 /******************************************************************************************************/

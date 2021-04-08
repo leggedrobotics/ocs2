@@ -208,7 +208,14 @@ PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const Pena
     // inequality constraints penalty
     scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityPenaltyTrajectory.begin(),
-                   [&](const ModelData& m) { return ineqConstrPenalty.penaltyCost(m.ineqConstr_.f); });
+                   [&](const ModelData& m) {
+                     scalar_t penalty = 0.0;
+                     for (int i = 0; i < m.ineqConstr_.f.rows(); i++) {
+                       penalty += ineqConstrPenalty.getValue(m.ineqConstr_.f(i));
+                     }
+                     return penalty;
+                   });
+
     performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
 
     // final cost and constraints

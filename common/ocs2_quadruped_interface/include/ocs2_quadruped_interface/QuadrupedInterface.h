@@ -86,10 +86,10 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Gets the solver synchronized modules */
   virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const = 0;
 
-  /** Loads {Q, R, Q_final} from file and maps R to taskspace of the initial state */
-  static std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> loadCostMatrices(const std::string& pathToConfigFile,
-                                                                                     const kinematic_model_t& kinematicModel,
-                                                                                     const state_vector_t& initialState);
+  /** Loads {Q, R} from file and maps R to taskspace of the initial state */
+  static std::tuple<state_matrix_t, input_matrix_t> loadCostMatrices(const std::string& pathToConfigFile,
+                                                                     const kinematic_model_t& kinematicModel,
+                                                                     const state_vector_t& initialState);
 
  private:
   /** Load the general quadruped settings from file. */

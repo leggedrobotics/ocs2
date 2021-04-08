@@ -27,16 +27,12 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 auto QuadrupedInterface::loadCostMatrices(const std::string& pathToConfigFile, const kinematic_model_t& kinematicModel,
-                                          const state_vector_t& initialState)
-    -> std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> {
+                                          const state_vector_t& initialState) -> std::tuple<state_matrix_t, input_matrix_t> {
+  // cost function components
   state_matrix_t Q;
   input_matrix_t R;
-  state_matrix_t QFinal;
-
-  // cost function components
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q);
   ocs2::loadData::loadEigenMatrix(pathToConfigFile, "R", R);
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal);
 
   // costs over Cartesian velocities
   Eigen::Matrix<scalar_t, 12, 12> J_allFeet;
@@ -45,7 +41,7 @@ auto QuadrupedInterface::loadCostMatrices(const std::string& pathToConfigFile, c
     J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
   }
   R.block<12, 12>(12, 12) = (J_allFeet.transpose() * R.block<12, 12>(12, 12) * J_allFeet).eval();
-  return {Q, R, QFinal};
+  return {Q, R};
 }
 
 /******************************************************************************************************/

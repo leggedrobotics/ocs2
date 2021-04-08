@@ -9,15 +9,13 @@
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
-#include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
 #include <ocs2_quadruped_interface/TerrainPlaneVisualizer.h>
 #include <ocs2_quadruped_interface/TerrainReceiver.h>
 
 namespace switched_model {
 
-void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, const ocs2::mpc::Settings& mpcSettings,
-                      const ocs2::ddp::Settings& ddpSettings) {
+void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& quadrupedInterface, std::unique_ptr<ocs2::MPC_BASE> mpcPtr) {
   const std::string robotName = "anymal";
 
   auto solverModules = quadrupedInterface.getSynchronizedModules();
@@ -43,7 +41,6 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
   solverModules.push_back(swingPlanningVisualizer);
 
   // launch MPC nodes
-  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, ddpSettings);
   mpcPtr->getSolverPtr()->setSynchronizedModules(solverModules);
   ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);

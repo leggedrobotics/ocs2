@@ -6,6 +6,10 @@
 
 namespace switched_model {
 
+enum class Algorithm { DDP, SQP };
+std::string toAlgorithmName(Algorithm type);
+Algorithm fromAlgorithmName(std::string name);
+
 struct ModelSettings {
   bool constrainedIntegration_ = true;
   scalar_t gravitationalAcceleration_ = 9.81;
@@ -30,6 +34,8 @@ struct ModelSettings {
   // FootPlacementCostParameters Sdf
   scalar_t muSdf_ = 2.5;
   scalar_t deltaSdf_ = 0.005;
+
+  Algorithm algorithm_ = Algorithm::SQP;
 };
 
 ModelSettings loadModelSettings(const std::string& filename, bool verbose = true);

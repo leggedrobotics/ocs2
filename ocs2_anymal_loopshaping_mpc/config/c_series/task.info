@@ -37,6 +37,8 @@ model_settings
   ; FootPlacementCostParameters Sdf
   muSdf                         2.5
   deltaSdf                      0.005
+
+  algorithm                     SQP
 }
 
 terrainPlane
@@ -157,8 +159,8 @@ mpc
 
   solutionTimeWindow              -1  ; [s]
 
-  mpcDesiredFrequency             20  ; [Hz]
-  mrtDesiredFrequency             400 ; [Hz]
+  mpcDesiredFrequency             50  ; [Hz]
+  mrtDesiredFrequency             50 ; [Hz]
 }
 
 ; initial state

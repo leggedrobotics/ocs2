@@ -43,6 +43,8 @@ model_settings
   ; FootPlacementCostParameters Sdf
   muSdf                         2.5
   deltaSdf                      0.005
+
+  algorithm                     SQP
 }
 
 terrainPlane

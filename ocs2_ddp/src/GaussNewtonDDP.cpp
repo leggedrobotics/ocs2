@@ -1166,7 +1166,7 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
   if (modelData.stateEqConstr_.f.rows() > 0) {
     const vector_t& Hv = modelData.stateEqConstr_.f;
     const matrix_t& Fm = modelData.stateEqConstr_.dfdx;
-    modelData.cost_.f += 0.5 * stateEqConstrPenaltyCoeff * Hv.squaredNorm();
+    modelData.cost_.f += 0.5 * stateEqConstrPenaltyCoeff * Hv.dot(Hv);
     modelData.cost_.dfdx.noalias() += stateEqConstrPenaltyCoeff * Fm.transpose() * Hv;
     modelData.cost_.dfdxx.noalias() += stateEqConstrPenaltyCoeff * Fm.transpose() * Fm;
   }

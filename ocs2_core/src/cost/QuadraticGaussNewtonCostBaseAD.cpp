@@ -68,7 +68,7 @@ scalar_t QuadraticGaussNewtonCostBaseAD::cost(scalar_t t, const vector_t& x, con
   tapedTimeStateInput_ << t, x, u;
   intermediateParameters_ = getIntermediateParameters(t);
   intermediateCostValues_ = intermediateADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, intermediateParameters_);
-  return 0.5 * intermediateCostValues_.squaredNorm();
+  return 0.5 * intermediateCostValues_.dot(intermediateCostValues_);
 }
 
 /******************************************************************************************************/
@@ -79,7 +79,7 @@ scalar_t QuadraticGaussNewtonCostBaseAD::finalCost(scalar_t t, const vector_t& x
   tapedTimeState_ << t, x;
   finalParameters_ = getFinalParameters(t);
   finalCostValues_ = finalADInterfacePtr_->getFunctionValue(tapedTimeState_, finalParameters_);
-  return 0.5 * finalCostValues_.squaredNorm();
+  return 0.5 * finalCostValues_.dot(finalCostValues_);
 }
 
 /******************************************************************************************************/
@@ -95,7 +95,7 @@ ScalarFunctionQuadraticApproximation QuadraticGaussNewtonCostBaseAD::costQuadrat
   const size_t costDim = intermediateCostValues_.rows();
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * intermediateCostValues_.squaredNorm();
+  L.f = 0.5 * intermediateCostValues_.dot(intermediateCostValues_);
   L.dfdx = intermediateJacobian_.block(0, 1, costDim, stateDim_).transpose() * intermediateCostValues_;
   L.dfdxx = intermediateJacobian_.block(0, 1, costDim, stateDim_).transpose() * intermediateJacobian_.block(0, 1, costDim, stateDim_);
   L.dfdu = intermediateJacobian_.rightCols(inputDim_).transpose() * intermediateCostValues_;
@@ -115,7 +115,7 @@ ScalarFunctionQuadraticApproximation QuadraticGaussNewtonCostBaseAD::finalCostQu
   finalCostValues_ = finalADInterfacePtr_->getFunctionValue(tapedTimeState_, finalParameters_);
 
   ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = 0.5 * finalCostValues_.squaredNorm();
+  Phi.f = 0.5 * finalCostValues_.dot(finalCostValues_);
   Phi.dfdx = finalJacobian_.rightCols(stateDim_).transpose() * finalCostValues_;
   Phi.dfdxx = finalJacobian_.rightCols(stateDim_).transpose() * finalJacobian_.rightCols(stateDim_);
   return Phi;

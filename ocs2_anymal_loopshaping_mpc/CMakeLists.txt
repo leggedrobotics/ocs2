@@ -96,3 +96,17 @@ install(TARGETS ${PROJECT_NAME}_mpc_node ${PROJECT_NAME}_dummy_mrt_node
 install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+#############
+## Testing ##
+#############
+
+# Build unit tests
+catkin_add_gtest(${PROJECT_NAME}_test
+  test/testProblemFormulation.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)

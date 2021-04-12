@@ -11,6 +11,8 @@
 #include <ocs2_core/constraint/ConstraintBaseAD.h>
 #include <ocs2_core/constraint/ConstraintCollection.h>
 #include <ocs2_core/constraint/LinearConstraint.h>
+#include <ocs2_core/constraint/LinearStateConstraint.h>
+#include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/constraint/StateConstraint.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
 

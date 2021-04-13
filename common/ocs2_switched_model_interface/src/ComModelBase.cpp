@@ -149,6 +149,29 @@ base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateComLocalAccelerat
   return comLocalAccelerations;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+comkino_input_t weightCompensatingInputs(const ComModelBase<scalar_t>& comModel, const contact_flag_t& contactFlags,
+                                         const vector3_t& baseOrientation) {
+  const int numStanceLegs = numberOfClosedContacts(contactFlags);
+
+  comkino_input_t inputs = comkino_input_t::Zero();
+  if (numStanceLegs > 0) {
+    const scalar_t totalWeight = comModel.totalMass() * 9.81;
+    const matrix3_t b_R_o = rotationMatrixOriginToBase(baseOrientation);
+    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalWeight / numStanceLegs};
+
+    for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
+      if (contactFlags[i]) {
+        inputs.segment<3>(3 * i) = forceInBase;
+      }
+    }
+  }
+
+  return inputs;
+}
+
 template class ComModelBase<scalar_t>;
 template class ComModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 

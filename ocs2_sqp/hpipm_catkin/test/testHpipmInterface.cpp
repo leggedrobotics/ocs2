@@ -55,7 +55,8 @@ TEST(test_hpiphm_interface, solve_and_check_dynamic) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
   ASSERT_TRUE(xSol[0].isApprox(x0));
@@ -95,7 +96,8 @@ TEST(test_hpiphm_interface, solve_after_resize) {
 
   // Solve again!
   hpipmInterface.resize(ocpSize);
-  hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
   ASSERT_TRUE(xSol[0].isApprox(x0));
@@ -140,7 +142,8 @@ TEST(test_hpiphm_interface, knownSolution) {
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  hpipmInterface.solve(xSolGiven[0], system, cost, nullptr, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(xSolGiven[0], system, cost, nullptr, xSol, uSol, true);
+  ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
   ASSERT_TRUE(ocs2::qp_solver::isEqual(xSolGiven, xSol, 1e-9));
@@ -172,12 +175,18 @@ TEST(test_hpiphm_interface, with_constraints) {
   // Resize Interface
   ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
   std::fill(ocpSize.numIneqConstraints.begin(), ocpSize.numIneqConstraints.end(), nc);
+
+  // Set one of the constraints to empty
+  constraints[1] = ocs2::VectorFunctionLinearApproximation();
+  ocpSize.numIneqConstraints[1] = 0;
+
   hpipmInterface.resize(ocpSize);
 
   // Solve!
   std::vector<ocs2::vector_t> xSol;
   std::vector<ocs2::vector_t> uSol;
-  hpipmInterface.solve(x0, system, cost, &constraints, xSol, uSol, true);
+  const auto status = hpipmInterface.solve(x0, system, cost, &constraints, xSol, uSol, true);
+  ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Initial condition
   ASSERT_TRUE(xSol[0].isApprox(x0));
@@ -189,6 +198,92 @@ TEST(test_hpiphm_interface, with_constraints) {
 
   // Check constraints
   for (int k = 0; k < N; k++) {
-    ASSERT_TRUE(constraints[k].f.isApprox(-constraints[k].dfdx * xSol[k] - constraints[k].dfdu * uSol[k], 1e-9));
+    if (constraints[k].f.size() > 0) {
+      ASSERT_TRUE(constraints[k].f.isApprox(-constraints[k].dfdx * xSol[k] - constraints[k].dfdu * uSol[k], 1e-9));
+    }
+  }
+}
+
+TEST(test_hpiphm_interface, retrieveRiccati) {
+  int nx = 3;
+  int nu = 2;
+  int N = 5;
+
+  // Problem setup
+  ocs2::vector_t x0 = ocs2::vector_t::Random(nx);
+  std::vector<ocs2::VectorFunctionLinearApproximation> system;
+  std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
+  for (int k = 0; k < N; k++) {
+    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+  }
+  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+
+  // store the true cost-to-go and feedback/feedforward terms
+  std::vector<ocs2::matrix_t> SmSolGiven(N + 1);
+  std::vector<ocs2::vector_t> svSolGiven(N + 1);
+  std::vector<ocs2::scalar_t> s0SolGiven(N + 1, 0.0);  // Currently always returns zero, but we check that it exactly does.
+  std::vector<ocs2::matrix_t> KSolGiven(N);
+  std::vector<ocs2::vector_t> kSolGiven(N);
+
+  // Discrete time Riccati recursion
+  SmSolGiven[N] = cost[N].dfdxx;
+  svSolGiven[N] = cost[N].dfdx;
+  for (int k = N - 1; k >= 0; k--) {
+    // Shorthand
+    const auto& Sm = SmSolGiven[k + 1];
+    const auto& sv = svSolGiven[k + 1];
+    const auto& A = system[k].dfdx;
+    const auto& B = system[k].dfdu;
+    const auto& b = system[k].f;
+    const auto& Q = cost[k].dfdxx;
+    const auto& R = cost[k].dfduu;
+    const auto& P = cost[k].dfdux;
+    const auto& q = cost[k].dfdx;
+    const auto& r = cost[k].dfdu;
+    ocs2::matrix_t P_BTSmA = P + B.transpose() * Sm * A;
+    ocs2::matrix_t invR_BTSmB = (R + B.transpose() * Sm * B).inverse();
+    ocs2::vector_t r_BTsv_BTSmb = r + B.transpose() * sv + B.transpose() * Sm * b;
+
+    // The actual backward pass
+    SmSolGiven[k] = Q + A.transpose() * Sm * A - P_BTSmA.transpose() * invR_BTSmB * P_BTSmA;
+    svSolGiven[k] = q + A.transpose() * sv + A.transpose() * Sm * b - P_BTSmA.transpose() * invR_BTSmB * r_BTsv_BTSmb;
+    KSolGiven[k] = -invR_BTSmB * P_BTSmA;
+    kSolGiven[k] = -invR_BTSmB * r_BTsv_BTSmb;
+  }
+
+  // Interface
+  ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
+  ocs2::HpipmInterface hpipmInterface(ocpSize);
+
+  // Solve!
+  std::vector<ocs2::vector_t> xSol;
+  std::vector<ocs2::vector_t> uSol;
+  const auto status = hpipmInterface.solve(x0, system, cost, nullptr, xSol, uSol, true);
+  ASSERT_EQ(status, hpipm_status::SUCCESS);
+
+  // Get Riccati info from hpipm interface
+  const auto KSol = hpipmInterface.getRiccatiFeedback(system[0], cost[0]);
+  const auto kSol = hpipmInterface.getRiccatiFeedforward(system[0], cost[0]);
+  const auto CostToGo = hpipmInterface.getRiccatiCostToGo(system[0], cost[0]);
+  std::vector<ocs2::matrix_t> SmSol(N + 1);
+  std::vector<ocs2::vector_t> svSol(N + 1);
+  std::vector<ocs2::scalar_t> s0Sol(N + 1);
+  for (int i = 0; i < (N + 1); i++) {
+    SmSol[i] = CostToGo[i].dfdxx;
+    svSol[i] = CostToGo[i].dfdx;
+    s0Sol[i] = CostToGo[i].f;
+  }
+
+  // Compare the two vector/matrix trajectory
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(SmSolGiven, SmSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(svSolGiven, svSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(s0SolGiven, s0Sol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(KSolGiven, KSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(kSolGiven, kSol, 1e-9));
+
+  // Check self-consistency of returned elements in u = K * x + k
+  for (int k = 0; k < N; k++) {
+    ASSERT_TRUE(uSol[k].isApprox(KSol[k] * xSol[k] + kSol[k]));
   }
 }

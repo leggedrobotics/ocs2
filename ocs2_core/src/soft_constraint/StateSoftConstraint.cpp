@@ -41,9 +41,8 @@ StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints,
-                                         std::unique_ptr<PenaltyBase> penaltyFunction)
-    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)) {}
+StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyFunction)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

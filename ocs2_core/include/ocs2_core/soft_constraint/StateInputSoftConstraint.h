@@ -65,11 +65,11 @@ class StateInputSoftConstraint final : public StateInputCost {
 
   /**
    * Constructor.
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, size_t numConstraints,
-                           std::unique_ptr<PenaltyBase> penaltyFunction);
+  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
 
   ~StateInputSoftConstraint() override = default;
 

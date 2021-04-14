@@ -51,6 +51,8 @@ add_library(${PROJECT_NAME}
   src/croc/WholebodyDynamicsCroc.cpp
   src/wheels/AnymalWheelsCom.cpp
   src/wheels/AnymalWheelsKinematics.cpp
+  src/wheels_chimera/AnymalWheelsChimeraCom.cpp
+  src/wheels_chimera/AnymalWheelsChimeraKinematics.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -89,6 +91,7 @@ catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestAnymalChimera.cpp
   test/TestAnymalCroc.cpp
   test/TestAnymalWheels.cpp
+  test/TestAnymalWheelsChimera.cpp
 )
 target_link_libraries(${PROJECT_NAME}_switched_model_test
   ${PROJECT_NAME}

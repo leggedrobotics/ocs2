@@ -39,4 +39,11 @@
       </include>
   </group>
 
+  <!-- Load wheels description -->
+  <group if="$(eval arg('robot_name') == 'wheels_chimera')">
+      <include file="$(find anymal_wheels_chimera)/launch/load_urdf.launch">
+        <arg name="description_name"   value="$(arg description_name)"/>
+      </include>
+  </group>
+
 </launch>

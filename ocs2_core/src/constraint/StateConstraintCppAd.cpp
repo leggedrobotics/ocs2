@@ -37,7 +37,7 @@ namespace ocs2 {
 void StateConstraintCppAd::initialize(size_t stateDim, size_t parameterDim, const std::string& modelName, const std::string& modelFolder,
                                       bool recompileLibraries, bool verbose) {
   auto constraintAd = [=](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
-    assert(x.rows() = 1 + stateDim);
+    assert(x.rows() == 1 + stateDim);
     const ad_scalar_t time = x(0);
     const ad_vector_t state = x.tail(stateDim);
     y = this->constraintFunction(time, state, p);

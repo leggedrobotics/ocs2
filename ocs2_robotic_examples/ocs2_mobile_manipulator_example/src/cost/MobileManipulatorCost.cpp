@@ -325,10 +325,6 @@ std::unique_ptr<StateCost> MobileManipulatorCost::getSelfCollisionCost(const std
   const std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
   PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterface_, collisionLinkPairs, collisionObjectPairs);
 
-  // Note: geometryInterface ignores invalid pairs.
-  //       This is why numCollisionPairs might not be equal to collisionLinkPairs.size() + collisionObjectPairs.size().
-  const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
-
   std::unique_ptr<StateConstraint> constraint;
   if (useCaching_) {
     constraint.reset(
@@ -341,7 +337,7 @@ std::unique_ptr<StateCost> MobileManipulatorCost::getSelfCollisionCost(const std
 
   auto penalty = std::unique_ptr<PenaltyBase>(new RelaxedBarrierPenalty(RelaxedBarrierPenalty::Config(mu, delta)));
 
-  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty)));
+  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penalty)));
 }
 
 /******************************************************************************************************/

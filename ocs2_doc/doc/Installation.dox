@@ -23,6 +23,7 @@ library versions as provided in the package sources.
   - [`raisim`](https://github.com/leggedrobotics/raisimLib) package, which needs to be installed from source by cloning it into your workspace.
   - [`grid_map_msgs`](https://github.com/ANYbotics/grid_map) catkin package, which may be installed with `sudo apt install ros-melodic-grid-map-msgs`.
 - [RaisimOgre](https://github.com/leggedrobotics/raisimOgre) Visualizer for Raisim. Can be used for debugging purposes to see if conversions between OCS2 and Raisim are correct.
+- For pinocchio (Rigid multi-body dynamics library) and self collision support clone [pinocchio](https://github.com/leggedrobotics/pinocchio) and [hpp-fcl](https://github.com/leggedrobotics/hpp-fcl) into your workspace (use master branch).
 
 \section ocs2_doc_install Installation
 \subsection ocs2_doc_build_lib Build the library

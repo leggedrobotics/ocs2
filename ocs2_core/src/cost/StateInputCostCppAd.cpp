@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,57 +27,73 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/StateSoftConstraint.h>
+#include <ocs2_core/cost/StateInputCostCppAd.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr,
-                                         std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray)
-    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyPtrArray)) {}
+void StateInputCostCppAd::initialize(size_t stateDim, size_t inputDim, size_t parameterDim, const std::string& modelName,
+                                     const std::string& modelFolder, bool recompileLibraries, bool verbose) {
+  auto costAd = [=](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+    assert(x.rows() == 1 + stateDim + inputDim);
+    const ad_scalar_t time = x(0);
+    const ad_vector_t state = x.segment(1, stateDim);
+    const ad_vector_t input = x.tail(inputDim);
+    y = ad_vector_t(1);
+    y(0) = this->costFunction(time, state, input, p);
+  };
+  adInterfacePtr_.reset(new ocs2::CppAdInterface(costAd, 1 + stateDim + inputDim, parameterDim, modelName, modelFolder));
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints,
-                                         std::unique_ptr<PenaltyBase> penaltyFunction)
-    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-StateSoftConstraint::StateSoftConstraint(const StateSoftConstraint& other)
-    : BASE(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-StateSoftConstraint* StateSoftConstraint::clone() const {
-  return new StateSoftConstraint(*this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories&) const {
-  return penalty_.getValue(constraintPtr_->getValue(time, state));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                    const CostDesiredTrajectories&) const {
-  switch (constraintPtr_->getOrder()) {
-    case ConstraintOrder::Linear:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));
-    case ConstraintOrder::Quadratic:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state));
-    default:
-      throw std::runtime_error("[StateSoftConstraint] Unknown constraint Order");
+  if (recompileLibraries) {
+    adInterfacePtr_->createModels(ocs2::CppAdInterface::ApproximationOrder::Second, verbose);
+  } else {
+    adInterfacePtr_->loadModelsIfAvailable(ocs2::CppAdInterface::ApproximationOrder::Second, verbose);
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputCostCppAd::StateInputCostCppAd(const StateInputCostCppAd& rhs)
+    : StateInputCost(rhs), adInterfacePtr_(new ocs2::CppAdInterface(*rhs.adInterfacePtr_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateInputCostCppAd::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                       const CostDesiredTrajectories& desiredTrajectory) const {
+  vector_t tapedTimeStateInput(1 + state.rows() + input.rows());
+  tapedTimeStateInput << time, state, input;
+  return adInterfacePtr_->getFunctionValue(tapedTimeStateInput, getParameters(time, desiredTrajectory))(0);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation StateInputCostCppAd::getQuadraticApproximation(
+    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
+  ScalarFunctionQuadraticApproximation cost;
+
+  const size_t stateDim = state.rows();
+  const size_t inputDim = input.rows();
+  const vector_t params = getParameters(time, desiredTrajectory);
+  vector_t tapedTimeStateInput(1 + stateDim + inputDim);
+  tapedTimeStateInput << time, state, input;
+
+  cost.f = adInterfacePtr_->getFunctionValue(tapedTimeStateInput, params)(0);
+
+  const matrix_t J = adInterfacePtr_->getJacobian(tapedTimeStateInput, params);
+  cost.dfdx = J.middleCols(1, stateDim).transpose();
+  cost.dfdu = J.rightCols(inputDim).transpose();
+
+  const matrix_t H = adInterfacePtr_->getHessian(0, tapedTimeStateInput, params);
+  cost.dfdxx = H.block(1, 1, stateDim, stateDim);
+  cost.dfdux = H.block(1 + stateDim, 1, inputDim, stateDim);
+  cost.dfduu = H.bottomRightCorner(inputDim, inputDim);
+
+  return cost;
 }
 
 }  // namespace ocs2

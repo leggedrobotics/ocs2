@@ -71,24 +71,22 @@ add_library(${PROJECT_NAME}
   src/constraint/ConstraintBase.cpp
   src/constraint/ConstraintBaseAD.cpp
   src/constraint/ConstraintCollection.cpp
+  src/constraint/StateConstraintCppAd.cpp
+  src/constraint/StateInputConstraintCppAd.cpp
   src/constraint/LinearConstraint.cpp
-  src/constraint/PenaltyBase.cpp
-  src/constraint/RelaxedBarrierPenalty.cpp
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/CostCollection.cpp
   src/cost/CostFunctionBase.cpp
-  src/cost/CostFunctionBaseAD.cpp
   src/cost/CostDesiredTrajectories.cpp
-  src/cost/RelaxedBarrierCost.cpp
-  src/cost/CostFunctionLinearCombination.cpp
   src/cost/QuadraticCostFunction.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
-  src/cost/QuadraticGaussNewtonCostBaseAD.cpp
   src/cost/StateCost.cpp
+  src/cost/StateCostCppAd.cpp
+  src/cost/StateInputCostCppAd.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
   src/dynamics/SystemDynamicsBase.cpp
@@ -130,10 +128,10 @@ add_library(${PROJECT_NAME}
   src/soft_constraint/StateSoftConstraint.cpp
   src/soft_constraint/StateInputSoftConstraint.cpp
   src/soft_constraint/penalties/DoubleSidedPenalty.cpp
-  src/soft_constraint/penalties/QuadraticPenaltyFunction.cpp
-  src/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.cpp
-  src/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.cpp
-  src/soft_constraint/penalties/SquaredHingePenaltyFunction.cpp
+  src/soft_constraint/penalties/QuadraticPenalty.cpp
+  src/soft_constraint/penalties/SmoothAbsolutePenalty.cpp
+  src/soft_constraint/penalties/RelaxedBarrierPenalty.cpp
+  src/soft_constraint/penalties/SquaredHingePenalty.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -235,7 +233,6 @@ target_link_libraries(interpolation_unittest
 
 catkin_add_gtest(${PROJECT_NAME}_cppadcg
   test/cppad_cg/testCppADCG_constraint.cpp
-  test/cppad_cg/testCppADCG_cost.cpp
   test/cppad_cg/testCppADCG_dynamics.cpp
   test/cppad_cg/testSparsityHelpers.cpp
   test/cppad_cg/testCppAdInterface.cpp
@@ -298,8 +295,7 @@ target_link_libraries(test_dynamics
 
 catkin_add_gtest(test_cost
   test/cost/testCostCollection.cpp
-  test/cost/testRelaxedBarrierCost.cpp
-  test/cost/testCostFunctionLinearCombination.cpp
+  test/cost/testCostCppAd.cpp
   test/cost/testQuadraticCostFunction.cpp
 )
 target_link_libraries(test_cost
@@ -311,6 +307,7 @@ target_link_libraries(test_cost
 
 catkin_add_gtest(test_constraint
   test/constraint/testConstraintCollection.cpp
+  test/constraint/testConstraintCppAd.cpp
 )
 target_link_libraries(test_constraint
   ${PROJECT_NAME}

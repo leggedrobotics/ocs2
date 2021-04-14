@@ -44,8 +44,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
+#include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
@@ -292,10 +292,9 @@ std::unique_ptr<StateCost> MobileManipulatorCost::getEndEffectorCost(const std::
     constraint.reset(new EndEffectorConstraint(eeKinematics));
   }
 
-  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyArray(6);
-  std::generate_n(penaltyArray.begin(), 3, [&] { return std::unique_ptr<PenaltyFunctionBase>(new QuadraticPenaltyFunction(muPosition)); });
-  std::generate_n(penaltyArray.begin() + 3, 3,
-                  [&] { return std::unique_ptr<PenaltyFunctionBase>(new QuadraticPenaltyFunction(muOrientation)); });
+  std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(6);
+  std::generate_n(penaltyArray.begin(), 3, [&] { return std::unique_ptr<PenaltyBase>(new QuadraticPenalty(muPosition)); });
+  std::generate_n(penaltyArray.begin() + 3, 3, [&] { return std::unique_ptr<PenaltyBase>(new QuadraticPenalty(muOrientation)); });
 
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penaltyArray)));
 }
@@ -340,7 +339,7 @@ std::unique_ptr<StateCost> MobileManipulatorCost::getSelfCollisionCost(const std
                                                       recompileLibraries, false));
   }
 
-  auto penalty = std::unique_ptr<PenaltyFunctionBase>(new RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyFunction::Config(mu, delta)));
+  auto penalty = std::unique_ptr<PenaltyBase>(new RelaxedBarrierPenalty(RelaxedBarrierPenalty::Config(mu, delta)));
 
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), numCollisionPairs, std::move(penalty)));
 }
@@ -367,10 +366,10 @@ std::unique_ptr<StateInputCost> MobileManipulatorCost::getJointVelocityLimitCost
   loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
   std::cerr << " #### =============================================================================" << std::endl;
 
-  std::unique_ptr<PenaltyFunctionBase> penaltyFunction;
-  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyArray(INPUT_DIM);
+  std::unique_ptr<PenaltyBase> penaltyFunction;
+  std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(INPUT_DIM);
   for (int i = 0; i < INPUT_DIM; i++) {
-    penaltyFunction.reset(new RelaxedBarrierPenaltyFunction(RelaxedBarrierPenaltyFunction::Config(mu, delta)));
+    penaltyFunction.reset(new RelaxedBarrierPenalty(RelaxedBarrierPenalty::Config(mu, delta)));
     penaltyArray[i].reset(new DoubleSidedPenalty(lowerBound(i), upperBound(i), std::move(penaltyFunction)));
   }
 

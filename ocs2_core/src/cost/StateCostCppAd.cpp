@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,42 +27,67 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
+#include <ocs2_core/cost/StateCostCppAd.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenaltyFunction::getValue(scalar_t h) const {
-  if (h > config_.delta) {
-    return -config_.mu * log(h);
-  } else {
-    const scalar_t delta_h = (h - 2.0 * config_.delta) / config_.delta;
-    return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
+void StateCostCppAd::initialize(size_t stateDim, size_t parameterDim, const std::string& modelName, const std::string& modelFolder,
+                                bool recompileLibraries, bool verbose) {
+  auto costAd = [=](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+    assert(x.rows() == 1 + stateDim);
+    const ad_scalar_t time = x(0);
+    const ad_vector_t state = x.tail(stateDim);
+    y = ad_vector_t(1);
+    y(0) = this->costFunction(time, state, p);
   };
+  adInterfacePtr_.reset(new ocs2::CppAdInterface(costAd, 1 + stateDim, parameterDim, modelName, modelFolder));
+
+  if (recompileLibraries) {
+    adInterfacePtr_->createModels(ocs2::CppAdInterface::ApproximationOrder::Second, verbose);
+  } else {
+    adInterfacePtr_->loadModelsIfAvailable(ocs2::CppAdInterface::ApproximationOrder::Second, verbose);
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenaltyFunction::getDerivative(scalar_t h) const {
-  if (h > config_.delta) {
-    return -config_.mu / h;
-  } else {
-    return config_.mu * ((h - 2.0 * config_.delta) / (config_.delta * config_.delta));
-  };
+StateCostCppAd::StateCostCppAd(const StateCostCppAd& rhs)
+    : StateCost(rhs), adInterfacePtr_(new ocs2::CppAdInterface(*rhs.adInterfacePtr_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateCostCppAd::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+  vector_t tapedTimeState(1 + state.rows());
+  tapedTimeState << time, state;
+  return adInterfacePtr_->getFunctionValue(tapedTimeState, getParameters(time, desiredTrajectory))(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenaltyFunction::getSecondDerivative(scalar_t h) const {
-  if (h > config_.delta) {
-    return config_.mu / (h * h);
-  } else {
-    return config_.mu / (config_.delta * config_.delta);
-  };
+ScalarFunctionQuadraticApproximation StateCostCppAd::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                               const CostDesiredTrajectories& desiredTrajectory) const {
+  ScalarFunctionQuadraticApproximation cost;
+
+  const size_t stateDim = state.rows();
+  const vector_t params = getParameters(time, desiredTrajectory);
+  vector_t tapedTimeState(1 + stateDim);
+  tapedTimeState << time, state;
+
+  cost.f = adInterfacePtr_->getFunctionValue(tapedTimeState, params)(0);
+
+  const matrix_t J = adInterfacePtr_->getJacobian(tapedTimeState, params);
+  cost.dfdx = J.rightCols(stateDim).transpose();
+
+  const matrix_t H = adInterfacePtr_->getHessian(0, tapedTimeState, params);
+  cost.dfdxx = H.bottomRightCorner(stateDim, stateDim);
+
+  return cost;
 }
 
 }  // namespace ocs2

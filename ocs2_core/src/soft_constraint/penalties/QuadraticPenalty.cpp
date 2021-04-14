@@ -27,41 +27,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getPenaltyFunctionValue(scalar_t h) const {
-  if (h > delta_) {
-    return -mu_ * log(h);
-  } else {
-    return mu_ * (-log(delta_) + scalar_t(0.5) * pow((h - 2.0 * delta_) / delta_, 2.0) - scalar_t(0.5));
-  };
+scalar_t QuadraticPenalty::getValue(scalar_t h) const {
+  return 0.5 * mu_ * h * h;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getPenaltyFunctionDerivative(scalar_t h) const {
-  if (h > delta_) {
-    return -mu_ / h;
-  } else {
-    return mu_ * ((h - 2.0 * delta_) / (delta_ * delta_));
-  };
+scalar_t QuadraticPenalty::getDerivative(scalar_t h) const {
+  return mu_ * h;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getPenaltyFunctionSecondDerivative(scalar_t h) const {
-  if (h > delta_) {
-    return mu_ / (h * h);
-  } else {
-    return mu_ / (delta_ * delta_);
-  };
+scalar_t QuadraticPenalty::getSecondDerivative(scalar_t h) const {
+  return mu_;
 }
 
 }  // namespace ocs2

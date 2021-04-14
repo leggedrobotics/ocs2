@@ -61,8 +61,7 @@ class StateInputSoftConstraint final : public StateInputCost {
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
    * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr,
-                           std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyPtrArray);
+  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
   /**
    * Constructor.
@@ -70,7 +69,7 @@ class StateInputSoftConstraint final : public StateInputCost {
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
   StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, size_t numConstraints,
-                           std::unique_ptr<PenaltyFunctionBase> penaltyFunction);
+                           std::unique_ptr<PenaltyBase> penaltyFunction);
 
   ~StateInputSoftConstraint() override = default;
 

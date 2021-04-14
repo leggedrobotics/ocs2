@@ -27,63 +27,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/constraint/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t PenaltyBase::penaltyCost(const vector_t& h) const {
-  scalar_t penalty = 0;
-  for (size_t i = 0; i < h.rows(); i++) {
-    penalty += getPenaltyFunctionValue(h(i));
+scalar_t SquaredHingePenalty::getValue(scalar_t h) const {
+  if (h < config_.delta) {
+    const scalar_t delta_h = h - config_.delta;
+    return config_.mu * 0.5 * delta_h * delta_h;
+  } else {
+    return 0;
   }
-  return penalty;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation PenaltyBase::penaltyCostQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const {
-  const auto numInequalityConstraints = h.f.rows();
-  const auto stateDim = h.dfdx.cols();
-  const auto inputDim = h.dfdu.cols();
-
-  ScalarFunctionQuadraticApproximation penalty;
-  penalty.setZero(stateDim, inputDim);
-
-  vector_t penaltyDerivative(numInequalityConstraints);
-  vector_t penaltySecondDerivative(numInequalityConstraints);
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltyDerivative(i) = getPenaltyFunctionDerivative(h.f(i));
-    penaltySecondDerivative(i) = getPenaltyFunctionSecondDerivative(h.f(i));
-
-    penalty.f += getPenaltyFunctionValue(h.f(i));
-    penalty.dfdxx.noalias() += penaltyDerivative(i) * h.dfdxx[i];
-    penalty.dfduu.noalias() += penaltyDerivative(i) * h.dfduu[i];
-    penalty.dfdux.noalias() += penaltyDerivative(i) * h.dfdux[i];
+scalar_t SquaredHingePenalty::getDerivative(scalar_t h) const {
+  if (h < config_.delta) {
+    return config_.mu * (h - config_.delta);
+  } else {
+    return 0;
   }
-
-  penalty.dfdxx.noalias() += h.dfdx.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdx;
-  penalty.dfduu.noalias() += h.dfdu.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdu;
-  penalty.dfdux.noalias() += h.dfdu.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdx;
-  penalty.dfdx = h.dfdx.transpose() * penaltyDerivative;
-  penalty.dfdu = h.dfdu.transpose() * penaltyDerivative;
-
-  return penalty;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t PenaltyBase::constraintViolationSquaredNorm(const vector_t& h) const {
-  scalar_t squaredViolation = 0;
-  for (size_t i = 0; i < h.rows(); i++) {
-    scalar_t violation = std::max(0.0, -h(i));
-    squaredViolation += violation * violation;
+scalar_t SquaredHingePenalty::getSecondDerivative(scalar_t h) const {
+  if (h < config_.delta) {
+    return config_.mu;
+  } else {
+    return 0;
   }
-  return squaredViolation;
 }
 
 }  // namespace ocs2

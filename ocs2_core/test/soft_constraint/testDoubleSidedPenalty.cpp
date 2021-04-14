@@ -30,14 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenaltyFunction.h>
+#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
 
 TEST(testDoubleSidedPenalty, value) {
   const ocs2::scalar_t eps = 1e-9;
   const ocs2::scalar_t l = -1.0;
   const ocs2::scalar_t u = 1.0;
-  ocs2::SquaredHingePenaltyFunction penalty(ocs2::SquaredHingePenaltyFunction::Config(1.0, 0.0));
-  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
+  ocs2::SquaredHingePenalty penalty(ocs2::SquaredHingePenalty::Config(1.0, 0.0));
+  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenalty>(penalty.clone()));
 
   EXPECT_NEAR(bounds.getValue(0.0), 0.0, eps);
   EXPECT_NEAR(bounds.getValue(2.0), penalty.getValue(u - 2.0), eps);
@@ -48,8 +48,8 @@ TEST(testDoubleSidedPenalty, derivative) {
   const ocs2::scalar_t eps = 1e-9;
   const ocs2::scalar_t l = -1.0;
   const ocs2::scalar_t u = 1.0;
-  ocs2::SquaredHingePenaltyFunction penalty(ocs2::SquaredHingePenaltyFunction::Config(1.0, 0.0));
-  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
+  ocs2::SquaredHingePenalty penalty(ocs2::SquaredHingePenalty::Config(1.0, 0.0));
+  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenalty>(penalty.clone()));
 
   EXPECT_NEAR(bounds.getDerivative(0.0), 0.0, eps);
   EXPECT_NEAR(bounds.getDerivative(2.0), -penalty.getDerivative(u - 2.0), eps);
@@ -60,8 +60,8 @@ TEST(testDoubleSidedPenalty, secondDerivative) {
   const ocs2::scalar_t eps = 1e-9;
   const ocs2::scalar_t l = -1.0;
   const ocs2::scalar_t u = 1.0;
-  ocs2::SquaredHingePenaltyFunction penalty(ocs2::SquaredHingePenaltyFunction::Config(1.0, 0.0));
-  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenaltyFunction>(penalty.clone()));
+  ocs2::SquaredHingePenalty penalty(ocs2::SquaredHingePenalty::Config(1.0, 0.0));
+  ocs2::DoubleSidedPenalty bounds(l, u, std::unique_ptr<ocs2::SquaredHingePenalty>(penalty.clone()));
 
   EXPECT_NEAR(bounds.getSecondDerivative(0.0), 0.0, eps);
   EXPECT_NEAR(bounds.getSecondDerivative(2.0), penalty.getSecondDerivative(u - 2.0), eps);

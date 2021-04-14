@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_python_interface/PythonInterface.h"
 
 #include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 namespace ocs2 {
 
@@ -129,7 +130,15 @@ VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  return cost_->cost(t, x, u);
+  scalar_t L = cost_->cost(t, x, u);
+
+  if (constraints_ != nullptr && penalty_ != nullptr) {
+    const auto h = constraints_->inequalityConstraint(t, x, u);
+    SoftConstraintPenalty softConstraintPenalty(h.rows(), std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    L += softConstraintPenalty.getValue(h);
+  }
+
+  return L;
 }
 
 /******************************************************************************************************/
@@ -137,7 +146,15 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
-  return cost_->costQuadraticApproximation(t, x, u);
+  auto L = cost_->costQuadraticApproximation(t, x, u);
+
+  if (constraints_ != nullptr && penalty_ != nullptr) {
+    const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);
+    SoftConstraintPenalty softConstraintPenalty(h.f.rows(), std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    L += softConstraintPenalty.getQuadraticApproximation(h);
+  }
+
+  return L;
 }
 
 /******************************************************************************************************/

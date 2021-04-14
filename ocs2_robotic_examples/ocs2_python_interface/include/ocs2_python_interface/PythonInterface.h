@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
@@ -166,6 +167,9 @@ class PythonInterface {
                                    scalar_t speed = 1.0) {
     throw std::runtime_error("PythonInterface::visualizeTrajectory must be implemented by robot-specific derived class.");
   }
+
+ protected:
+  std::unique_ptr<PenaltyBase> penalty_;
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;

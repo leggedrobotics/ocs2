@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/ThreadPool.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
@@ -505,7 +505,7 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
-  std::unique_ptr<PenaltyBase> penaltyPtr_;
+  std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()

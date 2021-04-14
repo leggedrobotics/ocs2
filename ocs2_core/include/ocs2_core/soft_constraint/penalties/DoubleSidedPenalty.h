@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
@@ -42,7 +42,7 @@ namespace ocs2 {
  *   p_{box}(h) = p(h - l) + p(u - h)
  * \f]
  */
-class DoubleSidedPenalty final : public PenaltyFunctionBase {
+class DoubleSidedPenalty final : public PenaltyBase {
  public:
   /**
    * Constructor
@@ -50,7 +50,7 @@ class DoubleSidedPenalty final : public PenaltyFunctionBase {
    * @param [in] upperBound: The upper bound.
    * @param [in] penalty: The penalty for the two inequality constraint.
    */
-  DoubleSidedPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyFunctionBase> penalty)
+  DoubleSidedPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyBase> penalty)
       : lowerBound_(lowerBound), upperBound_(upperBound), penaltyPtr_(std::move(penalty)) {}
 
   /** Default destructor */
@@ -65,7 +65,7 @@ class DoubleSidedPenalty final : public PenaltyFunctionBase {
  private:
   DoubleSidedPenalty(const DoubleSidedPenalty& other);
 
-  std::unique_ptr<PenaltyFunctionBase> penaltyPtr_;
+  std::unique_ptr<PenaltyBase> penaltyPtr_;
   scalar_t lowerBound_;
   scalar_t upperBound_;
 };

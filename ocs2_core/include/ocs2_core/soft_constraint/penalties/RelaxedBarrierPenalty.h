@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 
 namespace ocs2 {
 
@@ -47,7 +47,7 @@ namespace ocs2 {
  *
  * where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
  */
-class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
+class RelaxedBarrierPenalty final : public PenaltyBase {
  public:
   /**
    * Configuration object for the relaxed barrier penalty.
@@ -65,19 +65,19 @@ class RelaxedBarrierPenaltyFunction final : public PenaltyFunctionBase {
    * Constructor
    * @param [in] config: Configuration object containing mu and delta.
    */
-  explicit RelaxedBarrierPenaltyFunction(Config config) : config_(std::move(config)) {}
+  explicit RelaxedBarrierPenalty(Config config) : config_(std::move(config)) {}
 
   /** Default destructor */
-  ~RelaxedBarrierPenaltyFunction() override = default;
+  ~RelaxedBarrierPenalty() override = default;
 
-  RelaxedBarrierPenaltyFunction* clone() const override { return new RelaxedBarrierPenaltyFunction(*this); }
+  RelaxedBarrierPenalty* clone() const override { return new RelaxedBarrierPenalty(*this); }
 
   scalar_t getValue(scalar_t h) const override;
   scalar_t getDerivative(scalar_t h) const override;
   scalar_t getSecondDerivative(scalar_t h) const override;
 
  private:
-  RelaxedBarrierPenaltyFunction(const RelaxedBarrierPenaltyFunction& other) = default;
+  RelaxedBarrierPenalty(const RelaxedBarrierPenalty& other) = default;
 
   Config config_;
 };

@@ -32,11 +32,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <numeric>
 
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Lookup.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 
@@ -89,7 +90,8 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
   }  // end of i loop
 
   // initialize penalty functions
-  penaltyPtr_.reset(new RelaxedBarrierPenalty(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_));
+  penaltyPtr_.reset(new RelaxedBarrierPenalty(
+      RelaxedBarrierPenalty::Config(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_)));
 
   // initialize Augmented Lagrangian parameters
   initializeConstraintPenalties();
@@ -1172,7 +1174,9 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
 
   // inequality constraints
   if (modelData.ineqConstr_.f.rows() > 0) {
-    modelData.cost_ += penaltyPtr_->penaltyCostQuadraticApproximation(modelData.ineqConstr_);
+    // TODO(mspieler): Avoid local soft constraint penalty.
+    SoftConstraintPenalty softConstraintPenalty(modelData.ineqConstr_.f.rows(), std::unique_ptr<PenaltyBase>(penaltyPtr_->clone()));
+    modelData.cost_ += softConstraintPenalty.getQuadraticApproximation(modelData.ineqConstr_);
 
     // checking the numerical stability again
     if (ddpSettings_.checkNumericalStability_) {

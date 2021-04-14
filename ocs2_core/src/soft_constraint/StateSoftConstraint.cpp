@@ -35,14 +35,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr,
-                                         std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyPtrArray)
+                                         std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray)
     : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyPtrArray)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints,
-                                         std::unique_ptr<PenaltyFunctionBase> penaltyFunction)
+                                         std::unique_ptr<PenaltyBase> penaltyFunction)
     : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)) {}
 
 /******************************************************************************************************/

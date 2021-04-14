@@ -74,8 +74,6 @@ add_library(${PROJECT_NAME}
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
   src/constraint/LinearConstraint.cpp
-  src/constraint/PenaltyBase.cpp
-  src/constraint/RelaxedBarrierPenalty.cpp
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
@@ -130,10 +128,10 @@ add_library(${PROJECT_NAME}
   src/soft_constraint/StateSoftConstraint.cpp
   src/soft_constraint/StateInputSoftConstraint.cpp
   src/soft_constraint/penalties/DoubleSidedPenalty.cpp
-  src/soft_constraint/penalties/QuadraticPenaltyFunction.cpp
-  src/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.cpp
-  src/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.cpp
-  src/soft_constraint/penalties/SquaredHingePenaltyFunction.cpp
+  src/soft_constraint/penalties/QuadraticPenalty.cpp
+  src/soft_constraint/penalties/SmoothAbsolutePenalty.cpp
+  src/soft_constraint/penalties/RelaxedBarrierPenalty.cpp
+  src/soft_constraint/penalties/SquaredHingePenalty.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

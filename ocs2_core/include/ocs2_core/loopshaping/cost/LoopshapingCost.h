@@ -7,7 +7,7 @@
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {

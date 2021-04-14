@@ -82,14 +82,10 @@ add_library(${PROJECT_NAME}
   src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/CostCollection.cpp
   src/cost/CostFunctionBase.cpp
-  src/cost/CostFunctionBaseAD.cpp
   src/cost/CostDesiredTrajectories.cpp
-  src/cost/RelaxedBarrierCost.cpp
-  src/cost/CostFunctionLinearCombination.cpp
   src/cost/QuadraticCostFunction.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
-  src/cost/QuadraticGaussNewtonCostBaseAD.cpp
   src/cost/StateCost.cpp
   src/cost/StateCostCppAd.cpp
   src/cost/StateInputCostCppAd.cpp
@@ -239,7 +235,6 @@ target_link_libraries(interpolation_unittest
 
 catkin_add_gtest(${PROJECT_NAME}_cppadcg
   test/cppad_cg/testCppADCG_constraint.cpp
-  test/cppad_cg/testCppADCG_cost.cpp
   test/cppad_cg/testCppADCG_dynamics.cpp
   test/cppad_cg/testSparsityHelpers.cpp
   test/cppad_cg/testCppAdInterface.cpp
@@ -302,10 +297,8 @@ target_link_libraries(test_dynamics
 
 catkin_add_gtest(test_cost
   test/cost/testCostCollection.cpp
-  test/cost/testRelaxedBarrierCost.cpp
-  test/cost/testCostFunctionLinearCombination.cpp
-  test/cost/testQuadraticCostFunction.cpp
   test/cost/testCostCppAd.cpp
+  test/cost/testQuadraticCostFunction.cpp
 )
 target_link_libraries(test_cost
   ${PROJECT_NAME}

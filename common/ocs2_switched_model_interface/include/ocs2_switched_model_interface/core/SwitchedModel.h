@@ -250,4 +250,15 @@ feet_array_t<T> constantFeetArray(const T& val) {
   return {val, val, val, val};
 }
 
+/** Count contact feet */
+inline int numberOfClosedContacts(const contact_flag_t& contactFlags) {
+  size_t numStanceLegs = 0;
+  for (auto legInContact : contactFlags) {
+    if (legInContact) {
+      ++numStanceLegs;
+    }
+  }
+  return numStanceLegs;
+}
+
 }  // end of namespace switched_model

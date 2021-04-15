@@ -11,12 +11,9 @@ QuadrupedLoopshapingInterface::QuadrupedLoopshapingInterface(std::unique_ptr<swi
                                                              std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinition)
     : ocs2::LoopshapingRobotInterface(std::move(quadrupedPtr), std::move(loopshapingDefinition)) {
   // initialize state including filter state
-  const auto totalWeight = getQuadrupedInterface().getComModel().totalMass() * 9.81;
-  vector_t uSystemForWeightCompensation = vector_t::Zero(SYSTEM_INPUT_DIM);
-  const size_t numLegs = 4;
-  for (size_t i = 0; i < numLegs; i++) {
-    uSystemForWeightCompensation(3 * i + 2) = totalWeight / numLegs;
-  }
+  const auto stanceFlags = switched_model::constantFeetArray(true);
+  const auto uSystemForWeightCompensation =
+      weightCompensatingInputs(getQuadrupedInterface().getComModel(), stanceFlags, switched_model::vector3_t::Zero());
 
   ocs2::vector_t initialFilterState;
   ocs2::vector_t initialFilterInput;

@@ -41,9 +41,9 @@ StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, size_t numConstraints,
+StateInputSoftConstraint::StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr,
                                                    std::unique_ptr<PenaltyBase> penaltyFunction)
-    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)) {}
+    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyFunction)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

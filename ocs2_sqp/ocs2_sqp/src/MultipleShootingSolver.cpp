@@ -76,7 +76,9 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
   }
 
   if (constraintPtr != nullptr && settings_.inequalityConstraintMu > 0) {
-    penaltyPtr_.reset(new RelaxedBarrierPenalty({settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta}));
+    std::unique_ptr<RelaxedBarrierPenalty> penaltyFunction(
+        new RelaxedBarrierPenalty({settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta}));
+    penaltyPtr_.reset(new SoftConstraintPenalty(std::move(penaltyFunction)));
   }
 
   if (terminalCostFunctionPtr != nullptr) {

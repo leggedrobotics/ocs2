@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 namespace ocs2 {
@@ -68,7 +68,7 @@ struct Transcription {
  * @return multiple shooting transcription for this node.
  */
 Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
-                                    CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
+                                    CostFunctionBase& costFunction, ConstraintBase* constraintPtr, SoftConstraintPenalty* penaltyPtr,
                                     bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
                                     const vector_t& x_next, const vector_t& u);
 
@@ -77,8 +77,9 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
  * Corresponds to the performance index returned by "setupIntermediateNode"
  */
 PerformanceIndex computeIntermediatePerformance(SystemDynamicsBase& systemDynamics, DynamicsDiscretizer& discretizer,
-                                                CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
+                                                CostFunctionBase& costFunction, ConstraintBase* constraintPtr,
+                                                SoftConstraintPenalty* penaltyPtr, scalar_t t, scalar_t dt, const vector_t& x,
+                                                const vector_t& x_next, const vector_t& u);
 
 /**
  * Results of the transcription at a terminal node

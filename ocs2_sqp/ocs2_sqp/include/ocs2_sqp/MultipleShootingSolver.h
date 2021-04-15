@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/ThreadPool.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include <hpipm_catkin/HpipmInterface.h>
@@ -144,7 +144,7 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<std::unique_ptr<ConstraintBase>> constraintPtr_;
   std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
   std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
-  std::unique_ptr<PenaltyBase> penaltyPtr_;
+  std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // Threading
   std::unique_ptr<ThreadPool> threadPoolPtr_;

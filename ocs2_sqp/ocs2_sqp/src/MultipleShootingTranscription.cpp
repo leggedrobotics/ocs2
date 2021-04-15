@@ -37,7 +37,7 @@ namespace ocs2 {
 namespace multiple_shooting {
 
 Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
-                                    CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
+                                    CostFunctionBase& costFunction, ConstraintBase* constraintPtr, SoftConstraintPenalty* penaltyPtr,
                                     bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
                                     const vector_t& x_next, const vector_t& u) {
   // Results and short-hand notation
@@ -64,7 +64,7 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
     if (penaltyPtr != nullptr) {
       const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(t, x, u);
       if (ineqConstraints.f.size() > 0) {
-        const auto penaltyCost = penaltyPtr->getSecondDerivative(ineqConstraints);
+        const auto penaltyCost = penaltyPtr->getQuadraticApproximation(ineqConstraints);
         cost += penaltyCost;  // add to cost before potential projection.
         performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
         performance.inequalityConstraintPenalty += dt * penaltyCost.f;
@@ -99,8 +99,9 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
 }
 
 PerformanceIndex computeIntermediatePerformance(SystemDynamicsBase& systemDynamics, DynamicsDiscretizer& discretizer,
-                                                CostFunctionBase& costFunction, ConstraintBase* constraintPtr, PenaltyBase* penaltyPtr,
-                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u) {
+                                                CostFunctionBase& costFunction, ConstraintBase* constraintPtr,
+                                                SoftConstraintPenalty* penaltyPtr, scalar_t t, scalar_t dt, const vector_t& x,
+                                                const vector_t& x_next, const vector_t& u) {
   PerformanceIndex performance;
 
   // Dynamics
@@ -121,7 +122,7 @@ PerformanceIndex computeIntermediatePerformance(SystemDynamicsBase& systemDynami
     if (penaltyPtr) {
       const vector_t ineqConstraints = constraintPtr->inequalityConstraint(t, x, u);
       if (ineqConstraints.size() > 0) {
-        const scalar_t penaltyCost = penaltyPtr->penaltyCost(ineqConstraints);
+        const scalar_t penaltyCost = penaltyPtr->getValue(ineqConstraints);
         performance.inequalityConstraintISE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
         performance.inequalityConstraintPenalty += dt * penaltyCost;
       }

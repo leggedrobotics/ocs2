@@ -64,7 +64,7 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
     if (penaltyPtr != nullptr) {
       const auto ineqConstraints = constraintPtr->inequalityConstraintQuadraticApproximation(t, x, u);
       if (ineqConstraints.f.size() > 0) {
-        const auto penaltyCost = penaltyPtr->penaltyCostQuadraticApproximation(ineqConstraints);
+        const auto penaltyCost = penaltyPtr->getSecondDerivative(ineqConstraints);
         cost += penaltyCost;  // add to cost before potential projection.
         performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
         performance.inequalityConstraintPenalty += dt * penaltyCost.f;

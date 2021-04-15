@@ -32,10 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <numeric>
 
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
 #include "ocs2_sqp/MultipleShootingTranscription.h"
 
@@ -76,7 +76,7 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
   }
 
   if (constraintPtr != nullptr && settings_.inequalityConstraintMu > 0) {
-    penaltyPtr_.reset(new RelaxedBarrierPenalty(settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta));
+    penaltyPtr_.reset(new RelaxedBarrierPenalty({settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta}));
   }
 
   if (terminalCostFunctionPtr != nullptr) {

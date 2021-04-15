@@ -134,7 +134,7 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 
   if (constraints_ != nullptr && penalty_ != nullptr) {
     const auto h = constraints_->inequalityConstraint(t, x, u);
-    SoftConstraintPenalty softConstraintPenalty(h.rows(), std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getValue(h);
   }
 
@@ -150,7 +150,7 @@ ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation
 
   if (constraints_ != nullptr && penalty_ != nullptr) {
     const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);
-    SoftConstraintPenalty softConstraintPenalty(h.f.rows(), std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getQuadraticApproximation(h);
   }
 

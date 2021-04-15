@@ -42,7 +42,8 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
                                        std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
                                        std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
                                        std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
-                                       PenaltyBase& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc)
+                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
+                                       std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),

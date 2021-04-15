@@ -95,7 +95,7 @@ std::unique_ptr<SoftConstraint> softConstraintFactory(size_t numConstraints, ocs
   if (useSimilarPenalty) {
     // penalty function
     std::unique_ptr<ocs2::RelaxedBarrierPenalty> penaltyFunctionPtr(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
-    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), numConstraints, std::move(penaltyFunctionPtr)));
+    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), std::move(penaltyFunctionPtr)));
 
   } else {
     std::vector<std::unique_ptr<ocs2::PenaltyBase>> penaltyFunctionPtrArry;

@@ -90,8 +90,9 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
   }  // end of i loop
 
   // initialize penalty functions
-  penaltyPtr_.reset(new RelaxedBarrierPenalty(
+  std::unique_ptr<PenaltyBase> penaltyFunction(new RelaxedBarrierPenalty(
       RelaxedBarrierPenalty::Config(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_)));
+  penaltyPtr_.reset(new SoftConstraintPenalty(std::move(penaltyFunction)));
 
   // initialize Augmented Lagrangian parameters
   initializeConstraintPenalties();
@@ -1174,9 +1175,7 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
 
   // inequality constraints
   if (modelData.ineqConstr_.f.rows() > 0) {
-    // TODO(mspieler): Avoid local soft constraint penalty.
-    SoftConstraintPenalty softConstraintPenalty(modelData.ineqConstr_.f.rows(), std::unique_ptr<PenaltyBase>(penaltyPtr_->clone()));
-    modelData.cost_ += softConstraintPenalty.getQuadraticApproximation(modelData.ineqConstr_);
+    modelData.cost_ += penaltyPtr_->getQuadraticApproximation(modelData.ineqConstr_);
 
     // checking the numerical stability again
     if (ddpSettings_.checkNumericalStability_) {

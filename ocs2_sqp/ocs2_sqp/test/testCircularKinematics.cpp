@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   ocs2::CircularKinematicsSystem system;
   ocs2::CircularKinematicsCost cost;
-  cost.initialize("circular_kinematics_cost", "/tmp/ocs2/test_circular_kinematics/solve_projected_EqConstraints", true, false);
   ocs2::CircularKinematicsConstraints constraint;
 
   // Solver settings
@@ -92,7 +91,6 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
 TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   ocs2::CircularKinematicsSystem system;
   ocs2::CircularKinematicsCost cost;
-  cost.initialize("circular_kinematics_cost", "/tmp/ocs2/test_circular_kinematics/solve_EqConstraints_inQPSubproblem", true, false);
   ocs2::CircularKinematicsConstraints constraint;
 
   // Solver settings

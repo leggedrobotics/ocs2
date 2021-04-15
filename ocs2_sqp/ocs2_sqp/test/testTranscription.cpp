@@ -40,7 +40,6 @@ using namespace ocs2::multiple_shooting;
 TEST(test_transcription, intermediate_performance) {
   ocs2::CircularKinematicsSystem system;
   ocs2::CircularKinematicsCost cost;
-  cost.initialize("circular_kinematics_cost", "/tmp/ocs2/test_transcription/intermediate_performance", true, false);
   ocs2::CircularKinematicsConstraints constraint;
   auto discretizer = selectDynamicsDiscretization(SensitivityIntegratorType::RK4);
   auto sensitivityDiscretizer = selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);

@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
+#include <ocs2_sphere_approximation/SphereApproximation.h>
+
 #include <hpp/fcl/collision_data.h>
 
 /* Forward declaration of pinocchio geometry types */
@@ -67,6 +69,8 @@ class PinocchioGeometryInterface final {
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
+  PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
+                             const std::vector<std::string> sphereApproximationLinks, vector_t maxExtrusions);
   /**
    * Compute collision pair distances
    *
@@ -77,6 +81,8 @@ class PinocchioGeometryInterface final {
    */
   std::vector<hpp::fcl::DistanceResult> computeDistances(const PinocchioInterface& pinocchioInterface) const;
 
+  void setSphereTransforms(const PinocchioInterface& pinocchioInterface);
+
   /** Get the number of collision pairs */
   size_t getNumCollisionPairs() const;
 
@@ -84,8 +90,14 @@ class PinocchioGeometryInterface final {
   pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
+  const std::vector<SphereApproximation> getSphereApproximations() const { return sphereApproximations_; }
+
  private:
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
+
+  // Sphere approximation for obstacle avoidance
+  std::vector<SphereApproximation> sphereApproximations_;
+  vector_t maxExtrusions_;
 };
 
 }  // namespace ocs2

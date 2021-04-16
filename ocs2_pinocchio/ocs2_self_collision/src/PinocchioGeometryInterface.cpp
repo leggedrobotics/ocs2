@@ -92,6 +92,31 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
+                                                       const std::vector<std::string> sphereApproximationLinks, vector_t maxExtrusions)
+    : geometryModelPtr_(new pinocchio::GeometryModel), maxExtrusions_(std::move(maxExtrusions)) {
+  pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
+
+  std::cerr << "Finding objects ...\n";
+  size_t linkCount = 0;
+  for (const auto& link : sphereApproximationLinks) {
+    for (size_t i = 0; i < geometryModelPtr_->geometryObjects.size(); ++i) {
+      const pinocchio::GeometryObject& object = geometryModelPtr_->geometryObjects[i];
+      const std::string parentFrameName = pinocchioInterface.getModel().frames[object.parentFrame].name;
+      if (parentFrameName == link) {
+        std::cerr << "Found one object in frame:" << link << "\n";
+        sphereApproximations_.emplace_back(i, object.geometry.get(), maxExtrusions_[linkCount]);
+      }
+    }
+    linkCount++;
+  }
+  std::cerr << "Found and approximated " << sphereApproximations_.size() << " objects\n";
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+
 std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistances(const PinocchioInterface& pinocchioInterface) const {
   pinocchio::GeometryData geometryData(*geometryModelPtr_);
 
@@ -99,6 +124,20 @@ std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistanc
   pinocchio::computeDistances(*geometryModelPtr_, geometryData);
 
   return std::move(geometryData.distanceResults);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PinocchioGeometryInterface::setSphereTransforms(const PinocchioInterface& pinocchioInterface) {
+  pinocchio::GeometryData geometryData(*geometryModelPtr_);
+
+  pinocchio::updateGeometryPlacements(pinocchioInterface.getModel(), pinocchioInterface.getData(), *geometryModelPtr_, geometryData);
+
+  for (auto& sphereApprox : sphereApproximations_) {
+    const auto& objectTransform = geometryData.oMg[sphereApprox.getObjectId()];
+    sphereApprox.setSphereTransforms(objectTransform.rotation(), objectTransform.translation());
+  }
 }
 
 /******************************************************************************************************/

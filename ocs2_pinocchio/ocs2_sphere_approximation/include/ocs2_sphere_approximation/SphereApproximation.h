@@ -31,31 +31,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
 //#include <hpp/fcl/collision_object.h>
 #include <hpp/fcl/shape/geometric_shapes.h>
 
 namespace ocs2 {
 class SphereApproximation {
  public:
-  SphereApproximation(const hpp::fcl::CollisionGeometry* geometryPtr, scalar_t maxExtrusion);
+  SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, scalar_t maxExtrusion);
 
-  void approximatePrimitive(const hpp::fcl::CollisionGeometry* geometryPtr);
+  //  void approximatePrimitive(const hpp::fcl::CollisionGeometry* geometryPtr);
 
-  void setTranslation();
+  void setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation);
 
+  size_t getObjectId() const { return objectId_; };
   scalar_t getMaxExtrusion() const { return maxExtrusion_; };
   scalar_t getSphereRadius() const { return sphereRadius_; };
-  vector_array_t getSphereCentersInObjectFrame() const { return sphereCentersInObjectFrame_; };
+  vector_array_t getSphereCentersToObjectCenter() const { return sphereCentersToObjectCenter_; };
   vector_array_t getSphereCentersInWorldFrame() const { return sphereCentersInWorldFrame_; };
 
  private:
   void approximateBox(const vector_t& sides);
   void approximateCylinder(const scalar_t& radius, const scalar_t& length);
 
+  const size_t objectId_;
   const scalar_t maxExtrusion_;
 
   scalar_t sphereRadius_;
-  vector_array_t sphereCentersInObjectFrame_;
+  vector_array_t sphereCentersToObjectCenter_;
   vector_array_t sphereCentersInWorldFrame_;
 };
 

@@ -29,37 +29,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sphere_approximation/SphereApproximation.h"
 
-#include <iostream>
+#include <algorithm>
+#include <cmath>
 
 namespace ocs2 {
 
 SphereApproximation::SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, scalar_t maxExtrusion)
     : objectId_(objectId), maxExtrusion_(maxExtrusion) {
   const auto& nodeType = geometryPtr->getNodeType();
-  std::cerr << "[SphereApproximation] Node type: " << static_cast<size_t>(nodeType) << "\n";
   switch (nodeType) {
     case hpp::fcl::NODE_TYPE::GEOM_BOX: {
-      std::cerr << "[SphereApproximation] Casting Geometry Ptr to Box Ptr...\n";
       const auto* boxPtr = dynamic_cast<const hpp::fcl::Box*>(geometryPtr);
-
-      std::cerr << "[SphereApproximation] Approximating BOX with spheres...\n";
       approximateBox(boxPtr->halfSide * 2);
       break;
     }
     case hpp::fcl::NODE_TYPE::GEOM_CYLINDER: {
-      std::runtime_error("[SphereApproximation] Sphere approximation of CYLINDER not yet fully implemented");
-
-      std::cerr << "[SphereApproximation] Casting Geometry Ptr to Cylinder Ptr...\n";
       const auto* cylinderPtr = dynamic_cast<const hpp::fcl::Cylinder*>(geometryPtr);
-
-      std::cerr << "[SphereApproximation] Approximating CYLINDER witoh spheres...\n";
       approximateCylinder(cylinderPtr->radius, cylinderPtr->halfLength * 2);
       break;
     }
     case hpp::fcl::NODE_TYPE::GEOM_SPHERE: {
-      std::runtime_error("[SphereApproximation] Sphere approximation of SPHERE not yet fully implemented");
       const auto* spherePtr = dynamic_cast<const hpp::fcl::Sphere*>(geometryPtr);
       sphereRadius_ = spherePtr->radius;
+      sphereCentersToObjectCenter_.resize(1);
+      sphereCentersInWorldFrame_.resize(1);
+      sphereCentersToObjectCenter_[0] = vector_t::Zero(3);
       break;
     }
     default:
@@ -67,121 +61,72 @@ SphereApproximation::SphereApproximation(const size_t objectId, const hpp::fcl::
   }
 }
 
-// void SphereApproximation::approximatePrimitive(const hpp::fcl::CollisionGeometry* geometryPtr) {
-//  const auto& nodeType = geometryPtr->getNodeType();
-//  std::cerr << "[SphereApproximation] Node type: " << static_cast<size_t>(nodeType) << "\n";
-//  switch (nodeType) {
-//    case hpp::fcl::NODE_TYPE::GEOM_BOX: {
-//      std::cerr << "[SphereApproximation] Casting Geometry Ptr to Box Ptr...\n";
-//      const auto* boxPtr = dynamic_cast<const hpp::fcl::Box*>(geometryPtr);
-//
-//      std::cerr << "[SphereApproximation] Approximating BOX with spheres...\n";
-//      approximateBox(boxPtr->halfSide * 2);
-//      break;
-//    }
-//    case hpp::fcl::NODE_TYPE::GEOM_CYLINDER: {
-//      std::runtime_error("[SphereApproximation] Sphere approximation of CYLINDER not yet fully implemented");
-//
-//      std::cerr << "[SphereApproximation] Casting Geometry Ptr to Cylinder Ptr...\n";
-//      const auto* cylinderPtr = dynamic_cast<const hpp::fcl::Cylinder*>(geometryPtr);
-//
-//      std::cerr << "[SphereApproximation] Approximating CYLINDER witoh spheres...\n";
-//      approximateCylinder(cylinderPtr->radius, cylinderPtr->halfLength * 2);
-//      break;
-//    }
-//    case hpp::fcl::NODE_TYPE::GEOM_SPHERE: {
-//      std::runtime_error("[SphereApproximation] Sphere approximation of SPHERE not yet fully implemented");
-//      const auto* spherePtr = dynamic_cast<const hpp::fcl::Sphere*>(geometryPtr);
-//      sphereRadius_ = spherePtr->radius;
-//      break;
-//    }
-//    default:
-//      throw std::runtime_error("[SphereApproximation] Undefined shape primitive for sphere approximation");
-//  }
-//}
-
 void SphereApproximation::setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation) {
-  std::cerr << "Object centered at: " << objectTranslation.transpose() << std::endl;
   for (int i = 0; i < sphereCentersInWorldFrame_.size(); i++) {
     sphereCentersInWorldFrame_[i] = objectRotation * sphereCentersToObjectCenter_[i] + objectTranslation;
-    std::cerr << "Sphere " << i << " centerd in object at     : " << sphereCentersToObjectCenter_[i].transpose() << "\n";
-    std::cerr << "Sphere " << i << " centerd in world frame at: " << sphereCentersInWorldFrame_[i].transpose() << "\n";
   }
 }
 
 void SphereApproximation::approximateBox(const vector_t& sides) {
   // indices of the shortest, medium, and longest side
-  size_array_t indicesInLengthOrder(3);
-
-  // TODO (jichiu): Figure out a more efficient way of sorting indices
-  sides.minCoeff(&indicesInLengthOrder[0]);
-  sides.maxCoeff(&indicesInLengthOrder[2]);
-  indicesInLengthOrder[1] = 3 - indicesInLengthOrder[0] - indicesInLengthOrder[2];
+  size_array_t idxSorted = {0, 1, 2};
+  std::stable_sort(idxSorted.begin(), idxSorted.end(),
+                   [&sides](const size_t& idx1, const size_t& idx2) { return sides[idx1] < sides[idx2]; });
 
   vector_t initSphereRadii(3);
-  initSphereRadii << sides.norm() / 2, sides[indicesInLengthOrder[0]] / 2 + maxExtrusion_,
-      std::sqrt(3) * maxExtrusion_ / (std::sqrt(3) - 1);
-  size_t shortestRadiusInd;
-  sphereRadius_ = initSphereRadii.minCoeff(&shortestRadiusInd);
+  size_t caseIdx;
+  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExtrusion_, std::sqrt(3) * maxExtrusion_ / (std::sqrt(3) - 1);
+  sphereRadius_ = initSphereRadii.minCoeff(&caseIdx);
 
   // Distance between the first sphere center and the corner along x, y, z
   vector_t distances(3);
   // Number of spheres along x, y, z
   vector_t numSpheres(3);
 
-  if (shortestRadiusInd == 0) {
-    std::cerr << "Case 1: One sphere for the entire box\n";
+  if (caseIdx == 0) {
     distances = sides / 2;
 
     numSpheres = vector_t::Ones(3);
 
     // No re-calculation of the distances is required
 
-  } else if (shortestRadiusInd == 1) {
-    scalar_t dist =
-        std::sqrt(sphereRadius_ * sphereRadius_ - sides[indicesInLengthOrder[0]] * sides[indicesInLengthOrder[0]] / 4) / std::sqrt(2);
+  } else if (caseIdx == 1) {
+    scalar_t dist = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(sides[idxSorted[0]] / 2, 2)) / std::sqrt(2);
 
-    if (dist >= sides[indicesInLengthOrder[1]] / 2) {
-      std::cerr << "Case 2-1: One sphere for the shortest side & One sphere for the medium side\n";
-      distances[indicesInLengthOrder[0]] = sides[indicesInLengthOrder[0]] / 2;
-      distances[indicesInLengthOrder[1]] = sides[indicesInLengthOrder[1]] / 2;
-      distances[indicesInLengthOrder[2]] =
-          std::sqrt(sphereRadius_ * sphereRadius_ - distances[indicesInLengthOrder[0]] * distances[indicesInLengthOrder[0]] -
-                    distances[indicesInLengthOrder[1]] * distances[indicesInLengthOrder[1]]);
+    if (dist >= sides[idxSorted[1]] / 2) {
+      distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
+      distances[idxSorted[1]] = sides[idxSorted[1]] / 2;
+      distances[idxSorted[2]] =
+          std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[idxSorted[0]], 2) - std::pow(distances[idxSorted[1]], 2));
 
-      numSpheres[indicesInLengthOrder[0]] = numSpheres[indicesInLengthOrder[1]] = 1;
-      numSpheres[indicesInLengthOrder[2]] = std::ceil(sides[indicesInLengthOrder[2]] / (2 * distances[indicesInLengthOrder[2]]));
+      numSpheres[idxSorted[0]] = numSpheres[idxSorted[1]] = 1;
+      numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
 
       // Re-calculate the distances
-      distances[indicesInLengthOrder[2]] =
-          std::max(sides[indicesInLengthOrder[2]] / (2 * numSpheres[indicesInLengthOrder[2]]), sphereRadius_ - maxExtrusion_);
+      distances[idxSorted[2]] = std::max(sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]), sphereRadius_ - maxExtrusion_);
 
     } else {
-      std::cerr << "Case 2-2: One sphere for the shortest side & Multiple spheres for the medium side\n";
-      distances[indicesInLengthOrder[0]] = sides[indicesInLengthOrder[0]] / 2;
-      distances[indicesInLengthOrder[1]] = distances[indicesInLengthOrder[2]] = dist;
+      distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
+      distances[idxSorted[1]] = distances[idxSorted[2]] = dist;
 
-      numSpheres[indicesInLengthOrder[0]] = 1;
-      numSpheres[indicesInLengthOrder[1]] = std::ceil(sides[indicesInLengthOrder[1]] / (2 * distances[indicesInLengthOrder[1]]));
-      numSpheres[indicesInLengthOrder[2]] = std::ceil(sides[indicesInLengthOrder[2]] / (2 * distances[indicesInLengthOrder[2]]));
+      numSpheres[idxSorted[0]] = 1;
+      numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+      numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
 
       // Re-calculate the distances
-      distances[indicesInLengthOrder[1]] = distances[indicesInLengthOrder[2]] =
-          std::max(sides[indicesInLengthOrder[1]] / (2 * numSpheres[indicesInLengthOrder[1]]),
-                   sides[indicesInLengthOrder[2]] / (2 * numSpheres[indicesInLengthOrder[2]]));
+      distances[idxSorted[1]] = distances[idxSorted[2]] =
+          std::max(sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]), sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]));
     }
   } else {
-    std::cerr << "Case 3: Multiple spheres along all sides\n";
     distances = (sphereRadius_ - maxExtrusion_) * vector_t::Ones(3);
 
-    numSpheres[indicesInLengthOrder[0]] = std::ceil(sides[indicesInLengthOrder[0]] / (2 * distances[indicesInLengthOrder[0]]));
-    numSpheres[indicesInLengthOrder[1]] = std::ceil(sides[indicesInLengthOrder[1]] / (2 * distances[indicesInLengthOrder[1]]));
-    numSpheres[indicesInLengthOrder[2]] = std::ceil(sides[indicesInLengthOrder[2]] / (2 * distances[indicesInLengthOrder[2]]));
+    numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
+    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+    numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
 
     // Re-calculate the distances
-    distances = std::max({sides[indicesInLengthOrder[0]] / (2 * numSpheres[indicesInLengthOrder[0]]),
-                          sides[indicesInLengthOrder[1]] / (2 * numSpheres[indicesInLengthOrder[1]]),
-                          sides[indicesInLengthOrder[2]] / (2 * numSpheres[indicesInLengthOrder[2]])}) *
+    distances = std::max({sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]),
+                          sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]])}) *
                 vector_t::Ones(3);
   }
   // re-calculate the sphere radius
@@ -198,21 +143,130 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
     }
   }
 
-  std::cerr << "sides     = " << sides.transpose() << std::endl;
-  std::cerr << "distances = " << distances.transpose() << std::endl;
-  std::cerr << "spacings  = " << spacings.transpose() << std::endl;
+  size_t count = 0;
   for (size_t i = 0; i < numSpheres[0]; i++) {
     for (size_t j = 0; j < numSpheres[1]; j++) {
       for (size_t k = 0; k < numSpheres[2]; k++) {
-        size_t count = i * numSpheres[1] * numSpheres[2] + j * numSpheres[2] + k;
         sphereCentersToObjectCenter_[count] = vector_t::Zero(3);
         sphereCentersToObjectCenter_[count] << distances[0] + i * spacings[0] - sides[0] / 2, distances[1] + j * spacings[1] - sides[1] / 2,
             distances[2] + k * spacings[2] - sides[2] / 2;
+        count++;
       }
     }
   }
 }
 
-void SphereApproximation::approximateCylinder(const scalar_t& radius, const scalar_t& length) {}
+void SphereApproximation::approximateCylinder(const scalar_t& radius, const scalar_t& length) {
+  // First, approximate the rectangle cross-section of the cylinder
+  vector_t sides(2);
+  sides << 2 * radius, length;
+
+  size_array_t idxSorted = {0, 1};
+  if (sides(0) > sides(1)) {
+    std::swap(idxSorted[0], idxSorted[1]);
+  }
+
+  // TODO (jichiu): Figure a better way to store the desired ratio maxExtrusionL / maxExtrusion
+  scalar_t maxExtrusionL = maxExtrusion_ * 0.7;
+  vector_t initSphereRadii(3);
+  size_t caseIdx;
+  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExtrusionL, std::sqrt(2) * maxExtrusionL / (std::sqrt(2) - 1);
+  sphereRadius_ = initSphereRadii.minCoeff(&caseIdx);
+
+  vector_t distances(2);
+  vector_t numSpheres(2);
+
+  if (caseIdx == 0) {
+    distances = sides / 2;
+
+    numSpheres = vector_t::Ones(2);
+
+  } else if (caseIdx == 1) {
+    distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
+    distances[idxSorted[1]] = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[idxSorted[0]], 2));
+
+    numSpheres[idxSorted[0]] = 1;
+    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+
+    // Re-calculate the distances
+    distances[idxSorted[1]] = sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]);
+
+  } else {
+    distances = (sphereRadius_ - maxExtrusionL) * vector_t::Ones(2);
+
+    numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
+    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+
+    // Re-calculate the distances
+    distances = std::max(sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]])) *
+                vector_t::Ones(2);
+  }
+  sphereRadius_ = distances.norm();
+
+  scalar_t spacingLength;
+  if (numSpheres[1] > 1) {
+    spacingLength = (sides[1] - 2 * distances[1]) / (numSpheres[1] - 1);
+  }
+
+  // Second, approximate the circle base of the cylinder
+  bool approximateCylinderBase = true;
+  scalar_t radiusBase = radius;
+  scalar_t radiusCircle = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[1], 2));
+  scalar_t maxExtrusionR = maxExtrusion_ - maxExtrusionL;
+  vector_array_t circleCentersToBaseCenter;
+
+  while (approximateCylinderBase) {
+    scalar_t shift, alpha, numCircles;
+    approximateCylinderBase = approximateCircleBase(radiusBase, radiusCircle, maxExtrusionR, shift, alpha, numCircles);
+
+    for (size_t i = 0; i < numCircles; i++) {
+      vector_t circleCenter(2);
+      circleCenter << shift * std::sin(i * alpha), shift * std::cos(i * alpha);
+      circleCentersToBaseCenter.push_back(circleCenter);
+    }
+
+    // Enclose the uncovered area by another circle with radiusBase
+    radiusBase = shift / std::cos(alpha / 2) - radiusCircle;
+  }
+
+  numSpheres[0] = circleCentersToBaseCenter.size();
+  sphereCentersToObjectCenter_.resize(numSpheres[0] * numSpheres[1]);
+  sphereCentersInWorldFrame_.resize(numSpheres[0] * numSpheres[1]);
+
+  size_t count = 0;
+  for (size_t i = 0; i < numSpheres[1]; i++) {
+    for (size_t j = 0; j < numSpheres[0]; j++) {
+      sphereCentersToObjectCenter_[count] = vector_t::Zero(3);
+      sphereCentersToObjectCenter_[count] << circleCentersToBaseCenter[j], distances[1] + i * spacingLength - sides[1] / 2;
+      count++;
+    }
+  }
+}
+
+bool SphereApproximation::approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection,
+                                                const scalar_t& maxExtrusionR, scalar_t& shift, scalar_t& alpha, scalar_t& numCircles) {
+  if (radiusSphereCrossSection < radiusBase) {
+    shift = radiusBase + std::min(0.0, maxExtrusionR - radiusSphereCrossSection);
+    alpha =
+        2 * std::acos((std::pow(radiusBase, 2) + std::pow(shift, 2) - std::pow(radiusSphereCrossSection, 2)) / (2 * radiusBase * shift));
+
+    numCircles = std::ceil(2 * M_PI / alpha);
+
+    // Re-calculate alpha & shift
+    alpha = 2 * M_PI / numCircles;
+    vector_t intersection(2);
+    intersection << radiusBase * std::sin(alpha / 2), radiusBase * std::cos(alpha / 2);
+    shift = intersection[1] - std::sqrt(std::pow(radiusSphereCrossSection, 2) - std::pow(intersection[0], 2));
+
+    return true;
+
+  } else {
+    shift = 0;
+    alpha = 0;
+    numCircles = 1;
+
+    return false;
+  }
+}
 
 }  // namespace ocs2

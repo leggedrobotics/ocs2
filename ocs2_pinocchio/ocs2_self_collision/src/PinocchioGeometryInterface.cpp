@@ -97,20 +97,17 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
     : geometryModelPtr_(new pinocchio::GeometryModel), maxExtrusions_(std::move(maxExtrusions)) {
   pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
 
-  std::cerr << "Finding objects ...\n";
   size_t linkCount = 0;
   for (const auto& link : sphereApproximationLinks) {
     for (size_t i = 0; i < geometryModelPtr_->geometryObjects.size(); ++i) {
       const pinocchio::GeometryObject& object = geometryModelPtr_->geometryObjects[i];
       const std::string parentFrameName = pinocchioInterface.getModel().frames[object.parentFrame].name;
       if (parentFrameName == link) {
-        std::cerr << "Found one object in frame:" << link << "\n";
         sphereApproximations_.emplace_back(i, object.geometry.get(), maxExtrusions_[linkCount]);
       }
     }
     linkCount++;
   }
-  std::cerr << "Found and approximated " << sphereApproximations_.size() << " objects\n";
 }
 
 /******************************************************************************************************/
@@ -145,6 +142,18 @@ void PinocchioGeometryInterface::setSphereTransforms(const PinocchioInterface& p
 /******************************************************************************************************/
 size_t PinocchioGeometryInterface::getNumCollisionPairs() const {
   return geometryModelPtr_->collisionPairs.size();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t PinocchioGeometryInterface::getNumSpheres() const {
+  size_t numSpheres = 0;
+  for (const auto& sphereApprox : sphereApproximations_) {
+    numSpheres += sphereApprox.getSphereCentersInWorldFrame().size();
+  }
+
+  return numSpheres;
 }
 
 }  // namespace ocs2

@@ -86,6 +86,8 @@ class PinocchioGeometryInterface final {
   /** Get the number of collision pairs */
   size_t getNumCollisionPairs() const;
 
+  size_t getNumSpheres() const;
+
   /** Access the pinocchio geometry model */
   pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }

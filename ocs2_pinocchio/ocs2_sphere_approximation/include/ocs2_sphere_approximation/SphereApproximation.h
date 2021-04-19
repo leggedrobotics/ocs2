@@ -41,8 +41,6 @@ class SphereApproximation {
  public:
   SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, scalar_t maxExtrusion);
 
-  //  void approximatePrimitive(const hpp::fcl::CollisionGeometry* geometryPtr);
-
   void setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation);
 
   size_t getObjectId() const { return objectId_; };
@@ -54,6 +52,8 @@ class SphereApproximation {
  private:
   void approximateBox(const vector_t& sides);
   void approximateCylinder(const scalar_t& radius, const scalar_t& length);
+  bool approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection, const scalar_t& maxExtrusionR,
+                             scalar_t& shift, scalar_t& alpha, scalar_t& numCircles);
 
   const size_t objectId_;
   const scalar_t maxExtrusion_;

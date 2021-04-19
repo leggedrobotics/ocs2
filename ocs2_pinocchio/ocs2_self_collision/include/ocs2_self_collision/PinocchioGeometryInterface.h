@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <hpp/fcl/collision_data.h>
 
+#include <urdf_model/model.h>
+
 /* Forward declaration of pinocchio geometry types */
 namespace pinocchio {
 struct GeometryModel;
@@ -64,6 +66,19 @@ class PinocchioGeometryInterface final {
    * @param [in] collisionObjectPairs: List of collision object index pairs
    */
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
+                             const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
+
+  /**
+   * Constructor
+   *
+   * @param [in] urdfTree: previously parsed urdf model interface
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] collisionLinkPairs: List of collision link pairs by string name. One link can contain multiple colision objects.
+   *                                 In this case, all collision object combinations are added.
+   * @param [in] collisionObjectPairs: List of collision object index pairs
+   */
+  PinocchioGeometryInterface(const std::shared_ptr<::urdf::ModelInterface>& urdfTree, const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 

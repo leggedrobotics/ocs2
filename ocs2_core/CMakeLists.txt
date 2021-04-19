@@ -86,7 +86,6 @@ add_library(${PROJECT_NAME}
   src/cost/QuadraticCostFunction.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
-  src/cost/StateCost.cpp
   src/cost/StateCostCppAd.cpp
   src/cost/StateInputCostCppAd.cpp
   src/dynamics/ControlledSystemBase.cpp

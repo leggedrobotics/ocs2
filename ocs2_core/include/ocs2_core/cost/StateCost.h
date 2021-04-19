@@ -33,16 +33,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/cost/StateInputCost.h>
 
 namespace ocs2 {
 
 /** State-only cost term */
-class StateCost : public StateInputCost {
+class StateCost {
  public:
   StateCost() = default;
-  ~StateCost() override = default;
-  StateCost* clone() const override = 0;
+  virtual ~StateCost() = default;
+  virtual StateCost* clone() const = 0;
+
+  /** Set cost term activity */
+  void setActivity(bool activity) { active_ = activity; }
+
+  /** Check if cost term is active */
+  bool isActive() const { return active_; }
 
   /** Get cost term value */
   virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const = 0;
@@ -55,12 +60,7 @@ class StateCost : public StateInputCost {
   StateCost(const StateCost& rhs) = default;
 
  private:
-  /** Get cost term value, implemented for compatibility with StateInputCost */
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                    const CostDesiredTrajectories& desiredTrajectory) const final override;
-  /** Get cost term quadratic approximation, implemented for compatibility with StateInputCost */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const final override;
+  bool active_ = true;
 };
 
 // Template for conditional compilation using SFINAE

@@ -100,6 +100,12 @@ class PinocchioGeometryInterface final {
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
  private:
+  // Construction helpers
+  void addCollisionObjectPairs(const PinocchioInterface& pinocchioInterface,
+                               const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs);
+  void addCollisionLinkPairs(const PinocchioInterface& pinocchioInterface,
+                             const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs);
+
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 };
 

@@ -45,35 +45,28 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
+PinocchioGeometryInterface::PinocchioGeometryInterface(const PinocchioInterface& pinocchioInterface,
                                                        const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
     : geometryModelPtr_(new pinocchio::GeometryModel) {
-  pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
+  // TODO: Replace with pinocchio function that uses the ModelInterface directly
+  // As of 19-04-21 there is no buildGeom that takes a ModelInterface, so we deconstruct the modelInterface into a std::stringstream first
+  const std::unique_ptr<const TiXmlDocument> urdfAsXml(urdf::exportURDF(*pinocchioInterface.getUrdfModelPtr()));
+  TiXmlPrinter printer;
+  urdfAsXml->Accept(&printer);
+  const std::stringstream urdfAsStringStream(printer.Str());
+
+  pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfAsStringStream, pinocchio::COLLISION, *geometryModelPtr_);
 
   addCollisionObjectPairs(pinocchioInterface, collisionObjectPairs);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                                                       const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
-                                                       const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
-    : geometryModelPtr_(new pinocchio::GeometryModel) {
-  pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
-
-  addCollisionObjectPairs(pinocchioInterface, collisionObjectPairs);
-  addCollisionLinkPairs(pinocchioInterface, collisionLinkPairs);
-}
-
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::shared_ptr<const ::urdf::ModelInterface>& urdfTree,
-                                                       const PinocchioInterface& pinocchioInterface,
+PinocchioGeometryInterface::PinocchioGeometryInterface(const PinocchioInterface& pinocchioInterface,
                                                        const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                                                        const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
     : geometryModelPtr_(new pinocchio::GeometryModel) {
   // TODO: Replace with pinocchio function that uses the ModelInterface directly
   // As of 19-04-21 there is no buildGeom that takes a ModelInterface, so we deconstruct the modelInterface into a std::stringstream first
-  const std::unique_ptr<const TiXmlDocument> urdfAsXml(urdf::exportURDF(*urdfTree));
+  const std::unique_ptr<const TiXmlDocument> urdfAsXml(urdf::exportURDF(*pinocchioInterface.getUrdfModelPtr()));
   TiXmlPrinter printer;
   urdfAsXml->Accept(&printer);
   const std::stringstream urdfAsStringStream(printer.Str());

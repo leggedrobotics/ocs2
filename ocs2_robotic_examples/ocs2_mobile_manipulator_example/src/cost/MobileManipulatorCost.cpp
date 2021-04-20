@@ -323,7 +323,7 @@ std::unique_ptr<StateCost> MobileManipulatorCost::getSelfCollisionCost(const std
   std::cerr << " #### =============================================================================" << std::endl;
 
   const std::string urdfPath_ = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-  PinocchioGeometryInterface geometryInterface(urdfPath_, pinocchioInterface_, collisionLinkPairs, collisionObjectPairs);
+  PinocchioGeometryInterface geometryInterface(pinocchioInterface_, collisionLinkPairs, collisionObjectPairs);
 
   std::unique_ptr<StateConstraint> constraint;
   if (useCaching_) {

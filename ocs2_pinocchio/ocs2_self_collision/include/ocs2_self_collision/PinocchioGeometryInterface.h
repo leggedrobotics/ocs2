@@ -49,36 +49,21 @@ class PinocchioGeometryInterface final {
   /**
    * Constructor
    *
-   * @param [in] urdfPath: Path to the robot URDF for loading the collision bodies
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
    * @param [in] collisionObjectPairs: List of collision object index pairs
    */
-  PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
+  PinocchioGeometryInterface(const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs);
 
   /**
    * Constructor
    *
-   * @param [in] urdfPath: Path to the robot URDF for loading the collision bodies
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
    * @param [in] collisionLinkPairs: List of collision link pairs by string name. One link can contain multiple colision objects.
    *                                 In this case, all collision object combinations are added.
    * @param [in] collisionObjectPairs: List of collision object index pairs
    */
-  PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
-                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
-
-  /**
-   * Constructor
-   *
-   * @param [in] urdfTree: previously parsed urdf model interface
-   * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] collisionLinkPairs: List of collision link pairs by string name. One link can contain multiple colision objects.
-   *                                 In this case, all collision object combinations are added.
-   * @param [in] collisionObjectPairs: List of collision object index pairs
-   */
-  PinocchioGeometryInterface(const std::shared_ptr<const ::urdf::ModelInterface>& urdfTree, const PinocchioInterface& pinocchioInterface,
+  PinocchioGeometryInterface(const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 

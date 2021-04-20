@@ -86,6 +86,7 @@ class PinocchioGeometryInterface final {
 
  private:
   // Construction helpers
+  void buildGeomFromPinocchioInterface(const PinocchioInterface& pinocchioInterface, pinocchio::GeometryModel& geomModel);
   void addCollisionObjectPairs(const PinocchioInterface& pinocchioInterface,
                                const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs);
   void addCollisionLinkPairs(const PinocchioInterface& pinocchioInterface,

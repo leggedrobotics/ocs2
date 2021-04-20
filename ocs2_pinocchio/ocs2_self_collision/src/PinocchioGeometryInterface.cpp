@@ -66,7 +66,7 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
   addCollisionLinkPairs(pinocchioInterface, collisionLinkPairs);
 }
 
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
+PinocchioGeometryInterface::PinocchioGeometryInterface(const std::shared_ptr<const ::urdf::ModelInterface>& urdfTree,
                                                        const PinocchioInterface& pinocchioInterface,
                                                        const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                                                        const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)

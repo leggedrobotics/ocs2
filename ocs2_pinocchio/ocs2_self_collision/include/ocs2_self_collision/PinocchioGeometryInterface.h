@@ -78,7 +78,7 @@ class PinocchioGeometryInterface final {
    *                                 In this case, all collision object combinations are added.
    * @param [in] collisionObjectPairs: List of collision object index pairs
    */
-  PinocchioGeometryInterface(const std::shared_ptr<::urdf::ModelInterface>& urdfTree, const PinocchioInterface& pinocchioInterface,
+  PinocchioGeometryInterface(const std::shared_ptr<const ::urdf::ModelInterface>& urdfTree, const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 

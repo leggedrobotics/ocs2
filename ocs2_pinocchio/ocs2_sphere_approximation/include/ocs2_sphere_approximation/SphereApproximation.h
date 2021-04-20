@@ -39,12 +39,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 class SphereApproximation {
  public:
-  SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, scalar_t maxExtrusion);
+  SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess);
 
   void setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation);
 
   size_t getObjectId() const { return objectId_; };
-  scalar_t getMaxExtrusion() const { return maxExtrusion_; };
+  scalar_t getMaxExcess() const { return maxExcess_; };
   scalar_t getSphereRadius() const { return sphereRadius_; };
   vector_array_t getSphereCentersToObjectCenter() const { return sphereCentersToObjectCenter_; };
   vector_array_t getSphereCentersInWorldFrame() const { return sphereCentersInWorldFrame_; };
@@ -52,11 +52,11 @@ class SphereApproximation {
  private:
   void approximateBox(const vector_t& sides);
   void approximateCylinder(const scalar_t& radius, const scalar_t& length);
-  bool approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection, const scalar_t& maxExtrusionR,
+  bool approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection, const scalar_t& maxExcessR,
                              scalar_t& shift, scalar_t& alpha, scalar_t& numCircles);
 
   const size_t objectId_;
-  const scalar_t maxExtrusion_;
+  const scalar_t maxExcess_;
 
   scalar_t sphereRadius_;
   vector_array_t sphereCentersToObjectCenter_;

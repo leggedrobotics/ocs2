@@ -34,8 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-SphereApproximation::SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, scalar_t maxExtrusion)
-    : objectId_(objectId), maxExtrusion_(maxExtrusion) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SphereApproximation::SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess)
+    : objectId_(objectId), maxExcess_(maxExcess) {
   const auto& nodeType = geometryPtr->getNodeType();
   switch (nodeType) {
     case hpp::fcl::NODE_TYPE::GEOM_BOX: {
@@ -61,12 +64,18 @@ SphereApproximation::SphereApproximation(const size_t objectId, const hpp::fcl::
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void SphereApproximation::setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation) {
   for (int i = 0; i < sphereCentersInWorldFrame_.size(); i++) {
     sphereCentersInWorldFrame_[i] = objectRotation * sphereCentersToObjectCenter_[i] + objectTranslation;
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void SphereApproximation::approximateBox(const vector_t& sides) {
   // indices of the shortest, medium, and longest side
   size_array_t idxSorted = {0, 1, 2};
@@ -75,7 +84,7 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
 
   vector_t initSphereRadii(3);
   size_t caseIdx;
-  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExtrusion_, std::sqrt(3) * maxExtrusion_ / (std::sqrt(3) - 1);
+  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExcess_, std::sqrt(3) * maxExcess_ / (std::sqrt(3) - 1);
   sphereRadius_ = initSphereRadii.minCoeff(&caseIdx);
 
   // Distance between the first sphere center and the corner along x, y, z
@@ -103,7 +112,7 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
       numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
 
       // Re-calculate the distances
-      distances[idxSorted[2]] = std::max(sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]), sphereRadius_ - maxExtrusion_);
+      distances[idxSorted[2]] = std::max(sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]), sphereRadius_ - maxExcess_);
 
     } else {
       distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
@@ -118,7 +127,7 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
           std::max(sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]), sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]));
     }
   } else {
-    distances = (sphereRadius_ - maxExtrusion_) * vector_t::Ones(3);
+    distances = (sphereRadius_ - maxExcess_) * vector_t::Ones(3);
 
     numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
     numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
@@ -156,6 +165,9 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void SphereApproximation::approximateCylinder(const scalar_t& radius, const scalar_t& length) {
   // First, approximate the rectangle cross-section of the cylinder
   vector_t sides(2);
@@ -166,11 +178,11 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
     std::swap(idxSorted[0], idxSorted[1]);
   }
 
-  // TODO (jichiu): Figure a better way to store the desired ratio maxExtrusionL / maxExtrusion
-  scalar_t maxExtrusionL = maxExtrusion_ * 0.7;
+  // TODO (jichiu): Figure a better way to store the desired ratio maxExcessL / maxExcess
+  scalar_t maxExcessL = maxExcess_ * 0.7;
   vector_t initSphereRadii(3);
   size_t caseIdx;
-  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExtrusionL, std::sqrt(2) * maxExtrusionL / (std::sqrt(2) - 1);
+  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExcessL, std::sqrt(2) * maxExcessL / (std::sqrt(2) - 1);
   sphereRadius_ = initSphereRadii.minCoeff(&caseIdx);
 
   vector_t distances(2);
@@ -192,7 +204,7 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
     distances[idxSorted[1]] = sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]);
 
   } else {
-    distances = (sphereRadius_ - maxExtrusionL) * vector_t::Ones(2);
+    distances = (sphereRadius_ - maxExcessL) * vector_t::Ones(2);
 
     numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
     numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
@@ -212,12 +224,12 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
   bool approximateCylinderBase = true;
   scalar_t radiusBase = radius;
   scalar_t radiusCircle = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[1], 2));
-  scalar_t maxExtrusionR = maxExtrusion_ - maxExtrusionL;
+  scalar_t maxExcessR = maxExcess_ - maxExcessL;
   vector_array_t circleCentersToBaseCenter;
 
   while (approximateCylinderBase) {
     scalar_t shift, alpha, numCircles;
-    approximateCylinderBase = approximateCircleBase(radiusBase, radiusCircle, maxExtrusionR, shift, alpha, numCircles);
+    approximateCylinderBase = approximateCircleBase(radiusBase, radiusCircle, maxExcessR, shift, alpha, numCircles);
 
     for (size_t i = 0; i < numCircles; i++) {
       vector_t circleCenter(2);
@@ -243,10 +255,13 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 bool SphereApproximation::approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection,
-                                                const scalar_t& maxExtrusionR, scalar_t& shift, scalar_t& alpha, scalar_t& numCircles) {
+                                                const scalar_t& maxExcessR, scalar_t& shift, scalar_t& alpha, scalar_t& numCircles) {
   if (radiusSphereCrossSection < radiusBase) {
-    shift = radiusBase + std::min(0.0, maxExtrusionR - radiusSphereCrossSection);
+    shift = radiusBase + std::min(0.0, maxExcessR - radiusSphereCrossSection);
     alpha =
         2 * std::acos((std::pow(radiusBase, 2) + std::pow(shift, 2) - std::pow(radiusSphereCrossSection, 2)) / (2 * radiusBase * shift));
 

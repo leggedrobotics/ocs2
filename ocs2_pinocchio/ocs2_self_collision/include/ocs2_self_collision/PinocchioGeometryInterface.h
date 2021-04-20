@@ -70,7 +70,7 @@ class PinocchioGeometryInterface final {
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::string> sphereApproximationLinks, vector_t maxExtrusions);
+                             const std::vector<std::string>& sphereApproximationLinks, std::vector<scalar_t> maxExcesses);
   /**
    * Compute collision pair distances
    *
@@ -98,8 +98,8 @@ class PinocchioGeometryInterface final {
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 
   // Sphere approximation for obstacle avoidance
+  std::vector<scalar_t> maxExcesses_;
   std::vector<SphereApproximation> sphereApproximations_;
-  vector_t maxExtrusions_;
 };
 
 }  // namespace ocs2

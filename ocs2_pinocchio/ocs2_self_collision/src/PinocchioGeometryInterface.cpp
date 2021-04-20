@@ -93,8 +93,9 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                                                       const std::vector<std::string> sphereApproximationLinks, vector_t maxExtrusions)
-    : geometryModelPtr_(new pinocchio::GeometryModel), maxExtrusions_(std::move(maxExtrusions)) {
+                                                       const std::vector<std::string>& sphereApproximationLinks,
+                                                       std::vector<scalar_t> maxExcesses)
+    : geometryModelPtr_(new pinocchio::GeometryModel), maxExcesses_(std::move(maxExcesses)) {
   pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
 
   size_t linkCount = 0;
@@ -103,7 +104,7 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
       const pinocchio::GeometryObject& object = geometryModelPtr_->geometryObjects[i];
       const std::string parentFrameName = pinocchioInterface.getModel().frames[object.parentFrame].name;
       if (parentFrameName == link) {
-        sphereApproximations_.emplace_back(i, object.geometry.get(), maxExtrusions_[linkCount]);
+        sphereApproximations_.emplace_back(i, object.geometry.get(), maxExcesses_[linkCount]);
       }
     }
     linkCount++;

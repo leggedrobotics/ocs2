@@ -37,8 +37,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SphereApproximation::SphereApproximation(const size_t objectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess)
-    : objectId_(objectId), maxExcess_(maxExcess) {
+SphereApproximation::SphereApproximation(const size_t geomObjectId, const hpp::fcl::CollisionGeometry* geometryPtr,
+                                         const scalar_t maxExcess)
+    : geomObjectId_(geomObjectId), maxExcess_(maxExcess) {
   const auto& nodeType = geometryPtr->getNodeType();
   switch (nodeType) {
     case hpp::fcl::NODE_TYPE::GEOM_BOX: {
@@ -53,6 +54,7 @@ SphereApproximation::SphereApproximation(const size_t objectId, const hpp::fcl::
     }
     case hpp::fcl::NODE_TYPE::GEOM_SPHERE: {
       const auto* spherePtr = dynamic_cast<const hpp::fcl::Sphere*>(geometryPtr);
+      numSpheres_ = 1;
       sphereRadius_ = spherePtr->radius;
       sphereCentersToObjectCenter_.resize(1);
       sphereCentersInWorldFrame_.resize(1);
@@ -141,8 +143,9 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
   // re-calculate the sphere radius
   sphereRadius_ = distances.norm();
 
-  sphereCentersToObjectCenter_.resize(numSpheres[0] * numSpheres[1] * numSpheres[2]);
-  sphereCentersInWorldFrame_.resize(numSpheres[0] * numSpheres[1] * numSpheres[2]);
+  numSpheres_ = numSpheres[0] * numSpheres[1] * numSpheres[2];
+  sphereCentersToObjectCenter_.resize(numSpheres_);
+  sphereCentersInWorldFrame_.resize(numSpheres_);
 
   // Sphere spacings along x, y, z
   vector_t spacings(3);
@@ -156,7 +159,6 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
   for (size_t i = 0; i < numSpheres[0]; i++) {
     for (size_t j = 0; j < numSpheres[1]; j++) {
       for (size_t k = 0; k < numSpheres[2]; k++) {
-        sphereCentersToObjectCenter_[count] = vector_t::Zero(3);
         sphereCentersToObjectCenter_[count] << distances[0] + i * spacings[0] - sides[0] / 2, distances[1] + j * spacings[1] - sides[1] / 2,
             distances[2] + k * spacings[2] - sides[2] / 2;
         count++;
@@ -242,13 +244,13 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
   }
 
   numSpheres[0] = circleCentersToBaseCenter.size();
-  sphereCentersToObjectCenter_.resize(numSpheres[0] * numSpheres[1]);
-  sphereCentersInWorldFrame_.resize(numSpheres[0] * numSpheres[1]);
+  numSpheres_ = numSpheres[0] * numSpheres[1];
+  sphereCentersToObjectCenter_.resize(numSpheres_);
+  sphereCentersInWorldFrame_.resize(numSpheres_);
 
   size_t count = 0;
   for (size_t i = 0; i < numSpheres[1]; i++) {
     for (size_t j = 0; j < numSpheres[0]; j++) {
-      sphereCentersToObjectCenter_[count] = vector_t::Zero(3);
       sphereCentersToObjectCenter_[count] << circleCentersToBaseCenter[j], distances[1] + i * spacingLength - sides[1] / 2;
       count++;
     }

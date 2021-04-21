@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,42 +29,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+#include <utility>
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-//#include <hpp/fcl/collision_object.h>
-#include <hpp/fcl/shape/geometric_shapes.h>
+#include <ocs2_sphere_approximation/SphereApproximation.h>
+
+#include <hpp/fcl/collision_data.h>
+
+/* Forward declaration of pinocchio geometry types */
+namespace pinocchio {
+struct GeometryModel;
+}  // namespace pinocchio
 
 namespace ocs2 {
-class SphereApproximation {
+
+class PinocchioSphereInterface final {
  public:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
-  SphereApproximation(const size_t geomObjectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess);
+  PinocchioSphereInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
+                           std::vector<std::string> envCollisionLinks, std::vector<scalar_t> maxExcesses);
 
-  void setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation);
+  void setSphereTransforms(const PinocchioInterface& pinocchioInterface);
+  std::vector<vector3_t> computeSphereCentersInWorldFrame(const PinocchioInterface& pinocchioInterface) const;
 
-  size_t getGeomObjectId() const { return geomObjectId_; };
-  scalar_t getMaxExcess() const { return maxExcess_; };
+  const std::vector<std::string>& getEnvCollisionLinks() const { return envCollisionLinks_; };
   size_t getNumSpheres() const { return numSpheres_; };
-  scalar_t getSphereRadius() const { return sphereRadius_; };
-  std::vector<vector3_t> getSphereCentersToObjectCenter() const { return sphereCentersToObjectCenter_; };
-  std::vector<vector3_t> getSphereCentersInWorldFrame() const { return sphereCentersInWorldFrame_; };
+
+  /** Access the pinocchio geometry model */
+  pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
+  const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
+
+  const std::vector<SphereApproximation>& getSphereApproximations() const { return sphereApproximations_; }
 
  private:
-  void approximateBox(const vector_t& sides);
-  void approximateCylinder(const scalar_t& radius, const scalar_t& length);
-  bool approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection, const scalar_t& maxExcessR,
-                             scalar_t& shift, scalar_t& alpha, scalar_t& numCircles);
+  std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 
-  const size_t geomObjectId_;
-  const scalar_t maxExcess_;
-
+  // Sphere approximation for environment collision
+  std::vector<std::string> envCollisionLinks_;
+  std::vector<scalar_t> maxExcesses_;
+  std::vector<SphereApproximation> sphereApproximations_;
   size_t numSpheres_;
-  scalar_t sphereRadius_;
-  std::vector<vector3_t> sphereCentersToObjectCenter_;
-  std::vector<vector3_t> sphereCentersInWorldFrame_;
 };
 
 }  // namespace ocs2

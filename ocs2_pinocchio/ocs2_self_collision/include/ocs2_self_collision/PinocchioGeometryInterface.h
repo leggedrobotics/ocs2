@@ -70,7 +70,7 @@ class PinocchioGeometryInterface final {
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
   PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                             const std::vector<std::string>& sphereApproximationLinks, std::vector<scalar_t> maxExcesses);
+                             std::vector<std::string> envCollisionLinks, std::vector<scalar_t> maxExcesses);
   /**
    * Compute collision pair distances
    *
@@ -82,24 +82,28 @@ class PinocchioGeometryInterface final {
   std::vector<hpp::fcl::DistanceResult> computeDistances(const PinocchioInterface& pinocchioInterface) const;
 
   void setSphereTransforms(const PinocchioInterface& pinocchioInterface);
+  std::vector<vector_t> computeSphereCentersInWorldFrame(const PinocchioInterface& pinocchioInterface) const;
 
   /** Get the number of collision pairs */
   size_t getNumCollisionPairs() const;
 
-  size_t getNumSpheres() const;
+  std::vector<std::string> getEnvCollisionLinks() const { return envCollisionLinks_; };
+  size_t getNumSpheres() const { return numSpheres_; };
 
   /** Access the pinocchio geometry model */
   pinocchio::GeometryModel& getGeometryModel() { return *geometryModelPtr_; }
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
-  const std::vector<SphereApproximation> getSphereApproximations() const { return sphereApproximations_; }
+  const std::vector<SphereApproximation>& getSphereApproximations() const { return sphereApproximations_; }
 
  private:
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 
-  // Sphere approximation for obstacle avoidance
+  // Sphere approximation for environment collision
+  std::vector<std::string> envCollisionLinks_;
   std::vector<scalar_t> maxExcesses_;
   std::vector<SphereApproximation> sphereApproximations_;
+  size_t numSpheres_ = 0;
 };
 
 }  // namespace ocs2

@@ -70,6 +70,9 @@ link_directories(
 # ocs2 sphere approximation library
 add_library(${PROJECT_NAME}
   src/SphereApproximation.cpp
+  src/PinocchioSphereInterface.cpp
+  src/PinocchioSphereKinematics.cpp
+  src/PinocchioSphereKinematicsCppAd.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

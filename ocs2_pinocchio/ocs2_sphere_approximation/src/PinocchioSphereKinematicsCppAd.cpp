@@ -61,10 +61,6 @@ PinocchioSphereKinematicsCppAd::PinocchioSphereKinematicsCppAd(const PinocchioIn
     count += numSpheres;
   }
 
-  for (const auto& bodyName : endEffectorIds_) {
-    endEffectorFrameIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
-  }
-
   // initialize CppAD interface
   auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
 
@@ -89,8 +85,8 @@ PinocchioSphereKinematicsCppAd::PinocchioSphereKinematicsCppAd(const PinocchioSp
     : EndEffectorKinematics<scalar_t>(rhs),
       positionCppAdInterfacePtr_(new CppAdInterface(*rhs.positionCppAdInterfacePtr_)),
       pinocchioSphereInterface_(rhs.pinocchioSphereInterface_),
-      endEffectorIds_(rhs.endEffectorIds_),
-      endEffectorFrameIds_(rhs.endEffectorFrameIds_) {}
+      sphereApproximationParemeters_(rhs.sphereApproximationParemeters_),
+      endEffectorIds_(rhs.endEffectorIds_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -124,7 +120,7 @@ ad_vector_t PinocchioSphereKinematicsCppAd::getPositionCppAd(PinocchioInterfaceC
   ad_vector_t sphereCentersInWorldFrame(3 * pinocchioSphereInterface_.getNumSpheres());
 
   size_t startIdx = 0;
-  size_t count;
+  size_t count = 0;
   for (const auto& sphereApprox : sphereApproximations) {
     const size_t parentJointId = geometryModel.geometryObjects[sphereApprox.getGeomObjectId()].parentJoint;
     const size_t numSpheres = sphereApprox.getNumSpheres();

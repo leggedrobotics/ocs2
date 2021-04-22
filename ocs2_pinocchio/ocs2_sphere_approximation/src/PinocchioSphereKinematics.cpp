@@ -120,20 +120,19 @@ std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematics::getPos
   size_t count = 0;
 
   for (const auto& sphereApprox : sphereApproximations) {
-    const auto& joint = geometryModel.geometryObjects[sphereApprox.getGeomObjectId()].parentJoint;
-    const vector3_t jointPosition = data.oMi[joint].translation();
-    matrix_t jointJacobian = matrix_t::Zero(6, model.nq);
-    pinocchio::getJointJacobian(model, data, joint, rf, jointJacobian);
+    const auto& parentJointId = geometryModel.geometryObjects[sphereApprox.getGeomObjectId()].parentJoint;
+    const vector3_t jointPosition = data.oMi[parentJointId].translation();
+    matrix_t jointJacobian = matrix_t::Zero(6, model.nv);
+    pinocchio::getJointJacobian(model, data, parentJointId, rf, jointJacobian);
 
     const size_t numSpheresPerObject = sphereApprox.getNumSpheres();
-    // Start of a for-loop
     for (size_t i = 0; i < numSpheresPerObject; i++) {
       VectorFunctionLinearApproximation pos;
       pos.f = sphereCentersInWorldFrame[count + i];
       const vector3_t sphereCenterOffset = sphereCentersInWorldFrame[count + i] - jointPosition;
       const matrix_t sphereCenterJacobian =
           jointJacobian.topRows<3>() - skewSymmetricMatrix(sphereCenterOffset) * jointJacobian.bottomRows<3>();
-      std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, jointJacobian.topRows<3>(), matrix_t::Zero(0, model.nq));
+      std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, sphereCenterJacobian.topRows<3>(), matrix_t::Zero(0, model.nq));
       positions.emplace_back(std::move(pos));
     }
     count += numSpheresPerObject;

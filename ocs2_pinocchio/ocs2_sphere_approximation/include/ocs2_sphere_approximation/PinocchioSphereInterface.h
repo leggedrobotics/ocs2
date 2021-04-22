@@ -70,7 +70,7 @@ class PinocchioSphereInterface final {
   std::vector<std::string> envCollisionLinks_;
   std::vector<scalar_t> maxExcesses_;
   std::vector<SphereApproximation> sphereApproximations_;
-  size_t numSpheres_;
+  size_t numSpheres_ = 0;
 };
 
 }  // namespace ocs2

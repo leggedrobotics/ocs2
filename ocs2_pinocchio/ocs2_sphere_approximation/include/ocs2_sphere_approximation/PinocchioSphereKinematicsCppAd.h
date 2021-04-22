@@ -105,7 +105,7 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
   PinocchioSphereInterface pinocchioSphereInterface_;
   vector_t sphereApproximationParemeters_;
   std::vector<std::string> endEffectorIds_;
-  std::vector<size_t> endEffectorFrameIds_;
+  //  std::vector<size_t> endEffectorFrameIds_;
 };
 
 }  // namespace ocs2

@@ -37,9 +37,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SphereApproximation::SphereApproximation(const size_t geomObjectId, const hpp::fcl::CollisionGeometry* geometryPtr,
-                                         const scalar_t maxExcess)
-    : geomObjectId_(geomObjectId), maxExcess_(maxExcess) {
+SphereApproximation::SphereApproximation(const size_t geomObjId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess)
+    : geomObjId_(geomObjId), maxExcess_(maxExcess) {
   const auto& nodeType = geometryPtr->getNodeType();
   switch (nodeType) {
     case hpp::fcl::NODE_TYPE::GEOM_BOX: {

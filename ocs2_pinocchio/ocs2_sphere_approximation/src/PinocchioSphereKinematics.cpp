@@ -48,15 +48,13 @@ namespace ocs2 {
 PinocchioSphereKinematics::PinocchioSphereKinematics(PinocchioSphereInterface pinocchioSphereInterface,
                                                      const PinocchioStateInputMapping<scalar_t>& mapping)
     : pinocchioInterfacePtr_(nullptr), pinocchioSphereInterface_(std::move(pinocchioSphereInterface)), mappingPtr_(mapping.clone()) {
-  endEffectorIds_.resize(pinocchioSphereInterface_.getNumSpheres());
-  const auto& envCollisionLinks = pinocchioSphereInterface_.getEnvCollisionLinks();
-  const auto& sphereApproximations = pinocchioSphereInterface_.getSphereApproximations();
+  endEffectorIds_.resize(pinocchioSphereInterface_.getNumSpheresInTotal());
+  const auto& collisionLinks = pinocchioSphereInterface_.getCollisionLinks();
+  const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
   size_t count = 0;
-  for (size_t i = 0; i < sphereApproximations.size(); i++) {
-    const auto& sphereApprox = sphereApproximations[i];
-    size_t numSpheres = sphereApprox.getNumSpheres();
-    std::fill(endEffectorIds_.begin() + count, endEffectorIds_.begin() + count + numSpheres, envCollisionLinks[i]);
-    count += numSpheres;
+  for (size_t i = 0; i < pinocchioSphereInterface.getNumApproximations(); i++) {
+    std::fill(endEffectorIds_.begin() + count, endEffectorIds_.begin() + count + numSpheres[i], collisionLinks[i]);
+    count += numSpheres[i];
   }
 }
 
@@ -116,26 +114,27 @@ std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematics::getPos
   std::vector<VectorFunctionLinearApproximation> positions;
 
   const auto& geometryModel = pinocchioSphereInterface_.getGeometryModel();
-  const auto& sphereApproximations = pinocchioSphereInterface_.getSphereApproximations();
-  size_t count = 0;
+  const size_t numApproximations = pinocchioSphereInterface_.getNumApproximations();
+  const auto geomObjIds = pinocchioSphereInterface_.getGeomObjIds();
+  const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
 
-  for (const auto& sphereApprox : sphereApproximations) {
-    const auto& parentJointId = geometryModel.geometryObjects[sphereApprox.getGeomObjectId()].parentJoint;
+  size_t count = 0;
+  for (size_t i = 0; i < numApproximations; i++) {
+    const auto& parentJointId = geometryModel.geometryObjects[geomObjIds[i]].parentJoint;
     const vector3_t jointPosition = data.oMi[parentJointId].translation();
     matrix_t jointJacobian = matrix_t::Zero(6, model.nv);
     pinocchio::getJointJacobian(model, data, parentJointId, rf, jointJacobian);
 
-    const size_t numSpheresPerObject = sphereApprox.getNumSpheres();
-    for (size_t i = 0; i < numSpheresPerObject; i++) {
+    for (size_t j = 0; j < numSpheres[i]; j++) {
       VectorFunctionLinearApproximation pos;
-      pos.f = sphereCentersInWorldFrame[count + i];
-      const vector3_t sphereCenterOffset = sphereCentersInWorldFrame[count + i] - jointPosition;
+      pos.f = sphereCentersInWorldFrame[count + j];
+      const vector3_t sphereCenterOffset = sphereCentersInWorldFrame[count + j] - jointPosition;
       const matrix_t sphereCenterJacobian =
           jointJacobian.topRows<3>() - skewSymmetricMatrix(sphereCenterOffset) * jointJacobian.bottomRows<3>();
       std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, sphereCenterJacobian.topRows<3>(), matrix_t::Zero(0, model.nq));
       positions.emplace_back(std::move(pos));
     }
-    count += numSpheresPerObject;
+    count += numSpheres[i];
   }
 
   return positions;

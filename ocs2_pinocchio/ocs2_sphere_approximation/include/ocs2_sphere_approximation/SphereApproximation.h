@@ -45,7 +45,7 @@ class SphereApproximation {
 
   void setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation);
 
-  size_t getGeomObjectId() const { return geomObjectId_; };
+  size_t getGeomObjId() const { return geomObjId_; };
   scalar_t getMaxExcess() const { return maxExcess_; };
   size_t getNumSpheres() const { return numSpheres_; };
   scalar_t getSphereRadius() const { return sphereRadius_; };
@@ -58,7 +58,7 @@ class SphereApproximation {
   bool approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection, const scalar_t& maxExcessR,
                              scalar_t& shift, scalar_t& alpha, scalar_t& numCircles);
 
-  const size_t geomObjectId_;
+  const size_t geomObjId_;
   const scalar_t maxExcess_;
 
   size_t numSpheres_;

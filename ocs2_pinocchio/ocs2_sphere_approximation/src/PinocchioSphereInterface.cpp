@@ -44,25 +44,33 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioSphereInterface::PinocchioSphereInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                                                   std::vector<std::string> envCollisionLinks, std::vector<scalar_t> maxExcesses)
-    : geometryModelPtr_(new pinocchio::GeometryModel),
-      envCollisionLinks_(std::move(envCollisionLinks)),
-      maxExcesses_(std::move(maxExcesses)) {
+                                                   std::vector<std::string> collisionLinks, std::vector<scalar_t> maxExcesses)
+    : geometryModelPtr_(new pinocchio::GeometryModel), collisionLinks_(std::move(collisionLinks)) {
   pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
 
-  for (size_t i = 0; i < envCollisionLinks_.size(); i++) {
-    const auto& link = envCollisionLinks_[i];
+  for (size_t i = 0; i < collisionLinks_.size(); i++) {
+    const auto& link = collisionLinks_[i];
     for (size_t j = 0; j < geometryModelPtr_->geometryObjects.size(); ++j) {
       const pinocchio::GeometryObject& object = geometryModelPtr_->geometryObjects[j];
       const std::string parentFrameName = pinocchioInterface.getModel().frames[object.parentFrame].name;
       if (parentFrameName == link) {
-        sphereApproximations_.emplace_back(j, object.geometry.get(), maxExcesses_[i]);
+        sphereApproximations_.emplace_back(j, object.geometry.get(), maxExcesses[i]);
       }
     }
   }
 
+  numApproximations_ = sphereApproximations_.size();
+  numSpheres_.reserve(numApproximations_);
+  geomObjIds_.reserve(numApproximations_);
   for (const auto& sphereApprox : sphereApproximations_) {
-    numSpheres_ += sphereApprox.getNumSpheres();
+    const size_t numSpheres = sphereApprox.getNumSpheres();
+    numSpheresInTotal_ += numSpheres;
+    numSpheres_.emplace_back(numSpheres);
+    geomObjIds_.emplace_back(sphereApprox.getGeomObjId());
+
+    for (size_t j = 0; j < numSpheres; j++) {
+      sphereRadii_.push_back(sphereApprox.getSphereRadius());
+    }
   }
 }
 
@@ -75,8 +83,8 @@ void PinocchioSphereInterface::setSphereTransforms(const PinocchioInterface& pin
   pinocchio::updateGeometryPlacements(pinocchioInterface.getModel(), pinocchioInterface.getData(), *geometryModelPtr_, geometryData);
 
   for (auto& sphereApprox : sphereApproximations_) {
-    const auto& objectTransform = geometryData.oMg[sphereApprox.getGeomObjectId()];
-    sphereApprox.setSphereTransforms(objectTransform.rotation(), objectTransform.translation());
+    const auto& objTransform = geometryData.oMg[sphereApprox.getGeomObjId()];
+    sphereApprox.setSphereTransforms(objTransform.rotation(), objTransform.translation());
   }
 }
 
@@ -89,17 +97,17 @@ auto PinocchioSphereInterface::computeSphereCentersInWorldFrame(const PinocchioI
 
   pinocchio::updateGeometryPlacements(pinocchioInterface.getModel(), pinocchioInterface.getData(), *geometryModelPtr_, geometryData);
 
-  std::vector<vector3_t> sphereCentersInWorldFrame(numSpheres_);
+  std::vector<vector3_t> sphereCentersInWorldFrame(numSpheresInTotal_);
 
   size_t count = 0;
-  for (const auto& sphereApprox : sphereApproximations_) {
-    const auto& objectTransform = geometryData.oMg[sphereApprox.getGeomObjectId()];
-    const auto& sphereCentersToObjectCenter = sphereApprox.getSphereCentersToObjectCenter();
-    const size_t numSpherePerObject = sphereApprox.getNumSpheres();
-    for (size_t i = 0; i < numSpherePerObject; i++) {
-      sphereCentersInWorldFrame[count + i] = objectTransform.rotation() * sphereCentersToObjectCenter[i] + objectTransform.translation();
+  for (size_t i = 0; i < numApproximations_; i++) {
+    const auto& objTransform = geometryData.oMg[geomObjIds_[i]];
+    const auto& sphereCentersToObjectCenter = sphereApproximations_[i].getSphereCentersToObjectCenter();
+    const size_t numSpheres = numSpheres_[i];
+    for (size_t j = 0; j < numSpheres; j++) {
+      sphereCentersInWorldFrame[count + j] = objTransform.rotation() * sphereCentersToObjectCenter[j] + objTransform.translation();
     }
-    count += numSpherePerObject;
+    count += numSpheres;
   }
   return sphereCentersInWorldFrame;
 }

@@ -75,6 +75,8 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
    */
   void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 
+  const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };
+
   /** Get end-effector IDs (names) */
   const std::vector<std::string>& getIds() const override;
 

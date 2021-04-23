@@ -92,32 +92,6 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioGeometryInterface::PinocchioGeometryInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                                                       std::vector<std::string> envCollisionLinks, std::vector<scalar_t> maxExcesses)
-    : geometryModelPtr_(new pinocchio::GeometryModel),
-      envCollisionLinks_(std::move(envCollisionLinks)),
-      maxExcesses_(std::move(maxExcesses)) {
-  pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
-
-  for (size_t i = 0; i < envCollisionLinks_.size(); i++) {
-    const auto& link = envCollisionLinks_[i];
-    for (size_t j = 0; j < geometryModelPtr_->geometryObjects.size(); ++j) {
-      const pinocchio::GeometryObject& object = geometryModelPtr_->geometryObjects[j];
-      const std::string parentFrameName = pinocchioInterface.getModel().frames[object.parentFrame].name;
-      if (parentFrameName == link) {
-        sphereApproximations_.emplace_back(j, object.geometry.get(), maxExcesses_[i]);
-      }
-    }
-  }
-
-  for (const auto& sphereApprox : sphereApproximations_) {
-    numSpheres_ += sphereApprox.getNumSpheres();
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistances(const PinocchioInterface& pinocchioInterface) const {
   pinocchio::GeometryData geometryData(*geometryModelPtr_);
 
@@ -125,43 +99,6 @@ std::vector<hpp::fcl::DistanceResult> PinocchioGeometryInterface::computeDistanc
   pinocchio::computeDistances(*geometryModelPtr_, geometryData);
 
   return std::move(geometryData.distanceResults);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void PinocchioGeometryInterface::setSphereTransforms(const PinocchioInterface& pinocchioInterface) {
-  pinocchio::GeometryData geometryData(*geometryModelPtr_);
-
-  pinocchio::updateGeometryPlacements(pinocchioInterface.getModel(), pinocchioInterface.getData(), *geometryModelPtr_, geometryData);
-
-  for (auto& sphereApprox : sphereApproximations_) {
-    const auto& objectTransform = geometryData.oMg[sphereApprox.getObjectId()];
-    sphereApprox.setSphereTransforms(objectTransform.rotation(), objectTransform.translation());
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::vector<vector_t> PinocchioGeometryInterface::computeSphereCentersInWorldFrame(const PinocchioInterface& pinocchioInterface) const {
-  pinocchio::GeometryData geometryData(*geometryModelPtr_);
-
-  pinocchio::updateGeometryPlacements(pinocchioInterface.getModel(), pinocchioInterface.getData(), *geometryModelPtr_, geometryData);
-
-  std::vector<vector_t> sphereCentersInWorldFrame(numSpheres_);
-
-  size_t count = 0;
-  for (const auto& sphereApprox : sphereApproximations_) {
-    const auto& objectTransform = geometryData.oMg[sphereApprox.getObjectId()];
-    const auto& sphereCentersToObjectCenter = sphereApprox.getSphereCentersToObjectCenter();
-    const size_t numSpherePerObject = sphereApprox.getNumSpheres();
-    for (size_t i = 0; i < numSpherePerObject; i++) {
-      sphereCentersInWorldFrame[count + i] = objectTransform.rotation() * sphereCentersToObjectCenter[i] + objectTransform.translation();
-    }
-    count += numSpherePerObject;
-  }
-  return sphereCentersInWorldFrame;
 }
 
 /******************************************************************************************************/

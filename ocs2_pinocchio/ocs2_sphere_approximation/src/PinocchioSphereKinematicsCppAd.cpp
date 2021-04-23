@@ -50,15 +50,13 @@ PinocchioSphereKinematicsCppAd::PinocchioSphereKinematicsCppAd(const PinocchioIn
     : pinocchioSphereInterface_(std::move(pinocchioSphereInterface)) {
   sphereApproximationParemeters_ = concatSphereApproximationParameters();
 
-  endEffectorIds_.resize(pinocchioSphereInterface_.getNumSpheres());
-  const auto& envCollisionLinks = pinocchioSphereInterface_.getEnvCollisionLinks();
-  const auto& sphereApproximations = pinocchioSphereInterface_.getSphereApproximations();
+  endEffectorIds_.resize(pinocchioSphereInterface_.getNumSpheresInTotal());
+  const auto& collisionLinks = pinocchioSphereInterface_.getCollisionLinks();
+  const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
   size_t count = 0;
-  for (size_t i = 0; i < sphereApproximations.size(); i++) {
-    const auto& sphereApprox = sphereApproximations[i];
-    size_t numSpheres = sphereApprox.getNumSpheres();
-    std::fill(endEffectorIds_.begin() + count, endEffectorIds_.begin() + count + numSpheres, envCollisionLinks[i]);
-    count += numSpheres;
+  for (size_t i = 0; i < pinocchioSphereInterface.getNumApproximations(); i++) {
+    std::fill(endEffectorIds_.begin() + count, endEffectorIds_.begin() + count + numSpheres[i], collisionLinks[i]);
+    count += numSpheres[i];
   }
 
   // initialize CppAD interface
@@ -115,28 +113,29 @@ ad_vector_t PinocchioSphereKinematicsCppAd::getPositionCppAd(PinocchioInterfaceC
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  const auto& sphereApproximations = pinocchioSphereInterface_.getSphereApproximations();
   const auto& geometryModel = pinocchioSphereInterface_.getGeometryModel();
-  ad_vector_t sphereCentersInWorldFrame(3 * pinocchioSphereInterface_.getNumSpheres());
+  const size_t numApproximations = pinocchioSphereInterface_.getNumApproximations();
+  const auto geomObjIds = pinocchioSphereInterface_.getGeomObjIds();
+  const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
+  ad_vector_t sphereCentersInWorldFrame(3 * pinocchioSphereInterface_.getNumSpheresInTotal());
 
   size_t startIdx = 0;
   size_t count = 0;
-  for (const auto& sphereApprox : sphereApproximations) {
-    const size_t parentJointId = geometryModel.geometryObjects[sphereApprox.getGeomObjectId()].parentJoint;
-    const size_t numSpheres = sphereApprox.getNumSpheres();
+  for (size_t i = 0; i < numApproximations; i++) {
+    const size_t parentJointId = geometryModel.geometryObjects[geomObjIds[i]].parentJoint;
     const auto& translation = sphereApproximationParameters.segment<3>(startIdx);
     const auto& quat_coeffs = sphereApproximationParameters.segment<4>(startIdx + 3);
-    const auto& sphereCentersToObjectCenter = sphereApproximationParameters.segment(startIdx + 7, 3 * numSpheres);
+    const auto& sphereCentersToObjectCenter = sphereApproximationParameters.segment(startIdx + 7, 3 * numSpheres[i]);
     Eigen::Quaternion<ad_scalar_t> quaternion(quat_coeffs);
 
-    for (size_t j = 0; j < numSpheres; j++) {
+    for (size_t j = 0; j < numSpheres[i]; j++) {
       sphereCentersInWorldFrame.segment<3>(count + 3 * j) =
           data.oMi[parentJointId].rotation() * (quaternion._transformVector(sphereCentersToObjectCenter.segment<3>(3 * j)) + translation) +
           data.oMi[parentJointId].translation();
     }
 
-    startIdx = (7 + 3 * numSpheres);
-    count += 3 * numSpheres;
+    startIdx = (7 + 3 * numSpheres[i]);
+    count += 3 * numSpheres[i];
   }
 
   return sphereCentersInWorldFrame;
@@ -176,30 +175,30 @@ std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematicsCppAd::g
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PinocchioSphereKinematicsCppAd::concatSphereApproximationParameters() const {
-  // Constructor a vector_t consisting of numApprox segments of (3 + 4 + 3 * numSpheres) elements
+  // Constructor a vector_t consisting of numApprox segments of (3 + 4 + 3 * numSpheresEachApprox) elements
   // Each segment consists of the following parameters of each sphere-approximated geometry object:
   // placementTranslation       : size = 3
   // placementQuaternion        : size = 4
-  // sphereCentersToObjectCenter: size = 3 * numSpheres
+  // sphereCentersToObjectCenter: size = 3 * numSpheresEachApprox
 
-  const auto& sphereApproximations = pinocchioSphereInterface_.getSphereApproximations();
   const auto& geometryModel = pinocchioSphereInterface_.getGeometryModel();
-  const size_t numApprox = sphereApproximations.size();
-  vector_t sphereCentersAndObjectPlacements(numApprox * 7 + pinocchioSphereInterface_.getNumSpheres() * 3);
+  const size_t numApproximations = pinocchioSphereInterface_.getNumApproximations();
+  const auto geomObjIds = pinocchioSphereInterface_.getGeomObjIds();
+  const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
+  vector_t sphereCentersAndObjectPlacements(numApproximations * 7 + pinocchioSphereInterface_.getNumSpheresInTotal() * 3);
 
   size_t count = 0;
-  for (const auto& sphereApprox : sphereApproximations) {
-    const auto& placement = geometryModel.geometryObjects[sphereApprox.getGeomObjectId()].placement;
+  for (size_t i = 0; i < numApproximations; i++) {
+    const auto& placement = geometryModel.geometryObjects[geomObjIds[i]].placement;
 
     // Flatten sphereCentersToObjectCenter
-    const size_t numSpheres = sphereApprox.getNumSpheres();
-    const auto sphereCentersToObjectCenter = sphereApprox.getSphereCentersToObjectCenter();
-    vector_t concatSphereCenters(3 * numSpheres);
-    for (size_t j = 0; j < numSpheres; j++) {
+    std::vector<vector3_t> sphereCentersToObjectCenter = pinocchioSphereInterface_.getSphereCentersToObjectCenter(i);
+    vector_t concatSphereCenters(3 * numSpheres[i]);
+    for (size_t j = 0; j < numSpheres[i]; j++) {
       concatSphereCenters.segment<3>(j * 3) = sphereCentersToObjectCenter[j];
     }
 
-    const size_t segSize = 7 + 3 * numSpheres;
+    const size_t segSize = 7 + 3 * numSpheres[i];
     sphereCentersAndObjectPlacements.segment(count, segSize) << placement.translation(), matrixToQuaternion(placement.rotation()).coeffs(),
         concatSphereCenters;
 

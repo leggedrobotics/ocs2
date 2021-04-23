@@ -34,6 +34,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/test/circular_kinematics.h>
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
 
+namespace {
+/** Helper to compare if two performance indices are identical */
+bool areIdentical(const ocs2::PerformanceIndex& lhs, const ocs2::PerformanceIndex& rhs) {
+  return lhs.merit == rhs.merit && lhs.totalCost == rhs.totalCost && lhs.stateEqConstraintISE == rhs.stateEqConstraintISE &&
+         lhs.stateEqFinalConstraintSSE == rhs.stateEqFinalConstraintSSE && lhs.stateInputEqConstraintISE == rhs.stateInputEqConstraintISE &&
+         lhs.inequalityConstraintISE == rhs.inequalityConstraintISE && lhs.inequalityConstraintPenalty == rhs.inequalityConstraintPenalty;
+}
+}  // namespace
+
 using namespace ocs2;
 using namespace ocs2::multiple_shooting;
 
@@ -53,7 +62,7 @@ TEST(test_transcription, intermediate_performance) {
 
   const auto performance = computeIntermediatePerformance(system, discretizer, cost, &constraint, nullptr, t, dt, x, x_next, u);
 
-  ASSERT_EQ(performance, transcription.performance);
+  ASSERT_TRUE(areIdentical(performance, transcription.performance));
 }
 
 TEST(test_transcription, terminal_performance) {
@@ -70,5 +79,5 @@ TEST(test_transcription, terminal_performance) {
   const auto transcription = setupTerminalNode(costPtr.get(), nullptr, t, x);
   const auto performance = computeTerminalPerformance(costPtr.get(), nullptr, t, x);
 
-  ASSERT_EQ(performance, transcription.performance);
+  ASSERT_TRUE(areIdentical(performance, transcription.performance));
 }

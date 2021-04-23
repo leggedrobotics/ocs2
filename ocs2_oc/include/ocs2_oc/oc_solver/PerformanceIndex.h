@@ -73,12 +73,6 @@ inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& 
   return lhs;
 }
 
-inline bool operator==(const PerformanceIndex& lhs, const PerformanceIndex& rhs) {
-  return lhs.merit == rhs.merit && lhs.totalCost == rhs.totalCost && lhs.stateEqConstraintISE == rhs.stateEqConstraintISE &&
-         lhs.stateEqFinalConstraintSSE == rhs.stateEqFinalConstraintSSE && lhs.stateInputEqConstraintISE == rhs.stateInputEqConstraintISE &&
-         lhs.inequalityConstraintISE == rhs.inequalityConstraintISE && lhs.inequalityConstraintPenalty == rhs.inequalityConstraintPenalty;
-}
-
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
   const size_t tabSpace = 12;
   const auto indentation = stream.width();

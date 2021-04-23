@@ -190,14 +190,14 @@ inline void loadStdVector(const std::string& filename, const std::string& topicN
 
   // display
   if (verbose) {
+    std::cerr << " #### '" << topicName << "': {";
     if (vectorSize == 0) {
-      std::cerr << topicName << ": { }" << std::endl;
+      std::cerr << " }\n";
     } else {
-      std::cerr << topicName << ": {";
       for (size_t i = 0; i < vectorSize; i++) {
         std::cerr << loadVector[i] << ", ";
       }
-      std::cerr << "\b\b}" << std::endl;
+      std::cerr << "\b\b}\n";
     }
   }
 }

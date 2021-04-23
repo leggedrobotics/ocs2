@@ -32,13 +32,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <type_traits>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/constraint/ConstraintOrder.h>
 
 namespace ocs2 {
 
 /** State-input constraint function base class */
 class StateInputConstraint {
  public:
-  StateInputConstraint() = default;
+  explicit StateInputConstraint(ConstraintOrder order) : order_(order) {}
   virtual ~StateInputConstraint() = default;
   virtual StateInputConstraint* clone() const = 0;
 
@@ -48,6 +49,9 @@ class StateInputConstraint {
   /** Check constraint activity */
   bool isActive() const { return active_; }
 
+  /** Get the constraint order (Linear or Quadratic) */
+  constexpr ConstraintOrder getOrder() const { return order_; };
+
   /** Get the size of the constraint vector at given time */
   virtual size_t getNumConstraints(scalar_t time) const = 0;
 
@@ -56,19 +60,24 @@ class StateInputConstraint {
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const {
-    throw std::runtime_error("[StateInputConstraint] Linear approximation not implemented");
+    if (order_ == ConstraintOrder::Linear) {
+      throw std::runtime_error("[StateInputConstraint] Linear approximation not implemented!");
+    } else {
+      throw std::runtime_error("[StateInputConstraint] The class only provides Quadratic approximationn! call getQuadraticApproximation()");
+    }
   }
 
   /** Get the constraint quadratic approximation */
   virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                          const vector_t& input) const {
-    throw std::runtime_error("[StateInputConstraint] Quadratic approximation not implemented");
+    throw std::runtime_error("[StateInputConstraint] Quadratic approximation not implemented!");
   }
 
  protected:
   StateInputConstraint(const StateInputConstraint& rhs) = default;
 
  private:
+  ConstraintOrder order_;
   bool active_ = true;
 };
 

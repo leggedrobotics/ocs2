@@ -35,13 +35,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/ThreadPool.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
@@ -70,7 +70,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
    */
   LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
                              ConstraintBase& constraintsRef, CostFunctionBase& costFunctionRef, CostFunctionBase& heuristicsFunctionsRef,
-                             PenaltyBase& ineqConstrPenalty, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+                             SoftConstraintPenalty& ineqConstrPenalty, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
@@ -85,16 +85,16 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
            PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
            vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-           std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-           std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) override;
+           std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
+           scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
 
-  void computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
+  void computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                   matrix_t& deltaGm) const override;
 
-  matrix_t augmentHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Hm) const override;
+  matrix_t augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const override;
 
  private:
   // Levenberg-Marquardt
@@ -112,7 +112,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   ConstraintBase& constraintsRef_;
   CostFunctionBase& costFunctionRef_;
   CostFunctionBase& heuristicsFunctionsRef_;
-  PenaltyBase& ineqConstrPenaltyRef_;
+  SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
   scalar_t avgTimeStepFP_ = 0.0;

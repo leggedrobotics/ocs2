@@ -54,25 +54,22 @@ namespace ocs2 {
  */
 class StateInputSoftConstraint final : public StateInputCost {
  public:
-  /**
-   * Constructor.
-   * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
-   * @param [in] constraintOrder: The order of constraint's approximation.
-   */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr,
-                           std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray,
-                           ConstraintOrder constraintOrder = ConstraintOrder::Quadratic);
+  using BASE = StateInputCost;
 
   /**
    * Constructor.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
-   * @param [in] constraintOrder: The order of constraint's approximation.
+   * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, size_t numConstraints,
-                           std::unique_ptr<PenaltyFunctionBase> penaltyFunction,
-                           ConstraintOrder constraintOrder = ConstraintOrder::Quadratic);
+  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
+
+  /**
+   * Constructor.
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
+   * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
+   * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
+   */
+  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
 
   ~StateInputSoftConstraint() override = default;
 
@@ -96,7 +93,6 @@ class StateInputSoftConstraint final : public StateInputCost {
 
   std::unique_ptr<StateInputConstraint> constraintPtr_;
   SoftConstraintPenalty penalty_;
-  ConstraintOrder constraintOrder_;
 };
 
 }  // namespace ocs2

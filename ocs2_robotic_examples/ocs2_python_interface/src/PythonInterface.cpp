@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_python_interface/PythonInterface.h"
 
 #include <ocs2_core/misc/LinearAlgebra.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 namespace ocs2 {
 
@@ -131,9 +132,10 @@ VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(sc
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
   scalar_t L = cost_->cost(t, x, u);
 
-  if (constraints_) {
+  if (constraints_ != nullptr && penalty_ != nullptr) {
     const auto h = constraints_->inequalityConstraint(t, x, u);
-    L += penalty_->penaltyCost(h);
+    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    L += softConstraintPenalty.getValue(h);
   }
 
   return L;
@@ -146,14 +148,11 @@ ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation
                                                                                  Eigen::Ref<const vector_t> u) {
   auto L = cost_->costQuadraticApproximation(t, x, u);
 
-  const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);
-  const auto penalty = penalty_->penaltyCostQuadraticApproximation(h);
-  L.f += penalty.f;
-  L.dfdx += penalty.dfdx;
-  L.dfdu += penalty.dfdu;
-  L.dfdxx += penalty.dfdxx;
-  L.dfdux += penalty.dfdux;
-  L.dfduu += penalty.dfduu;
+  if (constraints_ != nullptr && penalty_ != nullptr) {
+    const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);
+    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    L += softConstraintPenalty.getQuadraticApproximation(h);
+  }
 
   return L;
 }
@@ -162,14 +161,14 @@ ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::valueFunction(scalar_t t, Eigen::Ref<const vector_t> x) {
-  return mpcMrtInterface_->getValueFunction(t, x);
+  return mpcMrtInterface_->getValueFunction(t, x).f;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::valueFunctionStateDerivative(scalar_t t, Eigen::Ref<const vector_t> x) {
-  return mpcMrtInterface_->getValueFunctionStateDerivative(t, x);
+  return mpcMrtInterface_->getValueFunction(t, x).dfdx;
 }
 
 /******************************************************************************************************/

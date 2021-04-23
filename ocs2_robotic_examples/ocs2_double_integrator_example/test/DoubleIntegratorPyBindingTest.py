@@ -10,20 +10,6 @@ from ocs2_double_integrator_example import (
 )
 
 
-"""
-# Python 3 import workaround (while ROS is still using python 2.7)
-import sys
-sys.path.append("/path/to/catkin_ws/devel/lib/python3.6/dist-packages/ocs2_double_integrator_example")
-from DoubleIntegratorPyBindings import mpc_interface
-from DoubleIntegratorPyBindings import import (
-    scalar_array,
-    vector_array,
-    matrix_array,
-    CostDesiredTrajectories,
-)
-"""
-
-
 class double_integrator_python_tests(unittest.TestCase):
     def setUp(self):
         print("Instantiating MPC interface")

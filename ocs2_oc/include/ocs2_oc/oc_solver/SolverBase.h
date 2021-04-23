@@ -184,22 +184,13 @@ class SolverBase {
   PrimalSolution primalSolution(scalar_t finalTime) const;
 
   /**
-   * Calculates the value function at the given time and state.
+   * Calculates the value function quadratic approximation at the given time and state.
    *
    * @param [in] time: The inquiry time
    * @param [in] state: The inquiry state.
-   * @return value at the inquiry time and state.
+   * @return The quadratic approximation of the value function at the requested time and state.
    */
-  virtual scalar_t getValueFunction(scalar_t time, const vector_t& state) const = 0;
-
-  /**
-   * Calculates the value function state derivative at the given time and state.
-   *
-   * @param [in] time: The inquiry time
-   * @param [in] state: The inquiry state.
-   * @return value function derivative wrt. state at the inquiry time and state.
-   */
-  virtual vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const = 0;
+  virtual ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const = 0;
 
   /**
    * Calculates the Lagrange multiplier of the state-input equality constraints at the given time and state.

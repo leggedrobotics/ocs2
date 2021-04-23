@@ -55,8 +55,8 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
                                                std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                                                size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
                                                vector_array2_t& inputTrajectoriesStock,
-                                               std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                               std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) const {
+                                               std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                               std::vector<std::vector<ModelData>>& modelDataEventTimesStock) const {
   if (controllersStock.size() != numPartitions_) {
     throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
   }
@@ -135,8 +135,8 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
 void SearchStrategyBase::rolloutCostAndConstraints(
     ConstraintBase& constraints, CostFunctionBase& costFunction, CostFunctionBase& heuristicsFunction,
     const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
-    const vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-    std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const {
+    const vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+    std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const {
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
@@ -174,40 +174,42 @@ void SearchStrategyBase::rolloutCostAndConstraints(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(
-    const PenaltyBase& ineqConstrPenalty, const scalar_array2_t& timeTrajectoriesStock,
-    const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-    const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t heuristicsValue) const {
+PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
+                                                                      const scalar_array2_t& timeTrajectoriesStock,
+                                                                      const std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                                                      const std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
+                                                                      scalar_t heuristicsValue) const {
   PerformanceIndex performanceIndex;
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     // total cost
     scalar_array_t costTrajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), costTrajectory.begin(),
-                   [](const ModelDataBase& m) { return m.cost_.f; });
+                   [](const ModelData& m) { return m.cost_.f; });
     performanceIndex.totalCost += trapezoidalIntegration(timeTrajectoriesStock[i], costTrajectory);
 
     // state equality constraint's ISE
     scalar_array_t stateEqualityNorm2Trajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), stateEqualityNorm2Trajectory.begin(),
-                   [](const ModelDataBase& m) { return m.stateEqConstr_.f.squaredNorm(); });
+                   [](const ModelData& m) { return m.stateEqConstr_.f.squaredNorm(); });
     performanceIndex.stateEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], stateEqualityNorm2Trajectory);
 
     // state-input equality constraint's ISE
     scalar_array_t stateInputEqualityNorm2Trajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), stateInputEqualityNorm2Trajectory.begin(),
-                   [](const ModelDataBase& m) { return m.stateInputEqConstr_.f.squaredNorm(); });
+                   [](const ModelData& m) { return m.stateInputEqConstr_.f.squaredNorm(); });
     performanceIndex.stateInputEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], stateInputEqualityNorm2Trajectory);
 
     // inequality constraints violation ISE
     scalar_array_t inequalityNorm2Trajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityNorm2Trajectory.begin(),
-                   [this](const ModelDataBase& m) { return m.ineqConstr_.f.cwiseMin(0.0).squaredNorm(); });
+                   [this](const ModelData& m) { return m.ineqConstr_.f.cwiseMin(0.0).squaredNorm(); });
     performanceIndex.inequalityConstraintISE += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityNorm2Trajectory);
 
     // inequality constraints penalty
     scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityPenaltyTrajectory.begin(),
-                   [&](const ModelDataBase& m) { return ineqConstrPenalty.penaltyCost(m.ineqConstr_.f); });
+                   [&](const ModelData& m) { return ineqConstrPenalty.getValue(m.ineqConstr_.f); });
+
     performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
 
     // final cost and constraints

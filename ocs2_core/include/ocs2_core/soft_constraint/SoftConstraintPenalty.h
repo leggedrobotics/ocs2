@@ -32,11 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 
 namespace ocs2 {
-
-enum class ConstraintOrder { Linear, Quadratic };
 
 /**
  *   A helper class that implements the cost penalty for general constraint
@@ -52,21 +50,22 @@ class SoftConstraintPenalty {
  public:
   /**
    * Constructor
-   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
+   * @note This imposes a fixed number of constraints, where the corresponding penalty function in the array is applied.
+   * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
-  SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray);
+  SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
   /**
-   * Constructor
-   * @param [in] numConstraints: The number of constraints.
+   * Constructor with s single penalty function
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
-  SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr);
+  SoftConstraintPenalty(std::unique_ptr<PenaltyBase> penaltyFunctionPtr);
 
   /** Default destructor */
   ~SoftConstraintPenalty() = default;
 
-  /** copy constructor */
+  /** Copy constructor */
   SoftConstraintPenalty(const SoftConstraintPenalty& other);
 
   /**
@@ -98,7 +97,7 @@ class SoftConstraintPenalty {
  private:
   std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(const vector_t& h) const;
 
-  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray_;
+  std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray_;
 };
 
 }  // namespace ocs2

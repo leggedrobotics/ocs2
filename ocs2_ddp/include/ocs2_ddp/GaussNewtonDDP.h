@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
@@ -41,8 +40,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
 #include <ocs2_core/misc/ThreadPool.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
@@ -113,9 +113,7 @@ class GaussNewtonDDP : public SolverBase {
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
-  scalar_t getValueFunction(scalar_t time, const vector_t& state) const override;
-
-  vector_t getValueFunctionStateDerivative(scalar_t time, const vector_t& state) const override;
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
@@ -181,7 +179,7 @@ class GaussNewtonDDP : public SolverBase {
    * @param [out] projectedModelData: The projected model data.
    * @param [out] riccatiModification: The Riccati equation modifier.
    */
-  void computeProjectionAndRiccatiModification(const ModelDataBase& modelData, const matrix_t& Sm, ModelDataBase& projectedModelData,
+  void computeProjectionAndRiccatiModification(const ModelData& modelData, const matrix_t& Sm, ModelData& projectedModelData,
                                                riccati_modification::Data& riccatiModification) const;
 
   /**
@@ -191,7 +189,7 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] Sm: The Riccati matrix.
    * @return The Hessian matrix of the Hamiltonian.
    */
-  virtual matrix_t computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const = 0;
+  virtual matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const = 0;
 
   /**
    * Calculates an LQ approximate of the optimal control problem for the nodes.
@@ -204,7 +202,7 @@ class GaussNewtonDDP : public SolverBase {
    */
   virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                         std::vector<ModelDataBase>& modelDataTrajectory) = 0;
+                                         std::vector<ModelData>& modelDataTrajectory) = 0;
 
   /**
    * Calculates the controller. This method uses the following variables:
@@ -289,8 +287,8 @@ class GaussNewtonDDP : public SolverBase {
   scalar_t rolloutInitialTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
                                     size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
                                     vector_array2_t& inputTrajectoriesStock,
-                                    std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                    std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, size_t workerIndex = 0);
+                                    std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                    std::vector<std::vector<ModelData>>& modelDataEventTimesStock, size_t workerIndex = 0);
 
   /**
    * Display rollout info and scores.
@@ -355,8 +353,8 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] constraintNullProjector: The projection matrix to the null space of constrained.
    * @param [out] projectedModelData: The projected model data.
    */
-  void projectLQ(const ModelDataBase& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
-                 ModelDataBase& projectedModelData) const;
+  void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
+                 ModelData& projectedModelData) const;
 
   /**
    * Augments the cost function for the given model data.
@@ -367,7 +365,7 @@ class GaussNewtonDDP : public SolverBase {
    * @param modelData: The model data.
    */
   void augmentCostWorker(size_t workerIndex, scalar_t stateEqConstrPenaltyCoeff, scalar_t stateInputEqConstrPenaltyCoeff,
-                         ModelDataBase& modelData) const;
+                         ModelData& modelData) const;
 
   /**
    * Initialize the constraint penalty coefficients.
@@ -470,13 +468,13 @@ class GaussNewtonDDP : public SolverBase {
   vector_array2_t nominalInputTrajectoriesStock_;
 
   // intermediate model data trajectory
-  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelData>> modelDataTrajectoriesStock_;
 
   // event times model data
-  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock_;
+  std::vector<std::vector<ModelData>> modelDataEventTimesStock_;
 
   // projected model data trajectory
-  std::vector<std::vector<ModelDataBase>> projectedModelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelData>> projectedModelDataTrajectoriesStock_;
 
   // Riccati modification
   std::vector<std::vector<riccati_modification::Data>> riccatiModificationTrajectoriesStock_;
@@ -507,7 +505,7 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
   std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
-  std::unique_ptr<PenaltyBase> penaltyPtr_;
+  std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
@@ -517,9 +515,9 @@ class GaussNewtonDDP : public SolverBase {
   vector_array2_t cachedStateTrajectoriesStock_;
   vector_array2_t cachedInputTrajectoriesStock_;
 
-  std::vector<std::vector<ModelDataBase>> cachedModelDataTrajectoriesStock_;
-  std::vector<std::vector<ModelDataBase>> cachedModelDataEventTimesStock_;
-  std::vector<std::vector<ModelDataBase>> cachedProjectedModelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelData>> cachedModelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelData>> cachedModelDataEventTimesStock_;
+  std::vector<std::vector<ModelData>> cachedProjectedModelDataTrajectoriesStock_;
   std::vector<std::vector<riccati_modification::Data>> cachedRiccatiModificationTrajectoriesStock_;
 
   scalar_array_t sFinalStock_;

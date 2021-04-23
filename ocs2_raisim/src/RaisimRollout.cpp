@@ -48,10 +48,7 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
       inputToRaisimPdTargets_(std::move(inputToRaisimPdTargets)) {
   world_.setTimeStep(this->settings().minTimeStep_);
 
-  // avoid self-collisions
-  constexpr CollisionGroup collisionGroup = 0b10;
-  constexpr CollisionGroup collisionMask = 0b01;
-  system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_, collisionGroup, collisionMask);
+  system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_);
   system_->setControlMode(raisimRolloutSettings_.controlMode_);
   if (raisimRolloutSettings_.controlMode_ != raisim::ControlMode::FORCE_AND_TORQUE) {
     system_->setPdGains(raisimRolloutSettings_.pGains_, raisimRolloutSettings_.dGains_);

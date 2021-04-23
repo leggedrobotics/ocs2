@@ -75,7 +75,7 @@ SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamics
 /******************************************************************************************************/
 void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                     const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                    std::vector<ModelDataBase>& modelDataTrajectory) {
+                                    std::vector<ModelData>& modelDataTrajectory) {
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {
@@ -108,19 +108,19 @@ void SLQ::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, s
 
   // BmProjected
   const matrix_t projectedBm =
-      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::dynamics_dfdu);
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], model_data::dynamics_dfdu);
   // PmProjected
   const matrix_t projectedPm =
-      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdux);
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], model_data::cost_dfdux);
   // RvProjected
   const vector_t projectedRv =
-      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::cost_dfdu);
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], model_data::cost_dfdu);
   // EvProjected
   const vector_t EvProjected =
-      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_f);
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], model_data::stateInputEqConstr_f);
   // CmProjected
   const matrix_t CmProjected =
-      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], ModelData::stateInputEqConstr_dfdx);
+      LinearInterpolation::interpolate(indexAlpha, BASE::projectedModelDataTrajectoriesStock_[i], model_data::stateInputEqConstr_dfdx);
 
   // projector
   const matrix_t Qu = LinearInterpolation::interpolate(indexAlpha, BASE::riccatiModificationTrajectoriesStock_[i],
@@ -204,7 +204,7 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t SLQ::computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const {
+matrix_t SLQ::computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const {
   return searchStrategyPtr_->augmentHamiltonianHessian(modelData, modelData.cost_.dfduu);
 }
 

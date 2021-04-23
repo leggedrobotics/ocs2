@@ -43,14 +43,18 @@ struct Settings {
   size_t n_input = 0;
 
   // Sqp settings
-  size_t sqpIteration = 1;
-  scalar_t deltaTol = 1e-6;
-  scalar_t alpha_decay = 0.5;
-  scalar_t alpha_min = 1e-4;
-  scalar_t gamma_c = 1e-6;
-  scalar_t g_max = 1e6;
-  scalar_t g_min = 1e-6;
-  scalar_t costTol = 1e-4;
+  size_t sqpIteration = 1;   // Maximum number of SQP iterations
+  scalar_t deltaTol = 1e-6;  // Termination condition : RMS update of x(t) and u(t) are both below this value
+  scalar_t costTol = 1e-4;   // Termination condition : (cost{i+1} - (cost{i}) < costTol AND constraints{i+1} < g_min
+
+  // Linesearch - step size rules
+  scalar_t alpha_decay = 0.5;  // multiply the step size by this factor every time a linesearch step is rejected.
+  scalar_t alpha_min = 1e-4;   // terminate linesearch if the attempted step size is below this threshold
+
+  // Linesearch - step acceptance criteria with c = costs and g = the norm of constraint violation
+  scalar_t g_max = 1e6;     // (1): g{i+1} < g_max
+  scalar_t g_min = 1e-6;    // (2a): IF (g{i+1} < g_min) REQUIRE c{i+1} < c{i}
+  scalar_t gamma_c = 1e-6;  // (2b): ELSE REQUIRE c{i+1} < (c{i} - gamma_c * g{i}) OR c{i+1} < (1-gamma_c) * g{i}
 
   // controller type
   bool useFeedbackPolicy = true;  // true to use feedback, false to use feedforward
@@ -62,7 +66,7 @@ struct Settings {
   scalar_t dt = 0.01;  // user-defined time discretization
   SensitivityIntegratorType integratorType = SensitivityIntegratorType::RK2;
 
-  // Inequality penalty method
+  // Inequality penalty relaxed barrier parameters
   scalar_t inequalityConstraintMu = 0.0;
   scalar_t inequalityConstraintDelta = 1e-6;
   bool projectStateInputEqualityConstraints = true;  // Use a projection method to resolve the state-input constraint Cx+Du+e

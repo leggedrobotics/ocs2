@@ -8,7 +8,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
-  ocs2_sphere_approximation
 
   # visualization deps
   roscpp

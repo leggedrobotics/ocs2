@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
   }
   std::cerr << std::endl;
 
-  gInterface.reset(new PinocchioGeometryInterface(urdfPath, *pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
+  gInterface.reset(new PinocchioGeometryInterface(*pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
   vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base"));
 

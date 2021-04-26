@@ -33,24 +33,45 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-//#include <hpp/fcl/collision_object.h>
 #include <hpp/fcl/shape/geometric_shapes.h>
 
 namespace ocs2 {
+
+/**
+ * Sphere approximation implmentation.
+ *
+ * This class approximates the collision primitive geometry: box, cylinder, and sphere, with spheres. This class is to be used with
+ * pinocchio::GeometryModel.
+ *
+ * Reference:
+ * [1] A. Voelz and K. Graichen, "Computation of Collision Distance and Gradient using an Automatic Sphere Approximation of the Robot Model
+ * with Bounded Error," ISR 2018; 50th International Symposium on Robotics, 2018, pp. 1-8.
+ */
 class SphereApproximation {
  public:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
+  /** Constructor
+   * @param [in] geomObjectId : index of the geometry object in GeoemtryModel
+   * @param [in] geometryPtr : pointer to the geometry stored in GeometryModel
+   * @param [in] maxExcess : maximum allowed excess from the object surface to the sphere surface
+   */
   SphereApproximation(const size_t geomObjectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess);
 
-  void setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation);
-
+  /** Get the index of the geometry object stored in GeometryModel */
   size_t getGeomObjId() const { return geomObjId_; };
+
+  /** Get the maximum alloowed excess from the the object surface to the sphere surface */
   scalar_t getMaxExcess() const { return maxExcess_; };
+
+  /** Get the number of spheres approximating the object */
   size_t getNumSpheres() const { return numSpheres_; };
+
+  /** Get the radius of the spheres approximating the object */
   scalar_t getSphereRadius() const { return sphereRadius_; };
+
+  /** Get the positions of the sphere centers w.r.t the object center */
   std::vector<vector3_t> getSphereCentersToObjectCenter() const { return sphereCentersToObjectCenter_; };
-  std::vector<vector3_t> getSphereCentersInWorldFrame() const { return sphereCentersInWorldFrame_; };
 
  private:
   void approximateBox(const vector_t& sides);
@@ -64,7 +85,6 @@ class SphereApproximation {
   size_t numSpheres_;
   scalar_t sphereRadius_;
   std::vector<vector3_t> sphereCentersToObjectCenter_;
-  std::vector<vector3_t> sphereCentersInWorldFrame_;
 };
 
 }  // namespace ocs2

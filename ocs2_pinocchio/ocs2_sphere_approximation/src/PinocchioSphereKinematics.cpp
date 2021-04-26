@@ -48,12 +48,12 @@ namespace ocs2 {
 PinocchioSphereKinematics::PinocchioSphereKinematics(PinocchioSphereInterface pinocchioSphereInterface,
                                                      const PinocchioStateInputMapping<scalar_t>& mapping)
     : pinocchioInterfacePtr_(nullptr), pinocchioSphereInterface_(std::move(pinocchioSphereInterface)), mappingPtr_(mapping.clone()) {
-  endEffectorIds_.resize(pinocchioSphereInterface_.getNumSpheresInTotal());
+  linkIds_.resize(pinocchioSphereInterface_.getNumSpheresInTotal());
   const auto& collisionLinks = pinocchioSphereInterface_.getCollisionLinks();
   const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
   size_t count = 0;
   for (size_t i = 0; i < pinocchioSphereInterface.getNumApproximations(); i++) {
-    std::fill(endEffectorIds_.begin() + count, endEffectorIds_.begin() + count + numSpheres[i], collisionLinks[i]);
+    std::fill(linkIds_.begin() + count, linkIds_.begin() + count + numSpheres[i], collisionLinks[i]);
     count += numSpheres[i];
   }
 }
@@ -66,7 +66,7 @@ PinocchioSphereKinematics::PinocchioSphereKinematics(const PinocchioSphereKinema
       pinocchioInterfacePtr_(nullptr),
       mappingPtr_(rhs.mappingPtr_->clone()),
       pinocchioSphereInterface_(rhs.pinocchioSphereInterface_),
-      endEffectorIds_(rhs.endEffectorIds_) {}
+      linkIds_(rhs.linkIds_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -79,7 +79,7 @@ PinocchioSphereKinematics* PinocchioSphereKinematics::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 const std::vector<std::string>& PinocchioSphereKinematics::getIds() const {
-  return endEffectorIds_;
+  return linkIds_;
 }
 
 /******************************************************************************************************/

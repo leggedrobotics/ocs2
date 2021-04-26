@@ -40,13 +40,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * End-effector Kinematics implmentation using pinocchio.
+ * Sphere Kinematics implmentation using pinocchio.
  *
  * This class uses caching of computation done on the pinocchio::Data in PinocchiInterface.
  * See in the method documentation which pinocchio functions are required to update pinocchio::Data.
  *
  * Example:
- *   PinocchioEndEffectorKinematics kinematics(pinocchioInterface, mapping, {"END_EFFECTOR_NAME"});
+ *   PinocchioSphereKinematics kinematics(pinocchioSphereInterface, mapping);
  *   pinocchio::forwardKinematics(pinocchioInterface.getModel(), pinocchioInterface.getData(), q);
  *   pinocchio::updateFramePlacements(pinocchioInterface.getModel(), pinocchioInterface.getData());
  *   kinematics.setPinocchioInterface(pinocchioInterface);
@@ -59,9 +59,8 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
   using EndEffectorKinematics<scalar_t>::quaternion_t;
 
   /** Constructor
-   * @param [in] pinocchioInterface: pinocchio interface.
+   * @param [in] pinocchioSphereInterface: pinocchio sphere interface.
    * @param [in] mapping: mapping from OCS2 to pinocchio state.
-   * @param [in] endEffectorIds: array of end effector names.
    */
   PinocchioSphereKinematics(PinocchioSphereInterface pinocchioSphereInterface, const PinocchioStateInputMapping<scalar_t>& mapping);
 
@@ -75,19 +74,20 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
    */
   void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 
+  /** Get the pinocchio sphere interface **/
   const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };
 
-  /** Get end-effector IDs (names) */
+  /** Get IDs (names) of the links which the spheres approximate */
   const std::vector<std::string>& getIds() const override;
 
-  /** Get the end effector position vectors.
+  /** Get the sphere center position vectors.
    * @note requires pinocchioInterface to be updated with:
    *       pinocchio::forwardKinematics(model, data, q)
    *       pinocchio::updateFramePlacements(model, data)
    */
   std::vector<vector3_t> getPosition(const vector_t& state) const override;
 
-  /** Get the end effector velocity vectors.
+  /** Get the sphere center velocity vectors.
    * @note requires pinocchioInterface to be updated with:
    *       pinocchio::forwardKinematics(model, data, q, v)
    */
@@ -95,7 +95,7 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
     throw std::runtime_error("[PinocchioSphereKinematics] getVelocity() is not implemented");
   };
 
-  /** Get the end effector orientation error.
+  /** Get the sphere center orientation error.
    * @note requires pinocchioInterface to be updated with:
    *       pinocchio::forwardKinematics(model, data, q)
    *       pinocchio::updateFramePlacements(model, data)
@@ -104,7 +104,7 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
     throw std::runtime_error("[PinocchioSphereKinematics] getOrientationError() is not implemented");
   };
 
-  /** Get the end effector position linear approximation.
+  /** Get the sphere center position linear approximation.
    * @note requires pinocchioInterface to be updated with:
    *       pinocchio::forwardKinematics(model, data, q)
    *       pinocchio::updateFramePlacements(model, data)
@@ -112,7 +112,7 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
    */
   std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
 
-  /** Get the end effector velocity linear approximation
+  /** Get the sphere center velocity linear approximation
    * @note requires pinocchioInterface to be updated with:
    *       pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a)
    */
@@ -121,7 +121,7 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
     throw std::runtime_error("[PinocchioSphereKinematics] getVelocityLinearApproximation() is not implemented");
   };
 
-  /** Get the end effector orientation error linear approximation.
+  /** Get the sphere center orientation error linear approximation.
    * @note requires pinocchioInterface to be updated with:
    *       pinocchio::forwardKinematics(model, data, q)
    *       pinocchio::updateFramePlacements(model, data)
@@ -138,8 +138,7 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
   const PinocchioInterface* pinocchioInterfacePtr_;
   std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
   PinocchioSphereInterface pinocchioSphereInterface_;
-  std::vector<std::string> endEffectorIds_;
-  //  std::vector<size_t> endEffectorFrameIds_;
+  std::vector<std::string> linkIds_;
 };
 
 }  // namespace ocs2

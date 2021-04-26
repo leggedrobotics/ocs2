@@ -77,20 +77,6 @@ PinocchioSphereInterface::PinocchioSphereInterface(const std::string& urdfPath, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PinocchioSphereInterface::setSphereTransforms(const PinocchioInterface& pinocchioInterface) {
-  pinocchio::GeometryData geometryData(*geometryModelPtr_);
-
-  pinocchio::updateGeometryPlacements(pinocchioInterface.getModel(), pinocchioInterface.getData(), *geometryModelPtr_, geometryData);
-
-  for (auto& sphereApprox : sphereApproximations_) {
-    const auto& objTransform = geometryData.oMg[sphereApprox.getGeomObjId()];
-    sphereApprox.setSphereTransforms(objTransform.rotation(), objTransform.translation());
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 auto PinocchioSphereInterface::computeSphereCentersInWorldFrame(const PinocchioInterface& pinocchioInterface) const
     -> std::vector<vector3_t> {
   pinocchio::GeometryData geometryData(*geometryModelPtr_);

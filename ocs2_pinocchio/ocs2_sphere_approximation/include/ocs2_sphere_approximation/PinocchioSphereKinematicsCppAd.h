@@ -54,8 +54,8 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
 
   /** Constructor
    * @param [in] pinocchioInterface pinocchio interface.
+   * @param [in] pinocchioSphereInterface pinocchio sphere interface
    * @param [in] mapping mapping from OCS2 to pinocchio state.
-   * @param [in] endEffectorIds array of end effector names.
    * @param [in] stateDim : size of state vector
    * @param [in] inputDim : size of input vector
    * @param [in] modelName : name of the generate model library
@@ -72,6 +72,8 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
   ~PinocchioSphereKinematicsCppAd() override = default;
   PinocchioSphereKinematicsCppAd* clone() const override;
   PinocchioSphereKinematicsCppAd& operator=(const PinocchioSphereKinematicsCppAd&) = delete;
+
+  const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };
 
   const std::vector<std::string>& getIds() const override;
 
@@ -96,16 +98,15 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
  private:
   PinocchioSphereKinematicsCppAd(const PinocchioSphereKinematicsCppAd& rhs);
 
-  vector_t concatSphereApproximationParameters() const;
+  vector_t concatSphereApproxParams() const;
   ad_vector_t getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                               const ad_vector_t& state, const ad_vector_t& sphereApproximationParameters);
+                               const ad_vector_t& state, const ad_vector_t& sphereApproxParams);
 
   std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
 
   PinocchioSphereInterface pinocchioSphereInterface_;
-  vector_t sphereApproximationParemeters_;
-  std::vector<std::string> endEffectorIds_;
-  //  std::vector<size_t> endEffectorFrameIds_;
+  vector_t sphereApproxParams_;
+  std::vector<std::string> linkIds_;
 };
 
 }  // namespace ocs2

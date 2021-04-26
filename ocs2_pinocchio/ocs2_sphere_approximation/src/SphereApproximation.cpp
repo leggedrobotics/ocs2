@@ -56,21 +56,11 @@ SphereApproximation::SphereApproximation(const size_t geomObjId, const hpp::fcl:
       numSpheres_ = 1;
       sphereRadius_ = spherePtr->radius;
       sphereCentersToObjectCenter_.resize(1);
-      sphereCentersInWorldFrame_.resize(1);
       sphereCentersToObjectCenter_[0] = vector_t::Zero(3);
       break;
     }
     default:
       throw std::runtime_error("[SphereApproximation] Undefined shape primitive for sphere approximation");
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SphereApproximation::setSphereTransforms(const matrix_t& objectRotation, const vector_t& objectTranslation) {
-  for (int i = 0; i < sphereCentersInWorldFrame_.size(); i++) {
-    sphereCentersInWorldFrame_[i] = objectRotation * sphereCentersToObjectCenter_[i] + objectTranslation;
   }
 }
 
@@ -144,7 +134,6 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
 
   numSpheres_ = numSpheres[0] * numSpheres[1] * numSpheres[2];
   sphereCentersToObjectCenter_.resize(numSpheres_);
-  sphereCentersInWorldFrame_.resize(numSpheres_);
 
   // Sphere spacings along x, y, z
   vector_t spacings(3);
@@ -245,7 +234,6 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
   numSpheres[0] = circleCentersToBaseCenter.size();
   numSpheres_ = numSpheres[0] * numSpheres[1];
   sphereCentersToObjectCenter_.resize(numSpheres_);
-  sphereCentersInWorldFrame_.resize(numSpheres_);
 
   size_t count = 0;
   for (size_t i = 0; i < numSpheres[1]; i++) {

@@ -48,27 +48,46 @@ class PinocchioSphereInterface final {
  public:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
+  /** Constructor
+   * @param [in] urdfPath : path to the urdf file
+   * @param [in] pinocchioInterface : pinocchio interface
+   * @param [in] collisionLinks : vector of the names of links to be approximated with spheres
+   * @param [in] maxExcess : vector of the maximum allowed excess for the sphere approximation of each link
+   */
   PinocchioSphereInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
                            std::vector<std::string> collisionLinks, std::vector<scalar_t> maxExcesses);
 
-  void setSphereTransforms(const PinocchioInterface& pinocchioInterface);
-
+  /** Compute the sphere center positions in world frame
+   *
+   * @note Requires pinocchioInterface with updated joint placements by calling forwardKinematics().
+   *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @return An array of sphere center positions in world frame.
+   */
   std::vector<vector3_t> computeSphereCentersInWorldFrame(const PinocchioInterface& pinocchioInterface) const;
 
+  /** Get the array of the collision links approximated with spheres */
   const std::vector<std::string>& getCollisionLinks() const { return collisionLinks_; };
 
+  /** Get the array of the SphereApproximation objects */
   const std::vector<SphereApproximation>& getSphereApproximations() const { return sphereApproximations_; }
 
+  /** Get the number of objects approximated with spheres */
   size_t getNumApproximations() const { return numApproximations_; };
 
+  /** Get the number of spheres in total */
   size_t getNumSpheresInTotal() const { return numSpheresInTotal_; };
 
+  /** Get the array of the number of spheres of each approximation */
   size_array_t getNumSpheres() const { return numSpheres_; };
 
+  /** Get the array of the geometry object index of each approximation */
   size_array_t getGeomObjIds() const { return geomObjIds_; };
 
+  /** Get the array of the radius of each sphere */
   scalar_array_t getSphereRadii() const { return sphereRadii_; };
 
+  /** Get the array of the center position of each sphere in world frame */
   std::vector<vector3_t> getSphereCentersToObjectCenter(size_t approxId) const {
     return sphereApproximations_[approxId].getSphereCentersToObjectCenter();
   };

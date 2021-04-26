@@ -27,80 +27,80 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/cost/CostBase.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SystemDynamicsBase::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  using Req = PreComputation::Request;
+CostBase::CostBase(PreComputation* preCompPtr) : preCompPtr_(preCompPtr) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t CostBase::getValue(scalar_t t, const vector_t& x, const vector_t& u) {
   if (preCompPtr_ != nullptr) {
-    preCompPtr_->request(Req::Dynamics | Req::Approximation, t, x, u);
+    preCompPtr_->request(PreComputation::Request::Cost, t, x, u);
   }
-  return linearApproximation(t, x, u, preCompPtr_);
+  return getValue(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
-  using Req = PreComputation::Request;
+scalar_t CostBase::getPreJumpValue(scalar_t t, const vector_t& x, const vector_t& u) {
   if (preCompPtr_ != nullptr) {
-    preCompPtr_->requestPreJump(Req::Dynamics | Req::Approximation, t, x);
+    preCompPtr_->requestPreJump(PreComputation::Request::Cost, t, x);
   }
-  return jumpMapLinearApproximation(t, x, u, preCompPtr_);
+  return getPreJumpValue(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation*) {
-  VectorFunctionLinearApproximation approximation;
-  approximation.dfdx.setIdentity(x.rows(), x.rows());
-  approximation.dfdu.setZero(x.rows(), 0);
-  approximation.f = this->computeJumpMap(t, x);
-  return approximation;
+scalar_t CostBase::getFinalValue(scalar_t t, const vector_t& x) {
+  if (preCompPtr_ != nullptr) {
+    preCompPtr_->requestFinal(PreComputation::Request::Cost, t, x);
+  }
+  return getFinalValue(t, x, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SystemDynamicsBase::guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  VectorFunctionLinearApproximation approximation;
-  approximation.dfdx.setZero(1, x.rows());
-  approximation.dfdu.setZero(1, u.rows());
-  approximation.f = this->computeGuardSurfaces(t, x);
-  return approximation;
+ScalarFunctionQuadraticApproximation CostBase::getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (preCompPtr_ != nullptr) {
+    preCompPtr_->request(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x, u);
+  }
+  return getQuadraticApproximation(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SystemDynamicsBase::flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
-  return vector_t::Zero(x.rows());
+ScalarFunctionQuadraticApproximation CostBase::getPreJumpQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (preCompPtr_ != nullptr) {
+    preCompPtr_->requestPreJump(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x);
+  }
+  return getPreJumpQuadraticApproximation(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SystemDynamicsBase::jumpMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
-  return vector_t::Zero(x.rows());
+ScalarFunctionQuadraticApproximation CostBase::getFinalQuadraticApproximation(scalar_t t, const vector_t& x) {
+  if (preCompPtr_ != nullptr) {
+    preCompPtr_->requestFinal(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x);
+  }
+  return getFinalQuadraticApproximation(t, x, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SystemDynamicsBase::guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
-  return vector_t::Zero(1);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-matrix_t SystemDynamicsBase::dynamicsCovariance(scalar_t t, const vector_t& x, const vector_t& u) {
-  return matrix_t::Zero(0, 0);
+void CostBase::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
+  costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
 }
 
 }  // namespace ocs2

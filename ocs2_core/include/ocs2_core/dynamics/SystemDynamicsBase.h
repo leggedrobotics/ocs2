@@ -43,20 +43,32 @@ namespace ocs2 {
  */
 class SystemDynamicsBase : public ControlledSystemBase {
  public:
-  /** Default Constructor */
-  SystemDynamicsBase() = default;
+  /** Constructor */
+  explicit SystemDynamicsBase(PreComputation* preCompPtr);
 
   /** Default destructor */
   ~SystemDynamicsBase() override = default;
 
-  /** Clone. */
-  SystemDynamicsBase* clone() const override = 0;
+  /**
+   * Clone
+   *
+   * @param [in] preCompPtr: A pointer to the pre-computation module.
+   * @return A raw pointer to the clone.
+   */
+  SystemDynamicsBase* clone(PreComputation* preCompPtr) const override = 0;
 
   /** Computes the linear approximation */
-  virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) = 0;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /** Computes the linear approximation with given pre-computation */
+  virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                const PreComputation* preComp) = 0;
 
   /** Computes the jump map linear approximation */
-  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x);
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x);
+
+  /** Computes the jump map linear approximation with given pre-computation */
+  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation* preComp);
 
   /** Computes the guard surfaces linear approximation */
   virtual VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
@@ -93,7 +105,7 @@ class SystemDynamicsBase : public ControlledSystemBase {
 
  protected:
   /**Copy constructor */
-  SystemDynamicsBase(const SystemDynamicsBase& rhs) = default;
+  SystemDynamicsBase(const SystemDynamicsBase& other) = default;
 };
 
 }  // namespace ocs2

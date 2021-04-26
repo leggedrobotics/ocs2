@@ -72,7 +72,7 @@ TEST(testSystemDynamicsLinearizer, testLinearSystem) {
   B << 1, 1;
   LinearSystemDynamics linSys(A, B);
 
-  SystemDynamicsLinearizer linearizedSys(std::shared_ptr<ControlledSystemBase>(linSys.clone()), /*doubleSidedDerivative=*/true,
+  SystemDynamicsLinearizer linearizedSys(std::unique_ptr<ControlledSystemBase>(linSys.clone()), /*doubleSidedDerivative=*/true,
                                          /*isSecondOrderSystem=*/false, EPSILON);
 
   ASSERT_TRUE(derivativeChecker(linSys, linearizedSys, TOLERANCE, time, state, input));
@@ -92,7 +92,7 @@ TEST(testSystemDynamicsLinearizer, testPendulum) {
   vector_t input = vector_t::Random(1);
 
   PendulumSystem nonLinSys;
-  SystemDynamicsLinearizer linearizedSys(std::shared_ptr<ControlledSystemBase>(nonLinSys.clone()), /*doubleSidedDerivative=*/true,
+  SystemDynamicsLinearizer linearizedSys(std::unique_ptr<ControlledSystemBase>(nonLinSys.clone()), /*doubleSidedDerivative=*/true,
                                          /*isSecondOrderSystem=*/false, EPSILON);
 
   for (auto i = 0; i < divisions; ++i) {

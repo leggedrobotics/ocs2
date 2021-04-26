@@ -29,39 +29,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
 /**
- *
- * A linear time invariant system with the following flow and jump maps:
- *
- * - \f$ \dot{x} = A * x + B * u   g(x) > 0, \f$
- * - \f$ x^{+} = G * x^{-}         g(x) = 0. \f$
- *
- * where \f$ g(x) \f$ is the guard surface defined by OdeBase::computeGuardSurfaces(t, x).
+ * Pre-Computation module base class.
  */
-class LinearSystemDynamics : public SystemDynamicsBase {
+class PreComputation {
  public:
-  LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G = matrix_t());
+  enum Request { Dynamics = 1, Cost = 2, Constraint = 4, SoftConstraint = 8, Approximation = 16 };
 
-  ~LinearSystemDynamics() override = default;
+  /** Constructor */
+  PreComputation() = default;
 
-  LinearSystemDynamics* clone(PreComputation*) const override;
+  /** Default destructor */
+  virtual ~PreComputation() = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) override;
+  /** Clone */
+  virtual PreComputation* clone() const = 0;
 
-  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation*) override;
+  /** Request callback */
+  virtual void request(Request requestFlags, scalar_t t, const vector_t& x, const vector_t& u) {}
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) override;
+  /** Request callback at jump event time */
+  virtual void requestPreJump(Request requestFlags, scalar_t t, const vector_t& x) {}
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation*) override;
+  /** Request callback at final time */
+  virtual void requestFinal(Request requestFlags, scalar_t t, const vector_t& x) {}
 
  protected:
-  matrix_t A_;
-  matrix_t B_;
-  matrix_t G_;
+  /** Copy constructor */
+  PreComputation(const PreComputation& rhs) = default;
 };
+
+inline PreComputation::Request operator|(PreComputation::Request a, PreComputation::Request b) {
+  return static_cast<PreComputation::Request>(static_cast<int>(a) | static_cast<int>(b));
+}
 
 }  // namespace ocs2

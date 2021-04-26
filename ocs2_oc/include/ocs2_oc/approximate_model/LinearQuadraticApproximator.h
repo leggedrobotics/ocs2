@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <string>
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
@@ -47,23 +48,14 @@ class LinearQuadraticApproximator {
  public:
   /**
    * Constructor
-   *
-   * @param [in] systemDerivatives: The system dynamics derivatives for subsystems of the system.
-   * @param [in] systemConstraints: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunction: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-   * @param [in] checkNumericalCharacteristics: check for the expected numerical characteristics of the model (default true)
    */
-  LinearQuadraticApproximator(const SystemDynamicsBase& systemDerivatives, const ConstraintBase& systemConstraints,
-                              const CostFunctionBase& costFunction, bool checkNumericalCharacteristics = true)
-      : systemDynamicsPtr_(systemDerivatives.clone()),
-        systemConstraintsPtr_(systemConstraints.clone()),
-        costFunctionPtr_(costFunction.clone()),
+  LinearQuadraticApproximator(SystemDynamicsBase& systemDynamics, CostBase& cost, ConstraintBase& constraint,
+                              PreComputation& preComputation, bool checkNumericalCharacteristics = true)
+      : dynamics_(dynamics),
+        cost_(cost),
+        constraint_(constraint),
+        preComputation_(preComputation),
         checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
-
-  /**
-   * Default destructor.
-   */
-  ~LinearQuadraticApproximator() = default;
 
   /**
    * Whether or not to check the numerical characteristics of the model.
@@ -138,9 +130,10 @@ class LinearQuadraticApproximator {
   void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
  private:
-  std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
-  std::unique_ptr<ConstraintBase> systemConstraintsPtr_;
-  std::unique_ptr<CostFunctionBase> costFunctionPtr_;
+  SystemDynamicsBase& systemDynamics;
+  CostBase& cost;
+  ConstraintBase& constraint;
+  PreComputation& preComputation;
 
   bool checkNumericalCharacteristics_;
 };

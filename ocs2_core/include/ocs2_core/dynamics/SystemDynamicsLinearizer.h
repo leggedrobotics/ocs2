@@ -46,24 +46,25 @@ namespace ocs2 {
 class SystemDynamicsLinearizer final : public SystemDynamicsBase {
  public:
   /** Constructor */
-  explicit SystemDynamicsLinearizer(std::shared_ptr<ControlledSystemBase> nonlinearSystemPtr, bool doubleSidedDerivative = true,
+  explicit SystemDynamicsLinearizer(std::unique_ptr<ControlledSystemBase> nonlinearSystemPtr, bool doubleSidedDerivative = true,
                                     bool isSecondOrderSystem = false, scalar_t eps = Eigen::NumTraits<scalar_t>::epsilon());
-
-  /** Copy constructor */
-  SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other);
 
   /** Default destructor */
   ~SystemDynamicsLinearizer() override = default;
 
   /** Clone */
-  SystemDynamicsLinearizer* clone() const override;
+  SystemDynamicsLinearizer* clone(PreComputation* preCompPtr) const override;
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preCompPtr) override;
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation* preCompPtr) override;
 
  private:
-  std::shared_ptr<ControlledSystemBase> controlledSystemPtr_;
+  /** Copy constructor */
+  SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other);
+
+  std::unique_ptr<ControlledSystemBase> controlledSystemPtr_;
   bool doubleSidedDerivative_;
   bool isSecondOrderSystem_;
   scalar_t eps_;

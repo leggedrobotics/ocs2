@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/integration/OdeBase.h>
 
@@ -41,8 +42,8 @@ namespace ocs2 {
  */
 class ControlledSystemBase : public OdeBase {
  public:
-  /** Default constructor. */
-  ControlledSystemBase() = default;
+  /** Constructor. */
+  explicit ControlledSystemBase(PreComputation* preCompPtr);
 
   /** Default destructor. */
   ~ControlledSystemBase() override = default;
@@ -56,6 +57,9 @@ class ControlledSystemBase : public OdeBase {
    * @param [in] controllerPtr: A pointer to the control policy.
    */
   void setController(ControllerBase* controllerPtr);
+
+  /** Set pre-computation module pointer */
+  void setPreCompPtr(PreComputation* preCompPtr) { preCompPtr_ = preCompPtr; }
 
   /**
    * Returns the controller pointer.
@@ -71,7 +75,7 @@ class ControlledSystemBase : public OdeBase {
    * @param [in] x: The current state.
    * @return The state time derivative.
    */
-  vector_t computeFlowMap(scalar_t t, const vector_t& x) final;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x) override final;
 
   /**
    * Computes the flow map of a system with exogenous input.
@@ -81,18 +85,32 @@ class ControlledSystemBase : public OdeBase {
    * @param [in] u: The current input.
    * @return: The state time derivative.
    */
-  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) = 0;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u);
+  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation* preCompPtr) = 0;
 
   /**
-   * Returns pointer to the class.
+   * State map at the transition time
    *
-   * @return A raw pointer to the class.
+   * @param [in] time: transition time
+   * @param [in] state: transition state
+   * @return mapped state after transition
    */
-  virtual ControlledSystemBase* clone() const = 0;
+  vector_t computeJumpMap(scalar_t time, const vector_t& state) override final;
+  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preComp);
+
+  /**
+   * Clone
+   *
+   * @param [in] preCompPtr: A pointer to the pre-computation module.
+   * @return A raw pointer to the clone.
+   */
+  virtual ControlledSystemBase* clone(PreComputation* preCompPtr) const = 0;
 
  protected:
-  /** Copy constructor. */
-  ControlledSystemBase(const ControlledSystemBase& rhs);
+  /** Copy constructor, keeps the same controllerPtr_ */
+  ControlledSystemBase(const ControlledSystemBase& other);
+
+  PreComputation* preCompPtr_ = nullptr;  //! pointer to pre-computation module
 
  private:
   ControllerBase* controllerPtr_ = nullptr;  //! pointer to controller

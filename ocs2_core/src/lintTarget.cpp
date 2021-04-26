@@ -25,6 +25,7 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
+#include <ocs2_core/cost/CostBase.h>
 #include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
@@ -60,7 +61,7 @@
 #include <ocs2_core/logic/ModeSchedule.h>
 
 // Loopshaping
-#include <ocs2_core/loopshaping/Loopshaping.h>
+// #include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>

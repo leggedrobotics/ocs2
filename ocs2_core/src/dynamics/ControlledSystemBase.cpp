@@ -34,8 +34,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& rhs) {
-  setController(rhs.controllerPtr());
+ControlledSystemBase::ControlledSystemBase(PreComputation* preCompPtr) : preCompPtr_(preCompPtr) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& other) : OdeBase(other) {
+  setController(other.controllerPtr());
 }
 
 /******************************************************************************************************/
@@ -66,6 +71,26 @@ vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
   assert(controllerPtr_ != nullptr);
   const vector_t u = controllerPtr_->computeInput(t, x);
   return computeFlowMap(t, x, u);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (preCompPtr_ != nullptr) {
+    preCompPtr_->request(PreComputation::Request::Dynamics, t, x, u);
+  }
+  return computeFlowMap(t, x, u, preCompPtr_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x) {
+  if (preCompPtr_ != nullptr) {
+    preCompPtr_->requestPreJump(PreComputation::Request::Dynamics, t, x);
+  }
+  return computeJumpMap(t, x, /* u, */ preCompPtr_);
 }
 
 }  // namespace ocs2

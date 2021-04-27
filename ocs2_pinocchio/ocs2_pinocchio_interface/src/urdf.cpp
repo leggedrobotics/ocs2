@@ -33,42 +33,56 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/urdf.h>
 
+#include <urdf_parser/urdf_parser.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModel(urdfFile, model);
-  return PinocchioInterface(model);
+  ::urdf::ModelInterfaceSharedPtr urdfTree = ::urdf::parseURDFFile(urdfFile);
+  if (urdfTree) {
+    return getPinocchioInterfaceFromUrdfModel(urdfTree);
+  } else {
+    throw std::invalid_argument("The file " + urdfFile + " does not contain a valid URDF model.");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile, const PinocchioInterface::JointModel& rootJoint) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModel(urdfFile, rootJoint, model);
-  return PinocchioInterface(model);
+  ::urdf::ModelInterfaceSharedPtr urdfTree = ::urdf::parseURDFFile(urdfFile);
+  if (urdfTree) {
+    return getPinocchioInterfaceFromUrdfModel(urdfTree, rootJoint);
+  } else {
+    throw std::invalid_argument("The file " + urdfFile + " does not contain a valid URDF model.");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModelFromXML(xmlString, model);
-  return PinocchioInterface(model);
+  ::urdf::ModelInterfaceSharedPtr urdfTree = ::urdf::parseURDF(xmlString);
+  if (urdfTree) {
+    return getPinocchioInterfaceFromUrdfModel(urdfTree);
+  } else {
+    throw std::invalid_argument("The XML stream does not contain a valid URDF model.");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString, const PinocchioInterface::JointModel& rootJoint) {
-  pinocchio::ModelTpl<scalar_t> model;
-  pinocchio::urdf::buildModelFromXML(xmlString, rootJoint, model);
-  return PinocchioInterface(model);
+  ::urdf::ModelInterfaceSharedPtr urdfTree = ::urdf::parseURDF(xmlString);
+  if (urdfTree) {
+    return getPinocchioInterfaceFromUrdfModel(urdfTree, rootJoint);
+  } else {
+    throw std::invalid_argument("The XML stream does not contain a valid URDF model.");
+  }
 }
 
 /******************************************************************************************************/
@@ -77,7 +91,7 @@ PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlStr
 PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree) {
   pinocchio::ModelTpl<scalar_t> model;
   pinocchio::urdf::buildModel(urdfTree, model);
-  return PinocchioInterface(model);
+  return PinocchioInterface(model, urdfTree);
 }
 
 /******************************************************************************************************/
@@ -87,7 +101,7 @@ PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::ur
                                                       const PinocchioInterface::JointModel& rootJoint) {
   pinocchio::ModelTpl<scalar_t> model;
   pinocchio::urdf::buildModel(urdfTree, rootJoint, model);
-  return PinocchioInterface(model);
+  return PinocchioInterface(model, urdfTree);
 }
 
 }  // namespace ocs2

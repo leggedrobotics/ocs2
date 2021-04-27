@@ -91,13 +91,14 @@ TEST(test_unconstrained, withFeedback) {
   const auto withNullConstraint = ocs2::solveWithFeedbackSetting(true, false, dynamics, costs);
 
   // Compare
+  const double tol = 1e-9;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
-    ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i]));
-    ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i]));
+    ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
+    ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i], tol));
     const auto t = withEmptyConstraint.timeTrajectory_[i];
     const auto& x = withEmptyConstraint.stateTrajectory_[i];
-    ASSERT_TRUE(withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x)));
+    ASSERT_TRUE(withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x), tol));
   }
 }
 
@@ -110,12 +111,13 @@ TEST(test_unconstrained, noFeedback) {
   const auto withNullConstraint = ocs2::solveWithFeedbackSetting(false, false, dynamics, costs);
 
   // Compare
+  const double tol = 1e-9;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
-    ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i]));
-    ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i]));
+    ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
+    ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i], tol));
     const auto t = withEmptyConstraint.timeTrajectory_[i];
     const auto& x = withEmptyConstraint.stateTrajectory_[i];
-    ASSERT_TRUE(withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x)));
+    ASSERT_TRUE(withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x), tol));
   }
 }

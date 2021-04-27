@@ -217,7 +217,8 @@ void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) 
     }
   }
   // Execute one instance in this thread.
-  taskFunction(0);
+  const int workerId = settings_.nThreads - 1;  // threadpool uses 0 -> n-2
+  taskFunction(workerId);
 
   // Wait for helpers to finish.
   for (auto&& fut : futures) {
@@ -385,14 +386,12 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   constraints_.resize(N + 1);
   constraintsProjection_.resize(N);
 
-  std::atomic_int workerId{0};
   std::atomic_int timeIndex{0};
-  auto parallelTask = [&](int) {
+  auto parallelTask = [&](int workerId) {
     // Get worker specific resources
-    int thisWorker = workerId++;  // assign worker ID (atomic)
-    SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_[thisWorker];
-    CostFunctionBase& costFunction = *costFunctionPtr_[thisWorker];
-    ConstraintBase* constraintPtr = constraintPtr_[thisWorker].get();
+    SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_[workerId];
+    CostFunctionBase& costFunction = *costFunctionPtr_[workerId];
+    ConstraintBase* constraintPtr = constraintPtr_[workerId].get();
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
     const bool projection = settings_.projectStateInputEqualityConstraints;
 
@@ -418,7 +417,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
       constraints_[i] = std::move(result.constraints);
     }
 
-    performance[thisWorker] = workerPerformance;
+    performance[workerId] = workerPerformance;
   };
   runParallel(parallelTask);
 
@@ -447,14 +446,12 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
   const int N = static_cast<int>(time.size()) - 1;
 
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
-  std::atomic_int workerId{0};
   std::atomic_int timeIndex{0};
-  auto parallelTask = [&](int) {
+  auto parallelTask = [&](int workerId) {
     // Get worker specific resources
-    int thisWorker = workerId++;  // assign worker ID (atomic)
-    SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_[thisWorker];
-    CostFunctionBase& costFunction = *costFunctionPtr_[thisWorker];
-    ConstraintBase* constraintPtr = constraintPtr_[thisWorker].get();
+    SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_[workerId];
+    CostFunctionBase& costFunction = *costFunctionPtr_[workerId];
+    ConstraintBase* constraintPtr = constraintPtr_[workerId].get();
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
 
     int i = timeIndex++;
@@ -471,7 +468,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
       workerPerformance += multiple_shooting::computeTerminalPerformance(terminalCostFunctionPtr_.get(), constraintPtr, tN, x[N]);
     }
 
-    performance[thisWorker] = workerPerformance;
+    performance[workerId] = workerPerformance;
   };
   runParallel(parallelTask);
 

@@ -42,9 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                                               const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr,
-                                               const CostFunctionBase* terminalCostFunctionPtr,
-                                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr)
+                                               const CostFunctionBase* costFunctionPtr,
+                                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                                               const ConstraintBase* constraintPtr, const CostFunctionBase* terminalCostFunctionPtr)
     : SolverBase(),
       settings_(std::move(settings)),
       totalNumIterations_(0),
@@ -71,6 +71,9 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
     }
   }
 
+  // Operating points
+  operatingTrajectoriesPtr_.reset(operatingTrajectoriesPtr->clone());
+
   if (constraintPtr == nullptr) {
     settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
   }
@@ -83,10 +86,6 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
 
   if (terminalCostFunctionPtr != nullptr) {
     terminalCostFunctionPtr_.reset(terminalCostFunctionPtr->clone());
-  }
-
-  if (operatingTrajectoriesPtr != nullptr) {
-    operatingTrajectoriesPtr_.reset(operatingTrajectoriesPtr->clone());
   }
 }
 
@@ -240,17 +239,13 @@ vector_array_t MultipleShootingSolver::initializeInputTrajectory(const std::vect
       u.emplace_back(primalSolution_.controllerPtr_->computeInput(ti, stateTrajectory[i]));
     } else {
       // No previous control at this time-point -> fall back to heuristics
-      if (operatingTrajectoriesPtr_) {
-        // Ask for operating trajectory between t[k] and t[k+1]. Take the returned input at t[k] as our heuristic.
-        const scalar_t tNext = getIntervalEnd(timeDiscretization[i + 1]);
-        scalar_array_t timeArray;
-        vector_array_t stateArray;
-        vector_array_t inputArray;
-        operatingTrajectoriesPtr_->getSystemOperatingTrajectories(stateTrajectory[i], ti, tNext, timeArray, stateArray, inputArray, false);
-        u.push_back(std::move(inputArray.front()));
-      } else {  // No information at all. Set inputs to zero.
-        u.emplace_back(vector_t::Zero(settings_.n_input));
-      }
+      // Ask for operating trajectory between t[k] and t[k+1]. Take the returned input at t[k] as our heuristic.
+      const scalar_t tNext = getIntervalEnd(timeDiscretization[i + 1]);
+      scalar_array_t timeArray;
+      vector_array_t stateArray;
+      vector_array_t inputArray;
+      operatingTrajectoriesPtr_->getSystemOperatingTrajectories(stateTrajectory[i], ti, tNext, timeArray, stateArray, inputArray, false);
+      u.push_back(std::move(inputArray.front()));
     }
   }
 
@@ -378,7 +373,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   const int N = static_cast<int>(time.size()) - 1;
 
   // Set up for constant state input size. Will be adapted based on constraint handling.
-  HpipmInterface::OcpSize ocpSize(N, settings_.n_state, settings_.n_input);
+  HpipmInterface::OcpSize ocpSize(N, x.front().size(), u.front().size());
 
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   dynamics_.resize(N);

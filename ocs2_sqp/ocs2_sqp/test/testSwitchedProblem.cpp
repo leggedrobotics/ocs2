@@ -29,12 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
 #include "ocs2_sqp/MultipleShootingSolver.h"
 #include "ocs2_sqp/TimeDiscretization.h"
 
 #include <ocs2_core/constraint/LinearConstraint.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+
+#include <ocs2_qp_solver/test/testProblemsGeneration.h>
 
 namespace ocs2 {
 namespace {
@@ -110,22 +112,23 @@ PrimalSolution solveWithEventTime(scalar_t eventTime) {
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.05;
-  settings.n_state = n;
-  settings.n_input = m;
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = true;
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;
-  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &switchedConstraint);
-  solver.setModeScheduleManager(modeScheduleManagerPtr);
-  solver.setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Random(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
+  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(m));
+
+  // Set up solver
+  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &switchedConstraint);
+  solver.setModeScheduleManager(modeScheduleManagerPtr);
+  solver.setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Solve
   solver.run(startTime, initState, finalTime, partitioningTimes);

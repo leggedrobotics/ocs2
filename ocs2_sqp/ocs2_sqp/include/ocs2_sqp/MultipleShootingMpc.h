@@ -49,12 +49,11 @@ class MultipleShootingMpc : public MPC_BASE {
    * @param operatingTrajectoriesPtr : The operating trajectories of system used for initialization.
    */
   MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                      const CostFunctionBase* costFunctionPtr, const ConstraintBase* constraintPtr = nullptr,
-                      const CostFunctionBase* terminalCostPtr = nullptr,
-                      const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr = nullptr)
+                      const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                      const ConstraintBase* constraintPtr = nullptr, const CostFunctionBase* terminalCostPtr = nullptr)
       : MPC_BASE(std::move(mpcSettings)) {
-    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), systemDynamicsPtr, costFunctionPtr, constraintPtr, terminalCostPtr,
-                                                operatingTrajectoriesPtr));
+    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), systemDynamicsPtr, costFunctionPtr, operatingTrajectoriesPtr,
+                                                constraintPtr, terminalCostPtr));
   };
 
   ~MultipleShootingMpc() override = default;

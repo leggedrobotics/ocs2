@@ -38,10 +38,6 @@ namespace ocs2 {
 namespace multiple_shooting {
 
 struct Settings {
-  // System settings
-  size_t n_state = 0;
-  size_t n_input = 0;
-
   // Sqp settings
   size_t sqpIteration = 1;   // Maximum number of SQP iterations
   scalar_t deltaTol = 1e-6;  // Termination condition : RMS update of x(t) and u(t) are both below this value

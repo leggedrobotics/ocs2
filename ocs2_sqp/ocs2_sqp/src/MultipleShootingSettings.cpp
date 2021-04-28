@@ -48,8 +48,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
     std::cerr << "\n #### =============================================================================\n";
   }
 
-  loadData::loadPtreeValue(pt, settings.n_state, fieldName + ".n_state", verbose);
-  loadData::loadPtreeValue(pt, settings.n_input, fieldName + ".n_input", verbose);
   loadData::loadPtreeValue(pt, settings.sqpIteration, fieldName + ".sqpIteration", verbose);
   loadData::loadPtreeValue(pt, settings.deltaTol, fieldName + ".deltaTol", verbose);
   loadData::loadPtreeValue(pt, settings.alpha_decay, fieldName + ".alpha_decay", verbose);

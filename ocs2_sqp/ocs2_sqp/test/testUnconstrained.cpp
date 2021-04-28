@@ -29,8 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
 #include "ocs2_sqp/MultipleShootingSolver.h"
+
+#include <ocs2_core/initialization/OperatingPoints.h>
+
+#include <ocs2_qp_solver/test/testProblemsGeneration.h>
 
 namespace ocs2 {
 namespace {
@@ -51,28 +54,29 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.05;
-  settings.n_state = n;
-  settings.n_input = m;
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = true;
   settings.useFeedbackPolicy = feedback;
   settings.printSolverStatistics = false;
   settings.printSolverStatus = false;
   settings.printLinesearch = false;
-  std::unique_ptr<ocs2::MultipleShootingSolver> solver;
-  if (emptyConstraint) {
-    ConstraintBase emptyBaseConstraints;
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &emptyBaseConstraints));
-  } else {
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), nullptr));
-  }
-  solver->setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Zero(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
+  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(m));
+
+  // Construct solver
+  std::unique_ptr<ocs2::MultipleShootingSolver> solver;
+  if (emptyConstraint) {
+    ConstraintBase emptyBaseConstraints;
+    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &emptyBaseConstraints));
+  } else {
+    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, nullptr));
+  }
+  solver->setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Solve
   solver->run(startTime, initState, finalTime, partitioningTimes);
@@ -98,7 +102,8 @@ TEST(test_unconstrained, withFeedback) {
     ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i], tol));
     const auto t = withEmptyConstraint.timeTrajectory_[i];
     const auto& x = withEmptyConstraint.stateTrajectory_[i];
-    ASSERT_TRUE(withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x), tol));
+    ASSERT_TRUE(
+        withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x), tol));
   }
 }
 
@@ -118,6 +123,7 @@ TEST(test_unconstrained, noFeedback) {
     ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i], tol));
     const auto t = withEmptyConstraint.timeTrajectory_[i];
     const auto& x = withEmptyConstraint.stateTrajectory_[i];
-    ASSERT_TRUE(withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x), tol));
+    ASSERT_TRUE(
+        withEmptyConstraint.controllerPtr_->computeInput(t, x).isApprox(withNullConstraint.controllerPtr_->computeInput(t, x), tol));
   }
 }

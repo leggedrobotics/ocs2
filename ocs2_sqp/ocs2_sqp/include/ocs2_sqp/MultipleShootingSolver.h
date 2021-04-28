@@ -61,8 +61,8 @@ class MultipleShootingSolver : public SolverBase {
    * @param operatingTrajectoriesPtr : The operating trajectories of system used for initialization.
    */
   MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr, const CostFunctionBase* costFunctionPtr,
-                         const ConstraintBase* constraintPtr = nullptr, const CostFunctionBase* terminalCostFunctionPtr = nullptr,
-                         const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr = nullptr);
+                         const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ConstraintBase* constraintPtr = nullptr,
+                         const CostFunctionBase* terminalCostFunctionPtr = nullptr);
 
   ~MultipleShootingSolver() override;
 

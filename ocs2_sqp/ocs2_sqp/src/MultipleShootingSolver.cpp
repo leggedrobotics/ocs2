@@ -444,7 +444,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
       i = timeIndex++;
     }
 
-    if (i == N && terminalCostFunctionPtr_) {  // Only one worker will execute this
+    if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
       workerPerformance += multiple_shooting::computeTerminalPerformance(terminalCostFunctionPtr_.get(), constraintPtr, tN, x[N]);
     }
@@ -455,6 +455,12 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
 
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
+
+  if (settings_.printLinesearch) {
+    for (int thr = 0; thr < settings_.nThreads; ++thr) {
+      std::cerr << "Performance for worker[" << thr << "]\n" << performance[thr] << "\n";
+    }
+  }
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());

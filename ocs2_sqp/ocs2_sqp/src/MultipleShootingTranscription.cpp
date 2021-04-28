@@ -155,7 +155,9 @@ TerminalTranscription setupTerminalNode(CostFunctionBase* terminalCostFunctionPt
 PerformanceIndex computeTerminalPerformance(CostFunctionBase* terminalCostFunctionPtr, ConstraintBase* constraintPtr, scalar_t t,
                                             const vector_t& x) {
   PerformanceIndex performance;
-  performance.totalCost += terminalCostFunctionPtr->finalCost(t, x);
+  if (terminalCostFunctionPtr != nullptr) {
+    performance.totalCost += terminalCostFunctionPtr->finalCost(t, x);
+  }
   return performance;
 }
 

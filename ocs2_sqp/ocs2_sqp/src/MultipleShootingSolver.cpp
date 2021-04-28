@@ -272,8 +272,10 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
   vector_array_t deltaUSol;
   hpipm_status status;
   if (constraintPtr_.front() && !settings_.projectStateInputEqualityConstraints) {
+    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_));
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using projection, we have an unconstrained QP.
+    hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, nullptr));
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, nullptr, deltaXSol, deltaUSol, settings_.printSolverStatus);
   }
 
@@ -369,9 +371,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
-  // Set up for constant state input size. Will be adapted based on constraint handling.
-  HpipmInterface::OcpSize ocpSize(N, x.front().size(), u.front().size());
-
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   dynamics_.resize(N);
   cost_.resize(N + 1);
@@ -415,16 +414,6 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
 
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
-
-  // Determine sizes
-  for (int i = 0; i < N; i++) {
-    ocpSize.numIneqConstraints[i] = constraints_[i].f.size();
-    ocpSize.numInputs[i] = dynamics_[i].dfdu.cols();
-  }
-  ocpSize.numIneqConstraints[N] = constraints_[N].f.size();
-
-  // Prepare solver size
-  hpipmInterface_.resize(std::move(ocpSize));
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());

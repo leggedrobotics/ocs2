@@ -1,8 +1,6 @@
 multiple_shooting
 {
   dt                                    0.015
-  n_state                               24
-  n_input                               24
   sqpIteration                          1
   deltaTol                              1e-2
   inequalityConstraintMu                0.1

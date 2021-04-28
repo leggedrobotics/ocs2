@@ -165,7 +165,7 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<PerformanceIndex> performanceIndeces_;
 
   // Benchmarking
-  size_t totalNumIterations_;
+  size_t totalNumIterations_{0};
   benchmark::RepeatedTimer initializationTimer_;
   benchmark::RepeatedTimer linearQuadraticApproximationTimer_;
   benchmark::RepeatedTimer solveQpTimer_;

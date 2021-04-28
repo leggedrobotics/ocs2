@@ -45,10 +45,7 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
                                                const CostFunctionBase* costFunctionPtr,
                                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
                                                const ConstraintBase* constraintPtr, const CostFunctionBase* terminalCostFunctionPtr)
-    : SolverBase(),
-      settings_(std::move(settings)),
-      totalNumIterations_(0),
-      hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings) {
+    : SolverBase(), settings_(std::move(settings)), hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings) {
   // Multithreading, set up threadpool for N-1 helpers, our main thread is the N-th one.
   if (settings_.nThreads > 1) {
     threadPoolPtr_.reset(new ThreadPool(settings_.nThreads - 1, settings_.threadPriority));

@@ -117,6 +117,9 @@ TEST(test_unconstrained, noFeedback) {
   const auto withEmptyConstraint = ocs2::solveWithFeedbackSetting(false, true, dynamics, costs);
   const auto withNullConstraint = ocs2::solveWithFeedbackSetting(false, false, dynamics, costs);
 
+  std::cout << "dynamics: " << dynamics << std::endl;
+  std::cout << "costs: " << costs << std::endl;
+
   // Compare
   const double tol = 1e-6;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {

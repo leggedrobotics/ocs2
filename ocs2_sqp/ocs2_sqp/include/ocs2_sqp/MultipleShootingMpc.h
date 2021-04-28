@@ -44,9 +44,9 @@ class MultipleShootingMpc : public MPC_BASE {
    * @param settings : settings for the multiple shooting solver.
    * @param systemDynamicsPtr : The system dynamics.
    * @param costFunctionPtr : The cost function used for the intermediate costs.
+   * @param operatingTrajectoriesPtr : The operating trajectories of system used for initialization.
    * @param constraintPtr : The system constraint function.
    * @param terminalCostPtr : The cost function used for the terminal (=at the end of the horizon) costs.
-   * @param operatingTrajectoriesPtr : The operating trajectories of system used for initialization.
    */
   MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
                       const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,

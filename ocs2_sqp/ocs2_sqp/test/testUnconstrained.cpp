@@ -57,9 +57,9 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
   settings.sqpIteration = 20;
   settings.projectStateInputEqualityConstraints = true;
   settings.useFeedbackPolicy = feedback;
-  settings.printSolverStatistics = false;
-  settings.printSolverStatus = false;
-  settings.printLinesearch = false;
+  settings.printSolverStatistics = true;
+  settings.printSolverStatus = true;
+  settings.printLinesearch = true;
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;

@@ -119,11 +119,11 @@ TEST(test_unconstrained, noFeedback) {
   const double tol = 1e-6;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     std::cout << "i : " << i << " u_empty: " << withEmptyConstraint.inputTrajectory_[i].transpose() <<
-              ", u_null: " << withNullConstraint.inputTrajectory_[i] << std::endl;
+              ", u_null: " << withNullConstraint.inputTrajectory_[i].transpose() << std::endl;
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
     ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i], tol));
-    
+
     const auto t = withEmptyConstraint.timeTrajectory_[i];
     const auto& x = withEmptyConstraint.stateTrajectory_[i];
     ASSERT_TRUE(

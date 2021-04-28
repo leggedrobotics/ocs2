@@ -54,7 +54,7 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.05;
-  settings.sqpIteration = 20;
+  settings.sqpIteration = 1;
   settings.projectStateInputEqualityConstraints = true;
   settings.useFeedbackPolicy = feedback;
   settings.printSolverStatistics = true;
@@ -97,8 +97,8 @@ TEST(test_unconstrained, withFeedback) {
   // Compare
   const double tol = 1e-6;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
-    std::cout << "i : " << i << " u_empty: " << withEmptyConstraint.inputTrajectory_[i].transpose() <<
-              ", u_null: " << withNullConstraint.inputTrajectory_[i].transpose() << std::endl;
+    std::cout << "i : " << i << " u_empty: " << withEmptyConstraint.inputTrajectory_[i].transpose()
+              << ", u_null: " << withNullConstraint.inputTrajectory_[i].transpose() << std::endl;
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
     ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i], tol));
@@ -120,8 +120,8 @@ TEST(test_unconstrained, noFeedback) {
   // Compare
   const double tol = 1e-6;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
-    std::cout << "i : " << i << " u_empty: " << withEmptyConstraint.inputTrajectory_[i].transpose() <<
-              ", u_null: " << withNullConstraint.inputTrajectory_[i].transpose() << std::endl;
+    std::cout << "i : " << i << " u_empty: " << withEmptyConstraint.inputTrajectory_[i].transpose()
+              << ", u_null: " << withNullConstraint.inputTrajectory_[i].transpose() << std::endl;
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
     ASSERT_TRUE(withEmptyConstraint.inputTrajectory_[i].isApprox(withNullConstraint.inputTrajectory_[i], tol));

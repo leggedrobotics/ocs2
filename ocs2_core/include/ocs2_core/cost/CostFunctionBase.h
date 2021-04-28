@@ -42,9 +42,6 @@ class CostFunctionBase {
   /** Constructor */
   CostFunctionBase() = default;
 
-  /** Copy constructor */
-  CostFunctionBase(const CostFunctionBase& rhs) = default;
-
   /** Default destructor */
   virtual ~CostFunctionBase() = default;
 
@@ -77,6 +74,9 @@ class CostFunctionBase {
   virtual scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) { return 0; }
 
  protected:
+  /** Copy constructor */
+  CostFunctionBase(const CostFunctionBase& rhs) = default;
+
   const CostDesiredTrajectories* costDesiredTrajectoriesPtr_ = nullptr;
 };
 

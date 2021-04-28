@@ -62,6 +62,9 @@ class QuadraticCostFunction : public CostFunctionBase {
   ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
 
  protected:
+  /** Copy constructor */
+  QuadraticCostFunction(const QuadraticCostFunction& rhs) = default;
+
   matrix_t Q_;
   matrix_t R_;
   matrix_t P_;

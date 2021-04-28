@@ -95,7 +95,7 @@ TEST(test_unconstrained, withFeedback) {
   const auto withNullConstraint = ocs2::solveWithFeedbackSetting(true, false, dynamics, costs);
 
   // Compare
-  const double tol = 1e-9;
+  const double tol = 1e-6;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
@@ -116,7 +116,7 @@ TEST(test_unconstrained, noFeedback) {
   const auto withNullConstraint = ocs2::solveWithFeedbackSetting(false, false, dynamics, costs);
 
   // Compare
-  const double tol = 1e-9;
+  const double tol = 1e-6;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));

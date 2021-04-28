@@ -426,6 +426,8 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
+  std::mutex m;
+
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
@@ -436,12 +438,21 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
 
     int i = timeIndex++;
+    {
+      std::lock_guard<std::mutex> lock(m);
+      std::cerr << "worker " << workerId << "i: " << i << "\n";
+    }
+
     while (i < N) {
       const scalar_t ti = getIntervalStart(time[i]);
       const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
       workerPerformance += multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr,
                                                                              penaltyPtr_.get(), ti, dt, x[i], x[i + 1], u[i]);
       i = timeIndex++;
+      {
+        std::lock_guard<std::mutex> lock(m);
+        std::cerr << "worker " << workerId << "i: " << i << "\n";
+      }
     }
 
     if (i == N) {  // Only one worker will execute this
@@ -450,6 +461,10 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
     }
 
     performance[workerId] = workerPerformance;
+    {
+      std::lock_guard<std::mutex> lock(m);
+      std::cerr << "worker " << workerId << "total cost: " << performance[workerId].totalCost << "\n";
+    }
   };
   runParallel(parallelTask);
 

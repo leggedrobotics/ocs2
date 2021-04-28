@@ -81,6 +81,17 @@ inline scalar_t terrainSignedDistanceFromPositionInWorld(const vector3_t& positi
   return surfaceNormal.dot(positionWorld - terrainPlane.positionInWorld);
 }
 
+/** Returns the vertical distance between the terrain a 3D point represented in world frame. */
+inline scalar_t terrainGravityAlignedDistanceFromPositionInWorld(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
+  // solve surfaceNormal.dot(projectedPosition - terrainPlane.positionInWorld) = 0
+  // Distance = positionWorld.z() - projectedPosition.z()
+  const vector3_t surfaceNormal = surfaceNormalInWorld(terrainPlane);
+  const scalar_t projectedPositionZ =
+      (surfaceNormal.dot(terrainPlane.positionInWorld) - positionWorld.x() * surfaceNormal.x() - positionWorld.y() * surfaceNormal.y()) /
+      surfaceNormal.z();
+  return positionWorld.z() - projectedPositionZ;
+}
+
 /** Returns the orthogonal projection onto the terrain plane for a 3D position in world. The returned position is in world frame */
 inline vector3_t projectPositionInWorldOntoPlane(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
   const vector3_t surfaceNormal = surfaceNormalInWorld(terrainPlane);
@@ -89,15 +100,8 @@ inline vector3_t projectPositionInWorldOntoPlane(const vector3_t& positionWorld,
 
 /** Returns the projection along gravity onto the terrain plane for a 3D position in world. The returned position is in world frame */
 inline vector3_t projectPositionInWorldOntoPlaneAlongGravity(const vector3_t& positionWorld, const TerrainPlane& terrainPlane) {
-  const vector3_t surfaceNormal = surfaceNormalInWorld(terrainPlane);
   vector3_t projectedPosition = positionWorld;
-  // solve
-  // 1. projectedPosition.x() = positionWorld.x();
-  // 2. projectedPosition.y() = positionWorld.y();
-  // 3. surfaceNormal.dot(projectedPosition - terrainPlane.positionInWorld) = 0
-  projectedPosition.z() = (surfaceNormal.dot(terrainPlane.positionInWorld) - projectedPosition.x() * surfaceNormal.x() -
-                           projectedPosition.y() * surfaceNormal.y()) /
-                          surfaceNormal.z();
+  projectedPosition.z() = positionWorld.z() - terrainGravityAlignedDistanceFromPositionInWorld(positionWorld, terrainPlane);
   return projectedPosition;
 }
 

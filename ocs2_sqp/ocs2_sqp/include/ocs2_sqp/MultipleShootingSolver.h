@@ -78,13 +78,13 @@ class MultipleShootingSolver : public SolverBase {
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  /** TODO */
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
-    return ScalarFunctionQuadraticApproximation::Zero(0, 0);
+    throw std::runtime_error("[MultipleShootingSolver] getValueFunction() not available yet.");
   };
 
-  /** TODO */
-  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override { return vector_t::Zero(0); }
+  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
+    throw std::runtime_error("[MultipleShootingSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
+  }
 
   // Irrelevant baseclass stuff
   void rewindOptimizer(size_t firstIndex) override{};

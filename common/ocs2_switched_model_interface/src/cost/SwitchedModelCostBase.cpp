@@ -65,7 +65,7 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
   // If the input has non-zero values, don't overwrite it.
   // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
   if (uNominal.isZero()) {
-    inputFromContactFlags(contactFlags, xNominal, uNominal);
+    uNominal = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getComPose<scalar_t>(xNominal)));
   }
 
   const vector_t xDeviation = x - xNominal;
@@ -102,7 +102,7 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
   // If the input has non-zero values, don't overwrite it.
   // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
   if (uNominal.isZero()) {
-    inputFromContactFlags(contactFlags, xNominal, uNominal);
+    uNominal = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getComPose<scalar_t>(xNominal)));
   }
 
   const vector_t xDeviation = x - xNominal;
@@ -148,35 +148,6 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::finalCostQuadraticAp
   Phi.dfdx.setZero(STATE_DIM);
   Phi.dfdxx.setZero(STATE_DIM, STATE_DIM);
   return Phi;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SwitchedModelCostBase::inputFromContactFlags(const contact_flag_t& contactFlags, const state_vector_t& nominalState,
-                                                  vector_t& inputs) const {
-  // Distribute total mass equally over active stance legs.
-  inputs.setZero(INPUT_DIM);
-
-  const scalar_t totalMass = comModelPtr_->totalMass() * 9.81;
-  size_t numStanceLegs(0);
-
-  for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-    if (contactFlags[i]) {
-      ++numStanceLegs;
-    }
-  }
-
-  if (numStanceLegs > 0) {
-    const matrix3_t b_R_o = rotationMatrixOriginToBase(getOrientation(getComPose(nominalState)));
-    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalMass / numStanceLegs};
-
-    for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-      if (contactFlags[i]) {
-        inputs.segment<3>(3 * i) = forceInBase;
-      }
-    }
-  }
 }
 
 }  // namespace switched_model

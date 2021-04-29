@@ -60,6 +60,7 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;
+  settings.nThreads = 100;
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
@@ -95,7 +96,7 @@ TEST(test_unconstrained, withFeedback) {
   const auto withNullConstraint = ocs2::solveWithFeedbackSetting(true, false, dynamics, costs);
 
   // Compare
-  const double tol = 1e-6;
+  const double tol = 1e-9;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
@@ -115,11 +116,8 @@ TEST(test_unconstrained, noFeedback) {
   const auto withEmptyConstraint = ocs2::solveWithFeedbackSetting(false, true, dynamics, costs);
   const auto withNullConstraint = ocs2::solveWithFeedbackSetting(false, false, dynamics, costs);
 
-  std::cout << "dynamics: " << dynamics << std::endl;
-  std::cout << "costs: " << costs << std::endl;
-
   // Compare
-  const double tol = 1e-6;
+  const double tol = 1e-9;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));

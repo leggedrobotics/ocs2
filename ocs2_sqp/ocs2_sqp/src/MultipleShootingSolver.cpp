@@ -408,7 +408,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
       constraints_[i] = std::move(result.constraints);
     }
 
-    performance[workerId] = workerPerformance;
+    // Accumulate! Same worker might run multiple tasks
+    performance[workerId] += workerPerformance;
   };
   runParallel(parallelTask);
 
@@ -438,21 +439,12 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
 
     int i = timeIndex++;
-    {
-      std::lock_guard<std::mutex> lock(m);
-      std::cerr << "worker " << workerId << "i: " << i << "\n";
-    }
-
     while (i < N) {
       const scalar_t ti = getIntervalStart(time[i]);
       const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
       workerPerformance += multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr,
                                                                              penaltyPtr_.get(), ti, dt, x[i], x[i + 1], u[i]);
       i = timeIndex++;
-      {
-        std::lock_guard<std::mutex> lock(m);
-        std::cerr << "worker " << workerId << "i: " << i << "\n";
-      }
     }
 
     if (i == N) {  // Only one worker will execute this
@@ -460,22 +452,13 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
       workerPerformance += multiple_shooting::computeTerminalPerformance(terminalCostFunctionPtr_.get(), constraintPtr, tN, x[N]);
     }
 
-    performance[workerId] = workerPerformance;
-    {
-      std::lock_guard<std::mutex> lock(m);
-      std::cerr << "worker " << workerId << "total cost: " << performance[workerId].totalCost << "\n";
-    }
+    // Accumulate! Same worker might run multiple tasks
+    performance[workerId] += workerPerformance;
   };
   runParallel(parallelTask);
 
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
-
-  if (settings_.printLinesearch) {
-    for (int thr = 0; thr < settings_.nThreads; ++thr) {
-      std::cerr << "Performance for worker[" << thr << "]\n" << performance[thr] << "\n";
-    }
-  }
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());

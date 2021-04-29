@@ -427,8 +427,6 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
   // Problem horizon
   const int N = static_cast<int>(time.size()) - 1;
 
-  std::mutex m;
-
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {

@@ -161,5 +161,45 @@ PerformanceIndex computeTerminalPerformance(CostFunctionBase* terminalCostFuncti
   return performance;
 }
 
+EventTranscription setupEventNode(SystemDynamicsBase& systemDynamics, CostFunctionBase* eventCostFunctionPtr, ConstraintBase* constraintPtr,
+                                  scalar_t t, const vector_t& x, const vector_t& x_next) {
+  // Results and short-hand notation
+  EventTranscription transcription;
+  auto& performance = transcription.performance;
+  auto& dynamics = transcription.dynamics;
+  auto& cost = transcription.cost;
+  auto& constraints = transcription.constraints;
+
+  // Dynamics
+  // jump map returns // x_{k+1} = A_{k} * dx_{k} + b_{k}
+  dynamics = systemDynamics.jumpMapLinearApproximation(t, x, vector_t::Zero(0));
+  dynamics.f -= x_next;                // make it dx_{k+1} = ...
+  dynamics.dfdu.setZero(x.size(), 0);  // Overwrite derivative that shouldn't exist.
+  performance.stateEqConstraintISE += dynamics.f.squaredNorm();
+
+  // TODO : add event costs once we have the interface
+  cost = ScalarFunctionQuadraticApproximation::Zero(x.size(), 0);
+
+  // TODO : add event constraints once we have the interface
+  constraints = VectorFunctionLinearApproximation::Zero(0, x.size(), 0);
+  return transcription;
+}
+
+PerformanceIndex computeEventPerformance(SystemDynamicsBase& systemDynamics, CostFunctionBase* eventCostFunctionPtr,
+                                         ConstraintBase* constraintPtr, scalar_t t, const vector_t& x, const vector_t& x_next) {
+  PerformanceIndex performance;
+
+  // Dynamics
+  const vector_t dynamicsGap = systemDynamics.computeJumpMap(t, x) - x_next;
+  performance.stateEqConstraintISE += dynamicsGap.squaredNorm();
+
+  // TODO : add event costs once we have the interface
+  performance.totalCost += 0.0;
+
+  // TODO : add event constraints once we have the interface
+
+  return performance;
+}
+
 }  // namespace multiple_shooting
 }  // namespace ocs2

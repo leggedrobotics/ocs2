@@ -81,3 +81,15 @@ TEST(test_transcription, terminal_performance) {
 
   ASSERT_TRUE(areIdentical(performance, transcription.performance));
 }
+
+TEST(test_transcription, event_performance) {
+  ocs2::CircularKinematicsSystem system;
+
+  const scalar_t t = 0.5;
+  const ocs2::vector_t x = (ocs2::vector_t(2) << 1.0, 0.1).finished();
+  const ocs2::vector_t x_next = (ocs2::vector_t(2) << 1.1, 0.2).finished();
+  const auto transcription = setupEventNode(system, nullptr, nullptr, t, x, x_next);
+  const auto performance = computeEventPerformance(system, nullptr, nullptr, t, x, x_next);
+
+  ASSERT_TRUE(areIdentical(performance, transcription.performance));
+}

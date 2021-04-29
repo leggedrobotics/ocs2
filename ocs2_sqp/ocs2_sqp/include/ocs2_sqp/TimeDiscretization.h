@@ -38,8 +38,11 @@ namespace ocs2 {
  * Packs together a time, and if an event happens at exactly that time.
  */
 struct AnnotatedTime {
+  /// Enum defines the type of event that occurs at this time
+  enum class Event { None, PreEvent, PostEvent };
+
   scalar_t time;
-  bool isEvent;
+  Event event;
 };
 
 /**

@@ -93,10 +93,11 @@ class SwitchedConstraint : public ocs2::ConstraintBase {
 PrimalSolution solveWithEventTime(scalar_t eventTime) {
   int n = 3;
   int m = 2;
-  int nc = 1;
 
   // System
-  auto systemPtr = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(n, m));
+  const auto dynamics = ocs2::qp_solver::getRandomDynamics(n, m);
+  const auto jumpMap = matrix_t::Random(n, n);
+  std::unique_ptr<ocs2::LinearSystemDynamics> systemPtr(new ocs2::LinearSystemDynamics(dynamics.dfdx, dynamics.dfdu, jumpMap));
 
   // Cost
   auto costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(n, m), ocs2::qp_solver::getRandomCost(n, 0));
@@ -141,16 +142,14 @@ PrimalSolution solveWithEventTime(scalar_t eventTime) {
 TEST(test_switched_problem, switched_constraint) {
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::scalar_t evenTime = 0.1875;
-  const auto primalSolution = ocs2::solveWithEventTime(evenTime);
+  const ocs2::scalar_t eventTime = 0.1875;
+  const auto primalSolution = ocs2::solveWithEventTime(eventTime);
 
-  // Should have correct node pre and post event time
-  const auto preEventTime = ocs2::getIntervalEnd({evenTime, true});
-  const auto postEventTime = ocs2::getIntervalStart({evenTime, true});
-  ASSERT_TRUE(std::any_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),
-                          [=](ocs2::scalar_t t) { return t == preEventTime; }));
-  ASSERT_TRUE(std::any_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),
-                          [=](ocs2::scalar_t t) { return t == postEventTime; }));
+  // Should have correct node pre and post event time, with corresponding inputs
+  ASSERT_EQ(primalSolution.timeTrajectory_[4], eventTime);
+  ASSERT_EQ(primalSolution.timeTrajectory_[5], eventTime);
+  ASSERT_LT(std::abs(primalSolution.inputTrajectory_[4][0]), 1e-9);
+  ASSERT_LT(std::abs(primalSolution.inputTrajectory_[5][1]), 1e-9);
 
   // Inspect solution, check at a dt smaller than solution to check interpolation around the switch.
   ocs2::scalar_t t_check = startTime;
@@ -161,10 +160,10 @@ TEST(test_switched_problem, switched_constraint) {
     ocs2::vector_t uNominal =
         ocs2::LinearInterpolation::interpolate(t_check, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_);
     ocs2::vector_t uControl = primalSolution.controllerPtr_->computeInput(t_check, xNominal);
-    if (t_check < preEventTime) {
+    if (t_check < eventTime) {
       ASSERT_LT(std::abs(uNominal[0]), 1e-9);
       ASSERT_LT(std::abs(uControl[0]), 1e-9);
-    } else if (t_check > postEventTime) {
+    } else if (t_check > eventTime) {
       ASSERT_LT(std::abs(uNominal[1]), 1e-9);
       ASSERT_LT(std::abs(uControl[1]), 1e-9);
     }
@@ -176,19 +175,15 @@ TEST(test_switched_problem, event_at_beginning) {
   // The event should replace the start time, all inputs should be after the event.
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::scalar_t evenTime = 1e-8;
-  const auto primalSolution = ocs2::solveWithEventTime(evenTime);
+  const ocs2::scalar_t eventTime = 1e-8;
+  const auto primalSolution = ocs2::solveWithEventTime(eventTime);
 
-  // Should have correct node pre and post event time
-  const auto preEventTime = ocs2::getIntervalEnd({evenTime, true});
-  const auto postEventTime = ocs2::getIntervalStart({evenTime, true});
-  ASSERT_TRUE(std::none_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),
-                           [=](ocs2::scalar_t t) { return t == preEventTime; }));
-  ASSERT_TRUE(std::any_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),
-                          [=](ocs2::scalar_t t) { return t == postEventTime; }));
+  // Should have correct post event time start
+  ASSERT_EQ(primalSolution.timeTrajectory_[0], eventTime);
+  ASSERT_NE(primalSolution.timeTrajectory_[1], eventTime);
 
   // Inspect solution, check at a dt smaller than solution to check interpolation around the switch.
-  ocs2::scalar_t t_check = postEventTime;
+  ocs2::scalar_t t_check = eventTime;
   ocs2::scalar_t dt_check = 1e-5;
   while (t_check < finalTime) {
     ocs2::vector_t xNominal =
@@ -206,16 +201,12 @@ TEST(test_switched_problem, event_at_end) {
   // The event should be ignored because its too close to the final time, all inputs should be before the event.
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::scalar_t evenTime = 1.0 - 1e-8;
-  const auto primalSolution = ocs2::solveWithEventTime(evenTime);
+  const ocs2::scalar_t eventTime = 1.0 - 1e-8;
+  const auto primalSolution = ocs2::solveWithEventTime(eventTime);
 
   // Should have correct node pre and post event time
-  const auto preEventTime = ocs2::getIntervalEnd({evenTime, true});
-  const auto postEventTime = ocs2::getIntervalStart({evenTime, true});
   ASSERT_TRUE(std::none_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),
-                           [=](ocs2::scalar_t t) { return t == preEventTime; }));
-  ASSERT_TRUE(std::none_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),
-                           [=](ocs2::scalar_t t) { return t == postEventTime; }));
+                           [=](ocs2::scalar_t t) { return t == eventTime; }));
 
   // Inspect solution, check at a dt smaller than solution to check interpolation around the switch.
   ocs2::scalar_t t_check = startTime;

@@ -45,9 +45,10 @@ TEST(test_discretization, noEvents_plusEps) {
   ASSERT_EQ(time[2].time, finalTime);  // Absorbs the point at 0.3
 
   // Events
-  ASSERT_FALSE(time[0].isEvent);
-  ASSERT_FALSE(time[1].isEvent);
-  ASSERT_FALSE(time[2].isEvent);
+  ASSERT_EQ(time[0].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[1].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[2].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time.size(), 3);
 }
 
 TEST(test_discretization, noEvents_minEps) {
@@ -62,9 +63,28 @@ TEST(test_discretization, noEvents_minEps) {
   ASSERT_EQ(time[2].time, finalTime);
 
   // Events
-  ASSERT_FALSE(time[0].isEvent);
-  ASSERT_FALSE(time[1].isEvent);
-  ASSERT_FALSE(time[2].isEvent);
+  ASSERT_EQ(time[0].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[1].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[2].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time.size(), 3);
+}
+
+TEST(test_discretization, eventAtBeginning) {
+  scalar_t initTime = 0.1;
+  scalar_t finalTime = 0.3;
+  scalar_t dt = 0.1;
+  scalar_array_t eventTimes{initTime + std::numeric_limits<scalar_t>::epsilon()};
+
+  auto time = timeDiscretizationWithEvents(initTime, finalTime, dt, eventTimes);
+  ASSERT_EQ(time[0].time, eventTimes[0]);
+  ASSERT_DOUBLE_EQ(time[1].time, eventTimes[0] + dt);
+  ASSERT_EQ(time[2].time, finalTime);  // Absorbs the point at 0.3
+
+  // Events
+  ASSERT_EQ(time[0].event, AnnotatedTime::Event::PostEvent);
+  ASSERT_EQ(time[1].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[2].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time.size(), 3);
 }
 
 TEST(test_discretization, withEvents) {
@@ -79,26 +99,32 @@ TEST(test_discretization, withEvents) {
   ASSERT_DOUBLE_EQ(time[1].time, initTime + dt);
   ASSERT_DOUBLE_EQ(time[2].time, initTime + 2. * dt);
   ASSERT_EQ(time[3].time, eventTimes[0]);
-  ASSERT_DOUBLE_EQ(time[4].time, eventTimes[0] + dt);
-  ASSERT_EQ(time[5].time, eventTimes[1]);
-  ASSERT_DOUBLE_EQ(time[6].time, eventTimes[1] + dt);
-  ASSERT_DOUBLE_EQ(time[7].time, eventTimes[1] + 2. * dt);
-  ASSERT_DOUBLE_EQ(time[8].time, eventTimes[1] + 3. * dt);
-  ASSERT_DOUBLE_EQ(time[9].time, eventTimes[1] + 4. * dt);
-  ASSERT_EQ(time[10].time, eventTimes[2]);
-  ASSERT_EQ(time[11].time, finalTime);  // Absorbs 3.8999999999999999999
+  ASSERT_EQ(time[4].time, eventTimes[0]);
+  ASSERT_DOUBLE_EQ(time[5].time, eventTimes[0] + dt);
+  ASSERT_EQ(time[6].time, eventTimes[1]);
+  ASSERT_EQ(time[7].time, eventTimes[1]);
+  ASSERT_DOUBLE_EQ(time[8].time, eventTimes[1] + dt);
+  ASSERT_DOUBLE_EQ(time[9].time, eventTimes[1] + 2. * dt);
+  ASSERT_DOUBLE_EQ(time[10].time, eventTimes[1] + 3. * dt);
+  ASSERT_DOUBLE_EQ(time[11].time, eventTimes[1] + 4. * dt);
+  ASSERT_EQ(time[12].time, eventTimes[2]);
+  ASSERT_EQ(time[13].time, eventTimes[2]);
+  ASSERT_EQ(time[14].time, finalTime);  // Absorbs 3.8999999999999999999
 
   // Events
-  ASSERT_FALSE(time[0].isEvent);
-  ASSERT_FALSE(time[1].isEvent);
-  ASSERT_FALSE(time[2].isEvent);
-  ASSERT_TRUE(time[3].isEvent);
-  ASSERT_FALSE(time[4].isEvent);
-  ASSERT_TRUE(time[5].isEvent);
-  ASSERT_FALSE(time[6].isEvent);
-  ASSERT_FALSE(time[7].isEvent);
-  ASSERT_FALSE(time[8].isEvent);
-  ASSERT_FALSE(time[9].isEvent);
-  ASSERT_TRUE(time[10].isEvent);
-  ASSERT_FALSE(time[11].isEvent);
+  ASSERT_EQ(time[0].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[1].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[2].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[3].event, AnnotatedTime::Event::PreEvent);
+  ASSERT_EQ(time[4].event, AnnotatedTime::Event::PostEvent);
+  ASSERT_EQ(time[5].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[6].event, AnnotatedTime::Event::PreEvent);
+  ASSERT_EQ(time[7].event, AnnotatedTime::Event::PostEvent);
+  ASSERT_EQ(time[8].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[9].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[10].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[11].event, AnnotatedTime::Event::None);
+  ASSERT_EQ(time[12].event, AnnotatedTime::Event::PreEvent);
+  ASSERT_EQ(time[13].event, AnnotatedTime::Event::PostEvent);
+  ASSERT_EQ(time[14].event, AnnotatedTime::Event::None);
 }

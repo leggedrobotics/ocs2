@@ -109,5 +109,34 @@ TerminalTranscription setupTerminalNode(CostFunctionBase* terminalCostFunctionPt
 PerformanceIndex computeTerminalPerformance(CostFunctionBase* terminalCostFunctionPtr, ConstraintBase* constraintPtr, scalar_t t,
                                             const vector_t& x);
 
+/**
+ * Results of the transcription at an event
+ */
+struct EventTranscription {
+  PerformanceIndex performance;
+  VectorFunctionLinearApproximation dynamics;
+  ScalarFunctionQuadraticApproximation cost;
+  VectorFunctionLinearApproximation constraints;
+};
+
+/**
+ * Compute the jump transcription at an event node.
+ *
+ * @param terminalCostFunctionPtr : (Optional) terminal cost function
+ * @param constraintPtr : (Optional) terminal constraints
+ * @param t : Time at the terminal node
+ * @param x : Terminal state
+ * @return multiple shooting transcription for the terminal node.
+ */
+EventTranscription setupEventNode(SystemDynamicsBase& systemDynamics, CostFunctionBase* eventCostFunctionPtr, ConstraintBase* constraintPtr,
+                                  scalar_t t, const vector_t& x, const vector_t& x_next);
+
+/**
+ * Compute only the performance index for the event node.
+ * Corresponds to the performance index returned by "setupEventNode"
+ */
+PerformanceIndex computeEventPerformance(SystemDynamicsBase& systemDynamics, CostFunctionBase* eventCostFunctionPtr,
+                                         ConstraintBase* constraintPtr, scalar_t t, const vector_t& x, const vector_t& x_next);
+
 }  // namespace multiple_shooting
 }  // namespace ocs2

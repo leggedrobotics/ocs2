@@ -39,7 +39,7 @@ scalar_t getInterpolationTime(const AnnotatedTime& annotatedTime) {
 
 scalar_t getIntervalStart(const AnnotatedTime& start) {
   scalar_t adaptedStart = start.time;
-  if (start.isEvent) {
+  if (start.event == AnnotatedTime::Event::PostEvent) {
     adaptedStart += OCS2NumericTraits<scalar_t>::weakEpsilon();
   }
   return adaptedStart;
@@ -47,7 +47,7 @@ scalar_t getIntervalStart(const AnnotatedTime& start) {
 
 scalar_t getIntervalEnd(const AnnotatedTime& end) {
   scalar_t adaptedEnd = end.time;
-  if (end.isEvent) {
+  if (end.event == AnnotatedTime::Event::PreEvent) {
     adaptedEnd -= OCS2NumericTraits<scalar_t>::weakEpsilon();
   }
   return adaptedEnd;
@@ -64,26 +64,26 @@ std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scala
   std::vector<AnnotatedTime> timeDiscretization;
 
   // Initialize
-  timeDiscretization.push_back({initTime, false});
+  timeDiscretization.push_back({initTime, AnnotatedTime::Event::None});
   scalar_t nextEventIdx = lookup::findIndexInTimeArray(eventTimes, initTime);
 
-  // Fill iteratively
+  // Fill iteratively with pre event, post events are added later
   AnnotatedTime nextNode = timeDiscretization.back();
   while (timeDiscretization.back().time < finalTime) {
     nextNode.time = nextNode.time + dt;
-    nextNode.isEvent = false;
+    nextNode.event = AnnotatedTime::Event::None;
 
     // Check if an event has passed
     if (nextEventIdx < eventTimes.size() && nextNode.time >= eventTimes[nextEventIdx]) {
       nextNode.time = eventTimes[nextEventIdx];
-      nextNode.isEvent = true;
+      nextNode.event = AnnotatedTime::Event::PreEvent;
       nextEventIdx++;
     }
 
     // Check if final time has passed
     if (nextNode.time >= finalTime) {
       nextNode.time = finalTime;
-      nextNode.isEvent = false;
+      nextNode.event = AnnotatedTime::Event::None;
     }
 
     if (nextNode.time > timeDiscretization.back().time + dt_min) {
@@ -93,7 +93,24 @@ std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scala
     }
   }
 
-  return timeDiscretization;
+  // Skip events at beginning of horizon
+  if (timeDiscretization.front().event == AnnotatedTime::Event::PreEvent) {
+    timeDiscretization.front().event = AnnotatedTime::Event::PostEvent;
+  }
+
+  // Duplicate all preEvents to postEvents
+  std::vector<AnnotatedTime> timeDiscretizationWithDoubleEvents;
+  timeDiscretizationWithDoubleEvents.reserve(2 * timeDiscretization.size());  // upper bound on size
+
+  for (const auto& t : timeDiscretization) {
+    timeDiscretizationWithDoubleEvents.push_back(t);
+    if (t.event == AnnotatedTime::Event::PreEvent) {
+      timeDiscretizationWithDoubleEvents.push_back(t);
+      timeDiscretizationWithDoubleEvents.back().event = AnnotatedTime::Event::PostEvent;
+    }
+  }
+
+  return timeDiscretizationWithDoubleEvents;
 }
 
 }  // namespace ocs2

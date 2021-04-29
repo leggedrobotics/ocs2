@@ -302,40 +302,37 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   // Clear old solution
   primalSolution_ = PrimalSolution();
 
-  // Reserve size
-  const int NupperBound = 2 * static_cast<int>(time.size());
-  primalSolution_.timeTrajectory_.reserve(NupperBound);
-  primalSolution_.stateTrajectory_.reserve(NupperBound);
-  primalSolution_.inputTrajectory_.reserve(NupperBound);
-
-  // Repeat last input to make equal length vectors
-  u.push_back(u.back());
+  // Correct for missing inputs at PreEvents
+  for (int i = 0; i < time.size(); ++i) {
+    if (time[i].event == AnnotatedTime::Event::PreEvent && i > 0) {
+      u[i] = u[i - 1];
+    }
+  }
 
   // Compute feedback, before x and u are moved to primal solution
   vector_array_t uff;
   matrix_array_t controllerGain;
   if (settings_.useFeedbackPolicy) {
     // see doc/LQR_full.pdf for detailed derivation for feedback terms
-    uff.reserve(NupperBound);
-    controllerGain.reserve(NupperBound);
+    uff = u;  // Copy and adapt in loop
+    controllerGain.reserve(time.size());
     matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
     for (int i = 0; (i + 1) < time.size(); i++) {
-      if (time[i].isEvent && !uff.empty()) {
-        // Duplicate pre-event controller
-        uff.push_back(uff.back());
+      if (time[i].event == AnnotatedTime::Event::PreEvent && i > 0) {
+        uff[i] = uff[i - 1];
         controllerGain.push_back(controllerGain.back());
-      }
-      // Linear controller has convention u = uff + K * x;
-      // We computed u = u'(t) + K (x - x'(t));
-      // >> uff = u'(t) - K x'(t)
-      if (constraintsProjection_[i].f.size() > 0) {
-        controllerGain.push_back(std::move(constraintsProjection_[i].dfdx));  // Steal! Don't use after this.
-        controllerGain.back().noalias() += constraintsProjection_[i].dfdu * KMatrices[i];
       } else {
-        controllerGain.push_back(std::move(KMatrices[i]));
+        // Linear controller has convention u = uff + K * x;
+        // We computed u = u'(t) + K (x - x'(t));
+        // >> uff = u'(t) - K x'(t)
+        if (constraintsProjection_[i].f.size() > 0) {
+          controllerGain.push_back(std::move(constraintsProjection_[i].dfdx));  // Steal! Don't use after this.
+          controllerGain.back().noalias() += constraintsProjection_[i].dfdu * KMatrices[i];
+        } else {
+          controllerGain.push_back(std::move(KMatrices[i]));
+        }
+        uff[i].noalias() -= controllerGain.back() * x[i];
       }
-      uff.push_back(u[i]);
-      uff.back().noalias() -= controllerGain.back() * x[i];
     }
     // Copy last one to get correct length
     uff.push_back(uff.back());
@@ -343,18 +340,11 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   }
 
   // Construct nominal state and inputs
-  for (int i = 0; i < time.size(); ++i) {
-    if (time[i].isEvent && !primalSolution_.inputTrajectory_.empty()) {
-      // Add pre event time, state at event time, and pre-event input
-      // Needs adaptation when jumps are considered because x[i] is post jump.
-      primalSolution_.timeTrajectory_.push_back(getIntervalEnd(time[i]));
-      primalSolution_.stateTrajectory_.push_back(x[i]);
-      primalSolution_.inputTrajectory_.push_back(primalSolution_.inputTrajectory_.back());
-    }
-    // Add data, post-event in case time[i] is an event.
-    primalSolution_.timeTrajectory_.push_back(getIntervalStart(time[i]));
-    primalSolution_.stateTrajectory_.push_back(std::move(x[i]));
-    primalSolution_.inputTrajectory_.push_back(std::move(u[i]));
+  primalSolution_.stateTrajectory_ = std::move(x);
+  u.push_back(u.back());  // Repeat last input to make equal length vectors
+  primalSolution_.inputTrajectory_ = std::move(u);
+  for (const auto& t : time) {
+    primalSolution_.timeTrajectory_.push_back(t.time);
   }
   primalSolution_.modeSchedule_ = this->getModeSchedule();
 
@@ -388,15 +378,27 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
 
     int i = timeIndex++;
     while (i < N) {
-      const scalar_t ti = getIntervalStart(time[i]);
-      const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-      auto result = multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr,
-                                                             penaltyPtr_.get(), projection, ti, dt, x[i], x[i + 1], u[i]);
-      workerPerformance += result.performance;
-      dynamics_[i] = std::move(result.dynamics);
-      cost_[i] = std::move(result.cost);
-      constraints_[i] = std::move(result.constraints);
-      constraintsProjection_[i] = std::move(result.constraintsProjection);
+      if (time[i].event == AnnotatedTime::Event::PreEvent) {
+        // Event node
+        auto result = multiple_shooting::setupEventNode(systemDynamics, nullptr, nullptr, time[i].time, x[i], x[i + 1]);
+        workerPerformance += result.performance;
+        dynamics_[i] = std::move(result.dynamics);
+        cost_[i] = std::move(result.cost);
+        constraints_[i] = std::move(result.constraints);
+        constraintsProjection_[i] = VectorFunctionLinearApproximation::Zero(0, x[i].size(), 0);
+      } else {
+        // Normal, intermediate node
+        const scalar_t ti = getIntervalStart(time[i]);
+        const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
+        auto result = multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr,
+                                                               penaltyPtr_.get(), projection, ti, dt, x[i], x[i + 1], u[i]);
+        workerPerformance += result.performance;
+        dynamics_[i] = std::move(result.dynamics);
+        cost_[i] = std::move(result.cost);
+        constraints_[i] = std::move(result.constraints);
+        constraintsProjection_[i] = std::move(result.constraintsProjection);
+      }
+
       i = timeIndex++;
     }
 
@@ -438,10 +440,17 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
 
     int i = timeIndex++;
     while (i < N) {
-      const scalar_t ti = getIntervalStart(time[i]);
-      const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-      workerPerformance += multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr,
-                                                                             penaltyPtr_.get(), ti, dt, x[i], x[i + 1], u[i]);
+      if (time[i].event == AnnotatedTime::Event::PreEvent) {
+        // Event node
+        workerPerformance += multiple_shooting::computeEventPerformance(systemDynamics, nullptr, nullptr, time[i].time, x[i], x[i + 1]);
+      } else {
+        // Normal, intermediate node
+        const scalar_t ti = getIntervalStart(time[i]);
+        const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
+        workerPerformance += multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr,
+                                                                               penaltyPtr_.get(), ti, dt, x[i], x[i + 1], u[i]);
+      }
+
       i = timeIndex++;
     }
 
@@ -514,7 +523,9 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const st
   do {
     // Compute step
     for (int i = 0; i < u.size(); i++) {
-      uNew[i] = u[i] + alpha * du[i];
+      if (du[i].size() > 0) {  // account for absence of inputs at events.
+        uNew[i] = u[i] + alpha * du[i];
+      }
     }
     for (int i = 0; i < x.size(); i++) {
       xNew[i] = x[i] + alpha * dx[i];

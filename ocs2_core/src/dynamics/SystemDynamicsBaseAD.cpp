@@ -108,7 +108,7 @@ VectorFunctionLinearApproximation SystemDynamicsBaseAD::linearApproximation(scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SystemDynamicsBaseAD::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+VectorFunctionLinearApproximation SystemDynamicsBaseAD::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
   vector_t tapedTimeState(1 + x.rows());
   tapedTimeState << t, x;
   vector_t parameters = getJumpMapParameters(t);
@@ -116,7 +116,7 @@ VectorFunctionLinearApproximation SystemDynamicsBaseAD::jumpMapLinearApproximati
 
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx = jumpJacobian_.rightCols(x.rows());
-  approximation.dfdu = matrix_t::Zero(jumpJacobian_.rows(), u.rows());  // not provided
+  approximation.dfdu.setZero(jumpJacobian_.rows(), 0);
   approximation.f = jumpMapADInterfacePtr_->getFunctionValue(tapedTimeState, parameters);
   return approximation;
 }

@@ -22,7 +22,6 @@ class LoopshapingDynamicsInputPattern final : public LoopshapingDynamics {
   LoopshapingDynamicsInputPattern* clone() const override { return new LoopshapingDynamicsInputPattern(*this); };
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  protected:
   using BASE::loopshapingDefinition_;

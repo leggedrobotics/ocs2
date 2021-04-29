@@ -46,26 +46,4 @@ VectorFunctionLinearApproximation LoopshapingDynamicsInputPattern::linearApproxi
   return dynamics;
 }
 
-VectorFunctionLinearApproximation LoopshapingDynamicsInputPattern::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                              const vector_t& u) {
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, u_system);
-
-  // Filter doesn't Jump
-  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(x);
-
-  VectorFunctionLinearApproximation jumpMap;
-  jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
-
-  jumpMap.dfdx.setZero(x.rows(), x.rows());
-  jumpMap.dfdx.topLeftCorner(x_system.rows(), x_system.rows()) = jumpMap_system.dfdx;
-
-  jumpMap.dfdu.setZero(x.rows(), u.rows());
-  jumpMap.dfdu.topLeftCorner(x_system.rows(), u_system.rows()) = jumpMap_system.dfdu;
-
-  return jumpMap;
-}
-
 }  // namespace ocs2

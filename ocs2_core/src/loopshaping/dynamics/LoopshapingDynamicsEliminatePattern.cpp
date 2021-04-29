@@ -51,42 +51,4 @@ VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::linearApp
   return dynamics;
 }
 
-VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                                  const vector_t& u) {
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-  const size_t FILTER_INPUT_DIM = s_filter.getNumInputs();
-  const bool isDiagonal = loopshapingDefinition_->isDiagonal();
-  const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, u_system);
-
-  // Filter doesn't Jump
-  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(x);
-
-  VectorFunctionLinearApproximation jumpMap;
-  jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
-
-  jumpMap.dfdx.resize(x.rows(), x.rows());
-  jumpMap.dfdx.topLeftCorner(x_system.rows(), x_system.rows()) = jumpMap_system.dfdx;
-  if (isDiagonal) {
-    jumpMap.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = jumpMap_system.dfdu * s_filter.getCdiag();
-  } else {
-    jumpMap.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).noalias() = jumpMap_system.dfdu * s_filter.getC();
-  }
-  jumpMap.dfdx.bottomLeftCorner(FILTER_STATE_DIM, x_system.rows()).setZero();
-  jumpMap.dfdx.bottomRightCorner(FILTER_STATE_DIM, FILTER_STATE_DIM).setIdentity();
-
-  jumpMap.dfdu.resize(x.rows(), u.rows());
-
-  if (isDiagonal) {
-    jumpMap.dfdu.topRows(x_system.rows()).noalias() = jumpMap_system.dfdu * s_filter.getDdiag();
-  } else {
-    jumpMap.dfdu.topRows(x_system.rows()).noalias() = jumpMap_system.dfdu * s_filter.getD();
-  }
-  jumpMap.dfdu.bottomRows(FILTER_STATE_DIM).setZero();
-
-  return jumpMap;
-}
-
 }  // namespace ocs2

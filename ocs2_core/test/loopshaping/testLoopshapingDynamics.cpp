@@ -43,10 +43,9 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMap) {
 
 TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMapApproximation) {
   // Evaluate linearization
-  const auto jumpMap_sys = this->testSystem->jumpMapLinearApproximation(this->t, this->x_sys_, this->u_sys_);
-  const auto jumpMap = this->testLoopshapingDynamics->jumpMapLinearApproximation(this->t, this->x_, this->u_);
+  const auto jumpMap_sys = this->testSystem->jumpMapLinearApproximation(this->t, this->x_sys_);
+  const auto jumpMap = this->testLoopshapingDynamics->jumpMapLinearApproximation(this->t, this->x_);
 
   EXPECT_TRUE(jumpMap.f.head(this->x_sys_.rows()).isApprox(jumpMap_sys.f));
   EXPECT_TRUE(jumpMap.dfdx.topLeftCorner(this->x_sys_.rows(), this->x_sys_.rows()).isApprox(jumpMap_sys.dfdx));
-  EXPECT_TRUE(jumpMap.dfdu.topLeftCorner(this->x_sys_.rows(), this->u_sys_.rows()).isApprox(jumpMap_sys.dfdu));
 }

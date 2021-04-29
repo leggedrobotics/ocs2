@@ -56,7 +56,7 @@ class SystemDynamicsBase : public ControlledSystemBase {
   virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) = 0;
 
   /** Computes the jump map linear approximation */
-  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x);
 
   /** Computes the guard surfaces linear approximation */
   virtual VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);

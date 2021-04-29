@@ -172,7 +172,7 @@ EventTranscription setupEventNode(SystemDynamicsBase& systemDynamics, CostFuncti
 
   // Dynamics
   // jump map returns // x_{k+1} = A_{k} * dx_{k} + b_{k}
-  dynamics = systemDynamics.jumpMapLinearApproximation(t, x, vector_t::Zero(0));
+  dynamics = systemDynamics.jumpMapLinearApproximation(t, x);
   dynamics.f -= x_next;                // make it dx_{k+1} = ...
   dynamics.dfdu.setZero(x.size(), 0);  // Overwrite derivative that shouldn't exist.
   performance.stateEqConstraintISE += dynamics.f.squaredNorm();

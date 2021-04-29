@@ -302,18 +302,24 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   // Clear old solution
   primalSolution_ = PrimalSolution();
 
+  // Correct for missing inputs at PreEvents
+  for (int i = 0; i < time.size(); ++i) {
+    if (time[i].event == AnnotatedTime::Event::PreEvent && i > 0) {
+      u[i] = u[i - 1];
+    }
+  }
+
   // Compute feedback, before x and u are moved to primal solution
   vector_array_t uff;
   matrix_array_t controllerGain;
   if (settings_.useFeedbackPolicy) {
     // see doc/LQR_full.pdf for detailed derivation for feedback terms
-    uff.reserve(time.size());
+    uff = u;  // Copy and adapt in loop
     controllerGain.reserve(time.size());
     matrix_array_t KMatrices = hpipmInterface_.getRiccatiFeedback(dynamics_[0], cost_[0]);
     for (int i = 0; (i + 1) < time.size(); i++) {
-      if (time[i].event == AnnotatedTime::Event::PreEvent && !uff.empty()) {
-        // Correct for missing inputs at PreEvents
-        uff.push_back(uff.back());
+      if (time[i].event == AnnotatedTime::Event::PreEvent && i > 0) {
+        uff[i] = uff[i - 1];
         controllerGain.push_back(controllerGain.back());
       } else {
         // Linear controller has convention u = uff + K * x;
@@ -325,8 +331,7 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
         } else {
           controllerGain.push_back(std::move(KMatrices[i]));
         }
-        uff.push_back(u[i]);
-        uff.back().noalias() -= controllerGain.back() * x[i];
+        uff[i].noalias() -= controllerGain.back() * x[i];
       }
     }
     // Copy last one to get correct length
@@ -335,15 +340,11 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   }
 
   // Construct nominal state and inputs
-  u.push_back(u.back());  // Repeat last input to make equal length vectors
   primalSolution_.stateTrajectory_ = std::move(x);
+  u.push_back(u.back());  // Repeat last input to make equal length vectors
   primalSolution_.inputTrajectory_ = std::move(u);
-  for (int i = 0; i < time.size(); ++i) {
-    primalSolution_.timeTrajectory_.push_back(time[i].time);
-    if (time[i].event == AnnotatedTime::Event::PreEvent && i > 0) {
-      // Correct for missing inputs at PreEvents
-      primalSolution_.inputTrajectory_[i] = primalSolution_.inputTrajectory_[i - 1];
-    }
+  for (const auto& t : time) {
+    primalSolution_.timeTrajectory_.push_back(t.time);
   }
   primalSolution_.modeSchedule_ = this->getModeSchedule();
 

@@ -13,7 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>doxygen</depend>
-  <depend>texlive-latex-extra</depend>
+  <depend>doxygen-latex</depend>
 
   <depend>ocs2_core</depend>
   <depend>ocs2_oc</depend>

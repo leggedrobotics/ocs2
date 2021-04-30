@@ -11,8 +11,8 @@
 #include <ocs2_core/constraint/ConstraintBaseAD.h>
 #include <ocs2_core/constraint/ConstraintCollection.h>
 #include <ocs2_core/constraint/LinearConstraint.h>
-#include <ocs2_core/constraint/PenaltyBase.h>
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
+#include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
 
 // Control
 #include <ocs2_core/control/ControllerBase.h>
@@ -26,11 +26,11 @@
 #include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/cost/CostFunctionBaseAD.h>
-#include <ocs2_core/cost/CostFunctionLinearCombination.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
-#include <ocs2_core/cost/RelaxedBarrierCost.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/StateInputCost.h>
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
@@ -78,11 +78,11 @@
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenaltyFunction.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenalty.h>
+#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
 
 // dummy target for clang toolchain
 int main() {

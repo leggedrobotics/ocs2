@@ -59,19 +59,17 @@ class StateSoftConstraint final : public StateCost {
   /**
    * Constructor.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
    * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
-  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyPtrArray);
+  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
   /**
    * Constructor.
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] numConstraints: The number of constraints.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
-  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints,
-                      std::unique_ptr<PenaltyFunctionBase> penaltyFunction);
+  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
 
   ~StateSoftConstraint() override = default;
 

@@ -87,6 +87,41 @@ class HpipmInterface {
                      std::vector<ScalarFunctionQuadraticApproximation>& cost, std::vector<VectorFunctionLinearApproximation>* constraints,
                      vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, bool verbose = false);
 
+  /**
+   * Return the Riccati cost-to-go for the previously solved problem.
+   * Extra information about the initial stage is needed to complete calculation.
+   *
+   * Cost-to-go at a node is: V_k(x) = 0.5 * x' * dfdxx * x + x' * dfdx + f
+   * For the moment, the value for f is set to 0.0 because it is expensive to compute and often not needed.
+   *
+   * @param dynamics0 : dynamics at k = 0
+   * @param cost0 : cost at k = 0
+   * @return Sequence of quadratic cost-to-go's.
+   */
+  std::vector<ScalarFunctionQuadraticApproximation> getRiccatiCostToGo(const VectorFunctionLinearApproximation& dynamics0,
+                                                                       const ScalarFunctionQuadraticApproximation& cost0);
+
+  /**
+   * Return the sequence of N feedback matrices for the previously solved problem.
+   * Extra information about the initial stage is needed to complete calculation.
+   *
+   * @param dynamics0 : dynamics at k = 0
+   * @param cost0 : cost at k = 0
+   * @return Sequence of feedback matrices K of the optimal solution u = K x + k
+   */
+  matrix_array_t getRiccatiFeedback(const VectorFunctionLinearApproximation& dynamics0, const ScalarFunctionQuadraticApproximation& cost0);
+
+  /**
+   * Return the sequence of N feedforward input vectors for the previously solved problem.
+   * Extra information about the initial stage is needed to complete calculation.
+   *
+   * @param dynamics0 : dynamics at k = 0
+   * @param cost0 : cost at k = 0
+   * @return Sequence of feedforward vectors k of the optimal solution u = K x + k
+   */
+  vector_array_t getRiccatiFeedforward(const VectorFunctionLinearApproximation& dynamics0,
+                                       const ScalarFunctionQuadraticApproximation& cost0);
+
  private:
   class Impl;
   std::unique_ptr<Impl> pImpl_;

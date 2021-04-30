@@ -174,7 +174,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const PenaltyBase& ineqConstrPenalty,
+PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
                                                                       const scalar_array2_t& timeTrajectoriesStock,
                                                                       const std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
                                                                       const std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
@@ -208,7 +208,8 @@ PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const Pena
     // inequality constraints penalty
     scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityPenaltyTrajectory.begin(),
-                   [&](const ModelData& m) { return ineqConstrPenalty.penaltyCost(m.ineqConstr_.f); });
+                   [&](const ModelData& m) { return ineqConstrPenalty.getValue(m.ineqConstr_.f); });
+
     performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
 
     // final cost and constraints

@@ -37,7 +37,7 @@ namespace ocs2 {
 void StateInputCostCppAd::initialize(size_t stateDim, size_t inputDim, size_t parameterDim, const std::string& modelName,
                                      const std::string& modelFolder, bool recompileLibraries, bool verbose) {
   auto costAd = [=](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
-    assert(x.rows() = 1 + stateDim + inputDim);
+    assert(x.rows() == 1 + stateDim + inputDim);
     const ad_scalar_t time = x(0);
     const ad_vector_t state = x.segment(1, stateDim);
     const ad_vector_t input = x.tail(inputDim);
@@ -79,7 +79,7 @@ ScalarFunctionQuadraticApproximation StateInputCostCppAd::getQuadraticApproximat
   const size_t stateDim = state.rows();
   const size_t inputDim = input.rows();
   const vector_t params = getParameters(time, desiredTrajectory);
-  vector_t tapedTimeStateInput(1 + state.rows() + input.rows());
+  vector_t tapedTimeStateInput(1 + stateDim + inputDim);
   tapedTimeStateInput << time, state, input;
 
   cost.f = adInterfacePtr_->getFunctionValue(tapedTimeStateInput, params)(0);

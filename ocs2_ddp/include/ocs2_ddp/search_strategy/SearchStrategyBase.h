@@ -35,11 +35,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 #include "ocs2_oc/oc_solver/PerformanceIndex.h"
 #include "ocs2_oc/rollout/RolloutBase.h"
@@ -173,7 +173,8 @@ class SearchStrategyBase {
    *
    * @return The cost, merit function and ISEs of constraints for the trajectory.
    */
-  PerformanceIndex calculateRolloutPerformanceIndex(const PenaltyBase& ineqConstrPenalty, const scalar_array2_t& timeTrajectoriesStock,
+  PerformanceIndex calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
+                                                    const scalar_array2_t& timeTrajectoriesStock,
                                                     const std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
                                                     const std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
                                                     scalar_t heuristicsValue) const;

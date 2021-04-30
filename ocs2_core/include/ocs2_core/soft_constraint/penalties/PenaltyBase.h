@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,29 +27,53 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
+#pragma once
+
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticPenaltyFunction::getValue(scalar_t h) const {
-  return 0.5 * mu_ * h * h;
-}
+/**
+ * The penalty function interface class is used to penalize constraint violation by adding a penalty term to the cost function.
+ * We assume that the penalty function is convex.
+ */
+class PenaltyBase {
+ public:
+  /** Default constructor */
+  PenaltyBase() = default;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticPenaltyFunction::getDerivative(scalar_t h) const {
-  return mu_ * h;
-}
+  /** Default destructor */
+  virtual ~PenaltyBase() = default;
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t QuadraticPenaltyFunction::getSecondDerivative(scalar_t h) const {
-  return mu_;
-}
+  /** Clones the class */
+  virtual PenaltyBase* clone() const = 0;
+
+  /**
+   * Compute the penalty value at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty cost.
+   */
+  virtual scalar_t getValue(scalar_t h) const = 0;
+
+  /**
+   * Compute the penalty derivative at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty derivative with respect to constraint value.
+   */
+  virtual scalar_t getDerivative(scalar_t h) const = 0;
+
+  /**
+   * Compute the penalty second derivative at a certain constraint value.
+   *
+   * @param [in] h: Constraint value.
+   * @return penalty second derivative with respect to constraint value.
+   */
+  virtual scalar_t getSecondDerivative(scalar_t h) const = 0;
+
+ protected:
+  PenaltyBase(const PenaltyBase& other) = default;
+};
 
 }  // namespace ocs2

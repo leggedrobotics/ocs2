@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -94,13 +94,13 @@ std::unique_ptr<SoftConstraint> softConstraintFactory(size_t numConstraints, ocs
 
   if (useSimilarPenalty) {
     // penalty function
-    std::unique_ptr<ocs2::RelaxedBarrierPenaltyFunction> penaltyFunctionPtr(new ocs2::RelaxedBarrierPenaltyFunction({10.0, 1.0}));
-    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), numConstraints, std::move(penaltyFunctionPtr)));
+    std::unique_ptr<ocs2::RelaxedBarrierPenalty> penaltyFunctionPtr(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
+    return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), std::move(penaltyFunctionPtr)));
 
   } else {
-    std::vector<std::unique_ptr<ocs2::PenaltyFunctionBase>> penaltyFunctionPtrArry;
+    std::vector<std::unique_ptr<ocs2::PenaltyBase>> penaltyFunctionPtrArry;
     for (size_t i = 0; i < numConstraints; i++) {
-      penaltyFunctionPtrArry.emplace_back(new ocs2::RelaxedBarrierPenaltyFunction({10.0, 1.0}));
+      penaltyFunctionPtrArry.emplace_back(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
     }  // end of i loop
     return std::unique_ptr<SoftConstraint>(new SoftConstraint(std::move(constraintPtr), std::move(penaltyFunctionPtrArry)));
   }

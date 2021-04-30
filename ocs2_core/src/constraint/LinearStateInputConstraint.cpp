@@ -55,7 +55,10 @@ size_t LinearStateInputConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t LinearStateInputConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u) const {
-  return e_ + C_ * x + D_ * u;
+  vector_t g = e_;
+  g.noalias() += C_ * x;
+  g.noalias() += D_ * u;
+  return g;
 }
 
 /******************************************************************************************************/
@@ -64,7 +67,9 @@ vector_t LinearStateInputConstraint::getValue(scalar_t t, const vector_t& x, con
 VectorFunctionLinearApproximation LinearStateInputConstraint::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                      const vector_t& u) const {
   VectorFunctionLinearApproximation g;
-  g.f = e_ + C_ * x + D_ * u;
+  g.f = e_;
+  g.f.noalias() += C_ * x;
+  g.f.noalias() += D_ * u;
   g.dfdx = C_;
   g.dfdu = D_;
   return g;

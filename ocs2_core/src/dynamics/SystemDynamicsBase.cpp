@@ -34,10 +34,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx.setIdentity(x.rows(), x.rows());
-  approximation.dfdu.setZero(x.rows(), u.rows());
+  approximation.dfdu.setZero(x.rows(), 0);
   approximation.f = this->computeJumpMap(t, x);
   return approximation;
 }

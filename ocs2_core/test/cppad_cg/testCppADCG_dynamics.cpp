@@ -88,8 +88,8 @@ void checkSystemDynamics(const size_t numTests, SystemDynamicsBase* const linear
       success = false;
     }
 
-    VectorFunctionLinearApproximation g1 = linearSystem1->jumpMapLinearApproximation(t, x, u);
-    VectorFunctionLinearApproximation g2 = linearSystem2->jumpMapLinearApproximation(t, x, u);
+    VectorFunctionLinearApproximation g1 = linearSystem1->jumpMapLinearApproximation(t, x);
+    VectorFunctionLinearApproximation g2 = linearSystem2->jumpMapLinearApproximation(t, x);
     if (!isApprox(g1, g2, precision)) {
       std::cout << "jumpMap1:\n" << g1.dfdx << std::endl;
       std::cout << "jumpMap2:\n" << g2.dfdx << std::endl;

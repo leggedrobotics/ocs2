@@ -61,6 +61,29 @@ vector_t LoopshapingDynamics::computeGuardSurfaces(scalar_t time, const vector_t
   return systemDynamics_->computeGuardSurfaces(time, x_system);
 }
 
+VectorFunctionLinearApproximation LoopshapingDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
+  // System jump
+  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
+  const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system);
+
+  // Filter doesn't Jump
+  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(x);
+  const size_t filterStateDim = jumMap_filter.size();
+
+  VectorFunctionLinearApproximation jumpMap;
+  jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
+
+  jumpMap.dfdx.resize(jumpMap.f.size(), jumpMap.f.size());
+  jumpMap.dfdx.topLeftCorner(jumpMap_system.f.size(), x_system.size()) = jumpMap_system.dfdx;
+  jumpMap.dfdx.topRightCorner(jumpMap_system.f.size(), filterStateDim).setZero();
+  jumpMap.dfdx.bottomLeftCorner(filterStateDim, x_system.size()).setZero();
+  jumpMap.dfdx.bottomRightCorner(filterStateDim, filterStateDim).setIdentity();
+
+  jumpMap.dfdu.resize(jumpMap.f.size(), 0);
+
+  return jumpMap;
+}
+
 VectorFunctionLinearApproximation LoopshapingDynamics::guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   throw std::runtime_error("[LoopshapingDynamics] Guard surfaces not implemented");
 }

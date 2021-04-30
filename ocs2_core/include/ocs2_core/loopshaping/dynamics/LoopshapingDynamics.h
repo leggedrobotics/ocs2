@@ -22,6 +22,7 @@ class LoopshapingDynamics : public SystemDynamicsBase {
   vector_t computeJumpMap(scalar_t time, const vector_t& state) final;
   vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
 
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x) final;
   VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
   vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;

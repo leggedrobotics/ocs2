@@ -132,6 +132,16 @@ class CppAdInterface {
   matrix_t getJacobian(const vector_t& x, const vector_t& p = vector_t(0)) const;
 
   /**
+   * Jacobian with gradient of each output w.r.t the variables x in the rows.
+   * And the GaussNewton approximation: Jacobian' * Jacobian constructed with sparsity information.
+   *
+   * @param x : input vector of size variableDim
+   * @param p : parameter vector of size parameterDim
+   * @return {d/dx( f(x,p) ), d/dx( f(x,p) )' * d/dx( f(x,p) )}
+   */
+  std::pair<matrix_t, matrix_t> getJacobianAndGaussNewtonHessian(const vector_t& x, const vector_t& p = vector_t(0)) const;
+
+  /**
    * Hessian, available per output.
    *
    * @param outputIndex : Output to get the hessian for.

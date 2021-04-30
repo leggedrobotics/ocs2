@@ -189,6 +189,60 @@ matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+std::pair<matrix_t, matrix_t> CppAdInterface::getJacobianAndGaussNewtonHessian(const vector_t& x, const vector_t& p) const {
+  // Concatenate input
+  vector_t xp(variableDim_ + parameterDim_);
+  xp << x, p;
+  CppAD::cg::ArrayView<scalar_t> xpArrayView(xp.data(), xp.size());
+
+  std::vector<scalar_t> sparseJacobian(nnzJacobian_);
+  CppAD::cg::ArrayView<scalar_t> sparseJacobianArrayView(sparseJacobian);
+  size_t const* rows;
+  size_t const* cols;
+  // Call this particular SparseJacobian. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
+  model_->SparseJacobian(xpArrayView, sparseJacobianArrayView, &rows, &cols);
+
+  // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
+  // to parameters.
+  const size_t range = model_->Range();
+  matrix_t jacobian = matrix_t::Zero(range, variableDim_);
+  for (size_t i = 0; i < nnzJacobian_; i++) {
+    jacobian(rows[i], cols[i]) = sparseJacobian[i];
+  }
+
+  /*
+   * Sparse construction of the GN matrix, H = J' * J.
+   * H(i, j) = sum_rows { J(row, i) * J(row, j) }
+   * Because the sparse elements are ordered first by row, then by column, we process J row-by-row.
+   * For each row of J, we add the non-zero pairs (i, j) to H(i, j).
+   */
+  matrix_t gaussNewtonHessian = matrix_t::Zero(variableDim_, variableDim_);
+  for (size_t i = 0; i < nnzJacobian_; ++i) {
+    const size_t row_i = rows[i];
+    const size_t col_i = cols[i];
+    const scalar_t v_i = sparseJacobian[i];
+    // Diagonal element always exists:
+    gaussNewtonHessian(col_i, col_i) += v_i * v_i;
+    // Process off diagonals in the upper triangular part of the Hessian
+    size_t j = i + 1;
+    while (rows[j] == row_i) {
+      gaussNewtonHessian(col_i, cols[j]) += v_i * sparseJacobian[j];
+      ++j;
+    }
+  }
+
+  // Make symmetric
+  gaussNewtonHessian.template triangularView<Eigen::StrictlyLower>() =
+      gaussNewtonHessian.template triangularView<Eigen::StrictlyUpper>().transpose();
+
+  assert(jacobian.allFinite());
+  assert(gaussNewtonHessian.allFinite());
+  return {jacobian, gaussNewtonHessian};
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 matrix_t CppAdInterface::getHessian(size_t outputIndex, const vector_t& x, const vector_t& p) const {
   vector_t w = vector_t::Zero(rangeDim_);
   w[outputIndex] = 1.0;

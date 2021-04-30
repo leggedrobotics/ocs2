@@ -73,7 +73,6 @@ add_library(${PROJECT_NAME}
   src/constraint/ConstraintCollection.cpp
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
-  src/constraint/StateInputGaussNewtonCostAd.cpp
   src/constraint/LinearConstraint.cpp
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
@@ -88,6 +87,7 @@ add_library(${PROJECT_NAME}
   src/cost/StateCost.cpp
   src/cost/StateCostCppAd.cpp
   src/cost/StateInputCostCppAd.cpp
+  src/cost/StateInputGaussNewtonCostAd.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
   src/dynamics/SystemDynamicsBase.cpp

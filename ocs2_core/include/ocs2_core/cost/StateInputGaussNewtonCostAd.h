@@ -40,36 +40,33 @@ namespace ocs2 {
  */
 class StateInputCostGaussNewtonAd : public StateInputCost {
  public:
-  StateInputCostGaussNewtonAd(size_t stateDim, size_t inputDim);
+  StateInputCostGaussNewtonAd() = default;
   ~StateInputCostGaussNewtonAd() override = default;
-  StateInputCostGaussNewtonAd* clone() const override = 0;
 
   /**
    * Initializes model libraries
-   *
-   * @param modelName : name of the generate model library
-   * @param modelFolder : folder to save the model library files to
-   * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
-   * available.
-   * @param verbose : print information.
+   * @param stateDim : state vector dimension.
+   * @param inputDim : state vector dimension.
+   * @param parameterDim : parameter vector dimension, set to 0 if getParameters() is not used.
+   * @param modelName : Name of the generate model library.
+   * @param modelFolder : Folder where the model library files are saved.
+   * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
+   * @param verbose : Print information.
    */
-  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                  bool verbose = true);
+  void initialize(size_t stateDim, size_t inputDim, size_t parameterDim, const std::string& modelName,
+                  const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
+  /** Get the parameter vector */
+  virtual vector_t getParameters(scalar_t time, const CostDesiredTrajectories& desiredTrajectory) const { return vector_t(0); };
+
+  /** Cost evaluation */
   scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
                     const CostDesiredTrajectories& desiredTrajectory) const override;
-
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                  const CostDesiredTrajectories& desiredTrajectory) const override;
 
  protected:
   StateInputCostGaussNewtonAd(const StateInputCostGaussNewtonAd& rhs);
-
-  /** Gets a user-defined cost parameters. */
-  virtual vector_t getParameters(scalar_t time, const CostDesiredTrajectories& desiredTrajectory) const { return vector_t(0); }
-
-  /** Number of parameters for the cost function. */
-  virtual size_t getNumParameters() const { return 0; }
 
   /**
    * Interface method to the cost function. This method must be implemented by the derived class.
@@ -85,12 +82,7 @@ class StateInputCostGaussNewtonAd : public StateInputCost {
                                          const ad_vector_t& parameters) const = 0;
 
  private:
-  /** Sets all the required CppAdCodeGenInterfaces */
-  void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
-
-  size_t stateDim_;
-  size_t inputDim_;
-  std::unique_ptr<CppAdInterface> costVectorFunctionADInterfacePtr_;
+  std::unique_ptr<CppAdInterface> adInterfacePtr_;
 };
 
 }  // namespace ocs2

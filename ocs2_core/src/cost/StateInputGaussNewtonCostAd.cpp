@@ -34,40 +34,39 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateInputCostGaussNewtonAd::StateInputCostGaussNewtonAd(size_t stateDim, size_t inputDim)
-    : StateInputCost(), stateDim_(stateDim), inputDim_(inputDim) {}
+void StateInputCostGaussNewtonAd::initialize(size_t stateDim, size_t inputDim, size_t parameterDim, const std::string& modelName,
+                                             const std::string& modelFolder, bool recompileLibraries, bool verbose) {
+  auto costVectorAd = [=](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+    assert(x.rows() == 1 + stateDim + inputDim);
+    const ad_scalar_t time = x(0);
+    const ad_vector_t state = x.segment(1, stateDim);
+    const ad_vector_t input = x.tail(inputDim);
+    y = this->costVectorFunction(time, state, input, p);
+  };
+  adInterfacePtr_.reset(new ocs2::CppAdInterface(costVectorAd, 1 + stateDim + inputDim, parameterDim, modelName, modelFolder));
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-StateInputCostGaussNewtonAd::StateInputCostGaussNewtonAd(const StateInputCostGaussNewtonAd& rhs)
-    : StateInputCost(rhs),
-      stateDim_(rhs.stateDim_),
-      inputDim_(rhs.inputDim_),
-      costVectorFunctionADInterfacePtr_(new CppAdInterface(*rhs.costVectorFunctionADInterfacePtr_)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void StateInputCostGaussNewtonAd::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries,
-                                             bool verbose) {
-  setADInterfaces(modelName, modelFolder);
   if (recompileLibraries) {
-    costVectorFunctionADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+    adInterfacePtr_->createModels(ocs2::CppAdInterface::ApproximationOrder::First, verbose);
   } else {
-    costVectorFunctionADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+    adInterfacePtr_->loadModelsIfAvailable(ocs2::CppAdInterface::ApproximationOrder::First, verbose);
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+StateInputCostGaussNewtonAd::StateInputCostGaussNewtonAd(const StateInputCostGaussNewtonAd& rhs)
+    : StateInputCost(rhs), adInterfacePtr_(new ocs2::CppAdInterface(*rhs.adInterfacePtr_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t StateInputCostGaussNewtonAd::getValue(scalar_t time, const vector_t& state, const vector_t& input,
                                                const CostDesiredTrajectories& desiredTrajectory) const {
-  vector_t timeStateInput(1 + stateDim_ + inputDim_);
+  vector_t timeStateInput(1 + state.rows() + input.rows());
   timeStateInput << time, state, input;
   const auto parameters = getParameters(time, desiredTrajectory);
-  const auto costVector = costVectorFunctionADInterfacePtr_->getFunctionValue(timeStateInput, parameters);
+  const auto costVector = adInterfacePtr_->getFunctionValue(timeStateInput, parameters);
   return 0.5 * costVector.squaredNorm();
 }
 
@@ -76,34 +75,24 @@ scalar_t StateInputCostGaussNewtonAd::getValue(scalar_t time, const vector_t& st
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateInputCostGaussNewtonAd::getQuadraticApproximation(
     scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
-  vector_t timeStateInput(1 + stateDim_ + inputDim_);
+  const auto stateDim = state.rows();
+  const auto inputDim = input.rows();
+  vector_t timeStateInput(1 + stateDim + inputDim);
   timeStateInput << time, state, input;
   const auto parameters = getParameters(time, desiredTrajectory);
-  const auto costVector = costVectorFunctionADInterfacePtr_->getFunctionValue(timeStateInput, parameters);
-  const auto costVectorJacobian = costVectorFunctionADInterfacePtr_->getJacobian(timeStateInput, parameters);
+  const auto costVector = adInterfacePtr_->getFunctionValue(timeStateInput, parameters);
+  const auto gnApproximation = adInterfacePtr_->getJacobianAndGaussNewtonHessian(timeStateInput, parameters);
+  const auto& J = gnApproximation.first;
+  const auto& H = gnApproximation.second;
 
   ScalarFunctionQuadraticApproximation L;
   L.f = 0.5 * costVector.squaredNorm();
-  L.dfdx.noalias() = costVectorJacobian.middleCols(1, stateDim_).transpose() * costVector;
-  L.dfdxx.noalias() = costVectorJacobian.middleCols(1, stateDim_).transpose() * costVectorJacobian.middleCols(1, stateDim_);
-  L.dfdu.noalias() = costVectorJacobian.rightCols(inputDim_).transpose() * costVector;
-  L.dfduu.noalias() = costVectorJacobian.rightCols(inputDim_).transpose() * costVectorJacobian.rightCols(inputDim_);
-  L.dfdux.noalias() = costVectorJacobian.rightCols(inputDim_).transpose() * costVectorJacobian.middleCols(1, stateDim_);
+  L.dfdx.noalias() = J.middleCols(1, stateDim).transpose() * costVector;
+  L.dfdu.noalias() = J.rightCols(inputDim).transpose() * costVector;
+  L.dfdxx = H.block(1, 1, stateDim, stateDim);
+  L.dfdux.noalias() = H.block(1 + stateDim, 1, inputDim, stateDim);
+  L.dfduu.noalias() = H.block(1 + stateDim, 1 + stateDim, inputDim, inputDim);
   return L;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void StateInputCostGaussNewtonAd::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
-  auto costVector = [this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
-    auto time = x(0);
-    auto state = x.segment(1, stateDim_);
-    auto input = x.tail(inputDim_);
-    y = this->costVectorFunction(time, state, input, p);
-  };
-  costVectorFunctionADInterfacePtr_.reset(
-      new CppAdInterface(costVector, 1 + stateDim_ + inputDim_, getNumParameters(), modelName + "_GN_cost_vector", modelFolder));
 }
 
 }  // namespace ocs2

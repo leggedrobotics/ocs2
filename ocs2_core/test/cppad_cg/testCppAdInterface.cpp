@@ -18,6 +18,9 @@ TEST_F(CppAdInterfaceNoParameterFixture, testModelGeneration) {
   ASSERT_TRUE(adInterface.getFunctionValue(x).isApprox(testFun(x)));
   ASSERT_TRUE(adInterface.getJacobian(x).isApprox(testJacobian(x)));
   ASSERT_TRUE(adInterface.getHessian(0, x).isApprox(testHessian(x)));
+
+  const auto gnApprox = adInterface.getJacobianAndGaussNewtonHessian(x);
+  ASSERT_TRUE(gnApprox.second.isApprox(gnApprox.first.transpose() * gnApprox.first));
 }
 
 TEST_F(CppAdInterfaceParameterizedFixture, testModelGeneration) {
@@ -31,6 +34,9 @@ TEST_F(CppAdInterfaceParameterizedFixture, testModelGeneration) {
   ASSERT_TRUE(adInterface.getJacobian(x, p).isApprox(testJacobian(x, p)));
   ASSERT_TRUE(adInterface.getHessian(0, x, p).isApprox(testHessian(0, x, p)));
   ASSERT_TRUE(adInterface.getHessian(1, x, p).isApprox(testHessian(1, x, p)));
+
+  const auto gnApprox = adInterface.getJacobianAndGaussNewtonHessian(x, p);
+  ASSERT_TRUE(gnApprox.second.isApprox(gnApprox.first.transpose() * gnApprox.first));
 }
 
 TEST_F(CppAdInterfaceParameterizedFixture, loadIfAvailable) {
@@ -44,4 +50,7 @@ TEST_F(CppAdInterfaceParameterizedFixture, loadIfAvailable) {
   ASSERT_TRUE(adInterface.getJacobian(x, p).isApprox(testJacobian(x, p)));
   ASSERT_TRUE(adInterface.getHessian(0, x, p).isApprox(testHessian(0, x, p)));
   ASSERT_TRUE(adInterface.getHessian(1, x, p).isApprox(testHessian(1, x, p)));
+
+  const auto gnApprox = adInterface.getJacobianAndGaussNewtonHessian(x, p);
+  ASSERT_TRUE(gnApprox.second.isApprox(gnApprox.first.transpose() * gnApprox.first));
 }

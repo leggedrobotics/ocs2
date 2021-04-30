@@ -36,7 +36,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * State-input cost term of the form  0.5 ||f(x,u,p)||^2, where the linear approximation of f(x,u,p) will be used to form the Hessian
+ * State-input cost term of the form  0.5 ||f(x,u,p)||^2, where the linear approximation of f(x,u,p) will be used to form the Hessian.
+ *
+ * The cost approximation is guaranteed to be positive semi-definite, and is given by:
+ *  c = 0.5 ||f(x,u,p)||^2
+ *  dcdx = dfdx(x,u,p)' * f(x,u,p)
+ *  dcdu = dfdu(x,u,p)' * f(x,u,p)
+ *  dcdxx = dfdx(x,u,p)' * dfdx(x,u,p)
+ *  dcdux = dfdu(x,u,p)' * dfdx(x,u,p)
+ *  dcduu = dfdu(x,u,p)' * dfdu(x,u,p)
  */
 class StateInputCostGaussNewtonAd : public StateInputCost {
  public:

@@ -15,6 +15,10 @@ class AnymalChimeraSwitchedModelTests : public switched_model::TestAnymalSwitche
                                 getAnymalComModel(AnymalModel::Chimera), getAnymalComModelAd(AnymalModel::Chimera)) {}
 };
 
+TEST_F(AnymalChimeraSwitchedModelTests, Cost) {
+  this->testCosts();
+}
+
 TEST_F(AnymalChimeraSwitchedModelTests, Constraints) {
   this->testConstraints();
 }

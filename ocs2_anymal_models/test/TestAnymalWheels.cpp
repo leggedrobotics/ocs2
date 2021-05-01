@@ -15,6 +15,10 @@ class AnymalWheelsSwitchedModelTests : public switched_model::TestAnymalSwitched
                                 getAnymalComModel(AnymalModel::Wheels), getAnymalComModelAd(AnymalModel::Wheels)) {}
 };
 
+TEST_F(AnymalWheelsSwitchedModelTests, Cost) {
+  this->testCosts();
+}
+
 TEST_F(AnymalWheelsSwitchedModelTests, Constraints) {
   this->testConstraints();
 }

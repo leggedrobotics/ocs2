@@ -85,9 +85,9 @@ ddp
   minRelCost                      0.1
   constraintTolerance             5e-3
 
-  displayInfo                     true
+  displayInfo                     false
   displayShortSummary             false
-  checkNumericalStability         true
+  checkNumericalStability         false
   debugPrintRollout               false
   debugCaching                    false
 
@@ -126,7 +126,7 @@ rollout
   RelTolODE                     1e-3
   minTimeStep                   1e-2
   maxNumStepsPerSecond          50000
-  checkNumericalStability       true
+  checkNumericalStability       false
 }
 
 mpc
@@ -235,3 +235,4 @@ tracking_cost_weights
     contact_force_y        0.001;
     contact_force_z        0.001;
 }
+

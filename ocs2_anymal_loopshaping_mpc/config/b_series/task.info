@@ -128,11 +128,11 @@ ddp
 ; Rollout settings
 rollout
 {
-  AbsTolODE                       1e-5
-  RelTolODE                       1e-3
-  minTimeStep                     1e-2
-  maxNumStepsPerSecond            10000
-  checkNumericalStability         false
+  AbsTolODE                     1e-5
+  RelTolODE                     1e-3
+  minTimeStep                   1e-2
+  maxNumStepsPerSecond          50000
+  checkNumericalStability       false
 }
 
 mpc
@@ -141,7 +141,7 @@ mpc
   numPartitions                   2
 
   runtimeMaxNumIterations         1
-  initMaxNumIterations            10
+  initMaxNumIterations            1
 
   runtimeMinStepLength            1e-2
   runtimeMaxStepLength            1.0
@@ -241,3 +241,4 @@ tracking_cost_weights
     contact_force_y        0.001;
     contact_force_z        0.001;
 }
+

@@ -242,3 +242,4 @@ tracking_cost_weights
     contact_force_y        0.001;
     contact_force_z        0.001;
 }
+

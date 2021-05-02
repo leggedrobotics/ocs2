@@ -79,7 +79,6 @@ class StateInputCostGaussNewtonAd : public StateInputCost {
   /**
    * Interface method to the cost function. This method must be implemented by the derived class.
    *
-   * @tparam scalar type. All the floating point operations should be with this type.
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector.

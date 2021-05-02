@@ -80,18 +80,15 @@ ScalarFunctionQuadraticApproximation StateInputCostGaussNewtonAd::getQuadraticAp
   vector_t timeStateInput(1 + stateDim + inputDim);
   timeStateInput << time, state, input;
   const auto parameters = getParameters(time, desiredTrajectory);
-  const auto costVector = adInterfacePtr_->getFunctionValue(timeStateInput, parameters);
-  const auto gnApproximation = adInterfacePtr_->getJacobianAndGaussNewtonHessian(timeStateInput, parameters);
-  const auto& J = gnApproximation.first;
-  const auto& H = gnApproximation.second;
+  const auto gnApproximation = adInterfacePtr_->getGaussNewtonApproximation(timeStateInput, parameters);
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * costVector.squaredNorm();
-  L.dfdx.noalias() = J.middleCols(1, stateDim).transpose() * costVector;
-  L.dfdu.noalias() = J.rightCols(inputDim).transpose() * costVector;
-  L.dfdxx = H.block(1, 1, stateDim, stateDim);
-  L.dfdux.noalias() = H.block(1 + stateDim, 1, inputDim, stateDim);
-  L.dfduu.noalias() = H.block(1 + stateDim, 1 + stateDim, inputDim, inputDim);
+  L.f = gnApproximation.f;
+  L.dfdx.noalias() = gnApproximation.dfdx.middleRows(1, stateDim);
+  L.dfdu.noalias() = gnApproximation.dfdx.bottomRows(inputDim);
+  L.dfdxx = gnApproximation.dfdxx.block(1, 1, stateDim, stateDim);
+  L.dfdux.noalias() = gnApproximation.dfdxx.block(1 + stateDim, 1, inputDim, stateDim);
+  L.dfduu.noalias() = gnApproximation.dfdxx.block(1 + stateDim, 1 + stateDim, inputDim, inputDim);
   return L;
 }
 

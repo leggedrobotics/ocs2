@@ -28,8 +28,9 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
     vector3_t comPosition{1000.0, 1000.0, 1500.0};
     vector3_t comAngularVelocity{5.0, 10.0, 10.0};
     vector3_t comLinearVelocity{15.0, 15.0, 30.0};
-    vector3_t jointPosition{vector3_t::Constant(1.0)};
+    vector3_t jointPosition{2.0, 2.0, 1.0};
     vector3_t footPosition{vector3_t::Constant(60.0)};
+    vector3_t jointVelocity{0.02, 0.02, 0.01};
     vector3_t footVelocity{vector3_t::Constant(1.0)};
     vector3_t contactForce{vector3_t::Constant(0.001)};
   };

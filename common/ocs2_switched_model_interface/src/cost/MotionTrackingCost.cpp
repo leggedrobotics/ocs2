@@ -15,7 +15,7 @@ namespace switched_model {
 
 namespace {
 constexpr size_t baseTargets = 12;
-constexpr size_t legTargets = 12;
+constexpr size_t legTargets = 15;
 constexpr size_t costVectorLength = baseTargets + NUM_CONTACT_POINTS * legTargets;
 
 template <typename SCALAR_T>
@@ -27,6 +27,7 @@ struct CostElements {
   vector3_s_t<SCALAR_T> comLinearVelocity{vector3_s_t<SCALAR_T>::Zero()};
   feet_array_t<vector3_s_t<SCALAR_T>> jointPosition{constantFeetArray<vector3_s_t<SCALAR_T>>(vector3_s_t<SCALAR_T>::Zero())};
   feet_array_t<vector3_s_t<SCALAR_T>> footPosition{constantFeetArray<vector3_s_t<SCALAR_T>>(vector3_s_t<SCALAR_T>::Zero())};
+  feet_array_t<vector3_s_t<SCALAR_T>> jointVelocity{constantFeetArray<vector3_s_t<SCALAR_T>>(vector3_s_t<SCALAR_T>::Zero())};
   feet_array_t<vector3_s_t<SCALAR_T>> footVelocity{constantFeetArray<vector3_s_t<SCALAR_T>>(vector3_s_t<SCALAR_T>::Zero())};
   feet_array_t<vector3_s_t<SCALAR_T>> contactForce{constantFeetArray<vector3_s_t<SCALAR_T>>(vector3_s_t<SCALAR_T>::Zero())};
 };
@@ -41,7 +42,7 @@ Eigen::Matrix<SCALAR_T, -1, 1> costElementsToVector(const CostElements<SCALAR_T>
   // Legs
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     v.segment(baseTargets + leg * legTargets, legTargets) << asStruct.jointPosition[leg], asStruct.footPosition[leg],
-        asStruct.footVelocity[leg], asStruct.contactForce[leg];
+        asStruct.jointVelocity[leg], asStruct.footVelocity[leg], asStruct.contactForce[leg];
   }
   return v;
 }
@@ -64,6 +65,7 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     motionTarget.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
     motionTarget.footPosition[leg] = kinematics.positionBaseToFootInBaseFrame(leg, qJoints);
+    motionTarget.jointVelocity[leg] = dqJoints.template segment<3>(3 * leg);
     motionTarget.footVelocity[leg] = kinematics.footVelocityRelativeToBaseInBaseFrame(leg, qJoints, dqJoints);
     motionTarget.contactForce[leg] = u.template segment<3>(3 * leg);
   }
@@ -88,6 +90,7 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedMo
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     weightStruct.jointPosition[leg] = settings.jointPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
     weightStruct.footPosition[leg] = settings.footPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
+    weightStruct.jointVelocity[leg] = settings.jointVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
     weightStruct.footVelocity[leg] = settings.footVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
     weightStruct.contactForce[leg] = settings.contactForce.cwiseSqrt().cast<ocs2::ad_scalar_t>();
   }
@@ -155,6 +158,9 @@ MotionTrackingCost::Weights loadWeightsFromFile(const std::string& filename, con
   ocs2::loadData::loadPtreeValue(pt, weights.footPosition.x(), fieldname + ".foot_position_x", verbose);
   ocs2::loadData::loadPtreeValue(pt, weights.footPosition.y(), fieldname + ".foot_position_y", verbose);
   ocs2::loadData::loadPtreeValue(pt, weights.footPosition.z(), fieldname + ".foot_position_z", verbose);
+  ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity.x(), fieldname + ".joint_velocity_HAA", verbose);
+  ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity.y(), fieldname + ".joint_velocity_HFE", verbose);
+  ocs2::loadData::loadPtreeValue(pt, weights.jointVelocity.z(), fieldname + ".joint_velocity_KFE", verbose);
   ocs2::loadData::loadPtreeValue(pt, weights.footVelocity.x(), fieldname + ".foot_velocity_x", verbose);
   ocs2::loadData::loadPtreeValue(pt, weights.footVelocity.y(), fieldname + ".foot_velocity_y", verbose);
   ocs2::loadData::loadPtreeValue(pt, weights.footVelocity.z(), fieldname + ".foot_velocity_z", verbose);

@@ -97,13 +97,13 @@ user@host:~/git/ocs2_anymal/ocs2_anymal_docker/bin$ ./run.sh --platform=gpu
 user@host:~$
 ```
 
-**IMPRTANT** to keep in mind: 
-* The current docker image has been built to launch containers which login to the host user.
-* All logins configure the environment by sourcing the copy of `src/bashrc` in the container.
+**IMPRTANT** to keep in mind:  
+* The current docker image has been built to launch containers which login to the host user.  
+* All logins configure the environment by sourcing the copy of `src/bashrc` in the container.  
 * The host user's home directory is mounted in the container. This allows us to maintain the 
-catkin workspaces in our home directories, and store all persistent data locally.
+catkin workspaces in our home directories, and store all persistent data locally.  
 * Any changes made to the containers file system (except for the mounted home directory) are not
-persistent and will be lost after exiting the container.
+persistent and will be lost after exiting the container.  
 
 ## 4. Creating and using a Catkin workspace
 

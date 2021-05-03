@@ -12,6 +12,10 @@ Here's an outline of the steps needed for setting up a docker container for OCS2
 3. Launching a container.  
 4. Creating and using a Catkin workspace.  
 
+There is also the option to pull pre-built images directly from our internal Docker 
+hosting service [Harbor](https://registry.leggedrobotics.com/). Instructions for
+using harbor are presented [below](##5.Using Harbor).  
+
 ## 1. Dependencies
 
 The `bin/install.sh` script has been provided as easy means for installing docker. 
@@ -76,9 +80,56 @@ to the `build.sh` script. So if we just built GPU image, we can launch a contain
 ./run.sh --platform=gpu
 ```
 
+You'll know it's working if you see this output:
+```commandline
+user@host:~/git/ocs2_anymal/ocs2_anymal_docker/bin$ ./run.sh --platform=gpu
+
+  ____   _____  _____ ___      _))
+ / __ \ / ____|/ ____|__ \   >  *\     _~
+| |  | | |    | (___    ) |   `;'\\__-' \_
+| |  | | |     \___ \  / /       | )  _ \ \
+| |__| | |____ ____) |/ /_      / /    w w
+ \____/ \_____|_____/|____|    w w
+
+ OCS2: Optimal Control for Switched Systems
+
+[OCS2-Docker::Entrypoint] Launching shell as user 'user'
+user@host:~$
+```
+
+**IMPRTANT** to keep in mind: 
+* The current docker image has been built to launch containers which login to the host user.
+* All logins configure the environment by sourcing the copy of `src/bashrc` in the container.
+* The host user's home directory is mounted in the container. This allows us to maintain the 
+catkin workspaces in our home directories, and store all persistent data locally.
+* Any changes made to the containers file system (except for the mounted home directory) are not
+persistent and will be lost after exiting the container.
+
 ## 4. Creating and using a Catkin workspace
 
 Now that the container is launched, you can create/setup a catkin workspace within which you can build 
 packages using the environment and dependencies provided by the image.
+
+## 5. Using Harbor
+
+First, login credentials are needed in order to access the registry. These can be acquired
+by contacting Tom ([tom.lankhorst@mavt.ethz.ch](tom.lankhorst@mavt.ethz.ch)). Once you have
+a `USERNAME` and `PASSWORD`, you can use the docker front-end to perform the login from terminal:
+```commandline
+docker login --username USERNAME registry.leggedrobotics.com
+```
+
+Once access has been set up, it is possible to pull from the registry using:
+```commandline
+docker pull registry.leggedrobotics.com/IMAGE
+```
+
+Where `IMAGE` is the name of the target image to be pulled. The name must exist in the 
+registry otherwise the command will fail.
+
+Example:
+```commandline
+docker pull registry.leggedrobotics.com/ocs2/ocs2-anymal:21.03-gpu
+```
 
 ----

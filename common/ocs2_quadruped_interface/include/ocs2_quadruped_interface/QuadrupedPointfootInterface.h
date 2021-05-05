@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_core/cost/QuadraticCostFunction.h>

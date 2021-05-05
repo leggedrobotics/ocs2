@@ -221,168 +221,37 @@ initialRobotState
    (35,0) 0.0    ; KFE
 }
 
-
-; state weighting
-Q
+tracking_cost_weights
 {
-    scaling 1e+0
+    ; Base
+    roll                   100.0;
+    pitch                  200.0;
+    yaw                    200.0;
+    base_position_x       1000.0;
+    base_position_y       1000.0;
+    base_position_z       1500.0;
+    base_angular_vel_x       5.0;
+    base_angular_vel_y      10.0;
+    base_angular_vel_z      10.0;
+    base_linear_vel_x       15.0;
+    base_linear_vel_y       15.0;
+    base_linear_vel_z       30.0;
 
-   ; orientation
-   (0,0) 100.0;   x
-   (1,1) 200.0;  y
-   (2,2) 200.0;  z
-
-   ; positon
-   (3,3) 1000.0; x
-   (4,4) 1000.0; y
-   (5,5) 1500.0; z
-
-   ; angular velocity
-   (6,6)  5.0      ; x
-   (7,7)  10.0      ; y
-   (8,8)  10.0      ; z
-
-   ; translational velocity
-   (9,9)    15.0    ; x
-   (10,10)  15.0    ; y
-   (11,11)  30.0    ; z
-
-   ; LF joints
-   (12,12) 20.0 ; LF_HAA  ; 100.0
-   (13,13) 20.0 ; LF_HFE  ; 70.0
-   (14,14) 10.0 ; LF_KFE  ; 50.0
-
-   ; RF joints
-   (15,15) 20.0 ; RF_HAA  ; 100.0
-   (16,16) 20.0 ; RF_HFE  ; 70.0
-   (17,17) 10.0 ; RF_KFE  ; 50.0
-
-   ; LH joints
-   (18,18) 20.0 ; LH_HAA  ; 100.0
-   (19,19) 20.0 ; LH_HFE  ; 70.0
-   (20,20) 10.0 ; LH_KFE  ; 50.0
-
-   ; RH joints
-   (21,21) 20.0 ; RH_HAA  ; 100.0
-   (22,22) 20.0 ; RH_HFE  ; 70.0
-   (23,23) 10.0 ; RH_KFE  ; 50.0
+    ; Per leg
+    joint_position_HAA       2.0;
+    joint_position_HFE       2.0;
+    joint_position_KFE       1.0;
+    foot_position_x         60.0;
+    foot_position_y         60.0;
+    foot_position_z         60.0;
+    joint_velocity_HAA      0.02;
+    joint_velocity_HFE      0.02;
+    joint_velocity_KFE      0.01;
+    foot_velocity_x          1.0;
+    foot_velocity_y          1.0;
+    foot_velocity_z          1.0;
+    contact_force_x        0.001;
+    contact_force_y        0.001;
+    contact_force_z        0.001;
 }
 
-
-; control weighting
-R
-{
-   scaling 1e-3
-
-   ; LF contact forces
-   (0,0)      1.0    ; LF_X
-   (1,1)      1.0    ; LF_Y
-   (2,2)      1.0    ; LF_Z
-
-   ; RF contact forces
-   (3,3)      1.0    ; RF_X
-   (4,4)      1.0    ; RF_Y
-   (5,5)      1.0    ; RF_Z
-
-   ; LH contact forces
-   (6,6)      1.0    ; LH_X
-   (7,7)      1.0    ; LH_Y
-   (8,8)      1.0    ; LH_Z
-
-   ; RH contact forces
-   (9,9)      1.0    ; RH_X
-   (10,10)    1.0    ; RH_Y
-   (11,11)    1.0    ; RH_Z
-
-   ; LF joint velocities
-   (12,12) 1000   ; LF_HAA
-   (13,13) 1000   ; LF_HFE
-   (14,14) 1000   ; LF_KFE
-
-   ; RF joint velocities
-   (15,15) 1000    ; RF_HAA
-   (16,16) 1000    ; RF_HFE
-   (17,17) 1000    ; RF_KFE
-
-   ; LH joint velocities
-   (18,18) 1000    ; LH_HAA
-   (19,19) 1000    ; LH_HFE
-   (20,20) 1000    ; LH_KFE
-
-   ; RH joint velocities
-   (21,21)  1000    ; RH_HAA
-   (22,22)  1000    ; RH_HFE
-   (23,23)  1000    ; RH_KFE
-}
-
-
-; state weighting
-Q_final
-{
-  scaling 1e-1
-
-  ; orientation
-  (0,0) 100.0     ; x
-  (1,1) 200.0     ; y
-  (2,2) 200.0     ; z
-
-  ; position
-  (3,3) 1000.0     ; x
-  (4,4) 1000.0     ; y
-  (5,5) 1500.0     ; z
-
-  ; angular velocity
-  (6,6)   5.0      ; x
-  (7,7)  10.0      ; y
-  (8,8)  10.0      ; z
-
-  ; translational velocity
-  (9,9)    15.0    ; x
-  (10,10)  15.0    ; y
-  (11,11)  30.0    ; z
-
-  ; LF joints
-  (12,12) 0.0    ; LF_HAA
-  (13,13) 0.0    ; LF_HFE
-  (14,14) 0.0    ; LF_KFE
-
-  ; RF joints
-  (15,15) 0.0    ; RF_HAA
-  (16,16) 0.0    ; RF_HFE
-  (17,17) 0.0    ; RF_KFE
-
-  ; LH joints
-  (18,18) 0.0    ; LH_HAA
-  (19,19) 0.0    ; LH_HFE
-  (20,20) 0.0    ; LH_KFE
-
-  ; RH joints
-  (21,21) 0.0    ; RH_HAA
-  (22,22) 0.0    ; RH_HFE
-  (23,23) 0.0    ; RH_KFE
-}
-
-
-; Robot final CoM pose
-CoM_final_pose
-{
-  ; orientation
-  (0,0) 0.0      ; x
-  (1,0) 0.0      ; y
-  (2,0) 0.0      ; z
-
-  ; position
-  (3,0) 2.0      ; x ;1.0
-  (4,0) 0.0      ; y
-  (5,0) 0.0      ; z
-}
-
-; set the endeffector's constraint information in ascending order
-; endeffector_constraint_0
-;{
-;  type  GAP
-;  xMin  0.7  ;0.7
-;  xMax  1.7  ;1.4
-;  yMin  -10.0
-;  yMax  10.0
-;}

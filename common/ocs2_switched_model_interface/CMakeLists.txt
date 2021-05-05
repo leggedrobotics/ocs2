@@ -8,9 +8,9 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_msgs
   ocs2_oc
   ocs2_ros_interfaces
-	visualization_msgs
-	geometry_msgs
-	ocs2_switched_model_msgs
+  visualization_msgs
+  geometry_msgs
+  ocs2_switched_model_msgs
 )
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -47,8 +47,9 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/constraint/FrictionConeConstraint.cpp
-	src/cost/SwitchedModelCostBase.cpp
 	src/cost/FootPlacementCost.cpp
+	src/cost/MotionTrackingCost.cpp
+	src/cost/SwitchedModelCostBase.cpp
 	src/foot_planner/CubicSpline.cpp
 	src/foot_planner/FootPhase.cpp
 	src/foot_planner/QuinticSplineSwing.cpp

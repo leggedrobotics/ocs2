@@ -13,6 +13,7 @@
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/cost/FootPlacementCost.h"
+#include "ocs2_switched_model_interface/cost/MotionTrackingCost.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
@@ -23,15 +24,17 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
 
   using ad_interface_t = ocs2::CppAdInterface;
   using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
-  using ad_com_model_t = ComModelBase<ad_scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   using com_model_t = ComModelBase<scalar_t>;
+  using ad_com_model_t = ComModelBase<ad_scalar_t>;
+  using kinematic_model_t = KinematicsModelBase<ocs2::scalar_t>;
+  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
   //! Constructor
-  SwitchedModelCostBase(const com_model_t& comModel, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
-                        const SwitchedModelModeScheduleManager& modeScheduleManager, const SwingTrajectoryPlanner& swingTrajectoryPlanner,
-                        const state_matrix_t& Q, const input_matrix_t& R, ModelSettings options = ModelSettings());
+  SwitchedModelCostBase(const MotionTrackingCost::Weights& trackingWeights, const SwitchedModelModeScheduleManager& modeScheduleManager,
+                        const SwingTrajectoryPlanner& swingTrajectoryPlanner, const kinematic_model_t& kinematicModel,
+                        const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel, const ad_com_model_t& adComModel,
+                        ModelSettings options = ModelSettings());
 
   //! Destructor
   ~SwitchedModelCostBase() override = default;
@@ -42,25 +45,24 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
   scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
   ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  //! No final cost for events.
+  scalar_t finalCost(scalar_t t, const vector_t& x) override { return 0.0; }
+  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override {
+    return ScalarFunctionQuadraticApproximation::Zero(x.size(), 0);
+  }
 
- private:
+ protected:
   //! Copy constructor
   SwitchedModelCostBase(const SwitchedModelCostBase& rhs);
 
+ private:
   void update(scalar_t t, const vector_t& x, const vector_t& u);
 
-  std::unique_ptr<FootPlacementCost> footPlacementCost_;
-
   std::unique_ptr<com_model_t> comModelPtr_;
-
+  std::unique_ptr<MotionTrackingCost> trackingCostPtr_;
+  std::unique_ptr<FootPlacementCost> footPlacementCost_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
-
-  // Quadratic cost terms
-  state_matrix_t Q_;
-  input_matrix_t R_;
 };
 
 }  // end of namespace switched_model

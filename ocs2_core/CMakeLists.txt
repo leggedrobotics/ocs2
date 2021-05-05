@@ -74,6 +74,8 @@ add_library(${PROJECT_NAME}
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
   src/constraint/LinearConstraint.cpp
+  src/constraint/LinearStateConstraint.cpp
+  src/constraint/LinearStateInputConstraint.cpp
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
@@ -309,6 +311,7 @@ target_link_libraries(test_cost
 catkin_add_gtest(test_constraint
   test/constraint/testConstraintCollection.cpp
   test/constraint/testConstraintCppAd.cpp
+  test/constraint/testLinearConstraint.cpp
 )
 target_link_libraries(test_constraint
   ${PROJECT_NAME}

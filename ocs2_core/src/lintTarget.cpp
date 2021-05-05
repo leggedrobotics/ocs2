@@ -1,4 +1,5 @@
 #include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 
 // Automatic Differentation
@@ -28,8 +29,6 @@
 #include <ocs2_core/cost/CostBase.h>
 #include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/cost/StateCost.h>
@@ -79,8 +78,8 @@
 
 // soft_constraint
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
-#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
-#include <ocs2_core/soft_constraint/StateSoftConstraint.h>
+// #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
+// #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 #include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>

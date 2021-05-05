@@ -53,20 +53,18 @@ class ControlledSystemBase : public OdeBase {
 
   /**
    * Sets the control policy using the controller class.
-   *
-   * @param [in] controllerPtr: A pointer to the control policy.
    */
-  void setController(ControllerBase* controllerPtr);
-
-  /** Set pre-computation module pointer */
-  void setPreCompPtr(PreComputation* preCompPtr) { preCompPtr_ = preCompPtr; }
+  void setController(ControllerBase* controllerPtr) { controllerPtr_ = controllerPtr; };
 
   /**
    * Returns the controller pointer.
-   *
-   * @return A pointer to controller.
    */
-  ControllerBase* controllerPtr() const;
+  ControllerBase* controllerPtr() const { return controllerPtr_; };
+
+  /**
+   * Set pre-computation pointer.
+   */
+  void setPreCompPtr(PreComputation* preCompPtr) { preCompPtr_ = preCompPtr; }
 
   /**
    * Computes the flow map of a system.

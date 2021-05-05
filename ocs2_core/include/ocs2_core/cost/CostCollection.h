@@ -42,23 +42,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-template <typename COST>
-class CostCollection final {
+/**
+ * Cost function combining a collection of cost terms.
+ * @tparam CostType: Either StateCost or StateInputCost
+ */
+template <typename CostType>
+class CostCollection {
  public:
   CostCollection() = default;
   ~CostCollection() = default;
 
   /** Copy constructor */
-  CostCollection(const CostCollection<COST>& rhs);
+  CostCollection(const CostCollection<CostType>& rhs);
 
   /** Move constructor */
-  CostCollection(CostCollection<COST>&& rhs) noexcept;
+  CostCollection(CostCollection<CostType>&& rhs) noexcept;
 
   /** Copy assignment */
-  CostCollection<COST>& operator=(const CostCollection<COST>& rhs);
+  CostCollection<CostType>& operator=(const CostCollection<CostType>& rhs);
 
   /** Move assignment */
-  CostCollection<COST>& operator=(CostCollection<COST>&& rhs);
+  CostCollection<CostType>& operator=(CostCollection<CostType>&& rhs);
 
   /**
    * Adds a cost term to the collection, and transfer ownership to the collection
@@ -66,42 +70,46 @@ class CostCollection final {
    * @param name: Name stored along with the cost term.
    * @param cost: Cost to be added.
    */
-  void add(std::string name, std::unique_ptr<COST> cost);
+  void add(std::string name, std::unique_ptr<CostType> cost);
 
   /**
    * Use to modify a cost term. The returned pointer is not to be stored since the CostCollection
    * contains a unique pointer to the object
-   * @tparam Derived: derived class of COST to cast to. Casts to the base class by default
+   * @tparam Derived: derived class of CostType to cast to. Casts to the base class by default
    * @param name: Name of the cost term to modify
    * @return A reference to the underlying cost term
    */
-  template <typename Derived = COST>
+  template <typename Derived = CostType>
   Derived& get(const std::string& name) {
-    static_assert(std::is_base_of<COST, Derived>::value, "Template argument must derive from COST");
+    static_assert(std::is_base_of<CostType, Derived>::value, "Template argument must derive from CostType");
     // if the key does not exist throws an exception
     return dynamic_cast<Derived&>(*costTermMap_.at(name));
   }
 
   /** Get state-input cost value */
-  template <typename T = COST, EnableIfStateInputCost_t<T> = true>
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const;
+  template <typename T = CostType, EnableIfStateInputCost_t<T> = true>
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
+                    const PreComputation* preCompPtr) const;
 
   /** Get state-input cost quadratic approximation */
-  template <typename T = COST, EnableIfStateInputCost_t<T> = true>
+  template <typename T = CostType, EnableIfStateInputCost_t<T> = true>
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const;
+                                                                 const CostDesiredTrajectories& desiredTrajectory,
+                                                                 const PreComputation* preCompPtr) const;
 
   /** Get state-only cost value */
-  template <typename T = COST, EnableIfStateCost_t<T> = true>
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+  template <typename T = CostType, EnableIfStateCost_t<T> = true>
+  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+                    const PreComputation* preCompPtr) const;
 
   /** Get state-only cost quadratic approximation */
-  template <typename T = COST, EnableIfStateCost_t<T> = true>
+  template <typename T = CostType, EnableIfStateCost_t<T> = true>
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const;
+                                                                 const CostDesiredTrajectories& desiredTrajectory,
+                                                                 const PreComputation* preCompPtr) const;
 
  private:
-  std::map<std::string, std::unique_ptr<COST>> costTermMap_;
+  std::map<std::string, std::unique_ptr<CostType>> costTermMap_;
 };
 
 // explicit template instantiation

@@ -27,49 +27,73 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(PreComputation* preCompPtr) : preCompPtr_(preCompPtr) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& other) : OdeBase(other) {
-  setController(other.controllerPtr());
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
-  assert(controllerPtr_ != nullptr);
-  const vector_t u = controllerPtr_->computeInput(t, x);
-  return computeFlowMap(t, x, u);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->request(PreComputation::Request::Dynamics, t, x, u);
+StateInputCostCollection::StateInputCostCollection(const StateInputCostCollection& other) {
+  // Loop through all costs by name and clone into the new object
+  costTermMap_.clear();
+  for (const auto& costPair : other.costTermMap_) {
+    add(costPair.first, std::unique_ptr<StateInputCost>(costPair.second->clone()));
   }
-  return computeFlowMap(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x) {
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->requestPreJump(PreComputation::Request::Dynamics, t, x);
+StateInputCostCollection* StateInputCostCollection::clone() const {
+  return new StateInputCostCollection(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void StateInputCostCollection::add(std::string name, std::unique_ptr<StateInputCost> costTerm) {
+  auto info = costTermMap_.emplace(std::move(name), std::move(costTerm));
+  if (!info.second) {
+    throw std::runtime_error(std::string("[StateInputCostCollection::add] Cost term with name \"") + info.first->first +
+                             "\" already exists");
   }
-  return computeJumpMap(t, x, /* u, */ preCompPtr_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                            const CostDesiredTrajectories& desiredTrajectory, const PreComputation* preCompPtr) const {
+  scalar_t cost = 0.0;
+
+  // accumulate cost terms
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      cost += costPair.second->getValue(time, state, input, desiredTrajectory, preCompPtr);
+    }
+  }
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                         const vector_t& input,
+                                                                                         const CostDesiredTrajectories& desiredTrajectory,
+                                                                                         const PreComputation* preCompPtr) const {
+  auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
+
+  // accumulate cost term quadratic approximation
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory, preCompPtr);
+    }
+  }
+
+  return cost;
 }
 
 }  // namespace ocs2

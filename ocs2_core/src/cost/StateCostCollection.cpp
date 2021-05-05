@@ -27,89 +27,74 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/StateCostCollection.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticCostFunction::QuadraticCostFunction(matrix_t Q, matrix_t R, matrix_t QFinal, matrix_t P /* = matrix_t() */)
-    : Q_(std::move(Q)), R_(std::move(R)), P_(std::move(P)), QFinal_(std::move(QFinal)) {
-  if (P_.size() == 0) {
-    P_ = matrix_t::Zero(R_.rows(), Q_.rows());
+StateCostCollection::StateCostCollection(const StateCostCollection& other) {
+  // Loop through all costs by name and clone into the new object
+  costTermMap_.clear();
+  for (const auto& costPair : other.costTermMap_) {
+    add(costPair.first, std::unique_ptr<StateCost>(costPair.second->clone()));
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticCostFunction* QuadraticCostFunction::clone() const {
-  return new QuadraticCostFunction(*this);
+StateCostCollection* StateCostCollection::clone() const {
+  return new StateCostCollection(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticCostFunction::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
+void StateCostCollection::add(std::string name, std::unique_ptr<StateCost> costTerm) {
+  auto info = costTermMap_.emplace(std::move(name), std::move(costTerm));
+  if (!info.second) {
+    throw std::runtime_error(std::string("[StateCostCollection::add] Cost term with name \"") + info.first->first + "\" already exists");
   }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  const vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
-  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticCostFunction::finalCost(scalar_t t, const vector_t& x) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
+scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+                                       const PreComputation* preCompPtr) const {
+  scalar_t cost = 0.0;
+
+  // accumulate cost terms
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      cost += costPair.second->getValue(time, state, desiredTrajectory, preCompPtr);
+    }
   }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
+
+  return cost;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation QuadraticCostFunction::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
+ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                    const CostDesiredTrajectories& desiredTrajectory,
+                                                                                    const PreComputation* preCompPtr) const {
+  auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
+
+  // accumulate cost term quadratic approximation
+  for (const auto& costPair : costTermMap_) {
+    if (costPair.second->isActive()) {
+      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory, preCompPtr);
+      cost.f += costTermApproximation.f;
+      cost.dfdx += costTermApproximation.dfdx;
+      cost.dfdxx += costTermApproximation.dfdxx;
+    }
   }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  const vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
-  const vector_t qDeviation = Q_ * xDeviation;
-  const vector_t rDeviation = R_ * uDeviation;
-  const vector_t pDeviation = P_ * xDeviation;
 
-  ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation) + uDeviation.dot(pDeviation);
-  L.dfdx = qDeviation;
-  L.dfdx.noalias() += P_.transpose() * uDeviation;
-  L.dfdu = rDeviation + pDeviation;
-  L.dfdxx = Q_;
-  L.dfdux = P_;
-  L.dfduu = R_;
-  return L;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ScalarFunctionQuadraticApproximation QuadraticCostFunction::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
-  }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  const vector_t qDeviation = QFinal_ * xDeviation;
-
-  ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = 0.5 * xDeviation.dot(qDeviation);
-  Phi.dfdx = qDeviation;
-  Phi.dfdxx = QFinal_;
-  return Phi;
+  return cost;
 }
 
 }  // namespace ocs2

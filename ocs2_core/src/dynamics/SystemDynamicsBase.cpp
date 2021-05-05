@@ -50,7 +50,7 @@ VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestPreJump(Req::Dynamics | Req::Approximation, t, x);
   }
-  return jumpMapLinearApproximation(t, x, u, preCompPtr_);
+  return jumpMapLinearApproximation(t, x, preCompPtr_);
 }
 
 /******************************************************************************************************/

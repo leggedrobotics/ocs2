@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,50 +29,63 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <map>
 #include <memory>
+#include <string>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include <ocs2_core/automatic_differentiation/Types.h>
-#include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/CostDesiredTrajectories.h>
+
+#include "StateInputCost.h"
 
 namespace ocs2 {
 
-/** CppAD state-only cost base class*/
-class StateCostCppAd : public StateCost {
+/**
+ * Cost function combining a collection of cost terms.
+ */
+class StateInputCostCollection : StateInputCost {
  public:
-  StateCostCppAd() = default;
-  ~StateCostCppAd() override = default;
+  StateInputCostCollection() = default;
+  ~StateInputCostCollection() override = default;
+  StateInputCostCollection* clone() const override;
 
-  /** Initialize the CppAd interface
-   * @param stateDim : state vector dimension.
-   * @param parameterDim : parameter vector dimension, set to 0 if getParameters() is not used.
-   * @param modelName : Name of the generate model library.
-   * @param modelFolder : Folder where the model library files are saved.
-   * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
-   * @param verbose : Print information.
+  /**
+   * Adds a cost term to the collection, and transfer ownership to the collection
+   * The provided name must be unique and is later used to access the cost term.
+   * @param name: Name stored along with the cost term.
+   * @param cost: Cost to be added.
    */
-  void initialize(size_t stateDim, size_t parameterDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
-                  bool recompileLibraries = true, bool verbose = true);
+  void add(std::string name, std::unique_ptr<StateInputCost> cost);
 
-  /* Get the parameter vector */
-  virtual vector_t getParameters(scalar_t time, const CostDesiredTrajectories& desiredTrajectory) const { return vector_t(0); };
+  /**
+   * Use to modify a cost term. The returned pointer is not to be stored since the StateInputCostCollection
+   * contains a unique pointer to the object
+   * @tparam Derived: derived class of StateInputCost to cast to. Casts to the base class by default
+   * @param name: Name of the cost term to modify
+   * @return A reference to the underlying cost term
+   */
+  template <typename Derived = StateInputCost>
+  Derived& get(const std::string& name) {
+    static_assert(std::is_base_of<StateInputCost, Derived>::value, "Template argument must derive from StateInputCost");
+    // if the key does not exist throws an exception
+    return dynamic_cast<Derived&>(*costTermMap_.at(name));
+  }
 
-  /* Cost evaluation */
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+  /** Get state-input cost value */
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
                     const PreComputation* preCompPtr) const override;
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+
+  /** Get state-input cost quadratic approximation */
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
                                                                  const PreComputation* preCompPtr) const override;
 
  protected:
-  StateCostCppAd(const StateCostCppAd& rhs);
-
-  /** The CppAD cost function */
-  virtual ad_scalar_t costFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const = 0;
+  /** Copy constructor */
+  StateInputCostCollection(const StateInputCostCollection& other);
 
  private:
-  std::unique_ptr<ocs2::CppAdInterface> adInterfacePtr_;
+  std::map<std::string, std::unique_ptr<StateInputCost>> costTermMap_;
 };
 
 }  // namespace ocs2

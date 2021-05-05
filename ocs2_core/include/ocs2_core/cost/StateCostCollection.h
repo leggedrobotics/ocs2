@@ -29,40 +29,63 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/StateCost.h>
+#include <map>
+#include <memory>
+#include <string>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/CostDesiredTrajectories.h>
+
+#include "StateCost.h"
 
 namespace ocs2 {
 
-/** Quadratic state-only cost term */
-class QuadraticStateCost : public StateCost {
+/**
+ * Cost function combining a collection of cost terms.
+ */
+class StateCostCollection : StateCost {
  public:
+  StateCostCollection() = default;
+  ~StateCostCollection() override = default;
+  StateCostCollection* clone() const override;
+
   /**
-   * Constructor for the quadratic cost function defined as the following:
-   * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$.
-   * @param [in] Q: \f$ Q \f$
+   * Adds a cost term to the collection, and transfer ownership to the collection
+   * The provided name must be unique and is later used to access the cost term.
+   * @param name: Name stored along with the cost term.
+   * @param cost: Cost to be added.
    */
-  explicit QuadraticStateCost(matrix_t Q);
-  ~QuadraticStateCost() override = default;
-  QuadraticStateCost* clone() const override;
+  void add(std::string name, std::unique_ptr<StateCost> cost);
 
-  /** Get cost term value */
+  /**
+   * Use to modify a cost term. The returned pointer is not to be stored since the StateCostCollection
+   * contains a unique pointer to the object
+   * @tparam Derived: derived class of StateCost to cast to. Casts to the base class by default
+   * @param name: Name of the cost term to modify
+   * @return A reference to the underlying cost term
+   */
+  template <typename Derived = StateCost>
+  Derived& get(const std::string& name) {
+    static_assert(std::is_base_of<StateCost, Derived>::value, "Template argument must derive from StateCost");
+    // if the key does not exist throws an exception
+    return dynamic_cast<Derived&>(*costTermMap_.at(name));
+  }
+
+  /** Get state-only cost value */
   scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation*) const final;
+                    const PreComputation* preCompPtr) const override;
 
-  /** Get cost term quadratic approximation */
+  /** Get state-only cost quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation*) const final;
+                                                                 const PreComputation* preCompPtr) const override;
 
  protected:
-  QuadraticStateCost(const QuadraticStateCost& rhs) = default;
-
-  /** Computes the state deviation for the nominal state.
-   * This method can be overwritten if desiredTrajectory has a different dimensions. */
-  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+  /** Copy constructor */
+  StateCostCollection(const StateCostCollection& other);
 
  private:
-  matrix_t Q_;
+  std::map<std::string, std::unique_ptr<StateCost>> costTermMap_;
 };
 
 }  // namespace ocs2

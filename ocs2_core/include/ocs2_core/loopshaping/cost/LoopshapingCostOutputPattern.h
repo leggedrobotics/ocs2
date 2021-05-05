@@ -5,11 +5,11 @@
 
 namespace ocs2 {
 
-class LoopshapingCostOutputPattern final : public LoopshapingCost {
+class LoopshapingCostOutputPattern final : public LoopshapingStateInputCost {
  public:
-  using BASE = LoopshapingCost;
+  using BASE = LoopshapingStateInputCost;
 
-  LoopshapingCostOutputPattern(const CostFunctionBase& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+  LoopshapingCostOutputPattern(const StateInputCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemCost, std::move(loopshapingDefinition)) {}
 
   ~LoopshapingCostOutputPattern() override = default;
@@ -18,11 +18,12 @@ class LoopshapingCostOutputPattern final : public LoopshapingCost {
 
   LoopshapingCostOutputPattern* clone() const override { return new LoopshapingCostOutputPattern(*this); };
 
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                 const CostDesiredTrajectories& desiredTrajectory,
+                                                                 const PreComputation* preCompPtr) const override;
 
  protected:
   using BASE::loopshapingDefinition_;
-  using BASE::systemCost_;
 };
 
 }  // namespace ocs2

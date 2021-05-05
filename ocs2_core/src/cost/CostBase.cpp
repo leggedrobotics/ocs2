@@ -43,7 +43,7 @@ scalar_t CostBase::getValue(scalar_t t, const vector_t& x, const vector_t& u) {
   if (preCompPtr_ != nullptr) {
     preCompPtr_->request(PreComputation::Request::Cost, t, x, u);
   }
-  return getValue(t, x, u, preCompPtr_);
+  return intermediateCost_.getValue(t, x, u, preCompPtr_) + intermediateStateCost_.getValue(t, x, preCompPtr_);
 }
 
 /******************************************************************************************************/
@@ -53,7 +53,7 @@ scalar_t CostBase::getPreJumpValue(scalar_t t, const vector_t& x, const vector_t
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestPreJump(PreComputation::Request::Cost, t, x);
   }
-  return getPreJumpValue(t, x, u, preCompPtr_);
+  return preJumpCost_.getValue(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
@@ -63,7 +63,7 @@ scalar_t CostBase::getFinalValue(scalar_t t, const vector_t& x) {
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestFinal(PreComputation::Request::Cost, t, x);
   }
-  return getFinalValue(t, x, preCompPtr_);
+  return finalCost_.getValue(t, x, preCompPtr_);
 }
 
 /******************************************************************************************************/
@@ -73,7 +73,8 @@ ScalarFunctionQuadraticApproximation CostBase::getQuadraticApproximation(scalar_
   if (preCompPtr_ != nullptr) {
     preCompPtr_->request(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x, u);
   }
-  return getQuadraticApproximation(t, x, u, preCompPtr_);
+  return intermediateCost_.getQuadraticApproximation(t, x, u, preCompPtr_) +=
+         intermediateStateCost_.getQuadraticApproximation(t, x, preCompPtr_);
 }
 
 /******************************************************************************************************/
@@ -83,7 +84,7 @@ ScalarFunctionQuadraticApproximation CostBase::getPreJumpQuadraticApproximation(
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestPreJump(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x);
   }
-  return getPreJumpQuadraticApproximation(t, x, u, preCompPtr_);
+  return preJumpCost_.getQuadraticApproximation(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
@@ -93,7 +94,7 @@ ScalarFunctionQuadraticApproximation CostBase::getFinalQuadraticApproximation(sc
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestFinal(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x);
   }
-  return getFinalQuadraticApproximation(t, x, preCompPtr_);
+  return finalCost_.getQuadraticApproximation(t, x, preCompPtr_);
 }
 
 /******************************************************************************************************/

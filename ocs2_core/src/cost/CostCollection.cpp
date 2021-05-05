@@ -34,35 +34,35 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename COST>
-CostCollection<COST>::CostCollection(const CostCollection<COST>& rhs) {
+template <typename CostType>
+CostCollection<CostType>::CostCollection(const CostCollection& other) {
   // Loop through all costs by name and clone into the new object
   costTermMap_.clear();
-  for (const auto& costPair : rhs.costTermMap_) {
-    add(costPair.first, std::unique_ptr<COST>(costPair.second->clone()));
+  for (const auto& costPair : other.costTermMap_) {
+    add(costPair.first, std::unique_ptr<CostType>(costPair.second->clone()));
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename COST>
-CostCollection<COST>::CostCollection(CostCollection<COST>&& rhs) noexcept : costTermMap_(std::move(rhs.costTermMap_)) {}
+template <typename CostType>
+CostCollection<CostType>::CostCollection(CostCollection<CostType>&& other) noexcept : costTermMap_(std::move(other.costTermMap_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename COST>
-CostCollection<COST>& CostCollection<COST>::operator=(const CostCollection<COST>& rhs) {
-  *this = CostCollection<COST>(rhs);
+template <typename CostType>
+CostCollection<CostType>& CostCollection<CostType>::operator=(const CostCollection<CostType>& rhs) {
+  *this = CostCollection<CostType>(rhs);
   return *this;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename COST>
-CostCollection<COST>& CostCollection<COST>::operator=(CostCollection<COST>&& rhs) {
+template <typename CostType>
+CostCollection<CostType>& CostCollection<CostType>::operator=(CostCollection<CostType>&& rhs) {
   std::swap(costTermMap_, rhs.costTermMap_);
   return *this;
 }
@@ -70,8 +70,8 @@ CostCollection<COST>& CostCollection<COST>::operator=(CostCollection<COST>&& rhs
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename COST>
-void CostCollection<COST>::add(std::string name, std::unique_ptr<COST> costTerm) {
+template <typename CostType>
+void CostCollection<CostType>::add(std::string name, std::unique_ptr<CostType> costTerm) {
   auto info = costTermMap_.emplace(std::move(name), std::move(costTerm));
   if (!info.second) {
     throw std::runtime_error(std::string("[CostCollection::add] Cost term with name \"") + info.first->first + "\" already exists");
@@ -84,13 +84,14 @@ void CostCollection<COST>::add(std::string name, std::unique_ptr<COST> costTerm)
 template <>
 template <>
 scalar_t CostCollection<StateInputCost>::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                                  const CostDesiredTrajectories& desiredTrajectory) const {
+                                                  const CostDesiredTrajectories& desiredTrajectory,
+                                                  const PreComputation* preCompPtr) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getValue(time, state, input, desiredTrajectory);
+      cost += costPair.second->getValue(time, state, input, desiredTrajectory, preCompPtr);
     }
   }
 
@@ -103,13 +104,14 @@ scalar_t CostCollection<StateInputCost>::getValue(scalar_t time, const vector_t&
 template <>
 template <>
 ScalarFunctionQuadraticApproximation CostCollection<StateInputCost>::getQuadraticApproximation(
-    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
+    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
+    const PreComputation* preCompPtr) const {
   auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
 
   // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory);
+      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory, preCompPtr);
     }
   }
 
@@ -121,13 +123,14 @@ ScalarFunctionQuadraticApproximation CostCollection<StateInputCost>::getQuadrati
 /******************************************************************************************************/
 template <>
 template <>
-scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+                                             const PreComputation* preCompPtr) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getValue(time, state, desiredTrajectory);
+      cost += costPair.second->getValue(time, state, desiredTrajectory, preCompPtr);
     }
   }
 
@@ -139,14 +142,15 @@ scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& stat
 /******************************************************************************************************/
 template <>
 template <>
-ScalarFunctionQuadraticApproximation CostCollection<StateCost>::getQuadraticApproximation(
-    scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+ScalarFunctionQuadraticApproximation CostCollection<StateCost>::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                          const CostDesiredTrajectories& desiredTrajectory,
+                                                                                          const PreComputation* preCompPtr) const {
   auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
 
   // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory);
+      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory, preCompPtr);
       cost.f += costTermApproximation.f;
       cost.dfdx += costTermApproximation.dfdx;
       cost.dfdxx += costTermApproximation.dfdxx;

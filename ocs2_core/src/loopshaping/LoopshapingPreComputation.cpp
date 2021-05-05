@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Ruben Grandia. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,49 +27,80 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/dynamics/ControlledSystemBase.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(PreComputation* preCompPtr) : preCompPtr_(preCompPtr) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& other) : OdeBase(other) {
-  setController(other.controllerPtr());
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
-  assert(controllerPtr_ != nullptr);
-  const vector_t u = controllerPtr_->computeInput(t, x);
-  return computeFlowMap(t, x, u);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->request(PreComputation::Request::Dynamics, t, x, u);
+LoopshapingPreComputation::LoopshapingPreComputation(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
+                                                     const PreComputation* systemPreCompPtr)
+    : loopshapingDefinition_(std::move(loopshapingDefinition)) {
+  if (systemPreCompPtr != nullptr) {
+    systemPreCompPtr_.reset(systemPreCompPtr->clone());
+    filteredSystemPreCompPtr_.reset(systemPreCompPtr->clone());
   }
-  return computeFlowMap(t, x, u, preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x) {
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->requestPreJump(PreComputation::Request::Dynamics, t, x);
+LoopshapingPreComputation::LoopshapingPreComputation(const LoopshapingPreComputation& other)
+    : loopshapingDefinition_(other.loopshapingDefinition_) {
+  if (other.systemPreCompPtr_ != nullptr) {
+    systemPreCompPtr_.reset(other.systemPreCompPtr_->clone());
+    filteredSystemPreCompPtr_.reset(other.filteredSystemPreCompPtr_->clone());
   }
-  return computeJumpMap(t, x, /* u, */ preCompPtr_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LoopshapingPreComputation* LoopshapingPreComputation::clone() const {
+  return new LoopshapingPreComputation(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LoopshapingPreComputation::request(Request requestFlags, scalar_t t, const vector_t& x, const vector_t& u) {
+  x_system_ = loopshapingDefinition_->getSystemState(x);
+  u_system_ = loopshapingDefinition_->getSystemInput(x, u);
+  x_filter_ = loopshapingDefinition_->getFilterState(x);
+  u_filter_ = loopshapingDefinition_->getFilteredInput(x, u);
+
+  if (systemPreCompPtr_ != nullptr) {
+    systemPreCompPtr_->request(requestFlags, t, x_system_, u_system_);
+    if (requestFlags & Request::Cost) {
+      // state-input cost function is evaluated on both u_system and u_filter.
+      filteredSystemPreCompPtr_->request(requestFlags, t, x_system_, u_filter_);
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LoopshapingPreComputation::requestPreJump(Request requestFlags, scalar_t t, const vector_t& x) {
+  x_system_ = loopshapingDefinition_->getSystemState(x);
+  x_filter_ = loopshapingDefinition_->getFilterState(x);
+
+  if (systemPreCompPtr_ != nullptr) {
+    systemPreCompPtr_->requestPreJump(requestFlags, t, x_system_);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LoopshapingPreComputation::requestFinal(Request requestFlags, scalar_t t, const vector_t& x) {
+  x_system_ = loopshapingDefinition_->getSystemState(x);
+  x_filter_ = loopshapingDefinition_->getFilterState(x);
+
+  if (systemPreCompPtr_ != nullptr) {
+    systemPreCompPtr_->requestFinal(requestFlags, t, x_system_);
+  }
 }
 
 }  // namespace ocs2

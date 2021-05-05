@@ -46,15 +46,17 @@ namespace ocs2 {
  */
 class LinearQuadraticApproximator {
  public:
+  using PreComputation::Request;
+
   /**
    * Constructor
    */
-  LinearQuadraticApproximator(SystemDynamicsBase& systemDynamics, CostBase& cost, ConstraintBase& constraint,
-                              PreComputation& preComputation, bool checkNumericalCharacteristics = true)
+  LinearQuadraticApproximator(SystemDynamicsBase& systemDynamics, CostBase& cost, ConstraintBase& constraint, PreComputation* preCompPtr,
+                              bool checkNumericalCharacteristics = true)
       : dynamics_(dynamics),
         cost_(cost),
         constraint_(constraint),
-        preComputation_(preComputation),
+        preCompPtr_(preCompPtr),
         checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
 
   /**
@@ -130,10 +132,10 @@ class LinearQuadraticApproximator {
   void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
  private:
+  PreComputation* preCompPtr_;
   SystemDynamicsBase& systemDynamics;
   CostBase& cost;
   ConstraintBase& constraint;
-  PreComputation& preComputation;
 
   bool checkNumericalCharacteristics_;
 };

@@ -81,10 +81,10 @@ add_library(${PROJECT_NAME}
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/CostCollection.cpp
-  src/cost/CostFunctionBase.cpp
-  src/cost/CostBase.cpp
+  src/cost/StateCostCollection.cpp
+  src/cost/StateInputCostCollection.cpp
+  # src/cost/CostBase.cpp
   src/cost/CostDesiredTrajectories.cpp
-  src/cost/QuadraticCostFunction.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
   src/cost/StateCostCppAd.cpp
@@ -106,13 +106,13 @@ add_library(${PROJECT_NAME}
   src/integration/StateTriggeredEventHandler.cpp
   src/integration/SystemEventHandler.cpp
   src/logic/ModeSchedule.cpp
-  # src/loopshaping/LoopshapingPropertyTree.cpp
-  # src/loopshaping/LoopshapingFilter.cpp
-  # src/loopshaping/LoopshapingOperatingPoint.cpp
-  # src/loopshaping/cost/LoopshapingCost.cpp
-  # src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
-  # src/loopshaping/cost/LoopshapingCostInputPattern.cpp
-  # src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
+  src/loopshaping/LoopshapingPropertyTree.cpp
+  src/loopshaping/LoopshapingFilter.cpp
+  src/loopshaping/LoopshapingOperatingPoint.cpp
+  src/loopshaping/cost/LoopshapingCost.cpp
+  src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
+  src/loopshaping/cost/LoopshapingCostInputPattern.cpp
+  src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
   # src/loopshaping/constraint/LoopshapingConstraint.cpp
   # src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
   # src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
@@ -122,13 +122,14 @@ add_library(${PROJECT_NAME}
   # src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
   # src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
   # src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
+  src/loopshaping/LoopshapingPreComputation.cpp
   src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
   src/misc/Log.cpp
   src/soft_constraint/SoftConstraintPenalty.cpp
-  src/soft_constraint/StateSoftConstraint.cpp
-  src/soft_constraint/StateInputSoftConstraint.cpp
+  # src/soft_constraint/StateSoftConstraint.cpp
+  # src/soft_constraint/StateInputSoftConstraint.cpp
   src/soft_constraint/penalties/DoubleSidedPenalty.cpp
   src/soft_constraint/penalties/QuadraticPenalty.cpp
   src/soft_constraint/penalties/SmoothAbsolutePenalty.cpp

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,43 +29,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
 
 /**
- * Quadratic Cost Function.
+ * Loopshaping Pre-Computation decorator class.
  */
-class QuadraticCostFunction : public CostFunctionBase {
+class LoopshapingPreComputation final : public PreComputation {
  public:
-  /**
-   * Constructor for the running and final cost function defined as the following:
-   * - \f$ L = 0.5(x-x_{n})' Q (x-x_{n}) + 0.5(u-u_{n})' R (u-u_{n}) + (u-u_{n})' P (x-x_{n}) \f$
-   * - \f$ \Phi = 0.5(x-x_{f})' Q_{f} (x-x_{f}) \f$.
-   * @param [in] Q: \f$ Q \f$
-   * @param [in] R: \f$ R \f$
-   * @param [in] QFinal: \f$ Q_{f}\f$
-   * @param [in] P: \f$ P \f$
-   */
-  QuadraticCostFunction(matrix_t Q, matrix_t R, matrix_t QFinal, matrix_t P = matrix_t());
+  using PreComputation::Request;
 
-  /** Destructor */
-  ~QuadraticCostFunction() override = default;
+  LoopshapingPreComputation(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition, const PreComputation* systemPreCompPtr);
+  ~LoopshapingPreComputation() override = default;
 
-  /** Clone */
-  QuadraticCostFunction* clone() const override;
+  LoopshapingPreComputation* clone() const override;
+  void request(Request requestFlags, scalar_t t, const vector_t& x, const vector_t& u) override;
+  void requestPreJump(Request requestFlags, scalar_t t, const vector_t& x) override;
+  void requestFinal(Request requestFlags, scalar_t t, const vector_t& x) override;
 
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
+  const vector_t& getSystemState() const { return x_system_; }
+  const vector_t& getSystemInput() const { return u_system_; }
+  const vector_t& getFilterState() const { return x_filter_; }
+  const vector_t& getFilterInput() const { return u_filter_; }
+  const PreComputation* getSystemPreComputationPtr() const { return systemPreCompPtr_.get(); }
+  const PreComputation* getFilteredSystemPreComputationPtr() const { return filteredSystemPreCompPtr_.get(); }
 
- protected:
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t P_;
-  matrix_t QFinal_;
+ private:
+  LoopshapingPreComputation(const LoopshapingPreComputation& rhs);
+
+ private:
+  vector_t x_system_;
+  vector_t u_system_;
+  vector_t x_filter_;
+  vector_t u_filter_;
+
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
+
+  std::unique_ptr<PreComputation> systemPreCompPtr_;
+  std::unique_ptr<PreComputation> filteredSystemPreCompPtr_;
 };
 
 }  // namespace ocs2

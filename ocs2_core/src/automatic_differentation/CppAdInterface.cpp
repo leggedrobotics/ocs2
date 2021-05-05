@@ -228,7 +228,7 @@ ScalarFunctionQuadraticApproximation CppAdInterface::getGaussNewtonApproximation
     const scalar_t v_i = sparseJacobian[i];
     // Diagonal element always exists:
     gnApprox.dfdxx(col_i, col_i) += v_i * v_i;
-    // Process off diagonals in the lower triangular part of the Hessian, works better with column major storage of Eigen
+    // Process off-diagonals
     size_t j = i + 1;
     while (rows[j] == row_i) {
       const size_t col_j = cols[j];

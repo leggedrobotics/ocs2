@@ -15,6 +15,10 @@ class AnymalBearSwitchedModelTests : public switched_model::TestAnymalSwitchedMo
                                 getAnymalComModel(AnymalModel::Bear), getAnymalComModelAd(AnymalModel::Bear)) {}
 };
 
+TEST_F(AnymalBearSwitchedModelTests, Cost) {
+  this->testCosts();
+}
+
 TEST_F(AnymalBearSwitchedModelTests, Constraints) {
   this->testConstraints();
 }

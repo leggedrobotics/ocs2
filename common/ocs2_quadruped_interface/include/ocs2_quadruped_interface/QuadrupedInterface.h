@@ -17,6 +17,7 @@
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
+#include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
 
 #include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 
@@ -80,16 +81,14 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Access to model settings */
   const ModelSettings& modelSettings() const { return modelSettings_; };
 
+  /** Access to cost settings */
+  const MotionTrackingCost::Weights& costSettings() const { return trackingWeights_; };
+
   /** Gets the rollout class */
   virtual const ocs2::RolloutBase& getRollout() const = 0;
 
   /** Gets the solver synchronized modules */
   virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const = 0;
-
-  /** Loads {Q, R, Q_final} from file and maps R to taskspace of the initial state */
-  static std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> loadCostMatrices(const std::string& pathToConfigFile,
-                                                                                     const kinematic_model_t& kinematicModel,
-                                                                                     const state_vector_t& initialState);
 
  private:
   /** Load the general quadruped settings from file. */
@@ -97,6 +96,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
 
   ocs2::rollout::Settings rolloutSettings_;
   ModelSettings modelSettings_;
+  MotionTrackingCost::Weights trackingWeights_;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;

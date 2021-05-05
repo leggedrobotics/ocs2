@@ -26,34 +26,10 @@ QuadrupedInterface::QuadrupedInterface(const kinematic_model_t& kinematicModel, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto QuadrupedInterface::loadCostMatrices(const std::string& pathToConfigFile, const kinematic_model_t& kinematicModel,
-                                          const state_vector_t& initialState)
-    -> std::tuple<state_matrix_t, input_matrix_t, state_matrix_t> {
-  state_matrix_t Q;
-  input_matrix_t R;
-  state_matrix_t QFinal;
-
-  // cost function components
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q", Q);
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "R", R);
-  ocs2::loadData::loadEigenMatrix(pathToConfigFile, "Q_final", QFinal);
-
-  // costs over Cartesian velocities
-  Eigen::Matrix<scalar_t, 12, 12> J_allFeet;
-  for (int leg = 0; leg < 4; ++leg) {
-    Eigen::Matrix<double, 6, 12> J_thisfoot = kinematicModel.baseToFootJacobianInBaseFrame(leg, getJointPositions(initialState));
-    J_allFeet.block<3, 12>(3 * leg, 0) = J_thisfoot.bottomRows<3>();
-  }
-  R.block<12, 12>(12, 12) = (J_allFeet.transpose() * R.block<12, 12>(12, 12) * J_allFeet).eval();
-  return {Q, R, QFinal};
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   rolloutSettings_ = ocs2::rollout::loadSettings(pathToConfigFile, "rollout");
   modelSettings_ = loadModelSettings(pathToConfigFile);
+  trackingWeights_ = loadWeightsFromFile(pathToConfigFile, "tracking_cost_weights");
 
   // initial state of the switched system
   Eigen::Matrix<scalar_t, RBD_STATE_DIM, 1> initRbdState;

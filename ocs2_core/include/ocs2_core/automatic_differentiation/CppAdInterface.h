@@ -132,6 +132,20 @@ class CppAdInterface {
   matrix_t getJacobian(const vector_t& x, const vector_t& p = vector_t(0)) const;
 
   /**
+   * Returns the full Gauss-Newton approximation of the function.
+   * With auto differentiated function y = f(x,p), the following approximation is made:
+   *
+   * value (scalar) : 0.5 * |y|^2
+   * first derivative : dy/dx' * y
+   * second derivative : dy/dx' * dy/dx
+   *
+   * @param x : input vector of size variableDim
+   * @param p : parameter vector of size parameterDim
+   * @return Quadratic approximation with the values stored in f, dfdx, dfdxx.
+   */
+  ScalarFunctionQuadraticApproximation getGaussNewtonApproximation(const vector_t& x, const vector_t& p = vector_t(0)) const;
+
+  /**
    * Hessian, available per output.
    *
    * @param outputIndex : Output to get the hessian for.

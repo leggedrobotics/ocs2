@@ -34,7 +34,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostBase::CostBase(std::shared_ptr<PreComputation> preCompPtr) : preCompPtr_(std::move(preCompPtr)) {}
+CostBase::CostBase(std::unique_ptr<StateInputCost> costPtr, std::unique_ptr<StateCost> finalCostPtr,
+                   std::unique_ptr<StateCost> preJumpCostPtr, std::shared_ptr<PreComputation> preCompPtr)
+    : costPtr_(std::move(costPtr)),
+      finalCostPtr_(std::move(finalCostPtr)),
+      preJumpCostPtr_(std::move(preJumpCostPtr)),
+      preCompPtr_(std::move(preCompPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

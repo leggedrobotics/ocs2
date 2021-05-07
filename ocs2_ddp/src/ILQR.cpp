@@ -80,7 +80,7 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
 
       LinearQuadraticApproximator lqapprox(*BASE::dynamicsPtrStock_[taskId], *BASE::constraintsPtrStock_[taskId],
                                            *BASE::costPtrStock_[taskId], BASE::preComputationPtrStock_[taskId].get(),
-                                           BASE::ddpSettings_.checkNumericalStability_);
+                                           BASE::settings().checkNumericalStability_);
       lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
                                     continuousTimeModelData);
 

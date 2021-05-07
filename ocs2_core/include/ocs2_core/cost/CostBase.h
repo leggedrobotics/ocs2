@@ -38,12 +38,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Cost Function base class.
+ * Cost Function base class containing intermediate, pre-jump and final cost terms.
+ * It also keeps the pre-computation module and the desired state-input trajectory reference
+ * and provides convenience functions for cost value and approximation.
  */
 class CostBase {
  public:
   /** Constructor */
-  explicit CostBase(std::shared_ptr<PreComputation> preCompPtr);
+  CostBase(std::unique_ptr<StateInputCost> costPtr, std::unique_ptr<StateCost> finalCostPtr, std::unique_ptr<StateCost> preJumpCostPtr,
+           std::shared_ptr<PreComputation> preCompPtr);
 
   /** Delete copy constructor */
   CostBase(const CostBase& other) = delete;
@@ -103,10 +106,10 @@ class CostBase {
 
   const CostDesiredTrajectories* costDesiredTrajectoriesPtr_ = nullptr;
 
-  std::shared_ptr<PreComputation> preCompPtr_;
   std::unique_ptr<StateInputCost> costPtr_;
   std::unique_ptr<StateCost> finalCostPtr_;
   std::unique_ptr<StateCost> preJumpCostPtr_;
+  std::shared_ptr<PreComputation> preCompPtr_;
 };
 
 }  // namespace ocs2

@@ -80,13 +80,13 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] rollout: The rollout class used for simulating the system dynamics.
    * @param [in] systemDynamics: The system dynamics and derivatives for the subsystems.
    * @param [in] constraints: The system constraint function and its derivatives for subsystems.
-   * @param [in] cost: The cost function (intermediate and final costs) and its derivatives for subsystems.
+   * @param [in] costFunction: The cost function (intermediate and final costs) and its derivatives for subsystems.
    * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization.
    * @param [in] preComputationPtr: The pre-computation pointer.
    */
   GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-                 const ConstraintBase& constraints, const CostBase& cost, const SystemOperatingTrajectoriesBase& operatingTrajectories,
-                 const PreComputation* preComputationPtr = nullptr);
+                 const ConstraintBase& constraints, const CostBase& costFunction,
+                 const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr = nullptr);
 
   /**
    * Destructor.
@@ -436,8 +436,6 @@ class GaussNewtonDDP : public SolverBase {
                const std::vector<ControllerBase*>& controllersPtrStock) override;
 
  protected:
-  ddp::Settings ddpSettings_;
-
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};
   std::atomic_size_t nextTimeIndex_{0};
@@ -487,6 +485,8 @@ class GaussNewtonDDP : public SolverBase {
   matrix_array2_t SmTrajectoryStock_;
 
  private:
+  ddp::Settings ddpSettings_;
+
   std::unique_ptr<ThreadPool> threadPoolPtr_;
 
   unsigned long long int rewindCounter_{0};

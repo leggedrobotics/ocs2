@@ -52,7 +52,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-                               const ConstraintBase& constraints, const CostBase& cost,
+                               const ConstraintBase& constraints, const CostBase& costFunction,
                                const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr)
     : SolverBase(), ddpSettings_(std::move(ddpSettings)) {
   // thread-pool
@@ -73,7 +73,7 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
     }
     constraintsPtrStock_.emplace_back(constraints.clone());
     dynamicsPtrStock_.emplace_back(systemDynamics.clone(preComputationPtrStock_.back()));
-    costPtrStock_.emplace_back(cost.clone(preComputationPtrStock_.back()));
+    costPtrStock_.emplace_back(costFunction.clone(preComputationPtrStock_.back()));
 
     // initialize rollout
     dynamicsForwardRolloutPtrStock_.emplace_back(rollout.clone());

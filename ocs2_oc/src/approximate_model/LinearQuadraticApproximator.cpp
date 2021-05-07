@@ -69,10 +69,12 @@ void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t
   // Jump map
   modelData.dynamics_ = dynamics_.jumpMapLinearApproximation(time, state, preCompPtr_);
 
-  // TODO(mspieler): Pre-jump constraints
+  // Pre-jump constraints
+  // state-only equality constraint
+  modelData.stateEqConstr_ = constraint_.finalStateEqualityConstraintLinearApproximation(time, state);
 
   // Pre-jump cost
-  modelData.cost_ = cost_.preJumpCost_.getQuadraticApproximation(time, state, preCompPtr_);
+  modelData.cost_ = cost_.getPreJumpCostFunction().getQuadraticApproximation(time, state, cost_.getCostDesiredTrajectories(), preCompPtr_);
 }
 
 /******************************************************************************************************/
@@ -87,7 +89,7 @@ void LinearQuadraticApproximator::approximateLQProblemAtFinalTime(const scalar_t
   // TODO(mspieler): Final constraints
 
   // Final cost
-  modelData.cost_ = cost_.finalCost_.getQuadraticApproximation(time, state, preCompPtr_);
+  modelData.cost_ = cost_.getFinalCostFunction().getQuadraticApproximation(time, state, cost_.getCostDesiredTrajectories(), preCompPtr_);
 }
 
 /******************************************************************************************************/
@@ -119,19 +121,19 @@ void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, cons
 void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                          ModelData& modelData) const {
   // State-input equality constraint
-  modelData.stateInputEqConstr_ = constraints_.stateInputEqualityConstraintLinearApproximation(time, state, input);
+  modelData.stateInputEqConstr_ = constraint_.stateInputEqualityConstraintLinearApproximation(time, state, input);
   if (modelData.stateInputEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-input equality constraints should be less-equal to the input dimension.");
   }
 
   // State-only equality constraint
-  modelData.stateEqConstr_ = constraints_.stateEqualityConstraintLinearApproximation(time, state);
+  modelData.stateEqConstr_ = constraint_.stateEqualityConstraintLinearApproximation(time, state);
   if (modelData.stateEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-only equality constraints should be less-equal to the input dimension.");
   }
 
   // Inequality constraint
-  modelData.ineqConstr_ = constraints_.inequalityConstraintQuadraticApproximation(time, state, input);
+  modelData.ineqConstr_ = constraint_.inequalityConstraintQuadraticApproximation(time, state, input);
 
   if (checkNumericalCharacteristics_) {
     std::string err = modelData.checkConstraintProperties();
@@ -155,8 +157,7 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
 void LinearQuadraticApproximator::approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                   ModelData& modelData) const {
   // get results
-  modelData.cost_ = cost_.intermediateCost_.getQuadraticApproximation(time, state, input, preCompPtr_);
-  modelData.cost_ += cost_.intermediateStateCost_.getQuadraticApproximation(time, state, preCompPtr_);
+  modelData.cost_ = cost_.getCostFunction().getQuadraticApproximation(time, state, input, cost_.getCostDesiredTrajectories(), preCompPtr_);
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {

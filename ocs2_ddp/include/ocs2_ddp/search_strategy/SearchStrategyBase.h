@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/cost/CostBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
@@ -144,21 +144,18 @@ class SearchStrategyBase {
    * Evaluates cost and constraints along the given time trajectories.
    *
    * @param [in] constraints: A reference to the constraint.
-   * @param [in] costFunction: A reference to the cost function.
-   * @param [in] heuristicsFunction: A reference to the heuristics function.
+   * @param [in] cost: A reference to the cost function.
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [in] constraints: A reference to the constraint class.
-   * @param [in] costFunction: A reference to the cost class.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] heuristicsValue: The Heuristics function value.
    */
-  void rolloutCostAndConstraints(ConstraintBase& constraints, CostFunctionBase& costFunction, CostFunctionBase& heuristicsFunction,
-                                 const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                 const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
+  void rolloutCostAndConstraints(ConstraintBase& constraints, CostBase& cost, const scalar_array2_t& timeTrajectoriesStock,
+                                 const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
+                                 const vector_array2_t& inputTrajectoriesStock,
                                  std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
                                  std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const;
 

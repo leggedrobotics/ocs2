@@ -44,7 +44,10 @@ namespace ocs2 {
 class SystemDynamicsBase : public ControlledSystemBase {
  public:
   /** Constructor */
-  explicit SystemDynamicsBase(PreComputation* preCompPtr);
+  explicit SystemDynamicsBase(std::shared_ptr<PreComputation> preCompPtr);
+
+  /** Deleted copy constructor, use normal constructor instead. */
+  SystemDynamicsBase(const SystemDynamicsBase& other) = delete;
 
   /** Default destructor */
   ~SystemDynamicsBase() override = default;
@@ -55,7 +58,7 @@ class SystemDynamicsBase : public ControlledSystemBase {
    * @param [in] preCompPtr: A pointer to the pre-computation module.
    * @return A raw pointer to the clone.
    */
-  SystemDynamicsBase* clone(PreComputation* preCompPtr) const override = 0;
+  SystemDynamicsBase* clone(std::shared_ptr<PreComputation> preCompPtr) const override = 0;
 
   /** Computes the linear approximation */
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
@@ -102,10 +105,6 @@ class SystemDynamicsBase : public ControlledSystemBase {
    * @return The covariance of the dynamics.
    */
   virtual matrix_t dynamicsCovariance(scalar_t t, const vector_t& x, const vector_t& u);
-
- protected:
-  /**Copy constructor */
-  SystemDynamicsBase(const SystemDynamicsBase& other) = default;
 };
 
 }  // namespace ocs2

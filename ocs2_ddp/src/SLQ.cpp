@@ -35,12 +35,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-         const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-         ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
-
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
-           heuristicsFunctionPtr) {
+SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
+         const ConstraintBase& systemConstraints, const CostBase& costFunction,
+         const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr /*= nullptr*/)
+    : BASE(std::move(ddpSettings), rollout, systemDynamics, systemConstraints, costFunction, operatingTrajectories, preComputationPtr) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
@@ -85,8 +83,13 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
     // get next time index is atomic
     while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
       // execute approximateLQ for the given partition and time index
-      BASE::linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                                                               inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+
+      LinearQuadraticApproximator lqapprox(*BASE::dynamicsPtrStock_[taskId], *BASE::constraintsPtrStock_[taskId],
+                                           *BASE::costPtrStock_[taskId], BASE::preComputationPtrStock_[taskId].get(),
+                                           BASE::ddpSettings_.checkNumericalStability_);
+
+      lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
+                                    modelDataTrajectory[timeIndex]);
     }
   };
 

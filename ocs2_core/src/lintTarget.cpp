@@ -28,11 +28,14 @@
 // Cost
 #include <ocs2_core/cost/CostBase.h>
 #include <ocs2_core/cost/CostCollection.h>
+#include <ocs2_core/cost/CostDefinition.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/StateCostCollection.h>
 #include <ocs2_core/cost/StateInputCost.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>

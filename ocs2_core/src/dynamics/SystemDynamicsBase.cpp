@@ -34,12 +34,17 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+SystemDynamicsBase::SystemDynamicsBase(std::shared_ptr<PreComputation> preCompPtr) : ControlledSystemBase(std::move(preCompPtr)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBase::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   using Req = PreComputation::Request;
   if (preCompPtr_ != nullptr) {
     preCompPtr_->request(Req::Dynamics | Req::Approximation, t, x, u);
   }
-  return linearApproximation(t, x, u, preCompPtr_);
+  return linearApproximation(t, x, u, preCompPtr_.get());
 }
 
 /******************************************************************************************************/
@@ -50,7 +55,7 @@ VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestPreJump(Req::Dynamics | Req::Approximation, t, x);
   }
-  return jumpMapLinearApproximation(t, x, preCompPtr_);
+  return jumpMapLinearApproximation(t, x, preCompPtr_.get());
 }
 
 /******************************************************************************************************/
@@ -60,7 +65,7 @@ VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx.setIdentity(x.rows(), x.rows());
   approximation.dfdu.setZero(x.rows(), 0);
-  approximation.f = this->computeJumpMap(t, x);
+  approximation.f = this->computeJumpMap(t, x, preCompPtr_.get());
   return approximation;
 }
 

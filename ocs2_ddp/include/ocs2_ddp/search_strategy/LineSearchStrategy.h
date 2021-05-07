@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/cost/CostBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/ThreadPool.h>
@@ -64,16 +64,15 @@ class LineSearchStrategy final : public SearchStrategyBase {
    * @param [in] threadPoolRef: A reference to the thread pool instance.
    * @param [in] rolloutRef: An array of references to the rollout class.
    * @param [in] constraintsRef: An array of references to the constraint class.
-   * @param [in] heuristicsFunctionsRef: An array of references to the heuristics function.
+   * @param [in] costRef: An array of references to the cost class.
    * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                      std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                      std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
-                     std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
-                     std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
-                     SoftConstraintPenalty& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+                     std::vector<std::reference_wrapper<CostBase>> costRefStock, SoftConstraintPenalty& ineqConstrPenaltyRef,
+                     std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
@@ -139,8 +138,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
   std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock_;
-  std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock_;
-  std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock_;
+  std::vector<std::reference_wrapper<CostBase>> costFunctionRefStock_;
   SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 

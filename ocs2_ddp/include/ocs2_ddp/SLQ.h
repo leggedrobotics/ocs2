@@ -47,18 +47,17 @@ class SLQ final : public GaussNewtonDDP {
   /**
    * Constructor
    *
-   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDynamicsPtr: The system dynamics and its derivatives for subsystems.
-   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
    * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
-   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
-   * defined, we will use the final cost function defined in costFunctionPtr.
+   * @param [in] rollout: The rollout class used for simulating the system dynamics.
+   * @param [in] systemDynamics: The system dynamics and its derivatives for subsystems.
+   * @param [in] constraint: The system constraint function and its derivatives for subsystems.
+   * @param [in] costFunction: The cost function (intermediate and final costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization of SLQ.
+   * @param [in] preComputationPtr: The pre-computation pointer.
    */
-  SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-      const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
-      const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+  SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics, const ConstraintBase& constraint,
+      const CostBase& costFunction, const SystemOperatingTrajectoriesBase& operatingTrajectories,
+      const PreComputation* preComputationPtr = nullptr);
 
   /**
    * Default destructor.

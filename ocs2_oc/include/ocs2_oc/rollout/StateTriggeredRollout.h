@@ -42,9 +42,6 @@ namespace ocs2 {
 
 /**
  * This class is an interface class for forward rollout of the system dynamics.
- *
- * @tparam STATE_DIM: Dimension of the state space.
- * @tparam INPUT_DIM: Dimension of the control input space.
  */
 class StateTriggeredRollout : public RolloutBase {
  public:
@@ -90,6 +87,7 @@ class StateTriggeredRollout : public RolloutBase {
                    vector_array_t& inputTrajectory) override;
 
  private:
+  std::unique_ptr<PreComputation> preCompPtr_;
   std::unique_ptr<ControlledSystemBase> systemDynamicsPtr_;
 
   std::shared_ptr<StateTriggeredEventHandler> systemEventHandlersPtr_;

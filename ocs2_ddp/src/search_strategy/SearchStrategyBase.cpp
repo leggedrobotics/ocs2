@@ -132,11 +132,13 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SearchStrategyBase::rolloutCostAndConstraints(
-    ConstraintBase& constraints, CostFunctionBase& costFunction, CostFunctionBase& heuristicsFunction,
-    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
-    const vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-    std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const {
+void SearchStrategyBase::rolloutCostAndConstraints(ConstraintBase& constraints, CostBase& cost,
+                                                   const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
+                                                   const vector_array2_t& stateTrajectoriesStock,
+                                                   const vector_array2_t& inputTrajectoriesStock,
+                                                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
+                                                   scalar_t& heuristicsValue) const {
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
@@ -145,7 +147,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(
       const auto& u = inputTrajectoriesStock[i][k];
 
       // intermediate cost
-      modelDataTrajectoriesStock[i][k].cost_.f = costFunction.cost(t, x, u);
+      modelDataTrajectoriesStock[i][k].cost_.f = cost.getValue(t, x, u);
 
       // state equality constraint
       modelDataTrajectoriesStock[i][k].stateEqConstr_.f = constraints.stateEqualityConstraint(t, x);
@@ -159,7 +161,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(
       // event time cost and constraints
       if (eventsPastTheEndItr != postEventIndicesStock[i].end() && k + 1 == *eventsPastTheEndItr) {
         const auto ke = std::distance(postEventIndicesStock[i].begin(), eventsPastTheEndItr);
-        modelDataEventTimesStock[i][ke].cost_.f = costFunction.finalCost(t, x);
+        modelDataEventTimesStock[i][ke].cost_.f = cost.getPreJumpValue(t, x);
         modelDataEventTimesStock[i][ke].stateEqConstr_.f = constraints.finalStateEqualityConstraint(t, x);
         eventsPastTheEndItr++;
       }
@@ -167,8 +169,8 @@ void SearchStrategyBase::rolloutCostAndConstraints(
   }    // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsValue = heuristicsFunction.finalCost(timeTrajectoriesStock[finalActivePartition_].back(),
-                                                 stateTrajectoriesStock[finalActivePartition_].back());
+  heuristicsValue =
+      cost.getFinalValue(timeTrajectoriesStock[finalActivePartition_].back(), stateTrajectoriesStock[finalActivePartition_].back());
 }
 
 /******************************************************************************************************/

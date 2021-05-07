@@ -38,8 +38,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
-                                                       RolloutBase& rolloutRef, ConstraintBase& constraintsRef,
-                                                       CostFunctionBase& costFunctionRef, CostFunctionBase& heuristicsFunctionsRef,
+                                                       RolloutBase& rolloutRef, ConstraintBase& constraintsRef, CostBase& costFunctionRef,
                                                        SoftConstraintPenalty& ineqConstrPenaltyRef,
                                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
@@ -47,7 +46,6 @@ LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings
       rolloutRef_(rolloutRef),
       constraintsRef_(constraintsRef),
       costFunctionRef_(costFunctionRef),
-      heuristicsFunctionsRef_(heuristicsFunctionsRef),
       ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
       meritFunc_(std::move(meritFunc)) {}
 
@@ -87,9 +85,8 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
         rolloutTrajectory(rolloutRef_, modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
                           inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
     scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(constraintsRef_, costFunctionRef_, heuristicsFunctionsRef_, timeTrajectoriesStock, postEventIndicesStock,
-                              stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock,
-                              heuristicsValue);
+    rolloutCostAndConstraints(constraintsRef_, costFunctionRef_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                              inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
 
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;

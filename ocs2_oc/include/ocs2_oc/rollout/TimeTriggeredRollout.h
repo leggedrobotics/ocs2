@@ -87,6 +87,7 @@ class TimeTriggeredRollout : public RolloutBase {
                    vector_array_t& inputTrajectory) override;
 
  private:
+  std::unique_ptr<PreComputation> preCompPtr_;
   std::unique_ptr<ControlledSystemBase> systemDynamicsPtr_;
 
   std::shared_ptr<SystemEventHandler> systemEventHandlersPtr_;

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,39 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <memory>
+
+#include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/StateInputCost.h>
 
 namespace ocs2 {
 
-/**
- *
- * A linear time invariant system with the following flow and jump maps:
- *
- * - \f$ \dot{x} = A * x + B * u   g(x) > 0, \f$
- * - \f$ x^{+} = G * x^{-}         g(x) = 0. \f$
- *
- * where \f$ g(x) \f$ is the guard surface defined by OdeBase::computeGuardSurfaces(t, x).
- */
-class LinearSystemDynamics : public SystemDynamicsBase {
- public:
-  LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G = matrix_t());
-
-  ~LinearSystemDynamics() override = default;
-
-  LinearSystemDynamics* clone(std::shared_ptr<PreComputation> preCompPtr) const override;
-
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) override;
-
-  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation*) override;
-
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) override;
-
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation*) override;
-
- protected:
-  matrix_t A_;
-  matrix_t B_;
-  matrix_t G_;
+struct CostDefinition {
+  std::unique_ptr<StateInputCost> intermediateCost;
+  std::unique_ptr<StateCost> intermediateStateCost;
+  std::unique_ptr<StateCost> finalCost;
+  std::unique_ptr<StateCost> preJumpCost;
 };
 
 }  // namespace ocs2

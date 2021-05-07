@@ -53,7 +53,7 @@ class SystemDynamicsLinearizer final : public SystemDynamicsBase {
   ~SystemDynamicsLinearizer() override = default;
 
   /** Clone */
-  SystemDynamicsLinearizer* clone(PreComputation* preCompPtr) const override;
+  SystemDynamicsLinearizer* clone(std::shared_ptr<PreComputation> preCompPtr) const override;
 
   vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preCompPtr) override;
 
@@ -61,8 +61,8 @@ class SystemDynamicsLinearizer final : public SystemDynamicsBase {
                                                         const PreComputation* preCompPtr) override;
 
  private:
-  /** Copy constructor */
-  SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other);
+  /** Copy constructor with pre-computation */
+  SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other, std::shared_ptr<PreComputation> preCompPtr);
 
   std::unique_ptr<ControlledSystemBase> controlledSystemPtr_;
   bool doubleSidedDerivative_;

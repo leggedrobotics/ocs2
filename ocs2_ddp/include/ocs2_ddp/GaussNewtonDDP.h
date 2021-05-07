@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/cost/CostBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -74,25 +74,19 @@ class GaussNewtonDDP : public SolverBase {
   };
 
   /**
-   * class for collecting SLQ data
-   */
-  friend class DDP_DataCollector;
-
-  /**
    * Constructor
    *
-   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
-   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization.
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
-   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
-   * If it is not defined, we will use the final cost function defined in costFunctionPtr.
+   * @param [in] rollout: The rollout class used for simulating the system dynamics.
+   * @param [in] systemDynamics: The system dynamics and derivatives for the subsystems.
+   * @param [in] constraints: The system constraint function and its derivatives for subsystems.
+   * @param [in] cost: The cost function (intermediate and final costs) and its derivatives for subsystems.
+   * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization.
+   * @param [in] preComputationPtr: The pre-computation pointer.
    */
-  GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-                 const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                 ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr);
+  GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
+                 const ConstraintBase& constraints, const CostBase& cost, const SystemOperatingTrajectoriesBase& operatingTrajectories,
+                 const PreComputation* preComputationPtr = nullptr);
 
   /**
    * Destructor.
@@ -442,6 +436,8 @@ class GaussNewtonDDP : public SolverBase {
                const std::vector<ControllerBase*>& controllersPtrStock) override;
 
  protected:
+  ddp::Settings ddpSettings_;
+
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};
   std::atomic_size_t nextTimeIndex_{0};
@@ -456,7 +452,10 @@ class GaussNewtonDDP : public SolverBase {
   scalar_array_t partitioningTimes_;
 
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
-  std::vector<std::unique_ptr<LinearQuadraticApproximator>> linearQuadraticApproximatorPtrStock_;
+  std::vector<std::shared_ptr<PreComputation>> preComputationPtrStock_;
+  std::vector<std::unique_ptr<ConstraintBase>> constraintsPtrStock_;
+  std::vector<std::unique_ptr<SystemDynamicsBase>> dynamicsPtrStock_;
+  std::vector<std::unique_ptr<CostBase>> costPtrStock_;
 
   // optimized controller
   std::vector<LinearController> nominalControllersStock_;
@@ -488,8 +487,6 @@ class GaussNewtonDDP : public SolverBase {
   matrix_array2_t SmTrajectoryStock_;
 
  private:
-  ddp::Settings ddpSettings_;
-
   std::unique_ptr<ThreadPool> threadPoolPtr_;
 
   unsigned long long int rewindCounter_{0};
@@ -504,7 +501,6 @@ class GaussNewtonDDP : public SolverBase {
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
-  std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
   std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is

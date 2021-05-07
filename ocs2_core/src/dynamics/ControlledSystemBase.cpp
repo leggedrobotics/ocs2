@@ -34,13 +34,19 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(PreComputation* preCompPtr) : preCompPtr_(preCompPtr) {}
+ControlledSystemBase::ControlledSystemBase(std::shared_ptr<PreComputation> preCompPtr) : preCompPtr_(preCompPtr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& other) : OdeBase(other) {
-  setController(other.controllerPtr());
+ControlledSystemBase* ControlledSystemBase::clone() const {
+  std::shared_ptr<PreComputation> clonedPreCompPtr;
+  if (preCompPtr_ != nullptr) {
+    clonedPreCompPtr.reset(preCompPtr_->clone());
+  }
+  auto* other = this->clone(std::move(clonedPreCompPtr));
+  other->setController(controllerPtr_);
+  return other;
 }
 
 /******************************************************************************************************/
@@ -59,7 +65,7 @@ vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x, con
   if (preCompPtr_ != nullptr) {
     preCompPtr_->request(PreComputation::Request::Dynamics, t, x, u);
   }
-  return computeFlowMap(t, x, u, preCompPtr_);
+  return computeFlowMap(t, x, u, preCompPtr_.get());
 }
 
 /******************************************************************************************************/
@@ -69,7 +75,7 @@ vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x) {
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestPreJump(PreComputation::Request::Dynamics, t, x);
   }
-  return computeJumpMap(t, x, /* u, */ preCompPtr_);
+  return computeJumpMap(t, x, preCompPtr_.get());
 }
 
 }  // namespace ocs2

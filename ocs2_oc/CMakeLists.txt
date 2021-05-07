@@ -5,7 +5,7 @@ project(ocs2_oc)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
-  ocs2_qp_solver
+  # ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system

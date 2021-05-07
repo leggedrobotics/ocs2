@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
   ocs2_oc
-  ocs2_qp_solver
+  # ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -31,7 +31,7 @@ catkin_package(
   CATKIN_DEPENDS
     ocs2_core
     ocs2_oc
-    ocs2_qp_solver
+    # ocs2_qp_solver
   DEPENDS
     Boost
 )
@@ -57,7 +57,6 @@ add_library(${PROJECT_NAME}
   src/search_strategy/SearchStrategyBase.cpp
   src/search_strategy/StrategySettings.cpp
   src/ContinuousTimeLqr.cpp
-  src/DDP_DataCollector.cpp
   src/GaussNewtonDDP.cpp
   src/HessianCorrection.cpp
   src/ILQR.cpp

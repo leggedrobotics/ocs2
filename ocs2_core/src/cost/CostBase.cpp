@@ -34,74 +34,106 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostBase::CostBase(PreComputation* preCompPtr) : preCompPtr_(preCompPtr) {}
+CostBase::CostBase(std::shared_ptr<PreComputation> preCompPtr) : preCompPtr_(std::move(preCompPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostBase::getValue(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->request(PreComputation::Request::Cost, t, x, u);
-  }
-  return intermediateCost_.getValue(t, x, u, preCompPtr_) + intermediateStateCost_.getValue(t, x, preCompPtr_);
+CostBase::CostBase(const CostBase& other, std::shared_ptr<PreComputation> preCompPtr)
+    : costPtr_(other.costPtr_->clone()), finalCostPtr_(other.finalCostPtr_->clone()), preJumpCostPtr_(other.preJumpCostPtr_->clone()) {
+  preCompPtr_ = std::move(preCompPtr);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t CostBase::getPreJumpValue(scalar_t t, const vector_t& x, const vector_t& u) {
+CostBase* CostBase::clone() const {
+  return new CostBase(*this, std::shared_ptr<PreComputation>(preCompPtr_->clone()));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+CostBase* CostBase::clone(std::shared_ptr<PreComputation> preCompPtr) const {
+  return new CostBase(*this, std::move(preCompPtr));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t CostBase::getValue(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[CostBase] costDesiredTrajectoriesPtr_ is not set.");
+  }
+  if (preCompPtr_ != nullptr) {
+    preCompPtr_->request(PreComputation::Request::Cost, t, x, u);
+  }
+  return costPtr_->getValue(t, x, u, *costDesiredTrajectoriesPtr_, preCompPtr_.get());
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t CostBase::getPreJumpValue(scalar_t t, const vector_t& x) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[CostBase] costDesiredTrajectoriesPtr_ is not set.");
+  }
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestPreJump(PreComputation::Request::Cost, t, x);
   }
-  return preJumpCost_.getValue(t, x, u, preCompPtr_);
+  return preJumpCostPtr_->getValue(t, x, *costDesiredTrajectoriesPtr_, preCompPtr_.get());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t CostBase::getFinalValue(scalar_t t, const vector_t& x) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[CostBase] costDesiredTrajectoriesPtr_ is not set.");
+  }
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestFinal(PreComputation::Request::Cost, t, x);
   }
-  return finalCost_.getValue(t, x, preCompPtr_);
+  return finalCostPtr_->getValue(t, x, *costDesiredTrajectoriesPtr_, preCompPtr_.get());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation CostBase::getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[CostBase] costDesiredTrajectoriesPtr_ is not set.");
+  }
   if (preCompPtr_ != nullptr) {
     preCompPtr_->request(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x, u);
   }
-  return intermediateCost_.getQuadraticApproximation(t, x, u, preCompPtr_) +=
-         intermediateStateCost_.getQuadraticApproximation(t, x, preCompPtr_);
+  return costPtr_->getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_, preCompPtr_.get());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation CostBase::getPreJumpQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+ScalarFunctionQuadraticApproximation CostBase::getPreJumpQuadraticApproximation(scalar_t t, const vector_t& x) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[CostBase] costDesiredTrajectoriesPtr_ is not set.");
+  }
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestPreJump(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x);
   }
-  return preJumpCost_.getQuadraticApproximation(t, x, u, preCompPtr_);
+  return preJumpCostPtr_->getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_, preCompPtr_.get());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation CostBase::getFinalQuadraticApproximation(scalar_t t, const vector_t& x) {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[CostBase] costDesiredTrajectoriesPtr_ is not set.");
+  }
   if (preCompPtr_ != nullptr) {
     preCompPtr_->requestFinal(PreComputation::Request::Cost | PreComputation::Request::Approximation, t, x);
   }
-  return finalCost_.getQuadraticApproximation(t, x, preCompPtr_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void CostBase::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
-  costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
+  return finalCostPtr_->getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_, preCompPtr_.get());
 }
 
 }  // namespace ocs2

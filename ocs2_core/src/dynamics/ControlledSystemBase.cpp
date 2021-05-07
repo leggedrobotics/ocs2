@@ -78,4 +78,12 @@ vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x) {
   return computeJumpMap(t, x, preCompPtr_.get());
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x, const PreComputation*) {
+  // default implementation
+  return OdeBase::computeJumpMap(t, x);
+}
+
 }  // namespace ocs2

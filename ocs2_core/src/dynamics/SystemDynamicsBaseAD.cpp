@@ -84,7 +84,7 @@ void SystemDynamicsBaseAD::initialize(size_t stateDim, size_t inputDim, const st
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t SystemDynamicsBaseAD::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) {
-  const vector_t tapedTimeStateInput = (vector_t(1 + x.rows(), u.rows()) << t, x, u).finished();
+  const vector_t tapedTimeStateInput = (vector_t(1 + x.rows() + u.rows()) << t, x, u).finished();
   const vector_t parameters = getFlowMapParameters(t);
   return flowMapADInterfacePtr_->getFunctionValue(tapedTimeStateInput, parameters);
 }
@@ -112,7 +112,7 @@ vector_t SystemDynamicsBaseAD::computeGuardSurfaces(scalar_t t, const vector_t& 
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBaseAD::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                                             const PreComputation*) {
-  const vector_t tapedTimeStateInput = (vector_t(1 + x.rows(), u.rows()) << t, x, u).finished();
+  const vector_t tapedTimeStateInput = (vector_t(1 + x.rows() + u.rows()) << t, x, u).finished();
   const vector_t parameters = getFlowMapParameters(t);
   flowJacobian_ = flowMapADInterfacePtr_->getJacobian(tapedTimeStateInput, parameters);
 

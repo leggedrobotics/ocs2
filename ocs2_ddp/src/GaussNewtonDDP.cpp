@@ -61,7 +61,7 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
   // Dynamics, Constraints, derivatives, and cost
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
   operatingTrajectoriesRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
-  preComputationPtrStock_.reserve(ddpSettings_.nThreads_);
+  preComputationPtrStock_.resize(ddpSettings_.nThreads_, nullptr);
   constraintsPtrStock_.reserve(ddpSettings_.nThreads_);
   dynamicsPtrStock_.reserve(ddpSettings_.nThreads_);
   costPtrStock_.reserve(ddpSettings_.nThreads_);

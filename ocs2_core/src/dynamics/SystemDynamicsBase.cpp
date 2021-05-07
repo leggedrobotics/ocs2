@@ -39,6 +39,19 @@ SystemDynamicsBase::SystemDynamicsBase(std::shared_ptr<PreComputation> preCompPt
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+SystemDynamicsBase* SystemDynamicsBase::clone() const {
+  std::shared_ptr<PreComputation> clonedPreCompPtr;
+  if (preCompPtr_ != nullptr) {
+    clonedPreCompPtr.reset(preCompPtr_->clone());
+  }
+  auto* other = this->clone(std::move(clonedPreCompPtr));
+  other->setController(this->controllerPtr());
+  return other;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBase::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   using Req = PreComputation::Request;
   if (preCompPtr_ != nullptr) {

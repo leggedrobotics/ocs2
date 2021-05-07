@@ -130,7 +130,7 @@ VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  scalar_t L = cost_->cost(t, x, u);
+  scalar_t L = cost_->getValue(t, x, u);
 
   if (constraints_ != nullptr && penalty_ != nullptr) {
     const auto h = constraints_->inequalityConstraint(t, x, u);
@@ -146,7 +146,7 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
-  auto L = cost_->costQuadraticApproximation(t, x, u);
+  auto L = cost_->getQuadraticApproximation(t, x, u);
 
   if (constraints_ != nullptr && penalty_ != nullptr) {
     const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);

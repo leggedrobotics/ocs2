@@ -49,9 +49,11 @@ namespace ballbot {
 class BallbotSystemDynamics : public SystemDynamicsBaseAD {
  public:
   /** Constructor */
-  BallbotSystemDynamics() : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
+  BallbotSystemDynamics(const std::string& libraryFolder, bool recompileLibraries) : SystemDynamicsBaseAD() {
     wheelRadius_ = param_.wheelRadius_;
     ballRadius_ = param_.ballRadius_;
+
+    initialize(STATE_DIM, INPUT_DIM, "ballbot_dynamics", libraryFolder, recompileLibraries, true);
   }
 
   /** Destructor */
@@ -59,7 +61,7 @@ class BallbotSystemDynamics : public SystemDynamicsBaseAD {
 
   BallbotSystemDynamics(const BallbotSystemDynamics& rhs) = default;
 
-  BallbotSystemDynamics* clone() const override { return new BallbotSystemDynamics(*this); }
+  BallbotSystemDynamics* clone(std::shared_ptr<PreComputation>) const override { return new BallbotSystemDynamics(*this); }
 
   ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                             const ad_vector_t& parameters) const override;

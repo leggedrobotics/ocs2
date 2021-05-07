@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ballbot_example/BallbotInterface.h"
 
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
@@ -72,8 +74,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   bool recompileLibraries;
   ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.recompileLibraries", recompileLibraries);
 
-  ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics());
-  ballbotSystemDynamicsPtr_->initialize("ballbot_dynamics", libraryFolder_, recompileLibraries, true);
+  ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
 
   /*
    * Rollout
@@ -93,7 +94,10 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "Q_final:\n" << QFinal_ << std::endl;
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
-  ballbotCostPtr_.reset(new QuadraticCostFunction(Q_, R_, QFinal_));
+  std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q_, R_));
+  std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal_));
+  std::unique_ptr<QuadraticStateCost> jumpCost(Phi->clone());
+  ballbotCostPtr_.reset(new CostBase(std::move(L), std::move(Phi), std::move(jumpCost), nullptr));
 
   /*
    * Constraints
@@ -110,8 +114,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> BallbotInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
-                                              ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *ddpBallbotRolloutPtr_, *ballbotSystemDynamicsPtr_,
+                                              *ballbotConstraintPtr_, *ballbotCostPtr_, *ballbotOperatingPointPtr_));
 }
 
 }  // namespace ballbot

@@ -55,6 +55,14 @@ class SystemDynamicsBase : public ControlledSystemBase {
   /**
    * Clone
    *
+   * @note Also clones the pre-computation object
+   * @return A raw pointer to the clone.
+   */
+  SystemDynamicsBase* clone() const;
+
+  /**
+   * Clone
+   *
    * @param [in] preCompPtr: A pointer to the pre-computation module.
    * @return A raw pointer to the clone.
    */

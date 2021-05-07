@@ -69,7 +69,7 @@ class ControlledSystemBase : public OdeBase {
   ControlledSystemBase* clone() const;
 
   /** Resets the internal classes. */
-  virtual void reset();
+  virtual void reset() { controllerPtr_ = nullptr; }
 
   /**
    * Sets the control policy using the controller class.

@@ -36,7 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_ddp/SLQ.h>
@@ -74,8 +75,7 @@ int main(int argc, char** argv) {
   /*
    * Rollout
    */
-  std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr(new BallbotSystemDynamics());
-  ballbotSystemDynamicsPtr->initialize("ballbot_dynamics", libraryFolder, true, true);
+  std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr(new BallbotSystemDynamics(libraryFolder, true));
   std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr, rolloutSettings));
 
   /*
@@ -90,7 +90,10 @@ int main(int argc, char** argv) {
   vector_t xInit(STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "initialState", xInit);
 
-  std::unique_ptr<QuadraticCostFunction> ballbotCostPtr(new QuadraticCostFunction(Q, R, QFinal));
+  std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q, R));
+  std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal));
+  std::unique_ptr<QuadraticStateCost> jumpCost(Phi->clone());
+  std::unique_ptr<CostBase> ballbotCostPtr(new CostBase(std::move(L), std::move(Phi), std::move(jumpCost), nullptr));
 
   /*
    * Constraints
@@ -120,8 +123,7 @@ int main(int argc, char** argv) {
    * define solver and run
    */
   ddpSettings.nThreads_ = 1;
-  SLQ slq(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
-          ballbotOperatingPointPtr.get(), ddpSettings);
+  SLQ slq(ddpSettings, *ballbotRolloutPtr, *ballbotSystemDynamicsPtr, *ballbotConstraintPtr, *ballbotCostPtr, *ballbotOperatingPointPtr);
   slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 

@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
   std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q, R));
   std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal));
   std::unique_ptr<QuadraticStateCost> jumpCost(Phi->clone());
-  std::unique_ptr<CostBase> ballbotCostPtr(new CostBase(std::move(L), std::move(Phi), std::move(jumpCost), nullptr));
+  std::unique_ptr<CostFunctionBase> ballbotCostPtr(new CostFunctionBase(std::move(L), std::move(Phi), std::move(jumpCost), nullptr));
 
   /*
    * Constraints

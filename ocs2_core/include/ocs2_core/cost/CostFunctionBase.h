@@ -42,17 +42,20 @@ namespace ocs2 {
  * It also keeps the pre-computation module and the desired state-input trajectory reference
  * and provides convenience functions for cost value and approximation.
  */
-class CostBase {
+class CostFunctionBase {
  public:
   /** Constructor */
-  CostBase(std::unique_ptr<StateInputCost> costPtr, std::unique_ptr<StateCost> finalCostPtr, std::unique_ptr<StateCost> preJumpCostPtr,
-           std::shared_ptr<PreComputation> preCompPtr);
+  CostFunctionBase(std::unique_ptr<StateInputCost> costPtr, std::unique_ptr<StateCost> preJumpCostPtr,
+                   std::unique_ptr<StateCost> finalCostPtr, std::shared_ptr<PreComputation> preCompPtr);
+  /** Constructor without pre-jump cost term for non-switching systems. */
+  CostFunctionBase(std::unique_ptr<StateInputCost> costPtr, std::unique_ptr<StateCost> finalCostPtr,
+                   std::shared_ptr<PreComputation> preCompPtr);
 
   /** Delete copy constructor */
-  CostBase(const CostBase& other) = delete;
+  CostFunctionBase(const CostFunctionBase& other) = delete;
 
   /** Default destructor */
-  virtual ~CostBase() = default;
+  virtual ~CostFunctionBase() = default;
 
   /** Sets the desired state and input trajectories used in the cost function. */
   void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
@@ -62,16 +65,16 @@ class CostBase {
   /** Get the desired state and input trajectories used in the cost function. */
   const CostDesiredTrajectories& getCostDesiredTrajectories() {
     if (costDesiredTrajectoriesPtr_ == nullptr) {
-      throw std::runtime_error("[CostBase] costDesiredTrajectoriesPtr_ is not set.");
+      throw std::runtime_error("[CostFunctionBase] costDesiredTrajectoriesPtr_ is not set.");
     }
     return *costDesiredTrajectoriesPtr_;
   }
 
   /** Clone, also clones the pre-computation object */
-  CostBase* clone() const;
+  CostFunctionBase* clone() const;
 
   /** Clone with given pre-computation pointer */
-  virtual CostBase* clone(std::shared_ptr<PreComputation> preCompPtr) const;
+  virtual CostFunctionBase* clone(std::shared_ptr<PreComputation> preCompPtr) const;
 
   StateInputCost& getCostFunction() { return *costPtr_; }
   StateCost& getFinalCostFunction() { return *finalCostPtr_; }
@@ -102,7 +105,7 @@ class CostBase {
 
  protected:
   /** Copy constructor with pre-computation */
-  CostBase(const CostBase& other, std::shared_ptr<PreComputation> preCompPtr);
+  CostFunctionBase(const CostFunctionBase& other, std::shared_ptr<PreComputation> preCompPtr);
 
   const CostDesiredTrajectories* costDesiredTrajectoriesPtr_ = nullptr;
 

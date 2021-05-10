@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/model_data/ModelData.h>
 
@@ -53,7 +53,7 @@ class LinearQuadraticApproximator {
    * @note This class does not take ownership of any of the parameters.
    *       Make sure that the parameter lifetime is longer than this class instance.
    */
-  LinearQuadraticApproximator(SystemDynamicsBase& dynamics, ConstraintBase& constraint, CostBase& cost, PreComputation* preCompPtr,
+  LinearQuadraticApproximator(SystemDynamicsBase& dynamics, ConstraintBase& constraint, CostFunctionBase& cost, PreComputation* preCompPtr,
                               bool checkNumericalCharacteristics = true)
       : dynamics_(dynamics),
         constraint_(constraint),
@@ -96,7 +96,7 @@ class LinearQuadraticApproximator {
 
   SystemDynamicsBase& dynamics_;
   ConstraintBase& constraint_;
-  CostBase& cost_;
+  CostFunctionBase& cost_;
   PreComputation* preCompPtr_;
 
   bool checkNumericalCharacteristics_;

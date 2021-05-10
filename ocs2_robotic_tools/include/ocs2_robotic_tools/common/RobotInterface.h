@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
@@ -70,7 +70,7 @@ class RobotInterface {
    * @brief getCost
    * @return reference to internal cost function
    */
-  virtual const CostBase& getCost() const = 0;
+  virtual const CostFunctionBase& getCost() const = 0;
 
   /**
    * @brief getConstraintPtr

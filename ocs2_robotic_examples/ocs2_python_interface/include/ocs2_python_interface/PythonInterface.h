@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
@@ -177,7 +177,7 @@ class PythonInterface {
 
   std::unique_ptr<SystemDynamicsBase> dynamics_;
   std::unique_ptr<ConstraintBase> constraints_;
-  std::unique_ptr<CostBase> cost_;
+  std::unique_ptr<CostFunctionBase> cost_;
   CostDesiredTrajectories targetTrajectories_;
 };
 

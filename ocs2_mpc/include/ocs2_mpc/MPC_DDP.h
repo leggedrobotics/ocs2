@@ -54,7 +54,7 @@ class MPC_DDP : public MPC_BASE {
    * @param [in] preComputationPtr: The pre-computation pointer.
    */
   MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-          const ConstraintBase& systemConstraints, const CostBase& costFunction,
+          const ConstraintBase& systemConstraints, const CostFunctionBase& costFunction,
           const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr = nullptr);
 
   /** Default destructor. */

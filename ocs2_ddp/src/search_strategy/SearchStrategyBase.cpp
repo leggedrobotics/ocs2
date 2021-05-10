@@ -132,7 +132,7 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SearchStrategyBase::rolloutCostAndConstraints(ConstraintBase& constraints, CostBase& cost,
+void SearchStrategyBase::rolloutCostAndConstraints(ConstraintBase& constraints, CostFunctionBase& cost,
                                                    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
                                                    const vector_array2_t& stateTrajectoriesStock,
                                                    const vector_array2_t& inputTrajectoriesStock,

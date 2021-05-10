@@ -83,7 +83,7 @@ add_library(${PROJECT_NAME}
   src/cost/CostCollection.cpp
   src/cost/StateCostCollection.cpp
   src/cost/StateInputCostCollection.cpp
-  src/cost/CostBase.cpp
+  src/cost/CostFunctionBase.cpp
   src/cost/CostDesiredTrajectories.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp

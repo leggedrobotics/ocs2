@@ -56,7 +56,7 @@ class SLQ final : public GaussNewtonDDP {
    * @param [in] preComputationPtr: The pre-computation pointer.
    */
   SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics, const ConstraintBase& constraint,
-      const CostBase& costFunction, const SystemOperatingTrajectoriesBase& operatingTrajectories,
+      const CostFunctionBase& costFunction, const SystemOperatingTrajectoriesBase& operatingTrajectories,
       const PreComputation* preComputationPtr = nullptr);
 
   /**

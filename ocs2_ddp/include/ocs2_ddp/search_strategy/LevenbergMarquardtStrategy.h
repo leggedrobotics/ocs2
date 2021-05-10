@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/ThreadPool.h>
@@ -69,7 +69,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
-                             ConstraintBase& constraintsRef, CostBase& costFunctionRef, SoftConstraintPenalty& ineqConstrPenalty,
+                             ConstraintBase& constraintsRef, CostFunctionBase& costFunctionRef, SoftConstraintPenalty& ineqConstrPenalty,
                              std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
@@ -110,7 +110,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
 
   RolloutBase& rolloutRef_;
   ConstraintBase& constraintsRef_;
-  CostBase& costFunctionRef_;
+  CostFunctionBase& costFunctionRef_;
   SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 

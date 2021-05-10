@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
@@ -153,7 +153,7 @@ class SearchStrategyBase {
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] heuristicsValue: The Heuristics function value.
    */
-  void rolloutCostAndConstraints(ConstraintBase& constraints, CostBase& cost, const scalar_array2_t& timeTrajectoriesStock,
+  void rolloutCostAndConstraints(ConstraintBase& constraints, CostFunctionBase& cost, const scalar_array2_t& timeTrajectoriesStock,
                                  const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
                                  const vector_array2_t& inputTrajectoriesStock,
                                  std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,

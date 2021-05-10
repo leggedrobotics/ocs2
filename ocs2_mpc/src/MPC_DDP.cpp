@@ -38,7 +38,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 MPC_DDP::MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-                 const ConstraintBase& systemConstraints, const CostBase& costFunction,
+                 const ConstraintBase& systemConstraints, const CostFunctionBase& costFunction,
                  const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr /*= nullptr*/)
     : MPC_BASE(std::move(mpcSettings)) {
   switch (ddpSettings.algorithm_) {

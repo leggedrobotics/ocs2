@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
 namespace ocs2 {
@@ -75,7 +75,7 @@ struct Settings {
  * @param settings : algorithm settings.
  * @return {FeedbackGains K, Value function S}
  */
-solution solve(SystemDynamicsBase& systemDynamics, CostBase& cost, PreComputation* preCompPtr, scalar_t time, const vector_t& state,
+solution solve(SystemDynamicsBase& systemDynamics, CostFunctionBase& cost, PreComputation* preCompPtr, scalar_t time, const vector_t& state,
                const vector_t& input, const Settings& settings = Settings());
 
 }  // namespace continuous_time_lqr

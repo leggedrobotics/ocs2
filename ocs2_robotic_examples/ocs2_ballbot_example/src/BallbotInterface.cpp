@@ -96,8 +96,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 
   std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q_, R_));
   std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal_));
-  std::unique_ptr<QuadraticStateCost> jumpCost(Phi->clone());
-  ballbotCostPtr_.reset(new CostBase(std::move(L), std::move(Phi), std::move(jumpCost), nullptr));
+  ballbotCostPtr_.reset(new CostFunctionBase(std::move(L), std::move(Phi), nullptr));
 
   /*
    * Constraints

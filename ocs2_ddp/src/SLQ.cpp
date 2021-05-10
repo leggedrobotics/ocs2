@@ -36,7 +36,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-         const ConstraintBase& systemConstraints, const CostBase& costFunction,
+         const ConstraintBase& systemConstraints, const CostFunctionBase& costFunction,
          const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr /*= nullptr*/)
     : BASE(std::move(ddpSettings), rollout, systemDynamics, systemConstraints, costFunction, operatingTrajectories, preComputationPtr) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {

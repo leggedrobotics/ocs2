@@ -38,7 +38,7 @@ namespace continuous_time_lqr {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-solution solve(SystemDynamicsBase& systemDynamics, CostBase& cost, PreComputation* preCompPtr, scalar_t time, const vector_t& state,
+solution solve(SystemDynamicsBase& systemDynamics, CostFunctionBase& cost, PreComputation* preCompPtr, scalar_t time, const vector_t& state,
                const vector_t& input, const Settings& settings) {
   const size_t stateDim = state.size();
 

@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
-#include <ocs2_core/cost/CostBase.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -85,7 +85,7 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] preComputationPtr: The pre-computation pointer.
    */
   GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-                 const ConstraintBase& constraints, const CostBase& costFunction,
+                 const ConstraintBase& constraints, const CostFunctionBase& costFunction,
                  const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr = nullptr);
 
   /**
@@ -453,7 +453,7 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<std::shared_ptr<PreComputation>> preComputationPtrStock_;
   std::vector<std::unique_ptr<ConstraintBase>> constraintsPtrStock_;
   std::vector<std::unique_ptr<SystemDynamicsBase>> dynamicsPtrStock_;
-  std::vector<std::unique_ptr<CostBase>> costPtrStock_;
+  std::vector<std::unique_ptr<CostFunctionBase>> costPtrStock_;
 
   // optimized controller
   std::vector<LinearController> nominalControllersStock_;

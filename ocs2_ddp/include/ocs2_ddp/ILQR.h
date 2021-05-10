@@ -54,7 +54,7 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] preComputationPtr: The pre-computation pointer.
    */
   ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics, const ConstraintBase& constraint,
-       const CostBase& costFunction, const SystemOperatingTrajectoriesBase& operatingTrajectories,
+       const CostFunctionBase& costFunction, const SystemOperatingTrajectoriesBase& operatingTrajectories,
        const PreComputation* preComputationPtr = nullptr);
 
   /**

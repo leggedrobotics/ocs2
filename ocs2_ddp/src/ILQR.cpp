@@ -37,8 +37,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-           const ConstraintBase& constraints, const CostBase& costFunction, const SystemOperatingTrajectoriesBase& operatingTrajectories,
-           const PreComputation* preComputationPtr /*= nullptr*/)
+           const ConstraintBase& constraints, const CostFunctionBase& costFunction,
+           const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr /*= nullptr*/)
     : BASE(std::move(ddpSettings), rollout, systemDynamics, constraints, costFunction, operatingTrajectories, preComputationPtr) {
   if (settings().algorithm_ != ddp::Algorithm::ILQR) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +

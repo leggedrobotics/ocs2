@@ -26,16 +26,16 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
-#include <ocs2_core/cost/CostBase.h>
 #include <ocs2_core/cost/CostCollection.h>
-#include <ocs2_core/cost/CostDefinition.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/cost/StateCost.h>
 #include <ocs2_core/cost/StateCostCollection.h>
 #include <ocs2_core/cost/StateInputCost.h>
 #include <ocs2_core/cost/StateInputCostCollection.h>
+#include <ocs2_core/cost/ZeroStateCost.h>
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>

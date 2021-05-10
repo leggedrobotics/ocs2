@@ -12,16 +12,21 @@ class LoopshapingDynamicsInputPattern final : public LoopshapingDynamics {
  public:
   using BASE = LoopshapingDynamics;
 
-  LoopshapingDynamicsInputPattern(const SystemDynamicsBase& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : BASE(controlledSystem, std::move(loopshapingDefinition)) {}
+  LoopshapingDynamicsInputPattern(const SystemDynamicsBase& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
+                                  std::shared_ptr<LoopshapingPreComputation> preCompPtr)
+      : BASE(controlledSystem, std::move(loopshapingDefinition), std::move(preCompPtr)) {}
 
   ~LoopshapingDynamicsInputPattern() override = default;
 
-  LoopshapingDynamicsInputPattern(const LoopshapingDynamicsInputPattern& obj) = default;
+  LoopshapingDynamicsInputPattern(const LoopshapingDynamicsInputPattern& obj) = delete;
 
-  LoopshapingDynamicsInputPattern* clone() const override { return new LoopshapingDynamicsInputPattern(*this); };
+  LoopshapingDynamicsInputPattern* clone(std::shared_ptr<PreComputation> preCompPtr) const override {
+    return new LoopshapingDynamicsInputPattern(*systemDynamics_, loopshapingDefinition_,
+                                               std::dynamic_pointer_cast<LoopshapingPreComputation>(std::move(preCompPtr)));
+  }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation* preCompPtr) override;
 
  protected:
   using BASE::loopshapingDefinition_;

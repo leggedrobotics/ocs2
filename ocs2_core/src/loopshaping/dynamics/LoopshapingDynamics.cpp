@@ -34,24 +34,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(state);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(state, input);
-  const vector_t x_filter = loopshapingDefinition_->getFilterState(state);
-  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(state, input);
+vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input,
+                                             const PreComputation* preCompPtr) {
+  assert(preCompPtr != nullptr);
+  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
+  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
+  const auto& x_system = preComp.getSystemState();
+  const auto& u_system = preComp.getSystemInput();
+  const auto& x_filter = preComp.getFilterState();
+  const auto& u_filter = preComp.getFilterInput();
 
-  const vector_t dynamics_system = systemDynamics_->computeFlowMap(time, x_system, u_system);
+  const vector_t dynamics_system = systemDynamics_->computeFlowMap(time, x_system, u_system, preComp.getSystemPreComputationPtr());
   const vector_t dynamics_filter = filterFlowmap(x_filter, u_filter, u_system);
 
   return loopshapingDefinition_->concatenateSystemAndFilterState(dynamics_system, dynamics_filter);
 }
 
-vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(state);
-  const vector_t jumpMap_system = systemDynamics_->computeJumpMap(time, x_system);
+vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) {
+  assert(preCompPtr != nullptr);
+  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
+  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
+  const auto& x_system = preComp.getSystemState();
+
+  const vector_t jumpMap_system = systemDynamics_->computeJumpMap(time, x_system, preComp.getSystemPreComputationPtr());
 
   // Filter doesn't Jump
-  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(state);
+  const auto& jumMap_filter = preComp.getFilterState();
 
   return loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system, jumMap_filter);
 }
@@ -61,23 +69,27 @@ vector_t LoopshapingDynamics::computeGuardSurfaces(scalar_t time, const vector_t
   return systemDynamics_->computeGuardSurfaces(time, x_system);
 }
 
-VectorFunctionLinearApproximation LoopshapingDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
+VectorFunctionLinearApproximation LoopshapingDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                  const PreComputation* preCompPtr) {
+  assert(preCompPtr != nullptr);
+  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
+  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
+
   // System jump
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system);
+  const auto& x_system = preComp.getSystemState();
+  const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, preComp.getSystemPreComputationPtr());
 
   // Filter doesn't Jump
-  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(x);
-  const size_t filterStateDim = jumMap_filter.size();
+  const auto& jumMap_filter = preComp.getFilterState();
 
   VectorFunctionLinearApproximation jumpMap;
   jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
 
   jumpMap.dfdx.resize(jumpMap.f.size(), jumpMap.f.size());
   jumpMap.dfdx.topLeftCorner(jumpMap_system.f.size(), x_system.size()) = jumpMap_system.dfdx;
-  jumpMap.dfdx.topRightCorner(jumpMap_system.f.size(), filterStateDim).setZero();
-  jumpMap.dfdx.bottomLeftCorner(filterStateDim, x_system.size()).setZero();
-  jumpMap.dfdx.bottomRightCorner(filterStateDim, filterStateDim).setIdentity();
+  jumpMap.dfdx.topRightCorner(jumpMap_system.f.size(), jumMap_filter.size()).setZero();
+  jumpMap.dfdx.bottomLeftCorner(jumMap_filter.size(), x_system.size()).setZero();
+  jumpMap.dfdx.bottomRightCorner(jumMap_filter.size(), jumMap_filter.size()).setIdentity();
 
   jumpMap.dfdu.resize(jumpMap.f.size(), 0);
 
@@ -105,15 +117,18 @@ vector_t LoopshapingDynamics::guardSurfacesDerivativeTime(scalar_t t, const vect
 }
 
 std::unique_ptr<LoopshapingDynamics> LoopshapingDynamics::create(const SystemDynamicsBase& systemDynamics,
-                                                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+                                                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
+                                                                 std::shared_ptr<LoopshapingPreComputation> loopshapingPreCompPtr) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingDynamics>(
+          new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition), std::move(loopshapingPreCompPtr)));
     case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingDynamics>(
+          new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition), std::move(loopshapingPreCompPtr)));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<LoopshapingDynamics>(
-          new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition)));
+          new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition), std::move(loopshapingPreCompPtr)));
     default:
       throw std::runtime_error("[LoopshapingDynamics::create] invalid loopshaping type");
   }

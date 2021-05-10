@@ -26,7 +26,6 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
-#include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
@@ -63,7 +62,7 @@
 #include <ocs2_core/logic/ModeSchedule.h>
 
 // Loopshaping
-// #include <ocs2_core/loopshaping/Loopshaping.h>
+#include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>
@@ -81,8 +80,8 @@
 
 // soft_constraint
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
-// #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
-// #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
+#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
+#include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 #include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>

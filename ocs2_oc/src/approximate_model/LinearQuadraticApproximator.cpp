@@ -39,9 +39,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                        ModelData& modelData) const {
-  const auto request = Request::Cost | Request::Constraint | Request::Dynamics | Request::Approximation;
   if (preCompPtr_ != nullptr) {
-    preCompPtr_->request(request, time, state, input);
+    const auto flags = Request::Cost | Request::Constraint | Request::Dynamics | Request::Approximation;
+    preCompPtr_->request(flags, time, state, input);
   }
 
   // dynamics
@@ -61,9 +61,9 @@ void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const {
-  const auto request = Request::Cost | Request::Constraint | Request::Dynamics | Request::Approximation;
   if (preCompPtr_ != nullptr) {
-    preCompPtr_->requestPreJump(request, time, state);
+    const auto flags = Request::Cost | Request::Constraint | Request::Dynamics | Request::Approximation;
+    preCompPtr_->requestPreJump(flags, time, state);
   }
 
   // Jump map
@@ -81,9 +81,9 @@ void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblemAtFinalTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const {
-  const auto request = Request::Cost | Request::Constraint | Request::Approximation;
   if (preCompPtr_ != nullptr) {
-    preCompPtr_->requestFinal(request, time, state);
+    const auto flags = Request::Cost | Request::Constraint | Request::Approximation;
+    preCompPtr_->requestFinal(flags, time, state);
   }
 
   // TODO(mspieler): Final constraints

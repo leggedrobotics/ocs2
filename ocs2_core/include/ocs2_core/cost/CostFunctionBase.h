@@ -57,6 +57,12 @@ class CostFunctionBase {
   /** Default destructor */
   virtual ~CostFunctionBase() = default;
 
+  /** Clone, also clones the pre-computation object */
+  CostFunctionBase* clone() const;
+
+  /** Clone with given pre-computation pointer */
+  virtual CostFunctionBase* clone(std::shared_ptr<PreComputation> preCompPtr) const;
+
   /** Sets the desired state and input trajectories used in the cost function. */
   void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
     costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
@@ -69,12 +75,6 @@ class CostFunctionBase {
     }
     return *costDesiredTrajectoriesPtr_;
   }
-
-  /** Clone, also clones the pre-computation object */
-  CostFunctionBase* clone() const;
-
-  /** Clone with given pre-computation pointer */
-  virtual CostFunctionBase* clone(std::shared_ptr<PreComputation> preCompPtr) const;
 
   StateInputCost& getCostFunction() { return *costPtr_; }
   StateCost& getFinalCostFunction() { return *finalCostPtr_; }

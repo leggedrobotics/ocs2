@@ -40,13 +40,14 @@ class ZeroStateCost final : public StateCost {
   ~ZeroStateCost() override = default;
   ZeroStateCost* clone() const override { return new ZeroStateCost(); }
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory, const PreComputation*) const {
+  scalar_t getValue(scalar_t /* time */, const vector_t& state, const CostDesiredTrajectories& /* desiredTrajectory */,
+                    const PreComputation* /* preCompPtr */) const {
     return 0.0;
   }
 
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation*) const {
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t /* time */, const vector_t& state,
+                                                                 const CostDesiredTrajectories& /* desiredTrajectory */,
+                                                                 const PreComputation* /* preCompPtr */) const {
     return ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
   }
 

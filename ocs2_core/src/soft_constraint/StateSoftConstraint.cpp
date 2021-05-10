@@ -60,7 +60,8 @@ StateSoftConstraint* StateSoftConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories&) const {
+scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories&,
+                                       const PreComputation* preCompPtr) const {
   return penalty_.getValue(constraintPtr_->getValue(time, state));
 }
 
@@ -68,7 +69,8 @@ scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                    const CostDesiredTrajectories&) const {
+                                                                                    const CostDesiredTrajectories&,
+                                                                                    const PreComputation* preCompPtr) const {
   switch (constraintPtr_->getOrder()) {
     case ConstraintOrder::Linear:
       return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));

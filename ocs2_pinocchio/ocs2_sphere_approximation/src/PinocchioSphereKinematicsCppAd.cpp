@@ -111,7 +111,7 @@ ad_vector_t PinocchioSphereKinematicsCppAd::getPositionCppAd(PinocchioInterfaceC
   const ad_vector_t q = mapping.getPinocchioJointPosition(state);
 
   pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
+  pinocchio::updateGlobalPlacements(model, data);
 
   const auto& geometryModel = pinocchioSphereInterface_.getGeometryModel();
   const size_t numApproximations = pinocchioSphereInterface_.getNumApproximations();
@@ -134,7 +134,7 @@ ad_vector_t PinocchioSphereKinematicsCppAd::getPositionCppAd(PinocchioInterfaceC
           data.oMi[parentJointId].translation();
     }
 
-    startIdx = (7 + 3 * numSpheres[i]);
+    startIdx += (7 + 3 * numSpheres[i]);
     count += 3 * numSpheres[i];
   }
 

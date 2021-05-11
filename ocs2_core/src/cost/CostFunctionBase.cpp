@@ -86,6 +86,16 @@ CostFunctionBase* CostFunctionBase::clone(std::shared_ptr<PreComputation> preCom
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+const CostDesiredTrajectories& CostFunctionBase::getCostDesiredTrajectories() const {
+  if (costDesiredTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[CostFunctionBase] costDesiredTrajectoriesPtr_ is not set.");
+  }
+  return *costDesiredTrajectoriesPtr_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t CostFunctionBase::getValue(scalar_t t, const vector_t& x, const vector_t& u) {
   if (costDesiredTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[CostFunctionBase] costDesiredTrajectoriesPtr_ is not set.");

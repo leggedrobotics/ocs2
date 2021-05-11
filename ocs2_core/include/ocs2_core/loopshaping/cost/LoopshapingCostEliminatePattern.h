@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
 
 namespace ocs2 {
 

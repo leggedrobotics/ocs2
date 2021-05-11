@@ -35,17 +35,17 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterface> robotInterfacePtr,
-                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
+                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
+                                                     const PreComputation* preComputationPtr = nullptr)
     : robotInterfacePtr_(std::move(robotInterfacePtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {
+  loopshapingPreComputationPtr_.reset(new LoopshapingPreComputation(loopshapingDefinitionPtr_, preComputationPtr));
+
   // wrap with loopshaping
-  dynamicsPtr_ = ocs2::LoopshapingDynamics::create(robotInterfacePtr_->getDynamics(), loopshapingDefinitionPtr_);
-  costFunctionPtr_ = ocs2::LoopshapingCost::create(robotInterfacePtr_->getCost(), loopshapingDefinitionPtr_);
-  if (robotInterfacePtr_->getTerminalCostPtr() != nullptr) {
-    terminalCostFunctionPtr_ = ocs2::LoopshapingCost::create(*robotInterfacePtr_->getTerminalCostPtr(), loopshapingDefinitionPtr_);
-  }
-  operatingPointsPtr_.reset(new ocs2::LoopshapingOperatingPoint(robotInterfacePtr_->getOperatingPoints(), loopshapingDefinitionPtr_));
+  dynamicsPtr_ = LoopshapingDynamics::create(robotInterfacePtr_->getDynamics(), loopshapingDefinitionPtr_, loopshapingPreComputationPtr_);
+  costFunctionPtr_.reset(new LoopshapingCost(robotInterfacePtr_->getCost(), loopshapingDefinitionPtr_, loopshapingPreComputationPtr_));
+  operatingPointsPtr_.reset(new LoopshapingOperatingPoint(robotInterfacePtr_->getOperatingPoints(), loopshapingDefinitionPtr_));
   if (robotInterfacePtr_->getConstraintPtr() != nullptr) {
-    constraintsPtr_ = ocs2::LoopshapingConstraint::create(*robotInterfacePtr_->getConstraintPtr(), loopshapingDefinitionPtr_);
+    constraintsPtr_ = LoopshapingConstraint::create(*robotInterfacePtr_->getConstraintPtr(), loopshapingDefinitionPtr_);
   }
   if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
     loopshapingModeScheduleManager_ =

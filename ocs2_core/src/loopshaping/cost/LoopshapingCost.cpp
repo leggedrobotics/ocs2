@@ -27,73 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCostEliminatePattern.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCostInputPattern.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCostOutputPattern.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingStateCost.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
 
 namespace ocs2 {
 
-scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
-                                        const PreComputation* preCompPtr) const {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
-
-  return systemCost_->getValue(t, x_system, desiredTrajectory, preComp.getSystemPreComputationPtr());
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LoopshapingCost::LoopshapingCost(const CostFunctionBase& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
+                                 std::shared_ptr<LoopshapingPreComputation> preCompPtr)
+    : CostFunctionBase(systemCost, std::static_pointer_cast<PreComputation>(std::move(preCompPtr))) {
+  // wrap the cost functions
+  Base::costPtr_ = LoopshapingStateInputCost::create(*costPtr_, loopshapingDefinition);
+  Base::finalCostPtr_.reset(new LoopshapingStateCost(*finalCostPtr_, loopshapingDefinition));
+  Base::preJumpCostPtr_.reset(new LoopshapingStateCost(*preJumpCostPtr_, loopshapingDefinition));
 }
 
-ScalarFunctionQuadraticApproximation LoopshapingStateCost::getQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                     const CostDesiredTrajectories& desiredTrajectory,
-                                                                                     const PreComputation* preCompPtr) const {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LoopshapingCost::LoopshapingCost(const LoopshapingCost& other, std::shared_ptr<PreComputation> preCompPtr)
+    : CostFunctionBase(other, std::move(preCompPtr)) {}
 
-  const auto Phi_system = systemCost_->getQuadraticApproximation(t, x_system, desiredTrajectory, preComp.getSystemPreComputationPtr());
-  const size_t nx_filter = loopshapingDefinition_->getInputFilter().getNumStates();
-
-  ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = Phi_system.f;
-  Phi.dfdx.resize(x.rows());
-  Phi.dfdx.head(x_system.rows()) = Phi_system.dfdx;
-  Phi.dfdx.tail(nx_filter).setZero();
-  Phi.dfdxx.setZero(x.rows(), x.rows());
-  Phi.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = Phi_system.dfdxx;
-  return Phi;
-}
-
-std::unique_ptr<LoopshapingStateInputCost> LoopshapingStateInputCost::create(const StateInputCost& systemCost,
-                                                                             std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  switch (loopshapingDefinition->getType()) {
-    case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostOutputPattern(systemCost, std::move(loopshapingDefinition)));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostInputPattern(systemCost, std::move(loopshapingDefinition)));
-    case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostEliminatePattern(systemCost, std::move(loopshapingDefinition)));
-    default:
-      throw std::runtime_error("[LoopshapingStateInputCost::create] invalid loopshaping type");
-  }
-}
-
-scalar_t LoopshapingStateInputCost::getValue(scalar_t t, const vector_t& x, const vector_t& u,
-                                             const CostDesiredTrajectories& desiredTrajectory, const PreComputation* preCompPtr) const {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
-  const auto& u_system = preComp.getSystemInput();
-  const auto& u_filter = preComp.getFilterInput();
-
-  const scalar_t L_system = systemCost_->getValue(t, x_system, u_system, desiredTrajectory, preComp.getSystemPreComputationPtr());
-  const scalar_t L_filter = systemCost_->getValue(t, x_system, u_filter, desiredTrajectory, preComp.getFilteredSystemPreComputationPtr());
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
-
-  return gamma * L_filter + (1.0 - gamma) * L_system;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+CostFunctionBase* LoopshapingCost::clone(std::shared_ptr<PreComputation> preCompPtr) const {
+  return new LoopshapingCost(*this, std::move(preCompPtr));
 }
 
 }  // namespace ocs2

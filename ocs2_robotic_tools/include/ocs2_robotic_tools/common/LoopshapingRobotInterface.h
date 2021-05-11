@@ -44,10 +44,12 @@ class LoopshapingRobotInterface : public RobotInterface {
   /**
    * Constructor.
    * @param [in] robotInterfacePtr: A unique pointer to the original robot interface.
-   * @param [in] loopshapingDefinitionPtr: A shared pointer to the loopshaping definition
+   * @param [in] loopshapingDefinitionPtr: A shared pointer to the loopshaping definition.
+   * @param [in] preComputationPtr: A pointer to the optional pre-computation module.
    */
   LoopshapingRobotInterface(std::unique_ptr<RobotInterface> robotInterfacePtr,
-                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr);
+                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
+                            const PreComputation* preComputationPtr /* = nullptr*/);
 
   /** Destructor */
   ~LoopshapingRobotInterface() override = default;
@@ -79,8 +81,6 @@ class LoopshapingRobotInterface : public RobotInterface {
 
   const LoopshapingCost& getCost() const override { return *costFunctionPtr_; }
 
-  const LoopshapingCost* getTerminalCostPtr() const override { return terminalCostFunctionPtr_.get(); }
-
   const LoopshapingConstraint* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
   const LoopshapingOperatingPoint& getOperatingPoints() const override { return *operatingPointsPtr_; }
@@ -88,10 +88,10 @@ class LoopshapingRobotInterface : public RobotInterface {
  private:
   std::unique_ptr<RobotInterface> robotInterfacePtr_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
+  std::shared_ptr<LoopshapingPreComputation> loopshapingPreComputationPtr_;
 
   std::unique_ptr<LoopshapingDynamics> dynamicsPtr_;
   std::unique_ptr<LoopshapingCost> costFunctionPtr_;
-  std::unique_ptr<LoopshapingCost> terminalCostFunctionPtr_;
   std::unique_ptr<LoopshapingOperatingPoint> operatingPointsPtr_;
   std::unique_ptr<LoopshapingConstraint> constraintsPtr_;
   std::shared_ptr<LoopshapingModeScheduleManager> loopshapingModeScheduleManager_;

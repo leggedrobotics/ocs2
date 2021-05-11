@@ -109,6 +109,8 @@ add_library(${PROJECT_NAME}
   src/loopshaping/LoopshapingFilter.cpp
   src/loopshaping/LoopshapingOperatingPoint.cpp
   src/loopshaping/cost/LoopshapingCost.cpp
+  src/loopshaping/cost/LoopshapingStateCost.cpp
+  src/loopshaping/cost/LoopshapingStateInputCost.cpp
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
   src/loopshaping/cost/LoopshapingCostOutputPattern.cpp

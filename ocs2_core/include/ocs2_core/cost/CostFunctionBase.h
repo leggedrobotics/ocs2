@@ -68,13 +68,8 @@ class CostFunctionBase {
     costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
   }
 
-  /** Get the desired state and input trajectories used in the cost function. */
-  const CostDesiredTrajectories& getCostDesiredTrajectories() {
-    if (costDesiredTrajectoriesPtr_ == nullptr) {
-      throw std::runtime_error("[CostFunctionBase] costDesiredTrajectoriesPtr_ is not set.");
-    }
-    return *costDesiredTrajectoriesPtr_;
-  }
+  /** Get the cost desired trajectories, throws if not set. */
+  const CostDesiredTrajectories& getCostDesiredTrajectories() const;
 
   StateInputCost& getCostFunction() { return *costPtr_; }
   StateCost& getFinalCostFunction() { return *finalCostPtr_; }

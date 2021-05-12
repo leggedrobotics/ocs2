@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <type_traits>
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintOrder.h>
 
@@ -56,10 +57,11 @@ class StateInputConstraint {
   virtual size_t getNumConstraints(scalar_t time) const = 0;
 
   /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const = 0;
+  virtual vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preCompPtr) const = 0;
 
   /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const {
+  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                   const PreComputation* preCompPtr) const {
     if (order_ == ConstraintOrder::Linear) {
       throw std::runtime_error("[StateInputConstraint] Linear approximation not implemented!");
     } else {
@@ -68,8 +70,8 @@ class StateInputConstraint {
   }
 
   /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const vector_t& input) const {
+  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                         const PreComputation* preCompPtr) const {
     throw std::runtime_error("[StateInputConstraint] Quadratic approximation not implemented!");
   }
 

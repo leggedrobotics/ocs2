@@ -9,13 +9,12 @@
 
 // Constraint
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/ConstraintBaseAD.h>
-#include <ocs2_core/constraint/ConstraintCollection.h>
-#include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/constraint/LinearStateConstraint.h>
 #include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/constraint/StateConstraintCollection.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
 // Control
 #include <ocs2_core/control/ControllerBase.h>

@@ -33,9 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_core/Types.h>
-
-#include "StateConstraint.h"
-#include "StateInputConstraint.h"
+#include <ocs2_core/constraint/StateConstraint.h>
 
 namespace ocs2 {
 
@@ -45,29 +43,12 @@ namespace ocs2 {
  * This class collects a variable number of constraint functions and provides methods to get the
  * concatenated constraint vectors and approximations. Each constraint can be accessed through its
  * string name and can be activated or deactivated.
- *
- * @tparam CONSTRAINT the constraint type: StateInputConstraint or StateConstraint
  */
-template <typename CONSTRAINT>
-class ConstraintCollection final {
+class StateConstraintCollection : public StateConstraint {
  public:
-  using LinearApproximation_t = VectorFunctionLinearApproximation;
-  using QuadraticApproximation_t = VectorFunctionQuadraticApproximation;
-
-  ConstraintCollection() = default;
-  ~ConstraintCollection() = default;
-
-  /** Copy constructor */
-  ConstraintCollection(const ConstraintCollection<CONSTRAINT>& rhs);
-
-  /** Move constructor */
-  ConstraintCollection(ConstraintCollection<CONSTRAINT>&& rhs) noexcept;
-
-  /** Copy assignment */
-  ConstraintCollection<CONSTRAINT>& operator=(const ConstraintCollection<CONSTRAINT>& rhs);
-
-  /** Move assignment */
-  ConstraintCollection<CONSTRAINT>& operator=(ConstraintCollection<CONSTRAINT>&& rhs);
+  StateConstraintCollection(ConstraintOrder order = ConstraintOrder::Quadratic) : StateConstraint(order) {}
+  ~StateConstraintCollection() override = default;
+  StateConstraintCollection* clone() const override;
 
   /**
    * Adds a constraint to the collection, and transfer ownership to the collection
@@ -75,44 +56,39 @@ class ConstraintCollection final {
    * @param constraintTerm: Constraint to be added.
    * @param name: Name stored along with the constraint.
    */
-  void add(std::string name, std::unique_ptr<CONSTRAINT> constraintTerm);
+  void add(std::string name, std::unique_ptr<StateConstraint> constraintTerm);
 
   /**
-   * Use to modify a constraint. The returned pointer is not to be stored since the ConstraintCollection contains a unique
+   * Use to modify a constraint. The returned pointer is not to be stored since the StateConstraintCollection contains a unique
    * pointer to the object
    * @tparam Derived: derived class of ConstraintTerm to cast to. Casts to the base class by default
    * @param name: Name of the constraint to modify
    * @return A reference to the underlying constraint
    */
-  template <typename Derived = CONSTRAINT>
+  template <typename Derived = StateConstraint>
   Derived& get(const std::string& name) {
-    static_assert(std::is_base_of<CONSTRAINT, Derived>::value, "Template argument must derive from CONSTRAINT");
+    static_assert(std::is_base_of<StateConstraint, Derived>::value, "Template argument must derive from StateConstraint");
     // if the key does not exist throws an exception
     return dynamic_cast<Derived&>(*constraintTermMap_.at(name));
   }
 
   /** Returns the number of active constraints at given time. */
-  size_t getNumConstraints(scalar_t time) const;
+  size_t getNumConstraints(scalar_t time) const override;
 
-  /* State-input constraints */
-  template <typename T = CONSTRAINT, EnableIfStateInputConstraint_t<T> = true>
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const;
+  /** Get the constraint vector value */
+  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) const override;
 
-  template <typename T = CONSTRAINT, EnableIfStateInputConstraint_t<T> = true>
-  LinearApproximation_t getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
+  /** Get the constraint linear approximation */
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
+                                                           const PreComputation* preCompPtr) const override;
 
-  template <typename T = CONSTRAINT, EnableIfStateInputConstraint_t<T> = true>
-  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
+  /** Get the constraint quadratic approximation */
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                 const PreComputation* preCompPtr) const override;
 
-  /* State-only constraints */
-  template <typename T = CONSTRAINT, EnableIfStateConstraint_t<T> = true>
-  vector_t getValue(scalar_t time, const vector_t& state) const;
-
-  template <typename T = CONSTRAINT, EnableIfStateConstraint_t<T> = true>
-  LinearApproximation_t getLinearApproximation(scalar_t time, const vector_t& state) const;
-
-  template <typename T = CONSTRAINT, EnableIfStateConstraint_t<T> = true>
-  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const vector_t& state) const;
+ protected:
+  /** Copy constructor */
+  StateConstraintCollection(const StateConstraintCollection& rhs);
 
  private:
   /**
@@ -121,12 +97,7 @@ class ConstraintCollection final {
   template <typename T, typename Allocator>
   void appendVectorToVectorByMoving(std::vector<T, Allocator>& v1, std::vector<T, Allocator>& v2) const;
 
- private:
-  std::map<std::string, std::unique_ptr<CONSTRAINT>> constraintTermMap_;
+  std::map<std::string, std::unique_ptr<StateConstraint>> constraintTermMap_;
 };
-
-// explicit template instantiation
-extern template class ConstraintCollection<StateInputConstraint>;
-extern template class ConstraintCollection<StateConstraint>;
 
 }  // namespace ocs2

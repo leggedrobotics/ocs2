@@ -42,6 +42,10 @@ namespace ocs2 {
 
 /**
  * Cost function combining a collection of cost terms.
+ *
+ * This class collects a variable number of cost terms and provides methods to get the
+ * summed cost values and quadratic approximations. Each cost term can be accessed through its
+ * string name and can be activated or deactivated.
  */
 class StateCostCollection : StateCost {
  public:

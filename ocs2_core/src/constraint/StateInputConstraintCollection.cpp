@@ -27,55 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/constraint/ConstraintCollection.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename CONSTRAINT>
-ConstraintCollection<CONSTRAINT>::ConstraintCollection(const ConstraintCollection<CONSTRAINT>& rhs) {
+StateInputConstraintCollection::StateInputConstraintCollection(const StateInputConstraintCollection& rhs) : StateInputConstraint(rhs) {
   // Loop through all constraints by name and clone into the new object
   constraintTermMap_.clear();
   for (const auto& constraintPair : rhs.constraintTermMap_) {
-    add(constraintPair.first, std::unique_ptr<CONSTRAINT>(constraintPair.second->clone()));
+    add(constraintPair.first, std::unique_ptr<StateInputConstraint>(constraintPair.second->clone()));
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename CONSTRAINT>
-ConstraintCollection<CONSTRAINT>::ConstraintCollection(ConstraintCollection<CONSTRAINT>&& rhs) noexcept
-    : constraintTermMap_(std::move(rhs.constraintTermMap_)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename CONSTRAINT>
-ConstraintCollection<CONSTRAINT>& ConstraintCollection<CONSTRAINT>::operator=(const ConstraintCollection<CONSTRAINT>& rhs) {
-  *this = ConstraintCollection<CONSTRAINT>(rhs);
-  return *this;
+StateInputConstraintCollection* StateInputConstraintCollection::clone() const {
+  return new StateInputConstraintCollection(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename CONSTRAINT>
-ConstraintCollection<CONSTRAINT>& ConstraintCollection<CONSTRAINT>::operator=(ConstraintCollection<CONSTRAINT>&& rhs) {
-  std::swap(constraintTermMap_, rhs.constraintTermMap_);
-  return *this;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename CONSTRAINT>
-void ConstraintCollection<CONSTRAINT>::add(std::string name, std::unique_ptr<CONSTRAINT> constraintTerm) {
+void StateInputConstraintCollection::add(std::string name, std::unique_ptr<StateInputConstraint> constraintTerm) {
   auto info = constraintTermMap_.emplace(std::move(name), std::move(constraintTerm));
   if (!info.second) {
-    throw std::runtime_error(std::string("[ConstraintCollection::add] Constraint term with name \"") + info.first->first +
+    throw std::runtime_error(std::string("[StateInputConstraintCollection::add] Constraint term with name \"") + info.first->first +
                              "\" already exists");
   }
 }
@@ -83,8 +63,7 @@ void ConstraintCollection<CONSTRAINT>::add(std::string name, std::unique_ptr<CON
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <typename CONSTRAINT>
-size_t ConstraintCollection<CONSTRAINT>::getNumConstraints(scalar_t time) const {
+size_t StateInputConstraintCollection::getNumConstraints(scalar_t time) const {
   size_t numConstraints = 0;
 
   // accumulate number of constraints for each constraintTerm
@@ -100,9 +79,8 @@ size_t ConstraintCollection<CONSTRAINT>::getNumConstraints(scalar_t time) const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <>
-template <>
-vector_t ConstraintCollection<StateInputConstraint>::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
+vector_t StateInputConstraintCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                                  const PreComputation* preCompPtr) const {
   vector_t constraintValues;
   constraintValues.resize(getNumConstraints(time));
 
@@ -110,7 +88,7 @@ vector_t ConstraintCollection<StateInputConstraint>::getValue(scalar_t time, con
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
-      const auto constraintTermValues = constraintPair.second->getValue(time, state, input);
+      const auto constraintTermValues = constraintPair.second->getValue(time, state, input, preCompPtr);
       constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
       i += constraintTermValues.rows();
     }
@@ -122,17 +100,16 @@ vector_t ConstraintCollection<StateInputConstraint>::getValue(scalar_t time, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <>
-template <>
-auto ConstraintCollection<StateInputConstraint>::getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const
-    -> LinearApproximation_t {
-  LinearApproximation_t linearApproximation(getNumConstraints(time), state.rows(), input.rows());
+VectorFunctionLinearApproximation StateInputConstraintCollection::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                         const vector_t& input,
+                                                                                         const PreComputation* preCompPtr) const {
+  VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows(), input.rows());
 
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
-      const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state, input);
+      const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state, input, preCompPtr);
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
@@ -147,13 +124,12 @@ auto ConstraintCollection<StateInputConstraint>::getLinearApproximation(scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <>
-template <>
-auto ConstraintCollection<StateInputConstraint>::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                           const vector_t& input) const -> QuadraticApproximation_t {
+VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                               const vector_t& input,
+                                                                                               const PreComputation* preCompPtr) const {
   const auto numConstraints = getNumConstraints(time);
 
-  QuadraticApproximation_t quadraticApproximation;
+  VectorFunctionQuadraticApproximation quadraticApproximation;
   quadraticApproximation.f.resize(numConstraints);
   quadraticApproximation.dfdx.resize(numConstraints, state.rows());
   quadraticApproximation.dfdu.resize(numConstraints, input.rows());
@@ -165,7 +141,7 @@ auto ConstraintCollection<StateInputConstraint>::getQuadraticApproximation(scala
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
-      auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state, input);
+      auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state, input, preCompPtr);
       const size_t nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
@@ -183,89 +159,9 @@ auto ConstraintCollection<StateInputConstraint>::getQuadraticApproximation(scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-template <>
-template <>
-vector_t ConstraintCollection<StateConstraint>::getValue(scalar_t time, const vector_t& state) const {
-  vector_t constraintValues;
-  constraintValues.resize(getNumConstraints(time));
-
-  // append vectors of constraint values from each constraintTerm
-  size_t i = 0;
-  for (const auto& constraintPair : constraintTermMap_) {
-    if (constraintPair.second->isActive()) {
-      const auto constraintTermValues = constraintPair.second->getValue(time, state);
-      constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
-      i += constraintTermValues.rows();
-    }
-  }
-
-  return constraintValues;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <>
-template <>
-auto ConstraintCollection<StateConstraint>::getLinearApproximation(scalar_t time, const vector_t& state) const -> LinearApproximation_t {
-  LinearApproximation_t linearApproximation(getNumConstraints(time), state.rows(), 0);
-
-  // append linearApproximation of each constraintTerm
-  size_t i = 0;
-  for (const auto& constraintPair : constraintTermMap_) {
-    if (constraintPair.second->isActive()) {
-      const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state);
-      const size_t nc = constraintTermApproximation.f.rows();
-      linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
-      linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
-      i += nc;
-    }
-  }
-
-  return linearApproximation;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <>
-template <>
-auto ConstraintCollection<StateConstraint>::getQuadraticApproximation(scalar_t time, const vector_t& state) const
-    -> QuadraticApproximation_t {
-  const auto numConstraints = getNumConstraints(time);
-
-  QuadraticApproximation_t quadraticApproximation;
-  quadraticApproximation.f.resize(numConstraints);
-  quadraticApproximation.dfdx.resize(numConstraints, state.rows());
-  quadraticApproximation.dfdxx.reserve(numConstraints);  // Use reserve instead of resize to avoid unnecessary allocations.
-
-  // append quadraticApproximation of each constraintTerm
-  size_t i = 0;
-  for (const auto& constraintPair : constraintTermMap_) {
-    if (constraintPair.second->isActive()) {
-      auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state);
-      const size_t nc = constraintTermApproximation.f.rows();
-      quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
-      quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
-      appendVectorToVectorByMoving(quadraticApproximation.dfdxx, constraintTermApproximation.dfdxx);
-      i += nc;
-    }
-  }
-
-  return quadraticApproximation;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename CONSTRAINT>
 template <typename T, typename Allocator>
-void ConstraintCollection<CONSTRAINT>::appendVectorToVectorByMoving(std::vector<T, Allocator>& v1, std::vector<T, Allocator>& v2) const {
+void StateInputConstraintCollection::appendVectorToVectorByMoving(std::vector<T, Allocator>& v1, std::vector<T, Allocator>& v2) const {
   v1.insert(v1.end(), std::make_move_iterator(v2.begin()), std::make_move_iterator(v2.end()));
 }
-
-// explicit template instantiation
-template class ConstraintCollection<StateInputConstraint>;
-template class ConstraintCollection<StateConstraint>;
 
 }  // namespace ocs2

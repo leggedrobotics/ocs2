@@ -65,15 +65,16 @@ CostFunctionBase::CostFunctionBase(std::unique_ptr<StateInputCost> costPtr, std:
 /******************************************************************************************************/
 /******************************************************************************************************/
 CostFunctionBase::CostFunctionBase(const CostFunctionBase& other, std::shared_ptr<PreComputation> preCompPtr)
-    : costPtr_(other.costPtr_->clone()), finalCostPtr_(other.finalCostPtr_->clone()), preJumpCostPtr_(other.preJumpCostPtr_->clone()) {
-  preCompPtr_ = std::move(preCompPtr);
-}
+    : costPtr_(other.costPtr_->clone()),
+      finalCostPtr_(other.finalCostPtr_->clone()),
+      preJumpCostPtr_(other.preJumpCostPtr_->clone()),
+      preCompPtr_(std::move(preCompPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 CostFunctionBase* CostFunctionBase::clone() const {
-  return new CostFunctionBase(*this, std::shared_ptr<PreComputation>(preCompPtr_->clone()));
+  return clone(std::shared_ptr<PreComputation>(preCompPtr_->clone()));
 }
 
 /******************************************************************************************************/

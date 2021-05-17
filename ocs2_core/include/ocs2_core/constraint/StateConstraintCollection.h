@@ -46,7 +46,7 @@ namespace ocs2 {
  */
 class StateConstraintCollection : public StateConstraint {
  public:
-  StateConstraintCollection(ConstraintOrder order = ConstraintOrder::Quadratic) : StateConstraint(order) {}
+  explicit StateConstraintCollection(ConstraintOrder order = ConstraintOrder::Quadratic) : StateConstraint(order) {}
   ~StateConstraintCollection() override = default;
   StateConstraintCollection* clone() const override;
 

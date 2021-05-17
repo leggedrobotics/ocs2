@@ -46,7 +46,7 @@ namespace ocs2 {
  */
 class StateInputConstraintCollection : public StateInputConstraint {
  public:
-  StateInputConstraintCollection(ConstraintOrder order = ConstraintOrder::Quadratic) : StateInputConstraint(order) {}
+  explicit StateInputConstraintCollection(ConstraintOrder order = ConstraintOrder::Quadratic) : StateInputConstraint(order) {}
   ~StateInputConstraintCollection() override = default;
   StateInputConstraintCollection* clone() const override;
 

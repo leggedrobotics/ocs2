@@ -29,30 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
+namespace LoopshapingOptimalControlProblem {
 
-/** Zero state-only cost term */
-class ZeroStateCost final : public StateCost {
- public:
-  ZeroStateCost() = default;
-  ~ZeroStateCost() override = default;
-  ZeroStateCost* clone() const override { return new ZeroStateCost(); }
+std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& problem,
+                                              std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  scalar_t getValue(scalar_t /* time */, const vector_t& state, const CostDesiredTrajectories& /* desiredTrajectory */,
-                    const PreComputation* /* preCompPtr */) const {
-    return 0.0;
-  }
-
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t /* time */, const vector_t& state,
-                                                                 const CostDesiredTrajectories& /* desiredTrajectory */,
-                                                                 const PreComputation* /* preCompPtr */) const {
-    return ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
-  }
-
- protected:
-  ZeroStateCost(const ZeroStateCost& rhs) = default;
-};
-
+}
 }  // namespace ocs2

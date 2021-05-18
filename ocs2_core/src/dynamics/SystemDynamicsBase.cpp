@@ -34,20 +34,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsBase::SystemDynamicsBase(std::shared_ptr<PreComputation> preCompPtr) : ControlledSystemBase(std::move(preCompPtr)) {}
+SystemDynamicsBase::SystemDynamicsBase(std::unique_ptr<PreComputation> preCompPtr) : ControlledSystemBase(std::move(preCompPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsBase* SystemDynamicsBase::clone() const {
-  std::shared_ptr<PreComputation> clonedPreCompPtr;
-  if (preCompPtr_ != nullptr) {
-    clonedPreCompPtr.reset(preCompPtr_->clone());
-  }
-  auto* other = this->clone(std::move(clonedPreCompPtr));
-  other->setController(this->controllerPtr());
-  return other;
-}
+SystemDynamicsBase::SystemDynamicsBase(const SystemDynamicsBase& other) : ControlledSystemBase(other) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -78,7 +70,7 @@ VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx.setIdentity(x.rows(), x.rows());
   approximation.dfdu.setZero(x.rows(), 0);
-  approximation.f = this->computeJumpMap(t, x, preCompPtr_.get());
+  approximation.f = ControlledSystemBase::computeJumpMap(t, x, preCompPtr_.get());
   return approximation;
 }
 

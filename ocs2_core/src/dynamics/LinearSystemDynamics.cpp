@@ -44,8 +44,14 @@ LinearSystemDynamics::LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G /*
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearSystemDynamics* LinearSystemDynamics::clone(std::shared_ptr<PreComputation>) const {
-  return new LinearSystemDynamics(A_, B_, G_);
+LinearSystemDynamics::LinearSystemDynamics(const LinearSystemDynamics& other)
+    : SystemDynamicsBase(other), A_(other.A_), B_(other.B_), G_(other.G_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LinearSystemDynamics* LinearSystemDynamics::clone() const {
+  return new LinearSystemDynamics(*this);
 }
 
 /******************************************************************************************************/

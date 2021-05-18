@@ -48,7 +48,7 @@ class PreComputation {
   virtual ~PreComputation() = default;
 
   /** Clone */
-  virtual PreComputation* clone() const = 0;
+  virtual PreComputation* clone() const { return new PreComputation(*this); }
 
   /** Request callback */
   virtual void request(Request requestFlags, scalar_t t, const vector_t& x, const vector_t& u) {}
@@ -61,7 +61,7 @@ class PreComputation {
 
  protected:
   /** Copy constructor */
-  PreComputation(const PreComputation& rhs) = default;
+  PreComputation(const PreComputation& other) = default;
 };
 
 inline PreComputation::Request operator|(PreComputation::Request a, PreComputation::Request b) {

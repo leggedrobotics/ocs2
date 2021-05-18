@@ -19,10 +19,6 @@ class LoopshapingStateInputCost : public StateInputCost {
  public:
   ~LoopshapingStateInputCost() override = default;
 
-  /** Loopshaping state-input cost factory function */
-  static std::unique_ptr<LoopshapingStateInputCost> create(const StateInputCost& systemCost,
-                                                           std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
-
   scalar_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
                     const PreComputation* preCompPtr) const final;
 

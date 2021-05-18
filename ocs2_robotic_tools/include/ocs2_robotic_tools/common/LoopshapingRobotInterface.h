@@ -88,7 +88,7 @@ class LoopshapingRobotInterface : public RobotInterface {
  private:
   std::unique_ptr<RobotInterface> robotInterfacePtr_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
-  std::shared_ptr<LoopshapingPreComputation> loopshapingPreComputationPtr_;
+  std::unique_ptr<LoopshapingPreComputation> loopshapingPreComputationPtr_;
 
   std::unique_ptr<LoopshapingDynamics> dynamicsPtr_;
   std::unique_ptr<LoopshapingCost> costFunctionPtr_;

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Ruben Grandia. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,80 +27,77 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LoopshapingPreComputation::LoopshapingPreComputation(const PreComputation* systemPreCompPtr,
-                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-    : loopshapingDefinition_(std::move(loopshapingDefinition)) {
-  if (systemPreCompPtr != nullptr) {
-    systemPreCompPtr_.reset(systemPreCompPtr->clone());
-    filteredSystemPreCompPtr_.reset(systemPreCompPtr->clone());
-  }
+OptimalControlProblem::OptimalControlProblem() = default;
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
+    : dynamics(other.dynamics->clone()),
+      equalityConstraint(other.equalityConstraint),
+      stateEqualityConstraint(other.stateEqualityConstraint),
+      inequalityConstraint(other.inequalityConstraint),
+      preJumpEqualityConstraint(other.preJumpEqualityConstraint),
+      finalEqualityConstraint(other.finalEqualityConstraint),
+      softConstraint(other.softConstraint),
+      preJumpSoftConstraint(other.preJumpSoftConstraint),
+      finalSoftConstraint(other.finalSoftConstraint),
+      cost(other.cost),
+      preJumpCost(other.preJumpCost),
+      finalCost(other.finalCost),
+      preComputation(other.preComputation->clone()) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+OptimalControlProblem::OptimalControlProblem(OptimalControlProblem&& other) noexcept
+    : dynamics(std::move(other.dynamics)),
+      equalityConstraint(std::move(other.equalityConstraint)),
+      stateEqualityConstraint(std::move(other.stateEqualityConstraint)),
+      inequalityConstraint(std::move(other.inequalityConstraint)),
+      preJumpEqualityConstraint(std::move(other.preJumpEqualityConstraint)),
+      finalEqualityConstraint(std::move(other.finalEqualityConstraint)),
+      softConstraint(std::move(other.softConstraint)),
+      preJumpSoftConstraint(std::move(other.preJumpSoftConstraint)),
+      finalSoftConstraint(std::move(other.finalSoftConstraint)),
+      cost(std::move(other.cost)),
+      preJumpCost(std::move(other.preJumpCost)),
+      finalCost(std::move(other.finalCost)),
+      preComputation(std::move(other.preComputation)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+OptimalControlProblem& OptimalControlProblem::operator=(const OptimalControlProblem& rhs) {
+  *this = OptimalControlProblem(rhs);
+  return *this;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LoopshapingPreComputation::LoopshapingPreComputation(const LoopshapingPreComputation& other)
-    : loopshapingDefinition_(other.loopshapingDefinition_) {
-  if (other.systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_.reset(other.systemPreCompPtr_->clone());
-    filteredSystemPreCompPtr_.reset(other.filteredSystemPreCompPtr_->clone());
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LoopshapingPreComputation* LoopshapingPreComputation::clone() const {
-  return new LoopshapingPreComputation(*this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LoopshapingPreComputation::request(Request requestFlags, scalar_t t, const vector_t& x, const vector_t& u) {
-  x_system_ = loopshapingDefinition_->getSystemState(x);
-  u_system_ = loopshapingDefinition_->getSystemInput(x, u);
-  x_filter_ = loopshapingDefinition_->getFilterState(x);
-  u_filter_ = loopshapingDefinition_->getFilteredInput(x, u);
-
-  if (systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_->request(requestFlags, t, x_system_, u_system_);
-    if (requestFlags & Request::Cost) {
-      // state-input cost function is evaluated on both u_system and u_filter.
-      filteredSystemPreCompPtr_->request(requestFlags, t, x_system_, u_filter_);
-    }
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LoopshapingPreComputation::requestPreJump(Request requestFlags, scalar_t t, const vector_t& x) {
-  x_system_ = loopshapingDefinition_->getSystemState(x);
-  x_filter_ = loopshapingDefinition_->getFilterState(x);
-
-  if (systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_->requestPreJump(requestFlags, t, x_system_);
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LoopshapingPreComputation::requestFinal(Request requestFlags, scalar_t t, const vector_t& x) {
-  x_system_ = loopshapingDefinition_->getSystemState(x);
-  x_filter_ = loopshapingDefinition_->getFilterState(x);
-
-  if (systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_->requestFinal(requestFlags, t, x_system_);
-  }
+OptimalControlProblem& OptimalControlProblem::operator=(OptimalControlProblem&& rhs) {
+  dynamics = std::move(rhs.dynamics);
+  equalityConstraint = std::move(rhs.equalityConstraint);
+  stateEqualityConstraint = std::move(rhs.stateEqualityConstraint);
+  inequalityConstraint = std::move(rhs.inequalityConstraint);
+  preJumpEqualityConstraint = std::move(rhs.preJumpEqualityConstraint);
+  finalEqualityConstraint = std::move(rhs.finalEqualityConstraint);
+  softConstraint = std::move(rhs.softConstraint);
+  preJumpSoftConstraint = std::move(rhs.preJumpSoftConstraint);
+  finalSoftConstraint = std::move(rhs.finalSoftConstraint);
+  cost = std::move(rhs.cost);
+  preJumpCost = std::move(rhs.preJumpCost);
+  finalCost = std::move(rhs.finalCost);
+  preComputation = std::move(rhs.preComputation);
+  return *this;
 }
 
 }  // namespace ocs2

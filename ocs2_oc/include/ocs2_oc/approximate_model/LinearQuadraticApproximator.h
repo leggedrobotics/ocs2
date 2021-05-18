@@ -34,10 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 
@@ -53,13 +51,8 @@ class LinearQuadraticApproximator {
    * @note This class does not take ownership of any of the parameters.
    *       Make sure that the parameter lifetime is longer than this class instance.
    */
-  LinearQuadraticApproximator(SystemDynamicsBase& dynamics, ConstraintBase& constraint, CostFunctionBase& cost, PreComputation* preCompPtr,
-                              bool checkNumericalCharacteristics = true)
-      : dynamics_(dynamics),
-        constraint_(constraint),
-        cost_(cost),
-        preCompPtr_(preCompPtr),
-        checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
+  LinearQuadraticApproximator(OptimalControlProblem& problem, bool checkNumericalCharacteristics = true)
+      : problem_(problem), checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
 
   /**
    * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
@@ -94,10 +87,7 @@ class LinearQuadraticApproximator {
   void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
   void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
-  SystemDynamicsBase& dynamics_;
-  ConstraintBase& constraint_;
-  CostFunctionBase& cost_;
-  PreComputation* preCompPtr_;
+  OptimalControlProblem& problem_;
 
   bool checkNumericalCharacteristics_;
 };

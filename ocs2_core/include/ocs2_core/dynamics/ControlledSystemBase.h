@@ -42,31 +42,14 @@ namespace ocs2 {
  */
 class ControlledSystemBase : public OdeBase {
  public:
-  /** Constructor. */
-  explicit ControlledSystemBase(std::shared_ptr<PreComputation> preCompPtr);
+  /** Constructor */
+  explicit ControlledSystemBase(std::unique_ptr<PreComputation> preCompPtr);
 
-  /** Deleted copy constructor, use normal constructor instead. */
-  ControlledSystemBase(const ControlledSystemBase& other) = delete;
-
-  /** Default destructor. */
+  /** Default destructor */
   ~ControlledSystemBase() override = default;
 
-  /**
-   * Clone
-   *
-   * @param preCompPtr: A pointer to the pre-computation module.
-   * @return A raw pointer to the clone.
-   */
-  virtual ControlledSystemBase* clone(std::shared_ptr<PreComputation> preCompPtr) const = 0;
-
-  /**
-   * Clone
-   *
-   * @note Keeps the same controllerPtr_
-   * @note Also clones the pre-computation object
-   * @return A raw pointer to the clone.
-   */
-  ControlledSystemBase* clone() const;
+  /** Clone */
+  virtual ControlledSystemBase* clone() const = 0;
 
   /** Resets the internal classes. */
   virtual void reset() { controllerPtr_ = nullptr; }
@@ -80,21 +63,6 @@ class ControlledSystemBase : public OdeBase {
    * Returns the controller pointer.
    */
   ControllerBase* controllerPtr() const { return controllerPtr_; };
-
-  /**
-   * Set pre-computation pointer.
-   */
-  void setPreComputationPtr(std::shared_ptr<PreComputation> preCompPtr) { preCompPtr_ = std::move(preCompPtr); }
-
-  /**
-   * Get a shared pointer to the pre-computation (for sharing the pre-computation).
-   */
-  std::shared_ptr<PreComputation> getPreComputationSharedPtr() const { return preCompPtr_; }
-
-  /**
-   * Get a const raw pointer to the pre-computation (for cloning the pre-computation).
-   */
-  const PreComputation* getPreComputationPtr() const { return preCompPtr_.get(); }
 
   /**
    * Computes the flow map of a system.
@@ -126,8 +94,19 @@ class ControlledSystemBase : public OdeBase {
   vector_t computeJumpMap(scalar_t time, const vector_t& state) override final;
   virtual vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preComp);
 
+  /** Get the pre-computation module pointer */
+  const PreComputation* getPreComputationPtr() const { return preCompPtr_.get(); }
+
  protected:
-  std::shared_ptr<PreComputation> preCompPtr_;  //! pointer to pre-computation module
+  /**
+   * Copy constructor
+   *
+   * @note Keeps the same controller pointer.
+   * @note Clones the pre-computation object.
+   */
+  ControlledSystemBase(const ControlledSystemBase& other);
+
+  std::unique_ptr<PreComputation> preCompPtr_;  //! pointer to pre-computation module
 
  private:
   ControllerBase* controllerPtr_ = nullptr;  //! pointer to controller

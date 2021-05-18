@@ -10,26 +10,22 @@ class LoopshapingDynamicsOutputPattern final : public LoopshapingDynamics {
   using BASE = LoopshapingDynamics;
 
   LoopshapingDynamicsOutputPattern(const SystemDynamicsBase& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                                   std::shared_ptr<LoopshapingPreComputation> preCompPtr)
+                                   std::unique_ptr<LoopshapingPreComputation> preCompPtr)
       : BASE(controlledSystem, std::move(loopshapingDefinition), std::move(preCompPtr)) {}
 
   ~LoopshapingDynamicsOutputPattern() override = default;
 
-  LoopshapingDynamicsOutputPattern(const LoopshapingDynamicsOutputPattern& obj) = delete;
+  LoopshapingDynamicsOutputPattern(const LoopshapingDynamicsOutputPattern& obj) = default;
 
-  LoopshapingDynamicsOutputPattern* clone(std::shared_ptr<PreComputation> preCompPtr) const override {
-    return new LoopshapingDynamicsOutputPattern(*systemDynamics_, loopshapingDefinition_,
-                                                std::dynamic_pointer_cast<LoopshapingPreComputation>(std::move(preCompPtr)));
-  }
+  LoopshapingDynamicsOutputPattern* clone() const override { return new LoopshapingDynamicsOutputPattern(*this); }
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                         const PreComputation* preCompPtr) override;
 
- protected:
-  using BASE::loopshapingDefinition_;
-
  private:
   vector_t filterFlowmap(const vector_t& x_filter, const vector_t& u_filter, const vector_t& u_system) override;
+
+  using BASE::loopshapingDefinition_;
 };
 
 }  // namespace ocs2

@@ -14,12 +14,10 @@
 namespace ocs2 {
 class LoopshapingDynamics : public SystemDynamicsBase {
  public:
-  LoopshapingDynamics(const LoopshapingDynamics& obj) = delete;
   ~LoopshapingDynamics() override = default;
 
   static std::unique_ptr<LoopshapingDynamics> create(const SystemDynamicsBase& systemDynamics,
-                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                                                     std::shared_ptr<LoopshapingPreComputation> preCompPtr);
+                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
   vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preComp) final;
   vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preComp) final;
@@ -33,10 +31,13 @@ class LoopshapingDynamics : public SystemDynamicsBase {
   vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
  protected:
+  LoopshapingDynamics(const LoopshapingDynamics& other)
+      : SystemDynamicsBase(other), systemDynamics_(other.systemDynamics_->clone()), loopshapingDefinition_(other.loopshapingDefinition_) {}
+
   LoopshapingDynamics(const SystemDynamicsBase& systemDynamics, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                      std::shared_ptr<LoopshapingPreComputation> preCompPtr)
-      : SystemDynamicsBase(std::static_pointer_cast<PreComputation>(std::move(preCompPtr))),
-        systemDynamics_(systemDynamics.clone(nullptr)),
+                      std::unique_ptr<LoopshapingPreComputation> preCompPtr)
+      : SystemDynamicsBase(std::unique_ptr<PreComputation>(std::move(preCompPtr))),
+        systemDynamics_(systemDynamics.clone()),
         loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
   std::unique_ptr<SystemDynamicsBase> systemDynamics_;

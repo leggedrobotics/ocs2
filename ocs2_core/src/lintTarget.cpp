@@ -8,7 +8,6 @@
 #include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
 // Constraint
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/LinearStateConstraint.h>
 #include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/constraint/StateConstraint.h>
@@ -26,7 +25,6 @@
 
 // Cost
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/cost/StateCost.h>
@@ -61,7 +59,7 @@
 #include <ocs2_core/logic/ModeSchedule.h>
 
 // Loopshaping
-#include <ocs2_core/loopshaping/Loopshaping.h>
+// #include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>

@@ -34,8 +34,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+SystemDynamicsBaseAD::SystemDynamicsBaseAD() : SystemDynamicsBase(nullptr) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 SystemDynamicsBaseAD::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
-    : SystemDynamicsBase(nullptr),  // pre-computation is not used here.
+    : SystemDynamicsBase(rhs),
       flowMapADInterfacePtr_(new CppAdInterface(*rhs.flowMapADInterfacePtr_)),
       jumpMapADInterfacePtr_(new CppAdInterface(*rhs.jumpMapADInterfacePtr_)),
       guardSurfacesADInterfacePtr_(new CppAdInterface(*rhs.guardSurfacesADInterfacePtr_)) {}

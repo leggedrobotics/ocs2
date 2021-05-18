@@ -28,26 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCostEliminatePattern.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCostInputPattern.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCostOutputPattern.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
 
 namespace ocs2 {
-
-std::unique_ptr<LoopshapingStateInputCost> LoopshapingStateInputCost::create(const StateInputCost& systemCost,
-                                                                             std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  switch (loopshapingDefinition->getType()) {
-    case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostOutputPattern(systemCost, std::move(loopshapingDefinition)));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostInputPattern(systemCost, std::move(loopshapingDefinition)));
-    case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostEliminatePattern(systemCost, std::move(loopshapingDefinition)));
-    default:
-      throw std::runtime_error("[LoopshapingStateInputCost::create] invalid loopshaping type");
-  }
-}
 
 scalar_t LoopshapingStateInputCost::getValue(scalar_t t, const vector_t& x, const vector_t& u,
                                              const CostDesiredTrajectories& desiredTrajectory, const PreComputation* preCompPtr) const {

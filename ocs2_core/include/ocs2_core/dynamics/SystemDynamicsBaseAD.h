@@ -45,7 +45,7 @@ namespace ocs2 {
 class SystemDynamicsBaseAD : public SystemDynamicsBase {
  public:
   /** Constructor */
-  SystemDynamicsBaseAD() : SystemDynamicsBase(nullptr){};
+  SystemDynamicsBaseAD();
 
   /** Default destructor */
   ~SystemDynamicsBaseAD() override = default;

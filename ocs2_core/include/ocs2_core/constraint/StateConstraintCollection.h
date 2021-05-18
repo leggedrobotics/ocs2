@@ -44,11 +44,23 @@ namespace ocs2 {
  * concatenated constraint vectors and approximations. Each constraint can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateConstraintCollection : public StateConstraint {
+class StateConstraintCollection final : public StateConstraint {
  public:
   explicit StateConstraintCollection(ConstraintOrder order = ConstraintOrder::Quadratic) : StateConstraint(order) {}
   ~StateConstraintCollection() override = default;
   StateConstraintCollection* clone() const override;
+
+  /** Copy constructor */
+  StateConstraintCollection(const StateConstraintCollection& other);
+
+  /** Move constructor */
+  StateConstraintCollection(StateConstraintCollection&& other) noexcept;
+
+  /** Copy assignment */
+  StateConstraintCollection& operator=(const StateConstraintCollection& rhs);
+
+  /** Move assignment */
+  StateConstraintCollection& operator=(StateConstraintCollection&& rhs);
 
   /**
    * Adds a constraint to the collection, and transfer ownership to the collection
@@ -85,10 +97,6 @@ class StateConstraintCollection : public StateConstraint {
   /** Get the constraint quadratic approximation */
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const PreComputation* preCompPtr) const override;
-
- protected:
-  /** Copy constructor */
-  StateConstraintCollection(const StateConstraintCollection& rhs);
 
  private:
   /**

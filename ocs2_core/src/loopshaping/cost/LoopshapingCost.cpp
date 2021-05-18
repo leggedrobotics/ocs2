@@ -28,34 +28,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingCostEliminatePattern.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingCostInputPattern.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingCostOutputPattern.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingStateCost.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
 
 namespace ocs2 {
+namespace LoopshapingCost {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LoopshapingCost::LoopshapingCost(const CostFunctionBase& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                                 std::shared_ptr<LoopshapingPreComputation> preCompPtr)
-    : CostFunctionBase(systemCost, std::static_pointer_cast<PreComputation>(std::move(preCompPtr))) {
-  // wrap the cost functions
-  Base::costPtr_ = LoopshapingStateInputCost::create(*costPtr_, loopshapingDefinition);
-  Base::finalCostPtr_.reset(new LoopshapingStateCost(*finalCostPtr_, loopshapingDefinition));
-  Base::preJumpCostPtr_.reset(new LoopshapingStateCost(*preJumpCostPtr_, loopshapingDefinition));
+std::unique_ptr<StateCost> create(const StateCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  return std::unique_ptr<StateCost>(new LoopshapingStateCost(systemCost, loopshapingDefinition));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LoopshapingCost::LoopshapingCost(const LoopshapingCost& other, std::shared_ptr<PreComputation> preCompPtr)
-    : CostFunctionBase(other, std::move(preCompPtr)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-CostFunctionBase* LoopshapingCost::clone(std::shared_ptr<PreComputation> preCompPtr) const {
-  return new LoopshapingCost(*this, std::move(preCompPtr));
+std::unique_ptr<StateInputCost> create(const StateInputCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  switch (loopshapingDefinition->getType()) {
+    case LoopshapingType::outputpattern:
+      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostOutputPattern(systemCost, std::move(loopshapingDefinition)));
+    case LoopshapingType::inputpattern:
+      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostInputPattern(systemCost, std::move(loopshapingDefinition)));
+    case LoopshapingType::eliminatepattern:
+      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostEliminatePattern(systemCost, std::move(loopshapingDefinition)));
+    default:
+      throw std::runtime_error("[LoopshapingStateInputCost::create] invalid loopshaping type");
+  }
 }
 
+}  // namespace LoopshapingCost
 }  // namespace ocs2

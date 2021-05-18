@@ -37,18 +37,24 @@ namespace ocs2 {
 SystemDynamicsLinearizer::SystemDynamicsLinearizer(std::unique_ptr<ControlledSystemBase> nonlinearSystemPtr,
                                                    bool doubleSidedDerivative /*= true*/, bool isSecondOrderSystem /*= false*/,
                                                    scalar_t eps /*= Eigen::NumTraits<scalar_t>::epsilon()*/)
-    : SystemDynamicsBase(nonlinearSystemPtr->getPreComputationSharedPtr()),
+    : SystemDynamicsBase(nullptr),
       controlledSystemPtr_(std::move(nonlinearSystemPtr)),
       doubleSidedDerivative_(doubleSidedDerivative),
       isSecondOrderSystem_(isSecondOrderSystem),
-      eps_(eps) {}
+      eps_(eps) {
+  const auto* preComp_system = nonlinearSystemPtr->getPreComputationPtr();
+  if (preComp_system != nullptr) {
+    // clone the pre-computation of the wrapped system
+    this->preCompPtr_.reset(preComp_system->clone());
+  }
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsLinearizer::SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other, std::shared_ptr<PreComputation> preCompPtr)
-    : SystemDynamicsBase(preCompPtr),
-      controlledSystemPtr_(other.controlledSystemPtr_->clone(preCompPtr)),
+SystemDynamicsLinearizer::SystemDynamicsLinearizer(const SystemDynamicsLinearizer& other)
+    : SystemDynamicsBase(other),
+      controlledSystemPtr_(other.controlledSystemPtr_->clone()),
       doubleSidedDerivative_(other.doubleSidedDerivative_),
       isSecondOrderSystem_(other.isSecondOrderSystem_),
       eps_(other.eps_) {}
@@ -56,8 +62,8 @@ SystemDynamicsLinearizer::SystemDynamicsLinearizer(const SystemDynamicsLinearize
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemDynamicsLinearizer* SystemDynamicsLinearizer::clone(std::shared_ptr<PreComputation> preCompPtr) const {
-  return new SystemDynamicsLinearizer(*this, std::move(preCompPtr));
+SystemDynamicsLinearizer* SystemDynamicsLinearizer::clone() const {
+  return new SystemDynamicsLinearizer(*this);
 }
 
 /******************************************************************************************************/

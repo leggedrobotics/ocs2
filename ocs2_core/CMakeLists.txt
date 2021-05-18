@@ -68,7 +68,6 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/automatic_differentation/FiniteDifferenceMethods.cpp
-  src/constraint/ConstraintBase.cpp
   src/constraint/StateConstraintCollection.cpp
   src/constraint/StateInputConstraintCollection.cpp
   src/constraint/StateConstraintCppAd.cpp
@@ -81,7 +80,6 @@ add_library(${PROJECT_NAME}
   src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/StateCostCollection.cpp
   src/cost/StateInputCostCollection.cpp
-  src/cost/CostFunctionBase.cpp
   src/cost/CostDesiredTrajectories.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
@@ -113,10 +111,10 @@ add_library(${PROJECT_NAME}
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
   src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
-  src/loopshaping/constraint/LoopshapingConstraint.cpp
-  src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
-  src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
-  src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
+  # src/loopshaping/constraint/LoopshapingConstraint.cpp
+  # src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
+  # src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
+  # src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamics.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsEliminatePattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp

@@ -47,11 +47,23 @@ namespace ocs2 {
  * summed cost values and quadratic approximations. Each cost term can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateCostCollection : StateCost {
+class StateCostCollection final : public StateCost {
  public:
   StateCostCollection() = default;
   ~StateCostCollection() override = default;
   StateCostCollection* clone() const override;
+
+  /** Copy constructor */
+  StateCostCollection(const StateCostCollection& other);
+
+  /** Move constructor */
+  StateCostCollection(StateCostCollection&& other) noexcept;
+
+  /** Copy assignment */
+  StateCostCollection& operator=(const StateCostCollection& rhs);
+
+  /** Move assignment */
+  StateCostCollection& operator=(StateCostCollection&& rhs);
 
   /**
    * Adds a cost term to the collection, and transfer ownership to the collection
@@ -83,10 +95,6 @@ class StateCostCollection : StateCost {
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
                                                                  const PreComputation* preCompPtr) const override;
-
- protected:
-  /** Copy constructor */
-  StateCostCollection(const StateCostCollection& other);
 
  private:
   std::map<std::string, std::unique_ptr<StateCost>> costTermMap_;

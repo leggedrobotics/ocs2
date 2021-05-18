@@ -30,10 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -45,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -450,10 +449,7 @@ class GaussNewtonDDP : public SolverBase {
   scalar_array_t partitioningTimes_;
 
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
-  std::vector<std::shared_ptr<PreComputation>> preComputationPtrStock_;
-  std::vector<std::unique_ptr<ConstraintBase>> constraintsPtrStock_;
-  std::vector<std::unique_ptr<SystemDynamicsBase>> dynamicsPtrStock_;
-  std::vector<std::unique_ptr<CostFunctionBase>> costPtrStock_;
+  std::vector<std::unique_ptr<OptimalControlProblem>> optimalControlProblemPtrStock_;
 
   // optimized controller
   std::vector<LinearController> nominalControllersStock_;

@@ -34,19 +34,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(std::shared_ptr<PreComputation> preCompPtr) : preCompPtr_(preCompPtr) {}
+ControlledSystemBase::ControlledSystemBase(std::unique_ptr<PreComputation> preCompPtr) : preCompPtr_(std::move(preCompPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase* ControlledSystemBase::clone() const {
-  std::shared_ptr<PreComputation> clonedPreCompPtr;
-  if (preCompPtr_ != nullptr) {
-    clonedPreCompPtr.reset(preCompPtr_->clone());
+ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& other) : OdeBase(other) {
+  if (other.preCompPtr_ != nullptr) {
+    preCompPtr_.reset(preCompPtr_->clone());
   }
-  auto* other = this->clone(std::move(clonedPreCompPtr));
-  other->setController(controllerPtr_);
-  return other;
+  setController(other.controllerPtr());
 }
 
 /******************************************************************************************************/

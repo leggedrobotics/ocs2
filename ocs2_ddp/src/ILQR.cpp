@@ -36,10 +36,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-           const ConstraintBase& constraints, const CostFunctionBase& costFunction,
-           const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr /*= nullptr*/)
-    : BASE(std::move(ddpSettings), rollout, systemDynamics, constraints, costFunction, operatingTrajectories, preComputationPtr) {
+ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+           const SystemOperatingTrajectoriesBase& operatingTrajectories)
+    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, operatingTrajectories) {
   if (settings().algorithm_ != ddp::Algorithm::ILQR) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");
@@ -78,9 +77,7 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
       // execute continuous time LQ approximation for the given partition and time index
       continuousTimeModelData = modelDataTrajectory[timeIndex];
 
-      LinearQuadraticApproximator lqapprox(*BASE::dynamicsPtrStock_[taskId], *BASE::constraintsPtrStock_[taskId],
-                                           *BASE::costPtrStock_[taskId], BASE::preComputationPtrStock_[taskId].get(),
-                                           BASE::settings().checkNumericalStability_);
+      LinearQuadraticApproximator lqapprox(*BASE::optimalControlProblemPtrStock_[taskId], BASE::settings().checkNumericalStability_);
       lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
                                     continuousTimeModelData);
 

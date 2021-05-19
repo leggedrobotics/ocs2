@@ -38,13 +38,11 @@ namespace continuous_time_lqr {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-solution solve(SystemDynamicsBase& systemDynamics, CostFunctionBase& cost, PreComputation* preCompPtr, scalar_t time, const vector_t& state,
-               const vector_t& input, const Settings& settings) {
+solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& state, const vector_t& input, const Settings& settings) {
   const size_t stateDim = state.size();
 
   // --- Form the Linear quadratic approximation ---
-  ConstraintBase noConstraint;
-  LinearQuadraticApproximator lqapprox(systemDynamics, noConstraint, cost, preCompPtr, settings.checkNumericalCharacteristics);
+  LinearQuadraticApproximator lqapprox(problem, settings.checkNumericalCharacteristics);
 
   // Obtain model data at the provided reference
   ModelData modelData;
@@ -52,7 +50,7 @@ solution solve(SystemDynamicsBase& systemDynamics, CostFunctionBase& cost, PreCo
   modelData.stateDim_ = stateDim;
   modelData.inputDim_ = input.size();
   modelData.dynamicsBias_.setZero(stateDim);
-  lqapprox.approximateLQProblem(time, state, input, modelData);
+  lqapprox.approximateUnconstrainedLQProblem(time, state, input, modelData);
 
   // --- Contstruct hamiltonian ---
   // Compute terms containing inv(R)

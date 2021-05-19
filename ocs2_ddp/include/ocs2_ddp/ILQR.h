@@ -47,15 +47,11 @@ class ILQR : public GaussNewtonDDP {
    *
    * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] rollout: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDynamics: The system dynamics and derivatives for the subsystems.
-   * @param [in] constraint: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunction: The cost function (intermediate and final costs) and its derivatives for subsystems.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization of ILQR.
-   * @param [in] preComputationPtr: The pre-computation pointer.
    */
-  ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics, const ConstraintBase& constraint,
-       const CostFunctionBase& costFunction, const SystemOperatingTrajectoriesBase& operatingTrajectories,
-       const PreComputation* preComputationPtr = nullptr);
+  ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+       const SystemOperatingTrajectoriesBase& operatingTrajectories);
 
   /**
    * Default destructor.

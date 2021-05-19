@@ -38,14 +38,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
-                                                       RolloutBase& rolloutRef, ConstraintBase& constraintsRef,
-                                                       CostFunctionBase& costFunctionRef, SoftConstraintPenalty& ineqConstrPenaltyRef,
+                                                       RolloutBase& rolloutRef, OptimalControlProblem& optimalControlProblemRef,
+                                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
                                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       rolloutRef_(rolloutRef),
-      constraintsRef_(constraintsRef),
-      costFunctionRef_(costFunctionRef),
+      optimalControlProblemRef_(optimalControlProblemRef),
       ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
       meritFunc_(std::move(meritFunc)) {}
 
@@ -85,7 +84,7 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
         rolloutTrajectory(rolloutRef_, modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
                           inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
     scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(constraintsRef_, costFunctionRef_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+    rolloutCostAndConstraints(optimalControlProblemRef_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
                               inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
 
     // compute average time step of forward rollout

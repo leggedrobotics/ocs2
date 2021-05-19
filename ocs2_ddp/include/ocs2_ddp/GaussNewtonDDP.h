@@ -77,15 +77,11 @@ class GaussNewtonDDP : public SolverBase {
    *
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
    * @param [in] rollout: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDynamics: The system dynamics and derivatives for the subsystems.
-   * @param [in] constraints: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunction: The cost function (intermediate and final costs) and its derivatives for subsystems.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
    * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization.
-   * @param [in] preComputationPtr: The pre-computation pointer.
    */
-  GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-                 const ConstraintBase& constraints, const CostFunctionBase& costFunction,
-                 const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr = nullptr);
+  GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+                 const SystemOperatingTrajectoriesBase& operatingTrajectories);
 
   /**
    * Destructor.

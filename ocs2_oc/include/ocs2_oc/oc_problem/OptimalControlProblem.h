@@ -56,11 +56,13 @@ struct OptimalControlProblem final {
   StateConstraintCollection finalEqualityConstraint;
 
   /* Soft constraints */
-  /** Intermediate soft constraint penalty cost */
+  /** Intermediate soft constraint penalty */
   StateInputCostCollection softConstraint;
-  /** Pre-jump soft constraint penalty cost */
+  /** Intermediate state-only soft constraint penalty */
+  StateCostCollection stateSoftConstraint;
+  /** Pre-jump soft constraint penalty */
   StateCostCollection preJumpSoftConstraint;
-  /** Final soft constraint penalty cost */
+  /** Final soft constraint penalty */
   StateCostCollection finalSoftConstraint;
 
   /* Cost */

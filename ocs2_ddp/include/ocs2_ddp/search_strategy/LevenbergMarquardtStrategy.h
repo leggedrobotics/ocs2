@@ -34,14 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/ThreadPool.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
@@ -62,14 +61,13 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
    *
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
    * @param [in] settings: The Levenberg Marquardt settings.
-   * @param [in] rolloutRef: A reference to the rollout class.
-   * @param [in] constraintsRef: A reference to the constraint class.
-   * @param [in] costRef: An array of references to the cost class.
+   * @param [in] rolloutRef: A reference to the rollout.
+   * @param [in] optimalControlProblemRef: A reference to the optimal control problem.
    * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
-                             ConstraintBase& constraintsRef, CostFunctionBase& costFunctionRef, SoftConstraintPenalty& ineqConstrPenalty,
+                             OptimalControlProblem& optimalControlProblemRef, SoftConstraintPenalty& ineqConstrPenalty,
                              std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
@@ -109,8 +107,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
   LevenbergMarquardtModule levenbergMarquardtModule_;
 
   RolloutBase& rolloutRef_;
-  ConstraintBase& constraintsRef_;
-  CostFunctionBase& costFunctionRef_;
+  OptimalControlProblem& optimalControlProblemRef_;
   SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 

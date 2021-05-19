@@ -65,6 +65,16 @@ class LinearQuadraticApproximator {
   void approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
   /**
+   * Calculates an LQ approximate of the unconstrainted optimal control problem at a given time, state, and input.
+   *
+   * @param [in] time: The current time.
+   * @param [in] state: The current state.
+   * @param [in] input: The current input.
+   * @param [out] modelData: The output data model.
+   */
+  void approximateUnconstrainedLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
+
+  /**
    * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
    *
    * @param [in] time: The current time.

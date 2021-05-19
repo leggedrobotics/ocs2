@@ -34,15 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
-#include "ocs2_oc/oc_solver/PerformanceIndex.h"
-#include "ocs2_oc/rollout/RolloutBase.h"
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_oc/oc_solver/PerformanceIndex.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "StrategySettings.h"
 
@@ -143,8 +142,7 @@ class SearchStrategyBase {
   /**
    * Evaluates cost and constraints along the given time trajectories.
    *
-   * @param [in] constraints: A reference to the constraint.
-   * @param [in] cost: A reference to the cost function.
+   * @param [in] problem: A reference to the optimal control problem.
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
@@ -153,7 +151,7 @@ class SearchStrategyBase {
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] heuristicsValue: The Heuristics function value.
    */
-  void rolloutCostAndConstraints(ConstraintBase& constraints, CostFunctionBase& cost, const scalar_array2_t& timeTrajectoriesStock,
+  void rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array2_t& timeTrajectoriesStock,
                                  const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
                                  const vector_array2_t& inputTrajectoriesStock,
                                  std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,

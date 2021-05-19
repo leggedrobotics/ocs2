@@ -34,12 +34,34 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateCostCollection::StateCostCollection(const StateCostCollection& other) {
+StateCostCollection::StateCostCollection(const StateCostCollection& other) : StateCost(other) {
   // Loop through all costs by name and clone into the new object
   costTermMap_.clear();
   for (const auto& costPair : other.costTermMap_) {
     add(costPair.first, std::unique_ptr<StateCost>(costPair.second->clone()));
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateCostCollection::StateCostCollection(StateCostCollection&& other) noexcept
+    : StateCost(other), costTermMap_(std::move(other.costTermMap_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateCostCollection& StateCostCollection::operator=(const StateCostCollection& rhs) {
+  *this = StateCostCollection(rhs);
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateCostCollection& StateCostCollection::operator=(StateCostCollection&& rhs) {
+  std::swap(costTermMap_, rhs.costTermMap_);
+  return *this;
 }
 
 /******************************************************************************************************/

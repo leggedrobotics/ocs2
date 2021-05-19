@@ -34,12 +34,34 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateInputCostCollection::StateInputCostCollection(const StateInputCostCollection& other) {
+StateInputCostCollection::StateInputCostCollection(const StateInputCostCollection& other) : StateInputCost(other) {
   // Loop through all costs by name and clone into the new object
   costTermMap_.clear();
   for (const auto& costPair : other.costTermMap_) {
     add(costPair.first, std::unique_ptr<StateInputCost>(costPair.second->clone()));
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputCostCollection::StateInputCostCollection(StateInputCostCollection&& other) noexcept
+    : StateInputCost(other), costTermMap_(std::move(other.costTermMap_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputCostCollection& StateInputCostCollection::operator=(const StateInputCostCollection& rhs) {
+  *this = StateInputCostCollection(rhs);
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputCostCollection& StateInputCostCollection::operator=(StateInputCostCollection&& rhs) {
+  std::swap(costTermMap_, rhs.costTermMap_);
+  return *this;
 }
 
 /******************************************************************************************************/

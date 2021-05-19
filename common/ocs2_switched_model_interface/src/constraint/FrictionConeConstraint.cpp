@@ -162,7 +162,7 @@ FrictionConeConstraint::input_matrix_t FrictionConeConstraint::frictionConeSecon
 
 FrictionConeConstraint::state_matrix_t FrictionConeConstraint::frictionConeSecondDerivativeState(
     const ConeDerivatives& coneDerivatives) const {
-  input_matrix_t ddhdxdx;
+  state_matrix_t ddhdxdx;
   ddhdxdx.setZero();
   ddhdxdx.block<3, 3>(0, 0) = coneDerivatives.d2Cone_deuler2;
   ddhdxdx.diagonal().array() -= hessianDiagonalShift_;

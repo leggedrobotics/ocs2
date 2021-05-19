@@ -47,15 +47,11 @@ class MPC_DDP : public MPC_BASE {
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] rollout: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDynamics: The system dynamics and derivatives for the subsystems.
-   * @param [in] systemConstraints: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunction: The cost function (intermediate and final costs) and its derivatives for subsystems.
+   * @param [in] optimalControlProblem: The optimal control problem definition.
    * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization.
-   * @param [in] preComputationPtr: The pre-computation pointer.
    */
-  MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-          const ConstraintBase& systemConstraints, const CostFunctionBase& costFunction,
-          const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr = nullptr);
+  MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
+          const OptimalControlProblem& optimalControlProblem, const SystemOperatingTrajectoriesBase& operatingTrajectories);
 
   /** Default destructor. */
   ~MPC_DDP() override = default;

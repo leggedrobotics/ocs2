@@ -180,19 +180,16 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                   ModelData& modelData) const {
-  // get results
-  modelData.cost_ =
-      problem_.cost.getQuadraticApproximation(time, state, input, *problem_.costDesiredTrajectories, problem_.preComputation.get());
+  const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
+  const auto* preComputation = problem_.preComputation.get();
 
-  modelData.cost_ +=
-      problem_.stateCost.getQuadraticApproximation(time, state, *problem_.costDesiredTrajectories, problem_.preComputation.get());
+  // get results
+  modelData.cost_ = problem_.cost.getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
+  modelData.cost_ += problem_.stateCost.getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
 
   // add soft constraint penalty
-  modelData.cost_ += problem_.softConstraint.getQuadraticApproximation(time, state, input, *problem_.costDesiredTrajectories,
-                                                                       problem_.preComputation.get());
-
-  modelData.cost_ +=
-      problem_.stateSoftConstraint.getQuadraticApproximation(time, state, *problem_.costDesiredTrajectories, problem_.preComputation.get());
+  modelData.cost_ += problem_.softConstraint.getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
+  modelData.cost_ += problem_.stateSoftConstraint.getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {

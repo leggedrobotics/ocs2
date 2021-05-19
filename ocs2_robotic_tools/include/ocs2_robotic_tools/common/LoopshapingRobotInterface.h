@@ -45,11 +45,9 @@ class LoopshapingRobotInterface : public RobotInterface {
    * Constructor.
    * @param [in] robotInterfacePtr: A unique pointer to the original robot interface.
    * @param [in] loopshapingDefinitionPtr: A shared pointer to the loopshaping definition.
-   * @param [in] preComputationPtr: A pointer to the optional pre-computation module.
    */
   LoopshapingRobotInterface(std::unique_ptr<RobotInterface> robotInterfacePtr,
-                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-                            const PreComputation* preComputationPtr /* = nullptr*/);
+                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr);
 
   /** Destructor */
   ~LoopshapingRobotInterface() override = default;
@@ -77,23 +75,16 @@ class LoopshapingRobotInterface : public RobotInterface {
 
   std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return loopshapingModeScheduleManager_; }
 
-  const LoopshapingDynamics& getDynamics() const override { return *dynamicsPtr_; }
-
-  const LoopshapingCost& getCost() const override { return *costFunctionPtr_; }
-
-  const LoopshapingConstraint* getConstraintPtr() const override { return constraintsPtr_.get(); }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return *optimalControlProblemPtr_; }
 
   const LoopshapingOperatingPoint& getOperatingPoints() const override { return *operatingPointsPtr_; }
 
  private:
   std::unique_ptr<RobotInterface> robotInterfacePtr_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
-  std::unique_ptr<LoopshapingPreComputation> loopshapingPreComputationPtr_;
 
-  std::unique_ptr<LoopshapingDynamics> dynamicsPtr_;
-  std::unique_ptr<LoopshapingCost> costFunctionPtr_;
+  std::unique_ptr<OptimalControlProblem> optimalControlProblemPtr_;
   std::unique_ptr<LoopshapingOperatingPoint> operatingPointsPtr_;
-  std::unique_ptr<LoopshapingConstraint> constraintsPtr_;
   std::shared_ptr<LoopshapingModeScheduleManager> loopshapingModeScheduleManager_;
 };
 

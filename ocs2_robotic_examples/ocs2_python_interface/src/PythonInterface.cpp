@@ -45,15 +45,7 @@ void PythonInterface::init(const RobotInterface& robot, std::unique_ptr<MPC_BASE
 
   mpcMrtInterface_.reset(new MPC_MRT_Interface(*mpcPtr_));
 
-  dynamics_.reset(robot.getDynamics().clone());
-  cost_.reset(robot.getCost().clone());
-
-  const ConstraintBase* constraintPtr = robot.getConstraintPtr();
-  if (constraintPtr) {
-    constraints_.reset(constraintPtr->clone());
-  } else {
-    constraints_.reset(new ConstraintBase());
-  }
+  problem_.reset(new OptimalControlProblem(robot.getOptimalControlProblem()));
 }
 
 /******************************************************************************************************/
@@ -62,7 +54,7 @@ void PythonInterface::init(const RobotInterface& robot, std::unique_ptr<MPC_BASE
 void PythonInterface::reset(CostDesiredTrajectories targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
   mpcMrtInterface_->resetMpcNode(targetTrajectories_);
-  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
+  problem_->costDesiredTrajectories = &targetTrajectories_;
 }
 
 /******************************************************************************************************/
@@ -81,7 +73,7 @@ void PythonInterface::setObservation(scalar_t t, Eigen::Ref<const vector_t> x, E
 /******************************************************************************************************/
 void PythonInterface::setTargetTrajectories(CostDesiredTrajectories targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
-  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
+  problem_->costDesiredTrajectories = &targetTrajectories_;
   mpcMrtInterface_->setTargetTrajectories(targetTrajectories_);
 }
 
@@ -115,7 +107,7 @@ matrix_t PythonInterface::getLinearFeedbackGain(scalar_t time) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::flowMap(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  return dynamics_->computeFlowMap(t, x, u);
+  return problem_->dynamics->computeFlowMap(t, x, u);
 }
 
 /******************************************************************************************************/
@@ -123,17 +115,32 @@ vector_t PythonInterface::flowMap(scalar_t t, Eigen::Ref<const vector_t> x, Eige
 /******************************************************************************************************/
 VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                               Eigen::Ref<const vector_t> u) {
-  return dynamics_->linearApproximation(t, x, u);
+  return problem_->dynamics->linearApproximation(t, x, u);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  scalar_t L = cost_->getValue(t, x, u);
+  auto* preComputation = problem_->preComputation.get();
+  if (preComputation != nullptr) {
+    preComputation->request(Request::Cost | Request::SoftConstraint, t, x, u);
+  }
 
-  if (constraints_ != nullptr && penalty_ != nullptr) {
-    const auto h = constraints_->inequalityConstraint(t, x, u);
+  const auto& desiredTrajectory = *problem_->costDesiredTrajectories;
+
+  // get results
+  scalar_t L = 0.0;
+  L += problem_->cost.getValue(t, x, u, desiredTrajectory, preComputation);
+  L += problem_->stateCost.getValue(t, x, desiredTrajectory, preComputation);
+  L += problem_->softConstraint.getValue(t, x, u, desiredTrajectory, preComputation);
+  L += problem_->stateSoftConstraint.getValue(t, x, desiredTrajectory, preComputation);
+
+  if (penalty_ != nullptr) {
+    if (preComputation != nullptr) {
+      preComputation->request(Request::Constraint, t, x, u);
+    }
+    const auto h = problem_->inequalityConstraint.getValue(t, x, u, preComputation);
     SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getValue(h);
   }
@@ -146,10 +153,24 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
-  auto L = cost_->getQuadraticApproximation(t, x, u);
+  auto* preComputation = problem_->preComputation.get();
+  if (preComputation != nullptr) {
+    preComputation->request(Request::Cost | Request::SoftConstraint | Request::Approximation, t, x, u);
+  }
 
-  if (constraints_ != nullptr && penalty_ != nullptr) {
-    const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);
+  const auto& desiredTrajectory = *problem_->costDesiredTrajectories;
+
+  // get results
+  auto L = problem_->cost.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
+  L += problem_->stateCost.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
+  L += problem_->softConstraint.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
+  L += problem_->stateSoftConstraint.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
+
+  if (penalty_ != nullptr) {
+    if (preComputation != nullptr) {
+      preComputation->request(Request::Constraint | Request::Approximation, t, x, u);
+    }
+    const auto h = problem_->inequalityConstraint.getQuadraticApproximation(t, x, u, preComputation);
     SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getQuadraticApproximation(h);
   }
@@ -175,7 +196,9 @@ vector_t PythonInterface::valueFunctionStateDerivative(scalar_t t, Eigen::Ref<co
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::stateInputEqualityConstraint(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  return constraints_->stateInputEqualityConstraint(t, x, u);
+  // TODO(mspieler)
+  return vector_t();
+  // return constraints_->stateInputEqualityConstraint(t, x, u);
 }
 
 /******************************************************************************************************/
@@ -183,33 +206,38 @@ vector_t PythonInterface::stateInputEqualityConstraint(scalar_t t, Eigen::Ref<co
 /******************************************************************************************************/
 VectorFunctionLinearApproximation PythonInterface::stateInputEqualityConstraintLinearApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                                    Eigen::Ref<const vector_t> u) {
-  return constraints_->stateInputEqualityConstraintLinearApproximation(t, x, u);
+  // TODO(mspieler)
+  return VectorFunctionLinearApproximation();
+  // return constraints_->stateInputEqualityConstraintLinearApproximation(t, x, u);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::stateInputEqualityConstraintLagrangian(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  vector_t zero_u = vector_t::Zero(u.rows());
+  // TODO(mspieler)
+  return vector_t();
 
-  const auto g = constraints_->stateInputEqualityConstraintLinearApproximation(t, x, zero_u);
-  const matrix_t& Dm = g.dfdu;
-  const vector_t& c = g.f;
+  // vector_t zero_u = vector_t::Zero(u.rows());
 
-  const auto Phi = costQuadraticApproximation(t, x, zero_u);
-  const matrix_t& R = Phi.dfduu;
-  const vector_t& r = Phi.dfdu;
+  // const auto g = constraints_->stateInputEqualityConstraintLinearApproximation(t, x, zero_u);
+  // const matrix_t& Dm = g.dfdu;
+  // const vector_t& c = g.f;
 
-  const matrix_t B = flowMapLinearApproximation(t, x, zero_u).dfdu;
+  // const auto Phi = costQuadraticApproximation(t, x, zero_u);
+  // const matrix_t& R = Phi.dfduu;
+  // const vector_t& r = Phi.dfdu;
 
-  matrix_t RinvChol;
-  LinearAlgebra::computeInverseMatrixUUT(R, RinvChol);
-  matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol;
-  ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol);
+  // const matrix_t B = flowMapLinearApproximation(t, x, zero_u).dfdu;
 
-  vector_t costate = valueFunctionStateDerivative(t, x);
+  // matrix_t RinvChol;
+  // LinearAlgebra::computeInverseMatrixUUT(R, RinvChol);
+  // matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol;
+  // ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol);
 
-  return DmDager.transpose() * (R * DmDager * c - r - B.transpose() * costate);
+  // vector_t costate = valueFunctionStateDerivative(t, x);
+
+  // return DmDager.transpose() * (R * DmDager * c - r - B.transpose() * costate);
 }
 
 }  // namespace ocs2

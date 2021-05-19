@@ -35,12 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_ddp/SLQ.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 // Ballbot
@@ -61,6 +61,9 @@ int main(int argc, char** argv) {
   std::string libraryFolder = ros::package::getPath("ocs2_ballbot_example") + "/auto_generated";
   std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
+  /* The optimal control problem formulation*/
+  OptimalControlProblem problem;
+
   /*
    * DDP settings
    */
@@ -75,8 +78,8 @@ int main(int argc, char** argv) {
   /*
    * Rollout
    */
-  std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr(new BallbotSystemDynamics(libraryFolder, true));
-  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr, rolloutSettings));
+  problem.dynamics.reset(new BallbotSystemDynamics(libraryFolder, true));
+  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*problem.dynamics, rolloutSettings));
 
   /*
    * Cost function
@@ -92,13 +95,8 @@ int main(int argc, char** argv) {
 
   std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q, R));
   std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal));
-  std::unique_ptr<QuadraticStateCost> jumpCost(Phi->clone());
-  std::unique_ptr<CostFunctionBase> ballbotCostPtr(new CostFunctionBase(std::move(L), std::move(Phi), std::move(jumpCost), nullptr));
-
-  /*
-   * Constraints
-   */
-  std::unique_ptr<ConstraintBase> ballbotConstraintPtr(new ConstraintBase());
+  problem.cost.add("cost", std::move(L));
+  problem.finalCost.add("finalCost", std::move(Phi));
 
   /*
    * Initialization
@@ -123,7 +121,7 @@ int main(int argc, char** argv) {
    * define solver and run
    */
   ddpSettings.nThreads_ = 1;
-  SLQ slq(ddpSettings, *ballbotRolloutPtr, *ballbotSystemDynamicsPtr, *ballbotConstraintPtr, *ballbotCostPtr, *ballbotOperatingPointPtr);
+  SLQ slq(ddpSettings, *ballbotRolloutPtr, problem, *ballbotOperatingPointPtr);
   slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 

@@ -29,24 +29,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_robotic_tools/common/LoopshapingRobotInterface.h"
 
+#include <ocs2_oc/oc_problem/LoopshapingOptimalControlProblem.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterface> robotInterfacePtr,
-                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-                                                     const PreComputation* preComputationPtr = nullptr)
+                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
     : robotInterfacePtr_(std::move(robotInterfacePtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {
-  loopshapingPreComputationPtr_.reset(new LoopshapingPreComputation(loopshapingDefinitionPtr_, preComputationPtr));
-
   // wrap with loopshaping
-  dynamicsPtr_ = LoopshapingDynamics::create(robotInterfacePtr_->getDynamics(), loopshapingDefinitionPtr_, loopshapingPreComputationPtr_);
-  costFunctionPtr_.reset(new LoopshapingCost(robotInterfacePtr_->getCost(), loopshapingDefinitionPtr_, loopshapingPreComputationPtr_));
+  optimalControlProblemPtr_ =
+      LoopshapingOptimalControlProblem::create(robotInterfacePtr->getOptimalControlProblem(), loopshapingDefinitionPtr_);
+
   operatingPointsPtr_.reset(new LoopshapingOperatingPoint(robotInterfacePtr_->getOperatingPoints(), loopshapingDefinitionPtr_));
-  if (robotInterfacePtr_->getConstraintPtr() != nullptr) {
-    constraintsPtr_ = LoopshapingConstraint::create(*robotInterfacePtr_->getConstraintPtr(), loopshapingDefinitionPtr_);
-  }
+
   if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
     loopshapingModeScheduleManager_ =
         std::make_shared<LoopshapingModeScheduleManager>(robotInterfacePtr_->getModeScheduleManagerPtr(), loopshapingDefinitionPtr_);

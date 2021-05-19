@@ -34,10 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Ballbot
@@ -71,9 +70,7 @@ class BallbotInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
-
-  const CostFunctionBase& getCost() const override { return *ballbotCostPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return optimalControlProblem_; }
 
   const RolloutBase& getRollout() const { return *ddpBallbotRolloutPtr_; }
 
@@ -96,11 +93,8 @@ class BallbotInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
+  OptimalControlProblem optimalControlProblem_;
   std::unique_ptr<RolloutBase> ddpBallbotRolloutPtr_;
-
-  std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
-  std::unique_ptr<CostFunctionBase> ballbotCostPtr_;
-  std::unique_ptr<ConstraintBase> ballbotConstraintPtr_;
   std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr_;
 
   // cost parameters

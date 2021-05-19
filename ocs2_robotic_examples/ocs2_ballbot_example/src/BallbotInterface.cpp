@@ -73,14 +73,13 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   // load the flag to generate library files from taskFile
   bool recompileLibraries;
   ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.recompileLibraries", recompileLibraries);
-
-  ballbotSystemDynamicsPtr_.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
+  optimalControlProblem_.dynamics.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
 
   /*
    * Rollout
    */
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(*ballbotSystemDynamicsPtr_, rolloutSettings));
+  ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(*optimalControlProblem_.dynamics, rolloutSettings));
 
   /*
    * Cost function
@@ -96,12 +95,9 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 
   std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q_, R_));
   std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal_));
-  ballbotCostPtr_.reset(new CostFunctionBase(std::move(L), std::move(Phi), nullptr));
 
-  /*
-   * Constraints
-   */
-  ballbotConstraintPtr_.reset(new ConstraintBase());
+  optimalControlProblem_.cost.add("cost", std::move(L));
+  optimalControlProblem_.finalCost.add("finalCost", std::move(Phi));
 
   /*
    * Initialization
@@ -113,8 +109,8 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> BallbotInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *ddpBallbotRolloutPtr_, *ballbotSystemDynamicsPtr_,
-                                              *ballbotConstraintPtr_, *ballbotCostPtr_, *ballbotOperatingPointPtr_));
+  return std::unique_ptr<MPC_DDP>(
+      new MPC_DDP(mpcSettings_, ddpSettings_, *ddpBallbotRolloutPtr_, optimalControlProblem_, *ballbotOperatingPointPtr_));
 }
 
 }  // namespace ballbot

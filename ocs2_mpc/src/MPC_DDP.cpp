@@ -37,18 +37,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_DDP::MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout, const SystemDynamicsBase& systemDynamics,
-                 const ConstraintBase& systemConstraints, const CostFunctionBase& costFunction,
-                 const SystemOperatingTrajectoriesBase& operatingTrajectories, const PreComputation* preComputationPtr /*= nullptr*/)
+MPC_DDP::MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
+                 const OptimalControlProblem& optimalControlProblem, const SystemOperatingTrajectoriesBase& operatingTrajectories)
     : MPC_BASE(std::move(mpcSettings)) {
   switch (ddpSettings.algorithm_) {
     case ddp::Algorithm::SLQ:
-      ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, systemDynamics, systemConstraints, costFunction, operatingTrajectories,
-                            preComputationPtr));
+      ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, operatingTrajectories));
       break;
     case ddp::Algorithm::ILQR:
-      ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, systemDynamics, systemConstraints, costFunction, operatingTrajectories,
-                             preComputationPtr));
+      ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, operatingTrajectories));
       break;
   }
 }

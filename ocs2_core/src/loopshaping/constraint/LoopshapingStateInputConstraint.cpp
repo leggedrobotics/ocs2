@@ -27,43 +27,28 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
+#include <ocs2_core/loopshaping/constraint/LoopshapingStateInputConstraint.h>
+
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingStateConstraint.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingStateInputConstraint.h>
 
 namespace ocs2 {
-namespace LoopshapingConstraint {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateConstraint> create(const StateConstraint& systemConstraint,
-                                        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  return std::unique_ptr<StateConstraint>(new LoopshapingStateConstraint(systemConstraint, loopshapingDefinition));
+vector_t LoopshapingStateInputConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u,
+                                                   const PreComputation* preCompPtr) const {
+  assert(preCompPtr != nullptr);
+  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
+  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
+  const auto& x_system = preComp.getSystemState();
+  const auto& u_system = preComp.getSystemInput();
+  const auto* preComp_system = preComp.getSystemPreComputationPtr();
+
+  return systemConstraint_->getValue(t, x_system, u_system, preComp_system);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<StateInputConstraint> create(const StateInputConstraint& systemConstraint,
-                                             std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  switch (loopshapingDefinition->getType()) {
-    case LoopshapingType::outputpattern:
-      return std::unique_ptr<StateInputConstraint>(
-          new LoopshapingConstraintOutputPattern(systemConstraint, std::move(loopshapingDefinition)));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<StateInputConstraint>(
-          new LoopshapingConstraintInputPattern(systemConstraint, std::move(loopshapingDefinition)));
-    case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<StateInputConstraint>(
-          new LoopshapingConstraintEliminatePattern(systemConstraint, std::move(loopshapingDefinition)));
-    default:
-      throw std::runtime_error("[LoopshapingConstraint::create] invalid loopshaping type");
-  }
-}
-
-}  // namespace LoopshapingConstraint
 }  // namespace ocs2

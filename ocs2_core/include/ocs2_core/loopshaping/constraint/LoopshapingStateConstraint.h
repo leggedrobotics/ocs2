@@ -21,7 +21,9 @@ class LoopshapingStateConstraint final : public StateConstraint {
 
   ~LoopshapingStateConstraint() override = default;
 
-  LoopshapingStateConstraint* clone() const override { new LoopshapingStateConstraint(*this); }
+  LoopshapingStateConstraint* clone() const override { return new LoopshapingStateConstraint(*this); }
+
+  size_t getNumConstraints(scalar_t time) const override { return systemConstraint_->getNumConstraints(time); }
 
   vector_t getValue(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) const override;
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
@@ -35,7 +37,7 @@ class LoopshapingStateConstraint final : public StateConstraint {
     systemConstraint_.reset(other.systemConstraint_->clone());
   }
 
-  std::unique_ptr<ConstraintBase> systemConstraint_;
+  std::unique_ptr<StateConstraint> systemConstraint_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 

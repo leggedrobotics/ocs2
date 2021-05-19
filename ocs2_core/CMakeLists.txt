@@ -111,10 +111,13 @@ add_library(${PROJECT_NAME}
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
   src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
-  # src/loopshaping/constraint/LoopshapingConstraint.cpp
-  # src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
-  # src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
-  # src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraint.cpp
+  src/loopshaping/constraint/LoopshapingFilterConstraint.cpp
+  src/loopshaping/constraint/LoopshapingStateConstraint.cpp
+  src/loopshaping/constraint/LoopshapingStateInputConstraint.cpp
+  src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
+  src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamics.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsEliminatePattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp

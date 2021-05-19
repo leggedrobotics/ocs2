@@ -72,7 +72,11 @@ class StateConstraint {
   /** Get the constraint quadratic approximation */
   virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                          const PreComputation* preCompPtr) const {
-    throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented!");
+    if (order_ == ConstraintOrder::Quadratic) {
+      throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented!");
+    } else {
+      throw std::runtime_error("[StateConstraint] The class only provides Linear approximationn! call getLinearApproximation()");
+    }
   }
 
  protected:

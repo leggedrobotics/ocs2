@@ -6,8 +6,8 @@
 
 #include <memory>
 
-#include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {

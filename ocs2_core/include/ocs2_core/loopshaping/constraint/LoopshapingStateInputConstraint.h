@@ -16,13 +16,9 @@ class LoopshapingStateInputConstraint : public StateInputConstraint {
  public:
   ~LoopshapingStateInputConstraint() override = default;
 
-  LoopshapingStateInputConstraint* clone() const override { new LoopshapingStateInputConstraint(*this); }
-
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preCompPtr) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation* preCompPtr) const override;
-  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const PreComputation* preCompPtr) const override;
+
+  size_t getNumConstraints(scalar_t time) const override { return systemConstraint_->getNumConstraints(time); }
 
  protected:
   LoopshapingStateInputConstraint(const StateInputConstraint& systemConstraint,
@@ -36,7 +32,7 @@ class LoopshapingStateInputConstraint : public StateInputConstraint {
     systemConstraint_.reset(other.systemConstraint_->clone());
   }
 
-  std::unique_ptr<ConstraintBase> systemConstraint_;
+  std::unique_ptr<StateInputConstraint> systemConstraint_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 

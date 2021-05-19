@@ -66,6 +66,8 @@ struct OptimalControlProblem final {
   /* Cost */
   /** Intermediate cost */
   StateInputCostCollection cost;
+  /** Intermediate state-only cost */
+  StateCostCollection stateCost;
   /** Pre-jump cost */
   StateCostCollection preJumpCost;
   /** Final cost */

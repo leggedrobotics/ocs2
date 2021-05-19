@@ -28,81 +28,69 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h>
+#include <ocs2_core/loopshaping/constraint/LoopshapingFilterConstraint.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation LoopshapingConstraintOutputPattern::getLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                             const vector_t& u,
-                                                                                             const PreComputation* preCompPtr) const {
+vector_t LoopshapingFilterConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation* preCompPtr) const {
+  if (loopshapingDefinition_->getType() != LoopshapingType::inputpattern) {
+    return vector_t(0);
+  }
+
   assert(preCompPtr != nullptr);
   assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
 
+  const bool isDiagonal = loopshapingDefinition_->isDiagonal();
+  const auto& s_filter = loopshapingDefinition_->getInputFilter();
   const auto& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto* preComp_system = preComp.getSystemPreComputationPtr();
-  const auto& x_system = preComp.getSystemState();
   const auto& u_system = preComp.getSystemInput();
+  const auto& x_filter = preComp.getFilterState();
+  const auto& u_filter = preComp.getFilterInput();
 
-  const auto g_system = systemConstraint_->getLinearApproximation(t, x_system, u_system, preComp_system);
-
-  VectorFunctionLinearApproximation g;
-  g.f = std::move(g_system.f);
-
-  g.dfdx.resize(g.f.rows(), x.rows());
-  g.dfdx.leftCols(x_system.rows()) = g_system.dfdx;
-  g.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
-
-  g.dfdu.resize(g.f.rows(), u.rows());
-  g.dfdu.leftCols(u_system.rows()).noalias() = g_system.dfdu;
-  g.dfdu.rightCols(u.rows() - u_system.rows()).setZero();
-
-  return g;
+  if (isDiagonal) {
+    return s_filter.getCdiag() * x_filter + s_filter.getDdiag() * u_filter - u_system;
+  } else {
+    return s_filter.getC() * x_filter + s_filter.getD() * u_filter - u_system;
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionQuadraticApproximation LoopshapingConstraintOutputPattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                                   const vector_t& u,
-                                                                                                   const PreComputation* preCompPtr) const {
+VectorFunctionLinearApproximation LoopshapingFilterConstraint::getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                                      const PreComputation* preCompPtr) const {
+  if (loopshapingDefinition_->getType() != LoopshapingType::inputpattern) {
+    return VectorFunctionLinearApproximation(0, x.rows(), u.rows());
+  }
+
   assert(preCompPtr != nullptr);
   assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
 
+  const bool isDiagonal = loopshapingDefinition_->isDiagonal();
+  const auto& s_filter = loopshapingDefinition_->getInputFilter();
   const auto& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto* preComp_system = preComp.getSystemPreComputationPtr();
   const auto& x_system = preComp.getSystemState();
   const auto& u_system = preComp.getSystemInput();
   const auto& x_filter = preComp.getFilterState();
+  const auto& u_filter = preComp.getFilterInput();
 
-  const auto h_system = systemConstraint_->getQuadraticApproximation(t, x_system, u_system, preComp_system);
-
-  VectorFunctionQuadraticApproximation h;
-  h.f = std::move(h_system.f);
-
-  h.dfdx.resize(h.f.rows(), x.rows());
-  h.dfdx.leftCols(x_system.rows()) = h_system.dfdx;
-  h.dfdx.rightCols(x_filter.rows()).setZero();
-
-  h.dfdu = h_system.dfdu;
-
-  h.dfdxx.resize(h.f.rows());
-  h.dfduu.resize(h.f.rows());
-  h.dfdux.resize(h.f.rows());
-  for (size_t i = 0; i < h.f.rows(); i++) {
-    h.dfdxx[i].setZero(x.rows(), x.rows());
-    h.dfdxx[i].topLeftCorner(x_system.rows(), x_system.rows()) = h_system.dfdxx[i];
-
-    h.dfduu[i] = h_system.dfduu[i];
-
-    h.dfdux[i].resize(u.rows(), x.rows());
-    h.dfdux[i].leftCols(x_system.rows()) = h_system.dfdux[i];
-    h.dfdux[i].rightCols(x_filter.rows()).setZero();
+  VectorFunctionLinearApproximation g(u_system.rows(), x.rows(), u.rows());
+  if (isDiagonal) {
+    g.f = s_filter.getCdiag() * x_filter + s_filter.getDdiag() * u_filter - u_system;
+  } else {
+    g.f = s_filter.getC() * x_filter + s_filter.getD() * u_filter - u_system;
   }
 
-  return h;
+  g.dfdx.leftCols(x_system.rows()).setZero();
+  g.dfdx.rightCols(x_filter.rows()) = s_filter.getC();
+
+  g.dfdu.leftCols(u_system.rows()) = -matrix_t::Identity(u_system.rows(), u_system.rows());
+  g.dfdu.rightCols(u_filter.rows()) = s_filter.getD();
+
+  return g;
 }
 
 }  // namespace ocs2

@@ -27,7 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
+#include <ocs2_core/loopshaping/constraint/LoopshapingStateConstraint.h>
 
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h>
@@ -38,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LoopshapingStateConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) const {
+vector_t LoopshapingStateConstraint::getValue(scalar_t t, const vector_t& x, const PreComputation* preCompPtr) const {
   assert(preCompPtr != nullptr);
   assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
   const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
@@ -51,7 +52,7 @@ vector_t LoopshapingStateConstraint::getValue(scalar_t time, const vector_t& sta
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
+VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                      const PreComputation* preCompPtr) const {
   assert(preCompPtr != nullptr);
   assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
@@ -62,17 +63,20 @@ VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproxima
   const auto c_system = systemConstraint_->getLinearApproximation(t, x_system, preComp_system);
 
   VectorFunctionLinearApproximation c;
+
   c.f = std::move(c_system.f);
+
   c.dfdx.resize(c.f.rows(), x.rows());
   c.dfdx.leftCols(x_system.rows()) = c_system.dfdx;
   c.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
-  return c
+
+  return c;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
+VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                            const PreComputation* preCompPtr) const {
   assert(preCompPtr != nullptr);
   assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
@@ -83,14 +87,20 @@ VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApp
   const auto c_system = systemConstraint_->getQuadraticApproximation(t, x_system, preComp_system);
 
   VectorFunctionQuadraticApproximation c;
+
   c.f = std::move(c_system.f);
+
   c.dfdx.resize(c.f.rows(), x.rows());
   c.dfdx.leftCols(x_system.rows()) = c_system.dfdx;
   c.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
-  for (size_t i = 0; i < h.f.rows(); i++) {
-    c.dfdxx.setZero(state.rows())
+
+  c.dfdxx.resize(c.f.rows());
+  for (size_t i = 0; i < c.f.rows(); i++) {
+    c.dfdxx[i].setZero(x.rows(), x.rows());
+    c.dfdxx[i].topLeftCorner(x_system.rows(), x_system.rows()) = c_system.dfdxx[i];
   }
-  return c
+
+  return c;
 }
 
 }  // namespace ocs2

@@ -123,7 +123,7 @@ std::unique_ptr<LoopshapingDynamics> LoopshapingDynamics::create(const SystemDyn
                                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   // wrap the system pre-computation
   std::unique_ptr<LoopshapingPreComputation> preCompPtr(
-      new LoopshapingPreComputation(loopshapingDefinition, systemDynamics.getPreComputationPtr()));
+      new LoopshapingPreComputation(systemDynamics.getPreComputationPtr(), loopshapingDefinition));
 
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:

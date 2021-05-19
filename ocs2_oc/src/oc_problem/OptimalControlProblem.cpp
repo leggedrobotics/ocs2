@@ -50,6 +50,7 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       preJumpSoftConstraint(other.preJumpSoftConstraint),
       finalSoftConstraint(other.finalSoftConstraint),
       cost(other.cost),
+      stateCost(other.stateCost),
       preJumpCost(other.preJumpCost),
       finalCost(other.finalCost),
       preComputation(other.preComputation->clone()) {}
@@ -68,6 +69,7 @@ OptimalControlProblem::OptimalControlProblem(OptimalControlProblem&& other) noex
       preJumpSoftConstraint(std::move(other.preJumpSoftConstraint)),
       finalSoftConstraint(std::move(other.finalSoftConstraint)),
       cost(std::move(other.cost)),
+      stateCost(std::move(other.stateCost)),
       preJumpCost(std::move(other.preJumpCost)),
       finalCost(std::move(other.finalCost)),
       preComputation(std::move(other.preComputation)) {}
@@ -94,6 +96,7 @@ OptimalControlProblem& OptimalControlProblem::operator=(OptimalControlProblem&& 
   preJumpSoftConstraint = std::move(rhs.preJumpSoftConstraint);
   finalSoftConstraint = std::move(rhs.finalSoftConstraint);
   cost = std::move(rhs.cost);
+  stateCost = std::move(rhs.stateCost);
   preJumpCost = std::move(rhs.preJumpCost);
   finalCost = std::move(rhs.finalCost);
   preComputation = std::move(rhs.preComputation);

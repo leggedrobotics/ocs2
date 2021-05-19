@@ -58,10 +58,15 @@ std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& probl
 
   // Cost
   augmentedProblem->cost.add("wrapper", LoopshapingCost::create(problem.cost, loopshapingDefinition));
+  augmentedProblem->stateCost.add("wrapper", LoopshapingCost::create(problem.stateCost, loopshapingDefinition));
   augmentedProblem->preJumpCost.add("wrapper", LoopshapingCost::create(problem.preJumpCost, loopshapingDefinition));
   augmentedProblem->finalCost.add("wrapper", LoopshapingCost::create(problem.finalCost, loopshapingDefinition));
 
   // Pre-computation
-  augmentedProblem->preComputation.reset(new LoopshapingPreComputation(problem.preComputation.get(), loopshapingDefinition))
-}  // namespace ocs2
+  augmentedProblem->preComputation.reset(new LoopshapingPreComputation(problem.preComputation.get(), loopshapingDefinition));
+
+  return augmentedProblem;
+}
+
 }  // namespace LoopshapingOptimalControlProblem
+}  // namespace ocs2

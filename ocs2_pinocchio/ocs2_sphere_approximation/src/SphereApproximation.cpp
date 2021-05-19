@@ -249,7 +249,7 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
 /******************************************************************************************************/
 bool SphereApproximation::approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection,
                                                 const scalar_t& maxExcessR, scalar_t& shift, scalar_t& alpha, scalar_t& numCircles) {
-  if (radiusSphereCrossSection < radiusBase) {
+  if (radiusSphereCrossSection < radiusBase - std::numeric_limits<scalar_t>::epsilon()) {
     shift = radiusBase + std::min(0.0, maxExcessR - radiusSphereCrossSection);
     alpha =
         2 * std::acos((std::pow(radiusBase, 2) + std::pow(shift, 2) - std::pow(radiusSphereCrossSection, 2)) / (2 * radiusBase * shift));

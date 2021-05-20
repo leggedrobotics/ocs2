@@ -35,7 +35,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LinearSystemDynamics::LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G /*= matrix_t()*/)
-    : SystemDynamicsBase(nullptr), A_(std::move(A)), B_(std::move(B)), G_(std::move(G)) {
+    : SystemDynamicsBase(), A_(std::move(A)), B_(std::move(B)), G_(std::move(G)) {
   if (G_.size() == 0) {
     G_.setIdentity(A_.rows(), A_.rows());
   }

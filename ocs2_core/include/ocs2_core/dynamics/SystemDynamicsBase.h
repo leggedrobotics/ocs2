@@ -44,7 +44,7 @@ namespace ocs2 {
 class SystemDynamicsBase : public ControlledSystemBase {
  public:
   /** Constructor */
-  explicit SystemDynamicsBase(std::unique_ptr<PreComputation> preCompPtr);
+  explicit SystemDynamicsBase(const PreComputation& preComputation = PreComputation());
 
   /** Default destructor */
   ~SystemDynamicsBase() override = default;

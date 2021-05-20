@@ -37,17 +37,11 @@ namespace ocs2 {
 SystemDynamicsLinearizer::SystemDynamicsLinearizer(std::unique_ptr<ControlledSystemBase> nonlinearSystemPtr,
                                                    bool doubleSidedDerivative /*= true*/, bool isSecondOrderSystem /*= false*/,
                                                    scalar_t eps /*= Eigen::NumTraits<scalar_t>::epsilon()*/)
-    : SystemDynamicsBase(nullptr),
+    : SystemDynamicsBase(nonlinearSystemPtr->getPreComputation()),
       controlledSystemPtr_(std::move(nonlinearSystemPtr)),
       doubleSidedDerivative_(doubleSidedDerivative),
       isSecondOrderSystem_(isSecondOrderSystem),
-      eps_(eps) {
-  const auto* preComp_system = nonlinearSystemPtr->getPreComputationPtr();
-  if (preComp_system != nullptr) {
-    // clone the pre-computation of the wrapped system
-    this->preCompPtr_.reset(preComp_system->clone());
-  }
-}
+      eps_(eps) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

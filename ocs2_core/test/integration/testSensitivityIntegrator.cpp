@@ -29,12 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_core/integration/SensitivityIntegrator.h"
 #include "ocs2_core/integration/Integrator.h"
+#include "ocs2_core/integration/SensitivityIntegrator.h"
 
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/control/FeedforwardController.h>
 
 namespace {
 ocs2::LinearSystemDynamics getSystem() {
@@ -61,7 +61,7 @@ TEST(test_sensitivity_integrator, eulerSensitivity) {
   // Check with more readable version of sensitivity computation.
   const auto eulerdynamics_check = [&]() {
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
+    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, nullptr);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -101,8 +101,8 @@ TEST(test_sensitivity_integrator, rk2Sensitivity) {
     const ocs2::scalar_t dt_halve = dt / 2.0;
 
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
-    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt, x + dt * k1.f, u);
+    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, nullptr);
+    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt, x + dt * k1.f, u, nullptr);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -146,10 +146,10 @@ TEST(test_sensitivity_integrator, rk4Sensitivity) {
     const ocs2::scalar_t dt_third = dt / 3.0;
 
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
-    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u);
-    const ocs2::VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u);
-    const ocs2::VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u);
+    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, nullptr);
+    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u, nullptr);
+    const ocs2::VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u, nullptr);
+    const ocs2::VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u, nullptr);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -195,7 +195,7 @@ TEST(test_sensitivity_integrator, vsBoostRK4) {
   ocs2::FeedforwardController controller({t, t}, {u, u});
   system.setController(&controller);
   int maxNumSteps = 4;
-  integrator->integrateConst(system, observer, x, t, t+dt, dt, maxNumSteps);
+  integrator->integrateConst(system, observer, x, t, t + dt, dt, maxNumSteps);
   const auto boostRk4ForwardDynamics = stateTrajectory.back();
 
   // This version

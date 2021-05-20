@@ -34,14 +34,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ControlledSystemBase::ControlledSystemBase(std::unique_ptr<PreComputation> preCompPtr) : preCompPtr_(std::move(preCompPtr)) {}
+ControlledSystemBase::ControlledSystemBase(const PreComputation& preComputation) : preCompPtr_(preComputation.clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& other) : OdeBase(other) {
   if (other.preCompPtr_ != nullptr) {
-    preCompPtr_.reset(preCompPtr_->clone());
+    preCompPtr_.reset(other.preCompPtr_->clone());
   }
   setController(other.controllerPtr());
 }

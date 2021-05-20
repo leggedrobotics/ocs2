@@ -34,14 +34,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LoopshapingPreComputation::LoopshapingPreComputation(const PreComputation* systemPreCompPtr,
+LoopshapingPreComputation::LoopshapingPreComputation(const PreComputation& systemPreComputation,
                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-    : loopshapingDefinition_(std::move(loopshapingDefinition)) {
-  if (systemPreCompPtr != nullptr) {
-    systemPreCompPtr_.reset(systemPreCompPtr->clone());
-    filteredSystemPreCompPtr_.reset(systemPreCompPtr->clone());
-  }
-}
+    : systemPreCompPtr_(systemPreComputation.clone()),
+      filteredSystemPreCompPtr_(systemPreComputation.clone()),
+      loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -122,19 +122,18 @@ vector_t LoopshapingDynamics::guardSurfacesDerivativeTime(scalar_t t, const vect
 std::unique_ptr<LoopshapingDynamics> LoopshapingDynamics::create(const SystemDynamicsBase& systemDynamics,
                                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   // wrap the system pre-computation
-  std::unique_ptr<LoopshapingPreComputation> preCompPtr(
-      new LoopshapingPreComputation(systemDynamics.getPreComputationPtr(), loopshapingDefinition));
+  LoopshapingPreComputation preComputation(systemDynamics.getPreComputation(), loopshapingDefinition);
 
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
       return std::unique_ptr<LoopshapingDynamics>(
-          new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition), std::move(preCompPtr)));
+          new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
     case LoopshapingType::inputpattern:
       return std::unique_ptr<LoopshapingDynamics>(
-          new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition), std::move(preCompPtr)));
+          new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<LoopshapingDynamics>(
-          new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition), std::move(preCompPtr)));
+          new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
     default:
       throw std::runtime_error("[LoopshapingDynamics::create] invalid loopshaping type");
   }

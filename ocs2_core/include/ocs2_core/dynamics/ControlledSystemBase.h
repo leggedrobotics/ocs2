@@ -42,8 +42,10 @@ namespace ocs2 {
  */
 class ControlledSystemBase : public OdeBase {
  public:
+  using OdeBase::computeFlowMap;
+
   /** Constructor */
-  explicit ControlledSystemBase(std::unique_ptr<PreComputation> preCompPtr);
+  explicit ControlledSystemBase(const PreComputation& preComputation = PreComputation());
 
   /** Default destructor */
   ~ControlledSystemBase() override = default;
@@ -94,8 +96,8 @@ class ControlledSystemBase : public OdeBase {
   vector_t computeJumpMap(scalar_t time, const vector_t& state) override final;
   virtual vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preComp);
 
-  /** Get the pre-computation module pointer */
-  const PreComputation* getPreComputationPtr() const { return preCompPtr_.get(); }
+  /** Get the pre-computation module */
+  const PreComputation& getPreComputation() const { return *preCompPtr_; }
 
  protected:
   /**

@@ -13,8 +13,8 @@ class LoopshapingDynamicsInputPattern final : public LoopshapingDynamics {
   using BASE = LoopshapingDynamics;
 
   LoopshapingDynamicsInputPattern(const SystemDynamicsBase& controlledSystem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                                  std::unique_ptr<LoopshapingPreComputation> preCompPtr)
-      : BASE(controlledSystem, std::move(loopshapingDefinition), std::move(preCompPtr)) {}
+                                  const LoopshapingPreComputation& PreComputation)
+      : BASE(controlledSystem, std::move(loopshapingDefinition), PreComputation) {}
 
   ~LoopshapingDynamicsInputPattern() override = default;
 

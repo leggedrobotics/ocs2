@@ -44,7 +44,7 @@ class LoopshapingPreComputation final : public PreComputation {
  public:
   using PreComputation::Request;
 
-  LoopshapingPreComputation(const PreComputation* systemPreCompPtr, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+  LoopshapingPreComputation(const PreComputation& systemPreComputation, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
   ~LoopshapingPreComputation() override = default;
 
   LoopshapingPreComputation* clone() const override;

@@ -236,7 +236,6 @@ target_link_libraries(interpolation_unittest
 )
 
 catkin_add_gtest(${PROJECT_NAME}_cppadcg
-  test/cppad_cg/testCppADCG_constraint.cpp
   test/cppad_cg/testCppADCG_dynamics.cpp
   test/cppad_cg/testSparsityHelpers.cpp
   test/cppad_cg/testCppAdInterface.cpp
@@ -258,21 +257,21 @@ target_link_libraries(test_transferfunctionbase
   gtest_main
 )
 
-catkin_add_gtest(${PROJECT_NAME}_loopshaping
-  test/loopshaping/testLoopshapingConfiguration.cpp
-  test/loopshaping/testLoopshapingConstraint.cpp
-  test/loopshaping/testLoopshapingCost.cpp
-  test/loopshaping/testLoopshapingDefinition.cpp
-  test/loopshaping/testLoopshapingDynamics.cpp
-  test/loopshaping/testLoopshapingFilterDynamics.cpp
-)
-target_link_libraries(${PROJECT_NAME}_loopshaping
-  ${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  -lstdc++fs
-  gtest_main
-)
+# catkin_add_gtest(${PROJECT_NAME}_loopshaping
+#   test/loopshaping/testLoopshapingConfiguration.cpp
+#   test/loopshaping/testLoopshapingConstraint.cpp
+#   test/loopshaping/testLoopshapingCost.cpp
+#   test/loopshaping/testLoopshapingDefinition.cpp
+#   test/loopshaping/testLoopshapingDynamics.cpp
+#   test/loopshaping/testLoopshapingFilterDynamics.cpp
+# )
+# target_link_libraries(${PROJECT_NAME}_loopshaping
+#   ${PROJECT_NAME}
+#   ${Boost_LIBRARIES}
+#   ${catkin_LIBRARIES}
+#   -lstdc++fs
+#   gtest_main
+# )
 
 catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testInterpolation.cpp
@@ -290,6 +289,7 @@ target_link_libraries(${PROJECT_NAME}_test_misc
 
 catkin_add_gtest(test_dynamics
   test/dynamics/testSystemDynamicsLinearizer.cpp
+  test/dynamics/testSystemDynamicsPreComputation.cpp
 )
 target_link_libraries(test_dynamics
   ${PROJECT_NAME}

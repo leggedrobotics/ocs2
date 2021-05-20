@@ -35,8 +35,8 @@ class LoopshapingDynamics : public SystemDynamicsBase {
       : SystemDynamicsBase(other), systemDynamics_(other.systemDynamics_->clone()), loopshapingDefinition_(other.loopshapingDefinition_) {}
 
   LoopshapingDynamics(const SystemDynamicsBase& systemDynamics, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
-                      std::unique_ptr<LoopshapingPreComputation> preCompPtr)
-      : SystemDynamicsBase(std::unique_ptr<PreComputation>(std::move(preCompPtr))),
+                      const LoopshapingPreComputation& preComputation)
+      : SystemDynamicsBase(preComputation),
         systemDynamics_(systemDynamics.clone()),
         loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 

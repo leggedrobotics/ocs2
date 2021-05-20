@@ -57,7 +57,7 @@ class testCppADCG_dynamicsFixture : public ::testing::Test {
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
     adLinearSystem_.reset(new LinearSystemDynamicsAD(A, B, G));
 
-    adLinearSystem_->initialize("testCppADCG_dynamics", libraryFolder, true, true);
+    adLinearSystem_->initialize(stateDim_, inputDim_, "testCppADCG_dynamics", libraryFolder, true, true);
   }
 
   std::unique_ptr<LinearSystemDynamics> linearSystem_;

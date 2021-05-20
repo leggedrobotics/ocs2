@@ -69,7 +69,7 @@ inline PreComputation::Request operator|(PreComputation::Request a, PreComputati
 }
 
 inline bool operator&(PreComputation::Request a, PreComputation::Request b) {
-  return static_cast<int>(a) & static_cast<int>(b) != 0;
+  return (static_cast<int>(a) & static_cast<int>(b)) != 0;
 }
 
 }  // namespace ocs2

@@ -42,9 +42,10 @@ namespace ocs2 {
  *
  * where \f$ g(x) \f$ is the guard surface defined by OdeBase::computeGuardSurfaces(t, x).
  */
-class LinearSystemDynamics : public SystemDynamicsBase {
+class LinearSystemDynamics final : public SystemDynamicsBase {
  public:
   LinearSystemDynamics(matrix_t A, matrix_t B, matrix_t G = matrix_t());
+  LinearSystemDynamics(const LinearSystemDynamics& other);
 
   ~LinearSystemDynamics() override = default;
 
@@ -59,8 +60,6 @@ class LinearSystemDynamics : public SystemDynamicsBase {
   VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation*) override;
 
  protected:
-  LinearSystemDynamics(const LinearSystemDynamics& other);
-
   matrix_t A_;
   matrix_t B_;
   matrix_t G_;

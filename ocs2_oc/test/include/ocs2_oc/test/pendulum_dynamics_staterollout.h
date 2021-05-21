@@ -40,7 +40,7 @@ class pendulum_dyn final : public ControlledSystemBase {
   pendulum_dyn() = default;
   ~pendulum_dyn() override = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     const double g = 9.81;
     const double L = 1;
     vector_t dxdt(2);
@@ -48,7 +48,7 @@ class pendulum_dyn final : public ControlledSystemBase {
     return dxdt;
   }
 
-  vector_t computeJumpMap(scalar_t t, const vector_t& state) override {
+  vector_t computeJumpMap(scalar_t t, const vector_t& state, const PreComputation&) override {
     vector_t mappedState(2);
     mappedState[0] = state[0];
     mappedState[1] = -0.9 * state[1];

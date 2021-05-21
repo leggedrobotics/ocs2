@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
@@ -46,16 +46,16 @@ class EXP1_Sys1 : public SystemDynamicsBase {
   EXP1_Sys1() = default;
   ~EXP1_Sys1() override = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final {
     vector_t dxdt(2);
     dxdt(0) = x(0) + u(0) * sin(x(0));
     dxdt(1) = -x(1) - u(0) * cos(x(1));
     return dxdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) {
     VectorFunctionLinearApproximation dynamics;
-    dynamics.f = computeFlowMap(t, x, u);
+    dynamics.f = computeFlowMap(t, x, u, preComp);
     dynamics.dfdx.resize(2, 2);
     dynamics.dfdx << u(0) * cos(x(0)) + 1, 0, 0, u(0) * sin(x(1)) - 1;
     dynamics.dfdu.resize(2, 1);
@@ -74,16 +74,16 @@ class EXP1_Sys2 : public SystemDynamicsBase {
   EXP1_Sys2() = default;
   ~EXP1_Sys2() = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final {
     vector_t dxdt(2);
     dxdt(0) = x(1) + u(0) * sin(x(1));
     dxdt(1) = -x(0) - u(0) * cos(x(0));
     return dxdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) {
     VectorFunctionLinearApproximation dynamics;
-    dynamics.f = computeFlowMap(t, x, u);
+    dynamics.f = computeFlowMap(t, x, u, preComp);
     dynamics.dfdx.resize(2, 2);
     dynamics.dfdx << 0, u(0) * cos(x(1)) + 1, u(0) * sin(x(0)) - 1, 0;
     dynamics.dfdu.resize(2, 1);
@@ -102,16 +102,16 @@ class EXP1_Sys3 : public SystemDynamicsBase {
   EXP1_Sys3() = default;
   ~EXP1_Sys3() = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final {
     vector_t dxdt(2);
     dxdt(0) = -x(0) - u(0) * sin(x(0));
     dxdt(1) = x(1) + u(0) * cos(x(1));
     return dxdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) {
     VectorFunctionLinearApproximation dynamics;
-    dynamics.f = computeFlowMap(t, x, u);
+    dynamics.f = computeFlowMap(t, x, u, preComp);
     dynamics.dfdx.resize(2, 2);
     dynamics.dfdx << -u(0) * cos(x(0)) - 1, 0, 0, 1 - u(0) * sin(x(1));
     dynamics.dfdu.resize(2, 1);
@@ -139,14 +139,15 @@ class EXP1_System : public SystemDynamicsBase {
 
   EXP1_System* clone() const final { return new EXP1_System(*this); }
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) final {
     const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u);
+    return subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u, preComp);
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation& preComp) final {
     const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemDynamicsPtr_[activeMode]->linearApproximation(t, x, u);
+    return subsystemDynamicsPtr_[activeMode]->linearApproximation(t, x, u, preComp);
   }
 
  private:
@@ -157,60 +158,42 @@ class EXP1_System : public SystemDynamicsBase {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP1_CostFunction : public CostFunctionBase {
+class EXP1_Cost final : public QuadraticStateInputCost {
  public:
-  explicit EXP1_CostFunction(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr)
-      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
-    matrix_t Q(2, 2);
-    matrix_t R(1, 1);
-    matrix_t Qf(2, 2);
-    Q << 1.0, 0.0, 0.0, 1.0;
-    R << 1.0;
-    Qf << 1.0, 0.0, 0.0, 1.0;
-    subsystemCostsPtr_[0].reset(new QuadraticCostFunction(Q, R, matrix_t::Zero(2, 2)));
-    subsystemCostsPtr_[1].reset(new QuadraticCostFunction(Q, R, matrix_t::Zero(2, 2)));
-    subsystemCostsPtr_[2].reset(new QuadraticCostFunction(Q, R, Qf));
-
-    vector_t x(2);
-    vector_t u(1);
-    x << 1.0, -1.0;
-    u << 0.0;
-    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {x}, {u});
-    subsystemCostsPtr_[0]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
-    subsystemCostsPtr_[1]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
-    subsystemCostsPtr_[2]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
+  EXP1_Cost() : QuadraticStateInputCost(matrix_t::Identity(2, 2), matrix_t::Identity(1, 1)) {
+    xDesired_ = (vector_t(2) << 1.0, -1.0).finished();
+    uDesired_ = (vector_t(1) << 0.0).finished();
   }
+  ~EXP1_Cost() override = default;
+  EXP1_Cost* clone() const override { return new EXP1_Cost(*this); }
 
-  ~EXP1_CostFunction() = default;
-
-  EXP1_CostFunction(const EXP1_CostFunction& other) : EXP1_CostFunction(other.modeScheduleManagerPtr_) {}
-
-  EXP1_CostFunction* clone() const final { return new EXP1_CostFunction(*this); }
-
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) final {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->cost(t, x, u);
-  }
-
-  scalar_t finalCost(scalar_t t, const vector_t& x) final {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->finalCost(t, x);
-  }
-
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) final {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->costQuadraticApproximation(t, x, u);
-  }
-
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) final {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->finalCostQuadraticApproximation(t, x);
+ protected:
+  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                       const CostDesiredTrajectories& desiredTrajectory) const override {
+    return {state - xDesired_, input - uDesired_};
   }
 
  public:
-  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
-  std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_{3};
-  CostDesiredTrajectories costDesiredTrajectories_;
+  vector_t xDesired_;
+  vector_t uDesired_;
+};
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+class EXP1_FinalCost final : public QuadraticStateCost {
+ public:
+  EXP1_FinalCost() : QuadraticStateCost(matrix_t::Identity(2, 2)), xDesired_((vector_t(2) << 1.0, -1.0).finished()) {}
+  ~EXP1_FinalCost() override = default;
+  EXP1_FinalCost* clone() const override { return new EXP1_FinalCost(*this); }
+
+ protected:
+  vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const override {
+    return state - xDesired_;
+  }
+
+ public:
+  vector_t xDesired_;
 };
 
 }  // namespace ocs2

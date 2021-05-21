@@ -39,7 +39,7 @@ class ballDyn : public ControlledSystemBase {
   ballDyn() = default;
   ~ballDyn() = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     matrix_t A(2, 2);
     A << 0.0, 1.0, 0.0, 0.0;
     vector_t F(2, 1);
@@ -47,7 +47,7 @@ class ballDyn : public ControlledSystemBase {
     return A * x + F;
   }
 
-  vector_t computeJumpMap(scalar_t t, const vector_t& x) override {
+  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) override {
     vector_t mappedState(2);
     mappedState[0] = x[0];
     mappedState[1] = -0.95 * x[1];

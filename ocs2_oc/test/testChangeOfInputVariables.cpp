@@ -30,8 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include "ocs2_oc/approximate_model/ChangeOfInputVariables.h"
-
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
+#include "ocs2_oc/test/testProblemsGeneration.h"
 
 using namespace ocs2;
 
@@ -73,7 +72,7 @@ TEST(quadratic_change_of_input_variables, noPx_noU0) {
 
   // Create change of variables
   const matrix_t Pu = matrix_t::Random(m, p);
-  const auto quadratic = qp_solver::getRandomCost(n, m);
+  const auto quadratic = getRandomCost(n, m);
 
   // Apply change of variables
   auto quadraticProjected = quadratic;
@@ -97,7 +96,7 @@ TEST(quadratic_change_of_input_variables, withPx) {
   // Create change of variables
   const matrix_t Pu = matrix_t::Random(m, p);
   const matrix_t Px = matrix_t::Random(m, n);
-  const auto quadratic = qp_solver::getRandomCost(n, m);
+  const auto quadratic = getRandomCost(n, m);
 
   // Apply change of variables
   auto quadraticProjected = quadratic;
@@ -121,7 +120,7 @@ TEST(quadratic_change_of_input_variables, withU0) {
   // Create change of variables
   const matrix_t Pu = matrix_t::Random(m, p);
   const vector_t u0 = vector_t::Random(m);
-  const auto quadratic = qp_solver::getRandomCost(n, m);
+  const auto quadratic = getRandomCost(n, m);
 
   // Apply change of variables
   auto quadraticProjected = quadratic;
@@ -146,7 +145,7 @@ TEST(quadratic_change_of_input_variables, bothPx_U0) {
   const matrix_t Pu = matrix_t::Random(m, p);
   const matrix_t Px = matrix_t::Random(m, n);
   const vector_t u0 = vector_t::Random(m);
-  const auto quadratic = qp_solver::getRandomCost(n, m);
+  const auto quadratic = getRandomCost(n, m);
 
   // Apply change of variables
   auto quadraticProjected = quadratic;
@@ -169,7 +168,7 @@ TEST(linear_change_of_input_variables, noPx_noU0) {
 
   // Create change of variables
   const matrix_t Pu = matrix_t::Random(m, p);
-  const auto linear = qp_solver::getRandomDynamics(n, m);
+  const auto linear = getRandomDynamics(n, m);
 
   // Apply change of variables
   auto linearProjected = linear;
@@ -193,7 +192,7 @@ TEST(linear_change_of_input_variables, withPx) {
   // Create change of variables
   const matrix_t Pu = matrix_t::Random(m, p);
   const matrix_t Px = matrix_t::Random(m, n);
-  const auto linear = qp_solver::getRandomDynamics(n, m);
+  const auto linear = getRandomDynamics(n, m);
 
   // Apply change of variables
   auto linearProjected = linear;
@@ -217,7 +216,7 @@ TEST(linear_change_of_input_variables, withU0) {
   // Create change of variables
   const matrix_t Pu = matrix_t::Random(m, p);
   const vector_t u0 = vector_t::Random(m);
-  const auto linear = qp_solver::getRandomDynamics(n, m);
+  const auto linear = getRandomDynamics(n, m);
 
   // Apply change of variables
   auto linearProjected = linear;
@@ -242,7 +241,7 @@ TEST(linear_change_of_input_variables, bothPx_U0) {
   const matrix_t Pu = matrix_t::Random(m, p);
   const matrix_t Px = matrix_t::Random(m, n);
   const vector_t u0 = vector_t::Random(m);
-  const auto linear = qp_solver::getRandomDynamics(n, m);
+  const auto linear = getRandomDynamics(n, m);
 
   // Apply change of variables
   auto linearProjected = linear;

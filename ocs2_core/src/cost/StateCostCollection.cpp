@@ -85,13 +85,13 @@ void StateCostCollection::add(std::string name, std::unique_ptr<StateCost> costT
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                                       const PreComputation* preCompPtr) const {
+                                       const PreComputation& preComp) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getValue(time, state, desiredTrajectory, preCompPtr);
+      cost += costPair.second->getValue(time, state, desiredTrajectory, preComp);
     }
   }
 
@@ -103,13 +103,13 @@ scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                     const CostDesiredTrajectories& desiredTrajectory,
-                                                                                    const PreComputation* preCompPtr) const {
+                                                                                    const PreComputation& preComp) const {
   auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
 
   // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory, preCompPtr);
+      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory, preComp);
       cost.f += costTermApproximation.f;
       cost.dfdx += costTermApproximation.dfdx;
       cost.dfdxx += costTermApproximation.dfdxx;

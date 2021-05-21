@@ -55,9 +55,9 @@ class LoopshapingPreComputation final : public PreComputation {
   const vector_t& getSystemState() const { return x_system_; }
   const vector_t& getSystemInput() const { return u_system_; }
   const vector_t& getFilterState() const { return x_filter_; }
-  const vector_t& getFilterInput() const { return u_filter_; }
-  const PreComputation* getSystemPreComputationPtr() const { return systemPreCompPtr_.get(); }
-  const PreComputation* getFilteredSystemPreComputationPtr() const { return filteredSystemPreCompPtr_.get(); }
+  const vector_t& getFilteredInput() const { return u_filter_; }
+  const PreComputation& getSystemPreComputation() const { return *systemPreCompPtr_; }
+  const PreComputation& getFilteredSystemPreComputation() const { return *filteredSystemPreCompPtr_; }
 
  private:
   LoopshapingPreComputation(const LoopshapingPreComputation& rhs);

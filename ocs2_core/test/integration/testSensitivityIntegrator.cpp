@@ -60,8 +60,10 @@ TEST(test_sensitivity_integrator, eulerSensitivity) {
 
   // Check with more readable version of sensitivity computation.
   const auto eulerdynamics_check = [&]() {
+    const ocs2::PreComputation preComp;
+
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, nullptr);
+    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, preComp);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -99,10 +101,11 @@ TEST(test_sensitivity_integrator, rk2Sensitivity) {
   // Check with more readable version of sensitivity computation.
   const auto rk2dynamics_check = [&]() {
     const ocs2::scalar_t dt_halve = dt / 2.0;
+    const ocs2::PreComputation preComp;
 
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, nullptr);
-    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt, x + dt * k1.f, u, nullptr);
+    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt, x + dt * k1.f, u, preComp);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -144,12 +147,13 @@ TEST(test_sensitivity_integrator, rk4Sensitivity) {
     const ocs2::scalar_t dt_halve = dt / 2.0;
     const ocs2::scalar_t dt_sixth = dt / 6.0;
     const ocs2::scalar_t dt_third = dt / 3.0;
+    const ocs2::PreComputation preComp;
 
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, nullptr);
-    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u, nullptr);
-    const ocs2::VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u, nullptr);
-    const ocs2::VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u, nullptr);
+    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u, preComp);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;

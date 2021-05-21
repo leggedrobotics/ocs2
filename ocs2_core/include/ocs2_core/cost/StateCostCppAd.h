@@ -60,10 +60,10 @@ class StateCostCppAd : public StateCost {
 
   /* Cost evaluation */
   scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation* preCompPtr) const override;
+                    const PreComputation& preComp) const override;
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation* preCompPtr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  protected:
   StateCostCppAd(const StateCostCppAd& rhs);

@@ -45,10 +45,8 @@ LoopshapingPreComputation::LoopshapingPreComputation(const PreComputation& syste
 /******************************************************************************************************/
 LoopshapingPreComputation::LoopshapingPreComputation(const LoopshapingPreComputation& other)
     : loopshapingDefinition_(other.loopshapingDefinition_) {
-  if (other.systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_.reset(other.systemPreCompPtr_->clone());
-    filteredSystemPreCompPtr_.reset(other.filteredSystemPreCompPtr_->clone());
-  }
+  systemPreCompPtr_.reset(other.systemPreCompPtr_->clone());
+  filteredSystemPreCompPtr_.reset(other.filteredSystemPreCompPtr_->clone());
 }
 
 /******************************************************************************************************/
@@ -67,12 +65,10 @@ void LoopshapingPreComputation::request(Request requestFlags, scalar_t t, const 
   x_filter_ = loopshapingDefinition_->getFilterState(x);
   u_filter_ = loopshapingDefinition_->getFilteredInput(x, u);
 
-  if (systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_->request(requestFlags, t, x_system_, u_system_);
-    if (requestFlags & Request::Cost) {
-      // state-input cost function is evaluated on both u_system and u_filter.
-      filteredSystemPreCompPtr_->request(requestFlags, t, x_system_, u_filter_);
-    }
+  systemPreCompPtr_->request(requestFlags, t, x_system_, u_system_);
+  if (requestFlags & Request::Cost) {
+    // state-input cost function is evaluated on both u_system and u_filter.
+    filteredSystemPreCompPtr_->request(requestFlags, t, x_system_, u_filter_);
   }
 }
 
@@ -83,9 +79,7 @@ void LoopshapingPreComputation::requestPreJump(Request requestFlags, scalar_t t,
   x_system_ = loopshapingDefinition_->getSystemState(x);
   x_filter_ = loopshapingDefinition_->getFilterState(x);
 
-  if (systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_->requestPreJump(requestFlags, t, x_system_);
-  }
+  systemPreCompPtr_->requestPreJump(requestFlags, t, x_system_);
 }
 
 /******************************************************************************************************/
@@ -95,9 +89,7 @@ void LoopshapingPreComputation::requestFinal(Request requestFlags, scalar_t t, c
   x_system_ = loopshapingDefinition_->getSystemState(x);
   x_filter_ = loopshapingDefinition_->getFilterState(x);
 
-  if (systemPreCompPtr_ != nullptr) {
-    systemPreCompPtr_->requestFinal(requestFlags, t, x_system_);
-  }
+  systemPreCompPtr_->requestFinal(requestFlags, t, x_system_);
 }
 
 }  // namespace ocs2

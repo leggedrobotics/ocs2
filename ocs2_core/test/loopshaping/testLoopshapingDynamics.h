@@ -39,11 +39,16 @@ class TestFixtureLoopShapingDynamics : public ::testing::Test {
     getRandomStateInput(x_sys_, u_sys_, x_filter_, u_filter_, x_, u_);
     getRandomStateInput(x_sys_disturbance_, u_sys_disturbance_, x_filter_disturbance_, u_filter_disturbance_, x_disturbance_,
                         u_disturbance_, eps);
+
+    preComp_sys_.reset(new PreComputation);
+    preComp_.reset(new LoopshapingPreComputation(*preComp_sys_, loopshapingDefinition_));
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
   std::unique_ptr<LinearSystemDynamics> testSystem;
   std::unique_ptr<LoopshapingDynamics> testLoopshapingDynamics;
+  std::unique_ptr<PreComputation> preComp_sys_;
+  std::unique_ptr<LoopshapingPreComputation> preComp_;
 
   const scalar_t tol = 1e-9;
 

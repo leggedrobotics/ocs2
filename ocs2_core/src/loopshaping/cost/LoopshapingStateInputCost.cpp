@@ -33,16 +33,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 scalar_t LoopshapingStateInputCost::getValue(scalar_t t, const vector_t& x, const vector_t& u,
-                                             const CostDesiredTrajectories& desiredTrajectory, const PreComputation* preCompPtr) const {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
-  const auto& u_system = preComp.getSystemInput();
-  const auto& u_filter = preComp.getFilterInput();
+                                             const CostDesiredTrajectories& desiredTrajectory, const PreComputation& preComp) const {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
+  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& u_filter = preCompLS.getFilteredInput();
 
-  const scalar_t L_system = systemCost_->getValue(t, x_system, u_system, desiredTrajectory, preComp.getSystemPreComputationPtr());
-  const scalar_t L_filter = systemCost_->getValue(t, x_system, u_filter, desiredTrajectory, preComp.getFilteredSystemPreComputationPtr());
+  const scalar_t L_system = systemCost_->getValue(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  const scalar_t L_filter = systemCost_->getValue(t, x_system, u_filter, desiredTrajectory, preCompLS.getFilteredSystemPreComputation());
   const scalar_t gamma = loopshapingDefinition_->gamma_;
 
   return gamma * L_filter + (1.0 - gamma) * L_system;

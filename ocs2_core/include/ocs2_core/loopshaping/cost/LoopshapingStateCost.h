@@ -25,11 +25,11 @@ class LoopshapingStateCost final : public StateCost {
   LoopshapingStateCost* clone() const override { return new LoopshapingStateCost(*this); }
 
   scalar_t getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation* preCompPtr) const override;
+                    const PreComputation& preComp) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation* preCompPtr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  private:
   LoopshapingStateCost(const LoopshapingStateCost& other)

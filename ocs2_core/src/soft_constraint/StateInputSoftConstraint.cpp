@@ -62,8 +62,8 @@ StateInputSoftConstraint* StateInputSoftConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories&,
-                                            const PreComputation* preCompPtr) const {
-  return penalty_.getValue(constraintPtr_->getValue(time, state, input, preCompPtr));
+                                            const PreComputation& preComp) const {
+  return penalty_.getValue(constraintPtr_->getValue(time, state, input, preComp));
 }
 
 /******************************************************************************************************/
@@ -72,12 +72,12 @@ scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state
 ScalarFunctionQuadraticApproximation StateInputSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                          const vector_t& input,
                                                                                          const CostDesiredTrajectories&,
-                                                                                         const PreComputation* preCompPtr) const {
+                                                                                         const PreComputation& preComp) const {
   switch (constraintPtr_->getOrder()) {
     case ConstraintOrder::Linear:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, input, preCompPtr));
+      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, input, preComp));
     case ConstraintOrder::Quadratic:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, input, preCompPtr));
+      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, input, preComp));
     default:
       throw std::runtime_error("[StateInputSoftConstraint] Unknown constraint Order");
   }

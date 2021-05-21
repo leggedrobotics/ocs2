@@ -57,14 +57,14 @@ LinearSystemDynamics* LinearSystemDynamics::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearSystemDynamics::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) {
+vector_t LinearSystemDynamics::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) {
   return A_ * x + B_ * u;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearSystemDynamics::computeJumpMap(scalar_t t, const vector_t& x, const PreComputation*) {
+vector_t LinearSystemDynamics::computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) {
   return G_ * x;
 }
 
@@ -72,7 +72,7 @@ vector_t LinearSystemDynamics::computeJumpMap(scalar_t t, const vector_t& x, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation LinearSystemDynamics::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                            const PreComputation*) {
+                                                                            const PreComputation&) {
   VectorFunctionLinearApproximation approximation;
   approximation.f = A_ * x;
   approximation.f.noalias() += B_ * u;
@@ -84,7 +84,7 @@ VectorFunctionLinearApproximation LinearSystemDynamics::linearApproximation(scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation LinearSystemDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation*) {
+VectorFunctionLinearApproximation LinearSystemDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) {
   VectorFunctionLinearApproximation approximation;
   approximation.f = G_ * x;
   approximation.dfdx = G_;

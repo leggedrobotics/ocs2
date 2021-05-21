@@ -88,15 +88,15 @@ class StateConstraintCollection final : public StateConstraint {
   size_t getNumConstraints(scalar_t time) const override;
 
   /** Get the constraint vector value */
-  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
 
   /** Get the constraint linear approximation */
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                           const PreComputation* preCompPtr) const override;
+                                                           const PreComputation& preComp) const override;
 
   /** Get the constraint quadratic approximation */
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const PreComputation* preCompPtr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  private:
   /**

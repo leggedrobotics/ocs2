@@ -19,11 +19,11 @@ class LoopshapingDynamics : public SystemDynamicsBase {
   static std::unique_ptr<LoopshapingDynamics> create(const SystemDynamicsBase& systemDynamics,
                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preComp) final;
-  vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preComp) final;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) final;
+  vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp) final;
   vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation* preComp) final;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation& preComp) final;
   VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
   vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;

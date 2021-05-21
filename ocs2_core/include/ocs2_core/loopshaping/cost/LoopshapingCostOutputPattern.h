@@ -20,7 +20,7 @@ class LoopshapingCostOutputPattern final : public LoopshapingStateInputCost {
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation* preCompPtr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  protected:
   using BASE::loopshapingDefinition_;

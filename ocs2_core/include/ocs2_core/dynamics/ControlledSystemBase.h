@@ -42,8 +42,6 @@ namespace ocs2 {
  */
 class ControlledSystemBase : public OdeBase {
  public:
-  using OdeBase::computeFlowMap;
-
   /** Constructor */
   explicit ControlledSystemBase(const PreComputation& preComputation = PreComputation());
 
@@ -84,7 +82,7 @@ class ControlledSystemBase : public OdeBase {
    * @return: The state time derivative.
    */
   vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u);
-  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation* preCompPtr) = 0;
+  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) = 0;
 
   /**
    * State map at the transition time
@@ -94,10 +92,13 @@ class ControlledSystemBase : public OdeBase {
    * @return mapped state after transition
    */
   vector_t computeJumpMap(scalar_t time, const vector_t& state) override final;
-  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preComp);
+  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp);
 
   /** Get the pre-computation module */
-  const PreComputation& getPreComputation() const { return *preCompPtr_; }
+  const PreComputation& getPreComputation() const {
+    assert(preCompPtr_ != nullptr);
+    return *preCompPtr_;
+  }
 
  protected:
   /**

@@ -63,15 +63,15 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   void initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
                   bool recompileLibraries = true, bool verbose = true);
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) final;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
 
-  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation*) final;
+  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) final;
 
   vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) final;
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) final;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation*) final;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) final;
 
   VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 

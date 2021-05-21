@@ -40,9 +40,8 @@ ControlledSystemBase::ControlledSystemBase(const PreComputation& preComputation)
 /******************************************************************************************************/
 /******************************************************************************************************/
 ControlledSystemBase::ControlledSystemBase(const ControlledSystemBase& other) : OdeBase(other) {
-  if (other.preCompPtr_ != nullptr) {
-    preCompPtr_.reset(other.preCompPtr_->clone());
-  }
+  assert(other.preCompPtr_ != nullptr);
+  preCompPtr_.reset(other.preCompPtr_->clone());
   setController(other.controllerPtr());
 }
 
@@ -59,26 +58,24 @@ vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->request(PreComputation::Request::Dynamics, t, x, u);
-  }
-  return computeFlowMap(t, x, u, preCompPtr_.get());
+  assert(preCompPtr_ != nullptr);
+  preCompPtr_->request(PreComputation::Request::Dynamics, t, x, u);
+  return computeFlowMap(t, x, u, *preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x) {
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->requestPreJump(PreComputation::Request::Dynamics, t, x);
-  }
-  return computeJumpMap(t, x, preCompPtr_.get());
+  assert(preCompPtr_ != nullptr);
+  preCompPtr_->requestPreJump(PreComputation::Request::Dynamics, t, x);
+  return computeJumpMap(t, x, *preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x, const PreComputation*) {
+vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) {
   // default implementation
   return OdeBase::computeJumpMap(t, x);
 }

@@ -34,14 +34,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OptimalControlProblem::OptimalControlProblem() = default;
+OptimalControlProblem::OptimalControlProblem() : preComputation(new PreComputation) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
-    : dynamics(other.dynamics->clone()),
-      equalityConstraint(other.equalityConstraint),
+    : equalityConstraint(other.equalityConstraint),
       stateEqualityConstraint(other.stateEqualityConstraint),
       inequalityConstraint(other.inequalityConstraint),
       preJumpEqualityConstraint(other.preJumpEqualityConstraint),
@@ -53,7 +52,17 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       stateCost(other.stateCost),
       preJumpCost(other.preJumpCost),
       finalCost(other.finalCost),
-      preComputation(other.preComputation->clone()) {}
+      preComputation(other.preComputation->clone()) {
+  // validtity check
+  if (other.dynamics == nullptr) {
+    throw std::runtime_error("[OptimalControlProblem] system dynamics pointer is not set");
+  }
+  if (other.preComputation == nullptr) {
+    throw std::runtime_error("[OptimalControlProblem] preComputation pointer is not set");
+  }
+  dynamics.reset(other.dynamics->clone());
+  preComputation.reset(other.preComputation->clone());
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

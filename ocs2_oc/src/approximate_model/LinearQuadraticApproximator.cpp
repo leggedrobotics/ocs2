@@ -39,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                        ModelData& modelData) const {
-  auto* preComputation = problem_.preComputation.get();
+  auto& preComputation = problem_.preComputation.get();
   if (preComputation != nullptr) {
     const auto flags = Request::Cost | Request::SoftConstraint | Request::Constraint | Request::Dynamics | Request::Approximation;
     preComputation->request(flags, time, state, input);
@@ -63,7 +63,7 @@ void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, con
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateUnconstrainedLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                                     ModelData& modelData) const {
-  auto* preComputation = problem_.preComputation.get();
+  auto& preComputation = problem_.preComputation.get();
   if (preComputation != nullptr) {
     const auto flags = Request::Cost | Request::SoftConstraint | Request::Dynamics | Request::Approximation;
     preComputation->request(flags, time, state, input);
@@ -80,7 +80,7 @@ void LinearQuadraticApproximator::approximateUnconstrainedLQProblem(const scalar
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const {
-  auto* preComputation = problem_.preComputation.get();
+  auto& preComputation = problem_.preComputation.get();
   if (preComputation != nullptr) {
     const auto flags = Request::Cost | Request::SoftConstraint | Request::Constraint | Request::Dynamics | Request::Approximation;
     preComputation->requestPreJump(flags, time, state);
@@ -181,15 +181,18 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
 void LinearQuadraticApproximator::approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                   ModelData& modelData) const {
   const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
-  const auto* preComputation = problem_.preComputation.get();
+  const auto& preComputation = problem_.preComputation.get();
 
   // get results
   modelData.cost_ = problem_.cost.getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
-  modelData.cost_ += problem_.stateCost.getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  modelData.cost_ += problem_.softConstraint.getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
 
   // add soft constraint penalty
-  modelData.cost_ += problem_.softConstraint.getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
-  modelData.cost_ += problem_.stateSoftConstraint.getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  auto stateCost = problem_.stateCost.getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  stateCost += problem_.stateSoftConstraint.getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  modelData.cost_.f += stateCost.f;
+  modelData.cost_.dfdx += stateCost.dfdx;
+  modelData.cost_.dfdxx += stateCost.dfdxx;
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {

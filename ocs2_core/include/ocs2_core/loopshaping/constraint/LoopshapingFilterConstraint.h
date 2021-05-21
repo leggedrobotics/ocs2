@@ -47,10 +47,10 @@ class LoopshapingFilterConstraint : public StateInputConstraint {
 
   size_t getNumConstraints(scalar_t time) const override { return loopshapingDefinition_->getInputFilter().getNumOutputs(); }
 
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preCompPtr) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
 
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation* preCompPtr) const override;
+                                                           const PreComputation& preComp) const override;
 
  protected:
   LoopshapingFilterConstraint(const LoopshapingFilterConstraint& other)

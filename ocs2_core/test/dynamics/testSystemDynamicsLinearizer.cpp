@@ -24,15 +24,15 @@ class PendulumSystem final : public SystemDynamicsBase {
   ~PendulumSystem() override = default;
   PendulumSystem* clone() const override { return new PendulumSystem(*this); }
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) override {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     vector_t dfdt(2);
     dfdt << x(1), sin(x(0)) + 0.1 * u(0);
     return dfdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) override {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     VectorFunctionLinearApproximation linearDynamics;
-    linearDynamics.f = computeFlowMap(t, x, u, nullptr);
+    linearDynamics.f = computeFlowMap(t, x, u, PreComputation());
     linearDynamics.dfdx.resize(2, 2);
     linearDynamics.dfdx << 0, 1,  // clang-format off
                            cos(x(0)), 0;  // clang-format on
@@ -102,8 +102,8 @@ TEST(testSystemDynamicsLinearizer, testPendulum) {
 
 static bool derivativeChecker(SystemDynamicsBase& sys1, SystemDynamicsBase& sys2, scalar_t tolerance, scalar_t t, const vector_t& x,
                               const vector_t& u) {
-  auto derivatives1 = sys1.linearApproximation(t, x, u, nullptr);
-  auto derivatives2 = sys2.linearApproximation(t, x, u, nullptr);
+  auto derivatives1 = sys1.linearApproximation(t, x, u, PreComputation());
+  auto derivatives2 = sys2.linearApproximation(t, x, u, PreComputation());
   scalar_t A_error = (derivatives1.dfdx - derivatives2.dfdx).lpNorm<Eigen::Infinity>();
   scalar_t B_error = (derivatives1.dfdu - derivatives2.dfdu).lpNorm<Eigen::Infinity>();
   return tolerance > std::fmax(A_error, B_error);

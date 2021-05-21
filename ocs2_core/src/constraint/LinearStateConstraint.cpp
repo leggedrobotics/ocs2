@@ -54,7 +54,7 @@ size_t LinearStateConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearStateConstraint::getValue(scalar_t t, const vector_t& x, const PreComputation*) const {
+vector_t LinearStateConstraint::getValue(scalar_t t, const vector_t& x, const PreComputation&) const {
   vector_t g = h_;
   g.noalias() += F_ * x;
   return g;
@@ -64,7 +64,7 @@ vector_t LinearStateConstraint::getValue(scalar_t t, const vector_t& x, const Pr
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation LinearStateConstraint::getLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                const PreComputation*) const {
+                                                                                const PreComputation&) const {
   VectorFunctionLinearApproximation g;
   g.f = h_;
   g.f.noalias() += F_ * x;

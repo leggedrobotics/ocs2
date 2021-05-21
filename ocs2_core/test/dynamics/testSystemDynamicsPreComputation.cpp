@@ -30,14 +30,14 @@ class DummySystem final : public SystemDynamicsBase {
   ~DummySystem() override = default;
   DummySystem* clone() const override { return new DummySystem(*this); }
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation*) override {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     vector_t dfdt(2);
     dfdt << x(1), u(0);
     return dfdt;
   }
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                        const PreComputation* preComp) override {
+                                                        const PreComputation& preComp) override {
     VectorFunctionLinearApproximation linearDynamics;
     linearDynamics.f = computeFlowMap(t, x, u, preComp);
     linearDynamics.dfdx.resize(2, 2);
@@ -63,14 +63,14 @@ TEST(testSystemDynamicsPreComputation, testIntermediateCallback) {
   EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
   EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
 
-  const auto flowMap = system.computeFlowMap(t, x, u);
+  const auto flowMap = system.ControlledSystemBase::computeFlowMap(t, x, u);
   EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
   EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
 
   DummyPreComputation::reset();
   EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
   EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
-  const auto flowMapApproximation = system.linearApproximation(t, x, u);
+  const auto flowMapApproximation = system.SystemDynamicsBase::linearApproximation(t, x, u);
   EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
   EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
 }

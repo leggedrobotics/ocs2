@@ -64,17 +64,17 @@ SystemDynamicsLinearizer* SystemDynamicsLinearizer::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t SystemDynamicsLinearizer::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input,
-                                                  const PreComputation* preCompPtr) {
-  return controlledSystemPtr_->computeFlowMap(time, state, input, preCompPtr);
+                                                  const PreComputation& preComp) {
+  return controlledSystemPtr_->computeFlowMap(time, state, input, preComp);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsLinearizer::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                                const PreComputation* preCompPtr) {
+                                                                                const PreComputation& preComp) {
   VectorFunctionLinearApproximation linearDynamics;
-  linearDynamics.f = controlledSystemPtr_->computeFlowMap(t, x, u, preCompPtr);
+  linearDynamics.f = controlledSystemPtr_->computeFlowMap(t, x, u, preComp);
   linearDynamics.dfdx = finiteDifferenceDerivativeState(*controlledSystemPtr_, t, x, u, eps_, doubleSidedDerivative_, isSecondOrderSystem_);
   linearDynamics.dfdu = finiteDifferenceDerivativeInput(*controlledSystemPtr_, t, x, u, eps_, doubleSidedDerivative_, isSecondOrderSystem_);
   return linearDynamics;

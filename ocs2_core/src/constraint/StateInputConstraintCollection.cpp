@@ -102,7 +102,7 @@ size_t StateInputConstraintCollection::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t StateInputConstraintCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                                  const PreComputation* preCompPtr) const {
+                                                  const PreComputation& preComp) const {
   vector_t constraintValues;
   constraintValues.resize(getNumConstraints(time));
 
@@ -110,7 +110,7 @@ vector_t StateInputConstraintCollection::getValue(scalar_t time, const vector_t&
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
-      const auto constraintTermValues = constraintPair.second->getValue(time, state, input, preCompPtr);
+      const auto constraintTermValues = constraintPair.second->getValue(time, state, input, preComp);
       constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
       i += constraintTermValues.rows();
     }
@@ -124,14 +124,14 @@ vector_t StateInputConstraintCollection::getValue(scalar_t time, const vector_t&
 /******************************************************************************************************/
 VectorFunctionLinearApproximation StateInputConstraintCollection::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                          const vector_t& input,
-                                                                                         const PreComputation* preCompPtr) const {
+                                                                                         const PreComputation& preComp) const {
   VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows(), input.rows());
 
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
-      const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state, input, preCompPtr);
+      const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state, input, preComp);
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
@@ -148,7 +148,7 @@ VectorFunctionLinearApproximation StateInputConstraintCollection::getLinearAppro
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                                const vector_t& input,
-                                                                                               const PreComputation* preCompPtr) const {
+                                                                                               const PreComputation& preComp) const {
   const auto numConstraints = getNumConstraints(time);
 
   VectorFunctionQuadraticApproximation quadraticApproximation;
@@ -163,7 +163,7 @@ VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadrati
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
     if (constraintPair.second->isActive()) {
-      auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state, input, preCompPtr);
+      auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state, input, preComp);
       const size_t nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;

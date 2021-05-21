@@ -20,7 +20,7 @@ class LoopshapingStateInputCost : public StateInputCost {
   ~LoopshapingStateInputCost() override = default;
 
   scalar_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation* preCompPtr) const final;
+                    const PreComputation& preComp) const final;
 
  protected:
   /** Constructor */

@@ -33,24 +33,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
-                                        const PreComputation* preCompPtr) const {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
+                                        const PreComputation& preComp) const {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
+  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& x_system = preCompLS.getSystemState();
 
-  return systemCost_->getValue(t, x_system, desiredTrajectory, preComp.getSystemPreComputationPtr());
+  return systemCost_->getValue(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
 }
 
 ScalarFunctionQuadraticApproximation LoopshapingStateCost::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                      const CostDesiredTrajectories& desiredTrajectory,
-                                                                                     const PreComputation* preCompPtr) const {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
+                                                                                     const PreComputation& preComp) const {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
+  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& x_system = preCompLS.getSystemState();
 
-  const auto Phi_system = systemCost_->getQuadraticApproximation(t, x_system, desiredTrajectory, preComp.getSystemPreComputationPtr());
+  const auto Phi_system = systemCost_->getQuadraticApproximation(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
   const size_t nx_filter = loopshapingDefinition_->getInputFilter().getNumStates();
 
   ScalarFunctionQuadraticApproximation Phi;

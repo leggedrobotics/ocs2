@@ -39,14 +39,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LoopshapingStateInputConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u,
-                                                   const PreComputation* preCompPtr) const {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
-  const auto& u_system = preComp.getSystemInput();
-  const auto* preComp_system = preComp.getSystemPreComputationPtr();
+vector_t LoopshapingStateInputConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) const {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
+  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
 
   return systemConstraint_->getValue(t, x_system, u_system, preComp_system);
 }

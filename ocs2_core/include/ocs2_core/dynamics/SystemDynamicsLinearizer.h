@@ -55,10 +55,10 @@ class SystemDynamicsLinearizer final : public SystemDynamicsBase {
   /** Clone */
   SystemDynamicsLinearizer* clone() const override;
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation* preCompPtr) override;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) override;
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                        const PreComputation* preCompPtr) override;
+                                                        const PreComputation& preComp) override;
 
  private:
   /** Copy constructor with pre-computation */

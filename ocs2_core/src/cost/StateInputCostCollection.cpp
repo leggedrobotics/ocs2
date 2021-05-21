@@ -86,13 +86,13 @@ void StateInputCostCollection::add(std::string name, std::unique_ptr<StateInputC
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                            const CostDesiredTrajectories& desiredTrajectory, const PreComputation* preCompPtr) const {
+                                            const CostDesiredTrajectories& desiredTrajectory, const PreComputation& preComp) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getValue(time, state, input, desiredTrajectory, preCompPtr);
+      cost += costPair.second->getValue(time, state, input, desiredTrajectory, preComp);
     }
   }
 
@@ -105,13 +105,13 @@ scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state
 ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                          const vector_t& input,
                                                                                          const CostDesiredTrajectories& desiredTrajectory,
-                                                                                         const PreComputation* preCompPtr) const {
+                                                                                         const PreComputation& preComp) const {
   auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
 
   // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory, preCompPtr);
+      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory, preComp);
     }
   }
 

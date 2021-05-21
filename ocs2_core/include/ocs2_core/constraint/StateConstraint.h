@@ -57,11 +57,11 @@ class StateConstraint {
   virtual size_t getNumConstraints(scalar_t time) const = 0;
 
   /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) const = 0;
+  virtual vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const = 0;
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                   const PreComputation* preCompPtr) const {
+                                                                   const PreComputation& preComp) const {
     if (order_ == ConstraintOrder::Linear) {
       throw std::runtime_error("[StateConstraint] Linear approximation not implemented!");
     } else {
@@ -71,7 +71,7 @@ class StateConstraint {
 
   /** Get the constraint quadratic approximation */
   virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const PreComputation* preCompPtr) const {
+                                                                         const PreComputation& preComp) const {
     if (order_ == ConstraintOrder::Quadratic) {
       throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented!");
     } else {

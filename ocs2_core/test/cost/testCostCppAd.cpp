@@ -57,8 +57,8 @@ TEST(TestStateCostCppAd, getValue) {
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
 
-  const auto val = cost.getValue(t, x, desiredTrajectory, nullptr);
-  const auto approx = cost.getQuadraticApproximation(t, x, desiredTrajectory, nullptr);
+  const auto val = cost.getValue(t, x, desiredTrajectory, ocs2::PreComputation());
+  const auto approx = cost.getQuadraticApproximation(t, x, desiredTrajectory, ocs2::PreComputation());
 
   EXPECT_NEAR(val, 1.5, 1e-6);
   EXPECT_NEAR(approx.f, val, 1e-6);
@@ -96,8 +96,8 @@ TEST(TestStateInputCostCppAd, getValue) {
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
   const ocs2::vector_t u = ocs2::vector_t::Ones(1);
 
-  const auto val = cost.getValue(t, x, u, desiredTrajectory, nullptr);
-  const auto approx = cost.getQuadraticApproximation(t, x, u, desiredTrajectory, nullptr);
+  const auto val = cost.getValue(t, x, u, desiredTrajectory, ocs2::PreComputation());
+  const auto approx = cost.getQuadraticApproximation(t, x, u, desiredTrajectory, ocs2::PreComputation());
 
   EXPECT_NEAR(val, 4.0, 1e-6);
   EXPECT_NEAR(approx.f, val, 1e-6);

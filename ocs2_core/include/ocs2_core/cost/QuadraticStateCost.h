@@ -47,12 +47,12 @@ class QuadraticStateCost : public StateCost {
 
   /** Get cost term value */
   scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation*) const final;
+                    const PreComputation&) const final;
 
   /** Get cost term quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation*) const final;
+                                                                 const PreComputation&) const final;
 
  protected:
   QuadraticStateCost(const QuadraticStateCost& rhs) = default;

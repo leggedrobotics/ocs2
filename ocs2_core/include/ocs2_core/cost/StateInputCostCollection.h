@@ -89,12 +89,12 @@ class StateInputCostCollection final : public StateInputCost {
 
   /** Get state-input cost value */
   scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation* preCompPtr) const override;
+                    const PreComputation& preComp) const override;
 
   /** Get state-input cost quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation* preCompPtr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  private:
   std::map<std::string, std::unique_ptr<StateInputCost>> costTermMap_;

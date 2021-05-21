@@ -57,13 +57,13 @@ class SystemDynamicsBase : public ControlledSystemBase {
 
   /** Computes the linear approximation with given pre-computation */
   virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                const PreComputation* preComp) = 0;
+                                                                const PreComputation& preComp) = 0;
 
   /** Computes the jump map linear approximation */
   VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x);
 
   /** Computes the jump map linear approximation with given pre-computation */
-  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation* preComp);
+  virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation& preComp);
 
   /** Computes the guard surfaces linear approximation */
   virtual VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
@@ -101,6 +101,9 @@ class SystemDynamicsBase : public ControlledSystemBase {
  protected:
   /** Copy constructor */
   SystemDynamicsBase(const SystemDynamicsBase& other);
+
+ private:
+  using Request = PreComputation::Request;
 };
 
 }  // namespace ocs2

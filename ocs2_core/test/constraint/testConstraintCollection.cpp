@@ -111,7 +111,7 @@ TEST(TestConstraintCollection, getValue) {
   x.setZero();
 
   // Zero constraints after creating
-  auto constraintValues = constraintCollection.getValue(t, x, u, nullptr);
+  auto constraintValues = constraintCollection.getValue(t, x, u, ocs2::PreComputation());
   EXPECT_EQ(constraintValues.size(), 0);
 
   // Add Linear inequality constraint term, which has 2 constraints, twice
@@ -120,7 +120,7 @@ TEST(TestConstraintCollection, getValue) {
   constraintCollection.add("Constraint1", std::move(constraintTerm1));
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
 
-  constraintValues = constraintCollection.getValue(t, x, u, nullptr);
+  constraintValues = constraintCollection.getValue(t, x, u, ocs2::PreComputation());
   ASSERT_EQ(constraintValues.rows(), 4);
   EXPECT_EQ(constraintValues[0], 1.0);
   EXPECT_EQ(constraintValues[1], 2.0);
@@ -145,7 +145,7 @@ TEST(TestConstraintCollection, getLinearApproximation) {
   constraintCollection.add("Constraint1", std::move(constraintTerm1));
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
 
-  auto linearApproximation = constraintCollection.getLinearApproximation(t, x, u, nullptr);
+  auto linearApproximation = constraintCollection.getLinearApproximation(t, x, u, ocs2::PreComputation());
   ASSERT_EQ(linearApproximation.f.size(), 4);
   EXPECT_EQ(linearApproximation.f(0), 1.0);
   EXPECT_EQ(linearApproximation.f(1), 2.0);
@@ -178,7 +178,7 @@ TEST(TestConstraintCollection, getQuadraticApproximation) {
   constraintCollection.add("Constraint1", std::move(constraintTerm1));
   constraintCollection.add("Constraint2", std::move(constraintTerm2));
 
-  auto quadraticApproximation = constraintCollection.getQuadraticApproximation(t, x, u, nullptr);
+  auto quadraticApproximation = constraintCollection.getQuadraticApproximation(t, x, u, ocs2::PreComputation());
   ASSERT_EQ(quadraticApproximation.f.size(), 4);
   EXPECT_EQ(quadraticApproximation.f(0), 1.0);
   EXPECT_EQ(quadraticApproximation.f(1), 2.0);

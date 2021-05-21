@@ -52,12 +52,12 @@ class StateCost {
 
   /** Get cost term value */
   virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                            const PreComputation* preCompPtr) const = 0;
+                            const PreComputation& preComp) const = 0;
 
   /** Get cost term quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                          const CostDesiredTrajectories& desiredTrajectory,
-                                                                         const PreComputation* preCompPtr) const = 0;
+                                                                         const PreComputation& preComp) const = 0;
 
  protected:
   StateCost(const StateCost& rhs) = default;

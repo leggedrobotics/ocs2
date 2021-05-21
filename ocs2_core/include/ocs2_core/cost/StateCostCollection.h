@@ -89,12 +89,12 @@ class StateCostCollection final : public StateCost {
 
   /** Get state-only cost value */
   scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation* preCompPtr) const override;
+                    const PreComputation& preComp) const override;
 
   /** Get state-only cost quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation* preCompPtr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  private:
   std::map<std::string, std::unique_ptr<StateCost>> costTermMap_;

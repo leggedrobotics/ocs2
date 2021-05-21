@@ -62,7 +62,7 @@ StateCostCppAd::StateCostCppAd(const StateCostCppAd& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateCostCppAd::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                                  const PreComputation*) const {
+                                  const PreComputation&) const {
   vector_t tapedTimeState(1 + state.rows());
   tapedTimeState << time, state;
   return adInterfacePtr_->getFunctionValue(tapedTimeState, getParameters(time, desiredTrajectory))(0);
@@ -73,7 +73,7 @@ scalar_t StateCostCppAd::getValue(scalar_t time, const vector_t& state, const Co
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateCostCppAd::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                const CostDesiredTrajectories& desiredTrajectory,
-                                                                               const PreComputation*) const {
+                                                                               const PreComputation&) const {
   ScalarFunctionQuadraticApproximation cost;
 
   const size_t stateDim = state.rows();

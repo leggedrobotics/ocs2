@@ -47,7 +47,7 @@ QuadraticStateCost* QuadraticStateCost::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                                      const PreComputation*) const {
+                                      const PreComputation&) const {
   const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
   return 0.5 * xDeviation.dot(Q_ * xDeviation);
 }
@@ -57,7 +57,7 @@ scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, cons
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                    const CostDesiredTrajectories& desiredTrajectory,
-                                                                                   const PreComputation*) const {
+                                                                                   const PreComputation&) const {
   const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
   const vector_t qDeviation = Q_ * xDeviation;
 

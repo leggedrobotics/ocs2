@@ -96,6 +96,7 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
       std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock;
       std::vector<std::reference_wrapper<OptimalControlProblem>> problemRefStock;
       for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
+        rolloutRefStock.emplace_back(*dynamicsForwardRolloutPtrStock_[i]);
         problemRefStock.emplace_back(*optimalControlProblemPtrStock_[i]);
       }  // end of i loop
       searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, *threadPoolPtr_,

@@ -25,11 +25,11 @@ class LoopshapingStateConstraint final : public StateConstraint {
 
   size_t getNumConstraints(scalar_t time) const override { return systemConstraint_->getNumConstraints(time); }
 
-  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                           const PreComputation* preCompPtr) const override;
+                                                           const PreComputation& preComp) const override;
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const PreComputation* preCompPtr) const override;
+                                                                 const PreComputation& preComp) const override;
 
  private:
   LoopshapingStateConstraint(const LoopshapingStateConstraint& other)

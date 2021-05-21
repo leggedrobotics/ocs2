@@ -19,17 +19,16 @@ vector_t LoopshapingDynamicsInputPattern::filterFlowmap(const vector_t& x_filter
 }
 
 VectorFunctionLinearApproximation LoopshapingDynamicsInputPattern::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                                       const PreComputation* preCompPtr) {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
+                                                                                       const PreComputation& preComp) {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
 
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
-  const auto& u_system = preComp.getSystemInput();
-  const auto& x_filter = preComp.getFilterState();
-  const auto& u_filter = preComp.getFilterInput();
-  const auto dynamics_system = systemDynamics_->linearApproximation(t, x_system, u_system, preComp.getSystemPreComputationPtr());
+  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& u_filter = preCompLS.getFilteredInput();
+  const auto dynamics_system = systemDynamics_->linearApproximation(t, x_system, u_system, preCompLS.getSystemPreComputation());
 
   VectorFunctionLinearApproximation dynamics;
   dynamics.f = loopshapingDefinition_->concatenateSystemAndFilterState(dynamics_system.f, filterFlowmap(x_filter, u_filter, u_system));

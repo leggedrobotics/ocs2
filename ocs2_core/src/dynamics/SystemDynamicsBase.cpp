@@ -45,32 +45,30 @@ SystemDynamicsBase::SystemDynamicsBase(const SystemDynamicsBase& other) : Contro
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBase::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  using Req = PreComputation::Request;
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->request(Req::Dynamics | Req::Approximation, t, x, u);
-  }
-  return linearApproximation(t, x, u, preCompPtr_.get());
+  assert(preCompPtr_ != nullptr);
+  preCompPtr_->request(Request::Dynamics | Request::Approximation, t, x, u);
+  return linearApproximation(t, x, u, *preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
-  using Req = PreComputation::Request;
-  if (preCompPtr_ != nullptr) {
-    preCompPtr_->requestPreJump(Req::Dynamics | Req::Approximation, t, x);
-  }
-  return jumpMapLinearApproximation(t, x, preCompPtr_.get());
+  assert(preCompPtr_ != nullptr);
+  preCompPtr_->requestPreJump(Request::Dynamics | Request::Approximation, t, x);
+  return jumpMapLinearApproximation(t, x, *preCompPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation*) {
+VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                 const PreComputation& preComp) {
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx.setIdentity(x.rows(), x.rows());
   approximation.dfdu.setZero(x.rows(), 0);
-  approximation.f = ControlledSystemBase::computeJumpMap(t, x, preCompPtr_.get());
+  assert(preCompPtr_ != nullptr);
+  approximation.f = ControlledSystemBase::computeJumpMap(t, x, preComp);
   return approximation;
 }
 

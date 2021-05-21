@@ -257,21 +257,22 @@ target_link_libraries(test_transferfunctionbase
   gtest_main
 )
 
-# catkin_add_gtest(${PROJECT_NAME}_loopshaping
-#   test/loopshaping/testLoopshapingConfiguration.cpp
-#   test/loopshaping/testLoopshapingConstraint.cpp
-#   test/loopshaping/testLoopshapingCost.cpp
-#   test/loopshaping/testLoopshapingDefinition.cpp
-#   test/loopshaping/testLoopshapingDynamics.cpp
-#   test/loopshaping/testLoopshapingFilterDynamics.cpp
-# )
-# target_link_libraries(${PROJECT_NAME}_loopshaping
-#   ${PROJECT_NAME}
-#   ${Boost_LIBRARIES}
-#   ${catkin_LIBRARIES}
-#   -lstdc++fs
-#   gtest_main
-# )
+catkin_add_gtest(${PROJECT_NAME}_loopshaping
+  test/loopshaping/testLoopshapingConfiguration.cpp
+  # test/loopshaping/testLoopshapingConstraint.cpp
+  # test/loopshaping/testLoopshapingCost.cpp
+  test/loopshaping/testLoopshapingDefinition.cpp
+  test/loopshaping/testLoopshapingDynamics.cpp
+  test/loopshaping/testLoopshapingFilterDynamics.cpp
+  test/loopshaping/testLoopshapingPreComputation.cpp
+)
+target_link_libraries(${PROJECT_NAME}_loopshaping
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  -lstdc++fs
+  gtest_main
+)
 
 catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testInterpolation.cpp

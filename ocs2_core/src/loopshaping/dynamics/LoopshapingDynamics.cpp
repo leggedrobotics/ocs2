@@ -34,16 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input,
-                                             const PreComputation* preCompPtr) {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto* preComp_system = preComp.getSystemPreComputationPtr();
-  const auto& x_system = preComp.getSystemState();
-  const auto& u_system = preComp.getSystemInput();
-  const auto& x_filter = preComp.getFilterState();
-  const auto& u_filter = preComp.getFilterInput();
+vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
+  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& u_filter = preCompLS.getFilteredInput();
 
   const vector_t dynamics_system = systemDynamics_->computeFlowMap(time, x_system, u_system, preComp_system);
   const vector_t dynamics_filter = filterFlowmap(x_filter, u_filter, u_system);
@@ -51,17 +49,16 @@ vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& stat
   return loopshapingDefinition_->concatenateSystemAndFilterState(dynamics_system, dynamics_filter);
 }
 
-vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state, const PreComputation* preCompPtr) {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto* preComp_system = preComp.getSystemPreComputationPtr();
-  const auto& x_system = preComp.getSystemState();
+vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp) {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
+  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto& x_system = preCompLS.getSystemState();
 
   const vector_t jumpMap_system = systemDynamics_->computeJumpMap(time, x_system, preComp_system);
 
   // Filter doesn't Jump
-  const auto& jumMap_filter = preComp.getFilterState();
+  const auto& jumMap_filter = preCompLS.getFilterState();
 
   return loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system, jumMap_filter);
 }
@@ -72,18 +69,17 @@ vector_t LoopshapingDynamics::computeGuardSurfaces(scalar_t time, const vector_t
 }
 
 VectorFunctionLinearApproximation LoopshapingDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                  const PreComputation* preCompPtr) {
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
-  const LoopshapingPreComputation& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
+                                                                                  const PreComputation& preComp) {
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
+  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
 
   // System jump
-  const auto& x_system = preComp.getSystemState();
-  const auto* preComp_system = preComp.getSystemPreComputationPtr();
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, preComp_system);
 
   // Filter doesn't Jump
-  const auto& jumMap_filter = preComp.getFilterState();
+  const auto& jumMap_filter = preCompLS.getFilterState();
 
   VectorFunctionLinearApproximation jumpMap;
   jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);

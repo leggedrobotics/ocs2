@@ -35,20 +35,19 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LoopshapingFilterConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation* preCompPtr) const {
+vector_t LoopshapingFilterConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) const {
   if (loopshapingDefinition_->getType() != LoopshapingType::inputpattern) {
     return vector_t(0);
   }
 
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
 
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& u_system = preComp.getSystemInput();
-  const auto& x_filter = preComp.getFilterState();
-  const auto& u_filter = preComp.getFilterInput();
+  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& u_filter = preCompLS.getFilteredInput();
 
   if (isDiagonal) {
     return s_filter.getCdiag() * x_filter + s_filter.getDdiag() * u_filter - u_system;
@@ -61,21 +60,20 @@ vector_t LoopshapingFilterConstraint::getValue(scalar_t t, const vector_t& x, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation LoopshapingFilterConstraint::getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                                      const PreComputation* preCompPtr) const {
+                                                                                      const PreComputation& preComp) const {
   if (loopshapingDefinition_->getType() != LoopshapingType::inputpattern) {
     return VectorFunctionLinearApproximation(0, x.rows(), u.rows());
   }
 
-  assert(preCompPtr != nullptr);
-  assert(dynamic_cast<const LoopshapingPreComputation*>(preCompPtr) != nullptr);
+  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
 
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preComp = *reinterpret_cast<const LoopshapingPreComputation*>(preCompPtr);
-  const auto& x_system = preComp.getSystemState();
-  const auto& u_system = preComp.getSystemInput();
-  const auto& x_filter = preComp.getFilterState();
-  const auto& u_filter = preComp.getFilterInput();
+  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& u_filter = preCompLS.getFilteredInput();
 
   VectorFunctionLinearApproximation g(u_system.rows(), x.rows(), u.rows());
   if (isDiagonal) {

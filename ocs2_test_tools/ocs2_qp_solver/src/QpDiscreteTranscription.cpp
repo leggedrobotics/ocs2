@@ -31,13 +31,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Created by rgrandia on 26.02.20.
 //
 
+#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+
 #include "ocs2_qp_solver/QpDiscreteTranscription.h"
 
 namespace ocs2 {
 namespace qp_solver {
 
-std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBase& cost, SystemDynamicsBase& system,
-                                                                  ConstraintBase* constraintsPtr,
+std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControlProblem& optimalControProblem,
                                                                   const ContinuousTrajectory& nominalTrajectory) {
   if (nominalTrajectory.timeTrajectory.empty()) {
     return {};
@@ -52,45 +53,44 @@ std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBa
   std::vector<LinearQuadraticStage> lqp;
   lqp.reserve(N + 1);
   for (int k = 0; k < N; ++k) {  // Intermediate stages
-    lqp.emplace_back(approximateStage(cost, system, constraintsPtr, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}, k == 0));
+    lqp.emplace_back(approximateStage(optimalControProblem, {t[k], x[k], u[k]}, {t[k + 1], x[k + 1]}, k == 0));
   }
 
-  if (constraintsPtr != nullptr) {
-    lqp.emplace_back(
-        cost.finalCostQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
-        constraintsPtr->finalStateEqualityConstraintLinearApproximation(t[N], x[N]));  // Terminal cost and constraints, no dynamics.
-  } else {
-    lqp.emplace_back(cost.finalCostQuadraticApproximation(t[N], x[N]), VectorFunctionLinearApproximation(),
-                     VectorFunctionLinearApproximation());  // Terminal cost, no dynamics and constraints.
-  }
+  ModelData modelData;
+  LinearQuadraticApproximator lqapprox(optimalControProblem);
+  lqapprox.approximateLQProblemAtFinalTime(t[N], x[N], modelData);
+  lqp.emplace_back(std::move(modelData.cost_), VectorFunctionLinearApproximation(), std::move(modelData.stateEqConstr_));
 
   return lqp;
 }
 
-LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, ConstraintBase* constraintsPtr,
-                                      TrajectoryRef start, StateTrajectoryRef end, bool isInitialTime) {
+LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProblem, TrajectoryRef start, StateTrajectoryRef end,
+                                      bool isInitialTime) {
   LinearQuadraticStage lqStage;
   auto dt = end.t - start.t;
 
-  lqStage.cost = approximateCost(cost, start, dt);
+  LinearQuadraticApproximator lqapprox(optimalControProblem);
+
+  ModelData modelData;
+  lqapprox.approximateLQProblem(start.t, start.x, start.u, modelData);
+
+  lqStage.cost = approximateCost(modelData, dt);
 
   // Linearized Dynamics after discretization: x0[k+1] + dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k])
-  lqStage.dynamics = approximateDynamics(system, start, dt);
+  lqStage.dynamics = approximateDynamics(modelData, start, dt);
   // Adapt the offset to account for discretization and the nominal trajectory :
   // dx[k+1] = A dx[k] + B du[k] + F(x0[k], u0[k]) - x0[k+1]
   lqStage.dynamics.f -= end.x;
 
-  if (constraintsPtr != nullptr) {
-    lqStage.constraints = approximateConstraints(*constraintsPtr, start, isInitialTime);
-  }
+  lqStage.constraints = approximateConstraints(modelData, isInitialTime);
 
   return lqStage;
 }
 
-ScalarFunctionQuadraticApproximation approximateCost(CostFunctionBase& cost, TrajectoryRef start, scalar_t dt) {
+ScalarFunctionQuadraticApproximation approximateCost(const ModelData& modelData, scalar_t dt) {
   // Approximates the cost accumulation of the dt interval.
   // Use Euler integration
-  const auto continuousCosts = cost.costQuadraticApproximation(start.t, start.x, start.u);
+  const auto continuousCosts = modelData.cost_;
   ScalarFunctionQuadraticApproximation discreteCosts;
   discreteCosts.dfdxx = continuousCosts.dfdxx * dt;
   discreteCosts.dfdux = continuousCosts.dfdux * dt;
@@ -101,13 +101,13 @@ ScalarFunctionQuadraticApproximation approximateCost(CostFunctionBase& cost, Tra
   return discreteCosts;
 }
 
-VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system, TrajectoryRef start, scalar_t dt) {
+VectorFunctionLinearApproximation approximateDynamics(const ModelData& modelData, TrajectoryRef start, scalar_t dt) {
   // Forward Euler discretization
   // x[k+1] = x[k] + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * dxdt[k]
   // x[k+1] = (x0[k] + dx[k]) + dt * (A_c dx[k] + B_c du[k] + b_c)
   // x[k+1] = (I + A_c * dt) dx[k] + (B_c * dt) du[k] + (b_c * dt + x0[k])
-  const auto continuousDynamics = system.linearApproximation(start.t, start.x, start.u);
+  const auto& continuousDynamics = modelData.dynamics_;
   VectorFunctionLinearApproximation discreteDynamics;
   discreteDynamics.dfdx = continuousDynamics.dfdx * dt;
   discreteDynamics.dfdx.diagonal().array() += 1.0;
@@ -116,18 +116,20 @@ VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system
   return discreteDynamics;
 }
 
-VectorFunctionLinearApproximation approximateConstraints(ConstraintBase& constraints, TrajectoryRef point, bool isInitialTime) {
+VectorFunctionLinearApproximation approximateConstraints(const ModelData& modelData, bool isInitialTime) {
   VectorFunctionLinearApproximation constraintsApproximation;
   if (isInitialTime) {
     // only use stat-input constraints for initial time
-    constraintsApproximation = constraints.stateInputEqualityConstraintLinearApproximation(point.t, point.x, point.u);
+    constraintsApproximation = std::move(modelData.stateInputEqConstr_);
   } else {
     // concatenate stat-input and state-only constraints
-    const auto stateInputConstraint = constraints.stateInputEqualityConstraintLinearApproximation(point.t, point.x, point.u);
-    const auto stateConstraint = constraints.stateEqualityConstraintLinearApproximation(point.t, point.x);
+    const auto& stateInputConstraint = modelData.stateInputEqConstr_;
+    const auto& stateConstraint = modelData.stateEqConstr_;
     const auto numStateInputConstraints = stateInputConstraint.f.size();
     const auto numStateConstraints = stateConstraint.f.size();
-    constraintsApproximation.resize(numStateConstraints + numStateInputConstraints, point.x.size(), point.u.size());
+    const auto numStates = stateInputConstraint.dfdx.cols();
+    const auto numInputs = stateInputConstraint.dfdu.cols();
+    constraintsApproximation.resize(numStateConstraints + numStateInputConstraints, numStates, numInputs);
     constraintsApproximation.f.head(numStateInputConstraints) = stateInputConstraint.f;
     constraintsApproximation.dfdx.topRows(numStateInputConstraints) = stateInputConstraint.dfdx;
     constraintsApproximation.dfdu.topRows(numStateInputConstraints) = stateInputConstraint.dfdu;

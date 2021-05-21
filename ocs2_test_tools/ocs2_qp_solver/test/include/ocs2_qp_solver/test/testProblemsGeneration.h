@@ -36,61 +36,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
 
-#include <ocs2_core/constraint/LinearConstraint.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/dynamics/LinearSystemDynamics.h>
+#include <ocs2_oc/test/testProblemsGeneration.h>
 
 namespace ocs2 {
 namespace qp_solver {
-
-/** Get random positive definite costs of n states and m inputs */
-inline ScalarFunctionQuadraticApproximation getRandomCost(int n, int m) {
-  matrix_t QPPR = matrix_t::Random(n + m, n + m);
-  QPPR = QPPR.transpose() * QPPR;
-  ScalarFunctionQuadraticApproximation cost;
-  cost.dfdxx = QPPR.topLeftCorner(n, n);
-  cost.dfdux = QPPR.bottomLeftCorner(m, n);
-  cost.dfduu = QPPR.bottomRightCorner(m, m);
-  cost.dfdx = vector_t::Random(n);
-  cost.dfdu = vector_t::Random(m);
-  cost.f = std::rand() / static_cast<scalar_t>(RAND_MAX);
-  return cost;
-}
-
-inline std::unique_ptr<ocs2::QuadraticCostFunction> getOcs2Cost(const ScalarFunctionQuadraticApproximation& cost,
-                                                                const ScalarFunctionQuadraticApproximation& costFinal) {
-  return std::unique_ptr<ocs2::QuadraticCostFunction>(new ocs2::QuadraticCostFunction(cost.dfdxx, cost.dfduu, costFinal.dfdxx, cost.dfdux));
-}
-
-/** Get random linear dynamics of n states and m inputs */
-inline VectorFunctionLinearApproximation getRandomDynamics(int n, int m) {
-  VectorFunctionLinearApproximation dynamics;
-  dynamics.dfdx = matrix_t::Random(n, n);
-  dynamics.dfdu = matrix_t::Random(n, m);
-  dynamics.f = vector_t::Random(n);
-  return dynamics;
-}
-
-inline std::unique_ptr<ocs2::LinearSystemDynamics> getOcs2Dynamics(const VectorFunctionLinearApproximation& dynamics) {
-  return std::unique_ptr<ocs2::LinearSystemDynamics>(new ocs2::LinearSystemDynamics(dynamics.dfdx, dynamics.dfdu));
-}
-
-/** Get random nc linear constraints of n states, and m inputs */
-inline VectorFunctionLinearApproximation getRandomConstraints(int n, int m, int nc) {
-  VectorFunctionLinearApproximation constraints;
-  constraints.dfdx = matrix_t::Random(nc, n);
-  constraints.dfdu = matrix_t::Random(nc, m);
-  constraints.f = vector_t::Random(nc);
-  return constraints;
-}
-
-inline std::unique_ptr<ocs2::LinearConstraint> getOcs2Constraints(const VectorFunctionLinearApproximation& stateInputConstraints,
-                                                                  const VectorFunctionLinearApproximation& stateOnlyConstraints,
-                                                                  const VectorFunctionLinearApproximation& finalStateOnlyConstraints) {
-  return std::unique_ptr<ocs2::LinearConstraint>(
-      new ocs2::LinearConstraint(stateInputConstraints.f, stateInputConstraints.dfdx, stateInputConstraints.dfdu, stateOnlyConstraints.f,
-                                 stateOnlyConstraints.dfdx, finalStateOnlyConstraints.f, finalStateOnlyConstraints.dfdx));
-}
 
 inline ContinuousTrajectory getRandomTrajectory(int N, int n, int m, scalar_t dt) {
   ContinuousTrajectory trajectory;
@@ -119,49 +68,6 @@ inline std::vector<LinearQuadraticStage> generateRandomLqProblem(int N, int nx, 
   lqProblem.emplace_back(getRandomCost(nx, 0), VectorFunctionLinearApproximation(), getRandomConstraints(nx, nu, nc));
 
   return lqProblem;
-}
-
-/**
- * Compares two Eigen vectors on equality.
- * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
- */
-inline bool isEqual(const vector_t& lhs, const vector_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
-  if (lhs.norm() > tol && rhs.norm() > tol) {
-    return lhs.isApprox(rhs, tol);
-  } else {
-    return (lhs - rhs).norm() < tol;
-  }
-}
-
-/**
- * Compares two scalars on equality in way that is consistent with the check for vectors.
- * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
- */
-inline bool isEqual(const scalar_t& lhs, const scalar_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
-  return isEqual((vector_t(1) << lhs).finished(), (vector_t(1) << rhs).finished(), tol);
-}
-
-/**
- * Compares two Eigen matrices on equality.
- * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
- */
-inline bool isEqual(const matrix_t& lhs, const matrix_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
-  if (lhs.norm() > tol && rhs.norm() > tol) {
-    return lhs.isApprox(rhs, tol);
-  } else {
-    return (lhs - rhs).norm() < tol;
-  }
-}
-
-/**
- * Compares two trajectories on element-wise approximate equality
- * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
- * @return Vectors are of equal length and equal values.
- */
-template <typename T>
-inline bool isEqual(const std::vector<T>& v0, const std::vector<T>& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
-  return (v0.size() == v1.size()) &&
-         std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const T& lhs, const T& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
 /** Checks QP feasibility and numerical conditioning */

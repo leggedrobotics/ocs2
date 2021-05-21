@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <iostream>
 
-#include "../include/testTools.h"
 #include "LinearSystemDynamicsAD.h"
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
+#include "ocs2_core/test/testTools.h"
 
 using namespace ocs2;
 

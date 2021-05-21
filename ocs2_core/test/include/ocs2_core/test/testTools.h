@@ -35,26 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
+/** Check for approximate equality of VectorFunctionLinearApproximation */
 inline bool isApprox(const VectorFunctionLinearApproximation& a, const VectorFunctionLinearApproximation& b, scalar_t precision = 1e-9) {
   return a.f.isApprox(b.f, precision) && a.dfdx.isApprox(b.dfdx, precision) && a.dfdu.isApprox(b.dfdu, precision);
 }
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-inline std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximation& f) {
-  out << "f: " << f.f.transpose() << '\n';
-  out << "dfdx:\n" << f.dfdx << '\n';
-  out << "dfdu:\n" << f.dfdu << '\n';
-  return out;
-}
-
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
+/** Check for approximate equality of VectorFunctionQuadraticApproximation */
 inline bool isApprox(const VectorFunctionQuadraticApproximation& a, const VectorFunctionQuadraticApproximation& b,
                      scalar_t precision = 1e-9) {
   if (!(a.f.isApprox(b.f, precision) && a.dfdx.isApprox(b.dfdx, precision) && a.dfdu.isApprox(b.dfdu, precision))) {
@@ -69,23 +55,47 @@ inline bool isApprox(const VectorFunctionQuadraticApproximation& a, const Vector
   return true;
 }
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-inline std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f) {
-  out << "f: " << f.f.transpose() << '\n';
-  out << "dfdx:\n" << f.dfdx << '\n';
-  out << "dfdu:\n" << f.dfdu << '\n';
-  for (size_t i = 0; i < f.f.rows(); i++) {
-    out << "dfdxx[" << i << "]:\n" << f.dfdxx[i] << '\n';
+/**
+ * Compares two Eigen vectors on equality.
+ * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
+ */
+inline bool isEqual(const vector_t& lhs, const vector_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+  if (lhs.norm() > tol && rhs.norm() > tol) {
+    return lhs.isApprox(rhs, tol);
+  } else {
+    return (lhs - rhs).norm() < tol;
   }
-  for (size_t i = 0; i < f.f.rows(); i++) {
-    out << "dfdux[" << i << "]:\n" << f.dfdux[i] << '\n';
+}
+
+/**
+ * Compares two scalars on equality in way that is consistent with the check for vectors.
+ * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
+ */
+inline bool isEqual(const scalar_t& lhs, const scalar_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+  return isEqual((vector_t(1) << lhs).finished(), (vector_t(1) << rhs).finished(), tol);
+}
+
+/**
+ * Compares two Eigen matrices on equality.
+ * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
+ */
+inline bool isEqual(const matrix_t& lhs, const matrix_t& rhs, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+  if (lhs.norm() > tol && rhs.norm() > tol) {
+    return lhs.isApprox(rhs, tol);
+  } else {
+    return (lhs - rhs).norm() < tol;
   }
-  for (size_t i = 0; i < f.f.rows(); i++) {
-    out << "dfduu[" << i << "]:\n" << f.dfduu[i] << '\n';
-  }
-  return out;
+}
+
+/**
+ * Compares two trajectories on element-wise approximate equality
+ * @param tol : tolerance (default value is 1e-12, which is the default of isApprox().
+ * @return Vectors are of equal length and equal values.
+ */
+template <typename T>
+inline bool isEqual(const std::vector<T>& v0, const std::vector<T>& v1, scalar_t tol = Eigen::NumTraits<scalar_t>::dummy_precision()) {
+  return (v0.size() == v1.size()) &&
+         std::equal(v0.begin(), v0.end(), v1.begin(), [tol](const T& lhs, const T& rhs) { return isEqual(lhs, rhs, tol); });
 }
 
 }  // namespace ocs2

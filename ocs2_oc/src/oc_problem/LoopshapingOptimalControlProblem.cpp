@@ -63,7 +63,7 @@ std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& probl
   augmentedProblem->finalCost.add("wrapper", LoopshapingCost::create(problem.finalCost, loopshapingDefinition));
 
   // Pre-computation
-  augmentedProblem->preComputation.reset(new LoopshapingPreComputation(problem.preComputation.get(), loopshapingDefinition));
+  augmentedProblem->preComputation.reset(new LoopshapingPreComputation(*problem.preComputation, loopshapingDefinition));
 
   return augmentedProblem;
 }

@@ -140,7 +140,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
                                                    std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
                                                    scalar_t& heuristicsValue) const {
   using Request = PreComputation::Request;
-  auto& preComputation = problem.preComputation.get();
+  auto& preComputation = *problem.preComputation;
   const auto& desiredTrajectory = *problem.costDesiredTrajectories;
 
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {

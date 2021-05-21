@@ -87,6 +87,7 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
 
       lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
                                     modelDataTrajectory[timeIndex]);
+      modelDataTrajectory[timeIndex].checkSizes(stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
     }
   };
 

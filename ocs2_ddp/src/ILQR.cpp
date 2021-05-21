@@ -80,6 +80,7 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
       LinearQuadraticApproximator lqapprox(*BASE::optimalControlProblemPtrStock_[taskId], BASE::settings().checkNumericalStability_);
       lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
                                     continuousTimeModelData);
+      continuousTimeModelData.checkSizes(stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
 
       // discretize LQ problem
       scalar_t timeStep = 0.0;

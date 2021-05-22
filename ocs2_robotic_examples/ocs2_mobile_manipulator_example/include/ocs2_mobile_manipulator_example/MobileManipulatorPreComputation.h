@@ -30,42 +30,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <memory>
+#include <string>
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-#include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
+#include <ocs2_core/PreComputation.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_core/constraint/StateConstraint.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class EndEffectorConstraint final : public StateConstraint {
+/** Callback for caching and reference update */
+class MobileManipulatorPreComputation : public PreComputation {
  public:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using quaternion_t = Eigen::Quaternion<scalar_t>;
+  using Request = PreComputation::Request;
 
-  EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                        std::shared_ptr<CostDesiredTrajectories> referenceTrajectory);
-  ~EndEffectorConstraint() override = default;
-  EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*endEffectorKinematicsPtr_, referenceTrajectoryPtr_); }
+  MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface);
+  ~MobileManipulatorPreComputation() override = default;
 
-  size_t getNumConstraints(scalar_t time) const override;
-  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                           const PreComputation& preComputation) const override;
+  MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
+  MobileManipulatorPreComputation* clone() const override;
+
+  void request(Request flags, scalar_t t, const vector_t& x, const vector_t& u) override;
+  void requestFinal(Request flags, scalar_t t, const vector_t& x) override;
+
+  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
+  const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }
 
  private:
-  std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(scalar_t time) const;
-
-  /** Cached pointer to the pinocchio end effector kinematics. Is set to nullptr if not used. */
-  PinocchioEndEffectorKinematics* pinocchioEEKinPtr_ = nullptr;
-
-  vector3_t eeDesiredPosition_;
-  quaternion_t eeDesiredOrientation_;
-  std::unique_ptr<EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
-  std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
+  PinocchioInterface pinocchioInterface_;
+  MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping_;
 };
 
 }  // namespace mobile_manipulator

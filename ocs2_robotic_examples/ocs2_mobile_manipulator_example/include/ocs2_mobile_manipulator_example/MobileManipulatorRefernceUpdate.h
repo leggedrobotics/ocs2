@@ -31,40 +31,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_mobile_manipulator_example/definitions.h>
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-#include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
-
-#include <ocs2_core/constraint/StateConstraint.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class EndEffectorConstraint final : public StateConstraint {
+class MobileManipulatorRefernceUpdate final : public SolverSynchronizedModule {
  public:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using quaternion_t = Eigen::Quaternion<scalar_t>;
+  explicit MobileManipulatorRefernceUpdate(std::shared_ptr<CostDesiredTrajectories> referenceTrajectory)
+      : referenceTrajectoryPtr_(std::move(referenceTrajectory)) {}
+  ~MobileManipulatorRefernceUpdate() override = default;
 
-  EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                        std::shared_ptr<CostDesiredTrajectories> referenceTrajectory);
-  ~EndEffectorConstraint() override = default;
-  EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*endEffectorKinematicsPtr_, referenceTrajectoryPtr_); }
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
+                    const CostDesiredTrajectories& costDesiredTrajectory) override {
+    // copy desired trajectory
+    *referenceTrajectoryPtr_ = costDesiredTrajectory;
+  }
 
-  size_t getNumConstraints(scalar_t time) const override;
-  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                           const PreComputation& preComputation) const override;
+  void postSolverRun(const PrimalSolution& primalSolution) override {}
 
  private:
-  std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(scalar_t time) const;
-
-  /** Cached pointer to the pinocchio end effector kinematics. Is set to nullptr if not used. */
-  PinocchioEndEffectorKinematics* pinocchioEEKinPtr_ = nullptr;
-
-  vector3_t eeDesiredPosition_;
-  quaternion_t eeDesiredOrientation_;
-  std::unique_ptr<EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
   std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
 };
 

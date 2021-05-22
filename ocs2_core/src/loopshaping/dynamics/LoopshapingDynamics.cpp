@@ -35,8 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
@@ -50,8 +49,7 @@ vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& stat
 }
 
 vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp) {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
 
@@ -70,8 +68,7 @@ vector_t LoopshapingDynamics::computeGuardSurfaces(scalar_t time, const vector_t
 
 VectorFunctionLinearApproximation LoopshapingDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
                                                                                   const PreComputation& preComp) {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
 
   // System jump
   const auto& x_system = preCompLS.getSystemState();

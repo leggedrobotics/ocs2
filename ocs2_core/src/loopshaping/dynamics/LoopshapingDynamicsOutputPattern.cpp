@@ -14,10 +14,8 @@ vector_t LoopshapingDynamicsOutputPattern::filterFlowmap(const vector_t& x_filte
 
 VectorFunctionLinearApproximation LoopshapingDynamicsOutputPattern::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                                                         const PreComputation& preComp) {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-
   const auto& r_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& x_filter = preCompLS.getFilterState();

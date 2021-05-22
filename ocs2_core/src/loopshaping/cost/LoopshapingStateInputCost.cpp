@@ -34,8 +34,7 @@ namespace ocs2 {
 
 scalar_t LoopshapingStateInputCost::getValue(scalar_t t, const vector_t& x, const vector_t& u,
                                              const CostDesiredTrajectories& desiredTrajectory, const PreComputation& preComp) const {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-  const LoopshapingPreComputation& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& u_filter = preCompLS.getFilteredInput();

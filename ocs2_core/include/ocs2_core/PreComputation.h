@@ -59,6 +59,22 @@ class PreComputation {
   /** Request callback at final time */
   virtual void requestFinal(Request requestFlags, scalar_t t, const vector_t& x) {}
 
+  /* Helper to cast to const reference of derived class. */
+  template <typename Derived>
+  const Derived& cast() const {
+    static_assert(std::is_base_of<PreComputation, Derived>::value, "Template argument must derive from PreComputation");
+    assert(dynamic_cast<const Derived*>(this) != nullptr);
+    return *reinterpret_cast<const Derived*>(this);
+  }
+
+  /* Helper to cast to reference of derived class. */
+  template <typename Derived>
+  Derived& cast() {
+    static_assert(std::is_base_of<PreComputation, Derived>::value, "Template argument must derive from PreComputation");
+    assert(dynamic_cast<Derived*>(this) != nullptr);
+    return *reinterpret_cast<Derived*>(this);
+  }
+
  protected:
   /** Copy constructor */
   PreComputation(const PreComputation& other) = default;

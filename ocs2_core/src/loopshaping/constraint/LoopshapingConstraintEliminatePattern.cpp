@@ -38,11 +38,9 @@ namespace ocs2 {
 VectorFunctionLinearApproximation LoopshapingConstraintEliminatePattern::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                                 const vector_t& u,
                                                                                                 const PreComputation& preComp) const {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
@@ -79,11 +77,9 @@ VectorFunctionLinearApproximation LoopshapingConstraintEliminatePattern::getLine
 VectorFunctionQuadraticApproximation LoopshapingConstraintEliminatePattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                       const vector_t& u,
                                                                                                       const PreComputation& preComp) const {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();

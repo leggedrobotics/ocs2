@@ -17,11 +17,9 @@ vector_t LoopshapingDynamicsEliminatePattern::filterFlowmap(const vector_t& x_fi
 
 VectorFunctionLinearApproximation LoopshapingDynamicsEliminatePattern::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                                                            const PreComputation& preComp) {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& x_filter = preCompLS.getFilterState();

@@ -38,9 +38,7 @@ namespace ocs2 {
 VectorFunctionLinearApproximation LoopshapingConstraintOutputPattern::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                              const vector_t& u,
                                                                                              const PreComputation& preComp) const {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-
-  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
@@ -67,9 +65,7 @@ VectorFunctionLinearApproximation LoopshapingConstraintOutputPattern::getLinearA
 VectorFunctionQuadraticApproximation LoopshapingConstraintOutputPattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                    const vector_t& u,
                                                                                                    const PreComputation& preComp) const {
-  assert(dynamic_cast<const LoopshapingPreComputation*>(&preComp) != nullptr);
-
-  const auto& preCompLS = *reinterpret_cast<const LoopshapingPreComputation*>(&preComp);
+  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();

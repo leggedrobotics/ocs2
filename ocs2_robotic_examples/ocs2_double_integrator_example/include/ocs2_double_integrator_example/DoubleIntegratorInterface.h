@@ -36,8 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
@@ -45,7 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Double Integrator
-#include "cost/DoubleIntegratorCost.h"
 #include "definitions.h"
 #include "dynamics/DoubleIntegratorDynamics.h"
 
@@ -74,13 +71,13 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   std::unique_ptr<ocs2::MPC_DDP> getMpc(bool warmStart = true);
 
-  const DoubleIntegratorDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
+  const DoubleIntegratorDynamics& getDynamics() const { return *dynamicsPtr_; }
 
-  const DoubleIntegratorCost& getCost() const override { return *linearSystemCostPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
-  const RolloutBase& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *linearSystemOperatingPointPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
 
  protected:
   /**
@@ -99,12 +96,10 @@ class DoubleIntegratorInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> ddpLinearSystemRolloutPtr_;
-
-  std::unique_ptr<DoubleIntegratorDynamics> linearSystemDynamicsPtr_;
-  std::unique_ptr<DoubleIntegratorCost> linearSystemCostPtr_;
-  std::unique_ptr<ConstraintBase> linearSystemConstraintPtr_;
-  std::unique_ptr<OperatingPoints> linearSystemOperatingPointPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::unique_ptr<DoubleIntegratorDynamics> dynamicsPtr_;
+  std::unique_ptr<OptimalControlProblem> problemPtr_;
+  std::unique_ptr<OperatingPoints> operatingPointPtr_;
 
   vector_t initialState_{STATE_DIM};
   vector_t finalGoal_{STATE_DIM};

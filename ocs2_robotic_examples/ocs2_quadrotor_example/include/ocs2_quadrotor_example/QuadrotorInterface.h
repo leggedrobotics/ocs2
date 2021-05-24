@@ -31,9 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
@@ -67,13 +66,13 @@ class QuadrotorInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const QuadrotorSystemDynamics& getDynamics() const override { return *quadrotorSystemDynamicsPtr_; }
+  const QuadrotorSystemDynamics& getDynamics() const { return *dynamicsPtr_; }
 
-  const QuadraticCostFunction& getCost() const override { return *quadrotorCostPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
-  const RolloutBase& getRollout() const { return *ddpQuadrotorRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *quadrotorOperatingPointPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
 
  protected:
   /**
@@ -89,17 +88,11 @@ class QuadrotorInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> ddpQuadrotorRolloutPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::unique_ptr<OptimalControlProblem> problemPtr_;
+  std::unique_ptr<QuadrotorSystemDynamics> dynamicsPtr_;
+  std::unique_ptr<OperatingPoints> operatingPointPtr_;
 
-  std::unique_ptr<QuadrotorSystemDynamics> quadrotorSystemDynamicsPtr_;
-  std::unique_ptr<QuadraticCostFunction> quadrotorCostPtr_;
-  std::unique_ptr<ConstraintBase> quadrotorConstraintPtr_;
-  std::unique_ptr<OperatingPoints> quadrotorOperatingPointPtr_;
-
-  // cost parameters
-  matrix_t Q_{STATE_DIM, STATE_DIM};
-  matrix_t R_{INPUT_DIM, INPUT_DIM};
-  matrix_t QFinal_{STATE_DIM, STATE_DIM};
   vector_t initialState_{STATE_DIM};
 };
 

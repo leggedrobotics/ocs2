@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
@@ -71,34 +73,40 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
    */
   const matrix_t A = (matrix_t(STATE_DIM, STATE_DIM) << 0.0, 1.0, 0.0, 0.0).finished();
   const matrix_t B = (matrix_t(STATE_DIM, INPUT_DIM) << 0.0, 1.0).finished();
-  linearSystemDynamicsPtr_.reset(new DoubleIntegratorDynamics(A, B));
+  dynamicsPtr_.reset(new DoubleIntegratorDynamics(A, B));
 
   /*
    * Rollout
    */
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout", verbose);
-  ddpLinearSystemRolloutPtr_.reset(new TimeTriggeredRollout(*linearSystemDynamicsPtr_, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
+
+  /*
+   * Optimal control problem
+   */
+  problemPtr_.reset(new OptimalControlProblem);
+  problemPtr_->dynamics.reset(dynamicsPtr_->clone());
 
   /*
    * Cost function
    */
   matrix_t Q(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile, "Q", Q);
   matrix_t R(INPUT_DIM, INPUT_DIM);
+  matrix_t Qf(STATE_DIM, STATE_DIM);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
   loadData::loadEigenMatrix(taskFile, "R", R);
-  matrix_t QFinal(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile, "Q_final", QFinal);
-  linearSystemCostPtr_.reset(new DoubleIntegratorCost(Q, R, QFinal));
+  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << std::endl;
+  std::cerr << "R:  \n" << Q << std::endl;
+  std::cerr << "Q_final:\n" << Qf << std::endl;
 
-  /*
-   * Constraints
-   */
-  linearSystemConstraintPtr_.reset(new ConstraintBase());
+  problemPtr_->cost.add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+  problemPtr_->finalCost.add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   /*
    * Initialization
    */
-  linearSystemOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
+  operatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/
@@ -106,18 +114,14 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc(bool warmStart) {
   if (warmStart) {
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
-                                                linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                                linearSystemOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
+    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *operatingPointPtr_));
   } else {
     auto mpcSettings = mpcSettings_;
     mpcSettings.coldStart_ = true;
     mpcSettings.runtimeMaxNumIterations_ = mpcSettings.initMaxNumIterations_;
     mpcSettings.runtimeMinStepLength_ = mpcSettings.initMinStepLength_;
     mpcSettings.runtimeMaxStepLength_ = mpcSettings.initMaxStepLength_;
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
-                                                linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                                linearSystemOperatingPointPtr_.get(), ddpSettings_, mpcSettings));
+    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *operatingPointPtr_));
   }
 }
 

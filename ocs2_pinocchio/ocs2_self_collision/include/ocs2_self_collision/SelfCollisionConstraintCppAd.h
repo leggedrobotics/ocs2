@@ -48,24 +48,16 @@ class SelfCollisionConstraintCppAd final : public StateConstraint {
 
   size_t getNumConstraints(scalar_t time) const override;
 
-  /** Get the self collision distance values
-   * @note Requires pinocchio::forwardKinematics().
-   */
-  vector_t getValue(scalar_t time, const vector_t& state) const override;
+  /** Get the self collision distance values */
+  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
-  /** Get the self collision distance approximation
-   * @note Requires pinocchio::forwardKinematics().
-   */
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
-
-  /** Caches the pointer to the pinocchio interface with pre-computed kinematics. (optional) */
-  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) { pinocchioInterfaceCachePtr_ = &pinocchioInterface; }
+  /** Get the self collision distance approximation */
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
  private:
   SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs);
 
-  PinocchioInterface pinocchioInterface_;
-  PinocchioInterface* pinocchioInterfaceCachePtr_ = nullptr;
+  mutable PinocchioInterface pinocchioInterface_;
   SelfCollisionCppAd selfCollision_;
   std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
 };

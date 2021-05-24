@@ -45,7 +45,7 @@ SelfCollisionConstraint::SelfCollisionConstraint(const PinocchioStateInputMappin
 /******************************************************************************************************/
 /******************************************************************************************************/
 SelfCollisionConstraint::SelfCollisionConstraint(const SelfCollisionConstraint& rhs)
-    : StateConstraint(rhs), pinocchioInterfacePtr_(nullptr), selfCollision_(rhs.selfCollision_), mappingPtr_(rhs.mappingPtr_->clone()) {}
+    : StateConstraint(rhs), selfCollision_(rhs.selfCollision_), mappingPtr_(rhs.mappingPtr_->clone()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -57,25 +57,22 @@ size_t SelfCollisionConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state) const {
-  if (pinocchioInterfacePtr_ == nullptr) {
-    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
-  }
+vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const {
+  const auto& pinocchioInterface = getPinocchioInterface(preComputation);
 
-  return selfCollision_.getValue(*pinocchioInterfacePtr_);
+  return selfCollision_.getValue(pinocchioInterface);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SelfCollisionConstraint::getLinearApproximation(scalar_t time, const vector_t& state) const {
-  if (pinocchioInterfacePtr_ == nullptr) {
-    throw std::runtime_error("[SelfCollisionConstraint] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
-  }
+VectorFunctionLinearApproximation SelfCollisionConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                  const PreComputation& preComputation) const {
+  const auto& pinocchioInterface = getPinocchioInterface(preComputation);
 
   VectorFunctionLinearApproximation constraint;
   matrix_t dfdq, dfdv;
-  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(*pinocchioInterfacePtr_);
+  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface);
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
   return constraint;

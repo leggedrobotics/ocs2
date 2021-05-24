@@ -55,7 +55,6 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pi
 SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs)
     : StateConstraint(rhs),
       pinocchioInterface_(rhs.pinocchioInterface_),
-      pinocchioInterfaceCachePtr_(nullptr),
       selfCollision_(rhs.selfCollision_),
       mappingPtr_(rhs.mappingPtr_->clone()) {}
 
@@ -69,40 +68,28 @@ size_t SelfCollisionConstraintCppAd::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state) const {
-  PinocchioInterface* pinocchioInterfacePtr = pinocchioInterfaceCachePtr_;
-  // use local copy if cache is not set
-  if (pinocchioInterfacePtr == nullptr) {
-    pinocchioInterfacePtr = const_cast<PinocchioInterface*>(&pinocchioInterface_);
+vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state, const PreComputation&) const {
+  const auto q = mappingPtr_->getPinocchioJointPosition(state);
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  pinocchio::forwardKinematics(model, data, q);
 
-    const auto q = mappingPtr_->getPinocchioJointPosition(state);
-    const auto& model = pinocchioInterfacePtr->getModel();
-    auto& data = pinocchioInterfacePtr->getData();
-    pinocchio::forwardKinematics(model, data, q);
-  }
-
-  return selfCollision_.getValue(*pinocchioInterfacePtr);
+  return selfCollision_.getValue(pinocchioInterface_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state) const {
+VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                       const PreComputation&) const {
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
-
-  PinocchioInterface* pinocchioInterfacePtr = pinocchioInterfaceCachePtr_;
-  // use local copy if cache is not set
-  if (pinocchioInterfacePtr == nullptr) {
-    pinocchioInterfacePtr = const_cast<PinocchioInterface*>(&pinocchioInterface_);
-
-    const auto& model = pinocchioInterfacePtr->getModel();
-    auto& data = pinocchioInterfacePtr->getData();
-    pinocchio::forwardKinematics(model, data, q);
-  }
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  pinocchio::forwardKinematics(model, data, q);
 
   VectorFunctionLinearApproximation constraint;
   matrix_t dfdq, dfdv;
-  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(*pinocchioInterfacePtr, q);
+  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, q);
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
   return constraint;

@@ -122,10 +122,8 @@ VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  auto* preComputation = problem_->preComputation.get();
-  if (preComputation != nullptr) {
-    preComputation->request(Request::Cost | Request::SoftConstraint, t, x, u);
-  }
+  auto& preComputation = *problem_->preComputation;
+  preComputation.request(Request::Cost | Request::SoftConstraint, t, x, u);
 
   const auto& desiredTrajectory = *problem_->costDesiredTrajectories;
 
@@ -137,9 +135,7 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
   L += problem_->stateSoftConstraint.getValue(t, x, desiredTrajectory, preComputation);
 
   if (penalty_ != nullptr) {
-    if (preComputation != nullptr) {
-      preComputation->request(Request::Constraint, t, x, u);
-    }
+    preComputation.request(Request::Constraint, t, x, u);
     const auto h = problem_->inequalityConstraint.getValue(t, x, u, preComputation);
     SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getValue(h);
@@ -153,29 +149,29 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
-  auto* preComputation = problem_->preComputation.get();
-  if (preComputation != nullptr) {
-    preComputation->request(Request::Cost | Request::SoftConstraint | Request::Approximation, t, x, u);
-  }
+  auto& preComputation = *problem_->preComputation;
+  preComputation.request(Request::Cost | Request::SoftConstraint | Request::Approximation, t, x, u);
 
   const auto& desiredTrajectory = *problem_->costDesiredTrajectories;
 
   // get results
-  auto L = problem_->cost.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
-  L += problem_->stateCost.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
-  L += problem_->softConstraint.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
-  L += problem_->stateSoftConstraint.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
+  auto cost = problem_->cost.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
+  cost += problem_->softConstraint.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
+
+  auto stateCost = problem_->stateCost.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
+  stateCost += problem_->stateSoftConstraint.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
+  cost.f += stateCost.f;
+  cost.dfdx += stateCost.dfdx;
+  cost.dfdxx += stateCost.dfdxx;
 
   if (penalty_ != nullptr) {
-    if (preComputation != nullptr) {
-      preComputation->request(Request::Constraint | Request::Approximation, t, x, u);
-    }
+    preComputation.request(Request::Constraint | Request::Approximation, t, x, u);
     const auto h = problem_->inequalityConstraint.getQuadraticApproximation(t, x, u, preComputation);
     SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
-    L += softConstraintPenalty.getQuadraticApproximation(h);
+    cost += softConstraintPenalty.getQuadraticApproximation(h);
   }
 
-  return L;
+  return cost;
 }
 
 /******************************************************************************************************/

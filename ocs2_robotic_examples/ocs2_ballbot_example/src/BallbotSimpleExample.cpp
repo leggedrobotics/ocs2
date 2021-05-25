@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
   /*
    * Rollout
    */
-  problem.dynamics.reset(new BallbotSystemDynamics(libraryFolder, true));
-  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*problem.dynamics, rolloutSettings));
+  problem.dynamicsPtr.reset(new BallbotSystemDynamics(libraryFolder, true));
+  std::unique_ptr<TimeTriggeredRollout> ballbotRolloutPtr(new TimeTriggeredRollout(*problem.dynamicsPtr, rolloutSettings));
 
   /*
    * Cost function

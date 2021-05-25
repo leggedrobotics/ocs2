@@ -70,7 +70,7 @@ class Ocs2QpSolverTest : public testing::Test {
 
     // create unconstrained problem
     unconstrainedProblem = ocs2::OptimalControlProblem();  // reset
-    unconstrainedProblem.dynamics.reset(system->clone());
+    unconstrainedProblem.dynamicsPtr.reset(system->clone());
 
     unconstrainedProblem.cost.add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     unconstrainedProblem.finalCost.add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
@@ -126,7 +126,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
 }
 
 TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
-  auto& preComputation = *unconstrainedProblem.preComputation;
+  auto& preComputation = *unconstrainedProblem.preComputationPtr;
   const auto t0 = constrainedSolution.timeTrajectory[0];
   const auto& x0 = constrainedSolution.stateTrajectory[0];
   const auto& u0 = constrainedSolution.inputTrajectory[0];

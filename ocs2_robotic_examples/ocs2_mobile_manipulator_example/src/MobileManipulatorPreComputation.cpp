@@ -55,7 +55,7 @@ MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorPreComputation::request(Request flags, scalar_t t, const vector_t& x, const vector_t& u) {
-  if (not(flags & (Request::Cost or Request::Constraint or Request::SoftConstraint))) {
+  if (!(flags & (Request::Cost | Request::Constraint | Request::SoftConstraint))) {
     return;
   }
 
@@ -78,7 +78,7 @@ void MobileManipulatorPreComputation::request(Request flags, scalar_t t, const v
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorPreComputation::requestFinal(Request flags, scalar_t t, const vector_t& x) {
-  if (not(flags & (Request::Cost or Request::Constraint or Request::SoftConstraint))) {
+  if (!(flags & (Request::Cost | Request::Constraint | Request::SoftConstraint))) {
     return;
   }
 

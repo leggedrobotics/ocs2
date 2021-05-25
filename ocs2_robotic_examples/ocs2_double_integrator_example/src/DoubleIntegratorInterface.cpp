@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
+#include "ocs2_double_integrator_example/dynamics/DoubleIntegratorDynamics.h"
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
@@ -73,19 +74,19 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
    */
   const matrix_t A = (matrix_t(STATE_DIM, STATE_DIM) << 0.0, 1.0, 0.0, 0.0).finished();
   const matrix_t B = (matrix_t(STATE_DIM, INPUT_DIM) << 0.0, 1.0).finished();
-  dynamicsPtr_.reset(new DoubleIntegratorDynamics(A, B));
+  std::unique_ptr<DoubleIntegratorDynamics> dynamicsPtr(new DoubleIntegratorDynamics(A, B));
 
   /*
    * Rollout
    */
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout", verbose);
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
 
   /*
    * Optimal control problem
    */
   problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamics.reset(dynamicsPtr_->clone());
+  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   /*
    * Cost function

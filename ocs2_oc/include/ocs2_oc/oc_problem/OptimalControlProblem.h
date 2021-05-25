@@ -41,7 +41,7 @@ namespace ocs2 {
 /** Optimal Control Problem definition */
 struct OptimalControlProblem final {
   /** System dynamics pointer */
-  std::unique_ptr<SystemDynamicsBase> dynamics;
+  std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
 
   /* Constraints */
   /** Intermediate equality constraints */
@@ -79,7 +79,7 @@ struct OptimalControlProblem final {
   const CostDesiredTrajectories* costDesiredTrajectories = nullptr;  // TODO(mspieler) remove this
 
   /** The pre-computation module */
-  std::unique_ptr<PreComputation> preComputation;
+  std::unique_ptr<PreComputation> preComputationPtr;
 
   /** Default constructor */
   OptimalControlProblem();

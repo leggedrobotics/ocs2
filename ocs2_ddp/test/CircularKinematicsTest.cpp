@@ -64,7 +64,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
 
     // optimal control problem
     problemPtr.reset(new ocs2::OptimalControlProblem);
-    problemPtr->dynamics.reset(systemDynamics.clone());
+    problemPtr->dynamicsPtr.reset(systemDynamics.clone());
 
     // cost function
     boost::filesystem::path filePath(__FILE__);

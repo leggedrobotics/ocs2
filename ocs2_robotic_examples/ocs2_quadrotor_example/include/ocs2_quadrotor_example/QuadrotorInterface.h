@@ -41,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Quadrotor
 #include "ocs2_quadrotor_example/QuadrotorParameters.h"
 #include "ocs2_quadrotor_example/definitions.h"
-#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
 namespace ocs2 {
 namespace quadrotor {
@@ -66,8 +65,6 @@ class QuadrotorInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const QuadrotorSystemDynamics& getDynamics() const { return *dynamicsPtr_; }
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
@@ -90,7 +87,6 @@ class QuadrotorInterface final : public RobotInterface {
 
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<OptimalControlProblem> problemPtr_;
-  std::unique_ptr<QuadrotorSystemDynamics> dynamicsPtr_;
   std::unique_ptr<OperatingPoints> operatingPointPtr_;
 
   vector_t initialState_{STATE_DIM};

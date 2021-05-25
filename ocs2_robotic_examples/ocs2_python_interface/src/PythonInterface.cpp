@@ -107,7 +107,7 @@ matrix_t PythonInterface::getLinearFeedbackGain(scalar_t time) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::flowMap(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  return problem_->dynamics->computeFlowMap(t, x, u);
+  return problem_->dynamicsPtr->computeFlowMap(t, x, u);
 }
 
 /******************************************************************************************************/
@@ -115,14 +115,14 @@ vector_t PythonInterface::flowMap(scalar_t t, Eigen::Ref<const vector_t> x, Eige
 /******************************************************************************************************/
 VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                               Eigen::Ref<const vector_t> u) {
-  return problem_->dynamics->linearApproximation(t, x, u);
+  return problem_->dynamicsPtr->linearApproximation(t, x, u);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  auto& preComputation = *problem_->preComputation;
+  auto& preComputation = *problem_->preComputationPtr;
   preComputation.request(Request::Cost | Request::SoftConstraint, t, x, u);
 
   const auto& desiredTrajectory = *problem_->costDesiredTrajectories;
@@ -149,7 +149,7 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
-  auto& preComputation = *problem_->preComputation;
+  auto& preComputation = *problem_->preComputationPtr;
   preComputation.request(Request::Cost | Request::SoftConstraint | Request::Approximation, t, x, u);
 
   const auto& desiredTrajectory = *problem_->costDesiredTrajectories;

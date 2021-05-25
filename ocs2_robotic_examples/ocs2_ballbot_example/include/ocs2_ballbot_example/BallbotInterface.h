@@ -70,11 +70,11 @@ class BallbotInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const OptimalControlProblem& getOptimalControlProblem() const override { return optimalControlProblem_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
-  const RolloutBase& getRollout() const { return *ddpBallbotRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *ballbotOperatingPointPtr_; }
+  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
 
  protected:
   /**
@@ -93,14 +93,9 @@ class BallbotInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  OptimalControlProblem optimalControlProblem_;
-  std::unique_ptr<RolloutBase> ddpBallbotRolloutPtr_;
-  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr_;
-
-  // cost parameters
-  matrix_t Q_{STATE_DIM, STATE_DIM};
-  matrix_t R_{INPUT_DIM, INPUT_DIM};
-  matrix_t QFinal_{STATE_DIM, STATE_DIM};
+  std::unique_ptr<OptimalControlProblem> problemPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::unique_ptr<OperatingPoints> operatingPointPtr_;
 
   vector_t initialState_{STATE_DIM};
 };

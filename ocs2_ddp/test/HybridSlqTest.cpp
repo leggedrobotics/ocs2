@@ -88,7 +88,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   std::unique_ptr<ocs2::StateCost> finalCost(new QuadraticStateCost(Qf));
 
   ocs2::OptimalControlProblem problem;
-  problem.dynamics.reset(systemDynamics.clone());
+  problem.dynamicsPtr.reset(systemDynamics.clone());
   problem.inequalityConstraint.add("bounds", std::move(systemConstraints));
   problem.cost.add("cost", std::move(cost));
   problem.finalCost.add("finalCost", std::move(finalCost));

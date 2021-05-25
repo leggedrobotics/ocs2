@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
+#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
@@ -76,19 +77,19 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics and derivatives
    */
-  dynamicsPtr_.reset(new QuadrotorSystemDynamics(quadrotorParameters));
+  std::unique_ptr<QuadrotorSystemDynamics> dynamicsPtr(new QuadrotorSystemDynamics(quadrotorParameters));
 
   /*
    * Rollout
    */
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
 
   /*
    * Optimal control problem
    */
   problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamics.reset(dynamicsPtr_->clone());
+  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   /*
    * Cost function

@@ -43,7 +43,9 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
     : StateConstraint(ConstraintOrder::Linear),
       endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
       referenceTrajectoryPtr_(std::move(referenceTrajectory)) {
-  assert(endEffectorKinematics.getIds().size() == 1);
+  if (endEffectorKinematics.getIds().size() != 1) {
+    throw std::runtime_error("[EndEffectorConstraint] endEffectorKinematics has wrong number of end effector IDs.");
+  }
   pinocchioEEKinPtr_ = dynamic_cast<PinocchioEndEffectorKinematics*>(endEffectorKinematicsPtr_.get());
 }
 
@@ -67,8 +69,8 @@ vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, c
   const auto desiredPositionOrientation = interpolateEndEffectorPose(time);
 
   vector_t constraint(6);
-  constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state)[0] - desiredPositionOrientation.first;
-  constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, {desiredPositionOrientation.second})[0];
+  constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state).front() - desiredPositionOrientation.first;
+  constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, {desiredPositionOrientation.second}).front();
   return constraint;
 }
 
@@ -87,12 +89,12 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
 
   auto approximation = VectorFunctionLinearApproximation(6, state.rows(), 0);
 
-  const auto eePosition = endEffectorKinematicsPtr_->getPositionLinearApproximation(state)[0];
+  const auto eePosition = endEffectorKinematicsPtr_->getPositionLinearApproximation(state).front();
   approximation.f.head<3>() = eePosition.f - desiredPositionOrientation.first;
   approximation.dfdx.topRows<3>() = eePosition.dfdx;
 
   const auto eeOrientationError =
-      endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, {desiredPositionOrientation.second})[0];
+      endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, {desiredPositionOrientation.second}).front();
   approximation.f.tail<3>() = eeOrientationError.f;
   approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
 
@@ -123,8 +125,8 @@ auto EndEffectorConstraint::interpolateEndEffectorPose(scalar_t time) const -> s
     position = alpha * lhs.head<3>() + (1.0 - alpha) * rhs.head<3>();
     orientation = q_lhs.slerp((1.0 - alpha), q_rhs);
   } else {  // stateTrajectory.size() == 1
-    position = stateTrajectory[0].head<3>();
-    orientation = quaternion_t(stateTrajectory[0].tail<4>());
+    position = stateTrajectory.front().head<3>();
+    orientation = quaternion_t(stateTrajectory.front().tail<4>());
   }
 
   return {position, orientation};

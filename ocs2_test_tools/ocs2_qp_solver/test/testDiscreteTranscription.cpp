@@ -53,7 +53,7 @@ class DiscreteTranscriptionTest : public testing::Test {
     system = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
 
     ocs2::OptimalControlProblem problem;
-    problem.dynamics.reset(system->clone());
+    problem.dynamicsPtr.reset(system->clone());
 
     problem.cost.add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     problem.finalCost.add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));

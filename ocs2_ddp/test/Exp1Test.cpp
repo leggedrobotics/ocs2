@@ -73,7 +73,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
 
     // optimal control problem
     problemPtr.reset(new ocs2::OptimalControlProblem);
-    problemPtr->dynamics.reset(system.clone());
+    problemPtr->dynamicsPtr.reset(system.clone());
 
     // cost function
     problemPtr->cost.add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP1_Cost()));

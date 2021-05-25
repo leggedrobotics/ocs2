@@ -38,7 +38,7 @@ std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& probl
   std::unique_ptr<OptimalControlProblem> augmentedProblem(new OptimalControlProblem());
 
   // Dynamics
-  augmentedProblem->dynamics = LoopshapingDynamics::create(*problem.dynamics, loopshapingDefinition);
+  augmentedProblem->dynamicsPtr = LoopshapingDynamics::create(*problem.dynamicsPtr, loopshapingDefinition);
 
   // Constraints
   augmentedProblem->equalityConstraint.add("wrapper", LoopshapingConstraint::create(problem.equalityConstraint, loopshapingDefinition));
@@ -52,9 +52,10 @@ std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& probl
 
   // Soft constraints
   // TODO(mspieler): soft constraint wrapper with gamma = 0
-  augmentedProblem->cost.add("wrapper", LoopshapingCost::create(problem.cost, loopshapingDefinition));
-  augmentedProblem->preJumpCost.add("wrapper", LoopshapingCost::create(problem.preJumpCost, loopshapingDefinition));
-  augmentedProblem->finalCost.add("wrapper", LoopshapingCost::create(problem.finalCost, loopshapingDefinition));
+  augmentedProblem->softConstraint.add("wrapper", LoopshapingCost::create(problem.softConstraint, loopshapingDefinition));
+  augmentedProblem->stateSoftConstraint.add("wrapper", LoopshapingCost::create(problem.stateSoftConstraint, loopshapingDefinition));
+  augmentedProblem->preJumpSoftConstraint.add("wrapper", LoopshapingCost::create(problem.preJumpSoftConstraint, loopshapingDefinition));
+  augmentedProblem->finalSoftConstraint.add("wrapper", LoopshapingCost::create(problem.finalSoftConstraint, loopshapingDefinition));
 
   // Cost
   augmentedProblem->cost.add("wrapper", LoopshapingCost::create(problem.cost, loopshapingDefinition));
@@ -63,7 +64,7 @@ std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& probl
   augmentedProblem->finalCost.add("wrapper", LoopshapingCost::create(problem.finalCost, loopshapingDefinition));
 
   // Pre-computation
-  augmentedProblem->preComputation.reset(new LoopshapingPreComputation(*problem.preComputation, loopshapingDefinition));
+  augmentedProblem->preComputationPtr.reset(new LoopshapingPreComputation(*problem.preComputationPtr, loopshapingDefinition));
 
   return augmentedProblem;
 }

@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_cart_pole_example/CartPoleInterface.h"
+#include "ocs2_cart_pole_example/dynamics/CartPoleSystemDynamics.h"
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
@@ -79,19 +80,19 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics
    */
-  dynamicsPtr_.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder_));
+  std::unique_ptr<CartPoleSytemDynamics> dynamicsPtr(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder_));
 
   /*
    * Rollout
    */
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
 
   /*
    * Optimal control problem
    */
   problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamics.reset(dynamicsPtr_->clone());
+  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   /*
    * Cost function

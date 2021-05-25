@@ -104,7 +104,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     // dynamics
     systemPtr = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
     problemPtr.reset(new ocs2::OptimalControlProblem);
-    problemPtr->dynamics.reset(systemPtr->clone());
+    problemPtr->dynamicsPtr.reset(systemPtr->clone());
 
     // cost
     problemPtr->cost.add("cost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));

@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // CartPole
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
 #include "ocs2_cart_pole_example/definitions.h"
-#include "ocs2_cart_pole_example/dynamics/CartPoleSystemDynamics.h"
 
 namespace ocs2 {
 namespace cartpole {
@@ -76,8 +75,6 @@ class CartPoleInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const CartPoleSytemDynamics& getDynamics() const { return *dynamicsPtr_; }
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
@@ -103,7 +100,6 @@ class CartPoleInterface final : public RobotInterface {
 
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<OptimalControlProblem> problemPtr_;
-  std::unique_ptr<CartPoleSytemDynamics> dynamicsPtr_;
   std::unique_ptr<OperatingPoints> operatingPointPtr_;
 
   vector_t initialState_{STATE_DIM};

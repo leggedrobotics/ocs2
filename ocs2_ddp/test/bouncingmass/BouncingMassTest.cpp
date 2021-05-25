@@ -132,7 +132,7 @@ TEST(BouncingMassTest, state_rollout_slq) {
   std::unique_ptr<ocs2::StateCost> finalCost(new BouncingMassFinalCost(reference, Qf, finalTime));
 
   ocs2::OptimalControlProblem problem;
-  problem.dynamics.reset(systemDynamics.clone());
+  problem.dynamicsPtr.reset(systemDynamics.clone());
   problem.cost.add("cost", std::move(cost));
   problem.finalCost.add("finalCost", std::move(finalCost));
 

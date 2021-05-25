@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 #include <ocs2_mobile_manipulator_example/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
@@ -66,7 +65,6 @@ class MobileManipulatorInterface final : public RobotInterface {
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
   const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
 
-  const MobileManipulatorDynamics& getDynamics() const { return *dynamicsPtr_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
@@ -75,10 +73,6 @@ class MobileManipulatorInterface final : public RobotInterface {
   static PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
 
  private:
-  std::unique_ptr<OptimalControlProblem> getMobileManipulatorProblem(const MobileManipulatorDynamics& dynamics,
-                                                                     const PinocchioInterface& pinocchioInterface,
-                                                                     const std::string& taskFile, const std::string& libraryFolder);
-
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
   std::unique_ptr<StateCost> getEndEffectorConstraint(PinocchioInterface pinocchioInterface, const std::string& taskFile,
                                                       const std::string& prefix, bool useCaching, const std::string& libraryFolder,
@@ -97,7 +91,6 @@ class MobileManipulatorInterface final : public RobotInterface {
   std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
   std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr_;
   std::unique_ptr<OperatingPoints> operatingPointPtr_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;

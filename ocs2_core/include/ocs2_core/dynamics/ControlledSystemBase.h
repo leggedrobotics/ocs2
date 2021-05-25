@@ -95,10 +95,7 @@ class ControlledSystemBase : public OdeBase {
   virtual vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp);
 
   /** Get the pre-computation module */
-  const PreComputation& getPreComputation() const {
-    assert(preCompPtr_ != nullptr);
-    return *preCompPtr_;
-  }
+  const PreComputation& getPreComputation() const { return *preCompPtr_; }
 
  protected:
   /**

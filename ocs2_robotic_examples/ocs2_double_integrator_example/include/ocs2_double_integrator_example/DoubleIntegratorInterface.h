@@ -44,7 +44,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Double Integrator
 #include "definitions.h"
-#include "dynamics/DoubleIntegratorDynamics.h"
 
 namespace ocs2 {
 namespace double_integrator {
@@ -71,8 +70,6 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   std::unique_ptr<ocs2::MPC_DDP> getMpc(bool warmStart = true);
 
-  const DoubleIntegratorDynamics& getDynamics() const { return *dynamicsPtr_; }
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
@@ -97,7 +94,6 @@ class DoubleIntegratorInterface final : public RobotInterface {
   mpc::Settings mpcSettings_;
 
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<DoubleIntegratorDynamics> dynamicsPtr_;
   std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::unique_ptr<OperatingPoints> operatingPointPtr_;
 

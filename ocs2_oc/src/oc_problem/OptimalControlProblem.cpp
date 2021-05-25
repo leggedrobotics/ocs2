@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OptimalControlProblem::OptimalControlProblem() : preComputation(new PreComputation) {}
+OptimalControlProblem::OptimalControlProblem() : preComputationPtr(new PreComputation) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -53,23 +53,19 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       stateCost(other.stateCost),
       preJumpCost(other.preJumpCost),
       finalCost(other.finalCost),
-      preComputation(other.preComputation->clone()) {
+      preComputationPtr(other.preComputationPtr->clone()) {
   // validtity check
-  if (other.dynamics == nullptr) {
-    throw std::runtime_error("[OptimalControlProblem] system dynamics pointer is not set");
+  if (other.dynamicsPtr == nullptr) {
+    throw std::runtime_error("[OptimalControlProblem] dynamicsPtr is not set");
   }
-  if (other.preComputation == nullptr) {
-    throw std::runtime_error("[OptimalControlProblem] preComputation pointer is not set");
-  }
-  dynamics.reset(other.dynamics->clone());
-  preComputation.reset(other.preComputation->clone());
+  dynamicsPtr.reset(other.dynamicsPtr->clone());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 OptimalControlProblem::OptimalControlProblem(OptimalControlProblem&& other) noexcept
-    : dynamics(std::move(other.dynamics)),
+    : dynamicsPtr(std::move(other.dynamicsPtr)),
       equalityConstraint(std::move(other.equalityConstraint)),
       stateEqualityConstraint(std::move(other.stateEqualityConstraint)),
       inequalityConstraint(std::move(other.inequalityConstraint)),
@@ -83,7 +79,7 @@ OptimalControlProblem::OptimalControlProblem(OptimalControlProblem&& other) noex
       stateCost(std::move(other.stateCost)),
       preJumpCost(std::move(other.preJumpCost)),
       finalCost(std::move(other.finalCost)),
-      preComputation(std::move(other.preComputation)) {}
+      preComputationPtr(std::move(other.preComputationPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -97,7 +93,7 @@ OptimalControlProblem& OptimalControlProblem::operator=(const OptimalControlProb
 /******************************************************************************************************/
 /******************************************************************************************************/
 OptimalControlProblem& OptimalControlProblem::operator=(OptimalControlProblem&& rhs) {
-  dynamics = std::move(rhs.dynamics);
+  dynamicsPtr = std::move(rhs.dynamicsPtr);
   equalityConstraint = std::move(rhs.equalityConstraint);
   stateEqualityConstraint = std::move(rhs.stateEqualityConstraint);
   inequalityConstraint = std::move(rhs.inequalityConstraint);
@@ -111,7 +107,7 @@ OptimalControlProblem& OptimalControlProblem::operator=(OptimalControlProblem&& 
   stateCost = std::move(rhs.stateCost);
   preJumpCost = std::move(rhs.preJumpCost);
   finalCost = std::move(rhs.finalCost);
-  preComputation = std::move(rhs.preComputation);
+  preComputationPtr = std::move(rhs.preComputationPtr);
   return *this;
 }
 

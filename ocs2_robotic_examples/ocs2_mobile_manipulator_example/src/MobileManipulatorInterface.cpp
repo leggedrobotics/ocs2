@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
+#include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPreComputation.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorRefernceUpdate.h>
@@ -114,13 +115,14 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   /*
    * Dynamics
    */
-  dynamicsPtr_.reset(new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder, recompileLibraries, true));
+  std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr(
+      new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder, recompileLibraries, true));
 
   /*
    * Rollout
    */
   const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
 
   /*
    * Desired trajectory reference
@@ -132,7 +134,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
    * Optimal control problem
    */
   problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamics.reset(dynamicsPtr_->clone());
+  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   /* Cost */
   problemPtr_->cost.add("inputCost", getQuadraticInputCost(taskFile));
@@ -150,7 +152,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
    * Use pre-computation
    */
   if (usePreComputation) {
-    problemPtr_->preComputation.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
+    problemPtr_->preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
   }
 
   /*

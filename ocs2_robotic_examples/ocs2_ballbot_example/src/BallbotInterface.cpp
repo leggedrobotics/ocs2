@@ -60,6 +60,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
    * Default initial condition
    */
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
   /*
    * DDP-MPC settings
@@ -73,44 +74,42 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   // load the flag to generate library files from taskFile
   bool recompileLibraries;
   ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.recompileLibraries", recompileLibraries);
-  optimalControlProblem_.dynamics.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
+  problemPtr_.reset(new OptimalControlProblem);
+  problemPtr_->dynamicsPtr.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
 
   /*
    * Rollout
    */
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  ddpBallbotRolloutPtr_.reset(new TimeTriggeredRollout(*optimalControlProblem_.dynamics, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings));
 
   /*
    * Cost function
    */
-  ocs2::loadData::loadEigenMatrix(taskFile, "Q", Q_);
-  ocs2::loadData::loadEigenMatrix(taskFile, "R", R_);
-  ocs2::loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+  matrix_t Q(STATE_DIM, STATE_DIM);
+  matrix_t R(INPUT_DIM, INPUT_DIM);
+  matrix_t Qf(STATE_DIM, STATE_DIM);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
+  loadData::loadEigenMatrix(taskFile, "R", R);
+  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << std::endl;
+  std::cerr << "R:  \n" << Q << std::endl;
+  std::cerr << "Q_final:\n" << Qf << std::endl;
 
-  std::cerr << "Q:  \n" << Q_ << std::endl;
-  std::cerr << "R:  \n" << R_ << std::endl;
-  std::cerr << "Q_final:\n" << QFinal_ << std::endl;
-  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-
-  std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q_, R_));
-  std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal_));
-
-  optimalControlProblem_.cost.add("cost", std::move(L));
-  optimalControlProblem_.finalCost.add("finalCost", std::move(Phi));
+  problemPtr_->cost.add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+  problemPtr_->finalCost.add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   /*
    * Initialization
    */
-  ballbotOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
+  operatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> BallbotInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(
-      new MPC_DDP(mpcSettings_, ddpSettings_, *ddpBallbotRolloutPtr_, optimalControlProblem_, *ballbotOperatingPointPtr_));
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *operatingPointPtr_));
 }
 
 }  // namespace ballbot

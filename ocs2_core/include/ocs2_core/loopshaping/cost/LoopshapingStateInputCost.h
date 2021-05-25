@@ -19,6 +19,8 @@ class LoopshapingStateInputCost : public StateInputCost {
  public:
   ~LoopshapingStateInputCost() override = default;
 
+  bool isActive(scalar_t time) const override { return systemCost_->isActive(time); }
+
   scalar_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
                     const PreComputation& preComp) const final;
 

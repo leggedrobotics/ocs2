@@ -90,7 +90,7 @@ size_t StateConstraintCollection::getNumConstraints(scalar_t time) const {
 
   // accumulate number of constraints for each constraintTerm
   for (const auto& constraintPair : constraintTermMap_) {
-    if (constraintPair.second->isActive()) {
+    if (constraintPair.second->isActive(time)) {
       numConstraints += constraintPair.second->getNumConstraints(time);
     }
   }
@@ -108,7 +108,7 @@ vector_t StateConstraintCollection::getValue(scalar_t time, const vector_t& stat
   // append vectors of constraint values from each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
-    if (constraintPair.second->isActive()) {
+    if (constraintPair.second->isActive(time)) {
       const auto constraintTermValues = constraintPair.second->getValue(time, state, preComp);
       constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
       i += constraintTermValues.rows();
@@ -128,7 +128,7 @@ VectorFunctionLinearApproximation StateConstraintCollection::getLinearApproximat
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
-    if (constraintPair.second->isActive()) {
+    if (constraintPair.second->isActive(time)) {
       const auto constraintTermApproximation = constraintPair.second->getLinearApproximation(time, state, preComp);
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
@@ -155,7 +155,7 @@ VectorFunctionQuadraticApproximation StateConstraintCollection::getQuadraticAppr
   // append quadraticApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintPair : constraintTermMap_) {
-    if (constraintPair.second->isActive()) {
+    if (constraintPair.second->isActive(time)) {
       auto constraintTermApproximation = constraintPair.second->getQuadraticApproximation(time, state, preComp);
       const size_t nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;

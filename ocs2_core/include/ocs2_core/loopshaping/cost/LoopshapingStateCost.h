@@ -24,6 +24,8 @@ class LoopshapingStateCost final : public StateCost {
 
   LoopshapingStateCost* clone() const override { return new LoopshapingStateCost(*this); }
 
+  bool isActive(scalar_t time) const override { return systemCost_->isActive(time); }
+
   scalar_t getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
                     const PreComputation& preComp) const override;
 

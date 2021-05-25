@@ -163,20 +163,66 @@ TEST(testSoftConstraint, softStateInputConstraint) {
   EXPECT_NO_THROW(stateInputQuadraticConstraintPtr->getQuadraticApproximation(0.0, state, input, costDesiredTrajectories, preComp));
 }
 
-TEST(testSoftConstraint, keepsActivityAfterClone) {
+class ActivityTestStateConstraint : public ocs2::StateConstraint {
+ public:
+  ActivityTestStateConstraint() : StateConstraint(ocs2::ConstraintOrder::Quadratic) {}
+  ~ActivityTestStateConstraint() override = default;
+  ActivityTestStateConstraint(const ActivityTestStateConstraint& other) = default;
+  ActivityTestStateConstraint* clone() const override { return new ActivityTestStateConstraint(*this); }
+
+  size_t getNumConstraints(ocs2::scalar_t time) const override { return 1; }
+  bool isActive(ocs2::scalar_t) const override { return active_; }
+  void setActivity(bool active) { active_ = active; }
+  ocs2::vector_t getValue(ocs2::scalar_t time, const ocs2::vector_t& state, const ocs2::PreComputation&) const override {
+    return ocs2::vector_t::Zero(1);
+  }
+
+ private:
+  bool active_ = true;
+};
+
+TEST(testSoftConstraint, checkActivityStateConstraint) {
   constexpr size_t numConstraints = 10;
 
-  auto stateQuadraticConstraintPtr =
-      softConstraintFactory<TestStateConstraint, ocs2::StateSoftConstraint>(numConstraints, ocs2::ConstraintOrder::Quadratic, true);
-  stateQuadraticConstraintPtr->setActivity(true);
-  EXPECT_TRUE(std::unique_ptr<ocs2::StateCost>(stateQuadraticConstraintPtr->clone())->isActive());
-  stateQuadraticConstraintPtr->setActivity(false);
-  EXPECT_FALSE(std::unique_ptr<ocs2::StateCost>(stateQuadraticConstraintPtr->clone())->isActive());
+  std::unique_ptr<ActivityTestStateConstraint> constraint(new ActivityTestStateConstraint);
+  std::unique_ptr<ocs2::RelaxedBarrierPenalty> penalty(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
+  std::unique_ptr<ocs2::StateSoftConstraint> softConstraint(new ocs2::StateSoftConstraint(std::move(constraint), std::move(penalty)));
 
-  auto stateLinearConstraintPtr =
-      softConstraintFactory<TestStateInputConstraint, ocs2::StateInputSoftConstraint>(numConstraints, ocs2::ConstraintOrder::Linear, false);
-  stateLinearConstraintPtr->setActivity(true);
-  EXPECT_TRUE(std::unique_ptr<ocs2::StateInputCost>(stateLinearConstraintPtr->clone())->isActive());
-  stateLinearConstraintPtr->setActivity(false);
-  EXPECT_FALSE(std::unique_ptr<ocs2::StateInputCost>(stateLinearConstraintPtr->clone())->isActive());
+  softConstraint->get<ActivityTestStateConstraint>().setActivity(true);
+  EXPECT_TRUE(std::unique_ptr<ocs2::StateCost>(softConstraint->clone())->isActive(0.0));
+  softConstraint->get<ActivityTestStateConstraint>().setActivity(false);
+  EXPECT_FALSE(std::unique_ptr<ocs2::StateCost>(softConstraint->clone())->isActive(0.0));
+}
+
+class ActivityTestStateInputConstraint : public ocs2::StateInputConstraint {
+ public:
+  ActivityTestStateInputConstraint() : StateInputConstraint(ocs2::ConstraintOrder::Quadratic) {}
+  ~ActivityTestStateInputConstraint() override = default;
+  ActivityTestStateInputConstraint(const ActivityTestStateInputConstraint& other) = default;
+  ActivityTestStateInputConstraint* clone() const override { return new ActivityTestStateInputConstraint(*this); }
+
+  size_t getNumConstraints(ocs2::scalar_t time) const override { return 1; }
+  bool isActive(ocs2::scalar_t) const override { return active_; }
+  void setActivity(bool active) { active_ = active; }
+  ocs2::vector_t getValue(ocs2::scalar_t time, const ocs2::vector_t& state, const ocs2::vector_t& input,
+                          const ocs2::PreComputation&) const override {
+    return ocs2::vector_t::Zero(1);
+  }
+
+ private:
+  bool active_ = true;
+};
+
+TEST(testSoftConstraint, checkActivityStateInputConstraint) {
+  constexpr size_t numConstraints = 10;
+
+  std::unique_ptr<ActivityTestStateInputConstraint> constraint(new ActivityTestStateInputConstraint);
+  std::unique_ptr<ocs2::RelaxedBarrierPenalty> penalty(new ocs2::RelaxedBarrierPenalty({10.0, 1.0}));
+  std::unique_ptr<ocs2::StateInputSoftConstraint> softConstraint(
+      new ocs2::StateInputSoftConstraint(std::move(constraint), std::move(penalty)));
+
+  softConstraint->get<ActivityTestStateInputConstraint>().setActivity(true);
+  EXPECT_TRUE(std::unique_ptr<ocs2::StateInputCost>(softConstraint->clone())->isActive(0.0));
+  softConstraint->get<ActivityTestStateInputConstraint>().setActivity(false);
+  EXPECT_FALSE(std::unique_ptr<ocs2::StateInputCost>(softConstraint->clone())->isActive(0.0));
 }

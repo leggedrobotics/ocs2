@@ -61,6 +61,13 @@ StateInputSoftConstraint* StateInputSoftConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+bool StateInputSoftConstraint::isActive(scalar_t time) const {
+  return constraintPtr_->isActive(time);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories&,
                                             const PreComputation& preComp) const {
   return penalty_.getValue(constraintPtr_->getValue(time, state, input, preComp));

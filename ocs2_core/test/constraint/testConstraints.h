@@ -67,6 +67,10 @@ class TestDummyConstraint final : public ocs2::StateInputConstraint {
 
   size_t getNumConstraints(ocs2::scalar_t time) const override { return 2; }
 
+  bool isActive(ocs2::scalar_t) const override { return active_; }
+
+  void setActivity(bool active) { active_ = active; }
+
   ocs2::vector_t getValue(ocs2::scalar_t time, const ocs2::vector_t& state, const ocs2::vector_t& input,
                           const ocs2::PreComputation&) const override {
     ocs2::vector_t constraintValues(2);
@@ -96,6 +100,9 @@ class TestDummyConstraint final : public ocs2::StateInputConstraint {
     quadraticApproximation.dfduu[1].setOnes();
     return quadraticApproximation;
   }
+
+ private:
+  bool active_ = true;
 };
 
 /** Dummy state-only constraint with 2 entries */

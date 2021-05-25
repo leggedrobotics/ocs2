@@ -60,6 +60,13 @@ StateSoftConstraint* StateSoftConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+bool StateSoftConstraint::isActive(scalar_t time) const {
+  return constraintPtr_->isActive(time);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories&,
                                        const PreComputation& preComp) const {
   return penalty_.getValue(constraintPtr_->getValue(time, state, preComp));

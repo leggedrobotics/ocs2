@@ -44,14 +44,11 @@ class StateConstraint {
   virtual ~StateConstraint() = default;
   virtual StateConstraint* clone() const = 0;
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
-
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
-
   /** Get the constraint order (Linear or Quadratic) */
   constexpr ConstraintOrder getOrder() const { return order_; };
+
+  /** Check constraint activity */
+  virtual bool isActive(scalar_t time) const { return true; }
 
   /** Get the size of the constraint vector at given time */
   virtual size_t getNumConstraints(scalar_t time) const = 0;
@@ -84,7 +81,6 @@ class StateConstraint {
 
  private:
   ConstraintOrder order_;
-  bool active_ = true;
 };
 
 // Template for conditional compilation using SFINAE

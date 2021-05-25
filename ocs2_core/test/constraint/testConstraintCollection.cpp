@@ -70,7 +70,7 @@ TEST(TestConstraintCollection, activatingConstraints) {
   // Check the right constraint size is incremented
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), addedConstraints);
 
-  constraintCollection.get("Constraint1").setActivity(false);
+  constraintCollection.get<TestDummyConstraint>("Constraint1").setActivity(false);
 
   // Check the right constraint size after deactivating the constraint
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);

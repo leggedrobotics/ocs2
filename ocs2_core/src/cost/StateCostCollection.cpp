@@ -90,7 +90,7 @@ scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, con
 
   // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
-    if (costPair.second->isActive()) {
+    if (costPair.second->isActive(time)) {
       cost += costPair.second->getValue(time, state, desiredTrajectory, preComp);
     }
   }
@@ -108,7 +108,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 
   // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
-    if (costPair.second->isActive()) {
+    if (costPair.second->isActive(time)) {
       const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory, preComp);
       cost.f += costTermApproximation.f;
       cost.dfdx += costTermApproximation.dfdx;

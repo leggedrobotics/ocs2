@@ -16,9 +16,11 @@ class LoopshapingStateInputConstraint : public StateInputConstraint {
  public:
   ~LoopshapingStateInputConstraint() override = default;
 
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
-
   size_t getNumConstraints(scalar_t time) const override { return systemConstraint_->getNumConstraints(time); }
+
+  bool isActive(scalar_t time) const override { return systemConstraint_->isActive(time); }
+
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
 
  protected:
   LoopshapingStateInputConstraint(const StateInputConstraint& systemConstraint,

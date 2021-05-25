@@ -82,6 +82,8 @@ class StateSoftConstraint final : public StateCost {
 
   StateSoftConstraint* clone() const override;
 
+  bool isActive(scalar_t time) const override;
+
   scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& /* desiredTrajectory */,
                     const PreComputation& preComp) const override;
 

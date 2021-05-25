@@ -39,6 +39,9 @@ class SimpleQuadraticCost final : public ocs2::StateInputCost {
 
   SimpleQuadraticCost* clone() const override { return new SimpleQuadraticCost(*this); }
 
+  bool isActive(ocs2::scalar_t) const override { return active_; }
+  void setActivity(bool active) { active_ = active; }
+
   ocs2::scalar_t getValue(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u, const ocs2::CostDesiredTrajectories&,
                           const ocs2::PreComputation&) const override {
     return 0.5 * x.dot(Q_ * x) + 0.5 * u.dot(R_ * u);
@@ -58,6 +61,7 @@ class SimpleQuadraticCost final : public ocs2::StateInputCost {
   }
 
  private:
+  bool active_ = true;
   ocs2::matrix_t Q_;
   ocs2::matrix_t R_;
 };
@@ -134,7 +138,7 @@ TEST_F(StateInputCost_TestFixture, throwsWhenAddExistingCost) {
 }
 
 TEST_F(StateInputCost_TestFixture, canDeactivateCost) {
-  auto& costFunction = costCollection.get("Simple quadratic cost");
+  auto& costFunction = costCollection.get<SimpleQuadraticCost>("Simple quadratic cost");
   costFunction.setActivity(false);
   const auto cost = costCollection.getValue(t, x, u, desiredTrajectory, ocs2::PreComputation());
   EXPECT_EQ(cost, 0.0);

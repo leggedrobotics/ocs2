@@ -44,11 +44,8 @@ class StateInputCost {
   virtual ~StateInputCost() = default;
   virtual StateInputCost* clone() const = 0;
 
-  /** Set cost term activity */
-  void setActivity(bool activity) { active_ = activity; }
-
   /** Check if cost term is active */
-  bool isActive() const { return active_; }
+  virtual bool isActive(scalar_t time) const { return true; }
 
   /** Get cost term value */
   virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
@@ -61,9 +58,6 @@ class StateInputCost {
 
  protected:
   StateInputCost(const StateInputCost& rhs) = default;
-
- private:
-  bool active_ = true;
 };
 
 // Template for conditional compilation using SFINAE

@@ -40,18 +40,12 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintEvaluation)
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintLinearApproximation) {
   // Extract approximation
   this->preComputation->request(Request::Constraint | Request::Approximation, this->t, this->x, this->u);
-  const auto g = this->loopshapingConstraint->getLinearApproximation(this->t, this->x, this->u, *this->preComputation);
+  const auto g_linear = this->loopshapingConstraint->getLinearApproximation(this->t, this->x, this->u, *this->preComputation);
+  const auto g_quadratic = this->loopshapingConstraint->getQuadraticApproximation(this->t, this->x, this->u, *this->preComputation);
 
-  // Reevaluate at disturbed state
-  this->preComputation->request(Request::Constraint, this->t, this->x + this->x_disturbance, this->u + this->u_disturbance);
-  vector_t g_disturbance =
-      this->loopshapingConstraint->getValue(this->t, this->x + this->x_disturbance, this->u + this->u_disturbance, *this->preComputation);
-
-  // Evaluate approximation
-  vector_t g_approximation = g.f + g.dfdx * this->x_disturbance + g.dfdu * this->u_disturbance;
-
-  // System part of the constraints should stay the same
-  EXPECT_LE((g_disturbance - g_approximation).array().abs().maxCoeff(), this->tol);
+  EXPECT_TRUE(g_linear.f.isApprox(g_quadratic.f));
+  EXPECT_TRUE(g_linear.dfdx.isApprox(g_quadratic.dfdx));
+  EXPECT_TRUE(g_linear.dfdu.isApprox(g_quadratic.dfdu));
 }
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintQuadraticApproximation) {
@@ -89,17 +83,11 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateOnlyConstraintEvaluation) 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateOnlyConstraintLinearApproximation) {
   // Extract approximation
   this->preComputation->requestFinal(Request::Constraint | Request::Approximation, this->t, this->x);
-  const auto g = this->loopshapingStateConstraint->getLinearApproximation(this->t, this->x, *this->preComputation);
+  const auto g_linear = this->loopshapingStateConstraint->getLinearApproximation(this->t, this->x, *this->preComputation);
+  const auto g_quadratic = this->loopshapingStateConstraint->getQuadraticApproximation(this->t, this->x, *this->preComputation);
 
-  // Reevaluate at disturbed state
-  this->preComputation->requestFinal(Request::Constraint, this->t, this->x + this->x_disturbance);
-  vector_t g_disturbance = this->loopshapingStateConstraint->getValue(this->t, this->x + this->x_disturbance, *this->preComputation);
-
-  // Evaluate approximation
-  vector_t g_approximation = g.f + g.dfdx * this->x_disturbance;
-
-  // System part of the constraints should stay the same
-  EXPECT_LE((g_disturbance - g_approximation).array().abs().maxCoeff(), this->tol);
+  EXPECT_TRUE(g_linear.f.isApprox(g_quadratic.f));
+  EXPECT_TRUE(g_linear.dfdx.isApprox(g_quadratic.dfdx));
 }
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateOnlyConstraintQuadraticApproximation) {

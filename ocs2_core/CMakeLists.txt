@@ -114,6 +114,11 @@ add_library(${PROJECT_NAME}
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
   src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraint.cpp
+  src/loopshaping/soft_constraint/LoopshapingStateInputSoftConstraint.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraintEliminatePattern.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraintInputPattern.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraintOutputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraint.cpp
   src/loopshaping/constraint/LoopshapingFilterConstraint.cpp
   src/loopshaping/constraint/LoopshapingStateConstraint.cpp
@@ -268,6 +273,7 @@ catkin_add_gtest(${PROJECT_NAME}_loopshaping
   test/loopshaping/testLoopshapingConfiguration.cpp
   test/loopshaping/testLoopshapingConstraint.cpp
   test/loopshaping/testLoopshapingCost.cpp
+  test/loopshaping/testLoopshapingSoftConstraint.cpp
   test/loopshaping/testLoopshapingDefinition.cpp
   test/loopshaping/testLoopshapingDynamics.cpp
   test/loopshaping/testLoopshapingFilterDynamics.cpp

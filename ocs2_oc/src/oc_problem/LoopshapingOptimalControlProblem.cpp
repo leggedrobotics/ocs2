@@ -51,11 +51,13 @@ std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& probl
                                                 LoopshapingConstraint::create(problem.finalEqualityConstraint, loopshapingDefinition));
 
   // Soft constraints
-  // TODO(mspieler): soft constraint wrapper with gamma = 0
-  augmentedProblem->softConstraint.add("wrapper", LoopshapingCost::create(problem.softConstraint, loopshapingDefinition));
-  augmentedProblem->stateSoftConstraint.add("wrapper", LoopshapingCost::create(problem.stateSoftConstraint, loopshapingDefinition));
-  augmentedProblem->preJumpSoftConstraint.add("wrapper", LoopshapingCost::create(problem.preJumpSoftConstraint, loopshapingDefinition));
-  augmentedProblem->finalSoftConstraint.add("wrapper", LoopshapingCost::create(problem.finalSoftConstraint, loopshapingDefinition));
+  augmentedProblem->softConstraint.add("wrapper", LoopshapingSoftConstraint::create(problem.softConstraint, loopshapingDefinition));
+  augmentedProblem->stateSoftConstraint.add("wrapper",
+                                            LoopshapingSoftConstraint::create(problem.stateSoftConstraint, loopshapingDefinition));
+  augmentedProblem->preJumpSoftConstraint.add("wrapper",
+                                              LoopshapingSoftConstraint::create(problem.preJumpSoftConstraint, loopshapingDefinition));
+  augmentedProblem->finalSoftConstraint.add("wrapper",
+                                            LoopshapingSoftConstraint::create(problem.finalSoftConstraint, loopshapingDefinition));
 
   // Cost
   augmentedProblem->cost.add("wrapper", LoopshapingCost::create(problem.cost, loopshapingDefinition));

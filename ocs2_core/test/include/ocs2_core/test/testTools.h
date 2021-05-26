@@ -29,11 +29,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <cmath>
 #include <ostream>
 
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
+
+/** Check for approximate equality of ScalarFunctionQuadraticApproximation */
+inline bool isApprox(const ScalarFunctionQuadraticApproximation& a, const ScalarFunctionQuadraticApproximation& b,
+                     scalar_t precision = 1e-9) {
+  return std::abs(a.f - b.f) < precision && a.dfdx.isApprox(b.dfdx, precision) && a.dfdu.isApprox(b.dfdu, precision) &&
+         a.dfdxx.isApprox(b.dfdxx, precision) && a.dfduu.isApprox(b.dfduu, precision) && a.dfdux.isApprox(b.dfdux, precision);
+}
 
 /** Check for approximate equality of VectorFunctionLinearApproximation */
 inline bool isApprox(const VectorFunctionLinearApproximation& a, const VectorFunctionLinearApproximation& b, scalar_t precision = 1e-9) {

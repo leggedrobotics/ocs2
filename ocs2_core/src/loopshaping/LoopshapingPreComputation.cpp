@@ -66,7 +66,7 @@ void LoopshapingPreComputation::request(Request requestFlags, scalar_t t, const 
   u_filter_ = loopshapingDefinition_->getFilteredInput(x, u);
 
   systemPreCompPtr_->request(requestFlags, t, x_system_, u_system_);
-  if (requestFlags & (Request::Cost | Request::SoftConstraint)) {
+  if (requestFlags & Request::Cost) {
     // state-input cost function is evaluated on both u_system and u_filter.
     filteredSystemPreCompPtr_->request(requestFlags, t, x_system_, u_filter_);
   }

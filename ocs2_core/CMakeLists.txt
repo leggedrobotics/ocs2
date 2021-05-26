@@ -266,7 +266,7 @@ target_link_libraries(test_transferfunctionbase
 
 catkin_add_gtest(${PROJECT_NAME}_loopshaping
   test/loopshaping/testLoopshapingConfiguration.cpp
-  # test/loopshaping/testLoopshapingConstraint.cpp
+  test/loopshaping/testLoopshapingConstraint.cpp
   test/loopshaping/testLoopshapingCost.cpp
   test/loopshaping/testLoopshapingDefinition.cpp
   test/loopshaping/testLoopshapingDynamics.cpp

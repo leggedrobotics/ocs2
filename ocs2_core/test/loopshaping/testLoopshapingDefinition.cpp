@@ -16,7 +16,6 @@ const std::string settingsFile_r = std::string(pathToTest.parent_path()) + "/loo
 const std::string settingsFile_r_simple = std::string(pathToTest.parent_path()) + "/loopshaping_r_simple.conf";
 const std::string settingsFile_s = std::string(pathToTest.parent_path()) + "/loopshaping_s.conf";
 const std::string settingsFile_s_simple = std::string(pathToTest.parent_path()) + "/loopshaping_s_simple.conf";
-const auto inf_ = std::numeric_limits<scalar_t>::infinity();
 
 TEST(testLoopshapingDefinition, SISO_Definition) {
   boost::property_tree::ptree pt;

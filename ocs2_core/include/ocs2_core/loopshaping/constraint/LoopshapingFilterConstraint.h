@@ -39,7 +39,7 @@ namespace ocs2 {
 
 class LoopshapingFilterConstraint : public StateInputConstraint {
  public:
-  LoopshapingFilterConstraint(const StateInputConstraint& systemConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+  LoopshapingFilterConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : StateInputConstraint(ConstraintOrder::Linear), loopshapingDefinition_(std::move(loopshapingDefinition)){};
   ~LoopshapingFilterConstraint() override = default;
 

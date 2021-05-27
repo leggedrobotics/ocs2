@@ -42,7 +42,7 @@ vector_t LoopshapingFilterConstraint::getValue(scalar_t t, const vector_t& x, co
 
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& u_system = preCompLS.getSystemInput();
   const auto& x_filter = preCompLS.getFilterState();
   const auto& u_filter = preCompLS.getFilteredInput();
@@ -65,7 +65,7 @@ VectorFunctionLinearApproximation LoopshapingFilterConstraint::getLinearApproxim
 
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& x_filter = preCompLS.getFilterState();

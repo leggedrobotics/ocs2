@@ -37,7 +37,7 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintOutputPattern::get
     const PreComputation& preComp) const {
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& r_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
 

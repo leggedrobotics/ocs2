@@ -40,7 +40,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t LoopshapingStateConstraint::getValue(scalar_t t, const vector_t& x, const PreComputation& preComp) const {
-  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
 
@@ -52,7 +52,7 @@ vector_t LoopshapingStateConstraint::getValue(scalar_t t, const vector_t& x, con
 /******************************************************************************************************/
 VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                      const PreComputation& preComp) const {
-  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
 
@@ -74,7 +74,7 @@ VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproxima
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                            const PreComputation& preComp) const {
-  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
 

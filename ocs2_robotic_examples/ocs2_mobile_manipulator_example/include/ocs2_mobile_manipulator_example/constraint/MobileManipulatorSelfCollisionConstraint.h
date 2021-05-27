@@ -47,7 +47,7 @@ class MobileManipulatorSelfCollisionConstraint final : public SelfCollisionConst
   MobileManipulatorSelfCollisionConstraint* clone() const { return new MobileManipulatorSelfCollisionConstraint(*this); }
 
   const PinocchioInterface& getPinocchioInterface(const PreComputation& preComputation) const override {
-    return preComputation.cast<const MobileManipulatorPreComputation>().getPinocchioInterface();
+    return cast<MobileManipulatorPreComputation>(preComputation).getPinocchioInterface();
   }
 };
 

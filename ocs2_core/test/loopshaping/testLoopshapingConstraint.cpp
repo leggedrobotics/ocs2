@@ -17,7 +17,7 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testFilterConstraint) {
   const auto c = filterConstraint.getValue(this->t, this->x, this->u, *this->preComputation);
   EXPECT_TRUE(c.allFinite());
 
-  this->preComputation->request(Request::Constraint | Request::Approximation, this->t, this->x, this->u);
+  this->preComputation->request(Request::Constraint + Request::Approximation, this->t, this->x, this->u);
   const auto clin = filterConstraint.getLinearApproximation(this->t, this->x, this->u, *this->preComputation);
   EXPECT_TRUE(clin.f.isApprox(c));
   EXPECT_TRUE(clin.f.allFinite());
@@ -39,7 +39,7 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintEvaluation)
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintLinearApproximation) {
   // Extract approximation
-  this->preComputation->request(Request::Constraint | Request::Approximation, this->t, this->x, this->u);
+  this->preComputation->request(Request::Constraint + Request::Approximation, this->t, this->x, this->u);
   const auto g_linear = this->loopshapingConstraint->getLinearApproximation(this->t, this->x, this->u, *this->preComputation);
   const auto g_quadratic = this->loopshapingConstraint->getQuadraticApproximation(this->t, this->x, this->u, *this->preComputation);
 
@@ -50,7 +50,7 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintLinearAppro
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintQuadraticApproximation) {
   // Extract approximation
-  this->preComputation->request(Request::Constraint | Request::Approximation, this->t, this->x, this->u);
+  this->preComputation->request(Request::Constraint + Request::Approximation, this->t, this->x, this->u);
   const auto h = this->loopshapingConstraint->getQuadraticApproximation(this->t, this->x, this->u, *this->preComputation);
 
   // Reevaluate at disturbed state
@@ -82,7 +82,7 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateOnlyConstraintEvaluation) 
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateOnlyConstraintLinearApproximation) {
   // Extract approximation
-  this->preComputation->requestFinal(Request::Constraint | Request::Approximation, this->t, this->x);
+  this->preComputation->requestFinal(Request::Constraint + Request::Approximation, this->t, this->x);
   const auto g_linear = this->loopshapingStateConstraint->getLinearApproximation(this->t, this->x, *this->preComputation);
   const auto g_quadratic = this->loopshapingStateConstraint->getQuadraticApproximation(this->t, this->x, *this->preComputation);
 
@@ -92,7 +92,7 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateOnlyConstraintLinearApprox
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testStateOnlyConstraintQuadraticApproximation) {
   // Extract approximation
-  this->preComputation->requestFinal(Request::Constraint | Request::Approximation, this->t, this->x);
+  this->preComputation->requestFinal(Request::Constraint + Request::Approximation, this->t, this->x);
   const auto h = this->loopshapingStateConstraint->getQuadraticApproximation(this->t, this->x, *this->preComputation);
 
   // Reevaluate at disturbed state

@@ -54,8 +54,8 @@ MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::request(Request flags, scalar_t t, const vector_t& x, const vector_t& u) {
-  if (!(flags & (Request::Cost | Request::Constraint | Request::SoftConstraint))) {
+void MobileManipulatorPreComputation::request(Request request, scalar_t t, const vector_t& x, const vector_t& u) {
+  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
     return;
   }
 
@@ -63,7 +63,7 @@ void MobileManipulatorPreComputation::request(Request flags, scalar_t t, const v
   auto& data = pinocchioInterface_.getData();
   const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
 
-  if (flags & Request::Approximation) {
+  if (request.contains(Request::Approximation)) {
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
     pinocchio::computeJointJacobians(model, data);
@@ -77,8 +77,8 @@ void MobileManipulatorPreComputation::request(Request flags, scalar_t t, const v
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::requestFinal(Request flags, scalar_t t, const vector_t& x) {
-  if (!(flags & (Request::Cost | Request::Constraint | Request::SoftConstraint))) {
+void MobileManipulatorPreComputation::requestFinal(Request request, scalar_t t, const vector_t& x) {
+  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
     return;
   }
 
@@ -86,7 +86,7 @@ void MobileManipulatorPreComputation::requestFinal(Request flags, scalar_t t, co
   auto& data = pinocchioInterface_.getData();
   const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
 
-  if (flags & Request::Approximation) {
+  if (request.contains(Request::Approximation)) {
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
     pinocchio::computeJointJacobians(model, data);

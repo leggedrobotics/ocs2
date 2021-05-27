@@ -62,7 +62,7 @@ class StateInputConstraint {
     if (order_ == ConstraintOrder::Linear) {
       throw std::runtime_error("[StateInputConstraint] Linear approximation not implemented!");
     } else {
-      throw std::runtime_error("[StateInputConstraint] The class only provides Quadratic approximationn! call getQuadraticApproximation()");
+      throw std::runtime_error("[StateInputConstraint] The class only provides Quadratic approximation! call getQuadraticApproximation()");
     }
   }
 
@@ -72,7 +72,7 @@ class StateInputConstraint {
     if (order_ == ConstraintOrder::Quadratic) {
       throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented!");
     } else {
-      throw std::runtime_error("[StateConstraint] The class only provides Linear approximationn! call getLinearApproximation()");
+      throw std::runtime_error("[StateConstraint] The class only provides Linear approximation! call getLinearApproximation()");
     }
   }
 

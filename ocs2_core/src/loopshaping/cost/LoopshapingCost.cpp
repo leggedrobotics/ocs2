@@ -40,14 +40,16 @@ namespace LoopshapingCost {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateCost> create(const StateCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  return std::unique_ptr<StateCost>(new LoopshapingStateCost(systemCost, loopshapingDefinition));
+std::unique_ptr<StateCostCollection> create(const StateCostCollection& systemCost,
+                                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  return std::unique_ptr<StateCostCollection>(new LoopshapingStateCost(systemCost, loopshapingDefinition));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateInputCost> create(const StateInputCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection& systemCost,
+                                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
       return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostOutputPattern(systemCost, std::move(loopshapingDefinition)));

@@ -9,7 +9,7 @@ class LoopshapingCostInputPattern final : public LoopshapingStateInputCost {
  public:
   using BASE = LoopshapingStateInputCost;
 
-  LoopshapingCostInputPattern(const StateInputCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+  LoopshapingCostInputPattern(const StateInputCostCollection& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemCost, std::move(loopshapingDefinition)) {}
 
   ~LoopshapingCostInputPattern() override = default;

@@ -47,23 +47,14 @@ namespace ocs2 {
  * summed cost values and quadratic approximations. Each cost term can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateCostCollection final : public StateCost {
+class StateCostCollection {
  public:
   StateCostCollection() = default;
-  ~StateCostCollection() override = default;
-  StateCostCollection* clone() const override;
+  virtual ~StateCostCollection() = default;
+  virtual StateCostCollection* clone() const;
 
-  /** Copy constructor */
-  StateCostCollection(const StateCostCollection& other);
-
-  /** Move constructor */
-  StateCostCollection(StateCostCollection&& other) noexcept;
-
-  /** Copy assignment */
-  StateCostCollection& operator=(const StateCostCollection& rhs);
-
-  /** Move assignment */
-  StateCostCollection& operator=(StateCostCollection&& rhs);
+  /** Checks if the collection has no elements */
+  bool empty() const { return costTermMap_.empty(); }
 
   /**
    * Adds a cost term to the collection, and transfer ownership to the collection
@@ -88,13 +79,17 @@ class StateCostCollection final : public StateCost {
   }
 
   /** Get state-only cost value */
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation& preComp) const override;
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+                            const PreComputation& preComp) const;
 
   /** Get state-only cost quadratic approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation& preComp) const override;
+  virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                         const CostDesiredTrajectories& desiredTrajectory,
+                                                                         const PreComputation& preComp) const;
+
+ protected:
+  /** Copy constructor */
+  StateCostCollection(const StateCostCollection& other);
 
  private:
   std::map<std::string, std::unique_ptr<StateCost>> costTermMap_;

@@ -34,19 +34,28 @@ namespace ocs2 {
 
 scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
                                         const PreComputation& preComp) const {
+  if (this->empty()) {
+    return 0.0;
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
 
-  return systemCost_->getValue(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  return StateCostCollection::getValue(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
 }
 
 ScalarFunctionQuadraticApproximation LoopshapingStateCost::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                      const CostDesiredTrajectories& desiredTrajectory,
                                                                                      const PreComputation& preComp) const {
+  if (this->empty()) {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0);
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
 
-  const auto Phi_system = systemCost_->getQuadraticApproximation(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  const auto Phi_system =
+      StateCostCollection::getQuadraticApproximation(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
   const size_t nx_filter = loopshapingDefinition_->getInputFilter().getNumStates();
 
   ScalarFunctionQuadraticApproximation Phi;

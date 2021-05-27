@@ -7,24 +7,22 @@
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/StateCostCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
 
 /**
- * Loopshaping state-only cost decorator class
+ * Loopshaping state-only cost collection class
  */
-class LoopshapingStateCost final : public StateCost {
+class LoopshapingStateCost final : public StateCostCollection {
  public:
-  LoopshapingStateCost(const StateCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : StateCost(), systemCost_(systemCost.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
+  LoopshapingStateCost(const StateCostCollection& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : StateCostCollection(systemCost), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
   ~LoopshapingStateCost() override = default;
 
   LoopshapingStateCost* clone() const override { return new LoopshapingStateCost(*this); }
-
-  bool isActive(scalar_t time) const override { return systemCost_->isActive(time); }
 
   scalar_t getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
                     const PreComputation& preComp) const override;
@@ -34,10 +32,8 @@ class LoopshapingStateCost final : public StateCost {
                                                                  const PreComputation& preComp) const override;
 
  private:
-  LoopshapingStateCost(const LoopshapingStateCost& other)
-      : StateCost(), systemCost_(other.systemCost_->clone()), loopshapingDefinition_(other.loopshapingDefinition_) {}
+  LoopshapingStateCost(const LoopshapingStateCost& other) = default;
 
-  std::unique_ptr<StateCost> systemCost_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 

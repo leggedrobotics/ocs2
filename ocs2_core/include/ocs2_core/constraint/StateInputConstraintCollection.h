@@ -62,6 +62,9 @@ class StateInputConstraintCollection final : public StateInputConstraint {
   /** Move assignment */
   StateInputConstraintCollection& operator=(StateInputConstraintCollection&& rhs);
 
+  /** Checks if the collection has no elements */
+  bool empty() const { return constraintTermMap_.empty(); }
+
   /**
    * Adds a constraint to the collection, and transfer ownership to the collection
    * The provided name must be unique and is later used to access the constraint.

@@ -35,6 +35,10 @@ namespace ocs2 {
 ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintOutputPattern::getQuadraticApproximation(
     scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
     const PreComputation& preComp) const {
+  if (this->empty()) {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
+  }
+
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const auto& r_filter = loopshapingDefinition_->getInputFilter();
   const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
@@ -42,7 +46,7 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintOutputPattern::get
   const auto& u_system = preCompLS.getSystemInput();
 
   const auto L_system =
-      systemCost_->getQuadraticApproximation(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
 
   ScalarFunctionQuadraticApproximation L = ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
   L.f = L_system.f;

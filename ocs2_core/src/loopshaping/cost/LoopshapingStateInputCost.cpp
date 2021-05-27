@@ -34,13 +34,19 @@ namespace ocs2 {
 
 scalar_t LoopshapingStateInputCost::getValue(scalar_t t, const vector_t& x, const vector_t& u,
                                              const CostDesiredTrajectories& desiredTrajectory, const PreComputation& preComp) const {
+  if (this->empty()) {
+    return 0.0;
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& u_filter = preCompLS.getFilteredInput();
 
-  const scalar_t L_system = systemCost_->getValue(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
-  const scalar_t L_filter = systemCost_->getValue(t, x_system, u_filter, desiredTrajectory, preCompLS.getFilteredSystemPreComputation());
+  const scalar_t L_system =
+      StateInputCostCollection::getValue(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  const scalar_t L_filter =
+      StateInputCostCollection::getValue(t, x_system, u_filter, desiredTrajectory, preCompLS.getFilteredSystemPreComputation());
   const scalar_t gamma = loopshapingDefinition_->gamma_;
 
   return gamma * L_filter + (1.0 - gamma) * L_system;

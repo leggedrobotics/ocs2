@@ -35,6 +35,10 @@ namespace ocs2 {
 ScalarFunctionQuadraticApproximation LoopshapingCostInputPattern::getQuadraticApproximation(
     scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
     const PreComputation& preComp) const {
+  if (this->empty()) {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
+  }
+
   const scalar_t gamma = loopshapingDefinition_->gamma_;
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
   const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
@@ -44,10 +48,10 @@ ScalarFunctionQuadraticApproximation LoopshapingCostInputPattern::getQuadraticAp
   const auto& u_filter = preCompLS.getFilteredInput();
 
   const auto L_system =
-      systemCost_->getQuadraticApproximation(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
 
-  const auto L_filter =
-      systemCost_->getQuadraticApproximation(t, x_system, u_filter, desiredTrajectory, preCompLS.getFilteredSystemPreComputation());
+  const auto L_filter = StateInputCostCollection::getQuadraticApproximation(t, x_system, u_filter, desiredTrajectory,
+                                                                            preCompLS.getFilteredSystemPreComputation());
 
   ScalarFunctionQuadraticApproximation L(x.rows(), u.rows());
   L.f = gamma * L_filter.f + (1.0 - gamma) * L_system.f;

@@ -35,11 +35,15 @@ namespace ocs2 {
 scalar_t LoopshapingStateInputSoftConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u,
                                                        const CostDesiredTrajectories& desiredTrajectory,
                                                        const PreComputation& preComp) const {
+  if (this->empty()) {
+    return 0.0;
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
 
-  return systemCost_->getValue(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  return StateInputCostCollection::getValue(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
 }
 
 }  // namespace ocs2

@@ -9,7 +9,8 @@ class LoopshapingSoftConstraintInputPattern final : public LoopshapingStateInput
  public:
   using BASE = LoopshapingStateInputSoftConstraint;
 
-  LoopshapingSoftConstraintInputPattern(const StateInputCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+  LoopshapingSoftConstraintInputPattern(const StateInputCostCollection& systemCost,
+                                        std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemCost, std::move(loopshapingDefinition)) {}
 
   ~LoopshapingSoftConstraintInputPattern() override = default;

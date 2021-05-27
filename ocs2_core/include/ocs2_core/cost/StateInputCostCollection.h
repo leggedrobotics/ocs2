@@ -47,23 +47,14 @@ namespace ocs2 {
  * summed cost values and quadratic approximations. Each cost term can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateInputCostCollection final : public StateInputCost {
+class StateInputCostCollection {
  public:
   StateInputCostCollection() = default;
-  ~StateInputCostCollection() override = default;
-  StateInputCostCollection* clone() const override;
+  virtual ~StateInputCostCollection() = default;
+  virtual StateInputCostCollection* clone() const;
 
-  /** Copy constructor */
-  StateInputCostCollection(const StateInputCostCollection& other);
-
-  /** Move constructor */
-  StateInputCostCollection(StateInputCostCollection&& other) noexcept;
-
-  /** Copy assignment */
-  StateInputCostCollection& operator=(const StateInputCostCollection& rhs);
-
-  /** Move assignment */
-  StateInputCostCollection& operator=(StateInputCostCollection&& rhs);
+  /** Checks if the collection has no elements */
+  bool empty() const { return costTermMap_.empty(); }
 
   /**
    * Adds a cost term to the collection, and transfer ownership to the collection
@@ -88,13 +79,17 @@ class StateInputCostCollection final : public StateInputCost {
   }
 
   /** Get state-input cost value */
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation& preComp) const override;
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
+                            const PreComputation& preComp) const;
 
   /** Get state-input cost quadratic approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& desiredTrajectory,
-                                                                 const PreComputation& preComp) const override;
+  virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                         const CostDesiredTrajectories& desiredTrajectory,
+                                                                         const PreComputation& preComp) const;
+
+ protected:
+  /** Copy constructor */
+  StateInputCostCollection(const StateInputCostCollection& other);
 
  private:
   std::map<std::string, std::unique_ptr<StateInputCost>> costTermMap_;

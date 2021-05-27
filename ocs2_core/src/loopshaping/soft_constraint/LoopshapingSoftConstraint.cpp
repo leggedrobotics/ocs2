@@ -40,25 +40,26 @@ namespace LoopshapingSoftConstraint {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateCost> create(const StateCost& systemSoftConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+std::unique_ptr<StateCostCollection> create(const StateCostCollection& systemSoftConstraint,
+                                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   // State-only soft constraint wrapper is identical to LoopshapingStateCost wrapper.
-  return std::unique_ptr<StateCost>(new LoopshapingStateCost(systemSoftConstraint, loopshapingDefinition));
+  return std::unique_ptr<StateCostCollection>(new LoopshapingStateCost(systemSoftConstraint, loopshapingDefinition));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateInputCost> create(const StateInputCost& systemSoftConstraint,
-                                       std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection& systemSoftConstraint,
+                                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingStateInputSoftConstraint>(
+      return std::unique_ptr<StateInputCostCollection>(
           new LoopshapingSoftConstraintOutputPattern(systemSoftConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingStateInputSoftConstraint>(
+      return std::unique_ptr<StateInputCostCollection>(
           new LoopshapingSoftConstraintInputPattern(systemSoftConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<LoopshapingStateInputSoftConstraint>(
+      return std::unique_ptr<StateInputCostCollection>(
           new LoopshapingSoftConstraintEliminatePattern(systemSoftConstraint, std::move(loopshapingDefinition)));
     default:
       throw std::runtime_error("[LoopshapingStateInputSoftConstraint::create] invalid loopshaping type");

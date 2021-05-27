@@ -31,18 +31,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/cost/StateCost.h>
-#include <ocs2_core/cost/StateInputCost.h>
+#include <ocs2_core/cost/StateCostCollection.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
 namespace LoopshapingCost {
 
 /** Factory for Loopshaping state-only cost wrapper */
-std::unique_ptr<StateCost> create(const StateCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+std::unique_ptr<StateCostCollection> create(const StateCostCollection& systemCost,
+                                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
 /** Factory for Loopshaping state-input cost wrapper */
-std::unique_ptr<StateInputCost> create(const StateInputCost& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection& systemCost,
+                                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
 }  // namespace LoopshapingCost
 }  // namespace ocs2

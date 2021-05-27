@@ -54,19 +54,18 @@ class PreComputation {
     enum Computation { Dynamics = 1, Cost = 2, Constraint = 4, SoftConstraint = 8, Approximation = 16 };
 
     /** Constructor, implicit construction is allowed */
-    Request(Computation computationFlag) : flags(computationFlag) {}
-
-    /** Union of two Request sets */
-    Request operator+(Request other) { return Request(static_cast<Computation>(static_cast<int>(flags) | static_cast<int>(other.flags))); }
+    constexpr Request(Computation computationFlag) : flags(computationFlag) {}
 
     /** Test if this Request contains item */
-    bool contains(Computation item) { return (static_cast<int>(flags) & static_cast<int>(item)) != 0; }
+    constexpr bool contains(Computation item) const { return (static_cast<int>(flags) & static_cast<int>(item)) != 0; }
 
     /** Test if this Request contains any Computation of other (non-empty intersection) */
-    bool containsAny(Request other) { return (static_cast<int>(flags) & static_cast<int>(other.flags)) != 0; }
+    constexpr bool containsAny(Request other) const { return (static_cast<int>(flags) & static_cast<int>(other.flags)) != 0; }
 
     /** Test if this Request contains all Computations of other (subset) */
-    bool containsAll(Request other) { return (static_cast<int>(flags) & static_cast<int>(other.flags)) == static_cast<int>(other.flags); }
+    constexpr bool containsAll(Request other) const {
+      return (static_cast<int>(flags) & static_cast<int>(other.flags)) == static_cast<int>(other.flags);
+    }
 
     /** flags bitfield */
     Computation flags;
@@ -111,8 +110,13 @@ Derived& cast(PreComputation& preComputation) {
   return static_cast<Derived&>(preComputation);
 }
 
+/** Union of two Request sets */
+inline constexpr PreComputation::Request operator+(PreComputation::Request a, PreComputation::Request b) {
+  return PreComputation::Request(static_cast<PreComputation::Request::Computation>(static_cast<int>(a.flags) | static_cast<int>(b.flags)));
+}
+
 /** Get a Request out of two Computation requests */
-inline PreComputation::Request operator+(PreComputation::Request::Computation a, PreComputation::Request::Computation b) {
+inline constexpr PreComputation::Request operator+(PreComputation::Request::Computation a, PreComputation::Request::Computation b) {
   return PreComputation::Request(a) + PreComputation::Request(b);
 }
 

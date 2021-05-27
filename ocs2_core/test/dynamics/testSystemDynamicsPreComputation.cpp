@@ -101,7 +101,7 @@ TEST(testSystemDynamicsPreComputation, testPreJumpCallback) {
 }
 
 TEST(testSystemDynamicsPreComputation, testPreComputationRequestLogic) {
-  Request a = Request::Cost + Request::Constraint;
+  constexpr Request a = Request::Cost + Request::Constraint;
 
   // Test for individual flags
   EXPECT_TRUE(a.contains(Request::Cost));
@@ -112,8 +112,8 @@ TEST(testSystemDynamicsPreComputation, testPreComputationRequestLogic) {
   // a.contains(int(42)); // this should not compile
   // a.contains(Request(Request::Cost)); // this should not compile
 
-  Request b = Request::Cost + Request::Approximation;
-  Request c = a + b;  // union
+  constexpr Request b = Request::Cost + Request::Approximation;
+  constexpr Request c = a + b;  // union
 
   // Test for subset
   EXPECT_TRUE(c.containsAll(a));

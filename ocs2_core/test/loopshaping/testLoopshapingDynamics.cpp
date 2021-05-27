@@ -26,7 +26,7 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamicsApproximation) {
   using Request = PreComputation::Request;
 
   // Extract linearization
-  this->preComp_->request(Request::Dynamics | Request::Approximation, this->t, this->x_, this->u_);
+  this->preComp_->request(Request::Dynamics + Request::Approximation, this->t, this->x_, this->u_);
   const auto linearization = this->testLoopshapingDynamics->linearApproximation(this->t, this->x_, this->u_, *this->preComp_);
 
   // Reevaluate at disturbed state
@@ -58,10 +58,10 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMapApproximation) {
   using Request = PreComputation::Request;
 
   // Evaluate linearization
-  this->preComp_sys_->requestPreJump(Request::Dynamics | Request::Approximation, this->t, this->x_sys_);
+  this->preComp_sys_->requestPreJump(Request::Dynamics + Request::Approximation, this->t, this->x_sys_);
   const auto jumpMap_sys = this->testSystem->jumpMapLinearApproximation(this->t, this->x_sys_, *this->preComp_sys_);
 
-  this->preComp_->requestPreJump(Request::Dynamics | Request::Approximation, this->t, this->x_);
+  this->preComp_->requestPreJump(Request::Dynamics + Request::Approximation, this->t, this->x_);
   const auto jumpMap = this->testLoopshapingDynamics->jumpMapLinearApproximation(this->t, this->x_, *this->preComp_);
 
   EXPECT_TRUE(jumpMap.f.head(this->x_sys_.rows()).isApprox(jumpMap_sys.f));

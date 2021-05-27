@@ -40,7 +40,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t LoopshapingStateInputConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) const {
-  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& preComp_system = preCompLS.getSystemPreComputation();

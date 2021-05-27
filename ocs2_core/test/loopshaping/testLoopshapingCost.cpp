@@ -4,16 +4,18 @@
 
 using namespace ocs2;
 
+using Request = PreComputation::Request;
+
 TYPED_TEST_CASE(TestFixtureLoopShapingCost, FilterConfigurations);
 
 TYPED_TEST(TestFixtureLoopShapingCost, testStateInputCostApproximation) {
   // Extract Quadratic approximation
-  this->preComputation->request(PreComputation::Request::Cost | PreComputation::Request::Approximation, this->t, this->x, this->u);
+  this->preComputation->request(Request::Cost + Request::Approximation, this->t, this->x, this->u);
   const auto L =
       this->loopshapingCost->getQuadraticApproximation(this->t, this->x, this->u, this->costDesiredTrajectories, *this->preComputation);
 
   // Reevaluate at disturbed state
-  this->preComputation->request(PreComputation::Request::Cost, this->t, this->x + this->x_disturbance, this->u + this->u_disturbance);
+  this->preComputation->request(Request::Cost, this->t, this->x + this->x_disturbance, this->u + this->u_disturbance);
   scalar_t L_disturbance = this->loopshapingCost->getValue(this->t, this->x + this->x_disturbance, this->u + this->u_disturbance,
                                                            this->costDesiredTrajectories, *this->preComputation);
 
@@ -28,14 +30,14 @@ TYPED_TEST(TestFixtureLoopShapingCost, testStateInputCostApproximation) {
 };
 
 TYPED_TEST(TestFixtureLoopShapingCost, testStateCostApproximation) {
-  this->preComputation->requestFinal(PreComputation::Request::Cost | PreComputation::Request::Approximation, this->t, this->x);
+  this->preComputation->requestFinal(Request::Cost + Request::Approximation, this->t, this->x);
 
   // Extract Quadratic approximation
   const auto L =
       this->loopshapingStateCost->getQuadraticApproximation(this->t, this->x, this->costDesiredTrajectories, *this->preComputation);
 
   // Reevaluate at disturbed state
-  this->preComputation->requestFinal(PreComputation::Request::Cost, this->t, this->x + this->x_disturbance);
+  this->preComputation->requestFinal(Request::Cost, this->t, this->x + this->x_disturbance);
   scalar_t L_disturbance =
       this->loopshapingStateCost->getValue(this->t, this->x + this->x_disturbance, this->costDesiredTrajectories, *this->preComputation);
 

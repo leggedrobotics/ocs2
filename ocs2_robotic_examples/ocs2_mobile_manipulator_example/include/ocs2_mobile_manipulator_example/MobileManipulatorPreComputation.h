@@ -51,8 +51,8 @@ class MobileManipulatorPreComputation : public PreComputation {
   MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
   MobileManipulatorPreComputation* clone() const override;
 
-  void request(Request flags, scalar_t t, const vector_t& x, const vector_t& u) override;
-  void requestFinal(Request flags, scalar_t t, const vector_t& x) override;
+  void request(Request request, scalar_t t, const vector_t& x, const vector_t& u) override;
+  void requestFinal(Request request, scalar_t t, const vector_t& x) override;
 
   PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
   const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }

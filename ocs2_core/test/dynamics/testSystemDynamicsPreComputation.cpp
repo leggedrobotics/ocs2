@@ -8,21 +8,23 @@
 
 using namespace ocs2;
 
+using Request = PreComputation::Request;
+
 class DummyPreComputation final : public PreComputation {
  public:
   DummyPreComputation() = default;
   PreComputation* clone() const override { return new DummyPreComputation(*this); }
 
-  void request(Request flags, scalar_t t, const vector_t& x, const vector_t& u) override { requestedFlags = flags; }
+  void request(Request request, scalar_t t, const vector_t& x, const vector_t& u) override { lastRequest = request; }
 
-  void requestPreJump(Request flags, scalar_t t, const vector_t& x) override { requestedFlags = flags; }
+  void requestPreJump(Request request, scalar_t t, const vector_t& x) override { lastRequest = request; }
 
-  static void reset() { requestedFlags = static_cast<PreComputation::Request>(0); }
+  static void reset() { lastRequest = static_cast<PreComputation::Request::Computation>(0); }
 
-  static Request requestedFlags;
+  static Request lastRequest;
 };
 
-PreComputation::Request DummyPreComputation::requestedFlags = static_cast<PreComputation::Request>(0);
+Request DummyPreComputation::lastRequest = Request(static_cast<Request::Computation>(0));
 
 class DummySystem final : public SystemDynamicsBase {
  public:
@@ -60,19 +62,19 @@ TEST(testSystemDynamicsPreComputation, testIntermediateCallback) {
   const vector_t u = vector_t::Zero(1);
 
   DummyPreComputation::reset();
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Approximation));
 
   const auto flowMap = system.ControlledSystemBase::computeFlowMap(t, x, u);
-  EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_TRUE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Approximation));
 
   DummyPreComputation::reset();
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Approximation));
   const auto flowMapApproximation = system.SystemDynamicsBase::linearApproximation(t, x, u);
-  EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_TRUE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_TRUE(DummyPreComputation::lastRequest.contains(Request::Approximation));
 }
 
 TEST(testSystemDynamicsPreComputation, testPreJumpCallback) {
@@ -82,29 +84,54 @@ TEST(testSystemDynamicsPreComputation, testPreJumpCallback) {
   const vector_t x = vector_t::Zero(2);
 
   DummyPreComputation::reset();
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Approximation));
 
   const auto jumpMap = system.computeJumpMap(t, x);
-  EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_TRUE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Approximation));
 
   DummyPreComputation::reset();
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_FALSE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_FALSE(DummyPreComputation::lastRequest.contains(Request::Approximation));
 
   const auto jumpMapApproximation = system.jumpMapLinearApproximation(t, x);
-  EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Dynamics);
-  EXPECT_TRUE(DummyPreComputation::requestedFlags & PreComputation::Request::Approximation);
+  EXPECT_TRUE(DummyPreComputation::lastRequest.contains(Request::Dynamics));
+  EXPECT_TRUE(DummyPreComputation::lastRequest.contains(Request::Approximation));
 }
 
 TEST(testSystemDynamicsPreComputation, testPreComputationRequestLogic) {
-  using Request = PreComputation::Request;
+  constexpr Request a = Request::Cost + Request::Constraint;
 
-  Request a = Request::Dynamics | Request::Approximation;
-  EXPECT_TRUE(a & Request::Dynamics);
-  EXPECT_TRUE(a & Request::Approximation);
-  EXPECT_FALSE(a & Request::Cost);
-  EXPECT_FALSE(a & Request::Constraint);
-  EXPECT_TRUE((Request::Dynamics | Request::Dynamics) & Request::Dynamics);
+  // Test for individual flags
+  EXPECT_TRUE(a.contains(Request::Cost));
+  EXPECT_TRUE(a.contains(Request::Constraint));
+  EXPECT_FALSE(a.contains(Request::Approximation));
+  EXPECT_FALSE(a.contains(Request::SoftConstraint));
+  EXPECT_FALSE(a.contains(Request::Dynamics));
+  // a.contains(int(42)); // this should not compile
+  // a.contains(Request(Request::Cost)); // this should not compile
+
+  constexpr Request b = Request::Cost + Request::Approximation;
+  constexpr Request c = a + b;  // union
+
+  // Test for subset
+  EXPECT_TRUE(c.containsAll(a));
+  EXPECT_TRUE(c.containsAll(b));
+  EXPECT_TRUE(c.containsAll(c));
+  EXPECT_FALSE(a.containsAll(b));
+  EXPECT_FALSE(b.containsAll(a));
+
+  // Test for non-empty intersection
+  EXPECT_TRUE(c.containsAny(a));
+  EXPECT_TRUE(c.containsAny(b));
+  EXPECT_TRUE(c.containsAny(c));
+  EXPECT_TRUE(a.containsAny(b));
+  EXPECT_TRUE(b.containsAny(a));
+
+  EXPECT_FALSE(c.contains(Request::Dynamics));
+  EXPECT_FALSE(c.contains(Request::SoftConstraint));
+
+  // Add same flag twice
+  EXPECT_TRUE((Request::Dynamics + Request::Dynamics).contains(Request::Dynamics));
 }

@@ -62,7 +62,7 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
 vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const {
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) {
-    const auto& preCompMM = preComputation.cast<MobileManipulatorPreComputation>();
+    const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
     pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
   }
 
@@ -81,7 +81,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
                                                                                 const PreComputation& preComputation) const {
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) {
-    const auto& preCompMM = preComputation.cast<MobileManipulatorPreComputation>();
+    const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
     pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
   }
 

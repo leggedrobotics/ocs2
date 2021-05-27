@@ -46,7 +46,7 @@ SystemDynamicsBase::SystemDynamicsBase(const SystemDynamicsBase& other) : Contro
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBase::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
   assert(preCompPtr_ != nullptr);
-  preCompPtr_->request(Request::Dynamics | Request::Approximation, t, x, u);
+  preCompPtr_->request(Request::Dynamics + Request::Approximation, t, x, u);
   return linearApproximation(t, x, u, *preCompPtr_);
 }
 
@@ -55,7 +55,7 @@ VectorFunctionLinearApproximation SystemDynamicsBase::linearApproximation(scalar
 /******************************************************************************************************/
 VectorFunctionLinearApproximation SystemDynamicsBase::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
   assert(preCompPtr_ != nullptr);
-  preCompPtr_->requestPreJump(Request::Dynamics | Request::Approximation, t, x);
+  preCompPtr_->requestPreJump(Request::Dynamics + Request::Approximation, t, x);
   return jumpMapLinearApproximation(t, x, *preCompPtr_);
 }
 

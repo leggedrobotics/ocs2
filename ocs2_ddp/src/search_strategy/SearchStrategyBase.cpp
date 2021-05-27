@@ -151,7 +151,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
       const auto& u = inputTrajectoriesStock[i][k];
       auto& modelData = modelDataTrajectoriesStock[i][k];
 
-      preComputation.request(Request::Cost | Request::Constraint | Request::SoftConstraint, t, x, u);
+      preComputation.request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u);
 
       // intermediate cost
       modelData.cost_.f = problem.cost.getValue(t, x, u, desiredTrajectory, preComputation);
@@ -173,7 +173,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
         const auto ke = std::distance(postEventIndicesStock[i].begin(), eventsPastTheEndItr);
         auto& modelDataEvent = modelDataEventTimesStock[i][ke];
 
-        preComputation.requestPreJump(Request::Cost | Request::Constraint | Request::SoftConstraint, t, x);
+        preComputation.requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x);
 
         // pre-jump cost
         modelDataEvent.cost_.f = problem.preJumpCost.getValue(t, x, desiredTrajectory, preComputation);
@@ -190,7 +190,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
   // calculate the Heuristics function at the final time
   const auto t = timeTrajectoriesStock[finalActivePartition_].back();
   const auto& x = stateTrajectoriesStock[finalActivePartition_].back();
-  preComputation.requestFinal(Request::Cost | Request::SoftConstraint, t, x);
+  preComputation.requestFinal(Request::Cost + Request::SoftConstraint, t, x);
   heuristicsValue = problem.finalCost.getValue(t, x, desiredTrajectory, preComputation);
   heuristicsValue += problem.finalSoftConstraint.getValue(t, x, desiredTrajectory, preComputation);
 }

@@ -34,7 +34,7 @@ namespace ocs2 {
 
 scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
                                         const PreComputation& preComp) const {
-  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
 
   return systemCost_->getValue(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
@@ -43,7 +43,7 @@ scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const Cos
 ScalarFunctionQuadraticApproximation LoopshapingStateCost::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                      const CostDesiredTrajectories& desiredTrajectory,
                                                                                      const PreComputation& preComp) const {
-  const LoopshapingPreComputation& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
 
   const auto Phi_system = systemCost_->getQuadraticApproximation(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());

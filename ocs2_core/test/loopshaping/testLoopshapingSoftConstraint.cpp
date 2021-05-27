@@ -10,7 +10,7 @@ using Request = PreComputation::Request;
 TYPED_TEST_CASE(TestFixtureLoopShapingSoftConstraint, FilterConfigurations);
 
 TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateInputValue) {
-  this->preComputation->request(Request::Cost | Request::SoftConstraint, this->t, this->x, this->u);
+  this->preComputation->request(Request::Cost + Request::SoftConstraint, this->t, this->x, this->u);
   const auto L = this->loopshapingCost->getValue(this->t, this->x, this->u, this->costDesiredTrajectories, *this->preComputation);
   const auto L_soft_constraint =
       this->loopshapingSoftConstraint->getValue(this->t, this->x, this->u, this->costDesiredTrajectories, *this->preComputation);
@@ -21,7 +21,7 @@ TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateInputValue) {
 }
 
 TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateInputApproximation) {
-  this->preComputation->request(Request::Cost | Request::SoftConstraint | Request::Approximation, this->t, this->x, this->u);
+  this->preComputation->request(Request::Cost + Request::SoftConstraint + Request::Approximation, this->t, this->x, this->u);
   const auto L =
       this->loopshapingCost->getQuadraticApproximation(this->t, this->x, this->u, this->costDesiredTrajectories, *this->preComputation);
   const auto L_soft_constraint = this->loopshapingSoftConstraint->getQuadraticApproximation(
@@ -30,7 +30,7 @@ TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateInputApproximation) {
 }
 
 TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateValue) {
-  this->preComputation->requestFinal(Request::Cost | Request::SoftConstraint, this->t, this->x);
+  this->preComputation->requestFinal(Request::Cost + Request::SoftConstraint, this->t, this->x);
   const auto L = this->loopshapingStateCost->getValue(this->t, this->x, this->costDesiredTrajectories, *this->preComputation);
   const auto L_soft_constraint =
       this->loopshapingStateSoftConstraint->getValue(this->t, this->x, this->costDesiredTrajectories, *this->preComputation);
@@ -41,7 +41,7 @@ TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateValue) {
 }
 
 TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateApproximation) {
-  this->preComputation->requestFinal(Request::Cost | Request::SoftConstraint | Request::Approximation, this->t, this->x);
+  this->preComputation->requestFinal(Request::Cost + Request::SoftConstraint + Request::Approximation, this->t, this->x);
   const auto L =
       this->loopshapingStateCost->getQuadraticApproximation(this->t, this->x, this->costDesiredTrajectories, *this->preComputation);
   const auto L_soft_constraint = this->loopshapingStateSoftConstraint->getQuadraticApproximation(

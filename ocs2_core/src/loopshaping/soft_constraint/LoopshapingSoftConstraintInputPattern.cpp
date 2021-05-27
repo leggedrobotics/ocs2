@@ -36,7 +36,7 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintInputPattern::getQ
     scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
     const PreComputation& preComp) const {
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
 

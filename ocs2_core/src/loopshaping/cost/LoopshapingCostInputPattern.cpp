@@ -37,7 +37,7 @@ ScalarFunctionQuadraticApproximation LoopshapingCostInputPattern::getQuadraticAp
     const PreComputation& preComp) const {
   const scalar_t gamma = loopshapingDefinition_->gamma_;
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const auto& preCompLS = preComp.cast<LoopshapingPreComputation>();
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& x_filter = preCompLS.getFilterState();

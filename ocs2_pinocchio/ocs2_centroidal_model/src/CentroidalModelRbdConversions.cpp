@@ -34,10 +34,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 CentroidalModelRbdConversions::CentroidalModelRbdConversions(
     const CentroidalModelPinocchioInterface<scalar_t>& centroidalModelPinocchioInterface)
     : centroidalModelPinocchioInterface_(centroidalModelPinocchioInterface) {}
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(const vector_t& state, const vector_t& input,
                                                                              const vector_t& jointAccelerations, Vector6& basePose,
                                                                              Vector6& baseVelocity, Vector6& baseAcceleration) {
@@ -76,6 +82,9 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   baseAcceleration.tail<3>() = o_baseAngularAccel_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vector_t& rbdState, vector_t& state) {
   const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
   const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
@@ -100,6 +109,9 @@ void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vec
   state.segment(6, GENERALIZED_VEL_NUM) = qPinocchio;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void CentroidalModelRbdConversions::computeRbdStateFromCentroidalModel(const vector_t& state, const vector_t& input,
                                                                        const vector_t& jointAccelerations, vector_t& rbdState) {
   const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;

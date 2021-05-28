@@ -63,7 +63,7 @@ class CentroidalModelRbdConversions {
    * @note: In rbdState, orientations precede positions and angular velocities precede linear velocities
    * @note: The inputted rbdState contains non-local base velocities (expressed in world frame)
    *
-   * @param [in] rbdState: rigid body dynamics model state
+   * @param [in] rbdState: rigid body dynamics model state [base pose, joint positions, base twist, joint velocities]
    * @param [out] state: ocs2 state vector
    */
   void computeCentroidalStateFromRbdModel(const vector_t& rbdState, vector_t& state);
@@ -75,7 +75,7 @@ class CentroidalModelRbdConversions {
    * @param [in] state: ocs2 state vector
    * @param [in] input: ocs2 input vector
    * @param [in] jointAccelerations: actuated joints accelerations
-   * @param [out] rbdState: rigid body dynamics model state
+   * @param [out] rbdState: rigid body dynamics model state [base pose, joint positions, base twist, joint velocities]
    */
   void computeRbdStateFromCentroidalModel(const vector_t& state, const vector_t& input, const vector_t& jointAccelerations,
                                           vector_t& rbdState);

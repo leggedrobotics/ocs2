@@ -34,10 +34,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 KinoCentroidalDynamicsAD::KinoCentroidalDynamicsAD(size_t stateDim, size_t inputDim,
                                                    const CentroidalModelPinocchioInterface<ad_scalar_t>& centroidalModelPinocchioInterface)
     : SystemDynamicsBaseAD(stateDim, inputDim), centroidalModelPinocchioInterface_(centroidalModelPinocchioInterface){};
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ocs2::ad_vector_t KinoCentroidalDynamicsAD::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                                           const ad_vector_t& parameters) const {
   const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;

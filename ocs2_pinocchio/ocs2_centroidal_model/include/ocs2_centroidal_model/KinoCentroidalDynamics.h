@@ -54,9 +54,9 @@ class KinoCentroidalDynamics : public SystemDynamicsBase {
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t time, const vector_t& state, const vector_t& input) override;
 
+ private:
   void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
- private:
   CentroidalModelPinocchioInterface<scalar_t> centroidalModelPinocchioInterface_;
 
   // partial derivatives of the system dynamics

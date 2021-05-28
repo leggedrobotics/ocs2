@@ -35,9 +35,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 KinoCentroidalDynamics::KinoCentroidalDynamics(const CentroidalModelPinocchioInterface<scalar_t>& centroidalModelPinocchioInterface)
     : centroidalModelPinocchioInterface_(centroidalModelPinocchioInterface){};
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 vector_t KinoCentroidalDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
   const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
   assert(GENERALIZED_VEL_NUM == state.rows() - 6);
@@ -63,6 +69,9 @@ vector_t KinoCentroidalDynamics::computeFlowMap(scalar_t time, const vector_t& s
   return stateDerivative;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation KinoCentroidalDynamics::linearApproximation(scalar_t time, const vector_t& state, const vector_t& input) {
   const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
   const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
@@ -132,6 +141,9 @@ VectorFunctionLinearApproximation KinoCentroidalDynamics::linearApproximation(sc
   return dynamics;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void KinoCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input) {
   const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
   const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
@@ -150,11 +162,11 @@ void KinoCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradients(co
 
   for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
     contactForceInWorldFrame = input.segment<3>(3 * i);
-    getSkewMatrix<scalar_t>(contactForceInWorldFrame, f_hat);
+    f_hat = skewSymmetricMatrix(contactForceInWorldFrame);
     normalizedAngularMomentumRateDerivativeState_.rightCols(GENERALIZED_VEL_NUM) -=
         1.0 / centroidalModelInfo.mass * f_hat * (centroidalModelPinocchioInterface_.translationalJacobianComToContactPointInWorldFrame(i));
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, 3 * i) = 1.0 / centroidalModelInfo.mass * Matrix3::Identity();
-    getSkewMatrix<scalar_t>(centroidalModelPinocchioInterface_.positionComToContactPointInWorldFrame(i), p_hat);
+    p_hat = skewSymmetricMatrix(centroidalModelPinocchioInterface_.positionComToContactPointInWorldFrame(i));
     normalizedAngularMomentumRateDerivativeInput_.block<3, 3>(0, 3 * i) = 1.0 / centroidalModelInfo.mass * p_hat;
   }
 
@@ -162,13 +174,13 @@ void KinoCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradients(co
        i < centroidalModelInfo.numThreeDofContacts + centroidalModelInfo.numSixDofContacts; i++) {
     const size_t inputIdx = 3 * centroidalModelInfo.numThreeDofContacts + 6 * (i - centroidalModelInfo.numThreeDofContacts);
     contactForceInWorldFrame = input.segment<3>(inputIdx);
-    getSkewMatrix<scalar_t>(contactForceInWorldFrame, f_hat);
+    f_hat = skewSymmetricMatrix(contactForceInWorldFrame);
     normalizedAngularMomentumRateDerivativeState_.rightCols(GENERALIZED_VEL_NUM) -=
         1.0 / centroidalModelInfo.mass * f_hat * (centroidalModelPinocchioInterface_.translationalJacobianComToContactPointInWorldFrame(i));
 
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, inputIdx) = 1.0 / centroidalModelInfo.mass * Matrix3::Identity();
 
-    getSkewMatrix<scalar_t>(centroidalModelPinocchioInterface_.positionComToContactPointInWorldFrame(i), p_hat);
+    p_hat = skewSymmetricMatrix(centroidalModelPinocchioInterface_.positionComToContactPointInWorldFrame(i));
     normalizedAngularMomentumRateDerivativeInput_.block<3, 3>(0, 3 * inputIdx) = 1.0 / centroidalModelInfo.mass * p_hat;
     normalizedAngularMomentumRateDerivativeInput_.block<3, 3>(0, 3 * inputIdx + 3) = 1.0 / centroidalModelInfo.mass * Matrix3::Identity();
   }

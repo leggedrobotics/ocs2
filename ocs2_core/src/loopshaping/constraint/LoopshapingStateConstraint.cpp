@@ -40,11 +40,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t LoopshapingStateConstraint::getValue(scalar_t t, const vector_t& x, const PreComputation& preComp) const {
+  if (this->empty()) {
+    return vector_t::Zero(0);
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
 
-  return systemConstraint_->getValue(t, x_system, preComp_system);
+  return StateConstraintCollection::getValue(t, x_system, preComp_system);
 }
 
 /******************************************************************************************************/
@@ -52,11 +56,15 @@ vector_t LoopshapingStateConstraint::getValue(scalar_t t, const vector_t& x, con
 /******************************************************************************************************/
 VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                      const PreComputation& preComp) const {
+  if (this->empty()) {
+    return VectorFunctionLinearApproximation::Zero(0, x.rows(), 0);
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
 
-  const auto c_system = systemConstraint_->getLinearApproximation(t, x_system, preComp_system);
+  const auto c_system = StateConstraintCollection::getLinearApproximation(t, x_system, preComp_system);
 
   VectorFunctionLinearApproximation c;
 
@@ -74,11 +82,15 @@ VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproxima
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                            const PreComputation& preComp) const {
+  if (this->empty()) {
+    return VectorFunctionQuadraticApproximation::Zero(0, x.rows(), 0);
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
 
-  const auto c_system = systemConstraint_->getQuadraticApproximation(t, x_system, preComp_system);
+  const auto c_system = StateConstraintCollection::getQuadraticApproximation(t, x_system, preComp_system);
 
   VectorFunctionQuadraticApproximation c;
 

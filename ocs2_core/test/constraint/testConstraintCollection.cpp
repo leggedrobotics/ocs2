@@ -76,27 +76,15 @@ TEST(TestConstraintCollection, activatingConstraints) {
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);
 }
 
-TEST(TestConstraintCollection, moveConstrut) {
+TEST(TestConstraintCollection, canClone) {
   ocs2::StateInputConstraintCollection constraintCollection;
   std::unique_ptr<TestDummyConstraint> constraintTerm(new TestDummyConstraint());
   const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
   constraintCollection.add("Constraint1", std::move(constraintTerm));
 
-  // move construct
-  ocs2::StateInputConstraintCollection newColleciton(std::move(constraintCollection));
-  EXPECT_EQ(newColleciton.getNumConstraints(0.0), addedConstraints);
-}
-
-TEST(TestConstraintCollection, moveAssign) {
-  ocs2::StateInputConstraintCollection constraintCollection;
-  std::unique_ptr<TestDummyConstraint> constraintTerm(new TestDummyConstraint());
-  const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
-  constraintCollection.add("Constraint1", std::move(constraintTerm));
-
-  ocs2::StateInputConstraintCollection newColleciton;
-  // move assign
-  newColleciton = std::move(constraintCollection);
-  EXPECT_EQ(newColleciton.getNumConstraints(0.0), addedConstraints);
+  // clone
+  std::unique_ptr<ocs2::StateInputConstraintCollection> newColleciton(constraintCollection.clone());
+  EXPECT_EQ(newColleciton->getNumConstraints(0.0), addedConstraints);
 }
 
 TEST(TestConstraintCollection, getValue) {

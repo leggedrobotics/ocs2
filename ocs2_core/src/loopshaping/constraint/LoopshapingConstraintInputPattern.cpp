@@ -38,6 +38,10 @@ namespace ocs2 {
 VectorFunctionLinearApproximation LoopshapingConstraintInputPattern::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                             const vector_t& u,
                                                                                             const PreComputation& preComp) const {
+  if (this->empty()) {
+    return VectorFunctionLinearApproximation::Zero(0, x.rows(), u.rows());
+  }
+
   const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
@@ -45,7 +49,7 @@ VectorFunctionLinearApproximation LoopshapingConstraintInputPattern::getLinearAp
   const auto& x_filter = preCompLS.getFilterState();
   const auto& u_filter = preCompLS.getFilteredInput();
 
-  const auto g_system = systemConstraint_->getLinearApproximation(t, x_system, u_system, preComp_system);
+  const auto g_system = StateInputConstraintCollection::getLinearApproximation(t, x_system, u_system, preComp_system);
 
   VectorFunctionLinearApproximation g;
   g.f = std::move(g_system.f);
@@ -67,6 +71,10 @@ VectorFunctionLinearApproximation LoopshapingConstraintInputPattern::getLinearAp
 VectorFunctionQuadraticApproximation LoopshapingConstraintInputPattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                   const vector_t& u,
                                                                                                   const PreComputation& preComp) const {
+  if (this->empty()) {
+    return VectorFunctionQuadraticApproximation::Zero(0, x.rows(), u.rows());
+  }
+
   const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
@@ -74,7 +82,7 @@ VectorFunctionQuadraticApproximation LoopshapingConstraintInputPattern::getQuadr
   const auto& x_filter = preCompLS.getFilterState();
   const auto& u_filter = preCompLS.getFilteredInput();
 
-  const auto h_system = systemConstraint_->getQuadraticApproximation(t, x_system, u_system, preComp_system);
+  const auto h_system = StateInputConstraintCollection::getQuadraticApproximation(t, x_system, u_system, preComp_system);
 
   VectorFunctionQuadraticApproximation h;
   h.f = std::move(h_system.f);

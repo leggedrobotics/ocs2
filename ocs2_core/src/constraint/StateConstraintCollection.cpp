@@ -34,34 +34,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateConstraintCollection::StateConstraintCollection(const StateConstraintCollection& other) : StateConstraint(other) {
+StateConstraintCollection::StateConstraintCollection(const StateConstraintCollection& other) {
   // Loop through all constraints by name and clone into the new object
   constraintTermMap_.clear();
   for (const auto& constraintPair : other.constraintTermMap_) {
     add(constraintPair.first, std::unique_ptr<StateConstraint>(constraintPair.second->clone()));
   }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-StateConstraintCollection::StateConstraintCollection(StateConstraintCollection&& other) noexcept
-    : StateConstraint(other), constraintTermMap_(std::move(other.constraintTermMap_)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-StateConstraintCollection& StateConstraintCollection::operator=(const StateConstraintCollection& rhs) {
-  *this = StateConstraintCollection(rhs);
-  return *this;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-StateConstraintCollection& StateConstraintCollection::operator=(StateConstraintCollection&& rhs) {
-  std::swap(constraintTermMap_, rhs.constraintTermMap_);
-  return *this;
 }
 
 /******************************************************************************************************/

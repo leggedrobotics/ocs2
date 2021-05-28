@@ -40,12 +40,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t LoopshapingStateInputConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) const {
+  if (this->empty()) {
+    return vector_t::Zero(0);
+  }
+
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
 
-  return systemConstraint_->getValue(t, x_system, u_system, preComp_system);
+  return StateInputConstraintCollection::getValue(t, x_system, u_system, preComp_system);
 }
 
 }  // namespace ocs2

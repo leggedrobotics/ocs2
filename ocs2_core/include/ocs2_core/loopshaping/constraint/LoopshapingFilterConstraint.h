@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+// TODO(mspieler): how should this constraint be added to the loopshaping collection wrapper?
 class LoopshapingFilterConstraint : public StateInputConstraint {
  public:
   LoopshapingFilterConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)

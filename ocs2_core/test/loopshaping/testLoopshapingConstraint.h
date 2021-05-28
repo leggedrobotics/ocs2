@@ -33,9 +33,15 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
     systemConstraint = TestQuadraticStateInputConstraint::createRandom(CONFIG::SYSTEM_STATE_DIM, CONFIG::SYSTEM_INPUT_DIM);
     systemStateConstraint = TestQuadraticStateConstraint::createRandom(CONFIG::SYSTEM_STATE_DIM);
 
+    // Create temporary collection and add a constraint copy
+    StateInputConstraintCollection systemConstraintCollection;
+    StateConstraintCollection systemStateConstraintCollection;
+    systemConstraintCollection.add("", std::unique_ptr<StateInputConstraint>(systemConstraint->clone()));
+    systemStateConstraintCollection.add("", std::unique_ptr<StateConstraint>(systemStateConstraint->clone()));
+
     // Create Loopshaping constraint
-    loopshapingConstraint = LoopshapingConstraint::create(*systemConstraint, loopshapingDefinition);
-    loopshapingStateConstraint = LoopshapingConstraint::create(*systemStateConstraint, loopshapingDefinition);
+    loopshapingConstraint = LoopshapingConstraint::create(systemConstraintCollection, loopshapingDefinition);
+    loopshapingStateConstraint = LoopshapingConstraint::create(systemStateConstraintCollection, loopshapingDefinition);
 
     // Create Loopshaping pre-computation
     preComputation.reset(new LoopshapingPreComputation(PreComputation(), loopshapingDefinition));
@@ -45,8 +51,8 @@ class TestFixtureLoopShapingConstraint : public ::testing::Test {
   std::unique_ptr<LoopshapingPreComputation> preComputation;
   std::unique_ptr<TestQuadraticStateInputConstraint> systemConstraint;
   std::unique_ptr<TestQuadraticStateConstraint> systemStateConstraint;
-  std::unique_ptr<StateInputConstraint> loopshapingConstraint;
-  std::unique_ptr<StateConstraint> loopshapingStateConstraint;
+  std::unique_ptr<StateInputConstraintCollection> loopshapingConstraint;
+  std::unique_ptr<StateConstraintCollection> loopshapingStateConstraint;
 
   const scalar_t tol = 1e-9;
 

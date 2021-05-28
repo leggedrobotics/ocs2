@@ -15,7 +15,7 @@ class LoopshapingConstraintEliminatePattern final : public LoopshapingStateInput
  public:
   using BASE = LoopshapingStateInputConstraint;
 
-  LoopshapingConstraintEliminatePattern(const StateInputConstraint& systemConstraint,
+  LoopshapingConstraintEliminatePattern(const StateInputConstraintCollection& systemConstraint,
                                         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemConstraint, std::move(loopshapingDefinition)){};
 
@@ -33,7 +33,6 @@ class LoopshapingConstraintEliminatePattern final : public LoopshapingStateInput
 
  protected:
   using BASE::loopshapingDefinition_;
-  using BASE::systemConstraint_;
 };
 
 }  // namespace ocs2

@@ -7,25 +7,20 @@
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/constraint/StateConstraintCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
 
-class LoopshapingStateConstraint final : public StateConstraint {
+class LoopshapingStateConstraint final : public StateConstraintCollection {
  public:
-  LoopshapingStateConstraint(const StateConstraint& systemConstraint, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : StateConstraint(systemConstraint.getOrder()),
-        systemConstraint_(systemConstraint.clone()),
-        loopshapingDefinition_(std::move(loopshapingDefinition)){};
+  LoopshapingStateConstraint(const StateConstraintCollection& systemConstraint,
+                             std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : StateConstraintCollection(systemConstraint), loopshapingDefinition_(std::move(loopshapingDefinition)){};
 
   ~LoopshapingStateConstraint() override = default;
 
   LoopshapingStateConstraint* clone() const override { return new LoopshapingStateConstraint(*this); }
-
-  size_t getNumConstraints(scalar_t time) const override { return systemConstraint_->getNumConstraints(time); }
-
-  bool isActive(scalar_t time) const override { return systemConstraint_->isActive(time); }
 
   vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
@@ -34,12 +29,8 @@ class LoopshapingStateConstraint final : public StateConstraint {
                                                                  const PreComputation& preComp) const override;
 
  private:
-  LoopshapingStateConstraint(const LoopshapingStateConstraint& other)
-      : StateConstraint(other), loopshapingDefinition_(other.loopshapingDefinition_) {
-    systemConstraint_.reset(other.systemConstraint_->clone());
-  }
+  LoopshapingStateConstraint(const LoopshapingStateConstraint& other) = default;
 
-  std::unique_ptr<StateConstraint> systemConstraint_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 

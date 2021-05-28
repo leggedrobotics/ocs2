@@ -7,34 +7,24 @@
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
 
-class LoopshapingStateInputConstraint : public StateInputConstraint {
+class LoopshapingStateInputConstraint : public StateInputConstraintCollection {
  public:
   ~LoopshapingStateInputConstraint() override = default;
-
-  size_t getNumConstraints(scalar_t time) const override { return systemConstraint_->getNumConstraints(time); }
-
-  bool isActive(scalar_t time) const override { return systemConstraint_->isActive(time); }
 
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
 
  protected:
-  LoopshapingStateInputConstraint(const StateInputConstraint& systemConstraint,
+  LoopshapingStateInputConstraint(const StateInputConstraintCollection& systemConstraint,
                                   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : StateInputConstraint(systemConstraint.getOrder()),
-        systemConstraint_(systemConstraint.clone()),
-        loopshapingDefinition_(std::move(loopshapingDefinition)){};
+      : StateInputConstraintCollection(systemConstraint), loopshapingDefinition_(std::move(loopshapingDefinition)){};
 
-  LoopshapingStateInputConstraint(const LoopshapingStateInputConstraint& other)
-      : StateInputConstraint(other), loopshapingDefinition_(other.loopshapingDefinition_) {
-    systemConstraint_.reset(other.systemConstraint_->clone());
-  }
+  LoopshapingStateInputConstraint(const LoopshapingStateInputConstraint& other) = default;
 
-  std::unique_ptr<StateInputConstraint> systemConstraint_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 

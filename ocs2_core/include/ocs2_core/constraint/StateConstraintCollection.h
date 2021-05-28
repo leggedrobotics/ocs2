@@ -44,23 +44,11 @@ namespace ocs2 {
  * concatenated constraint vectors and approximations. Each constraint can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateConstraintCollection final : public StateConstraint {
+class StateConstraintCollection {
  public:
-  explicit StateConstraintCollection(ConstraintOrder order = ConstraintOrder::Quadratic) : StateConstraint(order) {}
-  ~StateConstraintCollection() override = default;
-  StateConstraintCollection* clone() const override;
-
-  /** Copy constructor */
-  StateConstraintCollection(const StateConstraintCollection& other);
-
-  /** Move constructor */
-  StateConstraintCollection(StateConstraintCollection&& other) noexcept;
-
-  /** Copy assignment */
-  StateConstraintCollection& operator=(const StateConstraintCollection& rhs);
-
-  /** Move assignment */
-  StateConstraintCollection& operator=(StateConstraintCollection&& rhs);
+  StateConstraintCollection() = default;
+  virtual ~StateConstraintCollection() = default;
+  virtual StateConstraintCollection* clone() const;
 
   /** Checks if the collection has no elements */
   bool empty() const { return constraintTermMap_.empty(); }
@@ -88,18 +76,22 @@ class StateConstraintCollection final : public StateConstraint {
   }
 
   /** Returns the number of active constraints at given time. */
-  size_t getNumConstraints(scalar_t time) const override;
+  size_t getNumConstraints(scalar_t time) const;
 
   /** Get the constraint vector value */
-  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
+  virtual vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const;
 
   /** Get the constraint linear approximation */
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                           const PreComputation& preComp) const override;
+  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                   const PreComputation& preComp) const;
 
   /** Get the constraint quadratic approximation */
-  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const PreComputation& preComp) const override;
+  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                         const PreComputation& preComp) const;
+
+ protected:
+  /** Copy constructor */
+  StateConstraintCollection(const StateConstraintCollection& other);
 
  private:
   /**

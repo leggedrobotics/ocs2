@@ -47,19 +47,24 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
 
     costDesiredTrajectories = CostDesiredTrajectories({0.0}, {x_sys}, {u_sys});
 
-    // Create Loopshaping costs
-    loopshapingCost = LoopshapingCost::create(*systemCost, loopshapingDefinition);
-    loopshapingStateCost = LoopshapingCost::create(*systemStateCost, loopshapingDefinition);
+    StateInputCostCollection systemCostCollection;
+    StateCostCollection systemStateCostCollection;
+    systemCostCollection.add("", std::unique_ptr<StateInputCost>(systemCost->clone()));
+    systemStateCostCollection.add("", std::unique_ptr<StateCost>(systemStateCost->clone()));
+
+    // Create Loopshaping cost collection wrappers
+    loopshapingCost = LoopshapingCost::create(systemCostCollection, loopshapingDefinition);
+    loopshapingStateCost = LoopshapingCost::create(systemStateCostCollection, loopshapingDefinition);
 
     preComputation.reset(new LoopshapingPreComputation(PreComputation(), loopshapingDefinition));
   };
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition;
   std::unique_ptr<LoopshapingPreComputation> preComputation;
-  std::unique_ptr<QuadraticStateInputCost> systemCost;
-  std::unique_ptr<QuadraticStateCost> systemStateCost;
-  std::unique_ptr<StateInputCost> loopshapingCost;
-  std::unique_ptr<StateCost> loopshapingStateCost;
+  std::unique_ptr<StateInputCost> systemCost;
+  std::unique_ptr<StateCost> systemStateCost;
+  std::unique_ptr<StateInputCostCollection> loopshapingCost;
+  std::unique_ptr<StateCostCollection> loopshapingStateCost;
 
   const scalar_t tol = 1e-9;
 

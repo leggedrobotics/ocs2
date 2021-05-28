@@ -144,16 +144,9 @@ TEST_F(StateInputCost_TestFixture, canDeactivateCost) {
   EXPECT_EQ(cost, 0.0);
 }
 
-TEST_F(StateInputCost_TestFixture, moveConstrut) {
-  ocs2::StateInputCostCollection newColleciton(std::move(costCollection));
-  const auto cost = newColleciton.getValue(t, x, u, desiredTrajectory, ocs2::PreComputation());
-  EXPECT_NEAR(cost, expectedCost, 1e-6);
-}
-
-TEST_F(StateInputCost_TestFixture, moveAssign) {
-  ocs2::StateInputCostCollection newColleciton;
-  newColleciton = std::move(costCollection);
-  const auto cost = newColleciton.getValue(t, x, u, desiredTrajectory, ocs2::PreComputation());
+TEST_F(StateInputCost_TestFixture, canClone) {
+  std::unique_ptr<ocs2::StateInputCostCollection> newColleciton(costCollection.clone());
+  const auto cost = newColleciton->getValue(t, x, u, desiredTrajectory, ocs2::PreComputation());
   EXPECT_NEAR(cost, expectedCost, 1e-6);
 }
 

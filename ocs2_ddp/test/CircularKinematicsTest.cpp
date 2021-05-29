@@ -70,11 +70,11 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     boost::filesystem::path filePath(__FILE__);
     std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
     std::unique_ptr<ocs2::StateInputCost> cost(new ocs2::CircularKinematicsCost(libraryFolder));
-    problemPtr->cost.add("cost", std::move(cost));
+    problemPtr->costPtr->add("cost", std::move(cost));
 
     // constraint
     std::unique_ptr<ocs2::StateInputConstraint> constraint(new ocs2::CircularKinematicsConstraints);
-    problemPtr->equalityConstraint.add("constraint", std::move(constraint));
+    problemPtr->equalityConstraintPtr->add("constraint", std::move(constraint));
 
     // operatingTrajectories
     operatingPointsPtr.reset(new ocs2::OperatingPoints(initState, ocs2::vector_t::Zero(INPUT_DIM)));

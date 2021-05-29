@@ -107,18 +107,18 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     problemPtr->dynamicsPtr.reset(systemPtr->clone());
 
     // cost
-    problemPtr->cost.add("cost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
-    problemPtr->finalCost.add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
+    problemPtr->costPtr->add("cost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
+    problemPtr->finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
     costDesiredTrajectories =
         ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     // constraint
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
-      problemPtr->equalityConstraint.add(
+      problemPtr->equalityConstraintPtr->add(
           "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
-      problemPtr->stateEqualityConstraint.add(
+      problemPtr->stateEqualityConstraintPtr->add(
           "stateEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numStateOnlyConstraints)));
-      problemPtr->finalEqualityConstraint.add(
+      problemPtr->finalEqualityConstraintPtr->add(
           "finalEquality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
     }
 
@@ -203,15 +203,15 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
 
   ocs2::scalar_t getQpCost(const ocs2::qp_solver::ContinuousTrajectory& qpSolution) const {
     auto costFunc = [this](ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u) {
-      return problemPtr->cost.getValue(t, x, u, costDesiredTrajectories, ocs2::PreComputation());
+      return problemPtr->costPtr->getValue(t, x, u, costDesiredTrajectories, ocs2::PreComputation());
     };
     auto inputTrajectoryTemp = qpSolution.inputTrajectory;
     inputTrajectoryTemp.emplace_back(inputTrajectoryTemp.back());
     auto lAccum =
         ocs2::PerformanceIndicesRollout::rolloutCost(costFunc, qpSolution.timeTrajectory, qpSolution.stateTrajectory, inputTrajectoryTemp);
 
-    return lAccum + problemPtr->finalCost.getValue(qpSolution.timeTrajectory.back(), qpSolution.stateTrajectory.back(),
-                                                   costDesiredTrajectories, ocs2::PreComputation());
+    return lAccum + problemPtr->finalCostPtr->getValue(qpSolution.timeTrajectory.back(), qpSolution.stateTrajectory.back(),
+                                                       costDesiredTrajectories, ocs2::PreComputation());
   }
 
   std::string getTestName(const ocs2::ddp::Settings& ddpSettings) const {

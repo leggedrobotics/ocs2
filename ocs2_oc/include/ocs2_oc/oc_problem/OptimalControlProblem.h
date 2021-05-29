@@ -47,35 +47,35 @@ struct OptimalControlProblem final {
 
   /* Constraints */
   /** Intermediate equality constraints */
-  StateInputConstraintCollection equalityConstraint;
+  std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
   /** Intermediate state-only equality constraints */
-  StateConstraintCollection stateEqualityConstraint;
+  std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
   /** Intermediate inequality constraints */
-  StateInputConstraintCollection inequalityConstraint;
+  std::unique_ptr<StateInputConstraintCollection> inequalityConstraintPtr;
   /** pre-jump constraints */
-  StateConstraintCollection preJumpEqualityConstraint;
+  std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
   /** final constraints */
-  StateConstraintCollection finalEqualityConstraint;
+  std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
 
   /* Soft constraints */
   /** Intermediate soft constraint penalty */
-  StateInputCostCollection softConstraint;
+  std::unique_ptr<StateInputCostCollection> softConstraintPtr;
   /** Intermediate state-only soft constraint penalty */
-  StateCostCollection stateSoftConstraint;
+  std::unique_ptr<StateCostCollection> stateSoftConstraintPtr;
   /** Pre-jump soft constraint penalty */
-  StateCostCollection preJumpSoftConstraint;
+  std::unique_ptr<StateCostCollection> preJumpSoftConstraintPtr;
   /** Final soft constraint penalty */
-  StateCostCollection finalSoftConstraint;
+  std::unique_ptr<StateCostCollection> finalSoftConstraintPtr;
 
   /* Cost */
   /** Intermediate cost */
-  StateInputCostCollection cost;
+  std::unique_ptr<StateInputCostCollection> costPtr;
   /** Intermediate state-only cost */
-  StateCostCollection stateCost;
+  std::unique_ptr<StateCostCollection> stateCostPtr;
   /** Pre-jump cost */
-  StateCostCollection preJumpCost;
+  std::unique_ptr<StateCostCollection> preJumpCostPtr;
   /** Final cost */
-  StateCostCollection finalCost;
+  std::unique_ptr<StateCostCollection> finalCostPtr;
 
   /** Desired trajectory reference */
   const CostDesiredTrajectories* costDesiredTrajectories = nullptr;  // TODO(mspieler) remove this

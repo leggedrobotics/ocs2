@@ -76,8 +76,8 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     problemPtr->dynamicsPtr.reset(system.clone());
 
     // cost function
-    problemPtr->cost.add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP1_Cost()));
-    problemPtr->finalCost.add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP1_FinalCost()));
+    problemPtr->costPtr->add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP1_Cost()));
+    problemPtr->finalCostPtr->add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP1_FinalCost()));
 
     // operatingTrajectories
     const auto stateOperatingPoint = ocs2::vector_t::Zero(STATE_DIM);

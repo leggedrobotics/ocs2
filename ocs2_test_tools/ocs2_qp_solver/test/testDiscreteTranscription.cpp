@@ -55,8 +55,8 @@ class DiscreteTranscriptionTest : public testing::Test {
     ocs2::OptimalControlProblem problem;
     problem.dynamicsPtr.reset(system->clone());
 
-    problem.cost.add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
-    problem.finalCost.add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
+    problem.costPtr->add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
+    problem.finalCostPtr->add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
     problem.costDesiredTrajectories = &costDesiredTrajectories;
 
     linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
@@ -66,11 +66,11 @@ class DiscreteTranscriptionTest : public testing::Test {
     constrainedProblem = problem;  // copies unconstrained problem
     constrainedProblem.costDesiredTrajectories = &costDesiredTrajectories;
 
-    constrainedProblem.equalityConstraint.add(
+    constrainedProblem.equalityConstraintPtr->add(
         "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
-    constrainedProblem.stateEqualityConstraint.add(
+    constrainedProblem.stateEqualityConstraintPtr->add(
         "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numStateOnlyConstraints)));
-    constrainedProblem.finalEqualityConstraint.add(
+    constrainedProblem.finalEqualityConstraintPtr->add(
         "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
 
     constrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(constrainedProblem, linearization);

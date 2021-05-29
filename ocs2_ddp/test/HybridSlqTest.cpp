@@ -89,9 +89,9 @@ TEST(HybridSlqTest, state_rollout_slq) {
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
-  problem.inequalityConstraint.add("bounds", std::move(systemConstraints));
-  problem.cost.add("cost", std::move(cost));
-  problem.finalCost.add("finalCost", std::move(finalCost));
+  problem.inequalityConstraintPtr->add("bounds", std::move(systemConstraints));
+  problem.costPtr->add("cost", std::move(cost));
+  problem.finalCostPtr->add("finalCost", std::move(finalCost));
 
   vector_t xNominal = vector_t::Zero(stateDim);
   vector_t uNominal = vector_t::Zero(inputDim);

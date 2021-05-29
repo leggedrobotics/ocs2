@@ -72,17 +72,17 @@ class Ocs2QpSolverTest : public testing::Test {
     unconstrainedProblem = ocs2::OptimalControlProblem();  // reset
     unconstrainedProblem.dynamicsPtr.reset(system->clone());
 
-    unconstrainedProblem.cost.add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
-    unconstrainedProblem.finalCost.add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
+    unconstrainedProblem.costPtr->add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
+    unconstrainedProblem.finalCostPtr->add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
 
     // create constrained problem
     constrainedProblem = unconstrainedProblem;  // copies unconstrained problem
 
-    constrainedProblem.equalityConstraint.add(
+    constrainedProblem.equalityConstraintPtr->add(
         "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
-    constrainedProblem.stateEqualityConstraint.add(
+    constrainedProblem.stateEqualityConstraintPtr->add(
         "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numStateOnlyConstraints)));
-    constrainedProblem.finalEqualityConstraint.add(
+    constrainedProblem.finalEqualityConstraintPtr->add(
         "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
 
     costDesiredTrajectories =
@@ -132,7 +132,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
   const auto& u0 = constrainedSolution.inputTrajectory[0];
   preComputation.request(Request::Constraint, t0, x0, u0);
 
-  const auto g0 = unconstrainedProblem.equalityConstraint.getValue(t0, x0, u0, preComputation);
+  const auto g0 = unconstrainedProblem.equalityConstraintPtr->getValue(t0, x0, u0, preComputation);
   ASSERT_TRUE(g0.isZero(precision));
 
   for (int k = 1; k < N; ++k) {
@@ -141,10 +141,10 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
     const auto& u = constrainedSolution.inputTrajectory[k];
     preComputation.request(Request::Constraint, t, x, u);
 
-    const auto g = unconstrainedProblem.equalityConstraint.getValue(t, x, u, preComputation);
+    const auto g = unconstrainedProblem.equalityConstraintPtr->getValue(t, x, u, preComputation);
     ASSERT_TRUE(g.isZero(precision));
 
-    const auto h = unconstrainedProblem.stateEqualityConstraint.getValue(t, x, preComputation);
+    const auto h = unconstrainedProblem.stateEqualityConstraintPtr->getValue(t, x, preComputation);
     ASSERT_TRUE(h.isZero(precision));
   }
 
@@ -152,7 +152,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
   const auto& xf = constrainedSolution.stateTrajectory[N];
   preComputation.requestFinal(Request::Constraint, tf, xf);
 
-  const auto gf = unconstrainedProblem.finalEqualityConstraint.getValue(tf, xf, preComputation);
+  const auto gf = unconstrainedProblem.finalEqualityConstraintPtr->getValue(tf, xf, preComputation);
   ASSERT_TRUE(gf.isZero(precision));
 }
 

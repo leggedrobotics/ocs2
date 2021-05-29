@@ -34,25 +34,39 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OptimalControlProblem::OptimalControlProblem() : preComputationPtr(new PreComputation) {}
+OptimalControlProblem::OptimalControlProblem()
+    : preComputationPtr(new PreComputation),
+      equalityConstraintPtr(new StateInputConstraintCollection),
+      stateEqualityConstraintPtr(new StateConstraintCollection),
+      inequalityConstraintPtr(new StateInputConstraintCollection),
+      preJumpEqualityConstraintPtr(new StateConstraintCollection),
+      finalEqualityConstraintPtr(new StateConstraintCollection),
+      softConstraintPtr(new StateInputCostCollection),
+      stateSoftConstraintPtr(new StateCostCollection),
+      preJumpSoftConstraintPtr(new StateCostCollection),
+      finalSoftConstraintPtr(new StateCostCollection),
+      costPtr(new StateInputCostCollection),
+      stateCostPtr(new StateCostCollection),
+      preJumpCostPtr(new StateCostCollection),
+      finalCostPtr(new StateCostCollection) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
-    : equalityConstraint(other.equalityConstraint),
-      stateEqualityConstraint(other.stateEqualityConstraint),
-      inequalityConstraint(other.inequalityConstraint),
-      preJumpEqualityConstraint(other.preJumpEqualityConstraint),
-      finalEqualityConstraint(other.finalEqualityConstraint),
-      softConstraint(other.softConstraint),
-      stateSoftConstraint(other.stateSoftConstraint),
-      preJumpSoftConstraint(other.preJumpSoftConstraint),
-      finalSoftConstraint(other.finalSoftConstraint),
-      cost(other.cost),
-      stateCost(other.stateCost),
-      preJumpCost(other.preJumpCost),
-      finalCost(other.finalCost),
+    : equalityConstraintPtr(other.equalityConstraintPtr->clone()),
+      stateEqualityConstraintPtr(other.stateEqualityConstraintPtr->clone()),
+      inequalityConstraintPtr(other.inequalityConstraintPtr->clone()),
+      preJumpEqualityConstraintPtr(other.preJumpEqualityConstraintPtr->clone()),
+      finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
+      softConstraintPtr(other.softConstraintPtr->clone()),
+      stateSoftConstraintPtr(other.stateSoftConstraintPtr->clone()),
+      preJumpSoftConstraintPtr(other.preJumpSoftConstraintPtr->clone()),
+      finalSoftConstraintPtr(other.finalSoftConstraintPtr->clone()),
+      costPtr(other.costPtr->clone()),
+      stateCostPtr(other.stateCostPtr->clone()),
+      preJumpCostPtr(other.preJumpCostPtr->clone()),
+      finalCostPtr(other.finalCostPtr->clone()),
       preComputationPtr(other.preComputationPtr->clone()) {
   // validtity check
   if (other.dynamicsPtr == nullptr) {
@@ -66,19 +80,19 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
 /******************************************************************************************************/
 OptimalControlProblem::OptimalControlProblem(OptimalControlProblem&& other) noexcept
     : dynamicsPtr(std::move(other.dynamicsPtr)),
-      equalityConstraint(std::move(other.equalityConstraint)),
-      stateEqualityConstraint(std::move(other.stateEqualityConstraint)),
-      inequalityConstraint(std::move(other.inequalityConstraint)),
-      preJumpEqualityConstraint(std::move(other.preJumpEqualityConstraint)),
-      finalEqualityConstraint(std::move(other.finalEqualityConstraint)),
-      softConstraint(std::move(other.softConstraint)),
-      stateSoftConstraint(std::move(other.stateSoftConstraint)),
-      preJumpSoftConstraint(std::move(other.preJumpSoftConstraint)),
-      finalSoftConstraint(std::move(other.finalSoftConstraint)),
-      cost(std::move(other.cost)),
-      stateCost(std::move(other.stateCost)),
-      preJumpCost(std::move(other.preJumpCost)),
-      finalCost(std::move(other.finalCost)),
+      equalityConstraintPtr(std::move(other.equalityConstraintPtr)),
+      stateEqualityConstraintPtr(std::move(other.stateEqualityConstraintPtr)),
+      inequalityConstraintPtr(std::move(other.inequalityConstraintPtr)),
+      preJumpEqualityConstraintPtr(std::move(other.preJumpEqualityConstraintPtr)),
+      finalEqualityConstraintPtr(std::move(other.finalEqualityConstraintPtr)),
+      softConstraintPtr(std::move(other.softConstraintPtr)),
+      stateSoftConstraintPtr(std::move(other.stateSoftConstraintPtr)),
+      preJumpSoftConstraintPtr(std::move(other.preJumpSoftConstraintPtr)),
+      finalSoftConstraintPtr(std::move(other.finalSoftConstraintPtr)),
+      costPtr(std::move(other.costPtr)),
+      stateCostPtr(std::move(other.stateCostPtr)),
+      preJumpCostPtr(std::move(other.preJumpCostPtr)),
+      finalCostPtr(std::move(other.finalCostPtr)),
       preComputationPtr(std::move(other.preComputationPtr)) {}
 
 /******************************************************************************************************/
@@ -94,19 +108,19 @@ OptimalControlProblem& OptimalControlProblem::operator=(const OptimalControlProb
 /******************************************************************************************************/
 OptimalControlProblem& OptimalControlProblem::operator=(OptimalControlProblem&& rhs) {
   dynamicsPtr = std::move(rhs.dynamicsPtr);
-  equalityConstraint = std::move(rhs.equalityConstraint);
-  stateEqualityConstraint = std::move(rhs.stateEqualityConstraint);
-  inequalityConstraint = std::move(rhs.inequalityConstraint);
-  preJumpEqualityConstraint = std::move(rhs.preJumpEqualityConstraint);
-  finalEqualityConstraint = std::move(rhs.finalEqualityConstraint);
-  softConstraint = std::move(rhs.softConstraint);
-  stateSoftConstraint = std::move(rhs.stateSoftConstraint);
-  preJumpSoftConstraint = std::move(rhs.preJumpSoftConstraint);
-  finalSoftConstraint = std::move(rhs.finalSoftConstraint);
-  cost = std::move(rhs.cost);
-  stateCost = std::move(rhs.stateCost);
-  preJumpCost = std::move(rhs.preJumpCost);
-  finalCost = std::move(rhs.finalCost);
+  equalityConstraintPtr = std::move(rhs.equalityConstraintPtr);
+  stateEqualityConstraintPtr = std::move(rhs.stateEqualityConstraintPtr);
+  inequalityConstraintPtr = std::move(rhs.inequalityConstraintPtr);
+  preJumpEqualityConstraintPtr = std::move(rhs.preJumpEqualityConstraintPtr);
+  finalEqualityConstraintPtr = std::move(rhs.finalEqualityConstraintPtr);
+  softConstraintPtr = std::move(rhs.softConstraintPtr);
+  stateSoftConstraintPtr = std::move(rhs.stateSoftConstraintPtr);
+  preJumpSoftConstraintPtr = std::move(rhs.preJumpSoftConstraintPtr);
+  finalSoftConstraintPtr = std::move(rhs.finalSoftConstraintPtr);
+  costPtr = std::move(rhs.costPtr);
+  stateCostPtr = std::move(rhs.stateCostPtr);
+  preJumpCostPtr = std::move(rhs.preJumpCostPtr);
+  finalCostPtr = std::move(rhs.finalCostPtr);
   preComputationPtr = std::move(rhs.preComputationPtr);
   return *this;
 }

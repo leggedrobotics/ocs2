@@ -46,7 +46,7 @@ TEST(testOptimalControlProblem, evaluateCost) {
 
   OptimalControlProblem problem;
   problem.dynamicsPtr.reset(dynamics.clone());
-  problem.cost.add("QuadraticCost", std::unique_ptr<StateInputCost>(cost->clone()));
+  problem.costPtr->add("QuadraticCost", std::unique_ptr<StateInputCost>(cost->clone()));
   problem.costDesiredTrajectories = &desiredTrajectory;
 
   scalar_t t = 0.0;

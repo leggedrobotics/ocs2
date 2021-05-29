@@ -56,7 +56,7 @@ TEST(testContinousTimeLqr, compareWithMatlab) {
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(dynamics.clone());
-  problem.cost.add("cost", std::move(cost));
+  problem.costPtr->add("cost", std::move(cost));
   problem.costDesiredTrajectories = &costDesiredTrajectories;
 
   // Solve LQR
@@ -92,7 +92,7 @@ TEST(testContinousTimeLqr, evaluateCAREresidual) {
 
     ocs2::OptimalControlProblem problem;
     problem.dynamicsPtr.reset(dynamics->clone());
-    problem.cost.add("cost", std::move(cost));
+    problem.costPtr->add("cost", std::move(cost));
     problem.costDesiredTrajectories = &costDesiredTrajectories;
 
     // Solve LQR

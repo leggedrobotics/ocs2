@@ -50,7 +50,7 @@ solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& st
   modelData.stateDim_ = stateDim;
   modelData.inputDim_ = input.size();
   modelData.dynamicsBias_.setZero(stateDim);
-  lqapprox.approximateUnconstrainedLQProblem(time, state, input, modelData);
+  lqapprox.approximateLQProblem(time, state, input, modelData);
 
   // --- Contstruct hamiltonian ---
   // Compute terms containing inv(R)

@@ -154,19 +154,19 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
       preComputation.request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u);
 
       // intermediate cost
-      modelData.cost_.f = problem.cost.getValue(t, x, u, desiredTrajectory, preComputation);
-      modelData.cost_.f += problem.stateCost.getValue(t, x, desiredTrajectory, preComputation);
-      modelData.cost_.f += problem.softConstraint.getValue(t, x, u, desiredTrajectory, preComputation);
-      modelData.cost_.f += problem.stateSoftConstraint.getValue(t, x, desiredTrajectory, preComputation);
+      modelData.cost_.f = problem.costPtr->getValue(t, x, u, desiredTrajectory, preComputation);
+      modelData.cost_.f += problem.stateCostPtr->getValue(t, x, desiredTrajectory, preComputation);
+      modelData.cost_.f += problem.softConstraintPtr->getValue(t, x, u, desiredTrajectory, preComputation);
+      modelData.cost_.f += problem.stateSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
 
       // state equality constraint
-      modelData.stateEqConstr_.f = problem.stateEqualityConstraint.getValue(t, x, preComputation);
+      modelData.stateEqConstr_.f = problem.stateEqualityConstraintPtr->getValue(t, x, preComputation);
 
       // state-input equality constraint
-      modelData.stateInputEqConstr_.f = problem.equalityConstraint.getValue(t, x, u, preComputation);
+      modelData.stateInputEqConstr_.f = problem.equalityConstraintPtr->getValue(t, x, u, preComputation);
 
       // inequality constraints
-      modelData.ineqConstr_.f = problem.inequalityConstraint.getValue(t, x, u, preComputation);
+      modelData.ineqConstr_.f = problem.inequalityConstraintPtr->getValue(t, x, u, preComputation);
 
       // event time cost and constraints
       if (eventsPastTheEndItr != postEventIndicesStock[i].end() && k + 1 == *eventsPastTheEndItr) {
@@ -176,11 +176,11 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
         preComputation.requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x);
 
         // pre-jump cost
-        modelDataEvent.cost_.f = problem.preJumpCost.getValue(t, x, desiredTrajectory, preComputation);
-        modelDataEvent.cost_.f += problem.preJumpSoftConstraint.getValue(t, x, desiredTrajectory, preComputation);
+        modelDataEvent.cost_.f = problem.preJumpCostPtr->getValue(t, x, desiredTrajectory, preComputation);
+        modelDataEvent.cost_.f += problem.preJumpSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
 
         // pre-jump constraint
-        modelDataEvent.stateEqConstr_.f = problem.preJumpEqualityConstraint.getValue(t, x, preComputation);
+        modelDataEvent.stateEqConstr_.f = problem.preJumpEqualityConstraintPtr->getValue(t, x, preComputation);
 
         eventsPastTheEndItr++;
       }
@@ -191,8 +191,8 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
   const auto t = timeTrajectoriesStock[finalActivePartition_].back();
   const auto& x = stateTrajectoriesStock[finalActivePartition_].back();
   preComputation.requestFinal(Request::Cost + Request::SoftConstraint, t, x);
-  heuristicsValue = problem.finalCost.getValue(t, x, desiredTrajectory, preComputation);
-  heuristicsValue += problem.finalSoftConstraint.getValue(t, x, desiredTrajectory, preComputation);
+  heuristicsValue = problem.finalCostPtr->getValue(t, x, desiredTrajectory, preComputation);
+  heuristicsValue += problem.finalSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
 }
 
 /******************************************************************************************************/

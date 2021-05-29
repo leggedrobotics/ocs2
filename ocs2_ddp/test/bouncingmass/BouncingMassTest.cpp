@@ -133,8 +133,8 @@ TEST(BouncingMassTest, state_rollout_slq) {
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
-  problem.cost.add("cost", std::move(cost));
-  problem.finalCost.add("finalCost", std::move(finalCost));
+  problem.costPtr->add("cost", std::move(cost));
+  problem.finalCostPtr->add("finalCost", std::move(finalCost));
 
   // Rollout Class
   ocs2::StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);

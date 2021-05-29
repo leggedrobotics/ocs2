@@ -122,21 +122,24 @@ VectorFunctionLinearApproximation PythonInterface::flowMapLinearApproximation(sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
+  auto request = Request::Cost + Request::Cost + Request::SoftConstraint;
+  if (penalty_ != nullptr) {
+    request = request + Request::Constraint;
+  }
   auto& preComputation = *problem_->preComputationPtr;
-  preComputation.request(Request::Cost + Request::SoftConstraint, t, x, u);
+  preComputation.request(request, t, x, u);
 
   const auto& desiredTrajectory = *problem_->costDesiredTrajectories;
 
   // get results
   scalar_t L = 0.0;
-  L += problem_->cost.getValue(t, x, u, desiredTrajectory, preComputation);
-  L += problem_->stateCost.getValue(t, x, desiredTrajectory, preComputation);
-  L += problem_->softConstraint.getValue(t, x, u, desiredTrajectory, preComputation);
-  L += problem_->stateSoftConstraint.getValue(t, x, desiredTrajectory, preComputation);
+  L += problem_->costPtr->getValue(t, x, u, desiredTrajectory, preComputation);
+  L += problem_->stateCostPtr->getValue(t, x, desiredTrajectory, preComputation);
+  L += problem_->softConstraintPtr->getValue(t, x, u, desiredTrajectory, preComputation);
+  L += problem_->stateSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
 
   if (penalty_ != nullptr) {
-    preComputation.request(Request::Constraint, t, x, u);
-    const auto h = problem_->inequalityConstraint.getValue(t, x, u, preComputation);
+    const auto h = problem_->inequalityConstraintPtr->getValue(t, x, u, preComputation);
     SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getValue(h);
   }
@@ -149,24 +152,27 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                  Eigen::Ref<const vector_t> u) {
+  auto request = Request::Cost + Request::Cost + Request::SoftConstraint + Request::Approximation;
+  if (penalty_ != nullptr) {
+    request = request + Request::Constraint + Request::Approximation;
+  }
   auto& preComputation = *problem_->preComputationPtr;
-  preComputation.request(Request::Cost + Request::SoftConstraint + Request::Approximation, t, x, u);
+  preComputation.request(request, t, x, u);
 
   const auto& desiredTrajectory = *problem_->costDesiredTrajectories;
 
   // get results
-  auto cost = problem_->cost.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
-  cost += problem_->softConstraint.getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
+  auto cost = problem_->costPtr->getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
+  cost += problem_->softConstraintPtr->getQuadraticApproximation(t, x, u, desiredTrajectory, preComputation);
 
-  auto stateCost = problem_->stateCost.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
-  stateCost += problem_->stateSoftConstraint.getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
+  auto stateCost = problem_->stateCostPtr->getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
+  stateCost += problem_->stateSoftConstraintPtr->getQuadraticApproximation(t, x, desiredTrajectory, preComputation);
   cost.f += stateCost.f;
   cost.dfdx += stateCost.dfdx;
   cost.dfdxx += stateCost.dfdxx;
 
   if (penalty_ != nullptr) {
-    preComputation.request(Request::Constraint + Request::Approximation, t, x, u);
-    const auto h = problem_->inequalityConstraint.getQuadraticApproximation(t, x, u, preComputation);
+    const auto h = problem_->inequalityConstraintPtr->getQuadraticApproximation(t, x, u, preComputation);
     SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     cost += softConstraintPenalty.getQuadraticApproximation(h);
   }
@@ -192,9 +198,8 @@ vector_t PythonInterface::valueFunctionStateDerivative(scalar_t t, Eigen::Ref<co
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::stateInputEqualityConstraint(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  // TODO(mspieler)
-  return vector_t();
-  // return constraints_->stateInputEqualityConstraint(t, x, u);
+  problem_->preComputationPtr->request(Request::Constraint, t, x, u);
+  return problem_->equalityConstraintPtr->getValue(t, x, u, *problem_->preComputationPtr);
 }
 
 /******************************************************************************************************/
@@ -202,38 +207,34 @@ vector_t PythonInterface::stateInputEqualityConstraint(scalar_t t, Eigen::Ref<co
 /******************************************************************************************************/
 VectorFunctionLinearApproximation PythonInterface::stateInputEqualityConstraintLinearApproximation(scalar_t t, Eigen::Ref<const vector_t> x,
                                                                                                    Eigen::Ref<const vector_t> u) {
-  // TODO(mspieler)
-  return VectorFunctionLinearApproximation();
-  // return constraints_->stateInputEqualityConstraintLinearApproximation(t, x, u);
+  problem_->preComputationPtr->request(Request::Constraint + Request::Approximation, t, x, u);
+  return problem_->equalityConstraintPtr->getLinearApproximation(t, x, u, *problem_->preComputationPtr);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PythonInterface::stateInputEqualityConstraintLagrangian(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::Ref<const vector_t> u) {
-  // TODO(mspieler)
-  return vector_t();
+  vector_t zero_u = vector_t::Zero(u.rows());
 
-  // vector_t zero_u = vector_t::Zero(u.rows());
+  const auto g = stateInputEqualityConstraintLinearApproximation(t, x, zero_u);
+  const matrix_t& Dm = g.dfdu;
+  const vector_t& c = g.f;
 
-  // const auto g = constraints_->stateInputEqualityConstraintLinearApproximation(t, x, zero_u);
-  // const matrix_t& Dm = g.dfdu;
-  // const vector_t& c = g.f;
+  const auto Phi = costQuadraticApproximation(t, x, zero_u);
+  const matrix_t& R = Phi.dfduu;
+  const vector_t& r = Phi.dfdu;
 
-  // const auto Phi = costQuadraticApproximation(t, x, zero_u);
-  // const matrix_t& R = Phi.dfduu;
-  // const vector_t& r = Phi.dfdu;
+  const matrix_t B = flowMapLinearApproximation(t, x, zero_u).dfdu;
 
-  // const matrix_t B = flowMapLinearApproximation(t, x, zero_u).dfdu;
+  matrix_t RinvChol;
+  LinearAlgebra::computeInverseMatrixUUT(R, RinvChol);
+  matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol;
+  ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol);
 
-  // matrix_t RinvChol;
-  // LinearAlgebra::computeInverseMatrixUUT(R, RinvChol);
-  // matrix_t DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol;
-  // ocs2::LinearAlgebra::computeConstraintProjection(Dm, RinvChol, DmDager, DdaggerT_R_Ddagger_Chol, RmInvConstrainedChol);
+  vector_t costate = valueFunctionStateDerivative(t, x);
 
-  // vector_t costate = valueFunctionStateDerivative(t, x);
-
-  // return DmDager.transpose() * (R * DmDager * c - r - B.transpose() * costate);
+  return DmDager.transpose() * (R * DmDager * c - r - B.transpose() * costate);
 }
 
 }  // namespace ocs2

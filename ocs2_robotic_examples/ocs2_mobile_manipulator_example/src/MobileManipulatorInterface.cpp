@@ -137,16 +137,18 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   /* Cost */
-  problemPtr_->cost.add("inputCost", getQuadraticInputCost(taskFile));
+  problemPtr_->costPtr->add("inputCost", getQuadraticInputCost(taskFile));
 
   /* Constraints */
-  problemPtr_->softConstraint.add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  problemPtr_->stateSoftConstraint.add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath,
+  problemPtr_->softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
+  problemPtr_->stateSoftConstraintPtr->add(
+      "selfCollision",
+      getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath, usePreComputation, libraryFolder, recompileLibraries));
+  problemPtr_->stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
                                                                                    usePreComputation, libraryFolder, recompileLibraries));
-  problemPtr_->stateSoftConstraint.add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
-                                                                               usePreComputation, libraryFolder, recompileLibraries));
-  problemPtr_->finalSoftConstraint.add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
-                                                                                    usePreComputation, libraryFolder, recompileLibraries));
+  problemPtr_->finalSoftConstraintPtr->add(
+      "finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector", usePreComputation, libraryFolder,
+                                                   recompileLibraries));
 
   /*
    * Use pre-computation

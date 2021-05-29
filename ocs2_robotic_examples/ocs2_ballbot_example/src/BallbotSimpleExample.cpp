@@ -95,8 +95,8 @@ int main(int argc, char** argv) {
 
   std::unique_ptr<QuadraticStateInputCost> L(new QuadraticStateInputCost(Q, R));
   std::unique_ptr<QuadraticStateCost> Phi(new QuadraticStateCost(QFinal));
-  problem.cost.add("cost", std::move(L));
-  problem.finalCost.add("finalCost", std::move(Phi));
+  problem.costPtr->add("cost", std::move(L));
+  problem.finalCostPtr->add("finalCost", std::move(Phi));
 
   /*
    * Initialization

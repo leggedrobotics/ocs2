@@ -30,8 +30,8 @@ class DummyInterface final : public RobotInterface {
     Q << 1, 0, 0, 1;
     R << 1;
     Qf << 2, 0, 0, 2;
-    problemPtr_->cost.add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-    problemPtr_->finalCost.add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+    problemPtr_->costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+    problemPtr_->finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
     costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(2)});
     problemPtr_->costDesiredTrajectories = &costDesiredTrajectories_;

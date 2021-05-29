@@ -101,8 +101,8 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
   std::cerr << "R:  \n" << Q << std::endl;
   std::cerr << "Q_final:\n" << Qf << std::endl;
 
-  problemPtr_->cost.add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-  problemPtr_->finalCost.add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+  problemPtr_->costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+  problemPtr_->finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   /*
    * Initialization

@@ -85,12 +85,14 @@ TEST(HybridSlqTest, state_rollout_slq) {
   std::unique_ptr<ocs2::StateInputCost> cost(new QuadraticStateInputCost(Q, R));
   matrix_t Qf(stateDim, stateDim);
   Qf << 50, 0, 0, 0, 50, 0, 0, 0, 0;
+  std::unique_ptr<ocs2::StateCost> preJumpCost(new QuadraticStateCost(Qf));
   std::unique_ptr<ocs2::StateCost> finalCost(new QuadraticStateCost(Qf));
 
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(systemDynamics.clone());
   problem.inequalityConstraintPtr->add("bounds", std::move(systemConstraints));
   problem.costPtr->add("cost", std::move(cost));
+  problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
   problem.finalCostPtr->add("finalCost", std::move(finalCost));
 
   vector_t xNominal = vector_t::Zero(stateDim);

@@ -262,7 +262,7 @@ constexpr ocs2::scalar_t DDPCorrectness::solutionPrecision;
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_P(DDPCorrectness, TestSLQ) {
+TEST_P(DDPCorrectness, DISABLED_TestSLQ) {
   // settings
   ocs2::scalar_array_t partitioningTimes = getPartitioningTimes();
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, partitioningTimes.size() - 1, getSearchStrategy());

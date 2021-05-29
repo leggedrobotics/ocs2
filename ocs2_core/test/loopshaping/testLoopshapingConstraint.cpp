@@ -48,7 +48,7 @@ TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintLinearAppro
   EXPECT_TRUE(g_linear.dfdu.isApprox(g_quadratic.dfdu));
 }
 
-TYPED_TEST(TestFixtureLoopShapingConstraint, testStateInputConstraintQuadraticApproximation) {
+TYPED_TEST(TestFixtureLoopShapingConstraint, DISABLED_testStateInputConstraintQuadraticApproximation) {
   // Extract approximation
   this->preComputation->request(Request::Constraint + Request::Approximation, this->t, this->x, this->u);
   const auto h = this->loopshapingConstraint->getQuadraticApproximation(this->t, this->x, this->u, *this->preComputation);

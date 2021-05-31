@@ -43,7 +43,12 @@ namespace ocs2 {
  */
 class SystemDynamicsBase : public ControlledSystemBase {
  public:
-  /** Constructor */
+  /**
+   * Constructor
+   *
+   * @param [in] preComputation: The (optional) pre-computation module, internally keeps a copy.
+   *                             @see PreComputation class documentation.
+   */
   explicit SystemDynamicsBase(const PreComputation& preComputation = PreComputation());
 
   /** Default destructor */
@@ -52,17 +57,27 @@ class SystemDynamicsBase : public ControlledSystemBase {
   /** Clone */
   SystemDynamicsBase* clone() const override = 0;
 
-  /** Computes the linear approximation */
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
-
-  /** Computes the linear approximation with given pre-computation */
+  /**
+   * Computes the linear approximation.
+   *
+   * @param [in] t: The current time.
+   * @param [in] x: The current state.
+   * @param [in] u: The current input.
+   * @param [in] preComp: pre-computation module, safely ignore this parameter if not used.
+   *                      @see PreComputation class documentation.
+   * @return The state time derivative linear approximation.
+   */
   virtual VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
                                                                 const PreComputation& preComp) = 0;
 
-  /** Computes the jump map linear approximation */
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x);
-
-  /** Computes the jump map linear approximation with given pre-computation */
+  /** Computes the jump map linear approximation.
+   *
+   * @param [in] t: The current time.
+   * @param [in] x: The current state.
+   * @param [in] preComp: pre-computation module, safely ignore this parameter if not used.
+   *                      @see PreComputation class documentation.
+   * @return The linear approximation of the mapped state after transition
+   */
   virtual VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation& preComp);
 
   /** Computes the guard surfaces linear approximation */
@@ -97,6 +112,22 @@ class SystemDynamicsBase : public ControlledSystemBase {
    * @return The covariance of the dynamics.
    */
   virtual matrix_t dynamicsCovariance(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * Computes the flow map linear approximation.
+   *
+   * @note This method updates the internal preComputation with the request() callback and passes it
+   *       to the virtual linearApproximation() with the preComputation parameter.
+   *       This interface is used by SensitivityIntegrator.
+   */
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /** Computes the jump map linear approximation.
+   *
+   * @note This method updates the internal preComputation with the requestPreJump() callback and
+   *       passes it to the virtual jumpMapLinearApproximation() with the preComputation parameter.
+   */
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x);
 
  protected:
   /** Copy constructor */

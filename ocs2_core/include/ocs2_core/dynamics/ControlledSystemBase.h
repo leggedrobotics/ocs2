@@ -44,7 +44,12 @@ namespace ocs2 {
  */
 class ControlledSystemBase : public OdeBase {
  public:
-  /** Constructor */
+  /**
+   * Constructor
+   *
+   * @param [in] preComputation: The (optional) pre-computation module, internally keeps a copy.
+   *                             @see PreComputation class documentation.
+   */
   explicit ControlledSystemBase(const PreComputation& preComputation = PreComputation());
 
   /** Default destructor */
@@ -81,9 +86,10 @@ class ControlledSystemBase : public OdeBase {
    * @param [in] t: The current time.
    * @param [in] x: The current state.
    * @param [in] u: The current input.
-   * @return: The state time derivative.
+   * @param [in] preComp: pre-computation module, safely ignore this parameter if not used.
+   *                      @see PreComputation class documentation.
+   * @return The state time derivative.
    */
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u);
   virtual vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) = 0;
 
   /**
@@ -91,10 +97,29 @@ class ControlledSystemBase : public OdeBase {
    *
    * @param [in] time: transition time
    * @param [in] state: transition state
+   * @param [in] preComp: pre-computation module, safely ignore this parameter if not used.
+   *                      @see PreComputation class documentation.
    * @return mapped state after transition
    */
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) override final;
   virtual vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp);
+
+  /**
+   * Computes the flow map of a system with exogenous input.
+   *
+   * @note This method calls the internal preComputation request() callback and the virtual
+   *       computeFlowMap() with the preComputation as parameter.
+   *       This interface is used by Rollout and SensitivityIntegrator.
+   */
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u);
+
+  /**
+   * State map at the transition time
+   *
+   * @note This method calls the internal preComputation requestPreJump() callback and the virtual
+   *       computeJumpMap() with the preComputation as parameter.
+   *       This interface is used by Rollout.
+   */
+  vector_t computeJumpMap(scalar_t time, const vector_t& state) override final;
 
   /** Get the pre-computation module */
   const PreComputation& getPreComputation() const { return *preCompPtr_; }

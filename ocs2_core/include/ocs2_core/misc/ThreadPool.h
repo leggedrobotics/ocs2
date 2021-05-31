@@ -61,7 +61,7 @@ class ThreadPool {
    *
    * @tparam Functor: The task function
    * @param [in] taskFunction: The task function to run in the pool. It takes a thread worker index argument (between 0 and nThreads - 1),
-                               which can be used to index designated thread ressources.
+                               which can be used to index designated thread resources.
    * @return future object with taskFunction retrun value
    */
   template <typename Functor>
@@ -115,8 +115,9 @@ class ThreadPool {
    */
   void runTask(std::unique_ptr<TaskBase> taskPtr);
 
-  bool stop_ = false;  // protected by readyQueueLock_
-  std::queue<std::unique_ptr<TaskBase>> taskQueue_;
+  bool stop_ = false;  //!< flag telling all threads to stop.
+
+  std::queue<std::unique_ptr<TaskBase>> taskQueue_;  // protected by readyQueueLock_
   std::condition_variable taskQueueCondition_;
   std::mutex taskQueueLock_;
 

@@ -134,7 +134,7 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
     // accuracy condition for event refinement. If sufficiently accurate crossing location has been determined
     if (accuracyCondition || maxNumIterationsReached) {
       // set new begin/end time and begin state
-      t0 = queryTime + OCS2NumericTraits<scalar_t>::weakEpsilon();
+      t0 = queryTime + numeric_traits::weakEpsilon<scalar_t>();
       t1 = finalTime;
       // compute jump
       x0 = systemDynamicsPtr_->computeJumpMap(queryTime, queryState);

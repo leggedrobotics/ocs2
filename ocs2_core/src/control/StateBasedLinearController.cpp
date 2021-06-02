@@ -60,7 +60,7 @@ vector_t StateBasedLinearController::computeTrajectorySpreadingInput(scalar_t t,
   scalar_t tauPlus = (numEvents > currentMode + 2) ? ctrlEventTimes[currentMode + 2] : ctrlEventTimes.back();
 
   bool pastAllEvents = (currentMode >= numEvents - 1) && (t > tauMinus);
-  const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
+  const scalar_t eps = numeric_traits::weakEpsilon<scalar_t>();
 
   if (pastAllEvents) {
     return ctrlPtr->computeInput(t, x);

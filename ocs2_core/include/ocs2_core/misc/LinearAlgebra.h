@@ -32,16 +32,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
 
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace LinearAlgebra {
 
 // forward declarations
-void makePsdEigenvalue(matrix_t& squareMatrix, double minEigenvalue);
+void makePsdEigenvalue(matrix_t& squareMatrix, scalar_t minEigenvalue);
 
-void makePsdCholesky(matrix_t& A, double minEigenvalue);
+void makePsdCholesky(matrix_t& A, scalar_t minEigenvalue);
 
 void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT, matrix_t& DmDagger, matrix_t& DmDaggerTRmDmDaggerUUT,
                                  matrix_t& RmInvConstrainedUUT);
@@ -54,7 +54,7 @@ void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT,
  * @param [in] minEigenvalue: minimum eigenvalue.
  */
 template <typename Derived>
-void makePsdEigenvalue(Eigen::MatrixBase<Derived>& squareMatrix, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
+void makePsdEigenvalue(Eigen::MatrixBase<Derived>& squareMatrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
   matrix_t mat = squareMatrix;
   makePsdEigenvalue(mat, minEigenvalue);
   squareMatrix = mat;
@@ -80,7 +80,7 @@ void makePsdEigenvalue(Eigen::MatrixBase<Derived>& squareMatrix, double minEigen
  * @param [in] minEigenvalue: minimum eigenvalue.
  */
 template <typename Derived>
-void makePsdGershgorin(Eigen::MatrixBase<Derived>& squareMatrix, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
+void makePsdGershgorin(Eigen::MatrixBase<Derived>& squareMatrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
   assert(squareMatrix.rows() == squareMatrix.cols());
   squareMatrix = 0.5 * (squareMatrix + squareMatrix.transpose()).eval();
   for (size_t i = 0; i < squareMatrix.rows(); i++) {
@@ -107,7 +107,7 @@ void makePsdGershgorin(Eigen::MatrixBase<Derived>& squareMatrix, double minEigen
  * @param [in] minEigenvalue: minimum eigenvalue.
  */
 template <typename Derived>
-void makePsdCholesky(Eigen::MatrixBase<Derived>& A, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
+void makePsdCholesky(Eigen::MatrixBase<Derived>& A, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
   matrix_t mat = A;
   makePsdCholesky(mat, minEigenvalue);
   A = mat;

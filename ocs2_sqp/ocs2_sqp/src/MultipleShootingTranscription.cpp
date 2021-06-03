@@ -49,14 +49,14 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
   auto& projection = transcription.constraintsProjection;
 
   // Dynamics
-  // Discretization returns // x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
+  // Discretization returns x_{k+1} = A_{k} * dx_{k} + B_{k} * du_{k} + b_{k}
   dynamics = sensitivityDiscretizer(systemDynamics, t, x, u, dt);
   dynamics.f -= x_next;  // make it dx_{k+1} = ...
-  performance.stateEqConstraintISE += dt * dynamics.f.squaredNorm();
+  performance.stateEqConstraintISE = dt * dynamics.f.squaredNorm();
 
   // Costs: Approximate the integral with forward euler (correct for dt after adding penalty)
   cost = costFunction.costQuadraticApproximation(t, x, u);
-  performance.totalCost += dt * cost.f;
+  performance.totalCost = dt * cost.f;
 
   // Constraints
   if (constraintPtr != nullptr) {
@@ -66,15 +66,15 @@ Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, Dynamics
       if (ineqConstraints.f.size() > 0) {
         const auto penaltyCost = penaltyPtr->getQuadraticApproximation(ineqConstraints);
         cost += penaltyCost;  // add to cost before potential projection.
-        performance.inequalityConstraintISE += dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
-        performance.inequalityConstraintPenalty += dt * penaltyCost.f;
+        performance.inequalityConstraintISE = dt * ineqConstraints.f.cwiseMin(0.0).squaredNorm();
+        performance.inequalityConstraintPenalty = dt * penaltyCost.f;
       }
     }
 
     // C_{k} * dx_{k} + D_{k} * du_{k} + e_{k} = 0
     constraints = constraintPtr->stateInputEqualityConstraintLinearApproximation(t, x, u);
     if (constraints.f.size() > 0) {
-      performance.stateInputEqConstraintISE += dt * constraints.f.squaredNorm();
+      performance.stateInputEqConstraintISE = dt * constraints.f.squaredNorm();
       if (projectStateInputEqualityConstraints) {  // Handle equality constraints using projection.
         // Projection stored instead of constraint, // TODO: benchmark between lu and qr method. LU seems slightly faster.
         projection = luConstraintProjection(constraints);
@@ -106,16 +106,16 @@ PerformanceIndex computeIntermediatePerformance(SystemDynamicsBase& systemDynami
 
   // Dynamics
   const vector_t dynamicsGap = discretizer(systemDynamics, t, x, u, dt) - x_next;
-  performance.stateEqConstraintISE += dt * dynamicsGap.squaredNorm();
+  performance.stateEqConstraintISE = dt * dynamicsGap.squaredNorm();
 
   // Costs
-  performance.totalCost += dt * costFunction.cost(t, x, u);
+  performance.totalCost = dt * costFunction.cost(t, x, u);
 
   // Constraints
   if (constraintPtr != nullptr) {
     const vector_t constraints = constraintPtr->stateInputEqualityConstraint(t, x, u);
     if (constraints.size() > 0) {
-      performance.stateInputEqConstraintISE += dt * constraints.squaredNorm();
+      performance.stateInputEqConstraintISE = dt * constraints.squaredNorm();
     }
 
     // Inequalities as penalty
@@ -123,8 +123,8 @@ PerformanceIndex computeIntermediatePerformance(SystemDynamicsBase& systemDynami
       const vector_t ineqConstraints = constraintPtr->inequalityConstraint(t, x, u);
       if (ineqConstraints.size() > 0) {
         const scalar_t penaltyCost = penaltyPtr->getValue(ineqConstraints);
-        performance.inequalityConstraintISE += dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
-        performance.inequalityConstraintPenalty += dt * penaltyCost;
+        performance.inequalityConstraintISE = dt * ineqConstraints.cwiseMin(0.0).squaredNorm();
+        performance.inequalityConstraintPenalty = dt * penaltyCost;
       }
     }
   }
@@ -143,7 +143,7 @@ TerminalTranscription setupTerminalNode(CostFunctionBase* terminalCostFunctionPt
   // Terminal conditions
   if (terminalCostFunctionPtr != nullptr) {
     cost = terminalCostFunctionPtr->finalCostQuadraticApproximation(t, x);
-    performance.totalCost += cost.f;
+    performance.totalCost = cost.f;
   } else {
     cost = ScalarFunctionQuadraticApproximation::Zero(x.size(), 0);
   }
@@ -156,7 +156,7 @@ PerformanceIndex computeTerminalPerformance(CostFunctionBase* terminalCostFuncti
                                             const vector_t& x) {
   PerformanceIndex performance;
   if (terminalCostFunctionPtr != nullptr) {
-    performance.totalCost += terminalCostFunctionPtr->finalCost(t, x);
+    performance.totalCost = terminalCostFunctionPtr->finalCost(t, x);
   }
   return performance;
 }
@@ -175,7 +175,7 @@ EventTranscription setupEventNode(SystemDynamicsBase& systemDynamics, CostFuncti
   dynamics = systemDynamics.jumpMapLinearApproximation(t, x);
   dynamics.f -= x_next;                // make it dx_{k+1} = ...
   dynamics.dfdu.setZero(x.size(), 0);  // Overwrite derivative that shouldn't exist.
-  performance.stateEqConstraintISE += dynamics.f.squaredNorm();
+  performance.stateEqConstraintISE = dynamics.f.squaredNorm();
 
   // TODO : add event costs once we have the interface
   cost = ScalarFunctionQuadraticApproximation::Zero(x.size(), 0);
@@ -191,10 +191,10 @@ PerformanceIndex computeEventPerformance(SystemDynamicsBase& systemDynamics, Cos
 
   // Dynamics
   const vector_t dynamicsGap = systemDynamics.computeJumpMap(t, x) - x_next;
-  performance.stateEqConstraintISE += dynamicsGap.squaredNorm();
+  performance.stateEqConstraintISE = dynamicsGap.squaredNorm();
 
   // TODO : add event costs once we have the interface
-  performance.totalCost += 0.0;
+  performance.totalCost = 0.0;
 
   // TODO : add event constraints once we have the interface
 

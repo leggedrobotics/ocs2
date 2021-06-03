@@ -43,40 +43,21 @@ struct AnnotatedTime {
 
   scalar_t time;
   Event event;
+
+  /** Constructor defaulting to 'None' event  */
+  explicit AnnotatedTime(scalar_t t, Event e = Event::None) : time(t), event(e){};
 };
 
-/**
- * Computes the time at which to interpolate, respecting interpolation rules around event times
- *
- * @param time : Current time
- * @param end : End time of the interval
- * @return time to make the interpolation at.
- */
+/** Computes the time at which to interpolate, respecting interpolation rules around event times */
 scalar_t getInterpolationTime(const AnnotatedTime& annotatedTime);
 
-/**
- * Computes the interval start that respects interpolation rules around event times
- *
- * @param start : Time and event information at the start of the interval
- * @return adapted start time t
- */
+/** Computes the interval start that respects interpolation rules around event times */
 scalar_t getIntervalStart(const AnnotatedTime& start);
 
-/**
- * Computes the interval end that respects interpolation rules around event times
- *
- * @param end : Time and event information at the end of the interval
- * @return adapted end time t
- */
+/** Computes the interval end that respects interpolation rules around event times */
 scalar_t getIntervalEnd(const AnnotatedTime& end);
 
-/**
- * Computes the interval duration that respects interpolation rules around event times
- *
- * @param start : Time and event information at the start of the interval
- * @param end : Time and event information at the end of the interval
- * @return dt
- */
+/** Computes the interval duration that respects interpolation rules around event times */
 scalar_t getIntervalDuration(const AnnotatedTime& start, const AnnotatedTime& end);
 
 /**

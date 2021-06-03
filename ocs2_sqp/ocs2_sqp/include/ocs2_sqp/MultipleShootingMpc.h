@@ -63,7 +63,7 @@ class MultipleShootingMpc : public MPC_BASE {
 
  protected:
   void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
-    scalar_array_t partitioningTimes = {0.0};
+    const scalar_array_t partitioningTimes = {0.0};
     solverPtr_->run(initTime, initState, finalTime, partitioningTimes);
   }
 

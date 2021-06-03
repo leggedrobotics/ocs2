@@ -64,7 +64,7 @@ std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scala
   std::vector<AnnotatedTime> timeDiscretization;
 
   // Initialize
-  timeDiscretization.push_back({initTime, AnnotatedTime::Event::None});
+  timeDiscretization.emplace_back(initTime, AnnotatedTime::Event::None);
   scalar_t nextEventIdx = lookup::findIndexInTimeArray(eventTimes, initTime);
 
   // Fill iteratively with pre event, post events are added later

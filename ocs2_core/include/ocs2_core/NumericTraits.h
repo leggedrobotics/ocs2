@@ -38,7 +38,7 @@ namespace numeric_traits {
  * @return limit epsilon value.
  */
 template <typename T>
-static constexpr T limitEpsilon() {
+constexpr T limitEpsilon() {
   return T(1e-6);
 }
 
@@ -48,7 +48,7 @@ static constexpr T limitEpsilon() {
  * @return weak epsilon value
  */
 template <typename T>
-static constexpr T weakEpsilon() {
+constexpr T weakEpsilon() {
   return T(1e-9);
 }
 

@@ -34,13 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 scalar_t getInterpolationTime(const AnnotatedTime& annotatedTime) {
-  return annotatedTime.time + OCS2NumericTraits<scalar_t>::limitEpsilon();
+  return annotatedTime.time + numeric_traits::limitEpsilon<scalar_t>();
 }
 
 scalar_t getIntervalStart(const AnnotatedTime& start) {
   scalar_t adaptedStart = start.time;
   if (start.event == AnnotatedTime::Event::PostEvent) {
-    adaptedStart += OCS2NumericTraits<scalar_t>::weakEpsilon();
+    adaptedStart += numeric_traits::weakEpsilon<scalar_t>();
   }
   return adaptedStart;
 }
@@ -48,7 +48,7 @@ scalar_t getIntervalStart(const AnnotatedTime& start) {
 scalar_t getIntervalEnd(const AnnotatedTime& end) {
   scalar_t adaptedEnd = end.time;
   if (end.event == AnnotatedTime::Event::PreEvent) {
-    adaptedEnd -= OCS2NumericTraits<scalar_t>::weakEpsilon();
+    adaptedEnd -= numeric_traits::weakEpsilon<scalar_t>();
   }
   return adaptedEnd;
 }

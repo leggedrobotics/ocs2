@@ -64,7 +64,8 @@ Strategy fromString(const std::string& name);
  * @param [in] minEigenvalue: The minimum expected eigenvalue after correction.
  */
 template <typename Derived>
-void shiftHessian(Strategy strategy, Eigen::MatrixBase<Derived>& matrix, scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
+void shiftHessian(Strategy strategy, Eigen::MatrixBase<Derived>& matrix,
+                  scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
   assert(matrix.rows() == matrix.cols());
   switch (strategy) {
     case Strategy::DIAGONAL_SHIFT: {

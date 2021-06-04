@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
+#include "ocs2_core/NumericTraits.h"
 #include "ocs2_core/Types.h"
 #include "ocs2_core/misc/Lookup.h"
 
@@ -89,7 +90,13 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
   if (index >= 0) {
     if (index < lastInterval) {
       // interpolation : 0 <= index < lastInterval
-      scalar_t alpha = (enquiryTime - timeArray[index + 1]) / (timeArray[index] - timeArray[index + 1]);
+      const scalar_t intervalLength = timeArray[index + 1] - timeArray[index];
+      scalar_t alpha = (timeArray[index + 1] - enquiryTime) / intervalLength;
+      // if it is an event interval
+      constexpr scalar_t eps = 2.0 * numeric_traits::weakEpsilon<scalar_t>();
+      if (intervalLength < eps) {
+        alpha = std::round(alpha);
+      }
       return {index, alpha};
     } else {
       // upper bound : index >= lastInterval

@@ -41,7 +41,7 @@ class ZeroForceConstraint final : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
     for (int i = 0; i < 3; i++) {
       linearApproximation.constraintValues.push_back(input(3 * legNumber_ + i));
       linearApproximation.derivativeState.emplace_back(state_vector_t::Zero());
-      input_vector_t dcdu = state_vector_t::Zero();
+      input_vector_t dcdu = input_vector_t::Zero();
       dcdu(3 * legNumber_ + i) = 1.0;
       linearApproximation.derivativeInput.push_back(dcdu);
     }

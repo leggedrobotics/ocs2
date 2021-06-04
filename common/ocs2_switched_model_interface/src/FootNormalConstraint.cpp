@@ -77,7 +77,7 @@ void FootNormalConstraint::adfunc(const ad_com_model_t& adComModel, const ad_kin
   // Extract elements from taped input
   ad_scalar_t t = tapedInput(0);
   comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
-  comkino_state_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
+  comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
   // Extract elements from state
   const base_coordinate_ad_t comPose = getComPose(x);

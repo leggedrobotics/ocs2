@@ -42,7 +42,7 @@ template <typename SCALAR_T>
 com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<SCALAR_T>& comModel,
                                                                            const KinematicsModelBase<SCALAR_T>& kinematicsModel,
                                                                            const comkino_state_s_t<SCALAR_T>& comKinoState,
-                                                                           const comkino_state_s_t<SCALAR_T>& comKinoInput) {
+                                                                           const comkino_input_s_t<SCALAR_T>& comKinoInput) {
   // Extract elements from state
   const base_coordinate_s_t<SCALAR_T> comPose = getComPose(comKinoState);
   const base_coordinate_s_t<SCALAR_T> com_comTwist = getComLocalVelocities(comKinoState);
@@ -92,10 +92,10 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
 template com_state_t ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<scalar_t>& comModel,
                                                                         const KinematicsModelBase<scalar_t>& kinematicsModel,
                                                                         const comkino_state_t& comKinoState,
-                                                                        const comkino_state_t& comKinoInput);
+                                                                        const comkino_input_t& comKinoInput);
 template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivative(
     const ComModelBase<ocs2::CppAdInterface::ad_scalar_t>& comModel,
     const KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>& kinematicsModel, const comkino_state_ad_t& comKinoState,
-    const comkino_state_ad_t& comKinoInput);
+    const comkino_input_ad_t& comKinoInput);
 
 }  // namespace switched_model

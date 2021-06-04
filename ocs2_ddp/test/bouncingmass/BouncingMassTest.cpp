@@ -149,8 +149,8 @@ TEST(BouncingMassTest, state_rollout_slq) {
   vector_array_t controllerBiasArray;
   scalar_array_t timeStampArray;
 
-  const scalar_t controllerDeltaTime = 1e-3;  // Time step for controller time array
-  const scalar_t eps = ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon();
+  constexpr scalar_t controllerDeltaTime = 1e-3;  // Time step for controller time array
+  constexpr scalar_t eps = ocs2::numeric_traits::weakEpsilon<scalar_t>();
   scalar_array_t controlTimes = trajTimes;
   controlTimes.push_back(finalTime);
 

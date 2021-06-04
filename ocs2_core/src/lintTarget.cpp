@@ -1,4 +1,4 @@
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/Types.h>
 
 // Automatic Differentation

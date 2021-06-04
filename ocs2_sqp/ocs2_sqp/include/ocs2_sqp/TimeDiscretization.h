@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
@@ -74,6 +74,6 @@ scalar_t getIntervalDuration(const AnnotatedTime& start, const AnnotatedTime& en
  */
 std::vector<AnnotatedTime> timeDiscretizationWithEvents(scalar_t initTime, scalar_t finalTime, scalar_t dt,
                                                         const scalar_array_t& eventTimes,
-                                                        scalar_t dt_min = 10.0 * OCS2NumericTraits<scalar_t>::limitEpsilon());
+                                                        scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
 }  // namespace ocs2

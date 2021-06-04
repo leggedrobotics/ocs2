@@ -12,7 +12,8 @@ class AnymalCerberusSwitchedModelTests : public switched_model::TestAnymalSwitch
  public:
   AnymalCerberusSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::Cerberus), getAnymalKinematicsAd(AnymalModel::Cerberus),
-                                getAnymalComModel(AnymalModel::Cerberus), getAnymalComModelAd(AnymalModel::Cerberus)) {}
+                                getAnymalComModel(AnymalModel::Cerberus), getAnymalComModelAd(AnymalModel::Cerberus),
+                                getWholebodyDynamics(AnymalModel::Cerberus)) {}
 };
 
 TEST_F(AnymalCerberusSwitchedModelTests, Cost) {
@@ -29,6 +30,10 @@ TEST_F(AnymalCerberusSwitchedModelTests, Kinematics) {
 
 TEST_F(AnymalCerberusSwitchedModelTests, ComDynamics) {
   this->printComModel();
+}
+
+TEST_F(AnymalCerberusSwitchedModelTests, baseDynamics) {
+  this->testBaseDynamics();
 }
 
 TEST_F(AnymalCerberusSwitchedModelTests, EndeffectorOrientation) {

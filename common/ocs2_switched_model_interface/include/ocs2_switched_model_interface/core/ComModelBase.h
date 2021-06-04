@@ -74,6 +74,24 @@ class ComModelBase {
 
   base_coordinate_s_t<SCALAR_T> calculateComLocalAccelerations(const base_coordinate_s_t<SCALAR_T>& baseLocalAccelerations,
                                                                const base_coordinate_s_t<SCALAR_T>& baseLocalVelocities) const;
+
+  /**
+   * Computes the base acceleration based on the top 6 rows of the full rigid body dynamics of the system.
+   *
+   * @param basePose : {EulerXYZ (3x1), base position in Origin frame (3x1)}
+   * @param baseLocalVelocities : {base angular velocity in Base Frame (3x1), base linear velocity in Base Frame (3x1)}
+   * @param jointPositions : Joint positions (12x1)
+   * @param jointVelocities : Joint velocities (12x1)
+   * @param jointAccelerations : Joint accelerations (12x1)
+   * @param forcesOnBaseInBaseFrame : { torque on base in Base Frame (3x1), linear forces on the base in Base Frame (3x1) }.
+   * Forces on the base due to contact forces, i.e. J^T * F should also be included here.
+   * @return baseLocalAccelerations : {base angular acceleration in Base Frame (3x1), base linear acceleration in Base Frame (3x1)}
+   */
+  virtual base_coordinate_s_t<SCALAR_T> calculateBaseLocalAccelerations(
+      const base_coordinate_s_t<SCALAR_T>& basePose, const base_coordinate_s_t<SCALAR_T>& baseLocalVelocities,
+      const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities,
+      const joint_coordinate_s_t<SCALAR_T>& jointAccelerations,
+      const switched_model::base_coordinate_s_t<SCALAR_T>& forcesOnBaseInBaseFrame) const = 0;
 };
 
 extern template class ComModelBase<scalar_t>;

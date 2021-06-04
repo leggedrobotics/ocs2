@@ -84,12 +84,12 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
     return {0, scalar_t(1.0)};
   }
 
-  int index = lookup::findIntervalInTimeArray(timeArray, enquiryTime);
-  auto lastInterval = static_cast<int>(timeArray.size() - 1);
+  const int index = lookup::findIntervalInTimeArray(timeArray, enquiryTime);
+  const auto lastInterval = static_cast<int>(timeArray.size() - 1);
   if (index >= 0) {
     if (index < lastInterval) {
       // interpolation : 0 <= index < lastInterval
-      scalar_t alpha = (enquiryTime - timeArray[index + 1]) / (timeArray[index] - timeArray[index + 1]);
+      const scalar_t alpha = (timeArray[index + 1] - enquiryTime) / (timeArray[index + 1] - timeArray[index]);
       return {index, alpha};
     } else {
       // upper bound : index >= lastInterval

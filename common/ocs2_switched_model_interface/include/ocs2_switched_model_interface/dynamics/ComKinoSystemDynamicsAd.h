@@ -5,21 +5,22 @@
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
+#include "ocs2_switched_model_interface/dynamics/ComKinoDynamicsParameters.h"
+#include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
 namespace switched_model {
 
 class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
  public:
-
-
   using Base = ocs2::SystemDynamicsBaseAD;
 
   using ad_com_model_t = ComModelBase<ocs2::ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ocs2::ad_scalar_t>;
-  using parameters_t = Parameters<scalar_t>;
-  using ad_parameters_t = Parameters<ocs2::ad_scalar_t>;
+  using parameters_t = ComKinoSystemDynamicsParameters<scalar_t>;
+  using ad_parameters_t = ComKinoSystemDynamicsParameters<ocs2::ad_scalar_t>;
 
-  explicit ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel, bool recompileModel);
+  explicit ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
+                                   const SwitchedModelModeScheduleManager& modeScheduleManager, bool recompileModel);
 
   ComKinoSystemDynamicsAd(const ComKinoSystemDynamicsAd& rhs);
 
@@ -30,29 +31,22 @@ class ComKinoSystemDynamicsAd : public ocs2::SystemDynamicsBaseAD {
   ocs2::ad_vector_t systemFlowMap(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state, const ocs2::ad_vector_t& input,
                                   const ocs2::ad_vector_t& parameters) const override;
 
-  ocs2::vector_t getFlowMapParameters(scalar_t time) const override { return parametersToVector(*parameters_); }
+  ocs2::vector_t getFlowMapParameters(scalar_t time) const override {
+    return modeScheduleManagerPtr_->getActiveDynamicsParameters().asVector();
+  }
 
-  size_t getNumFlowMapParameters() const override { return 6; }
+  size_t getNumFlowMapParameters() const override { return parameters_t::getNumParameters(); }
 
   template <typename SCALAR_T>
-  static com_state_s_t<SCALAR_T> computeComStateDerivative(const ComModelBase<SCALAR_T>& comModel,
-                                                           const KinematicsModelBase<SCALAR_T>& kinematicsModel,
-                                                           const comkino_state_s_t<SCALAR_T>& comKinoState,
-                                                           const comkino_input_s_t<SCALAR_T>& comKinoInput,
-                                                           const Parameters<SCALAR_T>& parameters = Parameters<SCALAR_T>());
+  static com_state_s_t<SCALAR_T> computeComStateDerivative(
+      const ComModelBase<SCALAR_T>& comModel, const KinematicsModelBase<SCALAR_T>& kinematicsModel,
+      const comkino_state_s_t<SCALAR_T>& comKinoState, const comkino_input_s_t<SCALAR_T>& comKinoInput,
+      const ComKinoSystemDynamicsParameters<SCALAR_T>& parameters = ComKinoSystemDynamicsParameters<SCALAR_T>());
 
  private:
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
-
-  /** Get parameter struct from flat vector */
-  template <typename SCALAR_T>
-  static Parameters<SCALAR_T> parametersFromVector(const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& parameterVector);
-
-  /** Get parameter vector from struct */
-  template <typename SCALAR_T>
-  static Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> parametersToVector(const Parameters<SCALAR_T>& parameters);
-
+  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
 };
 
 //! Explicit instantiations of computeComStateDerivative

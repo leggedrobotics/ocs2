@@ -17,7 +17,8 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
   costFunctionPtr_.reset(new SwitchedModelCostBase(getComModel(), *getSwitchedModelModeScheduleManagerPtr(), Q, R));
   terminalCostFunctionPtr_.reset(new ocs2::QuadraticCostFunction(ocs2::matrix_t(), ocs2::matrix_t(), Qfinal));
 
-  dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
+  dynamicsPtr_.reset(
+      new system_dynamics_t(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(), modelSettings().recompileLibraries_));
   constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
                                          getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), modelSettings()));
   operatingPointsPtr_.reset(new operating_point_t(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));

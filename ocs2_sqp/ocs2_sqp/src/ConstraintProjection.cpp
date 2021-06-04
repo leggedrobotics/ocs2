@@ -27,49 +27,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "hpipm_catkin/OcpSize.h"
+#include "ocs2_sqp/ConstraintProjection.h"
 
 namespace ocs2 {
-namespace hpipm_interface {
 
-bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept {
-  // use && instead of &= to enable short-circuit evaluation
-  bool same = lhs.numStages == rhs.numStages;
-  same = same && (lhs.numInputs == rhs.numInputs);
-  same = same && (lhs.numStates == rhs.numStates);
-  same = same && (lhs.numInputBoxConstraints == rhs.numInputBoxConstraints);
-  same = same && (lhs.numStateBoxConstraints == rhs.numStateBoxConstraints);
-  same = same && (lhs.numIneqConstraints == rhs.numIneqConstraints);
-  same = same && (lhs.numInputBoxSlack == rhs.numInputBoxSlack);
-  same = same && (lhs.numStateBoxSlack == rhs.numStateBoxSlack);
-  same = same && (lhs.numIneqSlack == rhs.numIneqSlack);
-  return same;
+VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+  // Constraint Projectors are based on the QR decomposition
+  const auto numConstraints = constraint.dfdu.rows();
+  const auto numInputs = constraint.dfdu.cols();
+  const Eigen::HouseholderQR<matrix_t> QRof_DT(constraint.dfdu.transpose());
+
+  const auto RT = QRof_DT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>().transpose();
+  const matrix_t RTinvC = RT.solve(constraint.dfdx);  // inv(R^T) * C
+  const matrix_t RTinve = RT.solve(constraint.f);     // inv(R^T) * e
+
+  const matrix_t Q = QRof_DT.householderQ();
+  const auto Q1 = Q.leftCols(numConstraints);
+
+  VectorFunctionLinearApproximation projectionTerms;
+  projectionTerms.dfdu = Q.rightCols(numInputs - numConstraints);
+  projectionTerms.dfdx.noalias() = -Q1 * RTinvC;
+  projectionTerms.f.noalias() = -Q1 * RTinve;
+
+  return projectionTerms;
 }
 
-OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                const std::vector<VectorFunctionLinearApproximation>* constraints) {
-  const int numStages = dynamics.size();
+VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLinearApproximation& constraint) {
+  // Constraint Projectors are based on the LU decomposition
+  const Eigen::FullPivLU<matrix_t> lu(constraint.dfdu);
 
-  OcpSize problemSize(dynamics.size());
+  VectorFunctionLinearApproximation projectionTerms;
+  projectionTerms.dfdu = lu.kernel();
+  projectionTerms.dfdx.noalias() = -lu.solve(constraint.dfdx);
+  projectionTerms.f.noalias() = -lu.solve(constraint.f);
 
-  // State inputs
-  for (int k = 0; k < numStages; k++) {
-    problemSize.numStates[k] = dynamics[k].dfdx.cols();
-    problemSize.numInputs[k] = dynamics[k].dfdu.cols();
-  }
-  problemSize.numStates[numStages] = dynamics[numStages - 1].dfdx.rows();
-  problemSize.numInputs[numStages] = 0;
-
-  // Constraints
-  if (constraints != nullptr) {
-    for (int k = 0; k < numStages + 1; k++) {
-      problemSize.numIneqConstraints[k] = (*constraints)[k].f.size();
-    }
-  }
-
-  return problemSize;
+  return projectionTerms;
 }
 
-}  // namespace hpipm_interface
 }  // namespace ocs2

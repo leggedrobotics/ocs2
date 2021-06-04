@@ -189,6 +189,63 @@ matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+ScalarFunctionQuadraticApproximation CppAdInterface::getGaussNewtonApproximation(const vector_t& x, const vector_t& p) const {
+  // Concatenate input
+  vector_t xp(variableDim_ + parameterDim_);
+  xp << x, p;
+  CppAD::cg::ArrayView<scalar_t> xpArrayView(xp.data(), xp.size());
+
+  ScalarFunctionQuadraticApproximation gnApprox;
+
+  // Zero order
+  vector_t valueVector(model_->Range());
+  model_->ForwardZero(xp, valueVector);
+  gnApprox.f = 0.5 * valueVector.squaredNorm();
+
+  // Jacobian
+  std::vector<scalar_t> sparseJacobian(nnzJacobian_);
+  CppAD::cg::ArrayView<scalar_t> sparseJacobianArrayView(sparseJacobian);
+  size_t const* rows;
+  size_t const* cols;
+  model_->SparseJacobian(xpArrayView, sparseJacobianArrayView, &rows, &cols);
+
+  // Sparse evaluation of J' * f
+  gnApprox.dfdx = vector_t::Zero(variableDim_);
+  for (size_t i = 0; i < nnzJacobian_; i++) {
+    gnApprox.dfdx(cols[i]) += sparseJacobian[i] * valueVector(rows[i]);
+  }
+
+  /*
+   * Sparse construction of the GN matrix, H = J' * J.
+   * H(i, j) = sum_rows { J(row, i) * J(row, j) }
+   * Because the sparse elements are ordered first by row, then by column, we process J row-by-row.
+   * For each row of J, we add the non-zero pairs (i, j) to H(i, j).
+   */
+  gnApprox.dfdxx = matrix_t::Zero(variableDim_, variableDim_);
+  for (size_t i = 0; i < nnzJacobian_; ++i) {
+    const size_t row_i = rows[i];
+    const size_t col_i = cols[i];
+    const scalar_t v_i = sparseJacobian[i];
+    // Diagonal element always exists:
+    gnApprox.dfdxx(col_i, col_i) += v_i * v_i;
+    // Process off-diagonals
+    size_t j = i + 1;
+    while (rows[j] == row_i) {
+      const size_t col_j = cols[j];
+      gnApprox.dfdxx(col_j, col_i) += v_i * sparseJacobian[j];
+      gnApprox.dfdxx(col_i, col_j) = gnApprox.dfdxx(col_j, col_i);  // Maintain symmetry as we go.
+      ++j;
+    }
+  }
+
+  assert(gnApprox.dfdx.allFinite());
+  assert(gnApprox.dfdxx.allFinite());
+  return gnApprox;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 matrix_t CppAdInterface::getHessian(size_t outputIndex, const vector_t& x, const vector_t& p) const {
   vector_t w = vector_t::Zero(rangeDim_);
   w[outputIndex] = 1.0;

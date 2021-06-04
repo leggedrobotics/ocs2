@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_sqp</name>
+  <version>0.0.0</version>
+  <description>The ocs2_hpipm package</description>
+
+  <maintainer email="huier@todo.todo">huier</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>ocs2_core</depend>
+  <depend>ocs2_ddp</depend>
+  <depend>ocs2_mpc</depend>
+  <depend>ocs2_oc</depend>
+  <depend>ocs2_qp_solver</depend>
+  <depend>blasfeo_catkin</depend>
+  <depend>hpipm_catkin</depend>
+
+</package>

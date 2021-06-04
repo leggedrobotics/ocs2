@@ -27,49 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "hpipm_catkin/OcpSize.h"
+#pragma once
+
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
-namespace hpipm_interface {
 
-bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept {
-  // use && instead of &= to enable short-circuit evaluation
-  bool same = lhs.numStages == rhs.numStages;
-  same = same && (lhs.numInputs == rhs.numInputs);
-  same = same && (lhs.numStates == rhs.numStates);
-  same = same && (lhs.numInputBoxConstraints == rhs.numInputBoxConstraints);
-  same = same && (lhs.numStateBoxConstraints == rhs.numStateBoxConstraints);
-  same = same && (lhs.numIneqConstraints == rhs.numIneqConstraints);
-  same = same && (lhs.numInputBoxSlack == rhs.numInputBoxSlack);
-  same = same && (lhs.numStateBoxSlack == rhs.numStateBoxSlack);
-  same = same && (lhs.numIneqSlack == rhs.numIneqSlack);
-  return same;
-}
+/**
+ * Returns the linear projection
+ *  u = Pu * \tilde{u} + Px * x + Pe
+ *
+ * s.t. C*x + D*u + e = 0 is satisfied for any \tilde{u}
+ *
+ * Implementation based on the QR decomposition
+ *
+ * @param constraint : C = dfdx, D = dfdu, e = f;
+ * @return Px = dfdx, Pu = dfdu, Pe = f;
+ */
+VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLinearApproximation& constraint);
 
-OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                                const std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                                const std::vector<VectorFunctionLinearApproximation>* constraints) {
-  const int numStages = dynamics.size();
+/**
+ * Returns the linear projection
+ *  u = Pu * \tilde{u} + Px * x + Pe
+ *
+ * s.t. C*x + D*u + e = 0 is satisfied for any \tilde{u}
+ *
+ * Implementation based on the LU decomposition
+ *
+ * @param constraint : C = dfdx, D = dfdu, e = f;
+ * @return Px = dfdx, Pu = dfdu, Pe = f;
+ */
+VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLinearApproximation& constraint);
 
-  OcpSize problemSize(dynamics.size());
-
-  // State inputs
-  for (int k = 0; k < numStages; k++) {
-    problemSize.numStates[k] = dynamics[k].dfdx.cols();
-    problemSize.numInputs[k] = dynamics[k].dfdu.cols();
-  }
-  problemSize.numStates[numStages] = dynamics[numStages - 1].dfdx.rows();
-  problemSize.numInputs[numStages] = 0;
-
-  // Constraints
-  if (constraints != nullptr) {
-    for (int k = 0; k < numStages + 1; k++) {
-      problemSize.numIneqConstraints[k] = (*constraints)[k].f.size();
-    }
-  }
-
-  return problemSize;
-}
-
-}  // namespace hpipm_interface
 }  // namespace ocs2

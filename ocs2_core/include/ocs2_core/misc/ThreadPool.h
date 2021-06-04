@@ -49,7 +49,7 @@ class ThreadPool {
    * @param [in] nThreads: Number of threads to launch in the pool
    * @param [in] priority: The worker thread priority
    */
-  explicit ThreadPool(int nThreads = 1, int priority = 0);
+  explicit ThreadPool(size_t nThreads = 1, int priority = 0);
 
   /**
    * Destructor
@@ -62,28 +62,23 @@ class ThreadPool {
    * @tparam Functor: The task function
    * @param [in] taskFunction: The task function to run in the pool. It takes a thread worker index argument (between 0 and nThreads - 1),
                                which can be used to index designated thread resources.
-   * @return future object with taskFunction retrun value
+   * @return future object with taskFunction return value
    */
   template <typename Functor>
   std::future<typename std::result_of<Functor(int)>::type> run(Functor taskFunction);
 
   /**
-   * Helper function to run a task N times parallel on the pool
+   * Helper function to run a task N times parallel with the help of the pool.
+   * - 1 task will run in the calling thread with ID = nThreads.
+   * - N-1 tasks will run on the threadpool with ID in [0, nThreads-1].
    *
    * @note This is a blocking operation, returns when all tasks are completed.
    * @warning Calling runParallel(task, nThreads) does not guarantee that each task will be executed with a different workerIndex.
    *
    * @param [in] taskFunction: task function to run in the pool.
-   * @param [in] N: number of times to run taskFunction in parallel, if N = 1 the main thread is used.
+   * @param [in] N: number of times to run taskFunction in parallel.
    */
   void runParallel(std::function<void(int)> taskFunction, int N);
-
-  /**
-   * Enable debug log
-   *
-   * @param [in] debugPrint: re-entrant line printing function
-   */
-  void enableDebug(std::function<void(const std::string)> debugPrint);
 
   /** Get the number of threads. */
   size_t numThreads() const { return workerThreads_.size(); }
@@ -115,7 +110,7 @@ class ThreadPool {
    */
   void runTask(std::unique_ptr<TaskBase> taskPtr);
 
-  bool stop_ = false;  //!< flag telling all threads to stop.
+  std::atomic_bool stop_{false};  //!< flag telling all threads to stop.
 
   std::queue<std::unique_ptr<TaskBase>> taskQueue_;  // protected by readyQueueLock_
   std::condition_variable taskQueueCondition_;
@@ -140,7 +135,7 @@ struct ThreadPool::TaskBase {
  */
 template <typename Functor>
 struct ThreadPool::Task final : public ThreadPool::TaskBase {
-  explicit Task(Functor taskFunction) : packagedTask(taskFunction) {}
+  explicit Task(Functor taskFunction) : packagedTask(std::move(taskFunction)) {}
   ~Task() override = default;
   void operator()(int workerIndex) override { packagedTask(workerIndex); }
 
@@ -153,18 +148,17 @@ struct ThreadPool::Task final : public ThreadPool::TaskBase {
 /**************************************************************************************************/
 template <typename Functor>
 std::future<typename std::result_of<Functor(int)>::type> ThreadPool::run(Functor taskFunction) {
-  auto taskPtr = new Task<Functor>(taskFunction);
+  std::unique_ptr<Task<Functor>> taskPtr(new Task<Functor>(std::move(taskFunction)));
   auto future = taskPtr->packagedTask.get_future();
-  std::unique_ptr<TaskBase> taskBasePtr(taskPtr);
 
   if (workerThreads_.empty()) {
     // run on main thread
-    taskBasePtr->operator()(0);
+    taskPtr->operator()(0);
   } else {
-    runTask(std::move(taskBasePtr));
+    runTask(std::move(taskPtr));
   }
 
-  return std::move(future);
+  return future;
 }
 
 }  // namespace ocs2

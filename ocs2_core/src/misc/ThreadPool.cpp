@@ -6,9 +6,9 @@ namespace ocs2 {
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-ThreadPool::ThreadPool(int nThreads, int priority) {
+ThreadPool::ThreadPool(size_t nThreads, int priority) {
   workerThreads_.reserve(nThreads);
-  for (int i = 0; i < nThreads; i++) {
+  for (size_t i = 0; i < nThreads; i++) {
     workerThreads_.emplace_back(&ThreadPool::worker, this, i);
     setThreadPriority(priority, workerThreads_.back());
   }
@@ -24,7 +24,9 @@ ThreadPool::~ThreadPool() {
   }
   taskQueueCondition_.notify_all();
   for (auto& thread : workerThreads_) {
-    thread.join();
+    if (thread.joinable()) {
+      thread.join();
+    }
   }
 }
 
@@ -32,16 +34,16 @@ ThreadPool::~ThreadPool() {
 /**************************************************************************************************/
 /**************************************************************************************************/
 std::unique_ptr<ThreadPool::TaskBase> ThreadPool::popReady() {
-  std::unique_ptr<TaskBase> task;
-  {
-    std::unique_lock<std::mutex> lock(taskQueueLock_);
-    taskQueueCondition_.wait(lock, [this] { return stop_ || !taskQueue_.empty(); });
-    if (!taskQueue_.empty()) {
-      task = std::move(taskQueue_.front());
-      taskQueue_.pop();
-    }
+  std::unique_lock<std::mutex> lock(taskQueueLock_);
+  taskQueueCondition_.wait(lock, [this] { return !taskQueue_.empty() || stop_; });
+
+  if (!taskQueue_.empty()) {
+    auto task = std::move(taskQueue_.front());
+    taskQueue_.pop();
+    return task;
+  } else {
+    return nullptr;
   }
-  return std::move(task);
 }
 
 /**************************************************************************************************/
@@ -75,18 +77,21 @@ void ThreadPool::runTask(std::unique_ptr<TaskBase> taskPtr) {
 /**************************************************************************************************/
 /**************************************************************************************************/
 void ThreadPool::runParallel(std::function<void(int)> taskFunction, int N) {
-  if (N <= 1) {
-    taskFunction(0);
-    return;
-  }
-
+  // Launch tasks in helper threads
   std::vector<std::future<void>> futures;
-  futures.reserve(N);
-
-  for (int i = 0; i < N; i++) {
-    futures.push_back(std::move(run(taskFunction)));
+  if (N > 1) {
+    const int numHelpers = N - 1;
+    futures.reserve(numHelpers);
+    for (int i = 0; i < numHelpers; ++i) {
+      futures.emplace_back(run(taskFunction));
+    }
   }
 
+  // Execute one instance in this thread.
+  const auto workerId = static_cast<int>(numThreads());  // threadpool workers use ID 0 -> nThreads - 1
+  taskFunction(workerId);
+
+  // Wait for helpers to finish.
   for (auto&& fut : futures) {
     fut.get();
   }

@@ -57,7 +57,8 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
                                const CostFunctionBase* heuristicsFunctionPtr)
     : SolverBase(), ddpSettings_(std::move(ddpSettings)) {
   // thread-pool
-  threadPoolPtr_.reset(new ThreadPool(ddpSettings_.nThreads_, ddpSettings_.threadPriority_));
+  const size_t numHelperThreads = std::max(ddpSettings_.nThreads_, size_t(1)) - 1;
+  threadPoolPtr_.reset(new ThreadPool(numHelperThreads, ddpSettings_.threadPriority_));
 
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();

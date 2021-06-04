@@ -91,3 +91,33 @@ TEST(testThreadPool, testNoThreads) {
   auto fut1 = pool.run([&](int) -> std::string { return "runs on main thread"; });
   EXPECT_EQ(fut1.get(), "runs on main thread");
 }
+
+TEST(testThreadPool, testRunMultipleNoThreads) {
+  ThreadPool pool(0);
+  std::atomic_int counter;
+  counter = 0;
+
+  pool.runParallel([&](int) { counter++; }, 42);
+
+  EXPECT_EQ(counter, 42);
+}
+
+TEST(testThreadPool, testMoveOnlyTask) {
+  ThreadPool pool(2);
+
+  struct MoveOnlyTask {
+    MoveOnlyTask() = default;
+    ~MoveOnlyTask() = default;
+    MoveOnlyTask(const MoveOnlyTask&) = delete;
+    MoveOnlyTask& operator=(const MoveOnlyTask&) = delete;
+    MoveOnlyTask(MoveOnlyTask&&) = default;
+    MoveOnlyTask& operator=(MoveOnlyTask&&) = default;
+    double operator()(int) { return 3.14; }
+  };
+
+  auto f = MoveOnlyTask();
+
+  auto result = pool.run(std::move(f));
+
+  EXPECT_EQ(result.get(), 3.14);
+}

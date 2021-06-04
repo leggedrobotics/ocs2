@@ -80,10 +80,9 @@ void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, con
 
 void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::SystemObservation& observation) {
   // Extract components from state
-  const base_coordinate_t comPose = getComPose(state_vector_t(observation.state));
-  const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
+  const base_coordinate_t basePose = getComPose(state_vector_t(observation.state));
   const joint_coordinate_t qJoints = getJointPositions(state_vector_t(observation.state));
-  const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(comPose));
+  const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(basePose));
 
   // Compute cartesian state and inputs
   feet_array_t<vector3_t> feetPosition;
@@ -99,7 +98,7 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::Sy
   publishJointTransforms(timeStamp, qJoints);
   publishBaseTransform(timeStamp, basePose);
   publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode), feetPosition, feetForce);
-  publishCenterOfMassPose(timeStamp, comPose);
+  publishCenterOfMassPose(timeStamp, basePose);
   publishEndEffectorPoses(timeStamp, feetPosition, feetOrientations);
 }
 
@@ -214,26 +213,24 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     }
 
     // Construct pose msg
-    const base_coordinate_t comPose = state.head<6>();
+    const base_coordinate_t basePose = state.head<6>();
     geometry_msgs::Pose pose;
-    pose.position = getPointMsg(getPositionInOrigin(comPose));
-    pose.orientation = getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(comPose)));
+    pose.position = getPointMsg(getPositionInOrigin(basePose));
+    pose.orientation = getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(basePose)));
 
     // Construct vel msg
-    const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(comPose));
-    const base_coordinate_t comTwist = state.segment<6>(6);
-    const vector3_t o_comVel = o_R_b * getLinearVelocity(comTwist);
-    const vector3_t o_comAngVel = o_R_b * getAngularVelocity(comTwist);
+    const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(basePose));
+    const base_coordinate_t baseTwist = state.segment<6>(6);
+    const vector3_t o_baseVel = o_R_b * getLinearVelocity(baseTwist);
+    const vector3_t o_baseAngVel = o_R_b * getAngularVelocity(baseTwist);
 
     // Fill message containers
     desiredComPositionMsg.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
-    velArray.markers.emplace_back(getArrowAtPointMsg(o_comVel / velScale_, getPositionInOrigin(comPose), Color::blue));
-    angVelArray.markers.emplace_back(getArrowAtPointMsg(o_comAngVel / velScale_, getPositionInOrigin(comPose), Color::green));
+    velArray.markers.emplace_back(getArrowAtPointMsg(o_baseVel / velScale_, getPositionInOrigin(basePose), Color::blue));
+    angVelArray.markers.emplace_back(getArrowAtPointMsg(o_baseAngVel / velScale_, getPositionInOrigin(basePose), Color::green));
 
     // Fill feet msgs
-    const auto basePose = comModelPtr_->calculateBasePose(comPose);
-    const auto baseTwist = comModelPtr_->calculateBaseLocalVelocities(comTwist);
     const auto qJoints = state.tail<12>();
     const auto qVelJoints = input.tail<12>();
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
@@ -300,14 +297,13 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
 
   // Extract Com and Feet from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
-    const base_coordinate_t comPose = getComPose(state_vector_t(state));
-    const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
+    const base_coordinate_t basePose = getComPose(state_vector_t(state));
     const joint_coordinate_t qJoints = getJointPositions(state_vector_t(state));
 
     // Fill com position and pose msgs
     geometry_msgs::Pose pose;
-    pose.position = getPointMsg(getPositionInOrigin(comPose));
-    pose.orientation = getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(comPose)));
+    pose.position = getPointMsg(getPositionInOrigin(basePose));
+    pose.orientation = getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(basePose)));
     mpcComPositionMsgs.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
 
@@ -351,8 +347,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
       const auto preEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event]);
       const auto postEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event + 1]);
       const vector_t postEventState = ocs2::LinearInterpolation::interpolate(eventTimes[event], mpcTimeTrajectory, mpcStateTrajectory);
-      const base_coordinate_t comPose = getComPose(state_vector_t(postEventState));
-      const base_coordinate_t basePose = comModelPtr_->calculateBasePose(comPose);
+      const base_coordinate_t basePose = getComPose(state_vector_t(postEventState));
       const joint_coordinate_t qJoints = getJointPositions(state_vector_t(postEventState));
 
       for (int i = 0; i < NUM_CONTACT_POINTS; i++) {

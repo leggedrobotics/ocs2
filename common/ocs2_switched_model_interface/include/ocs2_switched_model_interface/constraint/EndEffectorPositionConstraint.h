@@ -45,11 +45,10 @@ class EndEffectorPositionConstraint : public EndEffectorConstraint {
     comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
 
     // Extract elements from state
-    const base_coordinate_ad_t comPose = getComPose(x);
+    const base_coordinate_ad_t basePose = getComPose(x);
     const joint_coordinate_ad_t qJoints = getJointPositions(x);
 
-    // Get base state from com state
-    const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
+    // Compute kinematics
     o_footPosition = adKinematicsModel.footPositionInOriginFrame(legNumber, basePose, qJoints);
   };
 };

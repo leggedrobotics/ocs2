@@ -80,14 +80,10 @@ void FootNormalConstraint::adfunc(const ad_com_model_t& adComModel, const ad_kin
   comkino_state_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
   // Extract elements from state
-  const base_coordinate_ad_t comPose = getComPose(x);
-  const base_coordinate_ad_t com_comTwist = getComLocalVelocities(x);
+  const base_coordinate_ad_t basePose = getComPose(x);
+  const base_coordinate_ad_t com_baseTwist = getComLocalVelocities(x);
   const joint_coordinate_ad_t qJoints = getJointPositions(x);
   const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
-
-  // Get base state from com state
-  const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
-  const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
 
   const auto o_footPosition = adKinematicsModel.footPositionInOriginFrame(legNumber, basePose, qJoints);
   const auto o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber, basePose, com_baseTwist, qJoints, dqJoints);

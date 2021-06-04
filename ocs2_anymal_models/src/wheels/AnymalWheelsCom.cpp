@@ -13,10 +13,7 @@
 #include "ocs2_anymal_models/wheels/generated/inverse_dynamics.h"
 #include "ocs2_anymal_models/wheels/generated/inertia_properties.h"
 #include "ocs2_anymal_models/wheels/generated/jsim.h"
-#include "ocs2_anymal_models/wheels/generated/miscellaneous.h"
 #include "ocs2_anymal_models/wheels/generated/transforms.h"
-
-#include "ocs2_switched_model_interface/core/Rotations.h"
 
 namespace anymal {
 namespace tpl {
@@ -26,11 +23,9 @@ namespace tpl {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalWheelsCom<SCALAR_T>::AnymalWheelsCom() {
-  switched_model::joint_coordinate_s_t<SCALAR_T> defaultJointConfig;
-  defaultJointConfig << SCALAR_T(-0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(-0.1),
-      SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.1), SCALAR_T(-0.7), SCALAR_T(1.0);
-
-  setJointConfiguration(defaultJointConfig);
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+  iit::wheels::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
+  totalMass_ = inertiaProperties_.getTotalMass();
 }
 
 /******************************************************************************************************/
@@ -39,31 +34,6 @@ AnymalWheelsCom<SCALAR_T>::AnymalWheelsCom() {
 template <typename SCALAR_T>
 AnymalWheelsCom<SCALAR_T>* AnymalWheelsCom<SCALAR_T>::clone() const {
   return new AnymalWheelsCom<SCALAR_T>(*this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void AnymalWheelsCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) {
-  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-  iit::wheels::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
-  iit::wheels::tpl::HomogeneousTransforms<trait_t> homTransforms_;
-  iit::wheels::tpl::ForceTransforms<trait_t> forceTransforms_;
-  iit::wheels::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
-
-  const auto qExtended = wheels::getExtendedJointCoordinates(q);
-  jointSpaceInertiaMatrix_.update(qExtended);
-  comPositionBaseFrame_ = iit::wheels::getWholeBodyCOM(inertiaProperties_, qExtended, homTransforms_);
-
-  comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
-  SCALAR_T mass = comInertia_(5, 5);
-  switched_model::matrix3_s_t<SCALAR_T> crossComPositionBaseFrame = switched_model::crossProductMatrix<SCALAR_T>(comPositionBaseFrame_);
-  comInertia_.template topLeftCorner<3, 3>() -= mass * crossComPositionBaseFrame * crossComPositionBaseFrame.transpose();
-  comInertia_.template topRightCorner<3, 3>().setZero();
-  comInertia_.template bottomLeftCorner<3, 3>().setZero();
-
-  totalMass_ = inertiaProperties_.getTotalMass();
 }
 
 template <typename SCALAR_T>

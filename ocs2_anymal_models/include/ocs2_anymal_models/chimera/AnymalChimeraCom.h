@@ -29,13 +29,7 @@ class AnymalChimeraCom : public switched_model::ComModelBase<SCALAR_T> {
 
   AnymalChimeraCom<SCALAR_T>* clone() const override;
 
-  void setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) override;
-
-  switched_model::vector3_s_t<SCALAR_T> comPositionBaseFrame() const override { return comPositionBaseFrame_; }
-
   SCALAR_T totalMass() const override { return totalMass_; }
-
-  Eigen::Matrix<SCALAR_T, 6, 6> comInertia() const override { return comInertia_; }
 
   switched_model::base_coordinate_s_t<SCALAR_T> calculateBaseLocalAccelerations(
       const switched_model::base_coordinate_s_t<SCALAR_T>& basePose, const switched_model::base_coordinate_s_t<SCALAR_T>& baseLocalVelocities,
@@ -44,9 +38,6 @@ class AnymalChimeraCom : public switched_model::ComModelBase<SCALAR_T> {
       const switched_model::base_coordinate_s_t<SCALAR_T>& forcesOnBaseInBaseFrame) const override;
 
  private:
-  // cached values for current default joint configuration
-  switched_model::vector3_s_t<SCALAR_T> comPositionBaseFrame_;
-  switched_model::matrix6_s_t<SCALAR_T> comInertia_;
   SCALAR_T totalMass_;
 };
 

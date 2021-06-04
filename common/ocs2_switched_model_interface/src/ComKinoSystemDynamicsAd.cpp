@@ -44,48 +44,41 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
                                                                            const comkino_state_s_t<SCALAR_T>& comKinoState,
                                                                            const comkino_state_s_t<SCALAR_T>& comKinoInput) {
   // Extract elements from state
-  const base_coordinate_s_t<SCALAR_T> comPose = getComPose(comKinoState);
-  const base_coordinate_s_t<SCALAR_T> com_comTwist = getComLocalVelocities(comKinoState);
+  const base_coordinate_s_t<SCALAR_T> basePose = getComPose(comKinoState);
+  const base_coordinate_s_t<SCALAR_T> baseLocalVelocities = getComLocalVelocities(comKinoState);
   const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
 
-  const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(comPose);
+  const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(basePose);
   const matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin(baseEulerAngles);
 
-  const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(com_comTwist);
-  const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(com_comTwist);
-
-  // Inertia matrix in the CoM frame and its derivatives
-  const matrix6_s_t<SCALAR_T> MInverse = comModel.comInertiaInverse();
-
-  // gravity effect on CoM in CoM coordinate
-  const vector3_s_t<SCALAR_T> o_gravityVector(SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(-9.81));
-  vector6_s_t<SCALAR_T> MInverseG;
-  MInverseG << vector3_s_t<SCALAR_T>::Zero(), -o_R_b.transpose() * o_gravityVector;
-
-  // Coriolis and centrifugal forces
-  base_coordinate_s_t<SCALAR_T> C;
-  C.head(3) = com_comAngularVelocity.cross(comModel.rotationalInertia() * com_comAngularVelocity);
-  C.tail(3).setZero();
+  const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(baseLocalVelocities);
+  const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(baseLocalVelocities);
 
   // contact JacobianTransposeLambda
-  const vector3_s_t<SCALAR_T> com_base2CoM = comModel.comPositionBaseFrame();
-  base_coordinate_s_t<SCALAR_T> JcTransposeLambda;
-  JcTransposeLambda.setZero();
+  base_coordinate_s_t<SCALAR_T> JcTransposeLambda = base_coordinate_s_t<SCALAR_T>::Zero();
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-    vector3_s_t<SCALAR_T> com_base2StanceFeet = kinematicsModel.positionBaseToFootInBaseFrame(i, qJoints);
-    vector3_s_t<SCALAR_T> com_comToFoot = com_base2StanceFeet - com_base2CoM;
-    JcTransposeLambda.head(3) += com_comToFoot.cross(comKinoInput.template segment<3>(3 * i));
-    JcTransposeLambda.tail(3) += comKinoInput.template segment<3>(3 * i);
+    const vector3_s_t<SCALAR_T> baseToFootInBase = kinematicsModel.positionBaseToFootInBaseFrame(i, qJoints);
+    const vector3_s_t<SCALAR_T> contactForce = comKinoInput.template segment<3>(3 * i);
+    JcTransposeLambda.head(3) += baseToFootInBase.cross(contactForce);
+    JcTransposeLambda.tail(3) += contactForce;
   }
 
   // angular velocities to Euler angle derivatives transformation
   const matrix3_s_t<SCALAR_T> transformAngVel2EulerAngDev = switched_model::angularVelocitiesToEulerAngleDerivativesMatrix(baseEulerAngles);
 
-  // CoM dynamics
+  // pose dynamics
   com_state_s_t<SCALAR_T> stateDerivativeCoM;
   stateDerivativeCoM.segment(0, 3) = transformAngVel2EulerAngDev * com_comAngularVelocity;
   stateDerivativeCoM.segment(3, 3) = o_R_b * com_comLinearVelocity;
-  stateDerivativeCoM.segment(6, 6) = MInverse * (-C + JcTransposeLambda) - MInverseG;
+
+  /*
+   * Base dynamics with the following assumptions:
+   *  - Zero joint acceleration
+   *  - Zero Coriolis/Centrifugal terms (base and joint velocity both passed as zero)
+   */
+  stateDerivativeCoM.segment(6, 6) = comModel.calculateBaseLocalAccelerations(basePose, base_coordinate_s_t<SCALAR_T>::Zero(), qJoints,
+                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(),
+                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(), JcTransposeLambda);
   return stateDerivativeCoM;
 }
 

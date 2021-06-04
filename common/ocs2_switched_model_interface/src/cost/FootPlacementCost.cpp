@@ -137,11 +137,9 @@ void FootPlacementCost::adfunc(const ad_com_model_t& adComModel, const ad_kinema
   comkino_state_ad_t x = state;
 
   // Extract elements from state
-  const base_coordinate_ad_t comPose = getComPose(x);
+  const base_coordinate_ad_t basePose = getComPose(x);
   const joint_coordinate_ad_t qJoints = getJointPositions(x);
 
-  // Get base state from com state
-  const base_coordinate_ad_t basePose = adComModel.calculateBasePose(comPose);
   const auto o_feetPositionsAsArray = adKinematicsModel.feetPositionsInOriginFrame(basePose, qJoints);
   o_feetPositions = fromArray(o_feetPositionsAsArray);
 }

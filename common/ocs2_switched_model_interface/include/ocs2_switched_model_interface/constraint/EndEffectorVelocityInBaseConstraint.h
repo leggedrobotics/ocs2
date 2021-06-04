@@ -45,15 +45,11 @@ class EndEffectorVelocityInBaseConstraint : public EndEffectorConstraint {
     comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
     // Extract elements from state
-    const base_coordinate_ad_t comPose = getComPose(x);
-    const base_coordinate_ad_t com_comTwist = getComLocalVelocities(x);
+    const base_coordinate_ad_t baseLocalVelocities = getComLocalVelocities(x);
     const joint_coordinate_ad_t qJoints = getJointPositions(x);
     const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
 
-    // Get base state from com state
-    const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
-
-    b_footVelocity = adKinematicsModel.footVelocityInBaseFrame(legNumber, com_baseTwist, qJoints, dqJoints);
+    b_footVelocity = adKinematicsModel.footVelocityInBaseFrame(legNumber, baseLocalVelocities, qJoints, dqJoints);
   }
 };
 }  // namespace switched_model

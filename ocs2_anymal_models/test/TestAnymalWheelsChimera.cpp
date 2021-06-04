@@ -12,7 +12,7 @@ class AnymalWheelsChimeraSwitchedModelTests : public switched_model::TestAnymalS
  public:
   AnymalWheelsChimeraSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::WheelsChimera), getAnymalKinematicsAd(AnymalModel::WheelsChimera),
-                                getAnymalComModel(AnymalModel::WheelsChimera), getAnymalComModelAd(AnymalModel::WheelsChimera)) {}
+                                getAnymalComModel(AnymalModel::WheelsChimera), getAnymalComModelAd(AnymalModel::WheelsChimera), nullptr) {}
 };
 
 TEST_F(AnymalWheelsChimeraSwitchedModelTests, Constraints) {

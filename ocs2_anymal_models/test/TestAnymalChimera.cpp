@@ -12,7 +12,8 @@ class AnymalChimeraSwitchedModelTests : public switched_model::TestAnymalSwitche
  public:
   AnymalChimeraSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::Chimera), getAnymalKinematicsAd(AnymalModel::Chimera),
-                                getAnymalComModel(AnymalModel::Chimera), getAnymalComModelAd(AnymalModel::Chimera)) {}
+                                getAnymalComModel(AnymalModel::Chimera), getAnymalComModelAd(AnymalModel::Chimera),
+                                getWholebodyDynamics(AnymalModel::Chimera)) {}
 };
 
 TEST_F(AnymalChimeraSwitchedModelTests, Constraints) {
@@ -25,6 +26,10 @@ TEST_F(AnymalChimeraSwitchedModelTests, Kinematics) {
 
 TEST_F(AnymalChimeraSwitchedModelTests, ComDynamics) {
   this->printComModel();
+}
+
+TEST_F(AnymalChimeraSwitchedModelTests, baseDynamics) {
+  this->testBaseDynamics();
 }
 
 TEST_F(AnymalChimeraSwitchedModelTests, EndeffectorOrientation) {

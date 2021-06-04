@@ -45,6 +45,8 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/constraint/FrictionConeConstraint.cpp
+	src/dynamics/ComKinoSystemDynamicsAd.cpp
+	src/dynamics/ComKinoDynamicsParameters.cpp
 	src/foot_planner/CubicSpline.cpp
 	src/foot_planner/FootPhase.cpp
 	src/foot_planner/QuinticSplineSwing.cpp
@@ -65,7 +67,6 @@ add_library(${PROJECT_NAME}
 	src/ComKinoConstraintBaseAd.cpp
 	src/AnymalWheelsComKinoConstraintAd.cpp
 	src/ComKinoOperatingPointsBase.cpp
-	src/ComKinoSystemDynamicsAd.cpp
 	src/ComModelBase.cpp
 	src/KinematicsModelBase.cpp
 	src/ModelSettings.cpp

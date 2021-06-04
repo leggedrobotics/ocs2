@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_ddp/HessianCorrection.h>
 
@@ -96,7 +96,7 @@ struct Settings {
   /** The Hessian correction strategy. */
   hessian_correction::Strategy hessianCorrectionStrategy_ = hessian_correction::Strategy::DIAGONAL_SHIFT;
   /** The multiple used for correcting the Hessian for numerical stability of the Riccati backward pass.*/
-  scalar_t hessianCorrectionMultiple_ = OCS2NumericTraits<scalar_t>::limitEpsilon();
+  scalar_t hessianCorrectionMultiple_ = numeric_traits::limitEpsilon<scalar_t>();
 };  // end of Settings
 
 /**

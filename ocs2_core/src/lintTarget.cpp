@@ -43,8 +43,8 @@
 #include <ocs2_core/dynamics/TransferFunctionBase.h>
 
 // Initialization
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 // Integration
 #include <ocs2_core/integration/Integrator.h>

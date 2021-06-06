@@ -34,42 +34,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This is the base class for initializing the DDP-based algorithms.
+ * This is the base class for initializing the solvers.
  */
-class SystemOperatingTrajectoriesBase {
+class Initializer {
  public:
-  /** Default constructor */
-  SystemOperatingTrajectoriesBase() = default;
+  /**
+   * Constructor
+   *
+   * @param [in] inputDim: The dimension of input space.
+   */
+  explicit Initializer(int inputDim) : inputDim_(inputDim) {}
 
   /** Default destructor */
-  virtual ~SystemOperatingTrajectoriesBase() = default;
+  virtual ~Initializer() = default;
 
   /**
-   * Returns pointer to the class.
+   * Clones the class.
    *
    * @return A raw pointer to the class.
    */
-  virtual SystemOperatingTrajectoriesBase* clone() const = 0;
+  virtual Initializer* clone() const { return new Initializer(*this); }
 
   /**
-   * Gets the Operating Trajectories of the system in time interval [startTime, finalTime] where there is
-   * no intermediate switches except possibly the end time.
+   * Computes the state and input of the next time step based on the current time and state. Note that it guaranteed that there is
+   * no event times in the interval [time, nextTime), but there might be an event at nextTime (with nextTime = time + timeStep).
    *
-   * @param [in] initialState: Initial state.
-   * @param [in] startTime: Initial time.
-   * @param [in] finalTime: Final time.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] inputTrajectory: Output control input trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
+   * @param [in] time: The current time.
+   * @param [in] state: The current state.
+   * @param [in] nextTime: The next time step.
+   * @param [out] input: The current input.
+   * @param [out] nextState: The next state.
    */
-  virtual void getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                              scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
-                                              vector_array_t& inputTrajectory, bool concatOutput) = 0;
+  virtual void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
+    input.setZero(inputDim_);
+    nextState = state;
+  }
 
  protected:
   /** Copy constructor */
-  SystemOperatingTrajectoriesBase(const SystemOperatingTrajectoriesBase& rhs) = default;
+  Initializer(const Initializer& rhs) = default;
+
+  int inputDim_;
 };
 
 }  // namespace ocs2

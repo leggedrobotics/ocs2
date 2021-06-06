@@ -73,12 +73,10 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     qpCost = getQpCost(qpSolution);
 
     // system operating points
-    ocs2::vector_array_t stateTrajectoryTemp(N + 1);
-    std::copy(nominalTrajectory.stateTrajectory.begin(), nominalTrajectory.stateTrajectory.end(), stateTrajectoryTemp.begin());
     ocs2::vector_array_t inputTrajectoryTemp(N);
     std::copy(nominalTrajectory.inputTrajectory.begin(), nominalTrajectory.inputTrajectory.end(), inputTrajectoryTemp.begin());
-    inputTrajectoryTemp.emplace_back(inputTrajectoryTemp.back());
-    operatingPointsPtr.reset(new ocs2::OperatingPoints(nominalTrajectory.timeTrajectory, stateTrajectoryTemp, inputTrajectoryTemp));
+    inputTrajectoryTemp.push_back(inputTrajectoryTemp.back());
+    operatingPointsPtr.reset(new ocs2::OperatingPoints(nominalTrajectory.timeTrajectory, nominalTrajectory.stateTrajectory, inputTrajectoryTemp));
 
     // rollout settings
     const ocs2::rollout::Settings rolloutSettings = []() {

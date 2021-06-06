@@ -44,16 +44,16 @@ class MultipleShootingMpc : public MPC_BASE {
    * @param settings : settings for the multiple shooting solver.
    * @param systemDynamicsPtr : The system dynamics.
    * @param costFunctionPtr : The cost function used for the intermediate costs.
-   * @param operatingTrajectoriesPtr : The operating trajectories of system used for initialization.
+   * @param initializerPtr: This class initializes the state-input for the time steps that no controller is available.
    * @param constraintPtr : The system constraint function.
    * @param terminalCostPtr : The cost function used for the terminal (=at the end of the horizon) costs.
    */
   MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                      const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                      const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr,
                       const ConstraintBase* constraintPtr = nullptr, const CostFunctionBase* terminalCostPtr = nullptr)
       : MPC_BASE(std::move(mpcSettings)) {
-    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), systemDynamicsPtr, costFunctionPtr, operatingTrajectoriesPtr,
-                                                constraintPtr, terminalCostPtr));
+    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), systemDynamicsPtr, costFunctionPtr, initializerPtr, constraintPtr,
+                                                terminalCostPtr));
   };
 
   ~MultipleShootingMpc() override = default;

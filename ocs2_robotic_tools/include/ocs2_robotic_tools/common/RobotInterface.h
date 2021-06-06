@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
 namespace ocs2 {
@@ -85,10 +85,10 @@ class RobotInterface {
   virtual const ConstraintBase* getConstraintPtr() const { return nullptr; }
 
   /**
-   * @brief getOperatingPoints
-   * @return reference to the internal operating point
+   * @brief getInitializer
+   * @return reference to the internal solver initializer
    */
-  virtual const SystemOperatingTrajectoriesBase& getOperatingPoints() const = 0;
+  virtual const Initializer& getInitializer() const = 0;
 };
 
 }  // namespace ocs2

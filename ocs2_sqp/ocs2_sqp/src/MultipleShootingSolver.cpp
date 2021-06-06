@@ -42,8 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                                               const CostFunctionBase* costFunctionPtr,
-                                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                                               const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr,
                                                const ConstraintBase* constraintPtr, const CostFunctionBase* terminalCostFunctionPtr)
     : SolverBase(), settings_(std::move(settings)), hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings) {
   // Multithreading, set up threadpool for N-1 helpers, our main thread is the N-th one.
@@ -69,7 +68,7 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
   }
 
   // Operating points
-  operatingTrajectoriesPtr_.reset(operatingTrajectoriesPtr->clone());
+  initializerPtr_.reset(initializerPtr->clone());
 
   if (constraintPtr == nullptr) {
     settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
@@ -151,8 +150,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
 
   // Initialize the state and input
-  vector_array_t x = initializeStateTrajectory(initState, timeDiscretization);
-  vector_array_t u = initializeInputTrajectory(timeDiscretization, x);
+  vector_array_t x, u;
+  initializeStateInputTrajectories(initState, timeDiscretization, x, u);
 
   // Initialize cost
   for (auto& cost : costFunctionPtr_) {
@@ -222,47 +221,34 @@ void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) 
   }
 }
 
-vector_array_t MultipleShootingSolver::initializeInputTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
-                                                                 const vector_array_t& stateTrajectory) const {
-  const int N = static_cast<int>(timeDiscretization.size()) - 1;
-  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
+void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& initState,
+                                                              const std::vector<AnnotatedTime>& timeDiscretization,
+                                                              vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;  // // size of the input trajectory
+  stateTrajectory.clear();
+  stateTrajectory.reserve(N + 1);
+  inputTrajectory.clear();
+  inputTrajectory.reserve(N);
 
-  vector_array_t u;
-  u.reserve(N);
+  stateTrajectory.push_back(initState);
+  const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
   for (int i = 0; i < N; i++) {
-    const scalar_t ti = getInterpolationTime(timeDiscretization[i]);
-    if (ti < interpolateTill) {
-      // Interpolate previous input trajectory
-      u.emplace_back(primalSolution_.controllerPtr_->computeInput(ti, stateTrajectory[i]));
+    const scalar_t time = getInterpolationTime(timeDiscretization[i]);
+    const scalar_t nextTime = getInterpolationTime(timeDiscretization[i + 1]);
+    if (time < interpolateTill) {
+      // Interpolate previous state-input trajectory
+      inputTrajectory.push_back(primalSolution_.controllerPtr_->computeInput(time, stateTrajectory.back()));
+      stateTrajectory.push_back(
+          LinearInterpolation::interpolate(nextTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
+
     } else {
       // No previous control at this time-point -> fall back to heuristics
       // Ask for operating trajectory between t[k] and t[k+1]. Take the returned input at t[k] as our heuristic.
-      const scalar_t tNext = getIntervalEnd(timeDiscretization[i + 1]);
-      scalar_array_t timeArray;
-      vector_array_t stateArray;
-      vector_array_t inputArray;
-      operatingTrajectoriesPtr_->getSystemOperatingTrajectories(stateTrajectory[i], ti, tNext, timeArray, stateArray, inputArray, false);
-      u.push_back(std::move(inputArray.front()));
+      vector_t input, nextState;
+      initializerPtr_->compute(time, stateTrajectory.back(), nextTime, input, nextState);
+      inputTrajectory.push_back(std::move(input));
+      stateTrajectory.push_back(std::move(nextState));
     }
-  }
-
-  return u;
-}
-
-vector_array_t MultipleShootingSolver::initializeStateTrajectory(const vector_t& initState,
-                                                                 const std::vector<AnnotatedTime>& timeDiscretization) const {
-  const int trajectoryLength = static_cast<int>(timeDiscretization.size());
-  if (totalNumIterations_ == 0) {  // first iteration
-    return vector_array_t(trajectoryLength, initState);
-  } else {  // interpolation of previous solution
-    vector_array_t x;
-    x.reserve(trajectoryLength);
-    x.push_back(initState);  // Force linearization of the first node around the current state
-    for (int i = 1; i < trajectoryLength; i++) {
-      const scalar_t ti = getInterpolationTime(timeDiscretization[i]);
-      x.emplace_back(LinearInterpolation::interpolate(ti, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
-    }
-    return x;
   }
 }
 

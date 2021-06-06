@@ -83,7 +83,7 @@ class LoopshapingRobotInterface : public RobotInterface {
 
   const LoopshapingConstraint* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
-  const LoopshapingOperatingPoint& getOperatingPoints() const override { return *operatingPointsPtr_; }
+  const LoopshapingInitializer& getInitializer() const override { return *initializerPtr_; }
 
  private:
   std::unique_ptr<RobotInterface> robotInterfacePtr_;
@@ -92,7 +92,7 @@ class LoopshapingRobotInterface : public RobotInterface {
   std::unique_ptr<LoopshapingDynamics> dynamicsPtr_;
   std::unique_ptr<LoopshapingCost> costFunctionPtr_;
   std::unique_ptr<LoopshapingCost> terminalCostFunctionPtr_;
-  std::unique_ptr<LoopshapingOperatingPoint> operatingPointsPtr_;
+  std::unique_ptr<LoopshapingInitializer> initializerPtr_;
   std::unique_ptr<LoopshapingConstraint> constraintsPtr_;
   std::shared_ptr<LoopshapingModeScheduleManager> loopshapingModeScheduleManager_;
 };

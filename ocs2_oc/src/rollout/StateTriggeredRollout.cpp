@@ -27,17 +27,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_oc/rollout/RootFinder.h>
+#include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include <ocs2_core/control/StateBasedLinearController.h>
-#include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_oc/rollout/RootFinder.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+vector_t StateTriggeredRollout::runImpl(time_interval_array_t&& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                                         scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (controller == nullptr) {

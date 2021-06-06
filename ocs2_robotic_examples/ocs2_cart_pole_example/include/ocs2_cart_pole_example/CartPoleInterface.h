@@ -82,7 +82,7 @@ class CartPoleInterface final : public RobotInterface {
 
   const RolloutBase& getRollout() const { return *ddpCartPoleRolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *cartPoleOperatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *cartPoleInitializerPtr_; }
 
  protected:
   /**
@@ -106,7 +106,7 @@ class CartPoleInterface final : public RobotInterface {
   std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
   std::unique_ptr<QuadraticCostFunction> cartPoleCostPtr_;
   std::unique_ptr<ConstraintBase> cartPoleConstraintPtr_;
-  std::unique_ptr<OperatingPoints> cartPoleOperatingPointPtr_;
+  std::unique_ptr<Initializer> cartPoleInitializerPtr_;
 
   // cost parameters
   matrix_t qm_{STATE_DIM, STATE_DIM};

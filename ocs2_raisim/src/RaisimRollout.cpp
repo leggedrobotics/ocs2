@@ -96,7 +96,7 @@ void RaisimRollout::setPdGains(const Eigen::VectorXd& pGain, const Eigen::Vector
   system_->setPdGains(pGain, dGain);
 }
 
-vector_t RaisimRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+vector_t RaisimRollout::runImpl(time_interval_array_t&& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                                 scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
                                 vector_array_t& inputTrajectory) {
   assert(controller != nullptr);

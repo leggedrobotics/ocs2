@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/Types.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP0.h>
@@ -77,7 +77,7 @@ class Exp0 : public testing::Test {
     constraintPtr.reset(new ocs2::ConstraintBase);
 
     // operatingTrajectories
-    initializerPtr.reset(new ocs2::Initializer(INPUT_DIM));
+    initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,

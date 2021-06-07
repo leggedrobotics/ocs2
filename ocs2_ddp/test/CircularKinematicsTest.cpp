@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/filesystem.hpp>
 
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
@@ -70,7 +71,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     constraintPtr.reset(new ocs2::CircularKinematicsConstraints);
 
     // operatingTrajectories
-    initializerPtr.reset(new ocs2::Initializer(INPUT_DIM));
+    initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }

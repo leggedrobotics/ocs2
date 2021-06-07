@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/Types.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP1.h>
@@ -77,7 +77,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     constraintPtr.reset(new ocs2::ConstraintBase);
 
     // operatingTrajectories
-    initializerPtr.reset(new ocs2::Initializer(INPUT_DIM));
+    initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }

@@ -119,7 +119,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization state
    */
-  initializerPtr_.reset(new Initializer(INPUT_DIM));
+  initializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;

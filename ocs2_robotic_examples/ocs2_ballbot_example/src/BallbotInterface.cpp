@@ -104,7 +104,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  ballbotInitializerPtr_.reset(new Initializer(INPUT_DIM));
+  ballbotInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/

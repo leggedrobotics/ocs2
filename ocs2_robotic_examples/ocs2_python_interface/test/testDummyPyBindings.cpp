@@ -1,11 +1,10 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
@@ -18,24 +17,21 @@ namespace pybindings_test {
 class DummyInterface final : public RobotInterface {
  public:
   DummyInterface() {
-    matrix_t A(2, 2);
-    A << 0, 1, 0, 0;
-    matrix_t B(2, 1);
-    B << 0, 1;
+    const matrix_t A = (matrix_t(2, 2) << 0, 1, 0, 0).finished();
+    const matrix_t B = (matrix_t(2, 1) << 0, 1).finished();
     dynamicsPtr_.reset(new LinearSystemDynamics(A, B));
 
-    matrix_t Q(2, 2), R(1, 1), Qf(2, 2);
-    Q << 1, 0, 0, 1;
-    R << 1;
-    Qf << 2, 0, 0, 2;
+    const matrix_t Q = (matrix_t(2, 2) << 1, 0, 0, 1).finished();
+    const matrix_t R = (matrix_t(1, 1) << 1).finished();
+    const matrix_t Qf = (matrix_t(2, 2) << 2, 0, 0, 2).finished();
     costPtr_.reset(new QuadraticCostFunction(Q, R, Qf));
 
-    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(2)});
+    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(1)});
     costPtr_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
 
     constraintPtr_.reset(new ConstraintBase());
 
-    initializerPtr_.reset(new Initializer(1));
+    initializerPtr_.reset(new DefaultInitializer(1));
 
     rollout::Settings rolloutSettings;
     rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));

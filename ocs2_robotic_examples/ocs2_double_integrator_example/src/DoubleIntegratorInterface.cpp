@@ -98,7 +98,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
   /*
    * Initialization
    */
-  linearSystemInitializerPtr_.reset(new Initializer(INPUT_DIM));
+  linearSystemInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/

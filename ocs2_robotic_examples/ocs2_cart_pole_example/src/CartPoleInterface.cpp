@@ -107,7 +107,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  cartPoleInitializerPtr_.reset(new Initializer(INPUT_DIM));
+  cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/

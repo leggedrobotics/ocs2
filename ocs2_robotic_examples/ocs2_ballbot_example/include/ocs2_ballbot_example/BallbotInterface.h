@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 

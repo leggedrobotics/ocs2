@@ -538,7 +538,7 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const st
     const bool stepAccepted = [&]() {
       if (newConstraintViolation > g_max) {
         return false;
-      } else if (newConstraintViolation < g_min) {
+      } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min) {
         // With low violation only care about cost, reference paper implements here armijo condition
         return (performanceNew.merit < baseline.merit);
       } else {

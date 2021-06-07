@@ -127,7 +127,7 @@ PrimalSolution solveWithEventTime(scalar_t eventTime) {
   ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(m));
 
   // Set up solver
-  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &switchedConstraint);
+  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &switchedConstraint, costPtr.get());
   solver.setModeScheduleManager(modeScheduleManagerPtr);
   solver.setCostDesiredTrajectories(costDesiredTrajectories);
 

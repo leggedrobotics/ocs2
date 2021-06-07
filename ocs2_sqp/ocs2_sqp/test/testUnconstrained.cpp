@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace {
 
-PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, const VectorFunctionLinearApproximation& dynamicsMatrices,
+std::pair<PrimalSolution, > solveWithFeedbackSetting(bool feedback, bool emptyConstraint, const VectorFunctionLinearApproximation& dynamicsMatrices,
                                         const ScalarFunctionQuadraticApproximation& costMatrices) {
   int n = dynamicsMatrices.dfdu.rows();
   int m = dynamicsMatrices.dfdu.cols();
@@ -54,7 +54,7 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.05;
-  settings.sqpIteration = 1;
+  settings.sqpIteration = 10;
   settings.projectStateInputEqualityConstraints = true;
   settings.useFeedbackPolicy = feedback;
   settings.printSolverStatistics = true;
@@ -81,6 +81,12 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
 
   // Solve
   solver->run(startTime, initState, finalTime, partitioningTimes);
+
+  // Assert solution, should be found in one iteration.
+  const auto performanceLog = solver->getIterationsLog();
+  ASSERT_EQ(performanceLog.size(), 1.0);
+  ASSERT_LT(performanceLog.front().stateEqConstraintISE, 1e-9);
+
   return solver->primalSolution(finalTime);
 }
 

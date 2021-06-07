@@ -55,13 +55,6 @@ TEST(testLinearInterpolation, testInterpolation) {
 }
 
 TEST(testLinearInterpolation, testEventTimeInterpolation) {
-  {  // Event in the middle
-    std::vector<double> time{0.0, 1.0, 1.0, 2.0};
-    const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(1.0, time);
-    ASSERT_EQ(indexAlpha.first, 0);
-    ASSERT_TRUE(std::isfinite(indexAlpha.second));
-  }
-
   {  // Only an event
     std::vector<double> time{1.0, 1.0};
     const auto indexAlpha = ocs2::LinearInterpolation::timeSegment(1.0, time);
@@ -69,6 +62,19 @@ TEST(testLinearInterpolation, testEventTimeInterpolation) {
     ASSERT_TRUE(std::isfinite(indexAlpha.second));
     ASSERT_GE(indexAlpha.second, 0.0);
     ASSERT_LE(indexAlpha.second, 1.0);
+  }
+
+  {  // Short time between samples
+    constexpr auto eps = ocs2::numeric_traits::weakEpsilon<ocs2::scalar_t>();
+    std::vector<double> time{0.0, 1.0, 1.0 + eps, 2.0};
+    // Close to 1.0
+    const auto indexAlphaLhs = ocs2::LinearInterpolation::timeSegment(1.0 + 0.1 * eps, time);
+    ASSERT_EQ(indexAlphaLhs.first, 1);
+    ASSERT_EQ(indexAlphaLhs.second, 1.0);
+    // Close to 1.0 + eps
+    const auto indexAlphaRhs = ocs2::LinearInterpolation::timeSegment(1.0 + 0.9 * eps, time);
+    ASSERT_EQ(indexAlphaRhs.first, 1);
+    ASSERT_EQ(indexAlphaRhs.second, 0.0);
   }
 }
 

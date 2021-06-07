@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,27 +29,34 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-namespace ocs2 {
-/**
- * Holds information about the various numeric traits.
- */
-template <typename T = double>
-class OCS2NumericTraits {
- public:
-  /**
-   * If a floating number v is in limit epsilon vicinity of w, then we assume that v approaches to w.
-   * This limit_epsilon value should be greater week_epsilon value.
-   *
-   * @return limit epsilon value.
-   */
-  static inline T limitEpsilon() { return T(1e-6); }
+#include <ocs2_core/Types.h>
 
-  /**
-   * Defines the precision during comparison.
-   *
-   * @return weak epsilon value
-   */
-  static inline T weakEpsilon() { return T(1e-9); }
-};
+namespace ocs2 {
+
+/**
+ * Returns the linear projection
+ *  u = Pu * \tilde{u} + Px * x + Pe
+ *
+ * s.t. C*x + D*u + e = 0 is satisfied for any \tilde{u}
+ *
+ * Implementation based on the QR decomposition
+ *
+ * @param constraint : C = dfdx, D = dfdu, e = f;
+ * @return Px = dfdx, Pu = dfdu, Pe = f;
+ */
+VectorFunctionLinearApproximation qrConstraintProjection(const VectorFunctionLinearApproximation& constraint);
+
+/**
+ * Returns the linear projection
+ *  u = Pu * \tilde{u} + Px * x + Pe
+ *
+ * s.t. C*x + D*u + e = 0 is satisfied for any \tilde{u}
+ *
+ * Implementation based on the LU decomposition
+ *
+ * @param constraint : C = dfdx, D = dfdu, e = f;
+ * @return Px = dfdx, Pu = dfdu, Pe = f;
+ */
+VectorFunctionLinearApproximation luConstraintProjection(const VectorFunctionLinearApproximation& constraint);
 
 }  // namespace ocs2

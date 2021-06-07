@@ -43,6 +43,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Ballbot
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
 
+// SQP
+#include "ocs2_sqp/MultipleShootingSettings.h"
+
 namespace ocs2 {
 namespace ballbot {
 
@@ -64,6 +67,8 @@ class BallbotInterface final : public RobotInterface {
   ~BallbotInterface() override = default;
 
   const vector_t& getInitialState() { return initialState_; }
+
+  multiple_shooting::Settings& sqpSettings() { return sqpSettings_; }
 
   ddp::Settings& ddpSettings() { return ddpSettings_; }
 
@@ -95,6 +100,7 @@ class BallbotInterface final : public RobotInterface {
 
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
+  multiple_shooting::Settings sqpSettings_;
 
   std::unique_ptr<RolloutBase> ddpBallbotRolloutPtr_;
 

@@ -141,7 +141,7 @@ class BouncingMassCost final : public ocs2::CostFunctionBase {
 
   vector_t getNominalFinalState(scalar_t t, const vector_t& x) {
     // Terminal cost only calculated for final state, not for intermediate switch states
-    if (std::fabs(t - timeFinal_) > ocs2::OCS2NumericTraits<scalar_t>::weakEpsilon()) {
+    if (std::fabs(t - timeFinal_) > ocs2::numeric_traits::weakEpsilon<scalar_t>()) {
       return x;
     }
 

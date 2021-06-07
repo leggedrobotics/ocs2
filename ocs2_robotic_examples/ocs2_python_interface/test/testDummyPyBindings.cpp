@@ -35,7 +35,7 @@ class DummyInterface final : public RobotInterface {
 
     constraintPtr_.reset(new ConstraintBase());
 
-    operatingPointPtr_.reset(new OperatingPoints(vector_t::Zero(2), vector_t::Zero(1)));
+    initializerPtr_.reset(new Initializer(1));
 
     rollout::Settings rolloutSettings;
     rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
@@ -47,18 +47,18 @@ class DummyInterface final : public RobotInterface {
     ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
     mpc::Settings mpcSettings;
     return std::unique_ptr<MPC_DDP>(new MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
-                                                operatingPointPtr_.get(), ddpSettings, mpcSettings));
+                                                initializerPtr_.get(), ddpSettings, mpcSettings));
   }
 
   const SystemDynamicsBase& getDynamics() const override { return *dynamicsPtr_; }
   const CostFunctionBase& getCost() const override { return *costPtr_; }
   const ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
-  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *initializerPtr_; }
 
   std::unique_ptr<LinearSystemDynamics> dynamicsPtr_;
   std::unique_ptr<QuadraticCostFunction> costPtr_;
   std::unique_ptr<ConstraintBase> constraintPtr_;
-  std::unique_ptr<OperatingPoints> operatingPointPtr_;
+  std::unique_ptr<Initializer> initializerPtr_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
   CostDesiredTrajectories costDesiredTrajectories_;
 };

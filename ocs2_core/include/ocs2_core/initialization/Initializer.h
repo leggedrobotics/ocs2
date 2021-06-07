@@ -34,26 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This is the base class for initializing the solvers.
+ * This is the interface class that the solvers use to initialize the state and the input for the time steps that no controller
+ * is available. For a trivial implementation of this class, refer to DefaultInitializer class.
  */
 class Initializer {
  public:
-  /**
-   * Constructor
-   *
-   * @param [in] inputDim: The dimension of input space.
-   */
-  explicit Initializer(int inputDim) : inputDim_(inputDim) {}
-
-  /** Default destructor */
+  Initializer() = default;
   virtual ~Initializer() = default;
-
-  /**
-   * Clones the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual Initializer* clone() const { return new Initializer(*this); }
+  virtual Initializer* clone() const = 0;
 
   /**
    * Computes the state and input of the next time step based on the current time and state. Note that it guaranteed that there is
@@ -65,16 +53,11 @@ class Initializer {
    * @param [out] input: The current input.
    * @param [out] nextState: The next state.
    */
-  virtual void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
-    input.setZero(inputDim_);
-    nextState = state;
-  }
+  virtual void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) = 0;
 
  protected:
   /** Copy constructor */
   Initializer(const Initializer& rhs) = default;
-
-  int inputDim_;
 };
 
 }  // namespace ocs2

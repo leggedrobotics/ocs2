@@ -37,7 +37,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LoopshapingInitializer::LoopshapingInitializer(const Initializer& systembase, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-    : Initializer(Eigen::Dynamic), systembase_(systembase.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
+    : systembase_(systembase.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -61,7 +61,6 @@ class SwingTrajectoryPlanner {
   feet_array_t<std::pair<scalar_t, TerrainPlane>> lastContacts_;
   feet_array_t<std::vector<std::unique_ptr<FootPhase>>> feetNormalTrajectories_;
   feet_array_t<std::vector<scalar_t>> feetNormalTrajectoriesEvents_;
-  feet_array_t<vector3_t> nominalConfigurationBaseToFootInBaseFrame_;
 
   feet_array_t<std::vector<ConvexTerrain>> nominalFootholdsPerLeg_;
   std::unique_ptr<TerrainModel> terrainModel_;

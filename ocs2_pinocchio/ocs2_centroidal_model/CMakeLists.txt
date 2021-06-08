@@ -62,8 +62,8 @@ add_library(${PROJECT_NAME}
   src/KinoCentroidalDynamics.cpp
   src/KinoCentroidalDynamicsAD.cpp
   src/CentroidalModelRbdConversions.cpp
-  src/CentroidalModelPinocchioInterface_instantiation.cpp
-  src/CentroidalModelPinocchioMapping_instantiation.cpp
+  src/CentroidalModelPinocchioInterface.cpp
+  src/CentroidalModelPinocchioMapping.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

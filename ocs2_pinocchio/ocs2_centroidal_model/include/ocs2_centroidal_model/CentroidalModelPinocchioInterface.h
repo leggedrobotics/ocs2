@@ -49,10 +49,20 @@ namespace ocs2 {
 
 /**
  * Centroidal Dynamics:
+ *
  * State: x = [ linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_positions ]'
+ * @remark: The linear and angular momenta are expressed with respect to
+ * the centroidal frame (a frame centered at the CoM and aligned with the inertial frame)
+ *
  * Input: u = [ contact_forces, contact_wrenches, joint_velocities ]'
+ * @remark: Contact forces and wrenches are expressed with respect to the inertial frame
+ *
+ *
  * Pinocchio Joint Positions: qPinocchio = [ base_position, base_orientation_zyx, joint_positions ]'
+ * @remark: Base position is expressed with respect to the inertial frame
+ *
  * Pinocchio Joint Velocities: vPinocchio = [ base_linear_velocity, base_orientation_zyx_derivatives, joint_velocities ]'
+ * @remark: Base linear velocity is expressed with respect to the inertial frame
  */
 
 template <typename SCALAR>
@@ -86,66 +96,26 @@ class CentroidalModelPinocchioInterface {
     vector_t vPinocchio;                          // pinocchio joint velocities deduced from the centroidal dynamics
     SCALAR mass;                                  // total robot mass
     vector3_t r_com;                              // position of center-of-mass in world frame
-    matrix_t J_com;                               // jacobian mapping joint velocities to CoM linear velocities
-    matrix_t A;                                   // full Centroidal Momentum Matrix (CMM)
-    matrix6_t Ab;                                 // base part of CMM
-    matrix_t Aj;                                  // joint part of CMM
-    matrix6_t Ab_inv;                             // inverse of Ab
-    vector_t qPinocchio_nominal;                  // nominal robot configuration used in the SRBD model
-    matrix3_t I_com_nominal;                      // nominal robot centroidal inertia used in the SRBD model
-    vector3_t r_com_base_nominal;                 // nominal CoM to base position used in the SRBD model
+    matrix_t J_com;                // jacobian mapping joint velocities to CoM linear velocities (expressed in inertial frame)
+    matrix_t A;                    // full Centroidal Momentum Matrix (CMM)
+    matrix6_t Ab;                  // base part of CMM
+    matrix_t Aj;                   // joint part of CMM
+    matrix6_t Ab_inv;              // inverse of Ab
+    vector_t qPinocchio_nominal;   // nominal robot configuration used in the SRBD model
+    matrix3_t I_com_nominal;       // nominal robot centroidal inertia used in the SRBD model (expressed in nominal base frame)
+    vector3_t r_com_base_nominal;  // nominal CoM to base position used in the SRBD model (expressed in nominal base frame)
   };
 
   CentroidalModelPinocchioInterface(const CentroidalModelType& centroidalModelType, const vector_t& qPinocchioNominal,
                                     const std::vector<std::string>& threeDofContactNames,
                                     const std::vector<std::string>& sixDofContactNames,
-                                    const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface)
-      : pinocchioInterface_(pinocchioInterface) {
-    initializeCentroidalModelInfo(centroidalModelType, qPinocchioNominal, threeDofContactNames, sixDofContactNames);
-  };
+                                    const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface);
+
+  ~CentroidalModelPinocchioInterface() = default;
 
   void initializeCentroidalModelInfo(const CentroidalModelType& centroidalModelType, const vector_t& qPinocchioNominal,
                                      const std::vector<std::string>& threeDofContactNames,
-                                     const std::vector<std::string>& sixDofContactNames) {
-    centroidalModelInfo_.centroidalModelType = centroidalModelType;
-    centroidalModelInfo_.numThreeDofContacts = threeDofContactNames.size();
-    centroidalModelInfo_.numSixDofContacts = sixDofContactNames.size();
-    for (const auto& name : threeDofContactNames) {
-      centroidalModelInfo_.endEffectorFrameIndices.push_back(getRobotModel().getBodyId(name));
-    }
-    for (const auto& name : sixDofContactNames) {
-      centroidalModelInfo_.endEffectorFrameIndices.push_back(getRobotModel().getBodyId(name));
-    }
-
-    const size_t GENERALIZED_VEL_NUM = getRobotModel().nv;
-    centroidalModelInfo_.qPinocchio.setZero(GENERALIZED_VEL_NUM);
-    centroidalModelInfo_.vPinocchio.setZero(GENERALIZED_VEL_NUM);
-    centroidalModelInfo_.mass = pinocchio::computeTotalMass(getRobotModel());
-    centroidalModelInfo_.r_com.setZero();
-    centroidalModelInfo_.J_com.setZero(3, GENERALIZED_VEL_NUM);
-    centroidalModelInfo_.A.setZero(6, GENERALIZED_VEL_NUM);
-    centroidalModelInfo_.Ab.setZero();
-    centroidalModelInfo_.Aj.setZero(6, GENERALIZED_VEL_NUM - 6);
-    centroidalModelInfo_.Ab_inv.setZero();
-
-    // make sure the nominal base frame is aligned with the world frame
-    centroidalModelInfo_.qPinocchio_nominal.setZero(GENERALIZED_VEL_NUM);
-    centroidalModelInfo_.qPinocchio_nominal.tail(GENERALIZED_VEL_NUM - 6) = qPinocchioNominal.tail(GENERALIZED_VEL_NUM - 6);
-    centroidalModelInfo_.I_com_nominal.setZero();
-    centroidalModelInfo_.r_com_base_nominal.setZero();
-
-    if (centroidalModelInfo_.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-      const vector_t vPinocchioNominal = vector_t::Zero(GENERALIZED_VEL_NUM);
-      centroidalModelInfo_.A =
-          pinocchio::ccrba(getRobotModel(), getRobotData(), centroidalModelInfo_.qPinocchio_nominal, vPinocchioNominal);
-      centroidalModelInfo_.A.template rightCols(GENERALIZED_VEL_NUM - 6).setZero();
-      centroidalModelInfo_.Ab = centroidalModelInfo_.A.template leftCols<6>();
-      centroidalModelInfo_.I_com_nominal = getRobotData().Ig.inertia().matrix();
-      centroidalModelInfo_.r_com_base_nominal = centroidalModelInfo_.qPinocchio_nominal.template head<3>() - getRobotData().com[0];
-    }
-  }
-
-  ~CentroidalModelPinocchioInterface() = default;
+                                     const std::vector<std::string>& sixDofContactNames);
 
   const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
   const Model& getRobotModel() const { return pinocchioInterface_.getModel(); }
@@ -157,10 +127,7 @@ class CentroidalModelPinocchioInterface {
    *
    * @param [in] state: system state vector
    */
-  void updatePinocchioJointPositions(const vector_t& state) {
-    const size_t GENERALIZED_VEL_NUM = getRobotModel().nv;
-    centroidalModelInfo_.qPinocchio = state.template segment(6, GENERALIZED_VEL_NUM);
-  }
+  void updatePinocchioJointPositions(const vector_t& state);
 
   /**
    * Updates the vector of generalized velocities (vPinocchio) used by pinocchio functions from the robot state and input variables
@@ -172,49 +139,7 @@ class CentroidalModelPinocchioInterface {
    *
    * @warning: The function updatePinocchioJointPositions should have been called before.
    */
-  void updatePinocchioJointVelocities(const vector_t& state, const vector_t& input) {
-    const size_t GENERALIZED_VEL_NUM = getRobotModel().nv;
-    const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
-
-    switch (centroidalModelInfo_.centroidalModelType) {
-      case CentroidalModelType::FullCentroidalDynamics: {
-        centroidalModelInfo_.A = pinocchio::computeCentroidalMap(getRobotModel(), getRobotData(), centroidalModelInfo_.qPinocchio);
-        centroidalModelInfo_.r_com = getRobotData().com[0];
-        centroidalModelInfo_.J_com = centroidalModelInfo_.A.template topRows<3>() / centroidalModelInfo_.mass;
-        centroidalModelInfo_.Ab = centroidalModelInfo_.A.template leftCols<6>();
-        centroidalModelInfo_.Aj = centroidalModelInfo_.A.template rightCols(ACTUATED_DOF_NUM);
-        centroidalModelInfo_.Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(centroidalModelInfo_.Ab);
-        centroidalModelInfo_.vPinocchio.template head<6>() =
-            centroidalModelInfo_.Ab_inv *
-            (centroidalModelInfo_.mass * state.template head<6>() - centroidalModelInfo_.Aj * input.template tail(ACTUATED_DOF_NUM));
-        centroidalModelInfo_.vPinocchio.template tail(ACTUATED_DOF_NUM) = input.template tail(ACTUATED_DOF_NUM);
-        break;
-      }
-      case CentroidalModelType::SingleRigidBodyDynamics: {
-        const vector3_t eulerAnglesZyx = centroidalModelInfo_.qPinocchio.template segment<3>(3);
-        const matrix3_t T_zyx = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocities(eulerAnglesZyx);
-        const matrix3_t R_w_b = getRotationMatrixFromZyxEulerAngles(eulerAnglesZyx);
-        vector3_t o_r_com_base = R_w_b * centroidalModelInfo_.r_com_base_nominal;
-        matrix3_t S_com_base = skewSymmetricMatrix(o_r_com_base);
-        centroidalModelInfo_.Ab.template topRightCorner<3, 3>() = centroidalModelInfo_.mass * S_com_base * T_zyx;
-        const matrix3_t mat1 = R_w_b * centroidalModelInfo_.I_com_nominal;
-        const matrix3_t mat2 = R_w_b.transpose() * T_zyx;
-        centroidalModelInfo_.Ab.template bottomRightCorner<3, 3>() = mat1 * mat2;
-        centroidalModelInfo_.Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(centroidalModelInfo_.Ab);
-        centroidalModelInfo_.A.template leftCols<6>() = centroidalModelInfo_.Ab;
-        centroidalModelInfo_.r_com = centroidalModelInfo_.qPinocchio.template head<3>() - o_r_com_base;
-        centroidalModelInfo_.J_com = centroidalModelInfo_.A.template topRows<3>() / centroidalModelInfo_.mass;
-        centroidalModelInfo_.vPinocchio.template head<6>() =
-            centroidalModelInfo_.Ab_inv * (centroidalModelInfo_.mass * state.template head<6>());
-        centroidalModelInfo_.vPinocchio.template tail(ACTUATED_DOF_NUM) = input.template tail(ACTUATED_DOF_NUM);
-        break;
-      }
-      default: {
-        throw std::runtime_error("The chosen centroidal model type is not supported.");
-        break;
-      }
-    }
-  }
+  void updatePinocchioJointVelocities(const vector_t& state, const vector_t& input);
 
   /**
    * Computes the world to contact point position in world frame
@@ -226,9 +151,7 @@ class CentroidalModelPinocchioInterface {
    * @warning: The function pinocchio::framesForwardKinematics (i.e., pinocchio::forwardKinematics followed by
    * pinocchio::updateFramePlacements) should have been called before.
    */
-  vector3_t positionWorldToContactPointInWorldFrame(size_t contactIndex) const {
-    return getRobotData().oMf[centroidalModelInfo_.endEffectorFrameIndices[contactIndex]].translation();
-  }
+  vector3_t positionWorldToContactPointInWorldFrame(size_t contactIndex) const;
 
   /**
    * Computes the CoM to contact point position in world frame
@@ -238,9 +161,7 @@ class CentroidalModelPinocchioInterface {
    *
    * @warning: The functions updatePinocchioJointVelocities and pinocchio::framesForwardKinematics should have been called before.
    */
-  vector3_t positionComToContactPointInWorldFrame(size_t contactIndex) const {
-    return positionWorldToContactPointInWorldFrame(contactIndex) - centroidalModelInfo_.r_com;
-  }
+  vector3_t positionComToContactPointInWorldFrame(size_t contactIndex) const;
 
   /**
    * Computes the world to contact point translational Jacobian in world frame
@@ -250,14 +171,7 @@ class CentroidalModelPinocchioInterface {
    *
    * @warning: The function pinocchio::computeJointJacobians followed by pinocchio::framesForwardKinematics should have been called before.
    */
-  matrix3x_t translationalJacobianWorldToContactPointInWorldFrame(size_t contactIndex) {
-    const size_t GENERALIZED_VEL_NUM = getRobotModel().nv;
-    matrix6x_t jacobianWorldToContactPointInWorldFrame;
-    jacobianWorldToContactPointInWorldFrame.setZero(6, GENERALIZED_VEL_NUM);
-    pinocchio::getFrameJacobian(getRobotModel(), getRobotData(), centroidalModelInfo_.endEffectorFrameIndices[contactIndex],
-                                pinocchio::LOCAL_WORLD_ALIGNED, jacobianWorldToContactPointInWorldFrame);
-    return jacobianWorldToContactPointInWorldFrame.template topRows<3>();
-  }
+  matrix3x_t translationalJacobianWorldToContactPointInWorldFrame(size_t contactIndex);
 
   /**
    * Computes the CoM to contact point translational Jacobian in world frame
@@ -268,9 +182,7 @@ class CentroidalModelPinocchioInterface {
    * @warning: The functions updatePinocchioJointVelocities, pinocchio::computeJointJacobians and pinocchio::framesForwardKinematics
    * should have been called before.
    */
-  matrix3x_t translationalJacobianComToContactPointInWorldFrame(size_t contactIndex) {
-    return translationalJacobianWorldToContactPointInWorldFrame(contactIndex) - centroidalModelInfo_.J_com;
-  }
+  matrix3x_t translationalJacobianComToContactPointInWorldFrame(size_t contactIndex);
 
   /**
    * Computes the absolute linear velocity of the contact point in world frame
@@ -281,9 +193,7 @@ class CentroidalModelPinocchioInterface {
    * @warning: The functions updatePinocchioJointVelocities, pinocchio::computeJointJacobians and pinocchio::framesForwardKinematics
    * should have been called before.
    */
-  vector3_t linearVelocityWorldToContactPointInWorldFrame(size_t contactIndex) {
-    return translationalJacobianWorldToContactPointInWorldFrame(contactIndex) * centroidalModelInfo_.vPinocchio;
-  }
+  vector3_t linearVelocityWorldToContactPointInWorldFrame(size_t contactIndex);
 
   /**
    * Computes the derivative of the normalized centroidal momentum (linear + angular) expressed in the centroidal frame
@@ -293,34 +203,7 @@ class CentroidalModelPinocchioInterface {
    *
    * @warning: The functions updatePinocchioJointVelocities and pinocchio::framesForwardKinematics should have been called before.
    */
-  vector6_t normalizedCentroidalMomentumRate(const vector_t& input) const {
-    const Eigen::Matrix<scalar_t, 3, 1> gravityVector = Eigen::Matrix<scalar_t, 3, 1>{0.0, 0.0, -9.81};
-    vector3_t contactForceInWorldFrame;
-    vector3_t contactTorqueInWorldFrame;
-    vector6_t normalizedCentroidalMomentumRate;
-    normalizedCentroidalMomentumRate.setZero();
-    normalizedCentroidalMomentumRate.template head<3>() = gravityVector.cast<SCALAR>();
-
-    for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++) {
-      contactForceInWorldFrame = input.template segment<3>(3 * i);
-      normalizedCentroidalMomentumRate.template head<3>() += 1.0 / centroidalModelInfo_.mass * contactForceInWorldFrame;
-      normalizedCentroidalMomentumRate.template tail<3>() +=
-          1.0 / centroidalModelInfo_.mass * (positionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame));
-    }
-
-    for (size_t i = centroidalModelInfo_.numThreeDofContacts;
-         i < centroidalModelInfo_.numThreeDofContacts + centroidalModelInfo_.numSixDofContacts; i++) {
-      const size_t inputIdx = 3 * centroidalModelInfo_.numThreeDofContacts + 6 * (i - centroidalModelInfo_.numThreeDofContacts);
-      contactForceInWorldFrame = input.template segment<3>(inputIdx);
-      contactTorqueInWorldFrame = input.template segment<3>(inputIdx + 3);
-      normalizedCentroidalMomentumRate.template head<3>() += 1.0 / centroidalModelInfo_.mass * contactForceInWorldFrame;
-      normalizedCentroidalMomentumRate.template tail<3>() +=
-          1.0 / centroidalModelInfo_.mass *
-          ((positionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame)) + contactTorqueInWorldFrame);
-    }
-
-    return normalizedCentroidalMomentumRate;
-  }
+  vector6_t normalizedCentroidalMomentumRate(const vector_t& input) const;
 
  private:
   PinocchioInterfaceTpl<SCALAR> pinocchioInterface_;

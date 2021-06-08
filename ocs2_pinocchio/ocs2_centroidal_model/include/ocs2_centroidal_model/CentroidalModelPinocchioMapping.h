@@ -42,38 +42,17 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   using typename PinocchioStateInputMapping<SCALAR>::matrix_t;
 
   CentroidalModelPinocchioMapping(size_t stateDim, size_t inputDim,
-                                  const CentroidalModelPinocchioInterface<SCALAR>& centroidalModelPinocchioInterface)
-      : stateDim_(stateDim), inputDim_(inputDim), centroidalModelPinocchioInterface_(centroidalModelPinocchioInterface){};
+                                  const CentroidalModelPinocchioInterface<SCALAR>& centroidalModelPinocchioInterface);
 
   ~CentroidalModelPinocchioMapping() override = default;
+
   CentroidalModelPinocchioMapping<SCALAR>* clone() const override { return new CentroidalModelPinocchioMapping<SCALAR>(*this); }
 
-  vector_t getPinocchioJointPosition(const vector_t& state) const override {
-    assert(stateDim_ == state.rows());
-    centroidalModelPinocchioInterface_.updatePinocchioJointPositions(state);
-    return centroidalModelPinocchioInterface_.getCentroidalModelInfo().qPinocchio;
-  }
+  vector_t getPinocchioJointPosition(const vector_t& state) const override;
 
-  vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override {
-    assert(stateDim_ == state.rows());
-    centroidalModelPinocchioInterface_.updatePinocchioJointPositions(state);
-    centroidalModelPinocchioInterface_.updatePinocchioJointVelocities(state, input);
-    return centroidalModelPinocchioInterface_.getCentroidalModelInfo().vPinocchio;
-  }
+  vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const;
 
-  std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override {
-    assert(stateDim_ == state.rows());
-    const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
-    const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
-
-    matrix_t dfdx = matrix_t::Zero(Jq.rows(), stateDim_);
-    dfdx.template middleCols(6, GENERALIZED_VEL_NUM) = Jq;
-
-    matrix_t dfdu = matrix_t::Zero(Jv.rows(), inputDim_);
-    dfdu.template rightCols(ACTUATED_DOF_NUM) = Jv.template rightCols(ACTUATED_DOF_NUM);
-
-    return {dfdx, dfdu};
-  }
+  std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
  private:
   mutable CentroidalModelPinocchioInterface<SCALAR> centroidalModelPinocchioInterface_;

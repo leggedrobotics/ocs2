@@ -126,7 +126,7 @@ class RaisimRollout final : public RolloutBase {
   void setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain);
 
  protected:
-  vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+  vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                    scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
                    vector_array_t& inputTrajectory) override;
 

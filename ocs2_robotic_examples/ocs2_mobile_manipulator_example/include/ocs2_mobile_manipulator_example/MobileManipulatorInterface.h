@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
@@ -69,7 +69,7 @@ class MobileManipulatorInterface final : public RobotInterface {
   const MobileManipulatorDynamics& getDynamics() const override { return *dynamicsPtr_; }
   const MobileManipulatorCost& getCost() const override { return *costPtr_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
-  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *initializerPtr_; }
   const ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
@@ -91,7 +91,7 @@ class MobileManipulatorInterface final : public RobotInterface {
   std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr_;
   std::unique_ptr<MobileManipulatorCost> costPtr_;
   std::unique_ptr<ConstraintBase> constraintPtr_;
-  std::unique_ptr<OperatingPoints> operatingPointPtr_;
+  std::unique_ptr<Initializer> initializerPtr_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
 

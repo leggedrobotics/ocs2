@@ -41,15 +41,15 @@ class OperatingPoints final : public Initializer {
  public:
   /**
    * Constructor
-   * @param [in] stateOperatingPoint: A single state operating point.
-   * @param [in] inputOperatingPoint: A single operating point.
+   * @param [in] stateOperatingPoint: An operating point for state.
+   * @param [in] inputOperatingPoint: An operating point for input.
    */
   OperatingPoints(const vector_t& stateOperatingPoint, const vector_t& inputOperatingPoint)
       : timeTrajectory_(1, 0.0), stateTrajectory_(1, stateOperatingPoint), inputTrajectory_(1, inputOperatingPoint) {}
 
   /**
    * Constructor
-   * @param [in] timeTrajectory: The time stamp of the operating trajectories.
+   * @param [in] timeTrajectory: The time stamps of the operating trajectories.
    * @param [in] stateTrajectory: The state operating trajectory.
    * @param [in] inputTrajectory: The input operating trajectory.
    */

@@ -119,9 +119,10 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization state
    */
+  initializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
+
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
-  operatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/
@@ -129,7 +130,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
   return std::unique_ptr<MPC_DDP>(new MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
-                                              operatingPointPtr_.get(), ddpSettings_, mpcSettings_));
+                                              initializerPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace mobile_manipulator

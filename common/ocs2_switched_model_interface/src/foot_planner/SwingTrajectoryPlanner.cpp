@@ -14,9 +14,7 @@ namespace switched_model {
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
                                                const KinematicsModelBase<scalar_t>& kinematicsModel,
                                                const joint_coordinate_t& nominalJointPositions)
-    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {
-  nominalConfigurationBaseToFootInBaseFrame_ = kinematicsModel_->positionBaseToFeetInBaseFrame(nominalJointPositions);
-}
+    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {}
 
 void SwingTrajectoryPlanner::updateTerrain(std::unique_ptr<TerrainModel> terrainModel) {
   terrainModel_ = std::move(terrainModel);
@@ -151,12 +149,9 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
       vector_t state = costDesiredTrajectories.getDesiredState(middleContactTime);
       const base_coordinate_t middleContactDesiredComPose = state.head<BASE_COORDINATE_SIZE>();
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
-      const auto rotationBaseToWorld = rotationMatrixBaseToOrigin(getOrientation(desiredBasePose));
-      const vector3_t footXYoffsetInBase{nominalConfigurationBaseToFootInBaseFrame_[leg].x(),
-                                         nominalConfigurationBaseToFootInBaseFrame_[leg].y(), 0.0};
-      const vector3_t footZoffsetInWorld{0.0, 0.0, nominalConfigurationBaseToFootInBaseFrame_[leg].z()};
+      const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       const vector3_t nominalFootholdPositionInWorld =
-          getPositionInOrigin(desiredBasePose) + rotationBaseToWorld * footXYoffsetInBase + footZoffsetInWorld;
+          kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
 
       if (contactPhase.start < finalTime) {
         ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld);

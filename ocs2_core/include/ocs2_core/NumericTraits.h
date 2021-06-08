@@ -33,7 +33,7 @@ namespace ocs2 {
 namespace numeric_traits {
 /**
  * If a floating number v is in limit epsilon vicinity of w, then we assume that v approaches to w.
- * This limit_epsilon value should be greater week_epsilon value.
+ * This limit_epsilon value should be greater than the weak_epsilon value.
  *
  * @return limit epsilon value.
  */

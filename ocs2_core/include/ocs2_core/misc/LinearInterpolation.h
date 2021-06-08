@@ -85,19 +85,28 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
     return {0, scalar_t(1.0)};
   }
 
-  int index = lookup::findIntervalInTimeArray(timeArray, enquiryTime);
-  auto lastInterval = static_cast<int>(timeArray.size() - 1);
+  const int index = lookup::findIntervalInTimeArray(timeArray, enquiryTime);
+  const auto lastInterval = static_cast<int>(timeArray.size() - 1);
   if (index >= 0) {
     if (index < lastInterval) {
       // interpolation : 0 <= index < lastInterval
+      assert(enquiryTime <= timeArray[index + 1]);  // assert upper bound of lookup
+      assert(timeArray[index] <= enquiryTime);      // assert lower bound of lookup
       const scalar_t intervalLength = timeArray[index + 1] - timeArray[index];
-      scalar_t alpha = (timeArray[index + 1] - enquiryTime) / intervalLength;
-      // if it is an event interval
-      constexpr scalar_t eps = 2.0 * numeric_traits::weakEpsilon<scalar_t>();
-      if (intervalLength < eps) {
-        alpha = std::round(alpha);
+      const scalar_t timeTillNext = timeArray[index + 1] - enquiryTime;
+
+      // Normal case: interval is large enough for normal interpolation
+      constexpr scalar_t minIntervalTime = 2.0 * numeric_traits::weakEpsilon<scalar_t>();
+      if (intervalLength > minIntervalTime) {
+        return {index, (timeTillNext / intervalLength)};
       }
-      return {index, alpha};
+
+      // Take closes point for small time intervals
+      if (timeTillNext < 0.5 * intervalLength) {  // short interval, closest to time[index + 1]
+        return {index, scalar_t(0.0)};
+      } else {  // short interval, closest to time[index]
+        return {index, scalar_t(1.0)};
+      }
     } else {
       // upper bound : index >= lastInterval
       return {std::max(lastInterval - 1, 0), scalar_t(0.0)};

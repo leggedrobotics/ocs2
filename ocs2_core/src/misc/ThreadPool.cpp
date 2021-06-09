@@ -33,32 +33,28 @@ ThreadPool::~ThreadPool() {
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-std::unique_ptr<ThreadPool::TaskBase> ThreadPool::popReady() {
-  std::unique_lock<std::mutex> lock(taskQueueLock_);
-  taskQueueCondition_.wait(lock, [this] { return !taskQueue_.empty() || stop_; });
-
-  if (!taskQueue_.empty()) {
-    auto task = std::move(taskQueue_.front());
-    taskQueue_.pop();
-    return task;
-  } else {
-    return nullptr;
-  }
-}
-
-/**************************************************************************************************/
-/**************************************************************************************************/
-/**************************************************************************************************/
 void ThreadPool::worker(int workerIndex) {
   while (true) {
-    auto taskPtr = popReady();  // returns either a task or nullptr if stop_ is set
+    std::unique_ptr<ThreadPool::TaskBase> taskPtr;
+    {
+      std::unique_lock<std::mutex> lock(taskQueueLock_);
+      taskQueueCondition_.wait(lock, [this] { return !taskQueue_.empty() || stop_; });
 
-    // exit condition
-    if (stop_) {
-      break;
+      // exit condition
+      if (stop_) {
+        break;
+      }
+
+      // pop the first task
+      if (!taskQueue_.empty()) {
+        taskPtr = std::move(taskQueue_.front());
+        taskQueue_.pop();
+      }
     }
 
-    taskPtr->operator()(workerIndex);
+    if (taskPtr) {
+      taskPtr->operator()(workerIndex);
+    }
   }
 }
 

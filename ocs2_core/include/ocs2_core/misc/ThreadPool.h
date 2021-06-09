@@ -90,13 +90,6 @@ class ThreadPool {
   struct Task;
 
   /**
-   * Pop next task from ready queue
-   *
-   * @return pointer to next task to run, nullptr if stop condiditon
-   */
-  std::unique_ptr<TaskBase> popReady();
-
-  /**
    * Thread worker loop
    *
    * @param [in] workerIndex: worker thread index
@@ -110,9 +103,9 @@ class ThreadPool {
    */
   void runTask(std::unique_ptr<TaskBase> taskPtr);
 
-  std::atomic_bool stop_{false};  //!< flag telling all threads to stop.
+  bool stop_{false};  //!< flag telling all threads to stop, protected by taskQueueLock_
 
-  std::queue<std::unique_ptr<TaskBase>> taskQueue_;  // protected by readyQueueLock_
+  std::queue<std::unique_ptr<TaskBase>> taskQueue_;  // protected by taskQueueLock_
   std::condition_variable taskQueueCondition_;
   std::mutex taskQueueLock_;
 

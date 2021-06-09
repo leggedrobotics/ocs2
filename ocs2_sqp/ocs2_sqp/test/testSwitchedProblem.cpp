@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_sqp/TimeDiscretization.h"
 
 #include <ocs2_core/constraint/LinearConstraint.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
@@ -124,10 +124,10 @@ PrimalSolution solveWithEventTime(scalar_t eventTime) {
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Random(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
-  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(m));
+  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Set up solver
-  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &switchedConstraint);
+  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &switchedConstraint);
   solver.setModeScheduleManager(modeScheduleManagerPtr);
   solver.setCostDesiredTrajectories(costDesiredTrajectories);
 

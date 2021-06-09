@@ -23,17 +23,6 @@ TEST(testThreadPool, testReturnType) {
   EXPECT_EQ(res.get(), 42);
 }
 
-TEST(testThreadPool, testIdIsDifferent) {
-  ThreadPool pool(1);
-  int firstId, secondId;
-
-  auto doNothing = [](int) { /* nop */ };
-  std::ignore = pool.run(doNothing, firstId);
-  std::ignore = pool.run(doNothing, secondId);
-
-  EXPECT_TRUE(firstId != secondId);
-}
-
 TEST(testThreadPool, testPropagateException) {
   ThreadPool pool(1);
   std::function<void(int)> task;
@@ -86,72 +75,6 @@ TEST(testThreadPool, testCanExecuteMultipleTasks) {
   res2.get();
 }
 
-TEST(testThreadPool, testTaskDependency) {
-  ThreadPool pool(2);
-  // pool.enableDebug([](const std::string msg) { std::cout << "[ThreadPool]: " << msg << std::endl; });
-
-  std::future<void> fut1, fut2, fut3;
-  int id1, id2;
-
-  std::promise<void> barrier_promise;
-  std::shared_future<void> barrier = barrier_promise.get_future();
-
-  std::string data = "";
-
-  fut1 = pool.run(
-      [&](int) {
-        barrier.get();
-        data = "first";
-      },
-      id1);
-  fut2 = pool.runAfter(id1, [&](int) { data += " second"; }, id2);
-  fut3 = pool.runAfter(id2, [&](int) { data += " third"; });
-
-  // check that no thread has run
-  EXPECT_EQ(data, "");
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  barrier_promise.set_value();
-
-  fut3.get();
-
-  // check that order is correct
-  EXPECT_EQ(data, "first second third");
-}
-
-TEST(testThreadPool, testDependsOnFinishedTask) {
-  ThreadPool pool(1);
-  std::future<void> fut;
-  int firstId;
-
-  auto doNothing = [](int) { /* nop */ };
-
-  fut = pool.run(doNothing, firstId);
-  fut.get();
-  // first task has finihed here
-
-  fut = pool.runAfter(firstId, doNothing);
-  std::future_status status = fut.wait_for(std::chrono::seconds(1));
-  // second task should run without delay
-
-  ASSERT_EQ(status, std::future_status::ready);
-  fut.get();
-}
-
-TEST(testThreadPool, testDependsOnNonexistingTask) {
-  ThreadPool pool(1);
-  std::future<void> fut;
-
-  fut = pool.runAfter(0xdead, [](int) { /* nop */ });
-
-  std::future_status status = fut.wait_for(std::chrono::seconds(1));
-
-  // In case of an unknown ID dependency is regarded as fulfilled.
-  // The task should run without delay.
-  ASSERT_EQ(status, std::future_status::ready);
-  fut.get();
-}
-
 TEST(testThreadPool, testRunMultiple) {
   ThreadPool pool(2);
   std::atomic_int counter;
@@ -164,11 +87,37 @@ TEST(testThreadPool, testRunMultiple) {
 
 TEST(testThreadPool, testNoThreads) {
   ThreadPool pool(0);
-  int id;
 
-  auto fut1 = pool.run([&](int) -> std::string { return "foo"; }, id);
-  EXPECT_EQ(fut1.get(), "foo");
+  auto fut1 = pool.run([&](int) -> std::string { return "runs on main thread"; });
+  EXPECT_EQ(fut1.get(), "runs on main thread");
+}
 
-  auto fut2 = pool.runAfter(id, [&](int) -> std::string { return "ok"; });
-  EXPECT_EQ(fut2.get(), "ok");
+TEST(testThreadPool, testRunMultipleNoThreads) {
+  ThreadPool pool(0);
+  std::atomic_int counter;
+  counter = 0;
+
+  pool.runParallel([&](int) { counter++; }, 42);
+
+  EXPECT_EQ(counter, 42);
+}
+
+TEST(testThreadPool, testMoveOnlyTask) {
+  ThreadPool pool(2);
+
+  struct MoveOnlyTask {
+    MoveOnlyTask() = default;
+    ~MoveOnlyTask() = default;
+    MoveOnlyTask(const MoveOnlyTask&) = delete;
+    MoveOnlyTask& operator=(const MoveOnlyTask&) = delete;
+    MoveOnlyTask(MoveOnlyTask&&) = default;
+    MoveOnlyTask& operator=(MoveOnlyTask&&) = default;
+    double operator()(int) { return 3.14; }
+  };
+
+  auto f = MoveOnlyTask();
+
+  auto result = pool.run(std::move(f));
+
+  EXPECT_EQ(result.get(), 3.14);
 }

@@ -54,11 +54,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                               const Initializer* initializerPtr, ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr)
-    : SolverBase(), ddpSettings_(std::move(ddpSettings)) {
-  // thread-pool
-  threadPoolPtr_.reset(new ThreadPool(ddpSettings_.nThreads_, ddpSettings_.threadPriority_));
-
+                               const Initializer* initializerPtr, ddp::Settings ddpSettings,
+                               const CostFunctionBase* heuristicsFunctionPtr)
+    : SolverBase(),
+      ddpSettings_(std::move(ddpSettings)),
+      threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -118,7 +118,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
         costFunctionRefStock.emplace_back(linearQuadraticApproximatorPtrStock_[i]->costFunction());
         heuristicsFunctionsRefStock.emplace_back(*heuristicsFunctionsPtrStock_[i]);
       }  // end of i loop
-      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, *threadPoolPtr_,
+      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, threadPool_,
                                                       std::move(rolloutRefStock), std::move(constraintsRefStock),
                                                       std::move(costFunctionRefStock), std::move(heuristicsFunctionsRefStock), *penaltyPtr_,
                                                       [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); }));
@@ -556,7 +556,7 @@ std::vector<std::pair<int, int>> GaussNewtonDDP::distributeWork(int numWorkers) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
-  threadPoolPtr_->runParallel([&](int) { taskFunction(); }, N);
+  threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
 
 /******************************************************************************************************/
@@ -897,6 +897,24 @@ void GaussNewtonDDP::calculateController() {
     runParallel(task, ddpSettings_.nThreads_);
 
   }  // end of i loop
+
+  // if the final time is not an event time change the last control to the second to the last
+  const auto& timeTrajectory = nominalTimeTrajectoriesStock_[finalActivePartition_];
+  const auto& postEventIndices = nominalPostEventIndicesStock_[finalActivePartition_];
+  if (postEventIndices.empty() || postEventIndices.back() != timeTrajectory.size() - 1) {
+    auto& ctrl = nominalControllersStock_[finalActivePartition_];
+    if (ctrl.size() > 1) {
+      const auto secondToLastIndex = ctrl.size() - 2;
+      ctrl.gainArray_.back() = ctrl.gainArray_[secondToLastIndex];
+      ctrl.biasArray_.back() = ctrl.biasArray_[secondToLastIndex];
+      ctrl.deltaBiasArray_.back() = ctrl.deltaBiasArray_[secondToLastIndex];
+    } else if (finalActivePartition_ > initActivePartition_) {
+      const auto secondToLastCtrl = nominalControllersStock_[finalActivePartition_ - 1];
+      ctrl.gainArray_.back() = secondToLastCtrl.gainArray_.back();
+      ctrl.biasArray_.back() = secondToLastCtrl.biasArray_.back();
+      ctrl.deltaBiasArray_.back() = secondToLastCtrl.deltaBiasArray_.back();
+    }
+  }
 }
 
 /******************************************************************************************************/

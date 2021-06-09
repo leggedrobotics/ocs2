@@ -489,7 +489,7 @@ class GaussNewtonDDP : public SolverBase {
  private:
   ddp::Settings ddpSettings_;
 
-  std::unique_ptr<ThreadPool> threadPoolPtr_;
+  ThreadPool threadPool_;
 
   unsigned long long int rewindCounter_{0};
   unsigned long long int totalNumIterations_{0};

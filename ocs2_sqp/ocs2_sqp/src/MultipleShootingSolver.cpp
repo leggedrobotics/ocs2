@@ -44,11 +44,10 @@ namespace ocs2 {
 MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
                                                const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr,
                                                const ConstraintBase* constraintPtr, const CostFunctionBase* terminalCostFunctionPtr)
-    : SolverBase(), settings_(std::move(settings)), hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings) {
-  // Multithreading, set up threadpool for N-1 helpers, our main thread is the N-th one.
-  if (settings_.nThreads > 1) {
-    threadPoolPtr_.reset(new ThreadPool(settings_.nThreads - 1, settings_.threadPriority));
-  }
+    : SolverBase(),
+      settings_(std::move(settings)),
+      hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings),
+      threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
@@ -202,23 +201,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 }
 
 void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) {
-  // Launch tasks in helper threads
-  std::vector<std::future<void>> futures;
-  if (threadPoolPtr_) {
-    int numHelpers = settings_.nThreads - 1;
-    futures.reserve(numHelpers);
-    for (int i = 0; i < numHelpers; i++) {
-      futures.emplace_back(threadPoolPtr_->run(taskFunction));
-    }
-  }
-  // Execute one instance in this thread.
-  const int workerId = settings_.nThreads - 1;  // threadpool uses 0 -> n-2
-  taskFunction(workerId);
-
-  // Wait for helpers to finish.
-  for (auto&& fut : futures) {
-    fut.get();
-  }
+  threadPool_.runParallel(std::move(taskFunction), settings_.nThreads);
 }
 
 void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& initState,
@@ -405,7 +388,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
     // Accumulate! Same worker might run multiple tasks
     performance[workerId] += workerPerformance;
   };
-  runParallel(parallelTask);
+  runParallel(std::move(parallelTask));
 
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
@@ -454,7 +437,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
     // Accumulate! Same worker might run multiple tasks
     performance[workerId] += workerPerformance;
   };
-  runParallel(parallelTask);
+  runParallel(std::move(parallelTask));
 
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
@@ -530,7 +513,7 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const st
     const bool stepAccepted = [&]() {
       if (newConstraintViolation > g_max) {
         return false;
-      } else if (newConstraintViolation < g_min) {
+      } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min) {
         // With low violation only care about cost, reference paper implements here armijo condition
         return (performanceNew.merit < baseline.merit);
       } else {

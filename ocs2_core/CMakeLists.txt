@@ -279,6 +279,7 @@ catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testSynchronized.cpp
   test/misc/testLookup.cpp
   test/misc/testThreadPool.cpp
+  test/testPrecomputation.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}

@@ -70,7 +70,7 @@ class PreComputation {
     friend constexpr PreComputation::RequestSet operator+(PreComputation::RequestSet a, PreComputation::RequestSet b);
 
    private:
-    /** flags bitfield */
+    //! Internal representation of the set through a bitfield
     Request flags_;
   };
 

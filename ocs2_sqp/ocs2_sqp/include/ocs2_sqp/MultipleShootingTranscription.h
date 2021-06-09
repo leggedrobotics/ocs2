@@ -122,11 +122,13 @@ struct EventTranscription {
 /**
  * Compute the jump transcription at an event node.
  *
- * @param terminalCostFunctionPtr : (Optional) terminal cost function
- * @param constraintPtr : (Optional) terminal constraints
- * @param t : Time at the terminal node
- * @param x : Terminal state
- * @return multiple shooting transcription for the terminal node.
+ * @param systemDynamics
+ * @param eventCostFunctionPtr
+ * @param constraintPtr
+ * @param t : Time at the event node
+ * @param x : Pre-event state
+ * @param x_next : Post-event state
+ * @return multiple shooting transcription for the event node.
  */
 EventTranscription setupEventNode(SystemDynamicsBase& systemDynamics, CostFunctionBase* eventCostFunctionPtr, ConstraintBase* constraintPtr,
                                   scalar_t t, const vector_t& x, const vector_t& x_next);

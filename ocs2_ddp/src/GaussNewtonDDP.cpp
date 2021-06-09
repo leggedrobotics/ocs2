@@ -55,11 +55,9 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
                                const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
                                const CostFunctionBase* heuristicsFunctionPtr)
-    : SolverBase(), ddpSettings_(std::move(ddpSettings)) {
-  // thread-pool
-  const size_t numHelperThreads = std::max(ddpSettings_.nThreads_, size_t(1)) - 1;
-  threadPoolPtr_.reset(new ThreadPool(numHelperThreads, ddpSettings_.threadPriority_));
-
+    : SolverBase(),
+      ddpSettings_(std::move(ddpSettings)),
+      threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -119,7 +117,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
         costFunctionRefStock.emplace_back(linearQuadraticApproximatorPtrStock_[i]->costFunction());
         heuristicsFunctionsRefStock.emplace_back(*heuristicsFunctionsPtrStock_[i]);
       }  // end of i loop
-      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, *threadPoolPtr_,
+      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, threadPool_,
                                                       std::move(rolloutRefStock), std::move(constraintsRefStock),
                                                       std::move(costFunctionRefStock), std::move(heuristicsFunctionsRefStock), *penaltyPtr_,
                                                       [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); }));
@@ -557,7 +555,7 @@ std::vector<std::pair<int, int>> GaussNewtonDDP::distributeWork(int numWorkers) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
-  threadPoolPtr_->runParallel([&](int) { taskFunction(); }, N);
+  threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
 
 /******************************************************************************************************/

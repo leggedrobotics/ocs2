@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
+#include "ocs2_sqp/MultipleShootingInitialization.h"
 #include "ocs2_sqp/MultipleShootingTranscription.h"
 
 namespace ocs2 {
@@ -230,24 +231,29 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   inputTrajectory.clear();
   inputTrajectory.reserve(N);
 
-  stateTrajectory.push_back(initState);
+  // Determine till when to use the previous solution
   const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
-  for (int i = 0; i < N; i++) {
-    const scalar_t time = getInterpolationTime(timeDiscretization[i]);
-    const scalar_t nextTime = getInterpolationTime(timeDiscretization[i + 1]);
-    if (time < interpolateTill) {
-      // Interpolate previous state-input trajectory
-      inputTrajectory.push_back(primalSolution_.controllerPtr_->computeInput(time, stateTrajectory.back()));
-      stateTrajectory.push_back(
-          LinearInterpolation::interpolate(nextTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
 
+  stateTrajectory.push_back(initState);
+  for (int i = 0; i < N; i++) {
+    if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
+      // Event Node
+      inputTrajectory.push_back(ocs2::vector_t());  // no input at event node
+      stateTrajectory.push_back(multiple_shooting::initializeEventNode(timeDiscretization[i].time, stateTrajectory.back()));
     } else {
-      // No previous control at this time-point -> fall back to heuristics
-      // Ask for operating trajectory between t[k] and t[k+1]. Take the returned input at t[k] as our heuristic.
-      vector_t input, nextState;
-      initializerPtr_->compute(time, stateTrajectory.back(), nextTime, input, nextState);
-      inputTrajectory.push_back(std::move(input));
-      stateTrajectory.push_back(std::move(nextState));
+      // Intermediate node
+      const scalar_t time = getIntervalStart(timeDiscretization[i]);
+      const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
+      auto inputAndNextState = [&] {
+        if (time < interpolateTill) {  // Using previous solution
+          const bool useController = (i == 0);
+          return multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back(), useController);
+        } else {  // Using initializer
+          return multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
+        }
+      }();
+      inputTrajectory.push_back(std::move(inputAndNextState.first));
+      stateTrajectory.push_back(std::move(inputAndNextState.second));
     }
   }
 }

@@ -1,17 +1,12 @@
 #include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/ThreadPool.h>
 
-#define DEBUG_MSG(...)         \
-  if (debug_) {                \
-    debugMessage(__VA_ARGS__); \
-  }
-
 namespace ocs2 {
 
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-ThreadPool::ThreadPool(size_t nThreads, int priority) : nextTaskId_(0), stop_(false), debug_(false) {
+ThreadPool::ThreadPool(size_t nThreads, int priority) {
   workerThreads_.reserve(nThreads);
   for (size_t i = 0; i < nThreads; i++) {
     workerThreads_.emplace_back(&ThreadPool::worker, this, i);
@@ -24,78 +19,41 @@ ThreadPool::ThreadPool(size_t nThreads, int priority) : nextTaskId_(0), stop_(fa
 /**************************************************************************************************/
 ThreadPool::~ThreadPool() {
   {  // set exit flag, wake up threads and join
-    std::lock_guard<std::mutex> lock(readyQueueLock_);
+    std::lock_guard<std::mutex> lock(taskQueueLock_);
     stop_ = true;
   }
-  readyQueueCondition_.notify_all();
+  taskQueueCondition_.notify_all();
   for (auto& thread : workerThreads_) {
-    thread.join();
-  }
-}
-
-/**************************************************************************************************/
-/**************************************************************************************************/
-/**************************************************************************************************/
-void ThreadPool::pushReady(int taskId) {
-  {
-    std::lock_guard<std::mutex> lock(readyQueueLock_);
-    readyQueue_.push(taskId);
-  }
-  readyQueueCondition_.notify_one();
-}
-
-/**************************************************************************************************/
-/**************************************************************************************************/
-/**************************************************************************************************/
-int ThreadPool::popReady() {
-  int task;
-  {
-    std::unique_lock<std::mutex> lock(readyQueueLock_);
-    readyQueueCondition_.wait(lock, [&] { return stop_ || !readyQueue_.empty(); });
-    if (!readyQueue_.empty()) {
-      task = readyQueue_.front();
-      readyQueue_.pop();
+    if (thread.joinable()) {
+      thread.join();
     }
   }
-  return task;
 }
 
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-void ThreadPool::worker(int workerId) {
+void ThreadPool::worker(int workerIndex) {
   while (true) {
-    int taskId;
-
-    taskId = popReady();  // can return if stop_ flag is set
-
-    // exit condition
-    if (stop_) {
-      DEBUG_MSG("stop", workerId);
-      break;
-    }
-
-    std::shared_ptr<TaskBase> task;
+    std::unique_ptr<ThreadPool::TaskBase> taskPtr;
     {
-      std::lock_guard<std::mutex> lock(taskRegistryLock_);
-      auto taskIter = taskRegistry_.find(taskId);
-      task = taskIter->second;
-    }
+      std::unique_lock<std::mutex> lock(taskQueueLock_);
+      taskQueueCondition_.wait(lock, [this] { return !taskQueue_.empty() || stop_; });
 
-    DEBUG_MSG("run  task " + std::to_string(taskId), workerId);
-    task->operator()(workerId);
-    DEBUG_MSG("done task " + std::to_string(taskId), workerId);
-
-    {  // Atomically make dependent tasks ready and destroy finished task
-      std::lock_guard<std::mutex> lock(taskRegistryLock_);
-
-      for (int& child : task->children_) {
-        DEBUG_MSG("ready  task " + std::to_string(child), workerId);
-        pushReady(child);
+      // exit condition
+      if (stop_) {
+        break;
       }
 
-      auto taskIter = taskRegistry_.find(taskId);
-      taskRegistry_.erase(taskIter);
+      // pop the first task
+      if (!taskQueue_.empty()) {
+        taskPtr = std::move(taskQueue_.front());
+        taskQueue_.pop();
+      }
+    }
+
+    if (taskPtr) {
+      taskPtr->operator()(workerIndex);
     }
   }
 }
@@ -103,94 +61,36 @@ void ThreadPool::worker(int workerId) {
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-int ThreadPool::runTask(std::shared_ptr<TaskBase> task) {
-  int taskId;
-
+void ThreadPool::runTask(std::unique_ptr<TaskBase> taskPtr) {
   {
-    std::lock_guard<std::mutex> lock(taskRegistryLock_);
-
-    taskId = nextTaskId_++;
-    taskRegistry_.insert({taskId, std::move(task)});
+    std::lock_guard<std::mutex> lock(taskQueueLock_);
+    taskQueue_.push(std::move(taskPtr));
   }
-  DEBUG_MSG("create task " + std::to_string(taskId));
-  DEBUG_MSG("ready  task " + std::to_string(taskId));
-
-  pushReady(taskId);
-  return taskId;
+  taskQueueCondition_.notify_one();
 }
 
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
-int ThreadPool::runTaskWithDependency(std::shared_ptr<TaskBase> task, int runAfterId) {
-  bool readyToRun = false;
-  int taskId;
-
-  {
-    std::lock_guard<std::mutex> lock(taskRegistryLock_);
-
-    taskId = nextTaskId_++;
-    // register task with id
-    taskRegistry_.insert({taskId, std::move(task)});
-
-    // register task at parent
-    auto parent = taskRegistry_.find(runAfterId);
-    if (parent != taskRegistry_.end()) {
-      parent->second->children_.push_back(taskId);
-    } else {
-      readyToRun = true;
-    }
-  }
-  DEBUG_MSG("create task " + std::to_string(taskId) + " depends on " + std::to_string(runAfterId));
-
-  if (readyToRun) {
-    DEBUG_MSG("ready  task " + std::to_string(taskId));
-    pushReady(taskId);
-  }
-
-  return taskId;
-}
-
-/**************************************************************************************************/
-/**************************************************************************************************/
-/**************************************************************************************************/
-void ThreadPool::runParallel(std::function<void(int)> taskFunction, size_t N) {
-  if (N <= 1) {
-    taskFunction(0);
-    return;
-  }
-
+void ThreadPool::runParallel(std::function<void(int)> taskFunction, int N) {
+  // Launch tasks in helper threads
   std::vector<std::future<void>> futures;
-  futures.reserve(N);
-
-  for (int i = 0; i < N; i++) {
-    futures.push_back(std::move(run(taskFunction)));
+  if (N > 1) {
+    const int numHelpers = N - 1;
+    futures.reserve(numHelpers);
+    for (int i = 0; i < numHelpers; ++i) {
+      futures.emplace_back(run(taskFunction));
+    }
   }
 
+  // Execute one instance in this thread.
+  const auto workerId = static_cast<int>(numThreads());  // threadpool workers use ID 0 -> nThreads - 1
+  taskFunction(workerId);
+
+  // Wait for helpers to finish.
   for (auto&& fut : futures) {
     fut.get();
   }
-}
-
-/**************************************************************************************************/
-/**************************************************************************************************/
-/**************************************************************************************************/
-void ThreadPool::debugMessage(const std::string msg, int workerId) {
-  if (debug_) {
-    std::string head;
-    if (workerId >= 0) {
-      head = "[Thread " + std::to_string(workerId) + "] ";
-    }
-    debugPrint_(head + msg);
-  }
-}
-
-/**************************************************************************************************/
-/**************************************************************************************************/
-/**************************************************************************************************/
-void ThreadPool::enableDebug(std::function<void(const std::string)> debugPrint) {
-  debugPrint_ = debugPrint;
-  debug_ = true;
 }
 
 }  // namespace ocs2

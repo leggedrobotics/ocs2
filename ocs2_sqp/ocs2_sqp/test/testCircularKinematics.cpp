@@ -49,6 +49,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;
+  settings.nThreads = 1;
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;

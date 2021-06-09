@@ -147,7 +147,7 @@ class MultipleShootingSolver : public SolverBase {
   std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // Threading
-  std::unique_ptr<ThreadPool> threadPoolPtr_;
+  ThreadPool threadPool_;
 
   // Solution
   PrimalSolution primalSolution_;

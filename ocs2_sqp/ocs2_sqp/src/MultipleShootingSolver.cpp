@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
 #include "ocs2_sqp/MultipleShootingInitialization.h"
@@ -238,22 +237,23 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   for (int i = 0; i < N; i++) {
     if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
       // Event Node
-      inputTrajectory.push_back(ocs2::vector_t());  // no input at event node
+      inputTrajectory.push_back(vector_t());  // no input at event node
       stateTrajectory.push_back(multiple_shooting::initializeEventNode(timeDiscretization[i].time, stateTrajectory.back()));
     } else {
       // Intermediate node
       const scalar_t time = getIntervalStart(timeDiscretization[i]);
       const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
-      auto inputAndNextState = [&] {
-        if (time < interpolateTill) {  // Using previous solution
-          const bool useController = (i == 0);
-          return multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back(), useController);
-        } else {  // Using initializer
-          return multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
-        }
-      }();
-      inputTrajectory.push_back(std::move(inputAndNextState.first));
-      stateTrajectory.push_back(std::move(inputAndNextState.second));
+      vector_t input, nextState;
+      if (time < interpolateTill) {  // Using previous solution
+        const bool useController = (i == 0);
+        std::tie(input, nextState) =
+            multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back(), useController);
+      } else {  // Using initializer
+        std::tie(input, nextState) =
+            multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
+      }
+      inputTrajectory.push_back(std::move(input));
+      stateTrajectory.push_back(std::move(nextState));
     }
   }
 }

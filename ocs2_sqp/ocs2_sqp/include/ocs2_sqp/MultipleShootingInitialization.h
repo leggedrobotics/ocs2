@@ -41,23 +41,27 @@ namespace multiple_shooting {
  *
  * @param initializer : System initializer
  * @param t :  Start of the discrete interval
- * @param t_next : End time of te discrete interval
+ * @param tNext : End time of te discrete interval
  * @param x : Starting state of the discrete interval
- * @return {u(t), x(t_next)} : input and state transition
+ * @return {u(t), x(tNext)} : input and state transition
  */
-std::pair<vector_t, vector_t> initializeIntermediateNode(Initializer& initializer, scalar_t t, scalar_t t_next, const vector_t& x);
+inline std::pair<vector_t, vector_t> initializeIntermediateNode(Initializer& initializer, scalar_t t, scalar_t tNext, const vector_t& x) {
+  vector_t input, nextState;
+  initializer.compute(t, x, tNext, input, nextState);
+  return {input, nextState};
+}
 
 /**
  * Interpolate a primal solution for state-input initialization at a intermediate node
  *
  * @param initializer : System initializer
  * @param t :  Start of the discrete interval
- * @param t_next : End time of te discrete interval
+ * @param tNext : End time of te discrete interval
  * @param x : Starting state of the discrete interval
  * @param useController : true = uses the controller of the primal solution, false = uses the input trajectory of the primal solution
- * @return {u(t), x(t_next)} : input and state transition
+ * @return {u(t), x(tNext)} : input and state transition
  */
-std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t t_next, const vector_t& x,
+std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x,
                                                          bool useController);
 
 /**
@@ -67,7 +71,10 @@ std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalS
  * @param x : Pre-event state
  * @return x_next : Post-event state
  */
-vector_t initializeEventNode(scalar_t t, const vector_t& x);
+inline vector_t initializeEventNode(scalar_t t, const vector_t& x) {
+  // Assume identity map for now
+  return x;
+}
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

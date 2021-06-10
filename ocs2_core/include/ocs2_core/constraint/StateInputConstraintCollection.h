@@ -29,11 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <map>
-#include <memory>
-
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_core/misc/Collection.h>
 
 namespace ocs2 {
 
@@ -44,39 +43,14 @@ namespace ocs2 {
  * concatenated constraint vectors and approximations. Each constraint can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateInputConstraintCollection {
+class StateInputConstraintCollection : public Collection<StateInputConstraint> {
  public:
   StateInputConstraintCollection() = default;
-  virtual ~StateInputConstraintCollection() = default;
-  virtual StateInputConstraintCollection* clone() const;
-
-  /** Checks if the collection has no elements */
-  bool empty() const { return constraintTermMap_.empty(); }
-
-  /**
-   * Adds a constraint to the collection, and transfer ownership to the collection
-   * The provided name must be unique and is later used to access the constraint.
-   * @param constraintTerm: Constraint to be added.
-   * @param name: Name stored along with the constraint.
-   */
-  void add(std::string name, std::unique_ptr<StateInputConstraint> constraintTerm);
-
-  /**
-   * Use to modify a constraint. The returned pointer is not to be stored since the StateInputConstraintCollection contains a unique
-   * pointer to the object
-   * @tparam Derived: derived class of ConstraintTerm to cast to. Casts to the base class by default
-   * @param name: Name of the constraint to modify
-   * @return A reference to the underlying constraint
-   */
-  template <typename Derived = StateInputConstraint>
-  Derived& get(const std::string& name) {
-    static_assert(std::is_base_of<StateInputConstraint, Derived>::value, "Template argument must derive from StateInputConstraint");
-    // if the key does not exist throws an exception
-    return dynamic_cast<Derived&>(*constraintTermMap_.at(name));
-  }
+  ~StateInputConstraintCollection() override = default;
+  StateInputConstraintCollection* clone() const override;
 
   /** Returns the number of active constraints at given time. */
-  size_t getNumConstraints(scalar_t time) const;
+  virtual size_t getNumConstraints(scalar_t time) const;
 
   /** Get the constraint vector value */
   virtual vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const;
@@ -92,15 +66,6 @@ class StateInputConstraintCollection {
  protected:
   /** Copy constructor */
   StateInputConstraintCollection(const StateInputConstraintCollection& other);
-
- private:
-  /**
-   * Appends the vector v1 by moving v2 which allows for the efficient transfer of resources.
-   */
-  template <typename T, typename Allocator>
-  void appendVectorToVectorByMoving(std::vector<T, Allocator>& v1, std::vector<T, Allocator>& v2) const;
-
-  std::map<std::string, std::unique_ptr<StateInputConstraint>> constraintTermMap_;
 };
 
 }  // namespace ocs2

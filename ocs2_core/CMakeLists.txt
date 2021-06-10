@@ -70,10 +70,11 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/automatic_differentation/FiniteDifferenceMethods.cpp
-  src/constraint/StateConstraintCollection.cpp
-  src/constraint/StateInputConstraintCollection.cpp
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
+  src/constraint/StateConstraintCollection.cpp
+  src/constraint/StateInputConstraintCollection.cpp
+  src/constraint/LinearConstraint.cpp
   src/constraint/LinearStateConstraint.cpp
   src/constraint/LinearStateInputConstraint.cpp
   src/control/FeedforwardController.cpp

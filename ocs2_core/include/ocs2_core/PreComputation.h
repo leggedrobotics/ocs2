@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/ComputationRequest.h>
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
@@ -46,34 +47,6 @@ namespace ocs2 {
  */
 class PreComputation {
  public:
-  /** Types of computation that can be simultaneously requested */
-  enum class Request { Dynamics = 1, Cost = 2, Constraint = 4, SoftConstraint = 8, Approximation = 16 };
-
-  /**
-   * A set of computation requests
-   * It can be composed by union of two Requests using operator+().
-   */
-  struct RequestSet {
-    /** Constructor, implicit conversion allowed */
-    constexpr RequestSet(Request computationFlag) : flags_(computationFlag) {}  // NOLINT(google-explicit-constructor)
-
-    /** Test if this Request set contains item */
-    constexpr bool contains(Request item) const;
-
-    /** Test if this Request set contains any Computation of other (non-empty intersection) */
-    constexpr bool containsAny(RequestSet other) const;
-
-    /** Test if this Request set contains all Computations of other (subset) */
-    constexpr bool containsAll(RequestSet other) const;
-
-    /** Union of two Request sets */
-    friend constexpr PreComputation::RequestSet operator+(PreComputation::RequestSet a, PreComputation::RequestSet b);
-
-   private:
-    //! Internal representation of the set through a bitfield
-    Request flags_;
-  };
-
   /** Constructor */
   PreComputation() = default;
 
@@ -111,45 +84,6 @@ Derived& cast(PreComputation& preComputation) {
   static_assert(std::is_base_of<PreComputation, Derived>::value, "Template argument must derive from PreComputation");
   assert(dynamic_cast<Derived*>(&preComputation) != nullptr);
   return static_cast<Derived&>(preComputation);
-}
-
-/** Bitwise | on the underlying type of PreComputation::Request */
-constexpr PreComputation::Request operator|(PreComputation::Request lhs, PreComputation::Request rhs) {
-  using underlying = typename std::underlying_type<PreComputation::Request>::type;
-  return static_cast<PreComputation::Request>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
-}
-
-/** Bitwise & on the underlying type of PreComputation::Request */
-constexpr PreComputation::Request operator&(PreComputation::Request lhs, PreComputation::Request rhs) {
-  using underlying = typename std::underlying_type<PreComputation::Request>::type;
-  return static_cast<PreComputation::Request>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs));
-}
-
-/** Check if the Bitwise representation of two PreComputation::Request has empty union */
-constexpr bool isUnionEmpty(PreComputation::Request lhs, PreComputation::Request rhs) {
-  using underlying = typename std::underlying_type<PreComputation::Request>::type;
-  return (static_cast<underlying>(lhs) & static_cast<underlying>(rhs)) == underlying(0);
-}
-
-constexpr bool PreComputation::RequestSet::contains(Request item) const {
-  return !isUnionEmpty(flags_, item);
-}
-
-constexpr bool PreComputation::RequestSet::containsAny(RequestSet other) const {
-  return !isUnionEmpty(flags_, other.flags_);
-}
-
-constexpr bool PreComputation::RequestSet::containsAll(RequestSet other) const {
-  return (flags_ & other.flags_) == other.flags_;
-}
-
-constexpr PreComputation::RequestSet operator+(PreComputation::RequestSet a, PreComputation::RequestSet b) {
-  return {a.flags_ | b.flags_};
-}
-
-/** Get a RequestSet out of two requests */
-constexpr PreComputation::RequestSet operator+(PreComputation::Request a, PreComputation::Request b) {
-  return a | b;
 }
 
 }  // namespace ocs2

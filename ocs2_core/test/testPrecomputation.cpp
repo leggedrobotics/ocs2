@@ -29,10 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ocs2_core/ComputationRequest.h>
 #include <ocs2_core/PreComputation.h>
 
-using Request = ocs2::PreComputation::Request;
-using RequestSet = ocs2::PreComputation::RequestSet;
+using Request = ocs2::Request;
 
 TEST(testPrecomputation, convenientInterface) {
   // Check that this compiles
@@ -50,7 +50,7 @@ TEST(testPrecomputation, containts) {
   ASSERT_TRUE(request.contains(Request::SoftConstraint));
   ASSERT_TRUE(request.contains(Request::Approximation));
 
-  constexpr RequestSet request2 = Request::Dynamics;
+  constexpr ocs2::RequestSet request2 = Request::Dynamics;
   ASSERT_TRUE(request2.contains(Request::Dynamics));
   ASSERT_FALSE(request2.contains(Request::Cost));
   ASSERT_FALSE(request2.contains(Request::Constraint));

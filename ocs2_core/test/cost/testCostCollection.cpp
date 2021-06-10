@@ -78,11 +78,14 @@ class StateInputCost_TestFixture : public ::testing::Test {
     u = ocs2::vector_t::Random(INPUT_DIM);
     t = 0.0;
 
-    auto cost = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(std::move(Q), std::move(R)));
-    expectedCost = cost->getValue(t, x, u, desiredTrajectory);
-    expectedCostApproximation = cost->getQuadraticApproximation(t, x, u, desiredTrajectory);
+    auto cost1 = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(Q, R));
+    auto cost2 = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(0.5 * Q, 2.0 * R));
+    expectedCost = cost1->getValue(t, x, u, desiredTrajectory) + cost2->getValue(t, x, u, desiredTrajectory);
+    expectedCostApproximation = cost1->getQuadraticApproximation(t, x, u, desiredTrajectory);
+    expectedCostApproximation += cost2->getQuadraticApproximation(t, x, u, desiredTrajectory);
 
-    costCollection.add("Simple quadratic cost", std::move(cost));
+    costCollection.add("Simple quadratic cost", std::move(cost1));
+    costCollection.add("Another simple quadratic cost", std::move(cost2));
   }
 
   ocs2::CostDesiredTrajectories desiredTrajectory;
@@ -134,10 +137,11 @@ TEST_F(StateInputCost_TestFixture, throwsWhenAddExistingCost) {
 }
 
 TEST_F(StateInputCost_TestFixture, canDeactivateCost) {
-  auto& costFunction = costCollection.get("Simple quadratic cost");
-  costFunction.setActivity(false);
+  auto& cost1 = costCollection.get("Simple quadratic cost");
+  auto& cost2 = costCollection.get("Another simple quadratic cost");
+  cost1.setActivity(false);
   const auto cost = costCollection.getValue(t, x, u, desiredTrajectory);
-  EXPECT_EQ(cost, 0.0);
+  EXPECT_DOUBLE_EQ(cost, cost2.getValue(t, x, u, desiredTrajectory));
 }
 
 TEST_F(StateInputCost_TestFixture, canClone) {

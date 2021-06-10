@@ -73,6 +73,8 @@ add_library(${PROJECT_NAME}
   src/constraint/ConstraintCollection.cpp
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
+  src/constraint/StateConstraintCollection.cpp
+  src/constraint/StateInputConstraintCollection.cpp
   src/constraint/LinearConstraint.cpp
   src/constraint/LinearStateConstraint.cpp
   src/constraint/LinearStateInputConstraint.cpp

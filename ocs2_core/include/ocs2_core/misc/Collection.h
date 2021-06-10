@@ -118,4 +118,14 @@ Collection<T>::Collection(const Collection& other) : termNameMap_(other.termName
   }
 }
 
+/**
+ * Helper function for merging two vectors by moving objects.
+ * @param v1 : vector to move objects to
+ * @param v2 : vector to move objects from
+ */
+template <typename T, typename Allocator>
+inline void appendVectorToVectorByMoving(std::vector<T, Allocator>& v1, std::vector<T, Allocator>&& v2) {
+  v1.insert(v1.end(), std::make_move_iterator(v2.begin()), std::make_move_iterator(v2.end()));
+}
+
 }  // namespace ocs2

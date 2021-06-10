@@ -1,6 +1,6 @@
 #include "ocs2_switched_model_interface/initialization/ComKinoInitializer.h"
 
-#include "ocs2_switched_model_interface/core/ComputeInputOperatingPoints.h"
+#include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 namespace switched_model {
@@ -28,9 +28,10 @@ ComKinoInitializer* ComKinoInitializer::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ComKinoInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
+  const auto comPose = getComPose(state);
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-  input = computeInputOperatingPoints(comModelPtr_->totalMass(), contactFlags, state);
-  nextState = (vector_t(STATE_DIM) << getComPose(state), base_coordinate_t::Zero(), getJointPositions(state)).finished();
+  input = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(comPose));
+  nextState = (vector_t(STATE_DIM) << comPose, base_coordinate_t::Zero(), getJointPositions(state)).finished();
 }
 
 }  // namespace switched_model

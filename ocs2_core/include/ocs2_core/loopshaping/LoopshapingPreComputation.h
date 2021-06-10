@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -42,27 +42,35 @@ namespace ocs2 {
  */
 class LoopshapingPreComputation final : public PreComputation {
  public:
-  using PreComputation::Request;
-
   LoopshapingPreComputation(const PreComputation& systemPreComputation, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
   ~LoopshapingPreComputation() override = default;
-
   LoopshapingPreComputation* clone() const override;
-  void request(Request requestFlags, scalar_t t, const vector_t& x, const vector_t& u) override;
-  void requestPreJump(Request requestFlags, scalar_t t, const vector_t& x) override;
-  void requestFinal(Request requestFlags, scalar_t t, const vector_t& x) override;
 
+  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
+  void requestPreJump(RequestSet request, scalar_t t, const vector_t& x) override;
+  void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
+
+  /** System state, computed for the last request. */
   const vector_t& getSystemState() const { return x_system_; }
+
+  /** System input, computed for the last request. */
   const vector_t& getSystemInput() const { return u_system_; }
+
+  /** Filter state, computed for the last request. */
   const vector_t& getFilterState() const { return x_filter_; }
+
+  /** Filter Input, computed for the last request. */
   const vector_t& getFilteredInput() const { return u_filter_; }
+
+  /** Precomputation evaluated for the system state and system input */
   const PreComputation& getSystemPreComputation() const { return *systemPreCompPtr_; }
+
+  /** Precomputation evaluated for the system state and filtered input */
   const PreComputation& getFilteredSystemPreComputation() const { return *filteredSystemPreCompPtr_; }
 
  private:
   LoopshapingPreComputation(const LoopshapingPreComputation& rhs);
 
- private:
   vector_t x_system_;
   vector_t u_system_;
   vector_t x_filter_;

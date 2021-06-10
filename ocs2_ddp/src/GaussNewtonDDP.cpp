@@ -54,8 +54,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                               const Initializer* initializerPtr, ddp::Settings ddpSettings,
-                               const CostFunctionBase* heuristicsFunctionPtr)
+                               const Initializer* initializerPtr, ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr)
     : SolverBase(),
       ddpSettings_(std::move(ddpSettings)),
       threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {

@@ -30,51 +30,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/initialization/Initializer.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2 {
 
 /**
- * This is an implementation of Initializer class that uses operating trajectories or single point for state-input initialization.
+ * This is a default implementation of the Initializer where it sets the input to zero and the next state to the current state.
  */
-class OperatingPoints final : public Initializer {
+class DefaultInitializer final : public Initializer {
  public:
   /**
    * Constructor
-   * @param [in] stateOperatingPoint: An operating point for state.
-   * @param [in] inputOperatingPoint: An operating point for input.
+   * @param [in] inputDim: The dimension of the input space.
    */
-  OperatingPoints(const vector_t& stateOperatingPoint, const vector_t& inputOperatingPoint)
-      : timeTrajectory_(1, 0.0), stateTrajectory_(1, stateOperatingPoint), inputTrajectory_(1, inputOperatingPoint) {}
+  explicit DefaultInitializer(size_t inputDim) : inputDim_(inputDim) {}
 
-  /**
-   * Constructor
-   * @param [in] timeTrajectory: The time stamps of the operating trajectories.
-   * @param [in] stateTrajectory: The state operating trajectory.
-   * @param [in] inputTrajectory: The input operating trajectory.
-   */
-  OperatingPoints(scalar_array_t timeTrajectory, vector_array_t stateTrajectory, vector_array_t inputTrajectory)
-      : timeTrajectory_(std::move(timeTrajectory)),
-        stateTrajectory_(std::move(stateTrajectory)),
-        inputTrajectory_(std::move(inputTrajectory)) {}
+  ~DefaultInitializer() override = default;
 
-  /** Destructor */
-  ~OperatingPoints() override = default;
-
-  OperatingPoints* clone() const override { return new OperatingPoints(*this); }
+  DefaultInitializer* clone() const override { return new DefaultInitializer(*this); }
 
   void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override {
-    input = LinearInterpolation::interpolate(time, timeTrajectory_, inputTrajectory_);
-    nextState = LinearInterpolation::interpolate(nextTime, timeTrajectory_, stateTrajectory_);
+    input.setZero(inputDim_);
+    nextState = state;
   }
 
- private:
-  /** Copy constructor */
-  OperatingPoints(const OperatingPoints& other) = default;
+ protected:
+  DefaultInitializer(const DefaultInitializer& rhs) = default;
 
-  const scalar_array_t timeTrajectory_;
-  const vector_array_t stateTrajectory_;
-  const vector_array_t inputTrajectory_;
+  size_t inputDim_;
 };
 
 }  // namespace ocs2

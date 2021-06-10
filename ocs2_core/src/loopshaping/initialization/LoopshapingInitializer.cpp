@@ -27,60 +27,45 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mpc/MPC_DDP.h>
+#include "ocs2_core/loopshaping/initialization/LoopshapingInitializer.h"
 
-#include <ocs2_ddp/ILQR.h>
-#include <ocs2_ddp/SLQ.h>
+#include <iostream>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_DDP::MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-                 const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
-                 mpc::Settings mpcSettings, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
+LoopshapingInitializer::LoopshapingInitializer(const Initializer& systembase, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+    : systembase_(systembase.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
-    : MPC_BASE(std::move(mpcSettings)) {
-  switch (ddpSettings.algorithm_) {
-    case ddp::Algorithm::SLQ:
-      ddpPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
-                            heuristicsFunctionPtr));
-      break;
-    case ddp::Algorithm::ILQR:
-      ddpPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
-                             heuristicsFunctionPtr));
-      break;
-  }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LoopshapingInitializer::LoopshapingInitializer(const LoopshapingInitializer& other)
+    : Initializer(other), systembase_(other.systembase_->clone()), loopshapingDefinition_(other.loopshapingDefinition_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LoopshapingInitializer* LoopshapingInitializer::clone() const {
+  return new LoopshapingInitializer(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_DDP::calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  // updating real-time iteration settings
-  if (MPC_BASE::initRun_ && ddpPtr_->settings().strategy_ == search_strategy::Type::LINE_SEARCH) {
-    ddpPtr_->settings().maxNumIterations_ = this->settings().initMaxNumIterations_;
-    ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().initMaxStepLength_;
-    ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().initMinStepLength_;
-  } else {
-    ddpPtr_->settings().maxNumIterations_ = this->settings().runtimeMaxNumIterations_;
-    ddpPtr_->settings().lineSearch_.maxStepLength_ = this->settings().runtimeMaxStepLength_;
-    ddpPtr_->settings().lineSearch_.minStepLength_ = this->settings().runtimeMinStepLength_;
-  }
+void LoopshapingInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
+  // system state-input initializer
+  vector_t systemInput, systemNextState;
+  const vector_t systemState = loopshapingDefinition_->getSystemState(state);
+  systembase_->compute(time, systemState, nextTime, systemInput, systemNextState);
 
-  // calculate controller
-  if (this->settings().coldStart_) {
-    ddpPtr_->reset();
-    ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
-
-  } else {
-    if (MPC_BASE::initRun_) {
-      ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_);
-    } else {
-      ddpPtr_->run(initTime, initState, finalTime, MPC_BASE::partitionTimes_, std::vector<ControllerBase*>());
-    }
-  }
+  // filter state-input initializer
+  vector_t equilibriumFilterNextState, equilibriumFilterInput;
+  loopshapingDefinition_->getFilterEquilibrium(systemInput, equilibriumFilterNextState, equilibriumFilterInput);
+  input = loopshapingDefinition_->concatenateSystemAndFilterInput(systemInput, equilibriumFilterInput);
+  nextState = loopshapingDefinition_->concatenateSystemAndFilterState(systemNextState, equilibriumFilterNextState);
 }
 
 }  // namespace ocs2

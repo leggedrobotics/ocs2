@@ -54,10 +54,10 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/ModeScheduleManager.cpp
   src/synchronized_module/LoopshapingModeScheduleManager.cpp
   src/synchronized_module/LoopshapingSynchronizedModule.cpp
-  src/rollout/OperatingTrajectoriesRollout.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp
   src/rollout/RootFinder.cpp
+  src/rollout/InitializerRollout.cpp
   src/rollout/StateTriggeredRollout.cpp
   src/rollout/TimeTriggeredRollout.cpp
   src/rollout/Rollout_Settings.cpp

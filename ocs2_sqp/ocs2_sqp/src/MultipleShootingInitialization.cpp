@@ -27,49 +27,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include "ocs2_sqp/MultipleShootingInitialization.h"
 
-#include <ocs2_core/Types.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2 {
+namespace multiple_shooting {
 
-/**
- * This is the base class for initializing the DDP-based algorithms.
- */
-class SystemOperatingTrajectoriesBase {
- public:
-  /** Default constructor */
-  SystemOperatingTrajectoriesBase() = default;
+std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x,
+                                                         bool useController) {
+  // Use interpolation for next state
+  const auto nextState = LinearInterpolation::interpolate(tNext, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_);
 
-  /** Default destructor */
-  virtual ~SystemOperatingTrajectoriesBase() = default;
+  // Determine input
+  if (useController) {
+    return {primalSolution.controllerPtr_->computeInput(t, x), nextState};
+  } else {
+    return {LinearInterpolation::interpolate(t, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_), nextState};
+  }
+}
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual SystemOperatingTrajectoriesBase* clone() const = 0;
-
-  /**
-   * Gets the Operating Trajectories of the system in time interval [startTime, finalTime] where there is
-   * no intermediate switches except possibly the end time.
-   *
-   * @param [in] initialState: Initial state.
-   * @param [in] startTime: Initial time.
-   * @param [in] finalTime: Final time.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] inputTrajectory: Output control input trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
-   */
-  virtual void getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                              scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
-                                              vector_array_t& inputTrajectory, bool concatOutput) = 0;
-
- protected:
-  /** Copy constructor */
-  SystemOperatingTrajectoriesBase(const SystemOperatingTrajectoriesBase& rhs) = default;
-};
-
+}  // namespace multiple_shooting
 }  // namespace ocs2

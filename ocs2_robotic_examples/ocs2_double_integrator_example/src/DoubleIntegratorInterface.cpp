@@ -98,7 +98,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
   /*
    * Initialization
    */
-  linearSystemOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
+  linearSystemInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/
@@ -108,7 +108,7 @@ std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc(bool warmStart) {
   if (warmStart) {
     return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
                                                 linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                                linearSystemOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
+                                                linearSystemInitializerPtr_.get(), ddpSettings_, mpcSettings_));
   } else {
     auto mpcSettings = mpcSettings_;
     mpcSettings.coldStart_ = true;
@@ -117,7 +117,7 @@ std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc(bool warmStart) {
     mpcSettings.runtimeMaxStepLength_ = mpcSettings.initMaxStepLength_;
     return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpLinearSystemRolloutPtr_.get(), linearSystemDynamicsPtr_.get(),
                                                 linearSystemConstraintPtr_.get(), linearSystemCostPtr_.get(),
-                                                linearSystemOperatingPointPtr_.get(), ddpSettings_, mpcSettings));
+                                                linearSystemInitializerPtr_.get(), ddpSettings_, mpcSettings));
   }
 }
 

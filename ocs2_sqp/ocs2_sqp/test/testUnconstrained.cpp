@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
 
@@ -68,15 +68,15 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Ones(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
-  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Ones(m));
+  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Construct solver
   std::unique_ptr<ocs2::MultipleShootingSolver> solver;
   if (emptyConstraint) {
     ConstraintBase emptyBaseConstraints;
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &emptyBaseConstraints));
+    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &emptyBaseConstraints));
   } else {
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, nullptr));
+    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, nullptr));
   }
   solver->setCostDesiredTrajectories(costDesiredTrajectories);
 

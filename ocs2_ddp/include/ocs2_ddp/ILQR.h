@@ -49,13 +49,13 @@ class ILQR : public GaussNewtonDDP {
    * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of ILQR.
+   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
    * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the final cost function defined in costFunctionPtr.
    */
   ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-       const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
+       const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
        const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /**

@@ -34,13 +34,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Ballbot
 #include "ocs2_ballbot_example/dynamics/BallbotSystemDynamics.h"
+
+// SQP
+#include "ocs2_sqp/MultipleShootingSettings.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -64,6 +67,8 @@ class BallbotInterface final : public RobotInterface {
 
   const vector_t& getInitialState() { return initialState_; }
 
+  multiple_shooting::Settings& sqpSettings() { return sqpSettings_; }
+
   ddp::Settings& ddpSettings() { return ddpSettings_; }
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
@@ -74,7 +79,7 @@ class BallbotInterface final : public RobotInterface {
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *ballbotInitializerPtr_; }
 
  protected:
   /**
@@ -92,10 +97,11 @@ class BallbotInterface final : public RobotInterface {
 
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
+  multiple_shooting::Settings sqpSettings_;
 
   std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<OperatingPoints> operatingPointPtr_;
+  std::unique_ptr<Initializer> ballbotInitializerPtr_;
 
   vector_t initialState_{STATE_DIM};
 };

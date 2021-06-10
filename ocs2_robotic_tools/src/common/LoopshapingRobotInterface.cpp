@@ -43,7 +43,7 @@ LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterf
   optimalControlProblemPtr_ =
       LoopshapingOptimalControlProblem::create(robotInterfacePtr->getOptimalControlProblem(), loopshapingDefinitionPtr_);
 
-  operatingPointsPtr_.reset(new LoopshapingOperatingPoint(robotInterfacePtr_->getOperatingPoints(), loopshapingDefinitionPtr_));
+  initializerPtr_.reset(new ocs2::LoopshapingInitializer(robotInterfacePtr_->getInitializer(), loopshapingDefinitionPtr_));
 
   if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
     loopshapingModeScheduleManager_ =

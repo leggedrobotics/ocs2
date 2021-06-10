@@ -160,16 +160,17 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   /*
    * Initialization state
    */
+  initializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
+
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
-  operatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
-  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *operatingPointPtr_));
+  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *initializerPtr_));
   mpc->getSolverPtr()->setSynchronizedModules({referenceUpdateModulePtr_});
   return mpc;
 }

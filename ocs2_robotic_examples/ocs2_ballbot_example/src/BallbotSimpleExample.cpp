@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
   /*
    * Initialization
    */
-  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr(new OperatingPoints(xInit, vector_t::Zero(INPUT_DIM)));
+  std::unique_ptr<Initializer> ballbotInitializerPtr(new DefaultInitializer(INPUT_DIM));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
    * define solver and run
    */
   ddpSettings.nThreads_ = 1;
-  SLQ slq(ddpSettings, *ballbotRolloutPtr, problem, *ballbotOperatingPointPtr);
+  SLQ slq(ddpSettings, *ballbotRolloutPtr, problem, *ballbotInitializerPtr);
   slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 

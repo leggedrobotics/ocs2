@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
@@ -74,7 +74,7 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *linearSystemInitializerPtr_; }
 
  protected:
   /**
@@ -95,7 +95,7 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<OptimalControlProblem> problemPtr_;
-  std::unique_ptr<OperatingPoints> operatingPointPtr_;
+  std::unique_ptr<Initializer> linearSystemInitializerPtr_;
 
   vector_t initialState_{STATE_DIM};
   vector_t finalGoal_{STATE_DIM};

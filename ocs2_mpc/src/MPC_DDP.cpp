@@ -38,14 +38,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 MPC_DDP::MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
-                 const OptimalControlProblem& optimalControlProblem, const SystemOperatingTrajectoriesBase& operatingTrajectories)
+                 const OptimalControlProblem& optimalControlProblem, const Initializer* initializerPtr)
     : MPC_BASE(std::move(mpcSettings)) {
   switch (ddpSettings.algorithm_) {
     case ddp::Algorithm::SLQ:
-      ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, operatingTrajectories));
+      ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, initializerPtr));
       break;
     case ddp::Algorithm::ILQR:
-      ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, operatingTrajectories));
+      ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, initializerPtr));
       break;
   }
 }

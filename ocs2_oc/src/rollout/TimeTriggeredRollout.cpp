@@ -34,9 +34,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                                       scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                                       vector_array_t& inputTrajectory) {
+vector_t TimeTriggeredRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState,
+                                       ControllerBase* controller, scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock,
+                                       vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (controller == nullptr) {
     throw std::runtime_error("The input controller is not set.");
   }
@@ -70,11 +70,16 @@ vector_t TimeTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, 
   vector_t beginState = initState;
   int k_u = 0;  // control input iterator
   for (int i = 0; i < numSubsystems; i++) {
-    Observer observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
-    // integrate controlled system
-    dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
-                                              timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
-                                              this->settings().relTolODE_, maxNumSteps);
+    if (timeIntervalArray[i].first < timeIntervalArray[i].second) {
+      Observer observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
+      // integrate controlled system
+      dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
+                                                timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
+                                                this->settings().relTolODE_, maxNumSteps);
+    } else {
+      timeTrajectory.push_back(timeIntervalArray[i].second);
+      stateTrajectory.push_back(beginState);
+    }
 
     // compute control input trajectory and concatenate to inputTrajectory
     if (this->settings().reconstructInputTrajectory_) {

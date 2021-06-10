@@ -46,5 +46,30 @@ bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept {
   return same;
 }
 
+OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                const std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                                const std::vector<VectorFunctionLinearApproximation>* constraints) {
+  const int numStages = dynamics.size();
+
+  OcpSize problemSize(dynamics.size());
+
+  // State inputs
+  for (int k = 0; k < numStages; k++) {
+    problemSize.numStates[k] = dynamics[k].dfdx.cols();
+    problemSize.numInputs[k] = dynamics[k].dfdu.cols();
+  }
+  problemSize.numStates[numStages] = dynamics[numStages - 1].dfdx.rows();
+  problemSize.numInputs[numStages] = 0;
+
+  // Constraints
+  if (constraints != nullptr) {
+    for (int k = 0; k < numStages + 1; k++) {
+      problemSize.numIneqConstraints[k] = (*constraints)[k].f.size();
+    }
+  }
+
+  return problemSize;
+}
+
 }  // namespace hpipm_interface
 }  // namespace ocs2

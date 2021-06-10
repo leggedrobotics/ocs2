@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
@@ -66,10 +66,10 @@ class RobotInterface {
   virtual const OptimalControlProblem& getOptimalControlProblem() const = 0;
 
   /**
-   * @brief getOperatingPoints
-   * @return reference to the internal operating point
+   * @brief getInitializer
+   * @return reference to the internal solver initializer
    */
-  virtual const SystemOperatingTrajectoriesBase& getOperatingPoints() const = 0;
+  virtual const Initializer& getInitializer() const = 0;
 };
 
 }  // namespace ocs2

@@ -50,10 +50,10 @@ class SLQ final : public GaussNewtonDDP {
    * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] rollout: The rollout class used for simulating the system dynamics.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
-   * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization of SLQ.
+   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
    */
   SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
-      const SystemOperatingTrajectoriesBase& operatingTrajectories);
+      const Initializer* initializerPtr);
 
   /**
    * Default destructor.

@@ -29,70 +29,38 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <map>
-#include <memory>
-#include <string>
-
 #include <ocs2_core/Types.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/misc/Collection.h>
 
 #include "StateInputCost.h"
 
 namespace ocs2 {
 
 /**
- * Cost function combining a collection of cost terms.
+ * State Input Cost function combining a collection of cost terms.
  *
  * This class collects a variable number of cost terms and provides methods to get the
  * summed cost values and quadratic approximations. Each cost term can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateInputCostCollection {
+class StateInputCostCollection : public Collection<StateInputCost> {
  public:
   StateInputCostCollection() = default;
-  virtual ~StateInputCostCollection() = default;
-  virtual StateInputCostCollection* clone() const;
-
-  /** Checks if the collection has no elements */
-  bool empty() const { return costTermMap_.empty(); }
-
-  /**
-   * Adds a cost term to the collection, and transfer ownership to the collection
-   * The provided name must be unique and is later used to access the cost term.
-   * @param name: Name stored along with the cost term.
-   * @param cost: Cost to be added.
-   */
-  void add(std::string name, std::unique_ptr<StateInputCost> cost);
-
-  /**
-   * Use to modify a cost term. The returned pointer is not to be stored since the StateInputCostCollection
-   * contains a unique pointer to the object
-   * @tparam Derived: derived class of StateInputCost to cast to. Casts to the base class by default
-   * @param name: Name of the cost term to modify
-   * @return A reference to the underlying cost term
-   */
-  template <typename Derived = StateInputCost>
-  Derived& get(const std::string& name) {
-    static_assert(std::is_base_of<StateInputCost, Derived>::value, "Template argument must derive from StateInputCost");
-    // if the key does not exist throws an exception
-    return dynamic_cast<Derived&>(*costTermMap_.at(name));
-  }
+  ~StateInputCostCollection() override = default;
+  StateInputCostCollection* clone() const override;
 
   /** Get state-input cost value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
-                            const PreComputation& preComp) const;
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                            const CostDesiredTrajectories& desiredTrajectory) const;
 
   /** Get state-input cost quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                         const CostDesiredTrajectories& desiredTrajectory,
-                                                                         const PreComputation& preComp) const;
+                                                                         const CostDesiredTrajectories& desiredTrajectory) const;
 
  protected:
   /** Copy constructor */
   StateInputCostCollection(const StateInputCostCollection& other);
-
- private:
-  std::map<std::string, std::unique_ptr<StateInputCost>> costTermMap_;
 };
 
 }  // namespace ocs2

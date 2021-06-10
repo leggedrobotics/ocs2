@@ -29,12 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <map>
-#include <memory>
-#include <string>
-
 #include <ocs2_core/Types.h>
 #include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/misc/Collection.h>
 
 #include "StateCost.h"
 
@@ -47,52 +44,22 @@ namespace ocs2 {
  * summed cost values and quadratic approximations. Each cost term can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateCostCollection {
+class StateCostCollection : public Collection<StateCost> {
  public:
   StateCostCollection() = default;
   virtual ~StateCostCollection() = default;
   virtual StateCostCollection* clone() const;
 
-  /** Checks if the collection has no elements */
-  bool empty() const { return costTermMap_.empty(); }
-
-  /**
-   * Adds a cost term to the collection, and transfer ownership to the collection
-   * The provided name must be unique and is later used to access the cost term.
-   * @param name: Name stored along with the cost term.
-   * @param cost: Cost to be added.
-   */
-  void add(std::string name, std::unique_ptr<StateCost> cost);
-
-  /**
-   * Use to modify a cost term. The returned pointer is not to be stored since the StateCostCollection
-   * contains a unique pointer to the object
-   * @tparam Derived: derived class of StateCost to cast to. Casts to the base class by default
-   * @param name: Name of the cost term to modify
-   * @return A reference to the underlying cost term
-   */
-  template <typename Derived = StateCost>
-  Derived& get(const std::string& name) {
-    static_assert(std::is_base_of<StateCost, Derived>::value, "Template argument must derive from StateCost");
-    // if the key does not exist throws an exception
-    return dynamic_cast<Derived&>(*costTermMap_.at(name));
-  }
-
   /** Get state-only cost value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
-                            const PreComputation& preComp) const;
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
 
   /** Get state-only cost quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const CostDesiredTrajectories& desiredTrajectory,
-                                                                         const PreComputation& preComp) const;
+                                                                         const CostDesiredTrajectories& desiredTrajectory) const;
 
  protected:
   /** Copy constructor */
   StateCostCollection(const StateCostCollection& other);
-
- private:
-  std::map<std::string, std::unique_ptr<StateCost>> costTermMap_;
 };
 
 }  // namespace ocs2

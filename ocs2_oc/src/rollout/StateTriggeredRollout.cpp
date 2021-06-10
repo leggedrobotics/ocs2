@@ -27,18 +27,18 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_oc/rollout/RootFinder.h>
+#include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include <ocs2_core/control/StateBasedLinearController.h>
-#include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_oc/rollout/RootFinder.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                                        scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
+vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState,
+                                        ControllerBase* controller, scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces,
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
   if (controller == nullptr) {
     throw std::runtime_error("The input controller is not set.");
@@ -134,7 +134,7 @@ vector_t StateTriggeredRollout::runImpl(time_interval_array_t timeIntervalArray,
     // accuracy condition for event refinement. If sufficiently accurate crossing location has been determined
     if (accuracyCondition || maxNumIterationsReached) {
       // set new begin/end time and begin state
-      t0 = queryTime + OCS2NumericTraits<scalar_t>::weakEpsilon();
+      t0 = queryTime + numeric_traits::weakEpsilon<scalar_t>();
       t1 = finalTime;
       // compute jump
       x0 = systemDynamicsPtr_->computeJumpMap(queryTime, queryState);

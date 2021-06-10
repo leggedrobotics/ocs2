@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
@@ -45,7 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
-#include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
@@ -74,14 +73,14 @@ class GaussNewtonDDP : public SolverBase {
 
   /**
    * Constructor
-   *
+   
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
    * @param [in] rollout: The rollout class used for simulating the system dynamics.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
-   * @param [in] operatingTrajectories: The operating trajectories of system which will be used for initialization.
+   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
    */
   GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
-                 const SystemOperatingTrajectoriesBase& operatingTrajectories);
+                 const Initializer* initializerPtr);
 
   /**
    * Destructor.
@@ -479,7 +478,7 @@ class GaussNewtonDDP : public SolverBase {
  private:
   ddp::Settings ddpSettings_;
 
-  std::unique_ptr<ThreadPool> threadPoolPtr_;
+  ThreadPool threadPool_;
 
   unsigned long long int rewindCounter_{0};
   unsigned long long int totalNumIterations_{0};
@@ -492,7 +491,7 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
-  std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
+std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
   std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is

@@ -12,6 +12,20 @@ templateSwitchingTimes
 {
 }
 
+; multiple_shooting settings
+multiple_shooting
+{
+  dt                            0.1
+  sqpIteration                  5
+  deltaTol                      1e-3
+  printSolverStatistics         true
+  printSolverStatus             false
+  printLinesearch               false
+  useFeedbackPolicy             true
+  integratorType                RK2
+  nThreads                      4
+}
+
 ; DDP settings
 ddp
 {

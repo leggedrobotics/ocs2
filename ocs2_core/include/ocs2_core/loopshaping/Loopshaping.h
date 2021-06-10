@@ -10,4 +10,4 @@
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
 #include <ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h>
 #include <ocs2_core/loopshaping/dynamics/LoopshapingFilterDynamics.h>
-#include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraint.h>
+#include <ocs2_core/loopshaping/initialization/LoopshapingInitializer.h>

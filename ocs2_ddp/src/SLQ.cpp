@@ -36,8 +36,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
-         const SystemOperatingTrajectoriesBase& operatingTrajectories)
-    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, operatingTrajectories) {
+         const Initializer* initializerPtr)
+    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializerPtr) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");

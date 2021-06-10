@@ -34,13 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateInputCostCollection::StateInputCostCollection(const StateInputCostCollection& other) {
-  // Loop through all costs by name and clone into the new object
-  costTermMap_.clear();
-  for (const auto& costPair : other.costTermMap_) {
-    add(costPair.first, std::unique_ptr<StateInputCost>(costPair.second->clone()));
-  }
-}
+StateInputCostCollection::StateInputCostCollection(const StateInputCostCollection& other) : Collection<StateInputCost>(other) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -52,25 +46,14 @@ StateInputCostCollection* StateInputCostCollection::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StateInputCostCollection::add(std::string name, std::unique_ptr<StateInputCost> costTerm) {
-  auto info = costTermMap_.emplace(std::move(name), std::move(costTerm));
-  if (!info.second) {
-    throw std::runtime_error(std::string("[StateInputCostCollection::add] Cost term with name \"") + info.first->first +
-                             "\" already exists");
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                            const CostDesiredTrajectories& desiredTrajectory, const PreComputation& preComp) const {
+                                            const CostDesiredTrajectories& desiredTrajectory) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
-  for (const auto& costPair : costTermMap_) {
-    if (costPair.second->isActive(time)) {
-      cost += costPair.second->getValue(time, state, input, desiredTrajectory, preComp);
+  for (const auto& costTerm : this->terms_) {
+    if (costTerm->isActive()) {
+      cost += costTerm->getValue(time, state, input, desiredTrajectory);
     }
   }
 
@@ -80,18 +63,23 @@ scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                         const vector_t& input,
-                                                                                         const CostDesiredTrajectories& desiredTrajectory,
-                                                                                         const PreComputation& preComp) const {
-  auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
+ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(
+    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
+  const auto firstActive =
+      std::find_if(terms_.begin(), terms_.end(), [](const std::unique_ptr<StateInputCost>& costTerm) { return costTerm->isActive(); });
 
-  // accumulate cost term quadratic approximation
-  for (const auto& costPair : costTermMap_) {
-    if (costPair.second->isActive(time)) {
-      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory, preComp);
-    }
+  // No active terms (or terms is empty).
+  if (firstActive == terms_.end()) {
+    return ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
   }
+
+  // Initialize with first active term, accumulate potentially other active terms.
+  auto cost = (*firstActive)->getQuadraticApproximation(time, state, input, desiredTrajectory);
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateInputCost>& costTerm) {
+    if (costTerm->isActive()) {
+      cost += costTerm->getQuadraticApproximation(time, state, input, desiredTrajectory);
+    }
+  });
 
   return cost;
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/ComputationRequest.h>
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
@@ -37,40 +38,15 @@ namespace ocs2 {
  * Pre-Computation base class.
  *
  * This is an optional module for sharing computation between system dynamics, cost and constraint
- * terms. The virtual request callback must be called before getting the value or approximation.
+ * terms. The virtual request callback are called before getting the value or approximation.
  * The callbacks take a set of requested computation items, which must be computed and stored
- * in the PreComputation object. The same PreComputation is passed to the getter mehtods of
- * dynamics, cost and constraint terms, which can make use the shared pre-computation.
+ * in the PreComputation object. The same PreComputation is passed to the getter methods of
+ * dynamics, cost and constraint terms, which can make use of the shared pre-computation.
  *
  * If pre-computation is not used, a default constructed PreComputation() can be passed to the getters.
  */
 class PreComputation {
  public:
-  /**
-   * Request of a set of Computation items.
-   * It can be composed by union of two Requests using operator+().
-   */
-  struct Request {
-    enum Computation { Dynamics = 1, Cost = 2, Constraint = 4, SoftConstraint = 8, Approximation = 16 };
-
-    /** Constructor, implicit construction is allowed */
-    constexpr Request(Computation computationFlag) : flags(computationFlag) {}
-
-    /** Test if this Request contains item */
-    constexpr bool contains(Computation item) const { return (static_cast<int>(flags) & static_cast<int>(item)) != 0; }
-
-    /** Test if this Request contains any Computation of other (non-empty intersection) */
-    constexpr bool containsAny(Request other) const { return (static_cast<int>(flags) & static_cast<int>(other.flags)) != 0; }
-
-    /** Test if this Request contains all Computations of other (subset) */
-    constexpr bool containsAll(Request other) const {
-      return (static_cast<int>(flags) & static_cast<int>(other.flags)) == static_cast<int>(other.flags);
-    }
-
-    /** flags bitfield */
-    Computation flags;
-  };
-
   /** Constructor */
   PreComputation() = default;
 
@@ -81,20 +57,20 @@ class PreComputation {
   virtual PreComputation* clone() const { return new PreComputation(*this); }
 
   /** Request callback */
-  virtual void request(Request request, scalar_t t, const vector_t& x, const vector_t& u) {}
+  virtual void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {}
 
   /** Request callback at jump event time */
-  virtual void requestPreJump(Request request, scalar_t t, const vector_t& x) {}
+  virtual void requestPreJump(RequestSet request, scalar_t t, const vector_t& x) {}
 
   /** Request callback at final time */
-  virtual void requestFinal(Request request, scalar_t t, const vector_t& x) {}
+  virtual void requestFinal(RequestSet request, scalar_t t, const vector_t& x) {}
 
  protected:
   /** Copy constructor */
   PreComputation(const PreComputation& other) = default;
 };
 
-/* Helper to cast to const reference of derived class. */
+/** Helper to cast to const reference of derived class. */
 template <typename Derived>
 const Derived& cast(const PreComputation& preComputation) {
   static_assert(std::is_base_of<PreComputation, Derived>::value, "Template argument must derive from PreComputation");
@@ -102,22 +78,12 @@ const Derived& cast(const PreComputation& preComputation) {
   return static_cast<const Derived&>(preComputation);
 }
 
-/* Helper to cast to reference of derived class. */
+/** Helper to cast to reference of derived class. */
 template <typename Derived>
 Derived& cast(PreComputation& preComputation) {
   static_assert(std::is_base_of<PreComputation, Derived>::value, "Template argument must derive from PreComputation");
   assert(dynamic_cast<Derived*>(&preComputation) != nullptr);
   return static_cast<Derived&>(preComputation);
-}
-
-/** Union of two Request sets */
-inline constexpr PreComputation::Request operator+(PreComputation::Request a, PreComputation::Request b) {
-  return PreComputation::Request(static_cast<PreComputation::Request::Computation>(static_cast<int>(a.flags) | static_cast<int>(b.flags)));
-}
-
-/** Get a Request out of two Computation requests */
-inline constexpr PreComputation::Request operator+(PreComputation::Request::Computation a, PreComputation::Request::Computation b) {
-  return PreComputation::Request(a) + PreComputation::Request(b);
 }
 
 }  // namespace ocs2

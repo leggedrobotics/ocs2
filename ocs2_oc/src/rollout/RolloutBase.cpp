@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <iostream>
 
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/misc/Numerics.h>
 
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -64,7 +64,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
     timeIntervalArray.emplace_back(beginTime, endTime);
 
     // adjusting the start time for correcting the subsystem recognition
-    const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
+    constexpr scalar_t eps = numeric_traits::weakEpsilon<scalar_t>();
     if (endTime - beginTime > eps) {
       timeIntervalArray.back().first += eps;
     } else {

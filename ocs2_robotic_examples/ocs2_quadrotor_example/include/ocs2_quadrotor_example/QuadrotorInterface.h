@@ -69,7 +69,7 @@ class QuadrotorInterface final : public RobotInterface {
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *operatingPointPtr_; }
 
  protected:
   /**

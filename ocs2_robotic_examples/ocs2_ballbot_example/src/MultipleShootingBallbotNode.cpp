@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,47 +27,43 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#pragma once
+#include <ros/init.h>
 
-#include <memory>
+#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include "ocs2_ballbot_example/BallbotInterface.h"
 
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_sqp/MultipleShootingMpc.h>
+#include <ocs2_sqp/MultipleShootingSolver.h>
 
-#include "RolloutBase.h"
+int main(int argc, char** argv) {
+  const std::string robotName = "ballbot";
 
-namespace ocs2 {
-
-/**
- * This class is an interface class for forward rollout of the system dynamics.
- */
-class OperatingTrajectoriesRollout : public RolloutBase {
- public:
-  using RolloutBase::time_interval_array_t;
-
-  /**
-   * Constructor.
-   *
-   * @param [in] operatingTrajectories: The operating trajectories used for initialization.
-   * @param [in] rolloutSettings: The rollout settings.
-   */
-  explicit OperatingTrajectoriesRollout(const SystemOperatingTrajectoriesBase& operatingTrajectories,
-                                        rollout::Settings rolloutSettings = rollout::Settings())
-      : RolloutBase(std::move(rolloutSettings)), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
-
-  /** Default destructor. */
-  ~OperatingTrajectoriesRollout() override = default;
-
-  OperatingTrajectoriesRollout* clone() const override {
-    return new OperatingTrajectoriesRollout(*operatingTrajectoriesPtr_, this->settings());
+  // task file
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() <= 1) {
+    throw std::runtime_error("No task file specified. Aborting.");
   }
+  std::string taskFileFolderName = std::string(programArgs[1]);
 
- protected:
-  vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
-                   scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                   vector_array_t& inputTrajectory) override;
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mpc");
+  ros::NodeHandle nodeHandle;
 
- private:
-  std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
-};
+  // Robot interface
+  ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-}  // namespace ocs2
+  ocs2::multiple_shooting::Settings settings = ballbotInterface.sqpSettings();
+
+  ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
+  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(new ocs2::MultipleShootingMpc(
+      mpcSettings, settings, &ballbotInterface.getDynamics(), &ballbotInterface.getCost(), &ballbotInterface.getInitializer(),
+      ballbotInterface.getConstraintPtr(), ballbotInterface.getTerminalCostPtr()));
+
+  ocs2::MPC_ROS_Interface mpcNode(*mpc, robotName);
+  mpcNode.launchNodes(nodeHandle);
+
+  // Successful exit
+  return 0;
+}

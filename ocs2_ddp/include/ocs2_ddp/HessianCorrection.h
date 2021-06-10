@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
 namespace ocs2 {
@@ -64,7 +64,8 @@ Strategy fromString(const std::string& name);
  * @param [in] minEigenvalue: The minimum expected eigenvalue after correction.
  */
 template <typename Derived>
-void shiftHessian(Strategy strategy, Eigen::MatrixBase<Derived>& matrix, double minEigenvalue = OCS2NumericTraits<double>::limitEpsilon()) {
+void shiftHessian(Strategy strategy, Eigen::MatrixBase<Derived>& matrix,
+                  scalar_t minEigenvalue = numeric_traits::limitEpsilon<scalar_t>()) {
   assert(matrix.rows() == matrix.cols());
   switch (strategy) {
     case Strategy::DIAGONAL_SHIFT: {

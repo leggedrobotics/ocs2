@@ -29,35 +29,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_centroidal_model/CentroidalModelPinocchioInterface.h"
+#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
 namespace ocs2 {
 
-class KinoCentroidalDynamics : public SystemDynamicsBase {
+class PinocchioCentroidalDynamics {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using Matrix3 = Eigen::Matrix<scalar_t, 3, 3>;
+  using CentroidalModelType = CentroidalModelPinocchioMapping<scalar_t>::CentroidalModelType;
+
   using Vector3 = Eigen::Matrix<scalar_t, 3, 1>;
   using Matrix3x = Eigen::Matrix<scalar_t, 3, Eigen::Dynamic>;
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
+  using Matrix3 = Eigen::Matrix<scalar_t, 3, 3>;
+  using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
-  KinoCentroidalDynamics(const CentroidalModelPinocchioInterface<scalar_t>& centroidalModelPinocchioInterface);
+  PinocchioCentroidalDynamics(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<scalar_t>& mapping);
 
-  virtual ~KinoCentroidalDynamics() override = default;
+  ~PinocchioCentroidalDynamics() = default;
 
-  KinoCentroidalDynamics* clone() const override { return new KinoCentroidalDynamics(*this); }
+  vector_t getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input);
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override;
-
-  VectorFunctionLinearApproximation linearApproximation(scalar_t time, const vector_t& state, const vector_t& input) override;
+  VectorFunctionLinearApproximation getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 
  private:
   void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
-  CentroidalModelPinocchioInterface<scalar_t> centroidalModelPinocchioInterface_;
+  const PinocchioInterface& pinocchioInterface_;
+  const CentroidalModelPinocchioMapping<scalar_t>& mapping_;
 
   // partial derivatives of the system dynamics
   Matrix3x normalizedLinearMomentumRateDerivativeState_;

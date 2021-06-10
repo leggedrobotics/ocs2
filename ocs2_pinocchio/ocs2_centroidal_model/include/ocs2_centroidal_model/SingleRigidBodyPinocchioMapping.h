@@ -29,41 +29,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
-
 #include "ocs2_centroidal_model/utils.h"
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/Types.h>
 
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
+#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
+
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
 #include <pinocchio/algorithm/center-of-mass.hpp>
-#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/centroidal.hpp>
 
 namespace ocs2 {
 
-/**
- * Centroidal Dynamics:
- *
- * State: x = [ linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_positions ]'
- * @remark: The linear and angular momenta are expressed with respect to
- * the centroidal frame (a frame centered at the CoM and aligned with the inertial frame)
- *
- * Input: u = [ contact_forces, contact_wrenches, joint_velocities ]'
- * @remark: Contact forces and wrenches are expressed with respect to the inertial frame
- *
- *
- * Pinocchio Joint Positions: qPinocchio = [ base_position, base_orientation_zyx, joint_positions ]'
- * @remark: Base position is expressed with respect to the inertial frame
- *
- * Pinocchio Joint Velocities: vPinocchio = [ base_linear_velocity, base_orientation_zyx_derivatives, joint_velocities ]'
- * @remark: Base linear velocity is expressed with respect to the inertial frame
- */
-
 template <typename SCALAR>
-class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
+class SingleRigidBodyPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -80,24 +63,11 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   using Model = pinocchio::ModelTpl<SCALAR>;
   using Data = typename Model::Data;
 
-  enum class CentroidalModelType { FullCentroidalDynamics, SingleRigidBodyDynamics };
-
-  struct CentroidalModelInfo {
-    CentroidalModelType centroidalModelType;      // full centroidal dynamics OR single rigid body dynamics (SRBD)
-    size_t numThreeDofContacts;                   // 3DOF contacts, force only
-    size_t numSixDofContacts;                     // 6DOF contacts, force and torque
-    std::vector<size_t> endEffectorFrameIndices;  // indices of end-effector frames [3DOF contacts, 6DOF contacts]
-    SCALAR robotMass;                             // total robot mass
-    vector_t qPinocchioNominal;                   // nominal robot configuration used in the SRBD model
-  };
-
-  CentroidalModelPinocchioMapping(size_t stateDim, size_t inputDim, const CentroidalModelType& centroidalModelType,
-                                  const vector_t& qPinocchioNominal, const std::vector<std::string>& threeDofContactNames,
-                                  const std::vector<std::string>& sixDofContactNames,
+  SingleRigidBodyPinocchioMapping(size_t stateDim, size_t inputDim, const vector_t& qPinocchioNominal,
                                   const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface);
 
-  ~CentroidalModelPinocchioMapping() override = default;
-  CentroidalModelPinocchioMapping<SCALAR>* clone() const override { return new CentroidalModelPinocchioMapping<SCALAR>(*this); }
+  ~SingleRigidBodyPinocchioMapping() override = default;
+  SingleRigidBodyPinocchioMapping<SCALAR>* clone() const override { return new SingleRigidBodyPinocchioMapping<SCALAR>(*this); }
 
   vector_t getPinocchioJointPosition(const vector_t& state) const override;
 
@@ -105,24 +75,23 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
 
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
-  const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
+  matrix6x_t getCentroidalMomentumMatrix(const vector_t& state) const;
 
-  matrix6x_t getCentroidalMomentumMatrix() const;
+  vector3_t getComPositionInWorld(const vector_t& state) const;
 
-  vector3_t getPositionComToContactPointInWorldFrame(size_t contactIndex) const;
-
-  matrix3x_t getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const;
-
-  vector6_t normalizedCentroidalMomentumRate(const vector_t& input) const;
+  matrix3x_t getComJacobianInWorld(const vector_t& state) const;
 
  private:
-  const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface_;
-  CentroidalModelInfo centroidalModelInfo_;
+  PinocchioInterfaceTpl<SCALAR> pinocchioInterface_;
+  SCALAR robotMass_;              // total robot mass
+  vector_t qPinocchioNominal_;    // nominal robot configuration used in the SRBD model
+  matrix3_t I_com_nominal_;       // nominal robot centroidal inertia used in the SRBD model (expressed in nominal base frame)
+  vector3_t r_com_base_nominal_;  // nominal CoM to base position used in the SRBD model (expressed in nominal base frame)
   const size_t stateDim_;
   const size_t inputDim_;
 };
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */
-extern template class CentroidalModelPinocchioMapping<scalar_t>;
-extern template class CentroidalModelPinocchioMapping<ad_scalar_t>;
+extern template class SingleRigidBodyPinocchioMapping<scalar_t>;
+extern template class SingleRigidBodyPinocchioMapping<ad_scalar_t>;
 }  // namespace ocs2

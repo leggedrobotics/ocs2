@@ -29,15 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_centroidal_model/KinoCentroidalDynamicsAD.h>
+#include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
 #include <ocs2_centroidal_model/example/anymal/definitions.h>
 
 namespace ocs2 {
 
-class AnymalKinoCentroidalDynamicsAD final : public KinoCentroidalDynamicsAD {
+class AnymalKinoCentroidalDynamicsAD final : public PinocchioCentroidalDynamicsAD {
  public:
   explicit AnymalKinoCentroidalDynamicsAD(const CentroidalModelPinocchioInterface<ad_scalar_t> &centroidalModelInterface)
-      : KinoCentroidalDynamicsAD(anymal::STATE_DIM, anymal::INPUT_DIM, centroidalModelInterface) {
+      : PinocchioCentroidalDynamicsAD(anymal::STATE_DIM, anymal::INPUT_DIM, centroidalModelInterface) {
     initialize("AnymalKinoCentroidalDynamicsAD", anymalCppAdModelPath, /*recompileLibraries=*/true, /*verbose=*/false);
   }
   ~AnymalKinoCentroidalDynamicsAD() override = default;

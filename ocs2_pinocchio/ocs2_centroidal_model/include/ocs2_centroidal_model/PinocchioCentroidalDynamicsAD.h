@@ -29,32 +29,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_centroidal_model/CentroidalModelPinocchioInterface.h"
+#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace ocs2 {
 
-class KinoCentroidalDynamicsAD : public ocs2::SystemDynamicsBaseAD {
+class PinocchioCentroidalDynamicsAD {
  public:
-  /**
-   * Constructor
-   * @param [in] stateDim: state dimensions
-   * @param [in] inputDim: input dimensions
-   * @param [in] centroidalModelPinocchioInterface: interface to centroidal model functions generated with pinocchio
-   */
-  KinoCentroidalDynamicsAD(size_t stateDim, size_t inputDim,
-                           const CentroidalModelPinocchioInterface<ad_scalar_t>& centroidalModelPinocchioInterface);
+  using CentroidalModelType = CentroidalModelPinocchioMapping<ad_scalar_t>::CentroidalModelType;
 
-  ~KinoCentroidalDynamicsAD() override = default;
+  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+                                size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder,
+                                bool recompileLibraries, bool verbose);
 
-  KinoCentroidalDynamicsAD* clone() const override { return new KinoCentroidalDynamicsAD(*this); }
+  ~PinocchioCentroidalDynamicsAD() = default;
 
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ad_vector_t& parameters) const override;
+  vector_t getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input) const;
+
+  VectorFunctionLinearApproximation getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
 
  private:
-  mutable CentroidalModelPinocchioInterface<ad_scalar_t> centroidalModelPinocchioInterface_;
+  ad_vector_t getSystemFlowMapCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
+                                    const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping, const ad_vector_t& state,
+                                    const ad_vector_t& input);
+
+  std::unique_ptr<CppAdInterface> systemFlowMapCppAdInterfacePtr_;
 };
 
 }  // namespace ocs2

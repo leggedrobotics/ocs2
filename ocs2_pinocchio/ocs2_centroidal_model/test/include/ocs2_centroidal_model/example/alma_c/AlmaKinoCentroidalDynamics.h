@@ -29,15 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_centroidal_model/KinoCentroidalDynamics.h>
+#include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
 #include <ocs2_centroidal_model/example/alma_c/definitions.h>
 
 namespace ocs2 {
 
-class AlmaKinoCentroidalDynamics final : public KinoCentroidalDynamics {
+class AlmaKinoCentroidalDynamics final : public PinocchioCentroidalDynamics {
  public:
   explicit AlmaKinoCentroidalDynamics(const CentroidalModelPinocchioInterface<scalar_t> &centroidalModelInterface)
-          : KinoCentroidalDynamics(centroidalModelInterface) {}
+          : PinocchioCentroidalDynamics(centroidalModelInterface) {}
   ~AlmaKinoCentroidalDynamics() override = default;
 
   AlmaKinoCentroidalDynamics* clone() const override { return new AlmaKinoCentroidalDynamics(*this); };

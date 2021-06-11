@@ -44,7 +44,7 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
   std::atomic_bool gaitUpdated_;
 
   std::mutex receivedGaitMutex_;  // protects the setGaitAction_ variable
-  std::function<void(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
+  std::function<void(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                      const ocs2::CostDesiredTrajectories& costDesiredTrajectory)>
       setGaitAction_;
 };

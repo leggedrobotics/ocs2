@@ -117,6 +117,19 @@ visualization_msgs::Marker getArrowAtPointMsg(const Eigen::Vector3d& vec, const 
   return arrow;
 }
 
+visualization_msgs::Marker getArrowBetweenPointsMsg(const Eigen::Vector3d& start, const Eigen::Vector3d& end, Color color) {
+  visualization_msgs::Marker arrow;
+  arrow.type = visualization_msgs::Marker::ARROW;
+  arrow.scale.x = 0.01;                           // shaft diameter
+  arrow.scale.y = 0.02;                           // arrow-head diameter
+  arrow.scale.z = 0.06;                           // arrow-head length
+  arrow.points.emplace_back(getPointMsg(start));  // start point
+  arrow.points.emplace_back(getPointMsg(end));    // end point
+  arrow.color = getColor(color);
+  arrow.pose.orientation = getOrientationMsg({1., 0., 0., 0.});
+  return arrow;
+}
+
 visualization_msgs::Marker getFootMarker(const Eigen::Vector3d& position, bool contactFlag, Color color, double diameter,
                                          double liftedAlpha) {
   auto footMarker = getSphereMsg(position, color, diameter);

@@ -46,7 +46,6 @@ PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInte
                                                              bool recompileLibraries, bool verbose) {
   // initialize CppAD interface
   auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
-
   auto systemFlowMapFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
     ad_vector_t state = x.head(stateDim);
     ad_vector_t input = x.tail(inputDim);
@@ -69,14 +68,14 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getSystemFlowMapCppAd(PinocchioInterf
                                                                  const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
                                                                  const ad_vector_t& state, const ad_vector_t& input) {
   const auto& model = pinocchioInterfaceCppAd.getModel();
+  auto& data = pinocchioInterfaceCppAd.getData();
   const size_t GENERALIZED_VEL_NUM = model.nv;
   assert(GENERALIZED_VEL_NUM == state.rows() - 6);
   const auto& info = mapping.getCentroidalModelInfo();
 
-  auto& data = pinocchioInterfaceCppAd.getData();
   const ad_vector_t qPinocchio = mapping.getPinocchioJointPosition(state);
 
-  ad_vector_t stateDerivative = ad_vector_t::Zero(state.rows());
+  ad_vector_t stateDerivative(state.rows());
 
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
     pinocchio::computeCentroidalMap(model, data, qPinocchio);

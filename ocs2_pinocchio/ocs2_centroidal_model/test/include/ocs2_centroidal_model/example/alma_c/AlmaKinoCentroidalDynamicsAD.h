@@ -36,13 +36,12 @@ namespace ocs2 {
 
 class AlmaKinoCentroidalDynamicsAD final : public PinocchioCentroidalDynamicsAD {
  public:
-  explicit AlmaKinoCentroidalDynamicsAD(const CentroidalModelPinocchioInterface<ad_scalar_t> &centroidalModelInterface)
-      : PinocchioCentroidalDynamicsAD(alma_c::STATE_DIM, alma_c::INPUT_DIM, centroidalModelInterface) {
-    initialize("AlmaKinoCentroidalDynamicsAD", almaCppAdModelPath, /*recompileLibraries=*/true, /*verbose=*/false);
-  }
-  ~AlmaKinoCentroidalDynamicsAD() override = default;
+  AlmaKinoCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping)
+          : PinocchioCentroidalDynamicsAD(pinocchioInterface, mapping, alma_c::STATE_DIM, alma_c::INPUT_DIM,
+                                          "AlmaKinoCentroidalDynamicsAD", almaCppAdModelPath, /*recompileLibraries=*/
+                                          true, /*verbose=*/false) {}
 
-  AlmaKinoCentroidalDynamicsAD* clone() const override { return new AlmaKinoCentroidalDynamicsAD(*this); };
+  ~AlmaKinoCentroidalDynamicsAD() = default;
 };
 
 }  // namespace ocs2

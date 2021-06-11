@@ -112,9 +112,10 @@ install(
 ## Testing ##
 #############
 catkin_add_gtest(${PROJECT_NAME}_test
-  test/AnymalKinoCentroidalDynamicsTest.cpp
-  test/AlmaKinoCentroidalDynamicsTest.cpp
-  test/AnymalCentroidalModelPinocchioTest.cpp
+#  test/AnymalKinoCentroidalDynamicsTest.cpp
+#  test/AlmaKinoCentroidalDynamicsTest.cpp
+#  test/AnymalCentroidalModelPinocchioTest.cpp
+  test/AlmaDynamicsCachingTest.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
   gtest_main

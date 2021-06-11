@@ -170,13 +170,15 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToConta
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::normalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
-  const CentroidalModelInfo& info = centroidalModelInfo_;
-  const Eigen::Matrix<SCALAR, 3, 1> gravityVector{SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81)};
+  const auto& info = centroidalModelInfo_;
+  const vector3_t gravityVector = vector3_t(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
   vector3_t contactForceInWorldFrame;
   vector3_t contactTorqueInWorldFrame;
   vector6_t normalizedCentroidalMomentumRate;
   normalizedCentroidalMomentumRate.setZero();
   normalizedCentroidalMomentumRate.template head<3>() = gravityVector;
+
+  std::cerr << info.endEffectorFrameIndices.front() << "\n";
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     contactForceInWorldFrame = input.template segment<3>(3 * i);

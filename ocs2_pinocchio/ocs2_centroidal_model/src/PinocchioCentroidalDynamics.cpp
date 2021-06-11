@@ -49,7 +49,7 @@ vector_t PinocchioCentroidalDynamics::getSystemFlowMap(scalar_t time, const vect
   const pinocchio::Model& model = pinocchioInterface_.getModel();
   const size_t GENERALIZED_VEL_NUM = model.nv;
   assert(GENERALIZED_VEL_NUM == state.rows() - 6);
-  auto& info = mapping_.getCentroidalModelInfo();
+  const auto& info = mapping_.getCentroidalModelInfo();
 
   vector_t stateDerivative(state.rows());
 
@@ -70,8 +70,7 @@ vector_t PinocchioCentroidalDynamics::getSystemFlowMap(scalar_t time, const vect
 VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state,
                                                                                                    const vector_t& input) {
   const pinocchio::Model& model = pinocchioInterface_.getModel();
-  // Copy required since pinocchio::computeCentroidalDynamicsDerivatives modifies the data
-  pinocchio::Data data = pinocchioInterface_.getData();
+  const pinocchio::Data& data = pinocchioInterface_.getData();
   const size_t GENERALIZED_VEL_NUM = model.nv;
   const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
   const size_t stateDim = state.rows();
@@ -116,13 +115,14 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapL
     dh_dq_.leftCols(3).setZero();
     floatingBaseVelocitiesDerivativeState_.rightCols(GENERALIZED_VEL_NUM) = -Ab_inv * dh_dq_;
   } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    vector_t qPinocchioNominal = info.qPinocchioNominal;
-    qPinocchioNominal.head(6) = qPinocchio.head(6);
-    vector_t vPinocchioNominal = vector_t::Zero(GENERALIZED_VEL_NUM);
-    vPinocchioNominal.head(6) = vPinocchio.head(6);
+    //    vector_t qPinocchioNominal = info.qPinocchioNominal;
+    //    qPinocchioNominal.head(6) = qPinocchio.head(6);
+    //    vector_t vPinocchioNominal = vector_t::Zero(GENERALIZED_VEL_NUM);
+    //    vPinocchioNominal.head(6) = vPinocchio.head(6);
     //    pinocchio::computeCentroidalDynamicsDerivatives(model, data, qPinocchioNominal, vPinocchioNominal,
     //                                                    vector_t::Zero(GENERALIZED_VEL_NUM), dh_dq_, dhdot_dq_, dhdot_dv_,
     //                                                    dhdot_da_);
+
     // Assumes pinocchio::computeCentroidalDynamicsDerivatives has been called externally
     const pinocchio::Inertia& Ytot = data.oYcrb[0];
     const typename pinocchio::Inertia::Vector3& com = Ytot.lever();

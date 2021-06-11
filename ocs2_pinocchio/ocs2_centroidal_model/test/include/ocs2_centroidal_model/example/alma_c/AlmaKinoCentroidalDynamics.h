@@ -36,11 +36,10 @@ namespace ocs2 {
 
 class AlmaKinoCentroidalDynamics final : public PinocchioCentroidalDynamics {
  public:
-  explicit AlmaKinoCentroidalDynamics(const CentroidalModelPinocchioInterface<scalar_t> &centroidalModelInterface)
-          : PinocchioCentroidalDynamics(centroidalModelInterface) {}
-  ~AlmaKinoCentroidalDynamics() override = default;
+  AlmaKinoCentroidalDynamics(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<scalar_t>& mapping)
+          : PinocchioCentroidalDynamics(pinocchioInterface, mapping) {}
 
-  AlmaKinoCentroidalDynamics* clone() const override { return new AlmaKinoCentroidalDynamics(*this); };
+  ~AlmaKinoCentroidalDynamics() = default;
 };
 
 }  // namespace ocs2

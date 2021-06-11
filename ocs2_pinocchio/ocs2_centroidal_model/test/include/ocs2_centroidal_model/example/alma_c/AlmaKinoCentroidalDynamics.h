@@ -36,7 +36,7 @@ namespace ocs2 {
 
 class AlmaKinoCentroidalDynamics final : public PinocchioCentroidalDynamics {
  public:
-  AlmaKinoCentroidalDynamics(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<scalar_t>& mapping)
+  AlmaKinoCentroidalDynamics(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& mapping)
           : PinocchioCentroidalDynamics(pinocchioInterface, mapping) {}
 
   ~AlmaKinoCentroidalDynamics() = default;

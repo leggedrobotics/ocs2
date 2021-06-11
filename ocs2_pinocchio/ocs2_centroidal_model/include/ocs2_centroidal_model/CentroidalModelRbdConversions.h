@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+// TODO: UPDATE THIS CLASS TO WORK WITH THE NEW STRUCTURE
 #pragma once
 
 #include "ocs2_centroidal_model/CentroidalModelPinocchioInterface.h"

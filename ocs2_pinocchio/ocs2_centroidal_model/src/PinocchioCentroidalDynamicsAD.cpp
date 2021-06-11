@@ -41,11 +41,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface,
-                                                             const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping, size_t stateDim,
+                                                             CentroidalModelPinocchioMapping<ad_scalar_t>& mapping, size_t stateDim,
                                                              size_t inputDim, const std::string& modelName, const std::string& modelFolder,
                                                              bool recompileLibraries, bool verbose) {
   // initialize CppAD interface
   auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
+  mapping.setPinocchioInterface(pinocchioInterfaceCppAd);
+
   auto systemFlowMapFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
     ad_vector_t state = x.head(stateDim);
     ad_vector_t input = x.tail(inputDim);
@@ -69,26 +71,28 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getSystemFlowMapCppAd(PinocchioInterf
                                                                  const ad_vector_t& state, const ad_vector_t& input) {
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
-  const size_t GENERALIZED_VEL_NUM = model.nv;
-  assert(GENERALIZED_VEL_NUM == state.rows() - 6);
+  const size_t generalizedVelocityNum = model.nv;
   const auto& info = mapping.getCentroidalModelInfo();
+  assert(generalizedVelocityNum == state.rows() - 6);
 
   const ad_vector_t qPinocchio = mapping.getPinocchioJointPosition(state);
-
-  ad_vector_t stateDerivative(state.rows());
 
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
     pinocchio::computeCentroidalMap(model, data, qPinocchio);
   } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    pinocchio::computeCentroidalMap(model, data, info.qPinocchioNominal);
+    auto qPinocchioSrbd = info.qPinocchioNominal;
+    qPinocchioSrbd.head<6>() = qPinocchio.head<6>();
+    pinocchio::computeCentroidalMap(model, data, qPinocchioSrbd);
   }
   pinocchio::updateFramePlacements(model, data);
+
+  ad_vector_t stateDerivative(state.rows());
 
   // compute center of mass acceleration and derivative of the normalized angular momentum
   stateDerivative.head(6) = mapping.normalizedCentroidalMomentumRate(input);
 
   // derivatives of the floating base variables + joint velocities
-  stateDerivative.tail(GENERALIZED_VEL_NUM) = mapping.getPinocchioJointVelocity(state, input);
+  stateDerivative.tail(generalizedVelocityNum) = mapping.getPinocchioJointVelocity(state, input);
 
   return stateDerivative;
 }

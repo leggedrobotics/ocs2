@@ -47,19 +47,55 @@ class PinocchioCentroidalDynamics {
   using Matrix3 = Eigen::Matrix<scalar_t, 3, 3>;
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
-  PinocchioCentroidalDynamics(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<scalar_t>& mapping);
+  /** Constructor
+   *
+   * @param pinocchioInterface: predefined pinocchio interface for a robot
+   * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
+   * which are needed for pinocchio functions and algorithms
+   */
+  PinocchioCentroidalDynamics(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& mapping);
 
   ~PinocchioCentroidalDynamics() = default;
 
+  /** Computes system flow map x_dot = f(x, u)
+   *
+   * @param time: time
+   * @param state: system state vector
+   * @param input: system input vector
+   * @return system flow map x_dot = f(x, u)
+   * @warning: The function computeCentroidalMap(model, data, q) and pinocchio::updateFramePlacements(model, data) should have been called
+   * first.
+   * @remark: For the SRBD model, computeCentroidalMap(model, data, qSRBD) where qSRBD = (qbase, qJointsNominal)
+   */
   vector_t getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input);
 
+  /** Computes first order approximation of the system flow map x_dot = f(x, u)
+   *
+   * @param time: time
+   * @param state: system state vector
+   * @param input: system input vector
+   * @return linear approximation of system flow map x_dot = f(x, u)
+   * @warning: The function pinocchio::computeCentroidalDynamicsDerivatives(...) and pinocchio::updateFramePlacements(model, data) should
+   * have been called first.
+   * @remark: For the SRBD model, use qSRBD = (qbase, qJointsNominal) and vSRBD = (vbase, 0);
+   */
   VectorFunctionLinearApproximation getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 
  private:
+  /**
+   * Computes the gradients of the normalized centroidal momentum rate (linear + angular) expressed in the centroidal frame
+   *
+   * @param [in] state: system state vector
+   * @param [in] input: system input vector
+   * @return: time derivative of normalized centroidal momentum
+   *
+   * @warning: The function pinocchio::computeCentroidalDynamicsDerivatives(...) should have been called first.
+   * @remark: For the SRBD model, use qSRBD = (qbase, qJointsNominal) and vSRBD = (vbase, 0);
+   */
   void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
-  const PinocchioInterface& pinocchioInterface_;
-  const CentroidalModelPinocchioMapping<scalar_t>& mapping_;
+  const PinocchioInterface* pinocchioInterfacePtr_;
+  CentroidalModelPinocchioMapping<scalar_t>* mappingPtr_;
 
   // partial derivatives of the system dynamics
   Matrix3x normalizedLinearMomentumRateDerivativeState_;

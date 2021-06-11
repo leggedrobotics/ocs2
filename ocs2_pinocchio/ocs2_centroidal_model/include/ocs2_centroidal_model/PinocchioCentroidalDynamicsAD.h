@@ -39,7 +39,7 @@ class PinocchioCentroidalDynamicsAD {
  public:
   using CentroidalModelType = CentroidalModelPinocchioMapping<ad_scalar_t>::CentroidalModelType;
 
-  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
                                 size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder,
                                 bool recompileLibraries, bool verbose);
 

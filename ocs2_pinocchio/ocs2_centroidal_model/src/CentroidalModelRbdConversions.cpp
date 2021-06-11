@@ -47,8 +47,8 @@ CentroidalModelRbdConversions::CentroidalModelRbdConversions(
 void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(const vector_t& state, const vector_t& input,
                                                                              const vector_t& jointAccelerations, Vector6& basePose,
                                                                              Vector6& baseVelocity, Vector6& baseAcceleration) {
-  const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
-  const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
+  const size_t generalizedVelocityNum = centroidalModelPinocchioInterface_.getRobotModel().nv;
+  const size_t actuatedDofNum = generalizedVelocityNum - 6;
   const auto& centroidalModelInfo = centroidalModelPinocchioInterface_.getCentroidalModelInfo();
 
   centroidalModelPinocchioInterface_.updatePinocchioJointPositions(state);
@@ -73,7 +73,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
                             centroidalModelInfo.qPinocchio, centroidalModelInfo.vPinocchio);
   qb_ddot_ = centroidalModelInfo.Ab_inv *
              (centroidalModelInfo.mass * centroidalModelPinocchioInterface_.normalizedCentroidalMomentumRate(input) -
-              Adot_ * centroidalModelInfo.vPinocchio - centroidalModelInfo.Aj * jointAccelerations.head(ACTUATED_DOF_NUM));
+              Adot_ * centroidalModelInfo.vPinocchio - centroidalModelInfo.Aj * jointAccelerations.head(actuatedDofNum));
 
   // Base Acceleration in world frame
   baseAcceleration.head<3>() = qb_ddot_.head<3>();
@@ -86,27 +86,27 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
 /******************************************************************************************************/
 /******************************************************************************************************/
 void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vector_t& rbdState, vector_t& state) {
-  const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
-  const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
+  const size_t generalizedVelocityNum = centroidalModelPinocchioInterface_.getRobotModel().nv;
+  const size_t actuatedDofNum = generalizedVelocityNum - 6;
   const auto& centroidalModelInfo = centroidalModelPinocchioInterface_.getCentroidalModelInfo();
 
-  vector_t qPinocchio(GENERALIZED_VEL_NUM);
+  vector_t qPinocchio(generalizedVelocityNum);
   qPinocchio.head<3>() = rbdState.segment<3>(3);
   qPinocchio.segment<3>(3) = rbdState.head<3>();
-  qPinocchio.tail(ACTUATED_DOF_NUM) = rbdState.segment(6, ACTUATED_DOF_NUM);
+  qPinocchio.tail(actuatedDofNum) = rbdState.segment(6, actuatedDofNum);
 
-  vector_t vPinocchio(GENERALIZED_VEL_NUM);
-  vPinocchio.head<3>() = rbdState.segment<3>(GENERALIZED_VEL_NUM + 3);
-  getEulerAnglesZyxDerivativesFromGlobalAngularVelocities<scalar_t>(qPinocchio.segment<3>(3), rbdState.segment<3>(GENERALIZED_VEL_NUM),
+  vector_t vPinocchio(generalizedVelocityNum);
+  vPinocchio.head<3>() = rbdState.segment<3>(generalizedVelocityNum + 3);
+  getEulerAnglesZyxDerivativesFromGlobalAngularVelocities<scalar_t>(qPinocchio.segment<3>(3), rbdState.segment<3>(generalizedVelocityNum),
                                                                     derivativeEulerAnglesZyx_);
   vPinocchio.segment<3>(3) = derivativeEulerAnglesZyx_;
-  vPinocchio.tail(ACTUATED_DOF_NUM) = rbdState.segment(GENERALIZED_VEL_NUM + 6, ACTUATED_DOF_NUM);
+  vPinocchio.tail(actuatedDofNum) = rbdState.segment(generalizedVelocityNum + 6, actuatedDofNum);
 
   centroidalMomentum_ = pinocchio::computeCentroidalMomentum(centroidalModelPinocchioInterface_.getRobotModel(),
                                                              centroidalModelPinocchioInterface_.getRobotData(), qPinocchio, vPinocchio);
 
   state.head(6) = centroidalMomentum_ / centroidalModelInfo.mass;
-  state.segment(6, GENERALIZED_VEL_NUM) = qPinocchio;
+  state.segment(6, generalizedVelocityNum) = qPinocchio;
 }
 
 /******************************************************************************************************/
@@ -114,19 +114,19 @@ void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vec
 /******************************************************************************************************/
 void CentroidalModelRbdConversions::computeRbdStateFromCentroidalModel(const vector_t& state, const vector_t& input,
                                                                        const vector_t& jointAccelerations, vector_t& rbdState) {
-  const size_t GENERALIZED_VEL_NUM = centroidalModelPinocchioInterface_.getRobotModel().nv;
-  const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
+  const size_t generalizedVelocityNum = centroidalModelPinocchioInterface_.getRobotModel().nv;
+  const size_t actuatedDofNum = generalizedVelocityNum - 6;
 
   Vector6 basePose, baseVelocity, baseAcceleration;
   computeBaseKinematicsFromCentroidalModel(state, input, jointAccelerations, basePose, baseVelocity, baseAcceleration);
 
   rbdState.head<3>() = basePose.tail<3>();
   rbdState.segment<3>(3) = basePose.head<3>();
-  rbdState.segment(6, ACTUATED_DOF_NUM) << state.segment(12, ACTUATED_DOF_NUM);
+  rbdState.segment(6, actuatedDofNum) << state.segment(12, actuatedDofNum);
 
-  rbdState.segment<3>(GENERALIZED_VEL_NUM) = baseVelocity.tail<3>();
-  rbdState.segment<3>(GENERALIZED_VEL_NUM + 3) = baseVelocity.head<3>();
-  rbdState.tail(ACTUATED_DOF_NUM) << input.tail(ACTUATED_DOF_NUM);
+  rbdState.segment<3>(generalizedVelocityNum) = baseVelocity.tail<3>();
+  rbdState.segment<3>(generalizedVelocityNum + 3) = baseVelocity.head<3>();
+  rbdState.tail(actuatedDofNum) << input.tail(actuatedDofNum);
 }
 
 }  // namespace ocs2

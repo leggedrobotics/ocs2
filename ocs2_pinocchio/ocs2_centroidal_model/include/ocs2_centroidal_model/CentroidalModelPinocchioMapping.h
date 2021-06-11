@@ -91,35 +91,125 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
     vector_t qPinocchioNominal;                   // nominal robot configuration used in the SRBD model
   };
 
+  /** Constructor
+   * @param [in] stateDim: Number of states defining the system flow map
+   * @param [in] inputDim: Number of inputs defining the system flow map
+   * @param [in] centroidalModelType: Type of template model (SRBD or FRBD)
+   * @param [in] qPinocchioNominal: nominal robot configuration used in the SRBD model
+   * @param [in] threeDofContactNames: Names of end-effectors with 3 DoF contacts (force)
+   * @param [in] sixDofContactNames: Names of end-effectors with 6 DoF contacts (force + torque)
+   */
   CentroidalModelPinocchioMapping(size_t stateDim, size_t inputDim, const CentroidalModelType& centroidalModelType,
                                   const vector_t& qPinocchioNominal, const std::vector<std::string>& threeDofContactNames,
-                                  const std::vector<std::string>& sixDofContactNames,
-                                  const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface);
+                                  const std::vector<std::string>& sixDofContactNames);
 
   ~CentroidalModelPinocchioMapping() override = default;
   CentroidalModelPinocchioMapping<SCALAR>* clone() const override { return new CentroidalModelPinocchioMapping<SCALAR>(*this); }
 
+  /** Sets the pinocchio interface for caching, and initializes the centroidal model info struct
+   * @note The pinocchio interface must be set before calling the getters.
+   * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
+   */
+  void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {
+    pinocchioInterfacePtr_ = &pinocchioInterface;
+    initializeCentroidalModelInfo();
+  }
+
+  /** Initializes the centroidal model info struct after defining the pinocchio interface */
+  void initializeCentroidalModelInfo() {
+    // TODO: Find a better way to do that, since this cannot be done in the constructor anymore (due to undefined pinocchioInterfacePtr_)
+    const Model& model = pinocchioInterfacePtr_->getModel();
+    centroidalModelInfo_.robotMass = pinocchio::computeTotalMass(model);
+    for (const auto& name : threeDofContactNames_) {
+      centroidalModelInfo_.endEffectorFrameIndices.push_back(model.getBodyId(name));
+    }
+    for (const auto& name : sixDofContactNames_) {
+      centroidalModelInfo_.endEffectorFrameIndices.push_back(model.getBodyId(name));
+    }
+  }
+
+  /**
+   * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state variables
+   *
+   * @param [in] state: system state vector
+   * @return pinocchio joint positions, which are also the robot's generalized positions
+   * with a ZYX-Euler angle parameterization of the base orientation
+   */
   vector_t getPinocchioJointPosition(const vector_t& state) const override;
 
+  /**
+   * Computes the vector of generalized velocities (vPinocchio) used by pinocchio functions from the robot state and input variables
+   * @param [in] state: system state vector
+   * @param [in] input: system input vector
+   * @return pinocchio joint velocities, which are also the time derivatives of the pinocchio joint positions
+   *
+   * @warning: The function computeCentroidalMap(model, data, q) should have been called first.
+   * @remark: For the SRBD model, computeCentroidalMap(model, data, qSRBD) where qSRBD = (qbase, qJointsNominal)
+   */
   vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override;
 
+  /**
+   * Maps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu.
+   * @param [in] state: system state vector
+   * @param [in] Jq: jacobian with respect to pinocchio joint positions
+   * @param [in] Jv: jacobian with respect to pinocchio joint velocities
+   * @return a pair {dfdx, dfdu} containing the jacobians with respect to the system state and input
+   */
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
+  /** Returns a structure containing robot-specific information needed for the centroidal dynamics computations
+   *
+   * @return centroidalModelInfo_
+   */
   const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
 
-  matrix6x_t getCentroidalMomentumMatrix() const;
+  /** Returns the centroidal momentum matrix from the pinocchioInterface data
+   * @return centroidal momentum matrix from data.Ag
+   * @warning: The function computeCentroidalMap(model, data, q) should have been called first.
+   * @remark: For the SRBD model, computeCentroidalMap(model, data, qSRBD) where qSRBD = (qbase, qJointsNominal)
+   */
+  const matrix6x_t& getCentroidalMomentumMatrix() const;
 
+  /**
+   * Computes the CoM to contact point position in world frame
+   *
+   * @param [in] contactIndex: index of the contact point
+   * @return: position of the contact point w.r.t CoM expressed in world frame
+   *
+   * @warning: The functions pinocchio::computeCentroidalMap(model, data, q) and pinocchio::updateFramePlacements(model, data)
+   * should have been called first.
+   */
   vector3_t getPositionComToContactPointInWorldFrame(size_t contactIndex) const;
 
+  /**
+   * Computes the CoM to contact point translational Jacobian in world frame
+   *
+   * @param [in] contactIndex: index of the contact point
+   * @return: CoM to contact point translational Jacobian expressed in world frame
+   *
+   * @warning: The functions pinocchio::computeCentroidalMap(model, data, q), pinocchio::computeJointJacobians(model, data, q)
+   * and pinocchio::updateFramePlacements(model, data) should have been called first.
+   */
   matrix3x_t getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const;
 
+  /**
+   * Computes the derivative of the normalized centroidal momentum (linear + angular) expressed in the centroidal frame
+   *
+   * @param [in] input: system input vector
+   * @return: time derivative of normalized centroidal momentum
+   *
+   * @warning: The functions pinocchio::computeCentroidalMap(model, data, q) and pinocchio::updateFramePlacements(model, data)
+   * should have been called first.
+   */
   vector6_t normalizedCentroidalMomentumRate(const vector_t& input) const;
 
  private:
-  const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface_;
+  const PinocchioInterfaceTpl<SCALAR>* pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;
   const size_t stateDim_;
   const size_t inputDim_;
+  const std::vector<std::string>& threeDofContactNames_;
+  const std::vector<std::string>& sixDofContactNames_;
 };
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */

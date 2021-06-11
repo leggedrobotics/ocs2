@@ -36,7 +36,7 @@ namespace ocs2 {
 
 class AlmaKinoCentroidalDynamicsAD final : public PinocchioCentroidalDynamicsAD {
  public:
-  AlmaKinoCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping)
+  AlmaKinoCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& mapping)
           : PinocchioCentroidalDynamicsAD(pinocchioInterface, mapping, alma_c::STATE_DIM, alma_c::INPUT_DIM,
                                           "AlmaKinoCentroidalDynamicsAD", almaCppAdModelPath, /*recompileLibraries=*/
                                           true, /*verbose=*/false) {}

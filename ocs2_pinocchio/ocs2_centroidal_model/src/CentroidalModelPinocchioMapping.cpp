@@ -39,21 +39,12 @@ CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(size_t 
                                                                          const CentroidalModelType& centroidalModelType,
                                                                          const vector_t& qPinocchioNominal,
                                                                          const std::vector<std::string>& threeDofContactNames,
-                                                                         const std::vector<std::string>& sixDofContactNames,
-                                                                         const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface)
-    : stateDim_(stateDim), inputDim_(inputDim), pinocchioInterface_(pinocchioInterface) {
-  const Model& model = pinocchioInterface_.getModel();
-  centroidalModelInfo_.robotMass = pinocchio::computeTotalMass(model);
+                                                                         const std::vector<std::string>& sixDofContactNames)
+    : stateDim_(stateDim), inputDim_(inputDim), threeDofContactNames_(threeDofContactNames), sixDofContactNames_(sixDofContactNames) {
   centroidalModelInfo_.centroidalModelType = centroidalModelType;
   centroidalModelInfo_.qPinocchioNominal = qPinocchioNominal;
   centroidalModelInfo_.numThreeDofContacts = threeDofContactNames.size();
   centroidalModelInfo_.numSixDofContacts = sixDofContactNames.size();
-  for (const auto& name : threeDofContactNames) {
-    centroidalModelInfo_.endEffectorFrameIndices.push_back(model.getBodyId(name));
-  }
-  for (const auto& name : sixDofContactNames) {
-    centroidalModelInfo_.endEffectorFrameIndices.push_back(model.getBodyId(name));
-  }
 }
 
 /******************************************************************************************************/
@@ -62,9 +53,9 @@ CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(size_t 
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
   assert(stateDim_ == state.rows());
-  const Model& model = pinocchioInterface_.getModel();
-  const size_t GENERALIZED_VEL_NUM = model.nv;
-  return state.segment(6, GENERALIZED_VEL_NUM);
+  const Model& model = pinocchioInterfacePtr_->getModel();
+  const size_t generalizedVelocityNum = model.nv;
+  return state.segment(6, generalizedVelocityNum);
 }
 
 /******************************************************************************************************/
@@ -73,23 +64,21 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const ve
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
   assert(stateDim_ == state.rows());
-  const Model& model = pinocchioInterface_.getModel();
-  const Data& data = pinocchioInterface_.getData();
+  const Model& model = pinocchioInterfacePtr_->getModel();
+  const Data& data = pinocchioInterfacePtr_->getData();
   const CentroidalModelInfo& info = centroidalModelInfo_;
-  const size_t GENERALIZED_VEL_NUM = model.nv;
-  const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
+  const size_t generalizedVelocityNum = model.nv;
+  const size_t actuatedDofNum = generalizedVelocityNum - 6;
 
-  // It is assumed that pinocchio::computeCentroidalMap(model, data, q) or pinocchio::computeCentroidalMap(model, data, qNominal) is called
-  // first
-  const matrix6x_t A = getCentroidalMomentumMatrix();
+  const auto& A = getCentroidalMomentumMatrix();
   const matrix6_t Ab = A.template leftCols<6>();
-  const matrix6x_t Aj = A.rightCols(ACTUATED_DOF_NUM);
-  const matrix6_t Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto& Aj = A.rightCols(actuatedDofNum);
 
-  vector_t vPinocchio(GENERALIZED_VEL_NUM);
+  vector_t vPinocchio(generalizedVelocityNum);
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
-      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * state.template head<6>() - Aj * input.tail(ACTUATED_DOF_NUM));
+      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * state.template head<6>() - Aj * input.tail(actuatedDofNum));
       break;
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
@@ -102,7 +91,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
     }
   }
 
-  vPinocchio.tail(ACTUATED_DOF_NUM) = input.tail(ACTUATED_DOF_NUM);
+  vPinocchio.tail(actuatedDofNum) = input.tail(actuatedDofNum);
 
   return vPinocchio;
 }
@@ -114,16 +103,16 @@ template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
     -> std::pair<matrix_t, matrix_t> {
   assert(stateDim_ == state.rows());
-  const Model& model = pinocchioInterface_.getModel();
-  const Data& data = pinocchioInterface_.getData();
-  const size_t GENERALIZED_VEL_NUM = model.nv;
-  const size_t ACTUATED_DOF_NUM = GENERALIZED_VEL_NUM - 6;
+  const Model& model = pinocchioInterfacePtr_->getModel();
+  const Data& data = pinocchioInterfacePtr_->getData();
+  const size_t generalizedVelocityNum = model.nv;
+  const size_t actuatedDofNum = generalizedVelocityNum - 6;
 
   matrix_t dfdx = matrix_t::Zero(Jq.rows(), stateDim_);
-  dfdx.middleCols(6, GENERALIZED_VEL_NUM) = Jq;
+  dfdx.middleCols(6, generalizedVelocityNum) = Jq;
 
   matrix_t dfdu = matrix_t::Zero(Jv.rows(), inputDim_);
-  dfdu.rightCols(ACTUATED_DOF_NUM) = Jv.rightCols(ACTUATED_DOF_NUM);
+  dfdu.rightCols(actuatedDofNum) = Jv.rightCols(actuatedDofNum);
 
   return {dfdx, dfdu};
 }
@@ -132,8 +121,8 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() const -> matrix6x_t {
-  const Data& data = pinocchioInterface_.getData();
+auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() const -> const matrix6x_t& {
+  const Data& data = pinocchioInterfacePtr_->getData();
   return data.Ag;
 }
 
@@ -142,7 +131,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() cons
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPositionComToContactPointInWorldFrame(size_t contactIndex) const -> vector3_t {
-  const Data& data = pinocchioInterface_.getData();
+  const Data& data = pinocchioInterfacePtr_->getData();
   return (data.oMf[centroidalModelInfo_.endEffectorFrameIndices[contactIndex]].translation() - data.com[0]);
 }
 
@@ -152,13 +141,13 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPositionComToContactPointInWorl
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const
     -> matrix3x_t {
-  const Model& model = pinocchioInterface_.getModel();
-  // Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
-  Data data = pinocchioInterface_.getData();
-  const size_t GENERALIZED_VEL_NUM = model.nv;
+  const Model& model = pinocchioInterfacePtr_->getModel();
+  // TODO: Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
+  Data data = pinocchioInterfacePtr_->getData();
+  const size_t generalizedVelocityNum = model.nv;
 
   matrix6x_t jacobianWorldToContactPointInWorldFrame;
-  jacobianWorldToContactPointInWorldFrame.setZero(6, GENERALIZED_VEL_NUM);
+  jacobianWorldToContactPointInWorldFrame.setZero(6, generalizedVelocityNum);
   pinocchio::getFrameJacobian(model, data, centroidalModelInfo_.endEffectorFrameIndices[contactIndex], pinocchio::LOCAL_WORLD_ALIGNED,
                               jacobianWorldToContactPointInWorldFrame);
   const matrix3x_t J_com = getCentroidalMomentumMatrix().template topRows<3>() / centroidalModelInfo_.robotMass;

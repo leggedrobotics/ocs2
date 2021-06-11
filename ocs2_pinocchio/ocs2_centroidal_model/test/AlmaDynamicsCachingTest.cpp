@@ -60,7 +60,8 @@ TEST(AlmaCentroidalModelTestInit, InitModelFromUrdf) {
   CentroidalModelPinocchioMapping<scalar_t> mapping(alma_c::STATE_DIM, alma_c::INPUT_DIM,
                                                     CentroidalModelType::FullCentroidalDynamics,
                                                     vector_t::Zero(nq), alma3DofContactNames,
-                                                    alma6DofContactNames, pinocchioInterface);
+                                                    alma6DofContactNames);
+  mapping.setPinocchioInterface(pinocchioInterface);
   const auto& centroidalModelInfo = mapping.getCentroidalModelInfo();
 
   std::cerr << "nq " << model.nq << '\n';
@@ -80,7 +81,8 @@ TEST(AlmaCentroidalModelTestInit, InitModelFromUrdfAD) {
   CentroidalModelPinocchioMapping<ad_scalar_t> mappingAD(alma_c::STATE_DIM, alma_c::INPUT_DIM,
                                                        CentroidalModelTypeAD::FullCentroidalDynamics,
                                                        ad_vector_t::Zero(nq), alma3DofContactNames,
-                                                       alma6DofContactNames, pinocchioInterface.toCppAd());
+                                                       alma6DofContactNames);
+  mappingAD.setPinocchioInterface(pinocchioInterface.toCppAd());
   const auto& centroidalModelInfo = mappingAD.getCentroidalModelInfo();
 
   std::cerr << "nq " << model.nq << '\n';
@@ -100,13 +102,13 @@ class AlmaCentroidalModelTest : public testing::Test {
     mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(alma_c::STATE_DIM, alma_c::INPUT_DIM,
                                                       CentroidalModelType::FullCentroidalDynamics,
                                                       vector_t::Zero(nq), alma3DofContactNames,
-                                                      alma6DofContactNames, pinocchioInterface_));
+                                                      alma6DofContactNames));
     AlmaKinoCentroidalDynamicsPtr = std::make_shared<AlmaKinoCentroidalDynamics>(pinocchioInterface_, *mapping_);
 
     mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(alma_c::STATE_DIM, alma_c::INPUT_DIM,
                                                          CentroidalModelTypeAD::FullCentroidalDynamics,
                                                          ad_vector_t::Zero(nq), alma3DofContactNames,
-                                                         alma6DofContactNames,pinocchioInterface_.toCppAd()));
+                                                         alma6DofContactNames));
     AlmaKinoCentroidalDynamicsAdPtr = std::make_shared<AlmaKinoCentroidalDynamicsAD>(pinocchioInterface_, *mappingAD_);
 
     srand(0);
@@ -180,6 +182,7 @@ TEST_F(AlmaCentroidalModelTest, ComputeFlowMap) {
   pinocchio::computeCentroidalMap(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto dynamics = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
+  std::cerr << "dynamics: \n" << dynamics << "\n";
 }
 
 TEST_F(AlmaCentroidalModelTest, ComputeLinearApproximation) {
@@ -197,6 +200,9 @@ TEST_F(AlmaCentroidalModelTest, ComputeLinearApproximation) {
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::updateFramePlacements(model, data);
   const auto linearApproximation = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
+  std::cerr << "dynamics: \n" << linearApproximation.f << "\n";
+  std::cerr << "dfdx: \n" << linearApproximation.dfdx << "\n";
+  std::cerr << "dfdu: \n" << linearApproximation.dfdu << "\n";
 }
 
 TEST_F(AlmaCentroidalModelTest, CompareFlowMaps) {

@@ -34,15 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class AnymalKinoCentroidalDynamicsAD final : public PinocchioCentroidalDynamicsAD {
- public:
-  explicit AnymalKinoCentroidalDynamicsAD(const CentroidalModelPinocchioInterface<ad_scalar_t> &centroidalModelInterface)
-      : PinocchioCentroidalDynamicsAD(anymal::STATE_DIM, anymal::INPUT_DIM, centroidalModelInterface) {
-    initialize("AnymalKinoCentroidalDynamicsAD", anymalCppAdModelPath, /*recompileLibraries=*/true, /*verbose=*/false);
-  }
-  ~AnymalKinoCentroidalDynamicsAD() override = default;
+  class AnymalKinoCentroidalDynamicsAD final : public PinocchioCentroidalDynamicsAD {
+  public:
+    AnymalKinoCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& mapping)
+            : PinocchioCentroidalDynamicsAD(pinocchioInterface, mapping, anymal::STATE_DIM, anymal::INPUT_DIM,
+                                            "AnymalKinoCentroidalDynamicsAD", anymalCppAdModelPath, /*recompileLibraries=*/
+                                            true, /*verbose=*/false) {}
 
-  AnymalKinoCentroidalDynamicsAD* clone() const override { return new AnymalKinoCentroidalDynamicsAD(*this); };
-};
+    ~AnymalKinoCentroidalDynamicsAD() = default;
+  };
 
 }  // namespace ocs2

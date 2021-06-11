@@ -34,13 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class AnymalKinoCentroidalDynamics final : public PinocchioCentroidalDynamics {
- public:
-  explicit AnymalKinoCentroidalDynamics(const CentroidalModelPinocchioInterface<scalar_t> &centroidalModelInterface)
-          : PinocchioCentroidalDynamics(centroidalModelInterface) {}
-  ~AnymalKinoCentroidalDynamics() override = default;
+  class AnymalKinoCentroidalDynamics final : public PinocchioCentroidalDynamics {
+  public:
+    AnymalKinoCentroidalDynamics(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& mapping)
+            : PinocchioCentroidalDynamics(pinocchioInterface, mapping) {}
 
-  AnymalKinoCentroidalDynamics* clone() const override { return new AnymalKinoCentroidalDynamics(*this); };
-};
+    ~AnymalKinoCentroidalDynamics() = default;
+  };
 
 }  // namespace ocs2

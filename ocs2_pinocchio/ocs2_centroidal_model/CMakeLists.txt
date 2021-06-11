@@ -61,7 +61,7 @@ link_directories(
 add_library(${PROJECT_NAME}
   src/PinocchioCentroidalDynamics.cpp
   src/PinocchioCentroidalDynamicsAD.cpp
-#  src/CentroidalModelRbdConversions.cpp
+  src/CentroidalModelRbdConversions.cpp
   src/CentroidalModelPinocchioMapping.cpp
 )
 target_link_libraries(${PROJECT_NAME}
@@ -110,10 +110,8 @@ install(
 ## Testing ##
 #############
 catkin_add_gtest(${PROJECT_NAME}_test
-#  test/AnymalKinoCentroidalDynamicsTest.cpp
-#  test/AlmaKinoCentroidalDynamicsTest.cpp
-#  test/AnymalCentroidalModelPinocchioTest.cpp
-  test/AlmaDynamicsCachingTest.cpp
+  test/AnymalCentroidalDynamicsTest.cpp
+  test/AlmaCentroidalDynamicsTest.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
   gtest_main

@@ -5,11 +5,12 @@ namespace switched_model {
 ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
                                                  const SwitchedModelModeScheduleManager& modeScheduleManager,
                                                  const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings options)
-    : adKinematicModelPtr_(adKinematicModel.clone()),
+    : inequalityConstraintsCollectionPtr_(new ocs2::StateInputConstraintCollection),
+      adKinematicModelPtr_(adKinematicModel.clone()),
       adComModelPtr_(adComModel.clone()),
+      options_(std::move(options)),
       modeScheduleManagerPtr_(&modeScheduleManager),
-      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
-      options_(std::move(options)) {
+      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner) {
   initializeConstraintTerms();
   collectConstraintPointers();
 }
@@ -19,13 +20,13 @@ ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adK
 /******************************************************************************************************/
 ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
     : ocs2::ConstraintBase(rhs),
+      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
+      inequalityConstraintsCollectionPtr_(rhs.inequalityConstraintsCollectionPtr_->clone()),
       adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
       adComModelPtr_(rhs.adComModelPtr_->clone()),
-      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
-      swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
       options_(rhs.options_),
-      inequalityConstraintCollection_(rhs.inequalityConstraintCollection_),
-      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_) {
+      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_) {
   collectConstraintPointers();
 }
 
@@ -46,7 +47,8 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     auto footName = feetNames[i];
 
     // Friction cone constraint
-    auto frictionCone = std::unique_ptr<ConstraintTerm_t>(new FrictionConeConstraint(options_.frictionCoefficient_, 25.0, i));
+    FrictionConeConstraint::Config frictionConfig(options_.frictionCoefficient_, 25.0);
+    std::unique_ptr<FrictionConeConstraint> frictionCone(new FrictionConeConstraint(std::move(frictionConfig), i));
 
     // EE force
     auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
@@ -58,7 +60,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
         i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
-    inequalityConstraintCollection_.add(footName + "_FrictionCone", std::move(frictionCone));
+    inequalityConstraintsCollectionPtr_->add(footName + "_FrictionCone", std::move(frictionCone));
 
     // State input equalities
     equalityStateInputConstraintCollection_.add(footName + "_ZeroForce", std::move(zeroForceConstraint));
@@ -75,7 +77,7 @@ void ComKinoConstraintBaseAd::collectConstraintPointers() {
     auto footName = feetNames[i];
 
     // Inequalities
-    frictionConeConstraints_[i] = &inequalityConstraintCollection_.get<FrictionConeConstraint>(footName + "_FrictionCone");
+    frictionConeConstraints_[i] = &inequalityConstraintsCollectionPtr_->get<FrictionConeConstraint>(footName + "_FrictionCone");
 
     // State input equalities
     zeroForceConstraints_[i] = &equalityStateInputConstraintCollection_.get<ZeroForceConstraint>(footName + "_ZeroForce");
@@ -142,7 +144,7 @@ vector_t ComKinoConstraintBaseAd::stateInputEqualityConstraint(scalar_t t, const
 /******************************************************************************************************/
 vector_t ComKinoConstraintBaseAd::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
   updateInequalityConstraints(t);
-  return inequalityConstraintCollection_.getValueAsVector(t, x, u);
+  return inequalityConstraintsCollectionPtr_->getValue(t, x, u);
 }
 
 /******************************************************************************************************/
@@ -167,25 +169,7 @@ VectorFunctionLinearApproximation ComKinoConstraintBaseAd::stateInputEqualityCon
 VectorFunctionQuadraticApproximation ComKinoConstraintBaseAd::inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                          const vector_t& u) {
   updateInequalityConstraints(t);
-  const auto constraintApproximation = inequalityConstraintCollection_.getQuadraticApproximation(t, x, u);
-  const size_t numConstraints = constraintApproximation.constraintValues.size();
-
-  VectorFunctionQuadraticApproximation h;
-  h.f.resize(numConstraints);
-  h.dfdx.resize(numConstraints, x.rows());
-  h.dfdu.resize(numConstraints, u.rows());
-  h.dfdxx.resize(numConstraints);
-  h.dfduu.resize(numConstraints);
-  h.dfdux.resize(numConstraints);
-  for (size_t i = 0; i < numConstraints; i++) {
-    h.f(i) = constraintApproximation.constraintValues[i];
-    h.dfdx.row(i) = constraintApproximation.derivativeState[i];
-    h.dfdu.row(i) = constraintApproximation.derivativeInput[i];
-    h.dfdxx[i] = constraintApproximation.secondDerivativesState[i];
-    h.dfduu[i] = constraintApproximation.secondDerivativesInput[i];
-    h.dfdux[i] = constraintApproximation.derivativesInputState[i];
-  }
-  return h;
+  return inequalityConstraintsCollectionPtr_->getQuadraticApproximation(t, x, u);
 }
 
 /******************************************************************************************************/

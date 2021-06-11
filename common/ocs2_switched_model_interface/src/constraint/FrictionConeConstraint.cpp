@@ -10,7 +10,7 @@
 namespace switched_model {
 
 FrictionConeConstraint::FrictionConeConstraint(Config config, int legNumber)
-    : StateInputConstraint(ocs2::ConstraintOrder::Quadratic),
+    : ocs2::StateInputConstraint(ocs2::ConstraintOrder::Quadratic),
       config_(std::move(config)),
       legNumber_(legNumber),
       t_R_w(matrix3_t::Identity()) {

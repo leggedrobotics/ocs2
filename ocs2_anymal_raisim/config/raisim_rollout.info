@@ -1,7 +1,7 @@
 rollout
 {
   checkNumericalStability       0
-  minTimeStep                   0.0025 ; used as time step in raisim
+  timeStep                      0.0025 ; used as time step in raisim
 
   raisim_rollout
   {

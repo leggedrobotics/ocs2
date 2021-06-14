@@ -65,7 +65,7 @@ class GDDP_Settings {
         absTolODE_(1e-9),
         relTolODE_(1e-6),
         maxNumStepsPerSecond_(5000),
-        minTimeStep_(1e-3) {}
+        timeStep_(1e-3) {}
 
   /**
    * This function loads the "GDDP_Settings" variables from a config file. This file contains the settings for the SQL and OCS2 algorithms.
@@ -133,7 +133,7 @@ class GDDP_Settings {
   /** This value determines the maximum number of integration points per a second for ode solvers. */
   size_t maxNumStepsPerSecond_;
   /** The minimum integration time step */
-  double minTimeStep_;
+  double timeStep_;
 
 };  // end of GDDP_Settings class
 
@@ -167,7 +167,7 @@ inline void GDDP_Settings::loadSettings(const std::string& filename, const std::
   loadData::loadPtreeValue(pt, absTolODE_, fieldName + ".AbsTolODE", verbose);
   loadData::loadPtreeValue(pt, relTolODE_, fieldName + ".RelTolODE", verbose);
   loadData::loadPtreeValue(pt, maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
-  loadData::loadPtreeValue(pt, minTimeStep_, fieldName + ".minTimeStep", verbose);
+  loadData::loadPtreeValue(pt, timeStep_, fieldName + ".timeStep", verbose);
 
   if (verbose) {
     std::cerr << " #### =============================================================================" << std::endl;

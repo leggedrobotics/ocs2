@@ -31,12 +31,16 @@ class FrictionConeConstraint final : public ocs2::StateInputConstraint {
    * hessianDiagonalShift: The Hessian shift to assure a strictly-convex quadratic constraint approximation.
    */
   struct Config {
-    Config(scalar_t frictionCoefficientParam = 0.7, scalar_t regularizationParam = 25.0, scalar_t gripperForceParam = 0.0,
-           scalar_t hessianDiagonalShiftParam = 1e-6)
+    explicit Config(scalar_t frictionCoefficientParam = 0.7, scalar_t regularizationParam = 25.0, scalar_t gripperForceParam = 0.0,
+                    scalar_t hessianDiagonalShiftParam = 1e-6)
         : frictionCoefficient(frictionCoefficientParam),
           regularization(regularizationParam),
           gripperForce(gripperForceParam),
-          hessianDiagonalShift(hessianDiagonalShiftParam) {}
+          hessianDiagonalShift(hessianDiagonalShiftParam) {
+      assert(frictionCoefficient > 0.0);
+      assert(regularization > 0.0);
+      assert(hessianDiagonalShift >= 0.0);
+    }
 
     scalar_t frictionCoefficient;
     scalar_t regularization;

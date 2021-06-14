@@ -16,6 +16,10 @@ class AnymalBearSwitchedModelTests : public switched_model::TestAnymalSwitchedMo
                                 getWholebodyDynamics(AnymalModel::Bear)) {}
 };
 
+TEST_F(AnymalBearSwitchedModelTests, Cost) {
+  this->testCosts();
+}
+
 TEST_F(AnymalBearSwitchedModelTests, Constraints) {
   this->testConstraints();
 }

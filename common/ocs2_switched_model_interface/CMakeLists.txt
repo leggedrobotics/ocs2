@@ -45,6 +45,8 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/constraint/FrictionConeConstraint.cpp
+	src/cost/MotionTrackingCost.cpp
+	src/cost/SwitchedModelCostBase.cpp
 	src/foot_planner/CubicSpline.cpp
 	src/foot_planner/FootPhase.cpp
 	src/foot_planner/QuinticSplineSwing.cpp
@@ -69,7 +71,6 @@ add_library(${PROJECT_NAME}
 	src/ComModelBase.cpp
 	src/KinematicsModelBase.cpp
 	src/ModelSettings.cpp
-	src/SwitchedModelCostBase.cpp
 	src/SwitchedModelStateEstimator.cpp
 )
 add_dependencies(${PROJECT_NAME}

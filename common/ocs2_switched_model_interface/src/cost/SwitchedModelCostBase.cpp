@@ -14,17 +14,19 @@ namespace switched_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwitchedModelCostBase::SwitchedModelCostBase(const com_model_t& comModel, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                                             const state_matrix_t& Q, const input_matrix_t& R)
-    : ocs2::QuadraticCostFunction(Q, R, state_matrix_t::Zero()),
-      comModelPtr_(comModel.clone()),
+SwitchedModelCostBase::SwitchedModelCostBase(const MotionTrackingCost::Weights& trackingWeights,
+                                             const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                             const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
+                                             const com_model_t& comModel, bool recompile)
+    : ocs2::CostFunctionBase(),
+      trackingCostPtr_(new MotionTrackingCost(trackingWeights, modeScheduleManager, kinematicModel, adKinematicModel, comModel, recompile)),
       modeScheduleManagerPtr_(&modeScheduleManager) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelCostBase::SwitchedModelCostBase(const SwitchedModelCostBase& rhs)
-    : ocs2::QuadraticCostFunction(rhs), comModelPtr_(rhs.comModelPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
+    : ocs2::CostFunctionBase(rhs), trackingCostPtr_(rhs.trackingCostPtr_->clone()), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -42,20 +44,7 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
     throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
   }
 
-  // Get stance configuration
-  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
-
-  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
-  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
-  // If the input has non-zero values, don't overwrite it.
-  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
-  if (uNominal.isZero()) {
-    uNominal = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getComPose<scalar_t>(xNominal)));
-  }
-
-  const vector_t xDeviation = x - xNominal;
-  const vector_t uDeviation = u - uNominal;
-  return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation);
+  return trackingCostPtr_->getValue(t, x, u, *costDesiredTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/
@@ -66,30 +55,7 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
     throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
   }
 
-  // Get stance configuration
-  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(t);
-
-  const vector_t xNominal = costDesiredTrajectoriesPtr_->getDesiredState(t);
-  vector_t uNominal = costDesiredTrajectoriesPtr_->getDesiredInput(t);
-  // If the input has non-zero values, don't overwrite it.
-  // TODO (rgrandia) : implement a better way to switch between heuristic inputs and tracking user defined inputs.
-  if (uNominal.isZero()) {
-    uNominal = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getComPose<scalar_t>(xNominal)));
-  }
-
-  const vector_t xDeviation = x - xNominal;
-  const vector_t uDeviation = u - uNominal;
-  const vector_t qDeviation = Q_ * xDeviation;
-  const vector_t rDeviation = R_ * uDeviation;
-
-  ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * xDeviation.dot(qDeviation) + 0.5 * uDeviation.dot(rDeviation);
-  L.dfdx = qDeviation;
-  L.dfdu = rDeviation;
-  L.dfdxx = Q_;
-  L.dfdux.setZero(u.rows(), x.rows());
-  L.dfduu = R_;
-  return L;
+  return trackingCostPtr_->getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
 }
 
 }  // namespace switched_model

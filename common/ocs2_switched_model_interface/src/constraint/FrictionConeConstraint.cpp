@@ -26,7 +26,7 @@ vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, 
 
   const auto localForce = computeLocalForces(eulerXYZ, forcesInBodyFrame);
 
-  return (ocs2::vector_t(1) << coneConstraint(localForce)).finished();
+  return coneConstraint(localForce);
 }
 
 VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
@@ -40,10 +40,10 @@ VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation
   const auto coneLocalDerivatives = computeConeLocalDerivatives(localForce);
   const auto coneDerivatives = computeConeConstraintDerivatives(coneLocalDerivatives, localForceDerivatives);
 
-  ocs2::VectorFunctionLinearApproximation linearApproximation(1, STATE_DIM, INPUT_DIM);
-  linearApproximation.f(0) = coneConstraint(localForce);
-  linearApproximation.dfdx = frictionConeStateDerivative(coneDerivatives).transpose();
-  linearApproximation.dfdu = frictionConeInputDerivative(coneDerivatives).transpose();
+  ocs2::VectorFunctionLinearApproximation linearApproximation;
+  linearApproximation.f = coneConstraint(localForce);
+  linearApproximation.dfdx = frictionConeStateDerivative(coneDerivatives);
+  linearApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
   return linearApproximation;
 }
 
@@ -58,13 +58,13 @@ VectorFunctionQuadraticApproximation FrictionConeConstraint::getQuadraticApproxi
   const auto coneLocalDerivatives = computeConeLocalDerivatives(localForce);
   const auto coneDerivatives = computeConeConstraintDerivatives(coneLocalDerivatives, localForceDerivatives);
 
-  ocs2::VectorFunctionQuadraticApproximation quadraticApproximation(1, STATE_DIM, INPUT_DIM);
-  quadraticApproximation.f(0) = coneConstraint(localForce);
-  quadraticApproximation.dfdx = frictionConeStateDerivative(coneDerivatives).transpose();
-  quadraticApproximation.dfdu = frictionConeInputDerivative(coneDerivatives).transpose();
-  quadraticApproximation.dfdxx[0] = frictionConeSecondDerivativeState(coneDerivatives);
-  quadraticApproximation.dfduu[0] = frictionConeSecondDerivativeInput(coneDerivatives);
-  quadraticApproximation.dfdux[0] = frictionConeDerivativesInputState(coneDerivatives);
+  ocs2::VectorFunctionQuadraticApproximation quadraticApproximation;
+  quadraticApproximation.f = coneConstraint(localForce);
+  quadraticApproximation.dfdx = frictionConeStateDerivative(coneDerivatives);
+  quadraticApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
+  quadraticApproximation.dfdxx.emplace_back(frictionConeSecondDerivativeState(coneDerivatives));
+  quadraticApproximation.dfduu.emplace_back(frictionConeSecondDerivativeInput(coneDerivatives));
+  quadraticApproximation.dfdux.emplace_back(frictionConeDerivativesInputState(coneDerivatives));
   return quadraticApproximation;
 }
 
@@ -106,11 +106,11 @@ FrictionConeConstraint::ConeLocalDerivatives FrictionConeConstraint::computeCone
   return coneDerivatives;
 }
 
-scalar_t FrictionConeConstraint::coneConstraint(const vector3_t& localForces) const {
+vector_t FrictionConeConstraint::coneConstraint(const vector3_t& localForces) const {
   const auto F_tangent_square = localForces.x() * localForces.x() + localForces.y() * localForces.y() + config_.regularization;
   const auto F_tangent_norm = sqrt(F_tangent_square);
-
-  return config_.frictionCoefficient * (localForces.z() + config_.gripperForce) - F_tangent_norm;
+  const scalar_t coneConstraint = config_.frictionCoefficient * (localForces.z() + config_.gripperForce) - F_tangent_norm;
+  return (ocs2::vector_t(1) << coneConstraint).finished();
 }
 
 FrictionConeConstraint::ConeDerivatives FrictionConeConstraint::computeConeConstraintDerivatives(
@@ -131,34 +131,34 @@ FrictionConeConstraint::ConeDerivatives FrictionConeConstraint::computeConeConst
   return coneDerivatives;
 }
 
-state_vector_t FrictionConeConstraint::frictionConeStateDerivative(const ConeDerivatives& coneDerivatives) const {
-  state_vector_t dhdx = state_vector_t::Zero();
-  dhdx.segment<3>(0) = coneDerivatives.dCone_deuler;
+matrix_t FrictionConeConstraint::frictionConeStateDerivative(const ConeDerivatives& coneDerivatives) const {
+  matrix_t dhdx = matrix_t::Zero(1, STATE_DIM);
+  dhdx.block<1, 3>(0, 0) = coneDerivatives.dCone_deuler;
   return dhdx;
 }
 
-input_vector_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const {
-  input_vector_t dhdu = input_vector_t::Zero();
-  dhdu.segment<3>(3 * legNumber_) = coneDerivatives.dCone_du;
+matrix_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const {
+  matrix_t dhdu = matrix_t::Zero(1, INPUT_DIM);
+  dhdu.block<1, 3>(0, 3 * legNumber_) = coneDerivatives.dCone_du;
   return dhdu;
 }
 
-input_matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const {
-  input_matrix_t ddhdudu = input_matrix_t::Zero();
+matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const {
+  matrix_t ddhdudu = matrix_t::Zero(INPUT_DIM, INPUT_DIM);
   ddhdudu.block<3, 3>(3 * legNumber_, 3 * legNumber_) = coneDerivatives.d2Cone_du2;
   ddhdudu.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdudu;
 }
 
-state_matrix_t FrictionConeConstraint::frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const {
-  state_matrix_t ddhdxdx = state_matrix_t::Zero();
+matrix_t FrictionConeConstraint::frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const {
+  matrix_t ddhdxdx = matrix_t::Zero(STATE_DIM, STATE_DIM);
   ddhdxdx.block<3, 3>(0, 0) = coneDerivatives.d2Cone_deuler2;
   ddhdxdx.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdxdx;
 }
 
-input_state_matrix_t FrictionConeConstraint::frictionConeDerivativesInputState(const ConeDerivatives& coneDerivatives) const {
-  input_state_matrix_t ddhdudx = input_state_matrix_t::Zero();
+matrix_t FrictionConeConstraint::frictionConeDerivativesInputState(const ConeDerivatives& coneDerivatives) const {
+  matrix_t ddhdudx = matrix_t::Zero(INPUT_DIM, STATE_DIM);
   ddhdudx.block<3, 3>(3 * legNumber_, 0) = coneDerivatives.d2Cone_dudeuler;
   return ddhdudx;
 }

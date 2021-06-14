@@ -94,18 +94,18 @@ class FrictionConeConstraint final : public ocs2::StateInputConstraint {
   };
 
   FrictionConeConstraint(const FrictionConeConstraint& other) = default;
-  scalar_t coneConstraint(const vector3_t& localForces) const;
+  vector_t coneConstraint(const vector3_t& localForces) const;
   vector3_t computeLocalForces(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const;
   LocalForceDerivatives computeLocalForceDerivatives(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const;
   ConeLocalDerivatives computeConeLocalDerivatives(const vector3_t& localForces) const;
   ConeDerivatives computeConeConstraintDerivatives(const ConeLocalDerivatives& coneLocalDerivatives,
                                                    const LocalForceDerivatives& localForceDerivatives) const;
 
-  state_vector_t frictionConeStateDerivative(const ConeDerivatives& coneDerivatives) const;
-  input_vector_t frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const;
-  input_matrix_t frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const;
-  state_matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
-  input_state_matrix_t frictionConeDerivativesInputState(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeStateDerivative(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeDerivativesInputState(const ConeDerivatives& coneDerivatives) const;
 
   const Config config_;
   const int legNumber_;

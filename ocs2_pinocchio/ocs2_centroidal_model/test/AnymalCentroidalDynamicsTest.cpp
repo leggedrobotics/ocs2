@@ -79,7 +79,7 @@ TEST(AnymalCentroidalModelTestInit, InitModelFromUrdfAD) {
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
   CentroidalModelPinocchioMapping<ad_scalar_t> mappingAD(anymal::STATE_DIM, anymal::INPUT_DIM,
-                                                         CentroidalModelTypeAD::FullCentroidalDynamics,
+                                                         CentroidalModelTypeAD::SingleRigidBodyDynamics,
                                                          ad_vector_t::Zero(nq), anymal3DofContactNames,
                                                          anymal6DofContactNames);
   mappingAD.setPinocchioInterface(pinocchioInterface.toCppAd());
@@ -100,13 +100,13 @@ public:
   AnymalCentroidalModelTest() : pinocchioInterface_(getAnymalPinocchioInterface()) {
     size_t nq = pinocchioInterface_.getModel().nq;
     mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(anymal::STATE_DIM, anymal::INPUT_DIM,
-                                                                 CentroidalModelType::FullCentroidalDynamics,
+                                                                 CentroidalModelType::SingleRigidBodyDynamics,
                                                                  vector_t::Zero(nq), anymal3DofContactNames,
                                                                  anymal6DofContactNames));
     AnymalKinoCentroidalDynamicsPtr = std::make_shared<AnymalKinoCentroidalDynamics>(pinocchioInterface_, *mapping_);
 
     mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(anymal::STATE_DIM, anymal::INPUT_DIM,
-                                                                      CentroidalModelTypeAD::FullCentroidalDynamics,
+                                                                      CentroidalModelTypeAD::SingleRigidBodyDynamics,
                                                                       ad_vector_t::Zero(nq), anymal3DofContactNames,
                                                                       anymal6DofContactNames));
     AnymalKinoCentroidalDynamicsAdPtr = std::make_shared<AnymalKinoCentroidalDynamicsAD>(pinocchioInterface_, *mappingAD_);
@@ -180,7 +180,9 @@ TEST_F(AnymalCentroidalModelTest, ComputeFlowMap) {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
-  pinocchio::computeCentroidalMap(model, data, qPinocchio);
+  vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
+  qPinocchioSRBD.head(6) = qPinocchio.head(6);
+  pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   pinocchio::updateFramePlacements(model, data);
   const auto dynamics = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
 }
@@ -190,14 +192,18 @@ TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
   auto& data = pinocchioInterface_.getData();
   const size_t GENERALIZED_VEL_NUM = model.nq;
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
-  pinocchio::computeCentroidalMap(model, data, qPinocchio);
+  vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
+  qPinocchioSRBD.head(6) = qPinocchio.head(6);
+  pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
+  vector_t vPinocchioSRBD = vPinocchio;
+  vPinocchioSRBD.tail(12).setZero();
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_da_.resize(6, GENERALIZED_VEL_NUM);
   pinocchio::computeCentroidalDynamicsDerivatives(model, data,
-                                                  qPinocchio, vPinocchio,
+                                                  qPinocchioSRBD, vPinocchioSRBD,
                                                   vector_t::Zero(GENERALIZED_VEL_NUM),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::updateFramePlacements(model, data);
@@ -209,7 +215,10 @@ TEST_F(AnymalCentroidalModelTest, CompareFlowMaps) {
 
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
-  pinocchio::computeCentroidalMap(model, data, mapping_->getPinocchioJointPosition(state));
+  const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
+  vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
+  qPinocchioSRBD.head(6) = qPinocchio.head(6);
+  pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   pinocchio::updateFramePlacements(model, data);
   const auto stateDerivative = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
 
@@ -223,14 +232,18 @@ TEST_F(AnymalCentroidalModelTest, CompareFlowMapLinearApproximations) {
   auto& data = pinocchioInterface_.getData();
   const size_t GENERALIZED_VEL_NUM = model.nq;
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
-  pinocchio::computeCentroidalMap(model, data, qPinocchio);
+  vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
+  qPinocchioSRBD.head(6) = qPinocchio.head(6);
+  pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
+  vector_t vPinocchioSRBD = vPinocchio;
+  vPinocchioSRBD.tail(12).setZero();
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_da_.resize(6, GENERALIZED_VEL_NUM);
   pinocchio::computeCentroidalDynamicsDerivatives(model, data,
-                                                  qPinocchio, vPinocchio,
+                                                  qPinocchioSRBD, vPinocchioSRBD,
                                                   vector_t::Zero(GENERALIZED_VEL_NUM),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::updateFramePlacements(model, data);

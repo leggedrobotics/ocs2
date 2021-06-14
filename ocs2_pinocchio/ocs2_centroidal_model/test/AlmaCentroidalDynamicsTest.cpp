@@ -207,7 +207,8 @@ TEST_F(AlmaCentroidalModelTest, CompareFlowMaps) {
 
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
-  pinocchio::computeCentroidalMap(model, data, mapping_->getPinocchioJointPosition(state));
+  const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
+  pinocchio::computeCentroidalMap(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto stateDerivative = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
 

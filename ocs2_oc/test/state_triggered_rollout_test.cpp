@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
+#include <ocs2_oc/rollout/RolloutSettings.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 
 #include "ocs2_oc/test/ball_dynamics_staterollout.h"
@@ -65,11 +65,12 @@ TEST(StateRolloutTests, rolloutTestBallDynamics) {
   const size_t nu = 1;
 
   // Construct State TriggerdRollout Object
-  ocs2::rollout::Settings RolloutSettings;
-  RolloutSettings.absTolODE_ = 1e-10;
-  RolloutSettings.relTolODE_ = 1e-7;
+  ocs2::rollout::Settings rolloutSettings;
+  rolloutSettings.absTolODE = 1e-10;
+  rolloutSettings.relTolODE = 1e-7;
+  rolloutSettings.timeStep = 1e-3;
   ocs2::ballDyn dynamics;
-  ocs2::StateTriggeredRollout rollout(dynamics, RolloutSettings);
+  ocs2::StateTriggeredRollout rollout(dynamics, rolloutSettings);
   // Construct Variables for run
   // Simulation time
   scalar_t t0 = 0;

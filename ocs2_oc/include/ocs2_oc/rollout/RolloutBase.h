@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 
-#include "Rollout_Settings.h"
+#include "RolloutSettings.h"
 
 namespace ocs2 {
 
@@ -141,7 +141,7 @@ class RolloutBase {
                            vector_array_t& inputTrajectory) = 0;
 
   /**
-   * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.
+   * Checks for the numerical stability if rollout::Settings::checkNumericalStability is true.
    *
    * @param [in] timeTrajectory: The time trajectory stamp.
    * @param [in] postEventIndicesStock: Indices containing past-the-end index of events trigger.

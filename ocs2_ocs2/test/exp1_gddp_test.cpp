@@ -59,10 +59,10 @@ TEST(exp1_gddp_test, optimum_gradient_test) {
   slqSettings.ddpSettings_.strategy_ = ddp_strategy::type::LINE_SEARCH;
   slqSettings.ddpSettings_.lineSearch_.minStepLength_ = 0.0001;
 
-  Rollout_Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-10;
-  rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 10000;
+  rollout::Settings rolloutSettings;
+  rolloutSettings.absTolODE = 1e-10;
+  rolloutSettings.relTolODE = 1e-7;
+  rolloutSettings.maxNumStepsPerSecond = 10000;
 
   GDDP_Settings gddpSettings;
   gddpSettings.displayInfo_ = true;

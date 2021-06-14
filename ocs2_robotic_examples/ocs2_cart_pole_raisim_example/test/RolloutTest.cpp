@@ -59,7 +59,7 @@ TEST(ocs2_cart_pole_raisim_example, RolloutTest) {
   ocs2::RaisimRollout rollout(ros::package::getPath("ocs2_cart_pole_example") + "/urdf/cartpole.urdf",
                               &ocs2::cartpole::stateToRaisimGenCoordGenVel, &ocs2::cartpole::raisimGenCoordGenVelToState,
                               &ocs2::cartpole::inputToRaisimGeneralizedForce);
-  rollout.settings().minTimeStep_ = 0.2;
+  rollout.settings().timeStep = 0.2;
 
   vector_t finalState =
       rollout.run(t0, x_init, tf, &ctrl, eventTimes, timeTrajectory, eventsPastTheEndIndeces, stateTrajectory, inputTrajectory);

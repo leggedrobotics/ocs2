@@ -54,7 +54,7 @@ vector_t InitializerRollout::runImpl(const time_interval_array_t& timeIntervalAr
                                      vector_array_t& inputTrajectory) {
   const auto numSubsystems = timeIntervalArray.size();
   const auto numEvents = numSubsystems - 1;
-  const size_t maxNumSteps = (timeIntervalArray.back().second - timeIntervalArray.front().first) / settings().minTimeStep_;
+  const size_t maxNumSteps = (timeIntervalArray.back().second - timeIntervalArray.front().first) / settings().timeStep;
 
   // clearing the output trajectories
   timeTrajectory.clear();
@@ -69,14 +69,14 @@ vector_t InitializerRollout::runImpl(const time_interval_array_t& timeIntervalAr
   vector_t input;
   vector_t state = initState;
   for (size_t i = 0; i < numSubsystems; i++) {
-    const size_t numSteps = (timeIntervalArray[i].second - timeIntervalArray[i].first) / settings().minTimeStep_;
-    const scalar_t remainderTime = timeIntervalArray[i].second - (timeIntervalArray[i].first + numSteps * settings().minTimeStep_);
+    const size_t numSteps = (timeIntervalArray[i].second - timeIntervalArray[i].first) / settings().timeStep;
+    const scalar_t remainderTime = timeIntervalArray[i].second - (timeIntervalArray[i].first + numSteps * settings().timeStep);
 
     // take (numSteps + 1) steps from timeIntervalArray[i].first to (timeIntervalArray[i].second - remainderTime)
     for (size_t k = 0; k < numSteps + 1; k++) {
-      timeTrajectory.push_back(timeIntervalArray[i].first + k * settings().minTimeStep_);
+      timeTrajectory.push_back(timeIntervalArray[i].first + k * settings().timeStep);
       stateTrajectory.push_back(state);
-      const scalar_t timeStep = k < numSteps ? settings().minTimeStep_ : remainderTime;
+      const scalar_t timeStep = k < numSteps ? settings().timeStep : remainderTime;
       initializerPtr_->compute(timeTrajectory.back(), stateTrajectory.back(), timeTrajectory.back() + timeStep, input, state);
       inputTrajectory.push_back(input);
     }  // end of k loop

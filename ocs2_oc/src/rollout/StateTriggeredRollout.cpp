@@ -45,7 +45,7 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
   }
 
   // max number of steps for integration
-  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond_ *
+  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond *
                                                std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
 
   // clearing the output trajectories
@@ -60,7 +60,7 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
 
   // set controller
   StateBasedLinearController trajectorySpreadingController;
-  if (this->settings().useTrajectorySpreadingController_) {
+  if (this->settings().useTrajectorySpreadingController) {
     trajectorySpreadingController.setController(controller);
     systemDynamicsPtr_->setController(&trajectorySpreadingController);
   } else {
@@ -85,14 +85,14 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
   int singleEventIterations = 0;  // iterations for a single event
   int numTotalIterations = 0;     // overall number of iterations
 
-  RootFinder rootFinder(this->settings().rootFindingAlgorithm_);  // root-finding algorithm
+  RootFinder rootFinder(this->settings().rootFindingAlgorithm);  // root-finding algorithm
 
   while (true) {  // keeps looping until end time condition is fulfilled, after which the loop is broken
     bool triggered = false;
     try {
       Observer observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
-      dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().minTimeStep_,
-                                                this->settings().absTolODE_, this->settings().relTolODE_, maxNumSteps);
+      dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, x0, t0, t1, this->settings().timeStep,
+                                                this->settings().absTolODE, this->settings().relTolODE, maxNumSteps);
     } catch (const size_t& e) {
       eventID = e;
       triggered = true;
@@ -104,11 +104,11 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
     const scalar_t queryGuard = guardSurfaces[eventID];
 
     // accuracy conditions on the obtained query guard and width of time window
-    const bool guardAccuracyCondition = std::fabs(queryGuard) < this->settings().absTolODE_;
-    const bool timeAccuracyCondition = std::fabs(t1 - t0) < this->settings().absTolODE_;
+    const bool guardAccuracyCondition = std::fabs(queryGuard) < this->settings().absTolODE;
+    const bool timeAccuracyCondition = std::fabs(t1 - t0) < this->settings().absTolODE;
     const bool accuracyCondition = guardAccuracyCondition || timeAccuracyCondition;
     // condition to check whether max number of iterations has not been reached, to prevent an infinite loop
-    const bool maxNumIterationsReached = singleEventIterations >= this->settings().maxSingleEventIterations_;
+    const bool maxNumIterationsReached = singleEventIterations >= this->settings().maxSingleEventIterations;
 
     // remove the element past the guard surface if the event handler was triggered
     // (Due to checking in EventHandler this can only happen to the last element of the trajectory)
@@ -120,7 +120,7 @@ vector_t StateTriggeredRollout::runImpl(const time_interval_array_t& timeInterva
     triggered = false;
 
     // compute control input trajectory and concatenate to inputTrajectory
-    if (this->settings().reconstructInputTrajectory_) {
+    if (this->settings().reconstructInputTrajectory) {
       for (; k_u < timeTrajectory.size(); k_u++) {
         inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
       }  // end of k_u loop

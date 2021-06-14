@@ -129,8 +129,9 @@ class MultipleShootingSolver : public SolverBase {
   static scalar_t trajectoryNorm(const vector_array_t& v);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  bool takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
-                const vector_array_t& dx, const vector_array_t& du, vector_array_t& x, vector_array_t& u);
+  std::pair<bool, PerformanceIndex> takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                             const vector_t& initState, const vector_array_t& dx, const vector_array_t& du,
+                                             vector_array_t& x, vector_array_t& u);
 
   // Problem definition
   Settings settings_;

@@ -169,7 +169,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     }
     // Make QP approximation
     linearQuadraticApproximationTimer_.startTimer();
-    performanceIndeces_.emplace_back(setupQuadraticSubproblem(timeDiscretization, initState, x, u));
+    const auto baselinePerformance = setupQuadraticSubproblem(timeDiscretization, initState, x, u);
     linearQuadraticApproximationTimer_.endTimer();
 
     // Solve QP
@@ -180,7 +180,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
     // Apply step
     linesearchTimer_.startTimer();
-    bool converged = takeStep(performanceIndeces_.back(), timeDiscretization, initState, deltaSolution.first, deltaSolution.second, x, u);
+    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution.first, deltaSolution.second, x, u);
+    const bool converged = stepInfo.first;
+    performanceIndeces_.push_back(stepInfo.second);
     linesearchTimer_.endTimer();
 
     totalNumIterations_++;
@@ -456,9 +458,10 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
   return std::sqrt(norm);
 }
 
-bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                      const vector_t& initState, const vector_array_t& dx, const vector_array_t& du, vector_array_t& x,
-                                      vector_array_t& u) {
+std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
+                                                                   const std::vector<AnnotatedTime>& timeDiscretization,
+                                                                   const vector_t& initState, const vector_array_t& dx,
+                                                                   const vector_array_t& du, vector_array_t& x, vector_array_t& u) {
   /*
    * Filter linesearch based on:
    * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"
@@ -539,18 +542,18 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const st
       x = std::move(xNew);
       u = std::move(uNew);
       const bool improvementBelowTol = std::abs(baseline.merit - performanceNew.merit) < costTol && newConstraintViolation < g_min;
-      return stepSizeBelowTol || improvementBelowTol;
+      return {stepSizeBelowTol || improvementBelowTol, performanceNew};
     } else if (stepSizeBelowTol) {  // Return if steps get too small without being accepted
       if (settings_.printLinesearch) {
         std::cerr << "Stepsize is smaller than provided deltaTol -> converged \n";
       }
-      return true;
+      return {true, baseline};
     } else {  // Try smaller step
       alpha *= alpha_decay;
     }
   } while (alpha > alpha_min);
 
-  return true;  // Alpha_min reached and no improvement found -> Converged
+  return {true, baseline};  // Alpha_min reached and no improvement found -> Converged
 }
 
 }  // namespace ocs2

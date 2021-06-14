@@ -47,7 +47,7 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     auto footName = feetNames[i];
 
     // Friction cone constraint
-    FrictionConeConstraint::Config frictionConfig(options_.frictionCoefficient_, 25.0);
+    FrictionConeConstraint::Config frictionConfig(options_.frictionCoefficient_);
     std::unique_ptr<FrictionConeConstraint> frictionCone(new FrictionConeConstraint(std::move(frictionConfig), i));
 
     // EE force

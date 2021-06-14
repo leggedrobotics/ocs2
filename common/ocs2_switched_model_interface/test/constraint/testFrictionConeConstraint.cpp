@@ -12,7 +12,7 @@
 
 TEST(TestFrictionConeConstraint, finiteDifference) {
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  switched_model::FrictionConeConstraint::Config config;
+  const switched_model::FrictionConeConstraint::Config config;
 
   switched_model::scalar_t t = 0.0;
   switched_model::scalar_t eps = 1e-4;

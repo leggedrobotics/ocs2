@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include "DDP_Settings.h"

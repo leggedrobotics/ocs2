@@ -44,20 +44,20 @@ namespace rollout {
  */
 struct Settings {
   /** This value determines the absolute tolerance error for ode solvers. */
-  scalar_t absTolODE_ = 1e-9;
+  scalar_t absTolODE = 1e-9;
   /** This value determines the relative tolerance error for ode solvers. */
-  scalar_t relTolODE_ = 1e-6;
+  scalar_t relTolODE = 1e-6;
   /** This value determines the maximum number of integration points per a second for ode solvers. */
-  size_t maxNumStepsPerSecond_ = 5000;
-  /** The minimum integration time step */
-  scalar_t minTimeStep_ = 1e-3;
+  size_t maxNumStepsPerSecond = 10000;
+  /** The integration time step used in the fixed time-step rollout methods */
+  scalar_t timeStep = 1e-2;
   /** Rollout integration scheme type */
-  IntegratorType integratorType_ = IntegratorType::ODE45;
+  IntegratorType integratorType = IntegratorType::ODE45;
 
   /** Whether to check that the rollout is numerically stable */
-  bool checkNumericalStability_ = false;
+  bool checkNumericalStability = false;
   /** Whether to run controller again after integration to construct input trajectory */
-  bool reconstructInputTrajectory_ = true;
+  bool reconstructInputTrajectory = true;
 
   /** Which of the RootFinding algorithms to use in StateRollout
    * 		0:		Anderson & Björck		(default)
@@ -65,12 +65,12 @@ struct Settings {
    * 		2:		Illinois
    * 		3:		Regula Falsi
    */
-  RootFinderType rootFindingAlgorithm_ = RootFinderType::ANDERSON_BJORCK;
+  RootFinderType rootFindingAlgorithm = RootFinderType::ANDERSON_BJORCK;
   /** This value determines the maximum number of iterations, per event, allowed in state triggered rollout to find
    *  the guard surface zero crossing.  */
-  int maxSingleEventIterations_ = 10;
+  int maxSingleEventIterations = 10;
   /** Whether to use the trajectory spreading controller in state triggered rollout */
-  bool useTrajectorySpreadingController_ = false;
+  bool useTrajectorySpreadingController = false;
 };
 
 /**

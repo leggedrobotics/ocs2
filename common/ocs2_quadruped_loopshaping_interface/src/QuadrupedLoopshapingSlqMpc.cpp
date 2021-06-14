@@ -9,7 +9,7 @@ namespace switched_model_loopshaping {
 std::unique_ptr<ocs2::SLQ> getSlq(const QuadrupedLoopshapingInterface& quadrupedInterface, const ocs2::ddp::Settings& ddpSettings) {
   auto slqPtr = std::unique_ptr<ocs2::SLQ>(new ocs2::SLQ(
       &quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(), quadrupedInterface.getConstraintPtr(),
-      &quadrupedInterface.getCost(), &quadrupedInterface.getOperatingPoints(), ddpSettings, quadrupedInterface.getTerminalCostPtr()));
+      &quadrupedInterface.getCost(), &quadrupedInterface.getInitializer(), ddpSettings, quadrupedInterface.getTerminalCostPtr()));
   slqPtr->setModeScheduleManager(quadrupedInterface.getModeScheduleManagerPtr());
   return slqPtr;
 }
@@ -19,7 +19,7 @@ std::unique_ptr<ocs2::MPC_DDP> getMpc(const QuadrupedLoopshapingInterface& quadr
   if (!quadrupedInterface.modelSettings().gaitOptimization_) {
     auto mpcPtr = std::unique_ptr<ocs2::MPC_DDP>(new ocs2::MPC_DDP(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
                                                                    quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
-                                                                   &quadrupedInterface.getOperatingPoints(), ddpSettings, mpcSettings,
+                                                                   &quadrupedInterface.getInitializer(), ddpSettings, mpcSettings,
                                                                    quadrupedInterface.getTerminalCostPtr()));
     mpcPtr->getSolverPtr()->setModeScheduleManager(quadrupedInterface.getModeScheduleManagerPtr());
     return mpcPtr;

@@ -14,10 +14,11 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
     : QuadrupedInterface(kinematicModel, adKinematicModel, comModel, adComModel, pathToConfigFolder) {
   costFunctionPtr_.reset(new SwitchedModelCostBase(costSettings(), *getSwitchedModelModeScheduleManagerPtr(), kinematicModel,
                                                    adKinematicModel, comModel, modelSettings().recompileLibraries_));
-  dynamicsPtr_.reset(new system_dynamics_t(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
+  dynamicsPtr_.reset(
+      new system_dynamics_t(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(), modelSettings().recompileLibraries_));
   constraintsPtr_.reset(new constraint_t(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
                                          getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), modelSettings()));
-  operatingPointsPtr_.reset(new operating_point_t(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
+  initializerPtr_.reset(new initializer_t(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
   timeTriggeredRolloutPtr_.reset(new time_triggered_rollout_t(*dynamicsPtr_, rolloutSettings()));
 
   // Initialize cost to be able to query it

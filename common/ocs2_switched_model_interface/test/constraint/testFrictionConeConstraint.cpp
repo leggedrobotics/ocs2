@@ -12,9 +12,7 @@
 
 TEST(TestFrictionConeConstraint, finiteDifference) {
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const switched_model::scalar_t mu = 0.7;
-  const switched_model::scalar_t regularization = 25;
-  TestedConstraint frictionConeConstraint({mu, regularization}, 0);
+  switched_model::FrictionConeConstraint::Config config;
 
   switched_model::scalar_t t = 0.0;
   switched_model::scalar_t eps = 1e-4;
@@ -22,7 +20,7 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
   int N = 10000;
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint({mu, regularization}, legNumber);
+    TestedConstraint frictionConeConstraint(config, legNumber);
     switched_model::vector3_t surfaceNormal = switched_model::vector3_t{0.0, 0.0, 1.0} + 0.1 * switched_model::vector3_t::Random();
     surfaceNormal.normalize();
     frictionConeConstraint.setSurfaceNormalInWorld(surfaceNormal);
@@ -98,20 +96,22 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
 TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   // Check friction cone for the case where the body is aligned with the terrain
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const switched_model::scalar_t mu = 0.7;
-  const switched_model::scalar_t regularization = 25;
+  const switched_model::FrictionConeConstraint::Config config(0.7, 25.0, 0.0, 0.0);
+  const auto mu = config.frictionCoefficient;
+  const auto regularization = config.regularization;
 
   // evaluation point
   switched_model::scalar_t t = 0.0;
-  switched_model::vector_t x = switched_model::vector_t::Random(switched_model::STATE_DIM);
-  switched_model::vector_t u = switched_model::vector_t::Random(switched_model::INPUT_DIM);
+  switched_model::comkino_state_t x = switched_model::comkino_state_t::Random();
+  switched_model::comkino_input_t u = switched_model::comkino_input_t::Random();
 
+  // Set terrain parallel to the body
   const switched_model::vector3_t eulerXYZ = switched_model::getOrientation(switched_model::getComPose(x));
   switched_model::TerrainPlane terrainPlane;
-  terrainPlane.orientationWorldToTerrain = switched_model::rotationMatrixBaseToOrigin(eulerXYZ).transpose();
+  terrainPlane.orientationWorldToTerrain = switched_model::rotationMatrixOriginToBase(eulerXYZ);
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint({mu, regularization, 0.0, 0.0}, legNumber);
+    TestedConstraint frictionConeConstraint(config, legNumber);
     frictionConeConstraint.setSurfaceNormalInWorld(switched_model::surfaceNormalInWorld(terrainPlane));
 
     // Local forces are equal to the body forces.
@@ -152,13 +152,12 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
 
 TEST(TestFrictionConeConstraint, negativeDefinite) {
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const switched_model::scalar_t mu = 0.7;
-  const switched_model::scalar_t regularization = 25;
+  const switched_model::FrictionConeConstraint::Config config;
 
   // evaluation point
   switched_model::scalar_t t = 0.0;
-  switched_model::vector_t x = switched_model::vector_t::Random(switched_model::STATE_DIM);
-  switched_model::vector_t u = switched_model::vector_t::Random(switched_model::INPUT_DIM);
+  switched_model::comkino_state_t x = switched_model::comkino_state_t::Random();
+  switched_model::comkino_input_t u = switched_model::comkino_input_t::Random();
   u(2) = 100.0;
   u(5) = 100.0;
   u(8) = 100.0;
@@ -168,7 +167,7 @@ TEST(TestFrictionConeConstraint, negativeDefinite) {
   switched_model::TerrainPlane terrainPlane;
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint({mu, regularization}, legNumber);
+    TestedConstraint frictionConeConstraint(config, legNumber);
     frictionConeConstraint.setSurfaceNormalInWorld(switched_model::surfaceNormalInWorld(terrainPlane));
 
     const auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);

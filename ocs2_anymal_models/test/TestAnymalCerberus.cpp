@@ -16,6 +16,10 @@ class AnymalCerberusSwitchedModelTests : public switched_model::TestAnymalSwitch
                                 getWholebodyDynamics(AnymalModel::Cerberus)) {}
 };
 
+TEST_F(AnymalCerberusSwitchedModelTests, Cost) {
+  this->testCosts();
+}
+
 TEST_F(AnymalCerberusSwitchedModelTests, Constraints) {
   this->testConstraints();
 }

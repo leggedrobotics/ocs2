@@ -24,6 +24,10 @@ class AnymalCrocSwitchedModelTests : public switched_model::TestAnymalSwitchedMo
                                 getWholebodyDynamics(AnymalModel::Croc)) {}
 };
 
+TEST_F(AnymalCrocSwitchedModelTests, Cost) {
+  this->testCosts();
+}
+
 TEST_F(AnymalCrocSwitchedModelTests, Constraints) {
   this->testConstraints();
 }

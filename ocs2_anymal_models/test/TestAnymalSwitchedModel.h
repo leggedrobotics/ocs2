@@ -42,15 +42,43 @@ class TestAnymalSwitchedModel : public ::testing::Test {
         randAngle{std::bind(std::ref(angleDist_), std::ref(generator_))},
         randPos{std::bind(std::ref(posDist_), std::ref(generator_))} {}
 
+  void testCosts() {
+    SwitchedModelModeScheduleManager modeScheduleManager(nullptr, nullptr, nullptr);
+    MotionTrackingCost::Weights weights;
+    weights.eulerXYZ << 100.0, 200.0, 200.0;
+    weights.comPosition << 1000.0, 1000.0, 1500.0;
+    weights.comAngularVelocity << 5.0, 10.0, 10.0;
+    weights.comLinearVelocity << 15.0, 15.0, 30.0;
+    weights.jointPosition.setConstant(1.0);  // some regularization
+    weights.contactForce.setConstant(0.001);
+    weights.footPosition.setConstant(60.0);
+    weights.footVelocity.setConstant(1.0);
+
+    switched_model::MotionTrackingCost motionTrackingCost(weights, modeScheduleManager, *kinematics_, *kinematicsAd_, *comModel_, true);
+    ocs2::scalar_t t = 0.0;
+    comkino_state_t x = comkino_state_t::Zero();
+    x.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE) << -0.25, 0.60, -0.85, 0.25, 0.60, -0.85, -0.25, -0.60, 0.85, 0.25, -0.60,
+        0.85;
+    comkino_input_t u = weightCompensatingInputs(*comModel_, constantFeetArray(true), x.head(3));
+    ocs2::CostDesiredTrajectories costDesiredTrajectories({t}, {x}, {u});
+
+    const auto approx = motionTrackingCost.getQuadraticApproximation(t, x, u, costDesiredTrajectories);
+
+    // Reference equals current state input, should have zero cost and zero gradient.
+    ASSERT_LT(approx.f, 1e-9);
+    ASSERT_LT(approx.dfdx.norm(), 1e-9);
+    ASSERT_LT(approx.dfdu.norm(), 1e-9);
+    ASSERT_TRUE(approx.dfdxx.allFinite());
+    ASSERT_TRUE(approx.dfduu.allFinite());
+    ASSERT_TRUE(approx.dfdux.allFinite());
+  }
+
   void testConstraints() {
     EXPECT_NO_THROW((evaluateConstraint<EndEffectorPositionConstraint>(*comModelAd_, *kinematicsAd_)));
-    EXPECT_NO_THROW(
-        (evaluateConstraint<EndEffectorPositionInBaseConstraint>(*comModelAd_, *kinematicsAd_)));
+    EXPECT_NO_THROW((evaluateConstraint<EndEffectorPositionInBaseConstraint>(*comModelAd_, *kinematicsAd_)));
     EXPECT_NO_THROW((evaluateConstraint<EndEffectorVelocityConstraint>(*comModelAd_, *kinematicsAd_)));
-    EXPECT_NO_THROW(
-        (evaluateConstraint<EndEffectorVelocityInBaseConstraint>(*comModelAd_, *kinematicsAd_)));
-    EXPECT_NO_THROW(
-        (evaluateConstraint<EndEffectorVelocityInFootFrameConstraint>(*comModelAd_, *kinematicsAd_)));
+    EXPECT_NO_THROW((evaluateConstraint<EndEffectorVelocityInBaseConstraint>(*comModelAd_, *kinematicsAd_)));
+    EXPECT_NO_THROW((evaluateConstraint<EndEffectorVelocityInFootFrameConstraint>(*comModelAd_, *kinematicsAd_)));
   }
 
   void testBaseDynamics() {
@@ -209,4 +237,4 @@ class TestAnymalSwitchedModel : public ::testing::Test {
   decltype(std::bind(std::ref(posDist_), std::ref(generator_))) randPos;
 };
 
-}  // namespace anymal
+}  // namespace switched_model

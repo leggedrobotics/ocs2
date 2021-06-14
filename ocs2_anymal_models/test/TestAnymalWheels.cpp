@@ -12,7 +12,7 @@ class AnymalWheelsSwitchedModelTests : public switched_model::TestAnymalSwitched
  public:
   AnymalWheelsSwitchedModelTests()
       : TestAnymalSwitchedModel(getAnymalKinematics(AnymalModel::Wheels), getAnymalKinematicsAd(AnymalModel::Wheels),
-                                getAnymalComModel(AnymalModel::Wheels), getAnymalComModelAd(AnymalModel::Wheels)) {}
+                                getAnymalComModel(AnymalModel::Wheels), getAnymalComModelAd(AnymalModel::Wheels), nullptr) {}
 };
 
 TEST_F(AnymalWheelsSwitchedModelTests, Cost) {

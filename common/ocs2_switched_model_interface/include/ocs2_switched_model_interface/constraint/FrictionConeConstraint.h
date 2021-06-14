@@ -1,6 +1,7 @@
 #pragma once
 
-#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
+
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
@@ -19,29 +20,40 @@ namespace switched_model {
  * sqrt(regularization) instead of Fz = 0
  *
  */
-class FrictionConeConstraint final : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
+class FrictionConeConstraint final : public ocs2::StateInputConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ConstraintTerm<STATE_DIM, INPUT_DIM>;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::LinearApproximation_t;
-  using typename BASE::QuadraticApproximation_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
+  /**
+   * frictionCoefficient: The coefficient of friction.
+   * regularization: A positive number to regulize the friction constraint. refer to the FrictionConeConstraint documentation.
+   * gripperForce: Gripper force in normal direction.
+   * hessianDiagonalShift: The Hessian shift to assure a strictly-convex quadratic constraint approximation.
+   */
+  struct Config {
+    explicit Config(scalar_t frictionCoefficientParam = 0.7, scalar_t regularizationParam = 25.0, scalar_t gripperForceParam = 0.0,
+                    scalar_t hessianDiagonalShiftParam = 1e-6)
+        : frictionCoefficient(frictionCoefficientParam),
+          regularization(regularizationParam),
+          gripperForce(gripperForceParam),
+          hessianDiagonalShift(hessianDiagonalShiftParam) {
+      assert(frictionCoefficient > 0.0);
+      assert(regularization > 0.0);
+      assert(hessianDiagonalShift >= 0.0);
+    }
+
+    scalar_t frictionCoefficient;
+    scalar_t regularization;
+    scalar_t gripperForce;
+    scalar_t hessianDiagonalShift;
+  };
 
   /**
    * Constructor
-   * @param frictionCoefficient : Friction coefficient (>0).
-   * @param regularization : (>0), see class documentation.
-   * @param legNumber : leg index in {0, 1, 2, 3}.
-   * @param gripperForce : Gripper force in normal direction.
-   * @param hessianDiagonalShift : Hessian shift to assure a strictly convex quadratic constraint approximation.
+   * @param [in] config : Friction model settings.
+   * @param [in] legNumber : leg index in {0, 1, 2, 3}.
    */
-  FrictionConeConstraint(scalar_t frictionCoefficient, scalar_t regularization, int legNumber, scalar_t gripperForce = 0.0,
-                         scalar_t hessianDiagonalShift = 1e-6);
+  FrictionConeConstraint(Config config, int legNumber);
 
   ~FrictionConeConstraint() override = default;
 
@@ -51,12 +63,13 @@ class FrictionConeConstraint final : public ConstraintTerm<STATE_DIM, INPUT_DIM>
 
   size_t getNumConstraints(scalar_t time) const override { return 1; };
 
-  scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
 
-  LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const vector_t& state,
+                                                           const vector_t& input) const override;
 
-  QuadraticApproximation_t getQuadraticApproximation(scalar_t time, const state_vector_t& state,
-                                                     const input_vector_t& input) const override;
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                 const vector_t& input) const override;
 
  private:
   struct LocalForceDerivatives {
@@ -80,24 +93,22 @@ class FrictionConeConstraint final : public ConstraintTerm<STATE_DIM, INPUT_DIM>
     matrix3_t d2Cone_deuler2;
   };
 
-  scalar_t coneConstraint(const vector3_t& localForces) const;
+  FrictionConeConstraint(const FrictionConeConstraint& other) = default;
+  vector_t coneConstraint(const vector3_t& localForces) const;
   vector3_t computeLocalForces(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const;
   LocalForceDerivatives computeLocalForceDerivatives(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const;
   ConeLocalDerivatives computeConeLocalDerivatives(const vector3_t& localForces) const;
   ConeDerivatives computeConeConstraintDerivatives(const ConeLocalDerivatives& coneLocalDerivatives,
                                                    const LocalForceDerivatives& localForceDerivatives) const;
 
-  state_vector_t frictionConeStateDerivative(const ConeDerivatives& coneDerivatives) const;
-  input_vector_t frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const;
-  input_matrix_t frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const;
-  state_matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
-  input_state_matrix_t frictionConeDerivativesInputState(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeStateDerivative(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeDerivativesInputState(const ConeDerivatives& coneDerivatives) const;
 
-  scalar_t frictionCoefficient_;
-  scalar_t regularization_;
-  scalar_t gripperForce_;
-  scalar_t hessianDiagonalShift_;
-  int legNumber_;
+  const Config config_;
+  const int legNumber_;
   matrix3_t t_R_w;  // rotation world to terrain
 };
 

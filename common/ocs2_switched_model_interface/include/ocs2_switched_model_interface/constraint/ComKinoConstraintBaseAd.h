@@ -2,6 +2,7 @@
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
 #include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
@@ -61,7 +62,7 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase {
 
   using ConstraintCollection_t = ConstraintCollection<STATE_DIM, INPUT_DIM>;
   ConstraintCollection_t equalityStateInputConstraintCollection_;  // state input equality constraints
-  ConstraintCollection_t inequalityConstraintCollection_;          // inequality constraints
+  std::unique_ptr<ocs2::StateInputConstraintCollection> inequalityConstraintsCollectionPtr_;
 
   // Individual constraint access (non-owning)
   feet_array_t<FootNormalConstraint*> eeNormalConstraints_;

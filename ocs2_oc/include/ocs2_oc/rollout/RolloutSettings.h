@@ -74,7 +74,7 @@ struct Settings {
 };
 
 /**
- * This function loads the "Rollout_Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
+ * This function loads the "rollout::Settings" variables from a config file. This file contains the settings for the Rollout algorithms.
  * Here, we use the INFO format which was created specifically for the property tree library (refer to www.goo.gl/fV3yWA).
  *
  * It has the following format: <br>
@@ -87,7 +87,7 @@ struct Settings {
  *   (and so on for the other fields) <br>
  * }  <br>
  *
- * If a value for a specific field is not defined it will set to the default value defined in "Rollout_Settings".
+ * If a value for a specific field is not defined it will set to the default value defined in "rollout::Settings".
  *
  * @param [in] filename: File name which contains the configuration data.
  * @param [in] fieldName: Field name which contains the configuration data.

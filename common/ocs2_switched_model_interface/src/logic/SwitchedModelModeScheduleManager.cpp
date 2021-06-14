@@ -14,7 +14,10 @@ SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::unique_p
     : ocs2::ModeScheduleManager(ocs2::ModeSchedule()),
       gaitSchedule_(std::move(gaitSchedule)),
       swingTrajectoryPtr_(std::move(swingTrajectory)),
-      terrainModel_(std::move(terrainModel)) {}
+      terrainModel_(std::move(terrainModel)),
+      activeDynamicsParameters_(),
+      newDynamicsParameters_(std::unique_ptr<ComKinoSystemDynamicsParameters<scalar_t>>(
+          new ComKinoSystemDynamicsParameters<scalar_t>(activeDynamicsParameters_))) {}
 
 contact_flag_t SwitchedModelModeScheduleManager::getContactFlags(scalar_t time) const {
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
@@ -34,6 +37,11 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
     auto lockedTerrainPtr = terrainModel_.lock();
     swingTrajectoryPtr_->update(initTime, finalTime, currentState, costDesiredTrajectory, extractContactTimingsPerLeg(modeSchedule),
                                 *lockedTerrainPtr);
+  }
+
+  {
+    auto lockedDynamicsParameterPtr = newDynamicsParameters_.lock();
+    activeDynamicsParameters_ = *lockedDynamicsParameterPtr;  // Copy external parameters to the active parameter set
   }
 }
 

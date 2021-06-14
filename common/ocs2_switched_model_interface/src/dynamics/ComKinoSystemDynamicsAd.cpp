@@ -9,8 +9,11 @@
 namespace switched_model {
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
-                                                 bool recompileModel)
-    : Base(STATE_DIM, INPUT_DIM), adKinematicModelPtr_(adKinematicModel.clone()), adComModelPtr_(adComModel.clone()) {
+                                                 const SwitchedModelModeScheduleManager& modeScheduleManager, bool recompileModel)
+    : Base(STATE_DIM, INPUT_DIM),
+      adKinematicModelPtr_(adKinematicModel.clone()),
+      adComModelPtr_(adComModel.clone()),
+      modeScheduleManagerPtr_(&modeScheduleManager) {
   std::string libName = "anymal_dynamics";
   std::string libFolder = "/tmp/ocs2";
   const bool verbose = recompileModel;
@@ -18,7 +21,10 @@ ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adK
 }
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ComKinoSystemDynamicsAd& rhs)
-    : Base(rhs), adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()), adComModelPtr_(rhs.adComModelPtr_->clone()) {}
+    : Base(rhs),
+      adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
+      adComModelPtr_(rhs.adComModelPtr_->clone()),
+      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_) {}
 
 ComKinoSystemDynamicsAd* ComKinoSystemDynamicsAd::clone() const {
   return new ComKinoSystemDynamicsAd(*this);
@@ -31,7 +37,8 @@ ocs2::ad_vector_t ComKinoSystemDynamicsAd::systemFlowMap(ocs2::ad_scalar_t time,
   ocs2::ad_vector_t stateDerivative(state.rows());
 
   const joint_coordinate_ad_t dqJoints = getJointVelocities(comkinoInput);
-  const com_state_ad_t comStateDerivative = computeComStateDerivative(*adComModelPtr_, *adKinematicModelPtr_, comkinoState, comkinoInput);
+  const com_state_ad_t comStateDerivative =
+      computeComStateDerivative(*adComModelPtr_, *adKinematicModelPtr_, comkinoState, comkinoInput, ad_parameters_t(parameters));
 
   // extended state time derivatives
   stateDerivative << comStateDerivative, dqJoints;
@@ -42,7 +49,8 @@ template <typename SCALAR_T>
 com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<SCALAR_T>& comModel,
                                                                            const KinematicsModelBase<SCALAR_T>& kinematicsModel,
                                                                            const comkino_state_s_t<SCALAR_T>& comKinoState,
-                                                                           const comkino_input_s_t<SCALAR_T>& comKinoInput) {
+                                                                           const comkino_input_s_t<SCALAR_T>& comKinoInput,
+                                                                           const ComKinoSystemDynamicsParameters<SCALAR_T>& parameters) {
   // Extract elements from state
   const base_coordinate_s_t<SCALAR_T> comPose = getComPose(comKinoState);
   const base_coordinate_s_t<SCALAR_T> com_comTwist = getComLocalVelocities(comKinoState);
@@ -78,6 +86,11 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
     JcTransposeLambda.tail(3) += comKinoInput.template segment<3>(3 * i);
   }
 
+  // External forces
+  const vector3_s_t<SCALAR_T> externalForceInBase = o_R_b.transpose() * parameters.externalForceInOrigin;
+  JcTransposeLambda.head(3) += parameters.externalTorqueInBase - com_base2CoM.cross(externalForceInBase);  // += T + com_com2Base.cross(F)
+  JcTransposeLambda.tail(3) += externalForceInBase;
+
   // angular velocities to Euler angle derivatives transformation
   const matrix3_s_t<SCALAR_T> transformAngVel2EulerAngDev = switched_model::angularVelocitiesToEulerAngleDerivativesMatrix(baseEulerAngles);
 
@@ -92,10 +105,12 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
 template com_state_t ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<scalar_t>& comModel,
                                                                         const KinematicsModelBase<scalar_t>& kinematicsModel,
                                                                         const comkino_state_t& comKinoState,
-                                                                        const comkino_input_t& comKinoInput);
-template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivative(
-    const ComModelBase<ocs2::CppAdInterface::ad_scalar_t>& comModel,
-    const KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>& kinematicsModel, const comkino_state_ad_t& comKinoState,
-    const comkino_input_ad_t& comKinoInput);
+                                                                        const comkino_input_t& comKinoInput,
+                                                                        const parameters_t& parameters);
+template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<ad_scalar_t>& comModel,
+                                                                           const KinematicsModelBase<ad_scalar_t>& kinematicsModel,
+                                                                           const comkino_state_ad_t& comKinoState,
+                                                                           const comkino_input_ad_t& comKinoInput,
+                                                                           const ad_parameters_t& parameters);
 
 }  // namespace switched_model

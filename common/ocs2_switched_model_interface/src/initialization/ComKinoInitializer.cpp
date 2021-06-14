@@ -28,10 +28,14 @@ ComKinoInitializer* ComKinoInitializer::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ComKinoInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
-  const auto comPose = getComPose(state);
+  const comkino_state_t comkinoState = state;
+  const auto comPose = getComPose(comkinoState);
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
+
   input = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(comPose));
-  nextState = (vector_t(STATE_DIM) << comPose, base_coordinate_t::Zero(), getJointPositions(state)).finished();
+
+  nextState.resize(STATE_DIM);
+  nextState << comPose, base_coordinate_t::Zero(), getJointPositions(comkinoState);
 }
 
 }  // namespace switched_model

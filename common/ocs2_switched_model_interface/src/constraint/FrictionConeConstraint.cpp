@@ -13,18 +13,15 @@ FrictionConeConstraint::FrictionConeConstraint(Config config, int legNumber)
     : ocs2::StateInputConstraint(ocs2::ConstraintOrder::Quadratic),
       config_(std::move(config)),
       legNumber_(legNumber),
-      t_R_w(matrix3_t::Identity()) {
-  assert(config_.frictionCoefficient > 0.0);
-  assert(config_.regularization > 0.0);
-  assert(config_.hessianDiagonalShift >= 0.0);
-}
+      t_R_w(matrix3_t::Identity()) {}
 
 void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld) {
   t_R_w = orientationWorldToTerrainFromSurfaceNormalInWorld(surfaceNormalInWorld);
 }
 
 vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
-  const vector3_t eulerXYZ = getOrientation(getComPose(state));
+  const comkino_state_t comkinoState = state;
+  const vector3_t eulerXYZ = getOrientation(getComPose(comkinoState));
   const vector3_t forcesInBodyFrame = input.segment<3>(3 * legNumber_);
 
   const auto localForce = computeLocalForces(eulerXYZ, forcesInBodyFrame);
@@ -34,7 +31,8 @@ vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, 
 
 VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                  const vector_t& input) const {
-  const vector3_t eulerXYZ = getOrientation(getComPose(state));
+  const comkino_state_t comkinoState = state;
+  const vector3_t eulerXYZ = getOrientation(getComPose(comkinoState));
   const vector3_t forcesInBodyFrame = input.segment<3>(3 * legNumber_);
 
   const auto localForce = computeLocalForces(eulerXYZ, forcesInBodyFrame);
@@ -51,7 +49,8 @@ VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation
 
 VectorFunctionQuadraticApproximation FrictionConeConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                        const vector_t& input) const {
-  const vector3_t eulerXYZ = getOrientation(getComPose(state));
+  const comkino_state_t comkinoState = state;
+  const vector3_t eulerXYZ = getOrientation(getComPose(comkinoState));
   const vector3_t forcesInBodyFrame = input.segment(3 * legNumber_, 3);
 
   const auto localForce = computeLocalForces(eulerXYZ, forcesInBodyFrame);
@@ -78,7 +77,7 @@ FrictionConeConstraint::LocalForceDerivatives FrictionConeConstraint::computeLoc
 }
 
 vector3_t FrictionConeConstraint::computeLocalForces(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const {
-  matrix3_t t_R_b = t_R_w * rotationMatrixBaseToOrigin(eulerXYZ);
+  const matrix3_t t_R_b = t_R_w * rotationMatrixBaseToOrigin(eulerXYZ);
   return t_R_b * forcesInBodyFrame;
 }
 

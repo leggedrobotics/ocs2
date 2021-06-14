@@ -18,7 +18,7 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   constraintsPtr_.reset(new ComKinoConstraintBaseAd(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
                                                     getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(),
                                                     modelSettings()));
-  operatingPointsPtr_.reset(new ComKinoOperatingPointsBase(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
+  initializerPtr_.reset(new ComKinoInitializer(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
   timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings()));
 
   // Initialize cost to be able to query it

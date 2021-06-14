@@ -26,7 +26,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 catkin_package(
 	INCLUDE_DIRS
 		include
-		${EIGEN_INCLUDE_DIRS}
+		${EIGEN3_INCLUDE_DIRS}
 	LIBRARIES
 		${PROJECT_NAME}
 	CATKIN_DEPENDS
@@ -39,7 +39,7 @@ catkin_package(
 ###########
 include_directories(
 	include
-	${EIGEN_INCLUDE_DIRS}
+	${EIGEN3_INCLUDE_DIRS}
 	${catkin_INCLUDE_DIRS}
 )
 
@@ -52,6 +52,7 @@ add_library(${PROJECT_NAME}
 	src/foot_planner/QuinticSplineSwing.cpp
 	src/foot_planner/SplineCpg.cpp
 	src/foot_planner/SwingTrajectoryPlanner.cpp
+	src/initialization/ComKinoInitializer.cpp
 	src/logic/Gait.cpp
 	src/logic/GaitAdaptation.cpp
 	src/logic/GaitReceiver.cpp
@@ -66,7 +67,6 @@ add_library(${PROJECT_NAME}
 	src/FootNormalConstraint.cpp
 	src/ComKinoConstraintBaseAd.cpp
 	src/AnymalWheelsComKinoConstraintAd.cpp
-	src/ComKinoOperatingPointsBase.cpp
 	src/ComKinoSystemDynamicsAd.cpp
 	src/ComModelBase.cpp
 	src/KinematicsModelBase.cpp

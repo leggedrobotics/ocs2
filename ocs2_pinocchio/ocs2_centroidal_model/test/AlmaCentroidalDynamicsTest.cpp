@@ -182,13 +182,13 @@ TEST_F(AlmaCentroidalModelTest, ComputeFlowMap) {
   pinocchio::computeCentroidalMap(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto dynamics = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
-  std::cerr << "dynamics: \n" << dynamics << "\n";
 }
 
 TEST_F(AlmaCentroidalModelTest, ComputeLinearApproximation) {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
+  pinocchio::computeCentroidalMap(model, data, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
@@ -200,9 +200,6 @@ TEST_F(AlmaCentroidalModelTest, ComputeLinearApproximation) {
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::updateFramePlacements(model, data);
   const auto linearApproximation = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
-  std::cerr << "dynamics: \n" << linearApproximation.f << "\n";
-  std::cerr << "dfdx: \n" << linearApproximation.dfdx << "\n";
-  std::cerr << "dfdu: \n" << linearApproximation.dfdu << "\n";
 }
 
 TEST_F(AlmaCentroidalModelTest, CompareFlowMaps) {
@@ -223,6 +220,7 @@ TEST_F(AlmaCentroidalModelTest, CompareFlowMapLinearApproximations) {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
+  pinocchio::computeCentroidalMap(model, data, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);

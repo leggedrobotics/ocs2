@@ -170,8 +170,9 @@ static void compareApproximation(const ocs2::VectorFunctionLinearApproximation& 
   // EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
   // The gradients of the base pose time derivatives are not correct due to a wrong dh_dq_ in pinocchio
   EXPECT_TRUE(a.dfdx.topRows<6>().isApprox(b.dfdx.topRows<6>()));
-  EXPECT_TRUE(a.dfdx.bottomRows<16>().isApprox(b.dfdx.bottomRows<16>()));
+  EXPECT_TRUE(a.dfdx.bottomRows<12>().isApprox(b.dfdx.bottomRows<12>()));
   EXPECT_TRUE(a.dfdx.leftCols<9>().isApprox(b.dfdx.leftCols<9>()));
+  EXPECT_TRUE(a.dfdx.rightCols<12>().isApprox(b.dfdx.rightCols<12>()));
   EXPECT_TRUE(a.dfdu.isApprox(b.dfdu));
 }
 
@@ -182,7 +183,6 @@ TEST_F(AnymalCentroidalModelTest, ComputeFlowMap) {
   pinocchio::computeCentroidalMap(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto dynamics = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
-  std::cerr << "dynamics: \n" << dynamics << "\n";
 }
 
 TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
@@ -190,6 +190,7 @@ TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
   auto& data = pinocchioInterface_.getData();
   const size_t GENERALIZED_VEL_NUM = model.nq;
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
+  pinocchio::computeCentroidalMap(model, data, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
@@ -201,9 +202,6 @@ TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::updateFramePlacements(model, data);
   const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
-  std::cerr << "dynamics: \n" << linearApproximation.f << "\n";
-  std::cerr << "dfdx: \n" << linearApproximation.dfdx << "\n";
-  std::cerr << "dfdu: \n" << linearApproximation.dfdu << "\n";
 }
 
 TEST_F(AnymalCentroidalModelTest, CompareFlowMaps) {
@@ -225,6 +223,7 @@ TEST_F(AnymalCentroidalModelTest, CompareFlowMapLinearApproximations) {
   auto& data = pinocchioInterface_.getData();
   const size_t GENERALIZED_VEL_NUM = model.nq;
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
+  pinocchio::computeCentroidalMap(model, data, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);

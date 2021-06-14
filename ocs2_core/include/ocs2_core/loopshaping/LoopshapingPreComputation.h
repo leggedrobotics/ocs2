@@ -51,16 +51,16 @@ class LoopshapingPreComputation final : public PreComputation {
   void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
 
   /** System state, computed for the last request. */
-  const vector_t& getSystemState() const { return x_system_; }
+  const vector_t& getSystemState() const { return systemState_; }
 
   /** System input, computed for the last request. */
-  const vector_t& getSystemInput() const { return u_system_; }
+  const vector_t& getSystemInput() const { return systemInput_; }
 
   /** Filter state, computed for the last request. */
-  const vector_t& getFilterState() const { return x_filter_; }
+  const vector_t& getFilterState() const { return filterState_; }
 
   /** Filter Input, computed for the last request. */
-  const vector_t& getFilteredInput() const { return u_filter_; }
+  const vector_t& getFilteredInput() const { return filterInput_; }
 
   /** Precomputation evaluated for the system state and system input */
   const PreComputation& getSystemPreComputation() const { return *systemPreCompPtr_; }
@@ -71,10 +71,10 @@ class LoopshapingPreComputation final : public PreComputation {
  private:
   LoopshapingPreComputation(const LoopshapingPreComputation& rhs);
 
-  vector_t x_system_;
-  vector_t u_system_;
-  vector_t x_filter_;
-  vector_t u_filter_;
+  vector_t systemState_;
+  vector_t systemInput_;
+  vector_t filterState_;
+  vector_t filterInput_;
 
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 

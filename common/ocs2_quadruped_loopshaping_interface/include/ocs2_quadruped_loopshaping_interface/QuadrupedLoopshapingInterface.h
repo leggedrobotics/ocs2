@@ -24,7 +24,6 @@ class QuadrupedLoopshapingInterface : public ocs2::LoopshapingRobotInterface {
   using com_model_t = switched_model::ComModelBase<scalar_t>;
   using kinematic_model_t = switched_model::KinematicsModelBase<scalar_t>;
 
-  using ad_scalar_t = ocs2::ad_scalar_t;
   using ad_com_model_t = switched_model::ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = switched_model::KinematicsModelBase<ad_scalar_t>;
 

@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
@@ -30,7 +29,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   using com_model_t = ComModelBase<scalar_t>;
   using kinematic_model_t = KinematicsModelBase<scalar_t>;
 
-  using ad_scalar_t = ocs2::ad_scalar_t;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 

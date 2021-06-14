@@ -51,7 +51,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.absTolODE, fieldName + ".AbsTolODE", verbose);
   loadData::loadPtreeValue(pt, settings.relTolODE, fieldName + ".RelTolODE", verbose);
   loadData::loadPtreeValue(pt, settings.maxNumStepsPerSecond, fieldName + ".maxNumStepsPerSecond", verbose);
-  loadData::loadPtreeValue(pt, settings.timeStep, fieldName + ".minTimeStep", verbose);
+  loadData::loadPtreeValue(pt, settings.timeStep, fieldName + ".timeStep", verbose);
 
   auto integratorName = integrator_type::toString(settings.integratorType);  // keep default
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".integratorType", verbose);

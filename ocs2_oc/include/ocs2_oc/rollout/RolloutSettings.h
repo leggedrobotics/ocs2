@@ -83,7 +83,7 @@ struct Settings {
  *   absTolODE                value   <br>
  *   relTolODE                value   <br>
  *   maxNumStepsPerSecond     value   <br>
- *   minTimeStep              value   <br>
+ *   timeStep                 value   <br>
  *   (and so on for the other fields) <br>
  * }  <br>
  *

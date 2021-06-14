@@ -2,6 +2,7 @@
     <arg name="robot_name"/>
     <arg name="config_name"/>
     <arg name="rviz"                  default="true" />
+    <arg name="performance_indices"   default="true" />
     <arg name="description_name"      default="ocs2_anymal_description"/>
     <arg name="target_command"        default="$(find ocs2_anymal_commands)/config/targetCommand.info"/>
 
@@ -28,4 +29,9 @@
 
     <node pkg="ocs2_anymal_commands" type="target_command_node" name="target_command_node"
         output="screen" args="$(arg target_command)" launch-prefix="gnome-terminal --"/>
+
+    <!-- Launch Performance Indices Multi-plot -->
+    <include if="$(arg performance_indices)" file="$(find ocs2_ros_interfaces)/launch/performance_indices.launch">
+      <arg name="mpc_policy_topic_name"      value="anymal_mpc_policy"/>
+    </include>
 </launch>

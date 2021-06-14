@@ -1,8 +1,8 @@
 rollout
 {
 
+  timeStep                      5e-3
   checkNumericalStability       false
-  minTimeStep                   0.005
 
   raisim_rollout
   {

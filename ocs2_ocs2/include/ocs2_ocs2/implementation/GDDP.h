@@ -648,9 +648,9 @@ void GDDP<STATE_DIM, INPUT_DIM>::solveSensitivityBVP(size_t workerIndex, const s
 
       Observer<STATE_DIM> rMvObserver(&rMvTrajectory);  // concatenate trajectory
       // solve Riccati equations for Mv
-      bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(
-          *bvpSensitivityEquationsPtrStock_[workerIndex], rMvObserver, MvFinalInternal, beginTimeItr, endTimeItr,
-          gddpSettings_.timeStep_, gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps);
+      bvpSensitivityIntegratorsPtrStock_[workerIndex]->integrate_times(*bvpSensitivityEquationsPtrStock_[workerIndex], rMvObserver,
+                                                                       MvFinalInternal, beginTimeItr, endTimeItr, gddpSettings_.timeStep_,
+                                                                       gddpSettings_.absTolODE_, gddpSettings_.relTolODE_, maxNumSteps);
 
       Observer<STATE_DIM> rMveObserver(&rMveTrajectory);  // concatenate trajectory
       // solve Riccati equations for Mve

@@ -21,11 +21,9 @@ namespace switched_model_loopshaping {
 
 class QuadrupedLoopshapingInterface : public ocs2::LoopshapingRobotInterface {
  public:
-  using com_model_t = switched_model::ComModelBase<double>;
-  using kinematic_model_t = switched_model::KinematicsModelBase<double>;
+  using com_model_t = switched_model::ComModelBase<scalar_t>;
+  using kinematic_model_t = switched_model::KinematicsModelBase<scalar_t>;
 
-  using ad_base_t = CppAD::cg::CG<double>;
-  using ad_scalar_t = CppAD::AD<ad_base_t>;
   using ad_com_model_t = switched_model::ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = switched_model::KinematicsModelBase<ad_scalar_t>;
 

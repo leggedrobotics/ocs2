@@ -107,9 +107,10 @@ template com_state_t ComKinoSystemDynamicsAd::computeComStateDerivative(const Co
                                                                         const comkino_state_t& comKinoState,
                                                                         const comkino_input_t& comKinoInput,
                                                                         const parameters_t& parameters);
-template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivative(
-    const ComModelBase<ocs2::CppAdInterface::ad_scalar_t>& comModel,
-    const KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>& kinematicsModel, const comkino_state_ad_t& comKinoState,
-    const comkino_input_ad_t& comKinoInput, const ad_parameters_t& parameters);
+template com_state_ad_t ComKinoSystemDynamicsAd::computeComStateDerivative(const ComModelBase<ad_scalar_t>& comModel,
+                                                                           const KinematicsModelBase<ad_scalar_t>& kinematicsModel,
+                                                                           const comkino_state_ad_t& comKinoState,
+                                                                           const comkino_input_ad_t& comKinoInput,
+                                                                           const ad_parameters_t& parameters);
 
 }  // namespace switched_model

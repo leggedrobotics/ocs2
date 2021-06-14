@@ -36,6 +36,6 @@ struct ComKinoSystemDynamicsParameters {
 
 //! Explicit instantiations
 extern template class ComKinoSystemDynamicsParameters<scalar_t>;
-extern template class ComKinoSystemDynamicsParameters<ocs2::ad_scalar_t>;
+extern template class ComKinoSystemDynamicsParameters<ad_scalar_t>;
 
 }  // namespace switched_model

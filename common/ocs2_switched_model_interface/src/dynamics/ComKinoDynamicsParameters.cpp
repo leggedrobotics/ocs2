@@ -19,6 +19,6 @@ Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> ComKinoSystemDynamicsParameters<SCALA
 }
 
 template class ComKinoSystemDynamicsParameters<scalar_t>;
-template class ComKinoSystemDynamicsParameters<ocs2::ad_scalar_t>;
+template class ComKinoSystemDynamicsParameters<ad_scalar_t>;
 
 }  // namespace switched_model

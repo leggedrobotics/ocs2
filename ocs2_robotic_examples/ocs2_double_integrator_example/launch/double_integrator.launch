@@ -23,5 +23,4 @@
 
     <node pkg="ocs2_double_integrator_example" type="double_integrator_target" name="double_integrator_target"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
-
 </launch>

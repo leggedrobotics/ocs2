@@ -8,6 +8,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
+  ocs2_ros_interfaces
 
   # visualization deps
   roscpp

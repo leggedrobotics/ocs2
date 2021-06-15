@@ -174,20 +174,15 @@ void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTraje
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg,
-                               CostDesiredTrajectories& costDesiredTrajectories) {
-  auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
-  auto& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
-  auto& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
-
+CostDesiredTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
   size_t N = targetTrajectoriesMsg.stateTrajectory.size();
   if (N == 0) {
     throw std::runtime_error("An empty target trajectories message is received.");
   }
 
   // state and time
-  desiredTimeTrajectory.resize(N);
-  desiredStateTrajectory.resize(N);
+  scalar_array_t desiredTimeTrajectory(N);
+  vector_array_t desiredStateTrajectory(N);
   for (size_t i = 0; i < N; i++) {
     desiredTimeTrajectory[i] = targetTrajectoriesMsg.timeTrajectory[i];
 
@@ -198,12 +193,14 @@ void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetT
 
   // input
   N = targetTrajectoriesMsg.inputTrajectory.size();
-  desiredInputTrajectory.resize(N);
+  vector_array_t desiredInputTrajectory(N);
   for (size_t i = 0; i < N; i++) {
     desiredInputTrajectory[i] = Eigen::Map<const Eigen::VectorXf>(targetTrajectoriesMsg.inputTrajectory[i].value.data(),
                                                                   targetTrajectoriesMsg.inputTrajectory[i].value.size())
                                     .cast<scalar_t>();
   }  // end of i loop
+
+  return {desiredTimeTrajectory, desiredStateTrajectory, desiredInputTrajectory};
 }
 
 }  // namespace ros_msg_conversions

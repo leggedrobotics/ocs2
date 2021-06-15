@@ -104,13 +104,12 @@ void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTraje
                                  ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
 
 /**
- * Reads the target trajectories message.
+ * Returns the target trajectories message.
  *
  * @param [in] targetTrajectoriesMsg: The target trajectories message.
- * @param [out] costDesiredTrajectories: The desired trajectory of the cost.
+ * @return: The desired trajectory of the cost.
  */
-void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg,
-                               CostDesiredTrajectories& costDesiredTrajectories);
+CostDesiredTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
 
 }  // namespace ros_msg_conversions
 }  // namespace ocs2

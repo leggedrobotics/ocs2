@@ -43,7 +43,10 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string robotName /*= "r
       publisherCommandPtr_(new CommandData()),
       bufferPerformanceIndicesPtr_(new PerformanceIndex),
       publisherPerformanceIndicesPtr_(new PerformanceIndex) {
-  set();
+  // start thread for publishing
+#ifdef PUBLISH_THREAD
+  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
+#endif
 }
 
 /******************************************************************************************************/
@@ -56,36 +59,15 @@ MPC_ROS_Interface::~MPC_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::set() {
-  terminateThread_ = false;
-  readyToPublish_ = false;
-
-  resetRequestedEver_ = false;
-  mpcTimer_.reset();
-
-  // start thread for publishing
-#ifdef PUBLISH_THREAD
-  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
-#endif
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_ROS_Interface::reset(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MPC_ROS_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
-
   mpc_.reset();
-
-  resetRequestedEver_ = true;
-
-  mpc_.getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
-  costDesiredTrajectoriesBufferUpdated_ = false;
-
+  mpc_.getSolverPtr()->getModeScheduleManager().setCostDesiredTrajectories(initCostDesiredTrajectories);
   mpcTimer_.reset();
-
+  resetRequestedEver_ = true;
   terminateThread_ = false;
   readyToPublish_ = false;
+  costDesiredTrajectoriesUpdated_ = true;
 }
 
 /******************************************************************************************************/
@@ -93,10 +75,8 @@ void MPC_ROS_Interface::reset(const CostDesiredTrajectories& initCostDesiredTraj
 /******************************************************************************************************/
 bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
   if (static_cast<bool>(req.reset)) {
-    CostDesiredTrajectories initCostDesiredTrajectories;
-    ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories, initCostDesiredTrajectories);
-    reset(initCostDesiredTrajectories);
-
+    const auto costDesiredTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
+    resetMpcNode(costDesiredTrajectories);
     res.done = static_cast<uint8_t>(true);
 
     std::cerr << "\n#####################################################"
@@ -104,12 +84,12 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
               << "\n#################  MPC is reset.  ###################"
               << "\n#####################################################"
               << "\n#####################################################\n";
+    return true;
 
   } else {
-    ROS_WARN_STREAM("Ineffective reset request.");
+    ROS_WARN_STREAM("[MPC_ROS_Interface] Reset request failed!");
+    return false;
   }
-
-  return true;
 }
 
 /******************************************************************************************************/
@@ -237,7 +217,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 
   // command
   bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
-  bufferCommandPtr_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
+  bufferCommandPtr_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getModeScheduleManager().getCostDesiredTrajectories();
 
   // performance indices
   *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
@@ -262,14 +242,11 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   mpcTimer_.startTimer();
 
   // Set latest cost desired trajectories
-  if (costDesiredTrajectoriesBufferUpdated_) {
-    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-    mpc_.getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
-    costDesiredTrajectoriesBufferUpdated_ = false;
-
+  if (costDesiredTrajectoriesUpdated_) {
+    costDesiredTrajectoriesUpdated_ = false;
     if (mpc_.settings().debugPrint_) {
       std::cerr << "### The target position is updated to \n";
-      mpc_.getSolverPtr()->getCostDesiredTrajectories().display();
+      mpc_.getSolverPtr()->getModeScheduleManager().getCostDesiredTrajectories().display();
     }
   }
 
@@ -318,9 +295,9 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MPC_ROS_Interface::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
-  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-  ros_msg_conversions::readTargetTrajectoriesMsg(*msg, costDesiredTrajectoriesBuffer_);
-  costDesiredTrajectoriesBufferUpdated_ = true;
+  const auto costDesiredTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
+  mpc_.getSolverPtr()->getModeScheduleManager().setCostDesiredTrajectories(std::move(costDesiredTrajectories));
+  costDesiredTrajectoriesUpdated_ = true;
 }
 
 /******************************************************************************************************/

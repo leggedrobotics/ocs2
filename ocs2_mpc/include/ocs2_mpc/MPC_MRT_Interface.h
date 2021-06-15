@@ -64,11 +64,10 @@ class MPC_MRT_Interface final : public MRT_BASE {
   void setCurrentObservation(const SystemObservation& currentObservation) override;
 
   /**
-   * Set new target trajectories to be tracked.
-   * It is safe to set a new value while the MPC optimization is running
-   * @param targetTrajectories
+   * Sets the new CostDesiredTrajectories. It is safe to set a new value while the MPC optimization is running.
    */
-  void setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories);
+  void setTargetTrajectories(CostDesiredTrajectories&& costDesiredTrajectories);
+  void setTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories);
 
   /**
    * Advance the mpc module for one iteration.
@@ -116,9 +115,8 @@ class MPC_MRT_Interface final : public MRT_BASE {
   // MPC inputs
   SystemObservation currentObservation_;
   std::mutex observationMutex_;
-  std::mutex costDesiredTrajectoriesBufferMutex_;
-  std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
-  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
+
+  std::atomic_bool costDesiredTrajectoriesUpdated_{false};
 };
 
 }  // namespace ocs2

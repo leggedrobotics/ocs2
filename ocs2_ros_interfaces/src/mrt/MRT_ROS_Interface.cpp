@@ -132,7 +132,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   auto& controlBuffer = primalSolution.controllerPtr_;
 
   ros_msg_conversions::readObservationMsg(msg.initObservation, commandData.mpcInitObservation_);
-  ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories, commandData.mpcCostDesiredTrajectories_);
+  commandData.mpcCostDesiredTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
   primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 

@@ -86,10 +86,10 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   }
 
   // Check if a goal has been set
-  if (initRun_ && getSolverPtr()->getCostDesiredTrajectories().empty()) {
-    std::cerr << "### WARNING: The initial desired trajectories are not set. "
-                 "This may cause undefined behavior. Use the MPC_BASE::getSolverPtr()->setCostDesiredTrajectories() "
-                 "method to provide appropriate goal trajectories.\n";
+  if (initRun_ && getSolverPtr()->getModeScheduleManager().getCostDesiredTrajectories().empty()) {
+    std::cerr << "### WARNING: The initial desired trajectories are not set. This may cause undefined behavior. "
+                 "Use the MPC_BASE::getSolverPtr()->getModeScheduleManager().setCostDesiredTrajectories() method "
+                 "to provide target trajectories.\n";
   }
 
   // adjusting the partitioning times based on the initial time

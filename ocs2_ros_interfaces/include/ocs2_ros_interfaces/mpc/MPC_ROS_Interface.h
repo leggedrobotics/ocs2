@@ -82,16 +82,11 @@ class MPC_ROS_Interface {
   virtual ~MPC_ROS_Interface();
 
   /**
-   * Sets the class as its constructor.
-   */
-  void set();
-
-  /**
    * Resets the class to its instantiation state.
    *
    * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
    */
-  virtual void reset(const CostDesiredTrajectories& initCostDesiredTrajectories);
+  void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories);
 
   /**
    * Shutdowns the ROS node.
@@ -186,8 +181,8 @@ class MPC_ROS_Interface {
   mutable std::mutex bufferMutex_;  // for policy variables with prefix (buffer*)
 
   // multi-threading for publishers
-  std::atomic_bool terminateThread_;
-  std::atomic_bool readyToPublish_;
+  std::atomic_bool terminateThread_{false};
+  std::atomic_bool readyToPublish_{false};
   std::thread publisherWorker_;
   std::mutex publisherMutex_;
   std::condition_variable msgReady_;
@@ -196,11 +191,9 @@ class MPC_ROS_Interface {
 
   // MPC reset
   std::mutex resetMutex_;
-  std::atomic<bool> resetRequestedEver_;
+  std::atomic_bool resetRequestedEver_{false};
 
-  std::mutex costDesiredTrajectoriesBufferMutex_;
-  std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
-  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
+  std::atomic_bool costDesiredTrajectoriesUpdated_{false};
 };
 
 }  // namespace ocs2

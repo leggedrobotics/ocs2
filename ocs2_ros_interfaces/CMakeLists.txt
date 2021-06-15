@@ -53,7 +53,9 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/command/TargetTrajectories_ROS_Interface.cpp
+  src/command/TargetTrajectoriesRosInterface.cpp
+  src/command/TargetTrajectoriesJoystickInterface.cpp
+  src/command/TargetTrajectoriesKeyboardInterface.cpp
   src/common/RosMsgConversions.cpp
   src/common/RosMsgHelpers.cpp
   src/mpc/MPC_ROS_Interface.cpp

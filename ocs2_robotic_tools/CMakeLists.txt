@@ -5,10 +5,8 @@ project(ocs2_robotic_tools)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED COMPONENTS
-  ocs2_ddp
   ocs2_core
-  ocs2_mpc
-  ocs2_ros_interfaces
+  ocs2_oc
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -24,10 +22,8 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
-    ocs2_ddp
     ocs2_core
-    ocs2_mpc
-    ocs2_ros_interfaces
+    ocs2_oc
   DEPENDS
 )
 
@@ -43,8 +39,6 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/command/TargetTrajectoriesJoystickInterface.cpp
-  src/command/TargetTrajectoriesKeyboardInterface.cpp
   src/common/RotationTransforms.cpp
   src/common/LoopshapingRobotInterface.cpp
 )

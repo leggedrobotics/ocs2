@@ -12,15 +12,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>ocs2_core</build_depend>
-  <build_depend>ocs2_ddp</build_depend>
-  <build_depend>ocs2_mpc</build_depend>
-  <build_depend>ocs2_ros_interfaces</build_depend>
   <build_depend>cmake_clang_tools</build_depend>
-
+  <build_depend>ocs2_core</build_depend>
+  <build_depend>ocs2_oc</build_depend>
   <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_ddp</run_depend>
-  <run_depend>ocs2_mpc</run_depend>
-  <run_depend>ocs2_ros_interfaces</run_depend>
+  <run_depend>ocs2_oc</run_depend>
 
 </package>

@@ -34,42 +34,40 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModeScheduleManager::ModeScheduleManager(ModeSchedule modeSchedule)
-    : modeSchedule_(std::move(modeSchedule)), modeScheduleBuffer_(), modeScheduleUpdated_(false) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ModeScheduleManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                       const CostDesiredTrajectories& costDesiredTrajectory) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+void ModeScheduleManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
   if (modeScheduleUpdated_) {
     modeScheduleUpdated_ = false;
     swap(modeSchedule_, modeScheduleBuffer_);
   }
-  preSolverRunImpl(initTime, finalTime, currentState, costDesiredTrajectory, modeSchedule_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-const ModeSchedule& ModeScheduleManager::getModeSchedule() const {
-  return modeSchedule_;
+  if (costDesiredTrajectoriesUpdated_) {
+    costDesiredTrajectoriesUpdated_ = false;
+    costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
+  }
+  modifyActiveReferences(initTime, finalTime, initState, modeSchedule_, costDesiredTrajectories_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ModeSchedule ModeScheduleManager::getModeScheduleImage() const {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  std::lock_guard<std::mutex> lock(dataMutex_);
   return modeSchedule_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+CostDesiredTrajectories ModeScheduleManager::getCostDesiredTrajectoriesImage() const {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  return costDesiredTrajectories_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void ModeScheduleManager::setModeSchedule(const ModeSchedule& modeSchedule) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  std::lock_guard<std::mutex> lock(dataMutex_);
   modeScheduleUpdated_ = true;
   modeScheduleBuffer_ = modeSchedule;
 }
@@ -78,9 +76,27 @@ void ModeScheduleManager::setModeSchedule(const ModeSchedule& modeSchedule) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ModeScheduleManager::setModeSchedule(ModeSchedule&& modeSchedule) {
-  std::lock_guard<std::mutex> lock(modeScheduleMutex_);
+  std::lock_guard<std::mutex> lock(dataMutex_);
   modeScheduleUpdated_ = true;
   modeScheduleBuffer_ = std::move(modeSchedule);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ModeScheduleManager::setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  costDesiredTrajectoriesUpdated_ = true;
+  costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ModeScheduleManager::setCostDesiredTrajectories(CostDesiredTrajectories&& costDesiredTrajectories) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  costDesiredTrajectoriesUpdated_ = true;
+  costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
 }
 
 }  // namespace ocs2

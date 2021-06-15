@@ -36,18 +36,17 @@ namespace ocs2 {
 /******************************************************************************************************/
 LoopshapingModeScheduleManager::LoopshapingModeScheduleManager(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr,
                                                                std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
-    : ModeScheduleManager(modeScheduleManagerPtr->getModeSchedule()),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
-      loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {}
+    : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LoopshapingModeScheduleManager::preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                                      const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) {
-  const vector_t systemState = loopshapingDefinitionPtr_->getSystemState(currentState);
-  modeScheduleManagerPtr_->preSolverRun(initTime, finalTime, systemState, costDesiredTrajectory);
+void LoopshapingModeScheduleManager::modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                                                            ModeSchedule& modeSchedule, CostDesiredTrajectories& costDesiredTrajectory) {
+  const vector_t systemState = loopshapingDefinitionPtr_->getSystemState(initState);
+  modeScheduleManagerPtr_->preSolverRun(initTime, finalTime, systemState);
   modeSchedule = modeScheduleManagerPtr_->getModeSchedule();
+  costDesiredTrajectory = modeScheduleManagerPtr_->getCostDesiredTrajectories();
 }
 
 }  // namespace ocs2

@@ -33,35 +33,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/ModeSchedule.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
 
 /**
  * Manages the ModeSchedule of the solver.
  */
-class ModeScheduleManager : public SolverSynchronizedModule {
+class ModeScheduleManager {
  public:
-  /**
-   * Constructor.
-   */
-  explicit ModeScheduleManager(ModeSchedule modeSchedule);
+  ModeScheduleManager() = default;
+  virtual ~ModeScheduleManager() = default;
+  ModeScheduleManager(ModeScheduleManager&& other) = default;
+  ModeScheduleManager& operator=(ModeScheduleManager&& other) = default;
+
+  ModeScheduleManager(const ModeScheduleManager& other) = delete;
+  ModeScheduleManager& operator=(const ModeScheduleManager& other) = delete;
 
   /**
-   * Default destructor.
+   * Method called right before the solver runs
+   *
+   * @param initTime : start time of the MPC horizon
+   * @param finalTime : Final time of the MPC horizon
+   * @param initState : State at the start of the MPC horizon
+   * @param costDesiredTrajectory : User defined cost desired trajectory
    */
-  ~ModeScheduleManager() override = default;
-
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const CostDesiredTrajectories& costDesiredTrajectory) final;
-
-  void postSolverRun(const PrimalSolution& primalSolution) final {}
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState);
 
   /**
    * Returns a const reference to ModeSchedule. This method is NOT thread safe.
    */
-  const ModeSchedule& getModeSchedule() const;
+  const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
+
+  /**
+   * Returns a const reference to ModeSchedule. This method is NOT thread safe.
+   */
+  const CostDesiredTrajectories& getCostDesiredTrajectories() const { return costDesiredTrajectories_; }
 
   /**
    * Returns a a copy of ModeSchedule. This method is thread safe.
@@ -69,36 +77,57 @@ class ModeScheduleManager : public SolverSynchronizedModule {
   ModeSchedule getModeScheduleImage() const;
 
   /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun()
-   * is called. This method is thread safe.
+   * Returns a a copy of ModeSchedule. This method is thread safe.
+   */
+  CostDesiredTrajectories getCostDesiredTrajectoriesImage() const;
+
+  /**
+   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
+   * This method is thread safe.
    */
   void setModeSchedule(const ModeSchedule& modeSchedule);
 
   /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun()
-   * is called. This method is thread safe.
+   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
+   * This method is thread safe.
    */
   void setModeSchedule(ModeSchedule&& modeSchedule);
 
+  /**
+   * Sets the CostDesiredTrajectories to the buffer. The buffer will move to internal CostDesiredTrajectories once
+   * preSolverRun() is called. This method is thread safe.
+   */
+  void setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories);
+
+  /**
+   * Sets the CostDesiredTrajectories to the buffer. The buffer will move to internal CostDesiredTrajectories once
+   * preSolverRun() is called. This method is thread safe.
+   */
+  void setCostDesiredTrajectories(CostDesiredTrajectories&& costDesiredTrajectories);
+
  protected:
   /**
-   * User defined preSolverRun.
+   * This method modifies the active ModeSchedule and CostDesiredTrajectories.
    *
-   * @param [in] initTime : start time of the MPC horizon
-   * @param [in] finalTime : Final time of the MPC horizon
-   * @param [in] currentState : State at the start of the MPC horizon
-   * @param [in] costDesiredTrajectory : User defined cost desired trajectory
-   * @param [in] modeSchedule : The current ModeSchedule
+   * @param [in] initTime : start time of the MPC horizon.
+   * @param [in] finalTime : Final time of the MPC horizon.
+   * @param [in] initState : State at the start of the MPC horizon.
+   * @param [in/out] modeSchedule : The active ModeSchedule.
+   * @param [in/out] costDesiredTrajectory : The active CostDesiredTrajectories.
    */
-  virtual void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) {}
+  virtual void modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ModeSchedule& modeSchedule,
+                                      CostDesiredTrajectories& costDesiredTrajectory) {}
 
  private:
   ModeSchedule modeSchedule_;
   ModeSchedule modeScheduleBuffer_;
 
-  bool modeScheduleUpdated_;
-  mutable std::mutex modeScheduleMutex_;
+  CostDesiredTrajectories costDesiredTrajectories_;
+  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
+
+  bool modeScheduleUpdated_{false};
+  bool costDesiredTrajectoriesUpdated_{false};
+  mutable std::mutex dataMutex_;
 };
 
 }  // namespace ocs2

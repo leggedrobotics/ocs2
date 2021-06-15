@@ -77,12 +77,10 @@ void SolverBase::printString(const std::string& text) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  if (modeScheduleManager_) {
-    modeScheduleManager_->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
-    modeSchedule_ = modeScheduleManager_->getModeSchedule();
-  }
+  modeScheduleManagerPtr_->preSolverRun(initTime, finalTime, initState);
+
   for (auto& module : synchronizedModules_) {
-    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
+    module->preSolverRun(initTime, finalTime, initState, *modeScheduleManagerPtr_);
   }
 }
 
@@ -90,11 +88,8 @@ void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t f
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SolverBase::postRun() {
-  if (modeScheduleManager_ || !synchronizedModules_.empty()) {
+  if (!synchronizedModules_.empty()) {
     const auto solution = primalSolution(getFinalTime());
-    if (modeScheduleManager_) {
-      modeScheduleManager_->postSolverRun(solution);
-    }
     for (auto& module : synchronizedModules_) {
       module->postSolverRun(solution);
     }

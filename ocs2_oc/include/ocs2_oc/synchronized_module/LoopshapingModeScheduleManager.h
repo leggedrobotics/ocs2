@@ -51,8 +51,8 @@ class LoopshapingModeScheduleManager : public ModeScheduleManager {
   ~LoopshapingModeScheduleManager() override = default;
 
  private:
-  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                        const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) override;
+  void modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ModeSchedule& modeSchedule,
+                              CostDesiredTrajectories& costDesiredTrajectory) override;
 
   std::shared_ptr<ocs2::ModeScheduleManager> modeScheduleManagerPtr_;
   std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinitionPtr_;

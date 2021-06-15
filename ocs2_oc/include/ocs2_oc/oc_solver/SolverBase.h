@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 
 #include <ocs2_oc/oc_data/PrimalSolution.h>
@@ -52,7 +51,7 @@ class SolverBase {
   /**
    * Constructor.
    */
-  SolverBase() = default;
+  SolverBase() : modeScheduleManagerPtr_(new ModeScheduleManager) {}
 
   /**
    * Default destructor.
@@ -94,8 +93,17 @@ class SolverBase {
    * Set mode schedule manager. This module is updated once before and once after solving the problem.
    */
   void setModeScheduleManager(std::shared_ptr<ModeScheduleManager> modeScheduleManager) {
-    modeScheduleManager_ = std::move(modeScheduleManager);
+    if (modeScheduleManager == nullptr) {
+      throw std::runtime_error("[SolverBase] ModeScheduleManager pointer cannot be a nullptr!");
+    }
+    modeScheduleManagerPtr_ = std::move(modeScheduleManager);
   };
+
+  /*
+   * Gets the ModeScheduleManager which manages both ModeSchedule and CostDesiredTrajectories.
+   */
+  ModeScheduleManager& getModeScheduleManager() { return *modeScheduleManagerPtr_; }
+  const ModeScheduleManager& getModeScheduleManager() const { return *modeScheduleManagerPtr_; }
 
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
@@ -138,34 +146,6 @@ class SolverBase {
    * @return partitioning times
    */
   virtual const scalar_array_t& getPartitioningTimes() const = 0;
-
-  /**
-   * Gets the cost function desired trajectories.
-   *
-   * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
-   */
-  const CostDesiredTrajectories& getCostDesiredTrajectories() const { return costDesiredTrajectories_; };
-
-  /**
-   * Sets the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  void setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
-    costDesiredTrajectories_ = costDesiredTrajectories;
-  };
-
-  /**
-   * Swaps the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  void swapCostDesiredTrajectories(CostDesiredTrajectories& costDesiredTrajectories) {
-    costDesiredTrajectories_.swap(costDesiredTrajectories);
-  };
-
-  /** gets mode schedule */
-  const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
 
   /**
    * @brief Returns the optimized policy data.
@@ -239,10 +219,8 @@ class SolverBase {
 
  private:
   mutable std::mutex outputDisplayGuardMutex_;
-  CostDesiredTrajectories costDesiredTrajectories_{0};
-  std::shared_ptr<ModeScheduleManager> modeScheduleManager_;
+  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
-  ModeSchedule modeSchedule_;
 };
 
 }  // namespace ocs2

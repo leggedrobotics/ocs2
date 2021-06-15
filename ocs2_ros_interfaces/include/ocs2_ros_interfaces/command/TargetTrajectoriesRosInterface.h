@@ -58,15 +58,10 @@ class TargetTrajectoriesRosInterface {
    */
   TargetTrajectoriesRosInterface(int argc, char* argv[], std::string robotName = "robot");
 
-  /**
-   * Destructor.
-   */
+  /** Destructor. */
   virtual ~TargetTrajectoriesRosInterface();
 
-  /**
-   * This is the main routine which launches the publisher node for MPC's
-   * desired trajectories.
-   */
+  /** Launches the publisher node for the MPC's target point. */
   void launchNodes();
 
   /**

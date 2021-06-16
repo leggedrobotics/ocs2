@@ -62,7 +62,7 @@ MPC_ROS_Interface::~MPC_ROS_Interface() {
 void MPC_ROS_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
   mpc_.reset();
-  mpc_.getSolverPtr()->getModeScheduleManager().setCostDesiredTrajectories(initCostDesiredTrajectories);
+  mpc_.getSolverPtr()->getReferenceManager().setCostDesiredTrajectories(initCostDesiredTrajectories);
   mpcTimer_.reset();
   resetRequestedEver_ = true;
   terminateThread_ = false;
@@ -217,7 +217,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 
   // command
   bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
-  bufferCommandPtr_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getModeScheduleManager().getCostDesiredTrajectories();
+  bufferCommandPtr_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getReferenceManager().getCostDesiredTrajectories();
 
   // performance indices
   *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
@@ -246,7 +246,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     costDesiredTrajectoriesUpdated_ = false;
     if (mpc_.settings().debugPrint_) {
       std::cerr << "### The target position is updated to \n";
-      mpc_.getSolverPtr()->getModeScheduleManager().getCostDesiredTrajectories().display();
+      mpc_.getSolverPtr()->getReferenceManager().getCostDesiredTrajectories().display();
     }
   }
 
@@ -296,7 +296,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 /******************************************************************************************************/
 void MPC_ROS_Interface::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
   const auto costDesiredTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
-  mpc_.getSolverPtr()->getModeScheduleManager().setCostDesiredTrajectories(std::move(costDesiredTrajectories));
+  mpc_.getSolverPtr()->getReferenceManager().setCostDesiredTrajectories(std::move(costDesiredTrajectories));
   costDesiredTrajectoriesUpdated_ = true;
 }
 

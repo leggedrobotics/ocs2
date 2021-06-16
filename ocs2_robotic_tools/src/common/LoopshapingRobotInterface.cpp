@@ -47,9 +47,9 @@ LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterf
   if (robotInterfacePtr_->getConstraintPtr() != nullptr) {
     constraintsPtr_ = ocs2::LoopshapingConstraint::create(*robotInterfacePtr_->getConstraintPtr(), loopshapingDefinitionPtr_);
   }
-  if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
-    loopshapingModeScheduleManager_ =
-        std::make_shared<LoopshapingModeScheduleManager>(robotInterfacePtr_->getModeScheduleManagerPtr(), loopshapingDefinitionPtr_);
+  if (robotInterfacePtr_->getReferenceManagerPtr() != nullptr) {
+    loopshapingReferenceManager_ =
+        std::make_shared<LoopshapingReferenceManager>(robotInterfacePtr_->getReferenceManagerPtr(), loopshapingDefinitionPtr_);
   }
 }
 

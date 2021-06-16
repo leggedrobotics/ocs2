@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
-#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 namespace ocs2 {
 
@@ -55,10 +55,10 @@ class RobotInterface {
   virtual ~RobotInterface() = default;
 
   /**
-   * @brief getModeScheduleManagerPtr
-   * @return a shared pointer to the mode-schedule manager.
+   * Gets the ReferenceManager.
+   * @return a shared pointer to the ReferenceManager.
    */
-  virtual std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const { return nullptr; }
+  virtual std::shared_ptr<ReferenceManager> getReferenceManagerPtr() const { return nullptr; }
 
   /**
    * @brief getDynamics

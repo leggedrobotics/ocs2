@@ -27,19 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/synchronized_module/ModeScheduleManager.h"
+#include "ocs2_oc/synchronized_module/ReferenceManager.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ModeScheduleManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
+void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
   std::lock_guard<std::mutex> lock(dataMutex_);
-  if (modeScheduleUpdated_) {
-    modeScheduleUpdated_ = false;
-    swap(modeSchedule_, modeScheduleBuffer_);
-  }
   if (costDesiredTrajectoriesUpdated_) {
     costDesiredTrajectoriesUpdated_ = false;
     costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
@@ -50,7 +46,7 @@ void ModeScheduleManager::preSolverRun(scalar_t initTime, scalar_t finalTime, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ModeSchedule ModeScheduleManager::getModeScheduleImage() const {
+ModeSchedule ReferenceManager::getModeScheduleImage() const {
   std::lock_guard<std::mutex> lock(dataMutex_);
   return modeSchedule_;
 }
@@ -58,7 +54,7 @@ ModeSchedule ModeScheduleManager::getModeScheduleImage() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostDesiredTrajectories ModeScheduleManager::getCostDesiredTrajectoriesImage() const {
+CostDesiredTrajectories ReferenceManager::getCostDesiredTrajectoriesImage() const {
   std::lock_guard<std::mutex> lock(dataMutex_);
   return costDesiredTrajectories_;
 }
@@ -66,25 +62,7 @@ CostDesiredTrajectories ModeScheduleManager::getCostDesiredTrajectoriesImage() c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ModeScheduleManager::setModeSchedule(const ModeSchedule& modeSchedule) {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  modeScheduleUpdated_ = true;
-  modeScheduleBuffer_ = modeSchedule;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ModeScheduleManager::setModeSchedule(ModeSchedule&& modeSchedule) {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  modeScheduleUpdated_ = true;
-  modeScheduleBuffer_ = std::move(modeSchedule);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ModeScheduleManager::setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
+void ReferenceManager::setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
   std::lock_guard<std::mutex> lock(dataMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
@@ -93,7 +71,7 @@ void ModeScheduleManager::setCostDesiredTrajectories(const CostDesiredTrajectori
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ModeScheduleManager::setCostDesiredTrajectories(CostDesiredTrajectories&& costDesiredTrajectories) {
+void ReferenceManager::setCostDesiredTrajectories(CostDesiredTrajectories&& costDesiredTrajectories) {
   std::lock_guard<std::mutex> lock(dataMutex_);
   costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);

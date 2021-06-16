@@ -41,15 +41,15 @@ namespace ocs2 {
 /**
  * Manages the ModeSchedule of the solver.
  */
-class ModeScheduleManager {
+class ReferenceManager {
  public:
-  ModeScheduleManager() = default;
-  virtual ~ModeScheduleManager() = default;
-  ModeScheduleManager(ModeScheduleManager&& other) = default;
-  ModeScheduleManager& operator=(ModeScheduleManager&& other) = default;
+  ReferenceManager() = default;
+  virtual ~ReferenceManager() = default;
+  ReferenceManager(ReferenceManager&& other) = default;
+  ReferenceManager& operator=(ReferenceManager&& other) = default;
 
-  ModeScheduleManager(const ModeScheduleManager& other) = delete;
-  ModeScheduleManager& operator=(const ModeScheduleManager& other) = delete;
+  ReferenceManager(const ReferenceManager& other) = delete;
+  ReferenceManager& operator=(const ReferenceManager& other) = delete;
 
   /**
    * Method called right before the solver runs
@@ -82,18 +82,6 @@ class ModeScheduleManager {
   CostDesiredTrajectories getCostDesiredTrajectoriesImage() const;
 
   /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
-   * This method is thread safe.
-   */
-  void setModeSchedule(const ModeSchedule& modeSchedule);
-
-  /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
-   * This method is thread safe.
-   */
-  void setModeSchedule(ModeSchedule&& modeSchedule);
-
-  /**
    * Sets the CostDesiredTrajectories to the buffer. The buffer will move to internal CostDesiredTrajectories once
    * preSolverRun() is called. This method is thread safe.
    */
@@ -120,14 +108,12 @@ class ModeScheduleManager {
 
  private:
   ModeSchedule modeSchedule_;
-  ModeSchedule modeScheduleBuffer_;
 
   CostDesiredTrajectories costDesiredTrajectories_;
   CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
 
-  bool modeScheduleUpdated_{false};
-  bool costDesiredTrajectoriesUpdated_{false};
   mutable std::mutex dataMutex_;
+  bool costDesiredTrajectoriesUpdated_{false};
 };
 
 }  // namespace ocs2

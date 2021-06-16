@@ -27,26 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/synchronized_module/LoopshapingModeScheduleManager.h"
+#pragma once
+
+#include <memory>
+
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+
+#include "ocs2_oc/synchronized_module/ReferenceManager.h"
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LoopshapingModeScheduleManager::LoopshapingModeScheduleManager(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr,
-                                                               std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
-    : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {}
+class LoopshapingReferenceManager : public ReferenceManager {
+ public:
+  /**
+   * Constructor.
+   * @param [in] referenceManagerPtr: A shared pointer to the original ReferenceManager.
+   * @param [in] loopshapingDefinitionPtr: A shared pointer to the loopshaping definition.
+   */
+  LoopshapingReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr,
+                              std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LoopshapingModeScheduleManager::modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                                                            ModeSchedule& modeSchedule, CostDesiredTrajectories& costDesiredTrajectory) {
-  const vector_t systemState = loopshapingDefinitionPtr_->getSystemState(initState);
-  modeScheduleManagerPtr_->preSolverRun(initTime, finalTime, systemState);
-  modeSchedule = modeScheduleManagerPtr_->getModeSchedule();
-  costDesiredTrajectory = modeScheduleManagerPtr_->getCostDesiredTrajectories();
-}
+  /** Destructor */
+  ~LoopshapingReferenceManager() override = default;
+
+ private:
+  void modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ModeSchedule& modeSchedule,
+                              CostDesiredTrajectories& costDesiredTrajectory) override;
+
+  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr_;
+  std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinitionPtr_;
+};
 
 }  // namespace ocs2

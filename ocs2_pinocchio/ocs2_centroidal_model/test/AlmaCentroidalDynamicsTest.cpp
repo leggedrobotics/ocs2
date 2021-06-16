@@ -40,9 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-using CentroidalModelType = CentroidalModelPinocchioMapping<scalar_t>::CentroidalModelType;
-using CentroidalModelTypeAD = CentroidalModelPinocchioMapping<ad_scalar_t>::CentroidalModelType;
-
 static PinocchioInterface getAlmaPinocchioInterface() {
   // build a joint model having just 2 joints: one translational joint and one spherical joint
   pinocchio::JointModelComposite jointComposite(2);
@@ -57,20 +54,20 @@ TEST(AlmaCentroidalModelTestInit, InitModelFromUrdf) {
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
-  CentroidalModelPinocchioMapping<scalar_t> mapping(alma_c::STATE_DIM, alma_c::INPUT_DIM,
-                                                    CentroidalModelType::FullCentroidalDynamics,
-                                                    vector_t::Zero(nq), alma3DofContactNames,
-                                                    alma6DofContactNames);
+  CentroidalModelInfoTpl<scalar_t> info(pinocchioInterface,
+                                        CentroidalModelType::FullCentroidalDynamics,
+                                        vector_t::Zero(nq), alma3DofContactNames,
+                                        alma6DofContactNames);
+  CentroidalModelPinocchioMapping<scalar_t> mapping(info);
   mapping.setPinocchioInterface(pinocchioInterface);
-  const auto& centroidalModelInfo = mapping.getCentroidalModelInfo();
 
   std::cerr << "nq " << model.nq << '\n';
   std::cerr << "nv " << model.nv << '\n';
   std::cerr << "STATE_DIM " << alma_c::STATE_DIM << '\n';
   std::cerr << "INPUT_DIM " << alma_c::INPUT_DIM << '\n';
 
-  EXPECT_EQ(model.nq + 6, alma_c::STATE_DIM);
-  EXPECT_EQ(model.nq - 6 + 3 * centroidalModelInfo.numThreeDofContacts + 6 * centroidalModelInfo.numSixDofContacts, alma_c::INPUT_DIM);
+  EXPECT_EQ(info.stateDim, alma_c::STATE_DIM);
+  EXPECT_EQ(info.inputDim, alma_c::INPUT_DIM);
 }
 
 TEST(AlmaCentroidalModelTestInit, InitModelFromUrdfAD) {
@@ -78,20 +75,20 @@ TEST(AlmaCentroidalModelTestInit, InitModelFromUrdfAD) {
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
-  CentroidalModelPinocchioMapping<ad_scalar_t> mappingAD(alma_c::STATE_DIM, alma_c::INPUT_DIM,
-                                                       CentroidalModelTypeAD::FullCentroidalDynamics,
-                                                       ad_vector_t::Zero(nq), alma3DofContactNames,
-                                                       alma6DofContactNames);
+  CentroidalModelInfoTpl<ad_scalar_t> infoAD(pinocchioInterface,
+                                             CentroidalModelType::FullCentroidalDynamics,
+                                             vector_t::Zero(nq), alma3DofContactNames,
+                                             alma6DofContactNames);
+  CentroidalModelPinocchioMapping<ad_scalar_t> mappingAD(infoAD);
   mappingAD.setPinocchioInterface(pinocchioInterface.toCppAd());
-  const auto& centroidalModelInfo = mappingAD.getCentroidalModelInfo();
 
   std::cerr << "nq " << model.nq << '\n';
   std::cerr << "nv " << model.nv << '\n';
   std::cerr << "STATE_DIM " << alma_c::STATE_DIM << '\n';
   std::cerr << "INPUT_DIM " << alma_c::INPUT_DIM << '\n';
 
-  EXPECT_EQ(model.nq + 6, alma_c::STATE_DIM);
-  EXPECT_EQ(model.nq - 6 + 3 * centroidalModelInfo.numThreeDofContacts + 6 * centroidalModelInfo.numSixDofContacts, alma_c::INPUT_DIM);
+  EXPECT_EQ(infoAD.stateDim, alma_c::STATE_DIM);
+  EXPECT_EQ(infoAD.inputDim, alma_c::INPUT_DIM);
 }
 
 class AlmaCentroidalModelTest : public testing::Test {
@@ -99,16 +96,18 @@ class AlmaCentroidalModelTest : public testing::Test {
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
   AlmaCentroidalModelTest() : pinocchioInterface_(getAlmaPinocchioInterface()) {
     size_t nq = pinocchioInterface_.getModel().nq;
-    mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(alma_c::STATE_DIM, alma_c::INPUT_DIM,
-                                                      CentroidalModelType::FullCentroidalDynamics,
-                                                      vector_t::Zero(nq), alma3DofContactNames,
-                                                      alma6DofContactNames));
+    CentroidalModelInfoTpl<scalar_t> info(pinocchioInterface_,
+                                          CentroidalModelType::FullCentroidalDynamics,
+                                          vector_t::Zero(nq), alma3DofContactNames,
+                                          alma6DofContactNames);
+    mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(info));
     AlmaKinoCentroidalDynamicsPtr = std::make_shared<AlmaKinoCentroidalDynamics>(pinocchioInterface_, *mapping_);
 
-    mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(alma_c::STATE_DIM, alma_c::INPUT_DIM,
-                                                         CentroidalModelTypeAD::FullCentroidalDynamics,
-                                                         ad_vector_t::Zero(nq), alma3DofContactNames,
-                                                         alma6DofContactNames));
+    CentroidalModelInfoTpl<ad_scalar_t> infoAD(pinocchioInterface_,
+                                          CentroidalModelType::FullCentroidalDynamics,
+                                          vector_t::Zero(nq), alma3DofContactNames,
+                                          alma6DofContactNames);
+    mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(infoAD));
     AlmaKinoCentroidalDynamicsAdPtr = std::make_shared<AlmaKinoCentroidalDynamicsAD>(pinocchioInterface_, *mappingAD_);
 
     srand(0);

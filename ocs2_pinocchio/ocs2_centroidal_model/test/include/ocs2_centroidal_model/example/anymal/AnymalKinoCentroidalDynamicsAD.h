@@ -37,9 +37,8 @@ namespace ocs2 {
   class AnymalKinoCentroidalDynamicsAD final : public PinocchioCentroidalDynamicsAD {
   public:
     AnymalKinoCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& mapping)
-            : PinocchioCentroidalDynamicsAD(pinocchioInterface, mapping, anymal::STATE_DIM, anymal::INPUT_DIM,
-                                            "AnymalKinoCentroidalDynamicsAD", anymalCppAdModelPath, /*recompileLibraries=*/
-                                            true, /*verbose=*/false) {}
+            : PinocchioCentroidalDynamicsAD(pinocchioInterface, mapping,"AnymalKinoCentroidalDynamicsAD",
+                                            anymalCppAdModelPath, /*recompileLibraries=*/true, /*verbose=*/false) {}
 
     ~AnymalKinoCentroidalDynamicsAD() = default;
   };

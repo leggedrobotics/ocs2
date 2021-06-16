@@ -62,6 +62,50 @@ namespace ocs2 {
  * @remark: Base linear velocity is expressed with respect to the inertial frame
  */
 
+enum class CentroidalModelType { FullCentroidalDynamics, SingleRigidBodyDynamics };
+
+template <typename SCALAR>
+struct CentroidalModelInfoTpl {
+  /** Constructor
+   * @param [in] interface: Pinocchio interface
+   * @param [in] type: Type of template model (SRBD or FRBD)
+   * @param [in] qNominal: nominal robot configuration used in the SRBD model
+   * @param [in] threeDofContactNames: Names of end-effectors with 3 DoF contacts (force)
+   * @param [in] sixDofContactNames: Names of end-effectors with 6 DoF contacts (force + torque)
+   */
+  CentroidalModelInfoTpl(const PinocchioInterface& interface, const CentroidalModelType& type, const vector_t& qNominal,
+                         const std::vector<std::string>& threeDofContactNames, const std::vector<std::string>& sixDofContactNames) {
+    centroidalModelType = type;
+    numThreeDofContacts = threeDofContactNames.size();
+    numSixDofContacts = sixDofContactNames.size();
+    qPinocchioNominal = qNominal.cast<SCALAR>();
+    const pinocchio::Model& model = interface.getModel();
+    generalizedCoordinatesNum = model.nq;
+    actuatedDofNum = generalizedCoordinatesNum - 6;
+    stateDim = generalizedCoordinatesNum + 6;
+    inputDim = actuatedDofNum + 3 * numThreeDofContacts + 6 * numSixDofContacts;
+    scalar_t robotMassTemp = pinocchio::computeTotalMass(model);
+    robotMass = SCALAR(robotMassTemp);
+    for (const auto& name : threeDofContactNames) {
+      endEffectorFrameIndices.push_back(model.getBodyId(name));
+    }
+    for (const auto& name : sixDofContactNames) {
+      endEffectorFrameIndices.push_back(model.getBodyId(name));
+    }
+  }
+
+  CentroidalModelType centroidalModelType;                     // full centroidal dynamics OR single rigid body dynamics (SRBD)
+  size_t numThreeDofContacts;                                  // 3DOF contacts, force only
+  size_t numSixDofContacts;                                    // 6DOF contacts, force and torque
+  std::vector<size_t> endEffectorFrameIndices;                 // indices of end-effector frames [3DOF contacts, 6DOF contacts]
+  size_t generalizedCoordinatesNum;                            // number of generalized coordinates in the pinocchio model
+  size_t actuatedDofNum;                                       // number of actuated degrees of freedom
+  size_t stateDim;                                             // number of states needed to define the system flow map
+  size_t inputDim;                                             // number of inputs needed to define the system flow map
+  SCALAR robotMass;                                            // total robot mass
+  Eigen::Matrix<SCALAR, Eigen::Dynamic, 1> qPinocchioNominal;  // nominal robot configuration used in the SRBD model
+};
+
 template <typename SCALAR>
 class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
  public:
@@ -80,53 +124,18 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   using Model = pinocchio::ModelTpl<SCALAR>;
   using Data = typename Model::Data;
 
-  enum class CentroidalModelType { FullCentroidalDynamics, SingleRigidBodyDynamics };
+  using CentroidalModelInfo = CentroidalModelInfoTpl<SCALAR>;
 
-  struct CentroidalModelInfo {
-    CentroidalModelType centroidalModelType;      // full centroidal dynamics OR single rigid body dynamics (SRBD)
-    size_t numThreeDofContacts;                   // 3DOF contacts, force only
-    size_t numSixDofContacts;                     // 6DOF contacts, force and torque
-    std::vector<size_t> endEffectorFrameIndices;  // indices of end-effector frames [3DOF contacts, 6DOF contacts]
-    SCALAR robotMass;                             // total robot mass
-    vector_t qPinocchioNominal;                   // nominal robot configuration used in the SRBD model
-  };
-
-  /** Constructor
-   * @param [in] stateDim: Number of states defining the system flow map
-   * @param [in] inputDim: Number of inputs defining the system flow map
-   * @param [in] centroidalModelType: Type of template model (SRBD or FRBD)
-   * @param [in] qPinocchioNominal: nominal robot configuration used in the SRBD model
-   * @param [in] threeDofContactNames: Names of end-effectors with 3 DoF contacts (force)
-   * @param [in] sixDofContactNames: Names of end-effectors with 6 DoF contacts (force + torque)
-   */
-  CentroidalModelPinocchioMapping(size_t stateDim, size_t inputDim, const CentroidalModelType& centroidalModelType,
-                                  const vector_t& qPinocchioNominal, const std::vector<std::string>& threeDofContactNames,
-                                  const std::vector<std::string>& sixDofContactNames);
+  explicit CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo);
 
   ~CentroidalModelPinocchioMapping() override = default;
   CentroidalModelPinocchioMapping<SCALAR>* clone() const override { return new CentroidalModelPinocchioMapping<SCALAR>(*this); }
 
-  /** Sets the pinocchio interface for caching, and initializes the centroidal model info struct
+  /** Sets the pinocchio interface for caching
    * @note The pinocchio interface must be set before calling the getters.
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
    */
-  void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {
-    pinocchioInterfacePtr_ = &pinocchioInterface;
-    initializeCentroidalModelInfo();
-  }
-
-  /** Initializes the centroidal model info struct after defining the pinocchio interface */
-  void initializeCentroidalModelInfo() {
-    // TODO: Find a better way to do that, since this cannot be done in the constructor anymore (due to undefined pinocchioInterfacePtr_)
-    const Model& model = pinocchioInterfacePtr_->getModel();
-    centroidalModelInfo_.robotMass = pinocchio::computeTotalMass(model);
-    for (const auto& name : threeDofContactNames_) {
-      centroidalModelInfo_.endEffectorFrameIndices.push_back(model.getBodyId(name));
-    }
-    for (const auto& name : sixDofContactNames_) {
-      centroidalModelInfo_.endEffectorFrameIndices.push_back(model.getBodyId(name));
-    }
-  }
+  void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 
   /**
    * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state variables
@@ -205,11 +214,7 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
 
  private:
   const PinocchioInterfaceTpl<SCALAR>* pinocchioInterfacePtr_;
-  CentroidalModelInfo centroidalModelInfo_;
-  const size_t stateDim_;
-  const size_t inputDim_;
-  const std::vector<std::string>& threeDofContactNames_;
-  const std::vector<std::string>& sixDofContactNames_;
+  const CentroidalModelInfoTpl<SCALAR> centroidalModelInfo_;
 };
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */

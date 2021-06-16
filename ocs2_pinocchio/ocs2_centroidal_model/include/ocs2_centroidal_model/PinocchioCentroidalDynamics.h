@@ -39,8 +39,6 @@ class PinocchioCentroidalDynamics {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using CentroidalModelType = CentroidalModelPinocchioMapping<scalar_t>::CentroidalModelType;
-
   using Vector3 = Eigen::Matrix<scalar_t, 3, 1>;
   using Matrix3x = Eigen::Matrix<scalar_t, 3, Eigen::Dynamic>;
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
@@ -65,7 +63,8 @@ class PinocchioCentroidalDynamics {
    * @return system flow map x_dot = f(x, u)
    * @warning: The function computeCentroidalMap(model, data, q) and pinocchio::updateFramePlacements(model, data) should have been called
    * first.
-   * @remark: For the SRBD model, computeCentroidalMap(model, data, qSRBD) where qSRBD = (qbase, qJointsNominal)
+   * @remark: For the SRBD model, call computeCentroidalMap(model, data, qSRBD) where qSRBD = (qbase, qJointsNominal),
+   * followed by forwardKinematics(model, data, q)
    */
   vector_t getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input);
 
@@ -77,7 +76,8 @@ class PinocchioCentroidalDynamics {
    * @return linear approximation of system flow map x_dot = f(x, u)
    * @warning: The function pinocchio::computeCentroidalDynamicsDerivatives(...) and pinocchio::updateFramePlacements(model, data) should
    * have been called first.
-   * @remark: For the SRBD model, use qSRBD = (qbase, qJointsNominal) and vSRBD = (vbase, 0);
+   * @remark: For the SRBD model, use qSRBD = (qbase, qJointsNominal) and vSRBD = (vbase, 0) in computeCentroidalDynamicsDerivatives(...),
+   * followed by computeJointJacobians(model, data, q), and forwardKinematics(model, data, q)
    */
   VectorFunctionLinearApproximation getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 

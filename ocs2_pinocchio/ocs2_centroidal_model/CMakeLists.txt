@@ -31,7 +31,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 ###################################
 catkin_package(
   INCLUDE_DIRS
-        include
+    include
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
@@ -46,8 +46,8 @@ catkin_package(
 ###########
 
 include_directories(
-        include
-        test/include
+  include
+  test/include
   ${pinocchio_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}

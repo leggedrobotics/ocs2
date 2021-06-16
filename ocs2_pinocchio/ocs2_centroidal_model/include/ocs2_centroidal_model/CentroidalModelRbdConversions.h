@@ -37,8 +37,6 @@ class CentroidalModelRbdConversions {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using CentroidalModelType = CentroidalModelPinocchioMapping<scalar_t>::CentroidalModelType;
-
   using Vector3 = Eigen::Matrix<scalar_t, 3, 1>;
   using Vector6 = Eigen::Matrix<scalar_t, 6, 1>;
   using Matrix3 = Eigen::Matrix<scalar_t, 3, 3>;

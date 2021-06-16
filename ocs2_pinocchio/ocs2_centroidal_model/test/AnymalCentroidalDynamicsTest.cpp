@@ -40,9 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-using CentroidalModelType = CentroidalModelPinocchioMapping<scalar_t>::CentroidalModelType;
-using CentroidalModelTypeAD = CentroidalModelPinocchioMapping<ad_scalar_t>::CentroidalModelType;
-
 static PinocchioInterface getAnymalPinocchioInterface() {
   // build a joint model having just 2 joints: one translational joint and one spherical joint
   pinocchio::JointModelComposite jointComposite(2);
@@ -57,20 +54,19 @@ TEST(AnymalCentroidalModelTestInit, InitModelFromUrdf) {
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
-  CentroidalModelPinocchioMapping<scalar_t> mapping(anymal::STATE_DIM, anymal::INPUT_DIM,
-                                                    CentroidalModelType::SingleRigidBodyDynamics,
-                                                    anymalInitialState.tail(nq), anymal3DofContactNames,
-                                                    anymal6DofContactNames);
+  CentroidalModelInfoTpl<scalar_t> info(pinocchioInterface, CentroidalModelType::SingleRigidBodyDynamics,
+                                        anymalInitialState.tail(nq), anymal3DofContactNames,
+                                        anymal6DofContactNames);
+  CentroidalModelPinocchioMapping<scalar_t> mapping(info);
   mapping.setPinocchioInterface(pinocchioInterface);
-  const auto& centroidalModelInfo = mapping.getCentroidalModelInfo();
 
   std::cerr << "nq " << model.nq << '\n';
   std::cerr << "nv " << model.nv << '\n';
   std::cerr << "STATE_DIM " << anymal::STATE_DIM << '\n';
   std::cerr << "INPUT_DIM " << anymal::INPUT_DIM << '\n';
 
-  EXPECT_EQ(model.nq + 6, anymal::STATE_DIM);
-  EXPECT_EQ(model.nq - 6 + 3 * centroidalModelInfo.numThreeDofContacts + 6 * centroidalModelInfo.numSixDofContacts, anymal::INPUT_DIM);
+  EXPECT_EQ(info.stateDim, anymal::STATE_DIM);
+  EXPECT_EQ(info.inputDim, anymal::INPUT_DIM);
 }
 
 TEST(AnymalCentroidalModelTestInit, InitModelFromUrdfAD) {
@@ -78,10 +74,10 @@ TEST(AnymalCentroidalModelTestInit, InitModelFromUrdfAD) {
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
-  CentroidalModelPinocchioMapping<ad_scalar_t> mappingAD(anymal::STATE_DIM, anymal::INPUT_DIM,
-                                                         CentroidalModelTypeAD::SingleRigidBodyDynamics,
-                                                         ad_vector_t::Zero(nq), anymal3DofContactNames,
-                                                         anymal6DofContactNames);
+  CentroidalModelInfoTpl<ad_scalar_t> infoAD(pinocchioInterface, CentroidalModelType::SingleRigidBodyDynamics,
+                                        anymalInitialState.tail(nq), anymal3DofContactNames,
+                                        anymal6DofContactNames);
+  CentroidalModelPinocchioMapping<ad_scalar_t> mappingAD(infoAD);
   mappingAD.setPinocchioInterface(pinocchioInterface.toCppAd());
   const auto& centroidalModelInfo = mappingAD.getCentroidalModelInfo();
 
@@ -99,16 +95,16 @@ public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
   AnymalCentroidalModelTest() : pinocchioInterface_(getAnymalPinocchioInterface()) {
     size_t nq = pinocchioInterface_.getModel().nq;
-    mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(anymal::STATE_DIM, anymal::INPUT_DIM,
-                                                                 CentroidalModelType::SingleRigidBodyDynamics,
-                                                                 vector_t::Zero(nq), anymal3DofContactNames,
-                                                                 anymal6DofContactNames));
+    CentroidalModelInfoTpl<scalar_t> info(pinocchioInterface_, CentroidalModelType::SingleRigidBodyDynamics,
+                                          anymalInitialState.tail(nq), anymal3DofContactNames,
+                                          anymal6DofContactNames);
+    mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(info));
     AnymalKinoCentroidalDynamicsPtr = std::make_shared<AnymalKinoCentroidalDynamics>(pinocchioInterface_, *mapping_);
 
-    mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(anymal::STATE_DIM, anymal::INPUT_DIM,
-                                                                      CentroidalModelTypeAD::SingleRigidBodyDynamics,
-                                                                      ad_vector_t::Zero(nq), anymal3DofContactNames,
-                                                                      anymal6DofContactNames));
+    CentroidalModelInfoTpl<ad_scalar_t> infoAD(pinocchioInterface_, CentroidalModelType::SingleRigidBodyDynamics,
+                                               anymalInitialState.tail(nq), anymal3DofContactNames,
+                                               anymal6DofContactNames);
+    mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(infoAD));
     AnymalKinoCentroidalDynamicsAdPtr = std::make_shared<AnymalKinoCentroidalDynamicsAD>(pinocchioInterface_, *mappingAD_);
 
     srand(0);
@@ -182,7 +178,9 @@ TEST_F(AnymalCentroidalModelTest, ComputeFlowMap) {
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
   qPinocchioSRBD.head(6) = qPinocchio.head(6);
+  //TODO: Fix. Not the most efficient since computeCentroidalMap already calls forwardKinematics and computeJointJacobians internally
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
+  pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto dynamics = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
 }
@@ -202,10 +200,13 @@ TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_da_.resize(6, GENERALIZED_VEL_NUM);
+  //TODO: Fix. Not the most efficient since computeCentroidalMap already calls forwardKinematics and computeJointJacobians internally
   pinocchio::computeCentroidalDynamicsDerivatives(model, data,
                                                   qPinocchioSRBD, vPinocchioSRBD,
                                                   vector_t::Zero(GENERALIZED_VEL_NUM),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
+  pinocchio::computeJointJacobians(model, data, qPinocchio);
+  pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
 }
@@ -219,6 +220,7 @@ TEST_F(AnymalCentroidalModelTest, CompareFlowMaps) {
   vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
   qPinocchioSRBD.head(6) = qPinocchio.head(6);
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
+  pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto stateDerivative = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
 
@@ -246,6 +248,8 @@ TEST_F(AnymalCentroidalModelTest, CompareFlowMapLinearApproximations) {
                                                   qPinocchioSRBD, vPinocchioSRBD,
                                                   vector_t::Zero(GENERALIZED_VEL_NUM),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
+  pinocchio::computeJointJacobians(model, data, qPinocchio);
+  pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
   compareApproximation(linearApproximation, linearApproximationAd);

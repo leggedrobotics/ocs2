@@ -48,9 +48,8 @@ PinocchioCentroidalDynamics::PinocchioCentroidalDynamics(const PinocchioInterfac
 /******************************************************************************************************/
 vector_t PinocchioCentroidalDynamics::getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
-  const size_t generalizedVelocityNum = model.nv;
   const auto& info = mappingPtr_->getCentroidalModelInfo();
-  assert(generalizedVelocityNum == state.rows() - 6);
+  assert(info.stateDim == state.rows());
 
   return (vector_t(state.rows()) << mappingPtr_->normalizedCentroidalMomentumRate(input),
           mappingPtr_->getPinocchioJointVelocity(state, input))
@@ -64,18 +63,17 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapL
                                                                                                    const vector_t& input) {
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
-  const size_t generalizedVelocityNum = model.nv;
-  const size_t actuatedDofNum = generalizedVelocityNum - 6;
   const size_t stateDim = state.rows();
   const size_t inputDim = input.rows();
-  assert(generalizedVelocityNum == stateDim - 6);
   const auto& info = mappingPtr_->getCentroidalModelInfo();
+  assert(info.stateDim == stateDim);
+  assert(info.inputDim == inputDim);
 
   auto dynamics = ocs2::VectorFunctionLinearApproximation::Zero(state.rows(), state.rows(), inputDim);
   dynamics.f = getSystemFlowMap(time, state, input);
 
   const auto& qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
-  const auto& vPinocchio = dynamics.f.tail(generalizedVelocityNum);
+  const auto& vPinocchio = dynamics.f.tail(info.generalizedCoordinatesNum);
 
   // Partial derivatives of the normalized momentum rates
   computeNormalizedCentroidalMomentumRateGradients(state, input);
@@ -85,33 +83,33 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapL
   const Matrix6 Ab = A.template leftCols<6>();
   // TODO: move getFloatingBaseCentroidalMomentumMatrixInverse(Ab) to PreComputation
   const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
-  const Matrix6x& Aj = A.rightCols(actuatedDofNum);
+  const auto Aj = A.rightCols(info.actuatedDofNum);
 
+  floatingBaseVelocitiesDerivativeInput_.setZero(6, inputDim);
   floatingBaseVelocitiesDerivativeState_.setZero(6, stateDim);
   floatingBaseVelocitiesDerivativeState_.leftCols(6) = info.robotMass * Ab_inv;
-  dh_dq_.resize(6, generalizedVelocityNum);
-  dhdot_dq_.resize(6, generalizedVelocityNum);
-  dhdot_dv_.resize(6, generalizedVelocityNum);
-  dhdot_da_.resize(6, generalizedVelocityNum);
+  dh_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dv_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_da_.resize(6, info.generalizedCoordinatesNum);
 
   // TODO: Check how to get the correct value for dh_dq_
   const pinocchio::Inertia& Ytot = data.oYcrb[0];
   const typename pinocchio::Inertia::Vector3& com = Ytot.lever();
   pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(Matrix6x, dh_dq_));
   dh_dq_.leftCols(3).setZero();
+
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    floatingBaseVelocitiesDerivativeState_.rightCols(generalizedVelocityNum).noalias() = -Ab_inv * dh_dq_;
+    floatingBaseVelocitiesDerivativeState_.rightCols(info.generalizedCoordinatesNum).noalias() = -Ab_inv * dh_dq_;
+    floatingBaseVelocitiesDerivativeInput_.rightCols(info.actuatedDofNum).noalias() = -Ab_inv * Aj;
   } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
     floatingBaseVelocitiesDerivativeState_.middleCols(6, 6).noalias() = -Ab_inv * dh_dq_.leftCols(6);
   }
 
-  floatingBaseVelocitiesDerivativeInput_.setZero(6, inputDim);
-  floatingBaseVelocitiesDerivativeInput_.rightCols(actuatedDofNum).noalias() = -Ab_inv * Aj;
-
   // Partial derivatives of the actuated joints
-  jointVelocitiesDerivativeInput_.setZero(actuatedDofNum, inputDim);
-  jointVelocitiesDerivativeInput_.rightCols(actuatedDofNum).setIdentity();
-  jointVelocitiesDerivativeState_.setZero(actuatedDofNum, state.rows());
+  jointVelocitiesDerivativeInput_.setZero(info.actuatedDofNum, inputDim);
+  jointVelocitiesDerivativeInput_.rightCols(info.actuatedDofNum).setIdentity();
+  jointVelocitiesDerivativeState_.setZero(info.actuatedDofNum, state.rows());
 
   dynamics.dfdx << normalizedLinearMomentumRateDerivativeState_, normalizedAngularMomentumRateDerivativeState_,
       floatingBaseVelocitiesDerivativeState_, jointVelocitiesDerivativeState_;
@@ -126,12 +124,11 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapL
 /******************************************************************************************************/
 void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input) {
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
-  const size_t generalizedVelocityNum = model.nv;
-  const size_t actuatedDofNum = generalizedVelocityNum - 6;
   const size_t stateDim = state.rows();
   const size_t inputDim = input.rows();
   const auto& info = mappingPtr_->getCentroidalModelInfo();
-  assert(3 * info.numThreeDofContacts + 6 * info.numSixDofContacts + actuatedDofNum == inputDim);
+  assert(info.stateDim == stateDim);
+  assert(info.inputDim == inputDim);
 
   // compute partial derivatives of the center of robotMass acceleration and normalized angular momentum
   normalizedLinearMomentumRateDerivativeState_.setZero(3, stateDim);
@@ -144,7 +141,7 @@ void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradien
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     contactForceInWorldFrame = input.segment<3>(3 * i);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
-    normalizedAngularMomentumRateDerivativeState_.rightCols(generalizedVelocityNum).noalias() -=
+    normalizedAngularMomentumRateDerivativeState_.rightCols(info.generalizedCoordinatesNum) -=
         f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, 3 * i).diagonal().array() = 1.0 / info.robotMass;
     p_hat = skewSymmetricMatrix(mappingPtr_->getPositionComToContactPointInWorldFrame(i)) / info.robotMass;
@@ -155,7 +152,7 @@ void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradien
     const size_t inputIdx = 3 * info.numThreeDofContacts + 6 * (i - info.numThreeDofContacts);
     contactForceInWorldFrame = input.segment<3>(inputIdx);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
-    normalizedAngularMomentumRateDerivativeState_.rightCols(generalizedVelocityNum).noalias() -=
+    normalizedAngularMomentumRateDerivativeState_.rightCols(info.generalizedCoordinatesNum) -=
         f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
 
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, inputIdx).diagonal().array() = 1.0 / info.robotMass;

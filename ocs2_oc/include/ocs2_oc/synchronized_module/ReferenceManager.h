@@ -57,7 +57,6 @@ class ReferenceManager {
    * @param initTime : start time of the MPC horizon
    * @param finalTime : Final time of the MPC horizon
    * @param initState : State at the start of the MPC horizon
-   * @param costDesiredTrajectory : User defined cost desired trajectory
    */
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState);
 
@@ -80,6 +79,18 @@ class ReferenceManager {
    * Returns a a copy of ModeSchedule. This method is thread safe.
    */
   CostDesiredTrajectories getCostDesiredTrajectoriesImage() const;
+
+  /**
+   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
+   * This method is thread safe.
+   */
+  void setModeSchedule(const ModeSchedule& modeSchedule);
+
+  /**
+   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
+   * This method is thread safe.
+   */
+  void setModeSchedule(ModeSchedule&& modeSchedule);
 
   /**
    * Sets the CostDesiredTrajectories to the buffer. The buffer will move to internal CostDesiredTrajectories once
@@ -108,11 +119,13 @@ class ReferenceManager {
 
  private:
   ModeSchedule modeSchedule_;
+  ModeSchedule modeScheduleBuffer_;
 
   CostDesiredTrajectories costDesiredTrajectories_;
   CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
 
   mutable std::mutex dataMutex_;
+  bool modeScheduleUpdated_{false};
   bool costDesiredTrajectoriesUpdated_{false};
 };
 

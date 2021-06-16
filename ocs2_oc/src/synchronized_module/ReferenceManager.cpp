@@ -36,6 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
   std::lock_guard<std::mutex> lock(dataMutex_);
+  if (modeScheduleUpdated_) {
+    modeScheduleUpdated_ = false;
+    swap(modeSchedule_, modeScheduleBuffer_);
+  }
   if (costDesiredTrajectoriesUpdated_) {
     costDesiredTrajectoriesUpdated_ = false;
     costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
@@ -62,10 +66,28 @@ CostDesiredTrajectories ReferenceManager::getCostDesiredTrajectoriesImage() cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void ReferenceManager::setModeSchedule(const ModeSchedule& modeSchedule) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  modeScheduleBuffer_ = modeSchedule;
+  modeScheduleUpdated_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::setModeSchedule(ModeSchedule&& modeSchedule) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  modeScheduleBuffer_ = std::move(modeSchedule);
+  modeScheduleUpdated_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void ReferenceManager::setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
   std::lock_guard<std::mutex> lock(dataMutex_);
-  costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_ = costDesiredTrajectories;
+  costDesiredTrajectoriesUpdated_ = true;
 }
 
 /******************************************************************************************************/
@@ -73,8 +95,8 @@ void ReferenceManager::setCostDesiredTrajectories(const CostDesiredTrajectories&
 /******************************************************************************************************/
 void ReferenceManager::setCostDesiredTrajectories(CostDesiredTrajectories&& costDesiredTrajectories) {
   std::lock_guard<std::mutex> lock(dataMutex_);
-  costDesiredTrajectoriesUpdated_ = true;
   costDesiredTrajectoriesBuffer_.swap(costDesiredTrajectories);
+  costDesiredTrajectoriesUpdated_ = true;
 }
 
 }  // namespace ocs2

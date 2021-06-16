@@ -52,11 +52,11 @@ class ReferenceManager {
   ReferenceManager& operator=(const ReferenceManager& other) = delete;
 
   /**
-   * Method called right before the solver runs
+   * The method is called right before the solver runs and before any other SolverSynchronizedModule::preSolverRun().
    *
-   * @param initTime : start time of the MPC horizon
-   * @param finalTime : Final time of the MPC horizon
-   * @param initState : State at the start of the MPC horizon
+   * @param [in] initTime : Start time of the optimization horizon.
+   * @param [in] finalTime : Final time of the optimization horizon.
+   * @param [in] initState : State at the start of the optimization horizon.
    */
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState);
 
@@ -108,14 +108,14 @@ class ReferenceManager {
   /**
    * This method modifies the active ModeSchedule and CostDesiredTrajectories.
    *
-   * @param [in] initTime : start time of the MPC horizon.
-   * @param [in] finalTime : Final time of the MPC horizon.
-   * @param [in] initState : State at the start of the MPC horizon.
-   * @param [in/out] modeSchedule : The active ModeSchedule.
-   * @param [in/out] costDesiredTrajectory : The active CostDesiredTrajectories.
+   * @param [in] initTime : Start time of the optimization horizon.
+   * @param [in] finalTime : Final time of the optimization horizon.
+   * @param [in] initState : State at the start of the optimization horizon.
+   * @param [out] modeSchedule : The updated ModeSchedule.
+   * @param [out] costDesiredTrajectory : The updated CostDesiredTrajectories.
    */
-  virtual void modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ModeSchedule& modeSchedule,
-                                      CostDesiredTrajectories& costDesiredTrajectory) {}
+  virtual void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ModeSchedule& modeSchedule,
+                                CostDesiredTrajectories& costDesiredTrajectory);
 
  private:
   ModeSchedule modeSchedule_;

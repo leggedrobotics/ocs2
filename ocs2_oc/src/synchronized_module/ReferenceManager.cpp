@@ -34,17 +34,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
+void ReferenceManager::preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                                        ModeSchedule& modeSchedule, CostDesiredTrajectories& costDesiredTrajectory) {
   std::lock_guard<std::mutex> lock(dataMutex_);
   if (modeScheduleUpdated_) {
+    swap(modeSchedule, modeScheduleBuffer_);
     modeScheduleUpdated_ = false;
-    swap(modeSchedule_, modeScheduleBuffer_);
   }
   if (costDesiredTrajectoriesUpdated_) {
+    costDesiredTrajectory.swap(costDesiredTrajectoriesBuffer_);
     costDesiredTrajectoriesUpdated_ = false;
-    costDesiredTrajectories_.swap(costDesiredTrajectoriesBuffer_);
   }
-  modifyActiveReferences(initTime, finalTime, initState, modeSchedule_, costDesiredTrajectories_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
+  preSolverRunImpl(initTime, finalTime, initState, modeSchedule_, costDesiredTrajectories_);
 }
 
 /******************************************************************************************************/
@@ -77,7 +84,7 @@ void ReferenceManager::setModeSchedule(const ModeSchedule& modeSchedule) {
 /******************************************************************************************************/
 void ReferenceManager::setModeSchedule(ModeSchedule&& modeSchedule) {
   std::lock_guard<std::mutex> lock(dataMutex_);
-  modeScheduleBuffer_ = std::move(modeSchedule);
+  swap(modeScheduleBuffer_, modeSchedule);
   modeScheduleUpdated_ = true;
 }
 

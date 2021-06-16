@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/subscriber.h>
 
 #include <ocs2_quadrotor_example/definitions.h>
-#include <ocs2_robotic_tools/command/TargetPoseTransformation.h>
-#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
+#include <ocs2_ros_interfaces/command/TargetPoseTransformation.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardInterface.h>
 
 namespace ocs2 {
 namespace quadrotor {

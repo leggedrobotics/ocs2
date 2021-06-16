@@ -41,7 +41,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 TargetTrajectories_IMarker_Mobile_Manipulator::TargetTrajectories_IMarker_Mobile_Manipulator(int argc, char* argv[], std::string robotName)
-    : TargetTrajectories_ROS_Interface(argc, argv, robotName), server("simple_marker") {
+    : TargetTrajectoriesRosInterface(argc, argv, robotName), server("simple_marker") {
   observationSubscriber_ = this->nodeHandle_->subscribe("/" + robotName + "_mpc_observation", 1,
                                                         &TargetTrajectories_IMarker_Mobile_Manipulator::observationCallback, this);
   // create an interactive marker for our server

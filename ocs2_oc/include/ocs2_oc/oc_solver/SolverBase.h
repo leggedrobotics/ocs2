@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
@@ -51,7 +51,7 @@ class SolverBase {
   /**
    * Constructor.
    */
-  SolverBase() : modeScheduleManagerPtr_(new ModeScheduleManager) {}
+  SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 
   /**
    * Default destructor.
@@ -90,20 +90,21 @@ class SolverBase {
            const std::vector<ControllerBase*>& controllersPtrStock);
 
   /**
-   * Set mode schedule manager. This module is updated once before and once after solving the problem.
+   * Sets the ReferenceManager which manages both ModeSchedule and CostDesiredTrajectories. This module is updated before
+   * SynchronizedModules.
    */
-  void setModeScheduleManager(std::shared_ptr<ModeScheduleManager> modeScheduleManager) {
-    if (modeScheduleManager == nullptr) {
-      throw std::runtime_error("[SolverBase] ModeScheduleManager pointer cannot be a nullptr!");
+  void setReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr) {
+    if (referenceManagerPtr == nullptr) {
+      throw std::runtime_error("[SolverBase] ReferenceManager pointer cannot be a nullptr!");
     }
-    modeScheduleManagerPtr_ = std::move(modeScheduleManager);
+    referenceManagerPtr_ = std::move(referenceManagerPtr);
   };
 
   /*
-   * Gets the ModeScheduleManager which manages both ModeSchedule and CostDesiredTrajectories.
+   * Gets the ReferenceManager which manages both ModeSchedule and CostDesiredTrajectories.
    */
-  ModeScheduleManager& getModeScheduleManager() { return *modeScheduleManagerPtr_; }
-  const ModeScheduleManager& getModeScheduleManager() const { return *modeScheduleManagerPtr_; }
+  ReferenceManager& getReferenceManager() { return *referenceManagerPtr_; }
+  const ReferenceManager& getReferenceManager() const { return *referenceManagerPtr_; }
 
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
@@ -219,7 +220,7 @@ class SolverBase {
 
  private:
   mutable std::mutex outputDisplayGuardMutex_;
-  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;  // this pointer cannot be nullptr
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
 };
 

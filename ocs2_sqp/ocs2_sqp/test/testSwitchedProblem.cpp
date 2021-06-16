@@ -45,8 +45,8 @@ namespace {
  */
 class SwitchedConstraint : public ocs2::ConstraintBase {
  public:
-  explicit SwitchedConstraint(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr)
-      : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), subsystemConstraintsPtr_(2) {
+  explicit SwitchedConstraint(std::shared_ptr<ReferenceManager> referenceManagerPtr)
+      : referenceManagerPtr_(std::move(referenceManagerPtr)), subsystemConstraintsPtr_(2) {
     int n = 3;
     int m = 2;
     int nc = 1;
@@ -66,7 +66,7 @@ class SwitchedConstraint : public ocs2::ConstraintBase {
   ~SwitchedConstraint() override = default;
 
   SwitchedConstraint(const SwitchedConstraint& other)
-      : ocs2::ConstraintBase(other), modeScheduleManagerPtr_(other.modeScheduleManagerPtr_) {
+      : ocs2::ConstraintBase(other), referenceManagerPtr_(other.referenceManagerPtr_) {
     for (const auto& constraint : other.subsystemConstraintsPtr_) {
       subsystemConstraintsPtr_.emplace_back(constraint->clone());
     }
@@ -75,19 +75,19 @@ class SwitchedConstraint : public ocs2::ConstraintBase {
   SwitchedConstraint* clone() const override { return new SwitchedConstraint(*this); }
 
   vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
     return subsystemConstraintsPtr_[activeMode]->stateInputEqualityConstraint(t, x, u);
   }
 
   VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
                                                                                     const vector_t& u) override {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
     return subsystemConstraintsPtr_[activeMode]->stateInputEqualityConstraintLinearApproximation(t, x, u);
   }
 
  public:
   std::vector<std::unique_ptr<ConstraintBase>> subsystemConstraintsPtr_;
-  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
 };
 
 std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scalar_t eventTime) {
@@ -107,8 +107,8 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   // Constraint
   const ocs2::scalar_array_t eventTimes{eventTime};
   const std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<ocs2::ModeScheduleManager> modeScheduleManagerPtr(new ocs2::ModeScheduleManager({eventTimes, subsystemsSequence}));
-  ocs2::SwitchedConstraint switchedConstraint(modeScheduleManagerPtr);
+  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr(new ocs2::ReferenceManager({eventTimes, subsystemsSequence}));
+  ocs2::SwitchedConstraint switchedConstraint(referenceManagerPtr);
 
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
@@ -128,7 +128,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
 
   // Set up solver
   ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &switchedConstraint);
-  solver.setModeScheduleManager(modeScheduleManagerPtr);
+  solver.setReferenceManager(referenceManagerPtr);
   solver.setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Solve

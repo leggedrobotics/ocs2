@@ -128,8 +128,8 @@ scalar_t MobileManipulatorCost::cost(scalar_t t, const vector_t& x, const vector
     pinocchio::updateFramePlacements(model, data);
   }
 
-  scalar_t cost = stateInputCostCollection_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
-  cost += stateCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
+  scalar_t cost = stateInputCostCollection_.getValue(t, x, u, *targetTrajectoriesPtr_);
+  cost += stateCostCollection_.getValue(t, x, *targetTrajectoriesPtr_);
   return cost;
 }
 
@@ -148,7 +148,7 @@ scalar_t MobileManipulatorCost::finalCost(scalar_t t, const vector_t& x) {
     pinocchio::updateFramePlacements(model, data);
   }
 
-  return finalCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
+  return finalCostCollection_.getValue(t, x, *targetTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/
@@ -168,8 +168,8 @@ ScalarFunctionQuadraticApproximation MobileManipulatorCost::costQuadraticApproxi
     pinocchio::updateGlobalPlacements(model, data);
   }
 
-  auto cost = stateInputCostCollection_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
-  const auto stateCost = stateCostCollection_.getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_);
+  auto cost = stateInputCostCollection_.getQuadraticApproximation(t, x, u, *targetTrajectoriesPtr_);
+  const auto stateCost = stateCostCollection_.getQuadraticApproximation(t, x, *targetTrajectoriesPtr_);
   cost.f += stateCost.f;
   cost.dfdx += stateCost.dfdx;
   cost.dfdxx += stateCost.dfdxx;
@@ -192,18 +192,18 @@ ScalarFunctionQuadraticApproximation MobileManipulatorCost::finalCostQuadraticAp
     pinocchio::computeJointJacobians(model, data);
   }
 
-  return finalCostCollection_.getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_);
+  return finalCostCollection_.getQuadraticApproximation(t, x, *targetTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorCost::setEndEffectorReference(scalar_t time) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
+  if (targetTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[MobileManipulatorCost] targetTrajectoriesPtr_ is not set.");
   }
 
-  const auto eePositionOrientationPair = interpolateEndEffectorPose(*costDesiredTrajectoriesPtr_, time);
+  const auto eePositionOrientationPair = interpolateEndEffectorPose(*targetTrajectoriesPtr_, time);
   eeConstraintPtr_->setDesiredPose(eePositionOrientationPair.first, eePositionOrientationPair.second);
 }
 
@@ -211,27 +211,27 @@ void MobileManipulatorCost::setEndEffectorReference(scalar_t time) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MobileManipulatorCost::setFinalEndEffectorReference(scalar_t time) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[MobileManipulatorCost] costDesiredTrajectoriesPtr_ is not set.");
+  if (targetTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[MobileManipulatorCost] targetTrajectoriesPtr_ is not set.");
   }
 
-  const auto eePositionOrientationPair = interpolateEndEffectorPose(*costDesiredTrajectoriesPtr_, time);
+  const auto eePositionOrientationPair = interpolateEndEffectorPose(*targetTrajectoriesPtr_, time);
   finalEeConstraintPtr_->setDesiredPose(eePositionOrientationPair.first, eePositionOrientationPair.second);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto MobileManipulatorCost::interpolateEndEffectorPose(const CostDesiredTrajectories& costDesiredTrajectory, scalar_t time) const
+auto MobileManipulatorCost::interpolateEndEffectorPose(const TargetTrajectories& targetTrajectories, scalar_t time) const
     -> std::pair<vector_t, quaternion_t> {
-  const auto& desiredTrajectory = costDesiredTrajectory.desiredStateTrajectory();
+  const auto& desiredTrajectory = targetTrajectories.stateTrajectory;
   std::pair<vector_t, Eigen::Quaternion<scalar_t>> reference;
 
   if (desiredTrajectory.size() > 1) {
     // Normal interpolation case
     int index;
     scalar_t alpha;
-    std::tie(index, alpha) = LinearInterpolation::timeSegment(time, costDesiredTrajectory.desiredTimeTrajectory());
+    std::tie(index, alpha) = LinearInterpolation::timeSegment(time, targetTrajectories.timeTrajectory);
 
     const auto& lhs = desiredTrajectory[index];
     const auto& rhs = desiredTrajectory[index + 1];

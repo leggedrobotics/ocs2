@@ -132,12 +132,12 @@ void TargetTrajectories_IMarker_Mobile_Manipulator::processFeedback(const visual
   ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
 
   // Desired time trajectory
-  CostDesiredTrajectories costDesiredTrajectories(1);
-  scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
+  TargetTrajectories targetTrajectories(1);
+  scalar_array_t& tDesiredTrajectory = targetTrajectories.timeTrajectory;
   tDesiredTrajectory[0] = observation.time;
 
   // Desired state trajectory
-  vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
+  vector_array_t& xDesiredTrajectory = targetTrajectories.stateTrajectory;
   xDesiredTrajectory[0].resize(7);  // 3 + 4 for desired position vector and orientation quaternion
   xDesiredTrajectory[0].tail<4>() = Eigen::Quaterniond(feedback->pose.orientation.w, feedback->pose.orientation.x,
                                                        feedback->pose.orientation.y, feedback->pose.orientation.z)
@@ -145,10 +145,10 @@ void TargetTrajectories_IMarker_Mobile_Manipulator::processFeedback(const visual
   xDesiredTrajectory[0].head<3>() << feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z;
 
   // Desired input trajectory
-  vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+  vector_array_t& uDesiredTrajectory = targetTrajectories.inputTrajectory;
   uDesiredTrajectory[0].setZero(INPUT_DIM);
 
-  this->publishTargetTrajectories(costDesiredTrajectories);
+  this->publishTargetTrajectories(targetTrajectories);
 }
 
 /******************************************************************************************************/

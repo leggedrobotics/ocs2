@@ -52,7 +52,7 @@ class SolverSynchronizedModule {
    * @param initTime : start time of the MPC horizon
    * @param finalTime : Final time of the MPC horizon
    * @param initState : State at the start of the MPC horizon
-   * @param referenceManager : The ReferenceManager which manages both ModeSchedule and CostDesiredTrajectories.
+   * @param referenceManager : The ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
   virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState, const ReferenceManager& referenceManager) = 0;
 

@@ -175,10 +175,10 @@ class EXP1_CostFunction : public CostFunctionBase {
     vector_t u(1);
     x << 1.0, -1.0;
     u << 0.0;
-    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {x}, {u});
-    subsystemCostsPtr_[0]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
-    subsystemCostsPtr_[1]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
-    subsystemCostsPtr_[2]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
+    targetTrajectories_ = TargetTrajectories({0.0}, {x}, {u});
+    subsystemCostsPtr_[0]->setTargetTrajectoriesPtr(&targetTrajectories_);
+    subsystemCostsPtr_[1]->setTargetTrajectoriesPtr(&targetTrajectories_);
+    subsystemCostsPtr_[2]->setTargetTrajectoriesPtr(&targetTrajectories_);
   }
 
   ~EXP1_CostFunction() = default;
@@ -210,7 +210,7 @@ class EXP1_CostFunction : public CostFunctionBase {
  public:
   std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
   std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_{3};
-  CostDesiredTrajectories costDesiredTrajectories_;
+  TargetTrajectories targetTrajectories_;
 };
 
 }  // namespace ocs2

@@ -27,128 +27,109 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iomanip>
-#include <iostream>
+#include "ocs2_core/reference/TargetTrajectories.h"
 
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+
+#include <iomanip>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-CostDesiredTrajectories::CostDesiredTrajectories(scalar_array_t desiredTimeTrajectory, vector_array_t desiredStateTrajectory,
-                                                 vector_array_t desiredInputTrajectory)
-    : desiredTimeTrajectory_(std::move(desiredTimeTrajectory)),
-      desiredStateTrajectory_(std::move(desiredStateTrajectory)),
-      desiredInputTrajectory_(std::move(desiredInputTrajectory)) {}
+TargetTrajectories::TargetTrajectories(size_t size) : timeTrajectory(size), stateTrajectory(size), inputTrajectory(size) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-CostDesiredTrajectories::CostDesiredTrajectories(size_t trajectorySize)
-    : desiredTimeTrajectory_(trajectorySize), desiredStateTrajectory_(trajectorySize), desiredInputTrajectory_(trajectorySize) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-bool CostDesiredTrajectories::empty() const {
-  return desiredTimeTrajectory_.empty();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-void CostDesiredTrajectories::clear() {
-  desiredTimeTrajectory_.clear();
-  desiredStateTrajectory_.clear();
-  desiredInputTrajectory_.clear();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-void CostDesiredTrajectories::swap(CostDesiredTrajectories& other) {
-  desiredTimeTrajectory_.swap(other.desiredTimeTrajectory_);
-  desiredStateTrajectory_.swap(other.desiredStateTrajectory_);
-  desiredInputTrajectory_.swap(other.desiredInputTrajectory_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-bool CostDesiredTrajectories::operator==(const CostDesiredTrajectories& other) {
-  return this->desiredTimeTrajectory() == other.desiredTimeTrajectory() &&
-         this->desiredStateTrajectory() == other.desiredStateTrajectory() &&
-         this->desiredInputTrajectory() == other.desiredInputTrajectory();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/***************************************************************************************************** */
-vector_t CostDesiredTrajectories::getDesiredState(scalar_t time) const {
-  if (desiredTimeTrajectory_.empty() || desiredStateTrajectory_.empty()) {
-    throw std::runtime_error("CostDesiredTrajectories is empty.");
-  } else {
-    return LinearInterpolation::interpolate(time, desiredTimeTrajectory_, desiredStateTrajectory_);
+TargetTrajectories::TargetTrajectories(scalar_array_t desiredTimeTrajectory, vector_array_t desiredStateTrajectory,
+                                       vector_array_t desiredInputTrajectory)
+    : timeTrajectory(std::move(desiredTimeTrajectory)),
+      stateTrajectory(std::move(desiredStateTrajectory)),
+      inputTrajectory(std::move(desiredInputTrajectory)) {
+  assert(stateTrajectory.size() == timeTrajectory.size());
+  if (!inputTrajectory.empty()) {
+    assert(inputTrajectory.size() == timeTrajectory.size());
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-vector_t CostDesiredTrajectories::getDesiredInput(scalar_t time) const {
+void TargetTrajectories::clear() {
+  timeTrajectory.clear();
+  stateTrajectory.clear();
+  inputTrajectory.clear();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+bool TargetTrajectories::operator==(const TargetTrajectories& other) {
+  return this->timeTrajectory == other.timeTrajectory && this->stateTrajectory == other.stateTrajectory &&
+         this->inputTrajectory == other.inputTrajectory;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+vector_t TargetTrajectories::getDesiredState(scalar_t time) const {
+  if (this->empty()) {
+    throw std::runtime_error("[TargetTrajectories] TargetTrajectories is empty!");
+  } else {
+    return LinearInterpolation::interpolate(time, timeTrajectory, stateTrajectory);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/***************************************************************************************************** */
+vector_t TargetTrajectories::getDesiredInput(scalar_t time) const {
   vector_t desiredInput;
-  if (desiredTimeTrajectory_.empty() || desiredInputTrajectory_.empty()) {
-    throw std::runtime_error("CostDesiredTrajectories is empty.");
+  if (this->empty()) {
+    throw std::runtime_error("[TargetTrajectories] TargetTrajectories is empty!");
+  } else if (inputTrajectory.empty()) {
+    throw std::runtime_error("[TargetTrajectories] TargetTrajectories does not have inputTrajectory!");
   } else {
-    return LinearInterpolation::interpolate(time, desiredTimeTrajectory_, desiredInputTrajectory_);
+    return LinearInterpolation::interpolate(time, timeTrajectory, inputTrajectory);
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-std::ostream& operator<<(std::ostream& out, const CostDesiredTrajectories& traj) {
-  const int dispPrecision = 4;
-
-  for (size_t i = 0; i < traj.desiredTimeTrajectory_.size(); i++) {
-    out << "time: " << std::setprecision(dispPrecision) << traj.desiredTimeTrajectory_[i] << ",\n";
-
-    // state
-    out << "state: [";
-    for (size_t j = 0; j < traj.desiredStateTrajectory_[i].size(); j++) {
-      out << std::setprecision(dispPrecision) << traj.desiredStateTrajectory_[i](j) << ",  ";
-    }
-    if (traj.desiredStateTrajectory_[i].size() > 0) {
-      out << "\b\b]"
-          << ",\n";
-    } else {
-      out << " ]"
-          << ",\n";
-    }
-
-    // input
-    out << "input: [";
-    for (size_t j = 0; j < traj.desiredInputTrajectory_[i].size(); j++) {
-      out << std::setprecision(dispPrecision) << traj.desiredInputTrajectory_[i](j) << ",  ";
-    }
-    if (traj.desiredInputTrajectory_[i].size() > 0) {
-      out << "\b\b]\n";
-    } else {
-      out << " ]\n";
-    }
-
-  }  // end of i loop
-  return out;
+void swap(TargetTrajectories& lh, TargetTrajectories& rh) {
+  lh.timeTrajectory.swap(rh.timeTrajectory);
+  lh.stateTrajectory.swap(rh.stateTrajectory);
+  lh.inputTrajectory.swap(rh.inputTrajectory);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-void CostDesiredTrajectories::display() const {
-  std::cerr << *this;
+std::ostream& operator<<(std::ostream& out, const TargetTrajectories& costDesiredTrajectories) {
+  constexpr int dispPrecision = 4;
+  auto printTidy = [dispPrecision](std::ostream& out, const vector_t& vec) {
+    out << "[";
+    for (size_t j = 0; j < vec.size(); j++) {
+      out << vec(j);
+      if (j + 1 != vec.size()) {
+        out << ",  ";
+      }
+    }
+    out << " ]\n";
+  };
+
+  for (size_t i = 0; i < costDesiredTrajectories.timeTrajectory.size(); i++) {
+    out << "time: " << std::setprecision(dispPrecision) << costDesiredTrajectories.timeTrajectory[i] << "\n";
+    out << "state: " << std::setprecision(dispPrecision);
+    printTidy(out, costDesiredTrajectories.stateTrajectory[i]);
+    out << "input: " << std::setprecision(dispPrecision);
+    printTidy(out, costDesiredTrajectories.inputTrajectory[i]);
+  }  // end of i loop
+
+  return out;
 }
 
 }  // namespace ocs2

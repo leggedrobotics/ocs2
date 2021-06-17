@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_core/logic/ModeSchedule.h"
+#include "ocs2_core/reference/ModeSchedule.h"
 
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/Lookup.h>

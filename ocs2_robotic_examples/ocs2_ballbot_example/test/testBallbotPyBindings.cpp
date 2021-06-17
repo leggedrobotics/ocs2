@@ -39,12 +39,12 @@ TEST(Ballbot, PyBindings) {
   initState(2) = 0.0;
   const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::ballbot::INPUT_DIM);
 
-  ocs2::CostDesiredTrajectories costDesiredTraj;
-  costDesiredTraj.desiredTimeTrajectory().resize(2, 0.0);
-  costDesiredTraj.desiredTimeTrajectory()[1] = 2.0;
-  costDesiredTraj.desiredInputTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::ballbot::INPUT_DIM));
-  costDesiredTraj.desiredStateTrajectory().resize(2, ocs2::vector_t::Zero(ocs2::ballbot::STATE_DIM));
-  costDesiredTraj.desiredStateTrajectory()[0] = initState;
+  ocs2::TargetTrajectories targetTrajectories;
+  targetTrajectories.timeTrajectory.resize(2, 0.0);
+  targetTrajectories.timeTrajectory[1] = 2.0;
+  targetTrajectories.inputTrajectory.resize(2, ocs2::vector_t::Zero(ocs2::ballbot::INPUT_DIM));
+  targetTrajectories.stateTrajectory.resize(2, ocs2::vector_t::Zero(ocs2::ballbot::STATE_DIM));
+  targetTrajectories.stateTrajectory[0] = initState;
 
   bindings.reset(costDesiredTraj);
   bindings.setObservation(0.0, initState, zeroInput);
@@ -74,7 +74,7 @@ TEST(Ballbot, PyBindings) {
   const auto L = bindings.costQuadraticApproximation(t_arr[0], x_arr[0], u_arr[0]);
   std::cout << "L: " << L.f << "\ndLdx: " << L.dfdx.transpose() << "\ndLdu: " << L.dfdu.transpose() << std::endl;
 
-  bindings.reset(costDesiredTraj);
+  bindings.reset(targetTrajectories);
   bindings.setObservation(0.0, initState, zeroInput);
   bindings.advanceMpc();
 }

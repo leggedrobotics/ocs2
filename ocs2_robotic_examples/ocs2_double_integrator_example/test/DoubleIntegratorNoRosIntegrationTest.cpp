@@ -47,12 +47,12 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
     goalState = doubleIntegratorInterfacePtr->getInitialTarget();
 
     // initialize reference
-    costDesiredTrajectories.desiredTimeTrajectory().push_back(initTime);
-    costDesiredTrajectories.desiredTimeTrajectory().push_back(initTime + 1.0);
-    costDesiredTrajectories.desiredStateTrajectory().push_back(initState);
-    costDesiredTrajectories.desiredStateTrajectory().push_back(goalState);
-    costDesiredTrajectories.desiredInputTrajectory().push_back(vector_t::Zero(INPUT_DIM));
-    costDesiredTrajectories.desiredInputTrajectory().push_back(vector_t::Zero(INPUT_DIM));
+    targetTrajectories.timeTrajectory.push_back(initTime);
+    targetTrajectories.timeTrajectory.push_back(initTime + 1.0);
+    targetTrajectories.stateTrajectory.push_back(initState);
+    targetTrajectories.stateTrajectory.push_back(goalState);
+    targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
+    targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
   }
 
   const scalar_t tolerance = 2e-2;
@@ -64,13 +64,13 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
   vector_t initState;
   vector_t goalState;
   std::unique_ptr<DoubleIntegratorInterface> doubleIntegratorInterfacePtr;
-  CostDesiredTrajectories costDesiredTrajectories;
+  TargetTrajectories targetTrajectories;
 };
 
 TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
   auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.setTargetTrajectories(costDesiredTrajectories);
+  mpcInterface.setTargetTrajectories(targetTrajectories);
 
   SystemObservation observation;
   observation.time = initTime;
@@ -107,7 +107,7 @@ TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
 TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
   auto mpcPtr = doubleIntegratorInterfacePtr->getMpc(false);
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.setTargetTrajectories(costDesiredTrajectories);
+  mpcInterface.setTargetTrajectories(targetTrajectories);
 
   SystemObservation observation;
   observation.time = initTime;
@@ -144,7 +144,7 @@ TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
 TEST_F(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.setTargetTrajectories(costDesiredTrajectories);
+  mpcInterface.setTargetTrajectories(targetTrajectories);
 
   const scalar_t f_mrt = 100;
   const scalar_t mrtTimeIncrement = 1.0 / f_mrt;

@@ -37,9 +37,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_ROS_Interface::MRT_ROS_Interface(std::string robotName /*= "robot"*/,
-                                     ros::TransportHints mrtTransportHints /* = ::ros::TransportHints().tcpNoDelay()*/)
-    : MRT_BASE(), robotName_(std::move(robotName)), mrtTransportHints_(mrtTransportHints) {
+MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, ros::TransportHints mrtTransportHints)
+    : topicPrefix_(std::move(topicPrefix)), mrtTransportHints_(mrtTransportHints) {
 // Start thread for publishing
 #ifdef PUBLISH_THREAD
   // Close old thread if it is already running
@@ -60,13 +59,13 @@ MRT_ROS_Interface::~MRT_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) {
   this->reset();
 
   ocs2_msgs::reset resetSrv;
   resetSrv.request.reset = static_cast<uint8_t>(true);
 
-  ros_msg_conversions::createTargetTrajectoriesMsg(initCostDesiredTrajectories, resetSrv.request.targetTrajectories);
+  ros_msg_conversions::createTargetTrajectoriesMsg(initTargetTrajectories, resetSrv.request.targetTrajectories);
 
   while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) {
     ROS_ERROR_STREAM("Failed to call service to reset MPC, retrying...");
@@ -132,7 +131,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   auto& controlBuffer = primalSolution.controllerPtr_;
 
   ros_msg_conversions::readObservationMsg(msg.initObservation, commandData.mpcInitObservation_);
-  commandData.mpcCostDesiredTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
+  commandData.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
   primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
@@ -253,11 +252,11 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   ROS_INFO_STREAM("MRT node is setting up ...");
 
   // observation publisher
-  mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(robotName_ + "_mpc_observation", 1);
+  mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(topicPrefix_ + "_mpc_observation", 1);
 
   // policy subscriber
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
-      robotName_ + "_mpc_policy",                                                         // topic name
+      topicPrefix_ + "_mpc_policy",                                                       // topic name
       1,                                                                                  // queue length
       boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
       ros::VoidConstPtr(),                                                                // tracked object
@@ -267,7 +266,7 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   mpcPolicySubscriber_ = nodeHandle.subscribe(ops);
 
   // MPC reset service client
-  mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(robotName_ + "_mpc_reset");
+  mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(topicPrefix_ + "_mpc_reset");
 
   // display
 #ifdef PUBLISH_THREAD

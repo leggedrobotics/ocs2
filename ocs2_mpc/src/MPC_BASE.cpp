@@ -86,9 +86,9 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   }
 
   // Check if a goal has been set
-  if (initRun_ && getSolverPtr()->getReferenceManager().getCostDesiredTrajectories().empty()) {
-    std::cerr << "### WARNING: The initial desired trajectories are not set. This may cause undefined behavior. "
-                 "Use the MPC_BASE::getSolverPtr()->getReferenceManager().setCostDesiredTrajectories() method "
+  if (initRun_ && getSolverPtr()->getReferenceManager().getTargetTrajectories().empty()) {
+    std::cerr << "### WARNING: The initial TargetTrajectories are not set. This may cause undefined behavior. "
+                 "Use the MPC_BASE::getSolverPtr()->getReferenceManager().setTargetTrajectories() method "
                  "to provide target trajectories.\n";
   }
 

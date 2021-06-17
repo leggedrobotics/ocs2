@@ -42,6 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
 
+#include <ocs2_msgs/mode_schedule.h>
+#include <ocs2_msgs/mpc_flattened_controller.h>
+#include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_msgs/mpc_target_trajectories.h>
+#include <ocs2_msgs/reset.h>
+
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -49,15 +55,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_BASE.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
-
-// MPC messages
-#include <ocs2_msgs/mode_schedule.h>
-#include <ocs2_msgs/mpc_flattened_controller.h>
-#include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_msgs/mpc_target_trajectories.h>
-#include <ocs2_msgs/reset.h>
-
-#include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 #define PUBLISH_THREAD
 
@@ -72,9 +69,9 @@ class MPC_ROS_Interface {
    * Constructor.
    *
    * @param [in] mpc: The underlying MPC class to be used.
-   * @param [in] robotName: The robot's name.
+   * @param [in] topicPrefix: The robot's name.
    */
-  explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string robotName = "robot");
+  explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
 
   /**
    * Destructor.
@@ -84,9 +81,9 @@ class MPC_ROS_Interface {
   /**
    * Resets the class to its instantiation state.
    *
-   * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
+   * @param [in] initTargetTrajectories: The initial desired cost trajectories.
    */
-  void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories);
+  void resetMpcNode(const TargetTrajectories& initTargetTrajectories);
 
   /**
    * Shutdowns the ROS node.
@@ -102,9 +99,6 @@ class MPC_ROS_Interface {
    * This is the main routine which launches all the nodes required for MPC to run which includes:
    * (1) The MPC policy publisher (either feedback or feedforward policy).
    * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
-   * (3) The desired trajectories subscriber which gets the goal information from user.
-   * (4) The desired mode sequence which gets the predefined mode switches for time-triggered hybrid systems.
-   * (5) All synchronized ros modules are subscribed with the same node handle
    */
   void launchNodes(ros::NodeHandle& nodeHandle);
 
@@ -148,20 +142,13 @@ class MPC_ROS_Interface {
    */
   void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
-  /**
-   * The callback method which receives the user-defined target trajectories message.
-   *
-   * @param [in] msg: The target trajectories message.
-   */
-  void mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg);
-
  protected:
   /*
    * Variables
    */
   MPC_BASE& mpc_;
 
-  std::string robotName_;
+  std::string topicPrefix_;
 
   std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
@@ -192,8 +179,6 @@ class MPC_ROS_Interface {
   // MPC reset
   std::mutex resetMutex_;
   std::atomic_bool resetRequestedEver_{false};
-
-  std::atomic_bool costDesiredTrajectoriesUpdated_{false};
 };
 
 }  // namespace ocs2

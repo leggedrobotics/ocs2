@@ -44,11 +44,10 @@ MPC_MRT_Interface::MPC_MRT_Interface(MPC_BASE& mpc) : mpc_(mpc) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MPC_MRT_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) {
   mpc_.reset();
-  mpc_.getSolverPtr()->getReferenceManager().setCostDesiredTrajectories(initCostDesiredTrajectories);
+  mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(initTargetTrajectories);
   mpcTimer_.reset();
-  costDesiredTrajectoriesUpdated_ = true;
 }
 
 /******************************************************************************************************/
@@ -62,17 +61,15 @@ void MPC_MRT_Interface::setCurrentObservation(const SystemObservation& currentOb
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::setTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
-  mpc_.getSolverPtr()->getReferenceManager().setCostDesiredTrajectories(costDesiredTrajectories);
-  costDesiredTrajectoriesUpdated_ = true;
+ReferenceManager& MPC_MRT_Interface::getReferenceManager() {
+  return mpc_.getSolverPtr()->getReferenceManager();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::setTargetTrajectories(CostDesiredTrajectories&& costDesiredTrajectories) {
-  mpc_.getSolverPtr()->getReferenceManager().setCostDesiredTrajectories(costDesiredTrajectories);
-  costDesiredTrajectoriesUpdated_ = true;
+const ReferenceManager& MPC_MRT_Interface::getReferenceManager() const {
+  return mpc_.getSolverPtr()->getReferenceManager();
 }
 
 /******************************************************************************************************/
@@ -86,15 +83,6 @@ void MPC_MRT_Interface::advanceMpc() {
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
     currentObservation = currentObservation_;
-  }
-
-  // Set latest cost desired trajectories
-  if (costDesiredTrajectoriesUpdated_) {
-    costDesiredTrajectoriesUpdated_ = false;
-    if (mpc_.settings().debugPrint_) {
-      std::cerr << "### The target position is updated to\n";
-      mpc_.getSolverPtr()->getReferenceManager().getCostDesiredTrajectories().display();
-    }
   }
 
   bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
@@ -138,7 +126,7 @@ void MPC_MRT_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
   // command
   std::unique_ptr<CommandData> commandPtr(new CommandData);
   commandPtr->mpcInitObservation_ = mpcInitObservation;
-  commandPtr->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getReferenceManager().getCostDesiredTrajectories();
+  commandPtr->mpcTargetTrajectories_ = mpc_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
 
   // performance indices
   std::unique_ptr<PerformanceIndex> performanceIndicesPtr(new PerformanceIndex);

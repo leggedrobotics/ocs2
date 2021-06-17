@@ -93,8 +93,8 @@ using namespace pybind11::literals;
         .def_readwrite("dfdxx", &ocs2::ScalarFunctionQuadraticApproximation::dfdxx)                                                     \
         .def_readwrite("dfdux", &ocs2::ScalarFunctionQuadraticApproximation::dfdux)                                                     \
         .def_readwrite("dfduu", &ocs2::ScalarFunctionQuadraticApproximation::dfduu);                                                    \
-    /* bind cost desired trajectories class */                                                                                          \
-    pybind11::class_<ocs2::CostDesiredTrajectories>(m, "CostDesiredTrajectories")                                                       \
+    /* bind TargetTrajectories class */                                                                                                 \
+    pybind11::class_<ocs2::TargetTrajectories>(m, "TargetTrajectories")                                                                 \
         .def(pybind11::init<ocs2::scalar_array_t, ocs2::vector_array_t, ocs2::vector_array_t>());                                       \
     /* bind the actual mpc interface */                                                                                                 \
     pybind11::class_<PY_INTERFACE>(m, "mpc_interface")                                                                                  \

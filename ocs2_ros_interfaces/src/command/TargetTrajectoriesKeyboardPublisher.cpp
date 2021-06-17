@@ -30,86 +30,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <thread>
 
-#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardInterface.h>
+#include "ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesKeyboardInterface::TargetTrajectoriesKeyboardInterface(int argc, char* argv[], const std::string& robotName /*= "robot"*/,
-                                                                         const size_t targetCommandSize /*= 0*/,
-                                                                         const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-    : TargetTrajectoriesRosInterface(argc, argv, robotName),
+TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::NodeHandle& nodeHandle, std::string topicPrefix,
+                                                                         size_t targetCommandSize,
+                                                                         const scalar_array_t& targetCommandLimits,
+                                                                         CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun)
+    : TargetTrajectoriesRosPublisher(nodeHandle, std::move(topicPrefix)),
       targetCommandSize_(targetCommandSize),
-      targetCommandLimits_(targetCommandLimits) {
-  if (targetCommandLimits.size() != targetCommandSize) {
-    throw std::runtime_error("Target command limits are not set properly");
+      commandLineToTargetTrajectoriesFun_(std::move(commandLineToTargetTrajectoriesFun)) {
+  if (targetCommandLimits.size() != targetCommandSize_) {
+    throw std::runtime_error("[TargetTrajectoriesKeyboardPublisher] Target command limits are not set properly!");
   }
+  targetCommandLimits_ = Eigen::Map<const vector_t>(targetCommandLimits.data(), targetCommandSize_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t& TargetTrajectoriesKeyboardInterface::targetCommandSize() {
-  return targetCommandSize_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void TargetTrajectoriesKeyboardInterface::toCostDesiredTimeStateInput(const scalar_array_t& commadLineTarget, scalar_t& desiredTime,
-                                                                      vector_t& desiredState, vector_t& desiredInput) {
-  // time
-  desiredTime = -1.0;
-  // state
-  desiredState = Eigen::Map<const vector_t>(commadLineTarget.data(), targetCommandSize_);
-  // input
-  desiredInput = vector_t::Zero(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-CostDesiredTrajectories TargetTrajectoriesKeyboardInterface::toCostDesiredTrajectories(const scalar_array_t& commadLineTarget) {
-  CostDesiredTrajectories costDesiredTrajectories(1);
-  toCostDesiredTimeStateInput(commadLineTarget, costDesiredTrajectories.desiredTimeTrajectory()[0],
-                              costDesiredTrajectories.desiredStateTrajectory()[0], costDesiredTrajectories.desiredInputTrajectory()[0]);
-  return costDesiredTrajectories;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void TargetTrajectoriesKeyboardInterface::getKeyboardCommand(const std::string& commadMsg /*= "Enter command, separated by spaces"*/) {
+void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::string& commadMsg) {
   while (ros::ok() && ros::master::check()) {
     // get command line
     std::cout << commadMsg << ": ";
-    targetCommand_ = getCommandLine();
+    const vector_t commandLineInput = getCommandLine().cwiseMin(targetCommandLimits_).cwiseMax(-targetCommandLimits_);
 
-    // limits
-    for (size_t i = 0; i < targetCommandSize_; i++) {
-      if (std::abs(targetCommand_[i]) > targetCommandLimits_[i]) {
-        targetCommand_[i] = std::copysign(targetCommandLimits_[i], targetCommand_[i]);
-      }
-    }  // end of i loop
-
+    // display
     std::cout << "The following command is published: [";
     for (size_t i = 0; i < targetCommandSize_; i++) {
-      std::cout << std::setprecision(4) << targetCommand_[i] << ", ";
+      std::cout << std::setprecision(4) << commandLineInput(i);
+      if (i + 1 != targetCommandSize_) {
+        std::cout << ", ";
+      }
     }
-    std::cout << "\b\b]" << std::endl << std::endl;
+    std::cout << "]\n\n";
 
-    // publish cost desired trajectories
-    TargetTrajectoriesRosInterface::publishTargetTrajectories(toCostDesiredTrajectories(targetCommand_));
-
+    // publish TargetTrajectories
+    this->publishTargetTrajectories(commandLineToTargetTrajectoriesFun_(commandLineInput));
   }  // end of while loop
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_array_t TargetTrajectoriesKeyboardInterface::getCommandLine() {
+vector_t TargetTrajectoriesKeyboardPublisher::getCommandLine() {
   scalar_array_t targetCommand(0);
 
   // Set up a thread to read user inputs
@@ -149,7 +117,9 @@ scalar_array_t TargetTrajectoriesKeyboardInterface::getCommandLine() {
     }  // end of i loop
   }
 
-  return targetCommand;
+  const vector_t eigenTargetCommand = Eigen::Map<const vector_t>(targetCommand.data(), targetCommandSize_);
+
+  return eigenTargetCommand;
 }
 
 }  // namespace ocs2

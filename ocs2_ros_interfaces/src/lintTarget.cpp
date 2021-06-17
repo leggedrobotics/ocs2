@@ -1,19 +1,23 @@
-// Command
-#include <ocs2_ros_interfaces/TargetPoseCommand.h>
+// command
+#include <ocs2_ros_interfaces/command/TargetPoseCommand.h>
 #include <ocs2_ros_interfaces/command/TargetPoseTransformation.h>
-#include <ocs2_ros_interfaces/command/TargetTrajectoriesJoystickInterface.h>
-#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardInterface.h>
-#include <ocs2_ros_interfaces/command/TargetTrajectoriesRosInterface.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 
-// Common
+// common
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
 
-// MPC
+// mpc
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
-// MRT
+// mrt
+#include <ocs2_ros_interfaces/mrt/LoopshapingDummyObserver.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+
+// synchronized_module
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
 // dummy target for clang toolchain
 int main() {

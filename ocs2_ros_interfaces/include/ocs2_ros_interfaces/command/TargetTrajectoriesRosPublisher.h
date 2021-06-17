@@ -35,49 +35,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-
-// MPC messages
-#include <ocs2_msgs/mpc_target_trajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 namespace ocs2 {
 
 /**
- * This class implements TargetTrajectories communication interface using ROS.
+ * This class provides a ROS publisher for the TargetTrajectories.
  */
-class TargetTrajectoriesRosInterface {
+class TargetTrajectoriesRosPublisher {
  public:
   /**
    * Constructor.
-   *
-   * @param [in] argc: Commandline number of arguments
-   * @param [in] argv: Command line arguments
-   * @param [in] robotName: The robot's name.
+   * @param [in] nodeHandle: ROS node handle.
+   * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic.
    */
-  TargetTrajectoriesRosInterface(int argc, char* argv[], std::string robotName = "robot");
+  TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, std::string topicPrefix = "anonymousRobot");
 
   /** Destructor. */
-  virtual ~TargetTrajectoriesRosInterface();
+  virtual ~TargetTrajectoriesRosPublisher();
 
-  /** Launches the publisher node for the MPC's target point. */
-  void launchNodes();
+  /** Publishes the target trajectories. */
+  void publishTargetTrajectories(const TargetTrajectories& targetTrajectories);
 
-  /**
-   * Publishes the target trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The target trajectories.
-   */
-  void publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories);
-
- protected:
-  std::string robotName_;
-
-  std::shared_ptr<::ros::NodeHandle> nodeHandle_;
-
-  // Publisher
-  ::ros::Publisher mpcTargetTrajectoriesPublisher_;
+ private:
+  ::ros::Publisher targetTrajectoriesPublisher_;
 };
 
 }  // namespace ocs2

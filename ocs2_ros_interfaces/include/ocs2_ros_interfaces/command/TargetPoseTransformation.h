@@ -62,7 +62,7 @@ namespace target_pose_transformation {
  *
  * Desired State:
  *
- * dState = costDesiredTrajectories.desiredStateTrajectory().at(0)
+ * dState = targetTrajectories.stateTrajectory.at(0)
  *
  * dState(0): orientation.w \\
  * dState(1): orientation.x \\

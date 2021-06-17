@@ -76,8 +76,8 @@ void MPC_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 /******************************************************************************************************/
 bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
   if (static_cast<bool>(req.reset)) {
-    const auto costDesiredTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
-    resetMpcNode(costDesiredTrajectories);
+    const auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
+    resetMpcNode(targetTrajectories);
     res.done = static_cast<uint8_t>(true);
 
     std::cerr << "\n#####################################################"

@@ -127,7 +127,7 @@ void toTargetPoseDisplacement(const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& 
  * @tparam SCALAR_T: Scalar type.
  */
 template <typename SCALAR_T>
-void toCostDesiredState(const std::vector<SCALAR_T>& targetPoseDisplacementVelocity,
+void toCostDesiredState(const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& targetPoseDisplacementVelocity,
                         Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& desiredState) {
   if (targetPoseDisplacementVelocity.size() < 12) {
     throw std::runtime_error("target command should have at least 12 elements.");
@@ -139,9 +139,9 @@ void toCostDesiredState(const std::vector<SCALAR_T>& targetPoseDisplacementVeloc
 
   // Orientation
   Eigen::Quaternion<SCALAR_T> qxyz =
-      Eigen::AngleAxis<SCALAR_T>(deg2rad(targetPoseDisplacementVelocity[0]), Eigen::Vector3d::UnitX()) *  // roll
-      Eigen::AngleAxis<SCALAR_T>(deg2rad(targetPoseDisplacementVelocity[1]), Eigen::Vector3d::UnitY()) *  // pitch
-      Eigen::AngleAxis<SCALAR_T>(deg2rad(targetPoseDisplacementVelocity[2]), Eigen::Vector3d::UnitZ());   // yaw
+      Eigen::AngleAxis<SCALAR_T>(deg2rad(targetPoseDisplacementVelocity(0)), Eigen::Vector3d::UnitX()) *  // roll
+      Eigen::AngleAxis<SCALAR_T>(deg2rad(targetPoseDisplacementVelocity(1)), Eigen::Vector3d::UnitY()) *  // pitch
+      Eigen::AngleAxis<SCALAR_T>(deg2rad(targetPoseDisplacementVelocity(2)), Eigen::Vector3d::UnitZ());   // yaw
 
   desiredState(0) = qxyz.w();
   desiredState(1) = qxyz.x();
@@ -149,21 +149,21 @@ void toCostDesiredState(const std::vector<SCALAR_T>& targetPoseDisplacementVeloc
   desiredState(3) = qxyz.z();
 
   // Position
-  desiredState(4) = targetPoseDisplacementVelocity[3];
-  desiredState(5) = targetPoseDisplacementVelocity[4];
-  desiredState(6) = targetPoseDisplacementVelocity[5];
+  desiredState(4) = targetPoseDisplacementVelocity(3);
+  desiredState(5) = targetPoseDisplacementVelocity(4);
+  desiredState(6) = targetPoseDisplacementVelocity(5);
 
   // if velocities are included
   if (targetPoseDisplacementVelocity.size() > POSE_DIM_) {
     // Angular velocity
-    desiredState(7) = targetPoseDisplacementVelocity[6];
-    desiredState(8) = targetPoseDisplacementVelocity[7];
-    desiredState(9) = targetPoseDisplacementVelocity[8];
+    desiredState(7) = targetPoseDisplacementVelocity(6);
+    desiredState(8) = targetPoseDisplacementVelocity(7);
+    desiredState(9) = targetPoseDisplacementVelocity(8);
 
     // Linear velocity
-    desiredState(10) = targetPoseDisplacementVelocity[9];
-    desiredState(11) = targetPoseDisplacementVelocity[10];
-    desiredState(12) = targetPoseDisplacementVelocity[11];
+    desiredState(10) = targetPoseDisplacementVelocity(9);
+    desiredState(11) = targetPoseDisplacementVelocity(10);
+    desiredState(12) = targetPoseDisplacementVelocity(11);
   }
 }
 

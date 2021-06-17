@@ -108,7 +108,7 @@ void swap(TargetTrajectories& lh, TargetTrajectories& rh) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-std::ostream& operator<<(std::ostream& out, const TargetTrajectories& costDesiredTrajectories) {
+std::ostream& operator<<(std::ostream& out, const TargetTrajectories& targetTrajectories) {
   constexpr int dispPrecision = 4;
   auto printTidy = [dispPrecision](std::ostream& out, const vector_t& vec) {
     out << "[";
@@ -121,12 +121,12 @@ std::ostream& operator<<(std::ostream& out, const TargetTrajectories& costDesire
     out << " ]\n";
   };
 
-  for (size_t i = 0; i < costDesiredTrajectories.timeTrajectory.size(); i++) {
-    out << "time: " << std::setprecision(dispPrecision) << costDesiredTrajectories.timeTrajectory[i] << "\n";
+  for (size_t i = 0; i < targetTrajectories.timeTrajectory.size(); i++) {
+    out << "time: " << std::setprecision(dispPrecision) << targetTrajectories.timeTrajectory[i] << "\n";
     out << "state: " << std::setprecision(dispPrecision);
-    printTidy(out, costDesiredTrajectories.stateTrajectory[i]);
+    printTidy(out, targetTrajectories.stateTrajectory[i]);
     out << "input: " << std::setprecision(dispPrecision);
-    printTidy(out, costDesiredTrajectories.inputTrajectory[i]);
+    printTidy(out, targetTrajectories.inputTrajectory[i]);
   }  // end of i loop
 
   return out;

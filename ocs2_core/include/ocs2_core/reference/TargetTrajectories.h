@@ -58,6 +58,6 @@ struct TargetTrajectories {
 };
 
 void swap(TargetTrajectories& lh, TargetTrajectories& rh);
-std::ostream& operator<<(std::ostream& out, const TargetTrajectories& costDesiredTrajectories);
+std::ostream& operator<<(std::ostream& out, const TargetTrajectories& targetTrajectories);
 
 }  // namespace ocs2

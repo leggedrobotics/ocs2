@@ -30,7 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <mutex>
 
+#include <ros/subscriber.h>
+
+#include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 
 namespace ocs2 {
@@ -38,15 +43,17 @@ namespace ocs2 {
 /**
  * This class lets the user to insert robot command form command line.
  */
-class TargetTrajectoriesKeyboardPublisher : public TargetTrajectoriesRosPublisher {
+class TargetTrajectoriesKeyboardPublisher final {
  public:
-  using CommandLineToTargetTrajectories = std::function<TargetTrajectories(const vector_t& commadLineTarget)>;
+  using CommandLineToTargetTrajectories =
+      std::function<TargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation)>;
 
   /**
    * Constructor
    *
    * @param [in] nodeHandle: ROS node handle.
-   * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic.
+   * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic. Moreover, the latest
+   * observation is be expected on "topicPrefix_mpc_observation" topic.
    * @param [in] targetCommandSize: command expected length
    * @param [in] targetCommandLimits: The limits of the loaded command from command-line (for safety purposes).
    * @param [in] commandLineToTargetTrajectoriesFun: A function which transforms the command line input to TargetTrajectories.
@@ -54,9 +61,6 @@ class TargetTrajectoriesKeyboardPublisher : public TargetTrajectoriesRosPublishe
   TargetTrajectoriesKeyboardPublisher(::ros::NodeHandle& nodeHandle, std::string topicPrefix, size_t targetCommandSize,
                                       const scalar_array_t& targetCommandLimits,
                                       CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun);
-
-  /** Default destructor */
-  ~TargetTrajectoriesKeyboardPublisher() override = default;
 
   /** Gets the command vector size. */
   size_t targetCommandSize() const { return targetCommandSize_; }
@@ -76,6 +80,12 @@ class TargetTrajectoriesKeyboardPublisher : public TargetTrajectoriesRosPublishe
   size_t targetCommandSize_;
   vector_t targetCommandLimits_;
   CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun_;
+
+  std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
+
+  ::ros::Subscriber observationSubscriber_;
+  mutable std::mutex latestObservationMutex_;
+  SystemObservation latestObservation_;
 };
 
 }  // namespace ocs2

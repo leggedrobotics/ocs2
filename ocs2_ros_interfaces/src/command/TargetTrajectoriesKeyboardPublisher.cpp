@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h"
 
+#include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -41,13 +44,21 @@ TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::
                                                                          size_t targetCommandSize,
                                                                          const scalar_array_t& targetCommandLimits,
                                                                          CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun)
-    : TargetTrajectoriesRosPublisher(nodeHandle, std::move(topicPrefix)),
-      targetCommandSize_(targetCommandSize),
-      commandLineToTargetTrajectoriesFun_(std::move(commandLineToTargetTrajectoriesFun)) {
+    : targetCommandSize_(targetCommandSize), commandLineToTargetTrajectoriesFun_(std::move(commandLineToTargetTrajectoriesFun)) {
   if (targetCommandLimits.size() != targetCommandSize_) {
     throw std::runtime_error("[TargetTrajectoriesKeyboardPublisher] Target command limits are not set properly!");
   }
   targetCommandLimits_ = Eigen::Map<const vector_t>(targetCommandLimits.data(), targetCommandSize_);
+
+  // observation subscriber
+  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) -> void {
+    std::lock_guard<std::mutex> lock(latestObservationMutex_);
+    ros_msg_conversions::readObservationMsg(*msg, latestObservation_);
+  };
+  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "_mpc_observation", 1, observationCallback);
+
+  // Trajectories publisher
+  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, std::move(topicPrefix)));
 }
 
 /******************************************************************************************************/
@@ -69,8 +80,19 @@ void TargetTrajectoriesKeyboardPublisher::publishKeyboardCommand(const std::stri
     }
     std::cout << "]\n\n";
 
+    // get the latest observation
+    ::ros::spinOnce();
+    SystemObservation observation;
+    {
+      std::lock_guard<std::mutex> lock(latestObservationMutex_);
+      observation = latestObservation_;
+    }
+
+    // get TargetTrajectories
+    const auto targetTrajectories = commandLineToTargetTrajectoriesFun_(commandLineInput, observation);
+
     // publish TargetTrajectories
-    this->publishTargetTrajectories(commandLineToTargetTrajectoriesFun_(commandLineInput));
+    targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
   }  // end of while loop
 }
 

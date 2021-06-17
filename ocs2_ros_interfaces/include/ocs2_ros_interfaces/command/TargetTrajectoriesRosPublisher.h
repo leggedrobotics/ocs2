@@ -44,7 +44,7 @@ namespace ocs2 {
 /**
  * This class provides a ROS publisher for the TargetTrajectories.
  */
-class TargetTrajectoriesRosPublisher {
+class TargetTrajectoriesRosPublisher final {
  public:
   /**
    * Constructor.
@@ -54,7 +54,7 @@ class TargetTrajectoriesRosPublisher {
   TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, std::string topicPrefix = "anonymousRobot");
 
   /** Destructor. */
-  virtual ~TargetTrajectoriesRosPublisher();
+  ~TargetTrajectoriesRosPublisher();
 
   /** Publishes the target trajectories. */
   void publishTargetTrajectories(const TargetTrajectories& targetTrajectories);

@@ -154,12 +154,12 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   initializeStateInputTrajectories(initState, timeDiscretization, x, u);
 
   // Initialize cost
-  const auto& costDesiredTrajectories = this->getReferenceManager().getCostDesiredTrajectories();
+  const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
   for (auto& cost : costFunctionPtr_) {
-    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    cost->setTargetTrajectoriesPtr(&targetTrajectories);
   }
   if (terminalCostFunctionPtr_) {
-    terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    terminalCostFunctionPtr_->setTargetTrajectoriesPtr(&targetTrajectories);
   }
 
   // Bookkeeping

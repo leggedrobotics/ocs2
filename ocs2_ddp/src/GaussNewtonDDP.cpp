@@ -1602,9 +1602,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // set cost desired trajectories
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
-    const auto& costDesiredTrajectories = this->getReferenceManager().getCostDesiredTrajectories();
-    heuristicsFunctionsPtrStock_[i]->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
-    linearQuadraticApproximatorPtrStock_[i]->costFunction().setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
+    heuristicsFunctionsPtrStock_[i]->setTargetTrajectoriesPtr(&targetTrajectories);
+    linearQuadraticApproximatorPtrStock_[i]->costFunction().setTargetTrajectoriesPtr(&targetTrajectories);
   }
 
   // display

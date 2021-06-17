@@ -27,18 +27,67 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_ballbot_example/command/TargetTrajectoriesKeyboardBallbot.h"
+#include <ocs2_ballbot_example/definitions.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 using namespace ocs2;
 using namespace ballbot;
 
-int main(int argc, char* argv[]) {
-  TargetTrajectoriesKeyboardBallbot targetPoseCommand(argc, argv, "ballbot");
+/**
+ * Converts command line to TargetTrajectories.
+ * @param [in] commadLineTarget : [X, Y, Yaw, v_X, v_Y, \omega_Z]
+ * @param [in] observation : the current observation
+ */
+TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
+  // desired state from command line (position is relative, velocity absolute)
+  const vector_t relativeState = [&commadLineTarget]() {
+    vector_t relativeState = commadLineTarget;
+    relativeState(2) = commadLineTarget[2] * M_PI / 180.0;  //  deg2rad
+    return relativeState;
+  }();
 
-  targetPoseCommand.launchNodes();
+  // Target reaching duration
+  constexpr scalar_t averageSpeed = 2.0;
+  const scalar_t targetReachingDuration1 = relativeState.head<3>().norm() / averageSpeed;
+  constexpr scalar_t averageAcceleration = 10.0;
+  const scalar_t targetReachingDuration2 = relativeState.tail<3>().norm() / averageAcceleration;
+  const scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
+
+  constexpr size_t numPoints = 2;
+
+  // Desired time trajectory
+  scalar_array_t timeTrajectory(numPoints);
+  timeTrajectory[0] = observation.time;
+  timeTrajectory[1] = observation.time + targetReachingDuration;
+
+  // Desired state trajectory
+  vector_array_t stateTrajectory(2);
+  stateTrajectory[0] = observation.state;
+  stateTrajectory[1] = observation.state;
+  stateTrajectory[1].head<3>() += relativeState.head<3>();
+  stateTrajectory[1].tail<5>() << relativeState.tail<3>(), 0.0, 0.0;
+
+  // Desired input trajectory
+  const vector_array_t inputTrajectory(numPoints, vector_t::Zero(INPUT_DIM));
+
+  return {timeTrajectory, stateTrajectory, inputTrajectory};
+}
+
+/**
+ * Main function
+ */
+int main(int argc, char* argv[]) {
+  ::ros::init(argc, argv, "ballbot_target");
+  ::ros::NodeHandle nodeHandle;
+  const std::string topicPrefix = "ballbot";
+
+  // goalPose: [X, Y, Yaw, v_X, v_Y, \omega_Z]
+  const scalar_array_t relativeStateLimit{2.0, 2.0, 360.0, 2.0, 2.0, 2.0};
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, topicPrefix, relativeStateLimit.size(), relativeStateLimit,
+                                                        &commandLineToTargetTrajectories);
 
   const std::string commadMsg = "Enter XY displacement and Yaw (deg) for the robot, separated by spaces";
-  targetPoseCommand.getKeyboardCommand(commadMsg);
+  targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit
   return 0;

@@ -1,6 +1,18 @@
-/*!
-@mainpage Overview
+.. OCS2 documentation index
+   contain the root `toctree` directive.
 
+Introduction
+================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   installation
+   profiling
+
+OCS2
+----
 \section ocs2_doc_home OCS2
 This is a C++ library for an efficient continuous and discrete time optimal control implementation.
 It includes methods for solving optimal control for continuous time problem with exogenous
@@ -22,7 +34,8 @@ Moreover, the library provides tools for implementing the SLQ algorithm in MPC f
 a ROS interface for receiving and sending the MPC policy. This library also uses CppADCodeGen an
 automatic-differentiation toolbox to calculate the derivatives of the system dynamics, constraint, and cost function.
 
-
+Modules
+------------
 \section ocs2_doc_link_section OCS2 Modules
 
 This library consists of the following main modules:

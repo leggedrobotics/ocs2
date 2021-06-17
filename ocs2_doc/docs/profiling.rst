@@ -1,3 +1,6 @@
+How to profile the solver
+=========================
+
 /*!
 
 @page ocs2_doc_profiling How to profile the solver

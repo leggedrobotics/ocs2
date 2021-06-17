@@ -1,3 +1,6 @@
+Installation
+============
+
 /*!
 
 @page ocs2_doc_installation Installation

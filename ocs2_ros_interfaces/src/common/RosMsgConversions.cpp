@@ -145,11 +145,10 @@ PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTrajectories,
-                                 ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
-  const auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
-  const auto& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
-  const auto& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+void createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories, ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
+  const auto& desiredTimeTrajectory = targetTrajectories.timeTrajectory;
+  const auto& desiredStateTrajectory = targetTrajectories.stateTrajectory;
+  const auto& desiredInputTrajectory = targetTrajectories.inputTrajectory;
 
   // time and state
   size_t N = desiredStateTrajectory.size();
@@ -174,7 +173,7 @@ void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTraje
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CostDesiredTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
+TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
   size_t N = targetTrajectoriesMsg.stateTrajectory.size();
   if (N == 0) {
     throw std::runtime_error("An empty target trajectories message is received.");

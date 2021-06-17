@@ -52,11 +52,11 @@ QuadraticCostFunction* QuadraticCostFunction::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t QuadraticCostFunction::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
+  if (targetTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  const vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  const vector_t xDeviation = x - targetTrajectoriesPtr_->getDesiredState(t);
+  const vector_t uDeviation = u - targetTrajectoriesPtr_->getDesiredInput(t);
   return 0.5 * xDeviation.dot(Q_ * xDeviation) + 0.5 * uDeviation.dot(R_ * uDeviation) + uDeviation.dot(P_ * xDeviation);
 }
 
@@ -64,10 +64,10 @@ scalar_t QuadraticCostFunction::cost(scalar_t t, const vector_t& x, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t QuadraticCostFunction::finalCost(scalar_t t, const vector_t& x) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
+  if (targetTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t xDeviation = x - targetTrajectoriesPtr_->getDesiredState(t);
   return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
 }
 
@@ -75,11 +75,11 @@ scalar_t QuadraticCostFunction::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticCostFunction::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
+  if (targetTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
-  const vector_t uDeviation = u - costDesiredTrajectoriesPtr_->getDesiredInput(t);
+  const vector_t xDeviation = x - targetTrajectoriesPtr_->getDesiredState(t);
+  const vector_t uDeviation = u - targetTrajectoriesPtr_->getDesiredInput(t);
   const vector_t qDeviation = Q_ * xDeviation;
   const vector_t rDeviation = R_ * uDeviation;
   const vector_t pDeviation = P_ * xDeviation;
@@ -99,10 +99,10 @@ ScalarFunctionQuadraticApproximation QuadraticCostFunction::costQuadraticApproxi
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticCostFunction::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
+  if (targetTrajectoriesPtr_ == nullptr) {
     throw std::runtime_error("[QuadraticCostFunction] costDesiredTrajectoriesPtr_ is not set. Use setCostDesiredTrajectoriesPtr()");
   }
-  const vector_t xDeviation = x - costDesiredTrajectoriesPtr_->getDesiredState(t);
+  const vector_t xDeviation = x - targetTrajectoriesPtr_->getDesiredState(t);
   const vector_t qDeviation = QFinal_ * xDeviation;
 
   ScalarFunctionQuadraticApproximation Phi;

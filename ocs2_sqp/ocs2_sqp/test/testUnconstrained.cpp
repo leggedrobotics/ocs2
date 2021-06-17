@@ -49,8 +49,8 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
 
   // Cost
   auto costPtr = ocs2::qp_solver::getOcs2Cost(costMatrices, costMatrices);
-  ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {ocs2::vector_t::Ones(n)}, {ocs2::vector_t::Ones(m)});
-  costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Ones(n)}, {ocs2::vector_t::Ones(m)});
+  costPtr->setTargetTrajectoriesPtr(&targetTrajectories);
 
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
@@ -78,7 +78,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   } else {
     solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, nullptr));
   }
-  solver->setCostDesiredTrajectories(costDesiredTrajectories);
+  solver->setTargetTrajectories(targetTrajectories);
 
   // Solve
   solver->run(startTime, initState, finalTime, partitioningTimes);

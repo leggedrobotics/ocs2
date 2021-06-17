@@ -101,8 +101,8 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
 
   // Cost
   auto costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(n, m), ocs2::qp_solver::getRandomCost(n, 0));
-  ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
-  costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
+  costPtr->setTargetTrajectoriesPtr(&targetTrajectories);
 
   // Constraint
   const ocs2::scalar_array_t eventTimes{eventTime};
@@ -129,7 +129,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   // Set up solver
   ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &switchedConstraint);
   solver.setReferenceManager(referenceManagerPtr);
-  solver.setCostDesiredTrajectories(costDesiredTrajectories);
+  solver.setTargetTrajectories(targetTrajectories);
 
   // Solve
   solver.run(startTime, initState, finalTime, partitioningTimes);

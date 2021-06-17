@@ -33,17 +33,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 namespace ocs2 {
 
 /**
- * Manages the ModeSchedule of the solver.
+ * Manages the ModeSchedule and the TargetTrajectories of the solver.
  */
 class ReferenceManager {
  public:
-  ReferenceManager() = default;
+  /**
+   * Constructor
+   * @param [in] (optional) initialTargetTrajectories: Initial TargetTrajectories.
+   * @param [in] (optional) initialModeSchedule: Initial ModeSchedule.
+   */
+  explicit ReferenceManager(TargetTrajectories initialTargetTrajectories = TargetTrajectories(),
+                            ModeSchedule initialModeSchedule = ModeSchedule());
+
   virtual ~ReferenceManager() = default;
   ReferenceManager(ReferenceManager&& other) = default;
   ReferenceManager& operator=(ReferenceManager&& other) = default;
@@ -68,7 +75,7 @@ class ReferenceManager {
   /**
    * Returns a const reference to ModeSchedule. This method is NOT thread safe.
    */
-  const CostDesiredTrajectories& getCostDesiredTrajectories() const { return costDesiredTrajectories_; }
+  const TargetTrajectories& getTargetTrajectories() const { return targetTrajectories_; }
 
   /**
    * Returns a a copy of ModeSchedule. This method is thread safe.
@@ -78,55 +85,56 @@ class ReferenceManager {
   /**
    * Returns a a copy of ModeSchedule. This method is thread safe.
    */
-  CostDesiredTrajectories getCostDesiredTrajectoriesImage() const;
+  TargetTrajectories getTargetTrajectoriesImage() const;
 
   /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
+   * Sets the ModeSchedule to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
    * This method is thread safe.
    */
   void setModeSchedule(const ModeSchedule& modeSchedule);
 
   /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to internal ModeSchedule once preSolverRun() is called.
+   * Sets the ModeSchedule to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
    * This method is thread safe.
    */
   void setModeSchedule(ModeSchedule&& modeSchedule);
 
   /**
-   * Sets the CostDesiredTrajectories to the buffer. The buffer will move to internal CostDesiredTrajectories once
+   * Sets the TargetTrajectories to the buffer. The buffer will move to active TargetTrajectories once
    * preSolverRun() is called. This method is thread safe.
    */
-  void setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories);
+  void setTargetTrajectories(const TargetTrajectories& targetTrajectories);
 
   /**
-   * Sets the CostDesiredTrajectories to the buffer. The buffer will move to internal CostDesiredTrajectories once
+   * Sets the TargetTrajectories to the buffer. The buffer will move to active TargetTrajectories once
    * preSolverRun() is called. This method is thread safe.
    */
-  void setCostDesiredTrajectories(CostDesiredTrajectories&& costDesiredTrajectories);
+  void setTargetTrajectories(TargetTrajectories&& targetTrajectories);
 
- protected:
+ private:
   /**
-   * This method modifies the active ModeSchedule and CostDesiredTrajectories.
+   * Modifies the active ModeSchedule and TargetTrajectories.
    *
    * @param [in] initTime : Start time of the optimization horizon.
    * @param [in] finalTime : Final time of the optimization horizon.
    * @param [in] initState : State at the start of the optimization horizon.
-   * @param [out] modeSchedule : The updated ModeSchedule.
-   * @param [out] costDesiredTrajectory : The updated CostDesiredTrajectories.
+   * @param [in, out] targetTrajectories : The updated TargetTrajectories. If setTargetTrajectories() has been called before,
+   * TargetTrajectories is already updated by the set value.
+   * @param [in, out] modeSchedule : The updated ModeSchedule. If setModeSchedule() has been called before, modeSchedule is
+   * already updated by the set value.
    */
-  virtual void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ModeSchedule& modeSchedule,
-                                CostDesiredTrajectories& costDesiredTrajectory);
+  virtual void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
+                                ModeSchedule& modeSchedule) {}
 
- private:
+  TargetTrajectories targetTrajectories_;
+  TargetTrajectories targetTrajectoriesBuffer_;
+
   ModeSchedule modeSchedule_;
   ModeSchedule modeScheduleBuffer_;
 
-  CostDesiredTrajectories costDesiredTrajectories_;
-  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
-
   mutable std::mutex dataMutex_;
   bool modeScheduleUpdated_{false};
-  bool costDesiredTrajectoriesUpdated_{false};
+  bool targetTrajectoriesUpdated_{false};
 };
 
 }  // namespace ocs2

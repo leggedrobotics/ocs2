@@ -51,8 +51,8 @@ class LoopshapingReferenceManager : public ReferenceManager {
   ~LoopshapingReferenceManager() override = default;
 
  private:
-  void modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ModeSchedule& modeSchedule,
-                              CostDesiredTrajectories& costDesiredTrajectory) override;
+  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
+                        ModeSchedule& modeSchedule) override;
 
   std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr_;
   std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinitionPtr_;

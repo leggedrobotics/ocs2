@@ -36,17 +36,19 @@ namespace ocs2 {
 /******************************************************************************************************/
 LoopshapingReferenceManager::LoopshapingReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr,
                                                          std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
-    : referenceManagerPtr_(std::move(referenceManagerPtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {}
+    : ReferenceManager(referenceManagerPtr->getTargetTrajectories(), referenceManagerPtr->getModeSchedule()),
+      referenceManagerPtr_(std::move(referenceManagerPtr)),
+      loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LoopshapingReferenceManager::modifyActiveReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                                                         ModeSchedule& modeSchedule, CostDesiredTrajectories& costDesiredTrajectory) {
+void LoopshapingReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                                                   TargetTrajectories& targetTrajectories, ModeSchedule& modeSchedule) {
   const vector_t systemState = loopshapingDefinitionPtr_->getSystemState(initState);
   referenceManagerPtr_->preSolverRun(initTime, finalTime, systemState);
+  targetTrajectories = referenceManagerPtr_->getTargetTrajectories();
   modeSchedule = referenceManagerPtr_->getModeSchedule();
-  costDesiredTrajectory = referenceManagerPtr_->getCostDesiredTrajectories();
 }
 
 }  // namespace ocs2

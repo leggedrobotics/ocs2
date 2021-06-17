@@ -29,12 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <vector>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/logic/ModeSchedule.h>
 
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
@@ -90,18 +90,17 @@ class SolverBase {
            const std::vector<ControllerBase*>& controllersPtrStock);
 
   /**
-   * Sets the ReferenceManager which manages both ModeSchedule and CostDesiredTrajectories. This module is updated before
-   * SynchronizedModules.
+   * Sets the ReferenceManager which manages both ModeSchedule and TargetTrajectories. This module updates before SynchronizedModules.
    */
   void setReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr) {
     if (referenceManagerPtr == nullptr) {
       throw std::runtime_error("[SolverBase] ReferenceManager pointer cannot be a nullptr!");
     }
     referenceManagerPtr_ = std::move(referenceManagerPtr);
-  };
+  }
 
   /*
-   * Gets the ReferenceManager which manages both ModeSchedule and CostDesiredTrajectories.
+   * Gets the ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
   ReferenceManager& getReferenceManager() { return *referenceManagerPtr_; }
   const ReferenceManager& getReferenceManager() const { return *referenceManagerPtr_; }
@@ -111,7 +110,7 @@ class SolverBase {
    */
   void setSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedModule>>& synchronizedModules) {
     synchronizedModules_ = synchronizedModules;
-  };
+  }
 
   /**
    * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.

@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
+#include "ocs2_centroidal_model/helpers.h"
 
 namespace ocs2 {
 
@@ -65,13 +66,16 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
   const auto Aj = A.rightCols(info.actuatedDofNum);
 
   vector_t vPinocchio(info.generalizedCoordinatesNum);
+  const auto normalizedMomentum = getNormalizedMomentum(state, info);
+  const auto jointVelocities = getJointVelocities(input, info).head(info.actuatedDofNum);
+
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
-      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * state.template head<6>() - Aj * input.tail(info.actuatedDofNum));
+      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * normalizedMomentum - Aj * jointVelocities);
       break;
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
-      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * state.template head<6>());
+      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * normalizedMomentum);
       break;
     }
     default: {
@@ -80,7 +84,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
     }
   }
 
-  vPinocchio.tail(info.actuatedDofNum) = input.tail(info.actuatedDofNum);
+  vPinocchio.tail(info.actuatedDofNum) = jointVelocities;
 
   return vPinocchio;
 }
@@ -96,9 +100,11 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   const auto& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
 
+  // TODO: Fix. This is currently wrong since dfdx = dfdq * dqdx + dfdv * dvdx, and dvdx is not zero
   matrix_t dfdx = matrix_t::Zero(Jq.rows(), centroidalModelInfo_.stateDim);
   dfdx.middleCols(6, info.generalizedCoordinatesNum) = Jq;
 
+  // TODO: Fix. This is currently wrong since dfdu = dfdv * dvdu, and dvdu is wrong now
   matrix_t dfdu = matrix_t::Zero(Jv.rows(), centroidalModelInfo_.inputDim);
   dfdu.rightCols(info.actuatedDofNum) = Jv.rightCols(info.actuatedDofNum);
 
@@ -137,7 +143,10 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToConta
   jacobianWorldToContactPointInWorldFrame.setZero(6, centroidalModelInfo_.generalizedCoordinatesNum);
   pinocchio::getFrameJacobian(model, data, centroidalModelInfo_.endEffectorFrameIndices[contactIndex], pinocchio::LOCAL_WORLD_ALIGNED,
                               jacobianWorldToContactPointInWorldFrame);
-  const matrix3x_t J_com = getCentroidalMomentumMatrix().template topRows<3>() / centroidalModelInfo_.robotMass;
+  matrix3x_t J_com = getCentroidalMomentumMatrix().template topRows<3>() / centroidalModelInfo_.robotMass;
+  if (centroidalModelInfo_.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
+    J_com.rightCols(centroidalModelInfo_.actuatedDofNum).setZero();
+  }
   return (jacobianWorldToContactPointInWorldFrame.template topRows<3>() - J_com);
 }
 
@@ -148,22 +157,21 @@ template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::normalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
   const auto& info = centroidalModelInfo_;
   const vector3_t gravityVector = vector3_t(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
-  vector3_t contactForceInWorldFrame;
-  vector3_t contactTorqueInWorldFrame;
   vector6_t normalizedCentroidalMomentumRate;
-  normalizedCentroidalMomentumRate.setZero();
-  normalizedCentroidalMomentumRate.template head<3>() = gravityVector;
+  normalizedCentroidalMomentumRate << gravityVector, vector3_t::Zero();
+
+  auto getForce = [&](size_t index) { return getContactForce(input, index, info); };
+  auto getTorque = [&](size_t index) { return getContactTorque(input, index, info); };
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    contactForceInWorldFrame = input.template segment<3>(3 * i);
+    const auto contactForceInWorldFrame = getForce(i);
     normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
     normalizedCentroidalMomentumRate.template tail<3>() += getPositionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame);
   }
 
   for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
-    const size_t inputIdx = 3 * info.numThreeDofContacts + 6 * (i - info.numThreeDofContacts);
-    contactForceInWorldFrame = input.template segment<3>(inputIdx);
-    contactTorqueInWorldFrame = input.template segment<3>(inputIdx + 3);
+    const auto contactForceInWorldFrame = getForce(i);
+    const auto contactTorqueInWorldFrame = getTorque(i);
     normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
     normalizedCentroidalMomentumRate.template tail<3>() +=
         getPositionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame) + contactTorqueInWorldFrame;

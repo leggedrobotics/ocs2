@@ -27,7 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
+#include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
+#include "ocs2_centroidal_model/helpers.h"
 
 #include <pinocchio/container/aligned-vector.hpp>
 #include "pinocchio/algorithm/centroidal-derivatives.hpp"
@@ -50,7 +51,6 @@ vector_t PinocchioCentroidalDynamics::getSystemFlowMap(scalar_t time, const vect
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   const auto& info = mappingPtr_->getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
-
   return (vector_t(state.rows()) << mappingPtr_->normalizedCentroidalMomentumRate(input),
           mappingPtr_->getPinocchioJointVelocity(state, input))
       .finished();
@@ -71,9 +71,6 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapL
 
   auto dynamics = ocs2::VectorFunctionLinearApproximation::Zero(state.rows(), state.rows(), inputDim);
   dynamics.f = getSystemFlowMap(time, state, input);
-
-  const auto& qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
-  const auto& vPinocchio = dynamics.f.tail(info.generalizedCoordinatesNum);
 
   // Partial derivatives of the normalized momentum rates
   computeNormalizedCentroidalMomentumRateGradients(state, input);
@@ -135,11 +132,12 @@ void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradien
   normalizedLinearMomentumRateDerivativeInput_.setZero(3, inputDim);
   normalizedAngularMomentumRateDerivativeState_.setZero(3, stateDim);
   normalizedAngularMomentumRateDerivativeInput_.setZero(3, inputDim);
-  Vector3 contactForceInWorldFrame;
   Matrix3 f_hat, p_hat;
 
+  auto getForce = [&](size_t index) { return getContactForce(input, index, info); };
+
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    contactForceInWorldFrame = input.segment<3>(3 * i);
+    const Vector3 contactForceInWorldFrame = getForce(i);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
     normalizedAngularMomentumRateDerivativeState_.rightCols(info.generalizedCoordinatesNum) -=
         f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
@@ -150,7 +148,7 @@ void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradien
 
   for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
     const size_t inputIdx = 3 * info.numThreeDofContacts + 6 * (i - info.numThreeDofContacts);
-    contactForceInWorldFrame = input.segment<3>(inputIdx);
+    const Vector3 contactForceInWorldFrame = getForce(i);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
     normalizedAngularMomentumRateDerivativeState_.rightCols(info.generalizedCoordinatesNum) -=
         f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));

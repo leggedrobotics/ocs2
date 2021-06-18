@@ -77,7 +77,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(ballbot_mpc
-  src/MPC_Ballbot_Node.cpp
+  src/BallbotMpcNode.cpp
 )
 add_dependencies(ballbot_mpc
   ${catkin_EXPORTED_TARGETS}

@@ -30,11 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/init.h>
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
-#include "ocs2_ballbot_example/BallbotInterface.h"
+#include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
 
 int main(int argc, char** argv) {
-  const std::string robotName = "ballbot";
+  const std::string robotName = "double_integrator";
+  using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
+  using mpc_ros_t = ocs2::MPC_ROS_Interface;
 
   // task file
   std::vector<std::string> programArgs{};
@@ -49,11 +52,16 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+  interface_t doubleIntegratorInterface(taskFileFolderName);
+
+  // ReferenceManager
+  auto rosReferenceManagerPtr = ocs2::RosReferenceManager::create<ocs2::ReferenceManager>(robotName);
+  rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // Launch MPC ROS node
-  auto mpcPtr = ballbotInterface.getMpc();
-  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
+  auto mpcPtr = doubleIntegratorInterface.getMpc();
+  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+  mpc_ros_t mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

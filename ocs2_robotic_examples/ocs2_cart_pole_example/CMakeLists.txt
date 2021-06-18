@@ -70,7 +70,7 @@ target_compile_options(cartpole_interface PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(cartpole_mpc
-  src/MPC_Cartpole_Node.cpp
+  src/CartpoleMpcNode.cpp
 )
 add_dependencies(cartpole_mpc
   ${catkin_EXPORTED_TARGETS}

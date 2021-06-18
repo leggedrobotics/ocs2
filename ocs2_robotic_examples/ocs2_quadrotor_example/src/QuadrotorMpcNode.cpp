@@ -30,13 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/init.h>
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
-#include "ocs2_double_integrator_example/DoubleIntegratorInterface.h"
+#include "ocs2_quadrotor_example/QuadrotorInterface.h"
 
 int main(int argc, char** argv) {
-  const std::string robotName = "double_integrator";
-  using interface_t = ocs2::double_integrator::DoubleIntegratorInterface;
-  using mpc_ros_t = ocs2::MPC_ROS_Interface;
+  const std::string robotName = "quadrotor";
 
   // task file
   std::vector<std::string> programArgs{};
@@ -44,18 +43,23 @@ int main(int argc, char** argv) {
   if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName = std::string(programArgs[1]);
+  std::string taskFileFolderName(programArgs[1]);
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t doubleIntegratorInterface(taskFileFolderName);
+  ocs2::quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
+
+  // ReferenceManager
+  auto rosReferenceManagerPtr = ocs2::RosReferenceManager::create<ocs2::ReferenceManager>(robotName);
+  rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // Launch MPC ROS node
-  auto mpcPtr = doubleIntegratorInterface.getMpc();
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  auto mpcPtr = quadrotorInterface.getMpc();
+  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

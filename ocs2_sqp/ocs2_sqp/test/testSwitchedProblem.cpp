@@ -91,8 +91,13 @@ class SwitchedConstraint : public ocs2::ConstraintBase {
 };
 
 std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scalar_t eventTime) {
-  int n = 3;
-  int m = 2;
+  constexpr int n = 3;
+  constexpr int m = 2;
+
+  // ReferenceManager
+  const ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
+  const ocs2::ModeSchedule modeSchedule({eventTime}, {0, 1});
+  auto referenceManagerPtr = std::make_shared<ocs2::ReferenceManager>(targetTrajectories, modeSchedule);
 
   // System
   const auto dynamics = ocs2::qp_solver::getRandomDynamics(n, m);
@@ -101,13 +106,9 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
 
   // Cost
   auto costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(n, m), ocs2::qp_solver::getRandomCost(n, 0));
-  ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
   costPtr->setTargetTrajectoriesPtr(&targetTrajectories);
 
   // Constraint
-  const ocs2::scalar_array_t eventTimes{eventTime};
-  const std::vector<size_t> subsystemsSequence{0, 1};
-  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr(new ocs2::ReferenceManager({eventTimes, subsystemsSequence}));
   ocs2::SwitchedConstraint switchedConstraint(referenceManagerPtr);
 
   // Solver settings
@@ -129,7 +130,6 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   // Set up solver
   ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &switchedConstraint);
   solver.setReferenceManager(referenceManagerPtr);
-  solver.setTargetTrajectories(targetTrajectories);
 
   // Solve
   solver.run(startTime, initState, finalTime, partitioningTimes);

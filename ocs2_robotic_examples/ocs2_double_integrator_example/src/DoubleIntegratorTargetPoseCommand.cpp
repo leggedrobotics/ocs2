@@ -39,19 +39,20 @@ using namespace double_integrator;
  * @param [in] observation : the current observation
  */
 TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
-  return TargetTrajectories({observation.time}, {commadLineTarget}, {vector_t::Zero(INPUT_DIM)});
+  const vector_t displacement = (vector_t(STATE_DIM) << observation.state(0) + commadLineTarget(0), 0.0).finished();
+  return TargetTrajectories({observation.time}, {displacement}, {vector_t::Zero(INPUT_DIM)});
 }
 
 int main(int argc, char* argv[]) {
-  ::ros::init(argc, argv, "ballbot_target");
+  const std::string robotName = "double_integrator";
+  ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
-  const std::string topicPrefix = "double_integrator";
 
   const scalar_array_t goalLimit{10.0, 10.0};  // [X, v_X,]
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, topicPrefix, goalLimit.size(), goalLimit,
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, goalLimit.size(), goalLimit,
                                                         &commandLineToTargetTrajectories);
 
-  const std::string commadMsg = "Enter displacement and velocity for the double-integrator, separated by space";
+  const std::string commadMsg = "Enter the desired displacement for the double-integrator";
   targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit

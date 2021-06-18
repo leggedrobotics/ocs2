@@ -99,13 +99,13 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
 }
 
 int main(int argc, char* argv[]) {
-  ::ros::init(argc, argv, "ballbot_target");
+  const std::string robotName = "quadrotor";
+  ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
-  const std::string topicPrefix = "quadrotor";
 
   // goalPose: [X, Y, Z, Roll, Pitch, Yaw, v_X, v_Y, v_Z, \omega_X, \omega_Y, \omega_Z]
   const scalar_array_t relativeStateLimit{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, topicPrefix, relativeStateLimit.size(), relativeStateLimit,
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit.size(), relativeStateLimit,
                                                         &commandLineToTargetTrajectories);
 
   const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";

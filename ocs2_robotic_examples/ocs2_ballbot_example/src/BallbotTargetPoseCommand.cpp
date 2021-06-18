@@ -77,13 +77,13 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
  * Main function
  */
 int main(int argc, char* argv[]) {
-  ::ros::init(argc, argv, "ballbot_target");
+  const std::string robotName = "ballbot";
+  ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
-  const std::string topicPrefix = "ballbot";
 
   // goalPose: [X, Y, Yaw, v_X, v_Y, \omega_Z]
   const scalar_array_t relativeStateLimit{2.0, 2.0, 360.0, 2.0, 2.0, 2.0};
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, topicPrefix, relativeStateLimit.size(), relativeStateLimit,
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit.size(), relativeStateLimit,
                                                         &commandLineToTargetTrajectories);
 
   const std::string commadMsg = "Enter XY displacement and Yaw (deg) for the robot, separated by spaces";

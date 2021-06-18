@@ -63,15 +63,17 @@ add_custom_target(Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 
 # Sphinx documentation generation
 set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs)
-file(GLOB_RECURSE SPHINX_RST_SOURCES ${SPHINX_SOURCE} *.rst)
+file(GLOB_RECURSE SPHINX_RST_SOURCES ${SPHINX_SOURCE} *.rst *.bib *.md)
 set(SPHINX_CONF ${CMAKE_CURRENT_SOURCE_DIR}/tools/sphinx/)
 set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/output/sphinx)
 set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
 
+file(MAKE_DIRECTORY ${SPHINX_BUILD})
 add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
   COMMAND 
     ${SPHINX_EXECUTABLE} -b html -c ${SPHINX_CONF}
     -Dbreathe_projects.ocs2=${DOXYGEN_OUTPUT_DIR}
+    -Drelease="cmake-release"
     ${SPHINX_SOURCE} ${SPHINX_BUILD} 
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   BYPRODUCT ${SPHINX_BUILD}

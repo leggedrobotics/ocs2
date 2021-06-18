@@ -14,7 +14,6 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'OCS2'
@@ -22,7 +21,7 @@ copyright = 'Farbod Farshidian'
 author = 'Farbod Farshidian'
 
 # The full version, including alpha/beta/rc tags
-release = 'TODO'
+# release = '' defined via CMake
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,7 +31,10 @@ release = 'TODO'
 # ones.
 extensions = [
     'breathe',
+    'sphinxcontrib.bibtex',
 ]
+
+bibtex_bibfiles = ['refs.bib']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

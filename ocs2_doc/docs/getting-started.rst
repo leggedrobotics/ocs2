@@ -1,0 +1,254 @@
+.. index:: pair: page; Getting Started
+.. _doxid-ocs2_doc_getting_started:
+
+Getting Started
+===============
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_steps:
+
+Main Steps
+~~~~~~~~~~
+
+After setting up you catkin workspace (refer to :ref:`Installation <doxid-ocs2_doc_installation>`), the next step is to define your optimal control problem by providing the following components
+
+* System dynamics and its linearization
+
+* Cost function and its quadratic approximation
+
+* Constraints and their linearization (if the problem is constrained)
+
+* Logic-Rules (if you are dealing with a switched system or mixed logic problem)
+
+* Choosing proper operating trajectories for the initial iteration of optimizer.
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_common:
+
+Commonly-Used Methods
+---------------------
+
+Before moving on to the deatils on how each of these components should be implemented, we discuss some of the methods which are repeatedly used
+
+* ``<class_name>::initializeModel``: This method is almost used in all of the interface classes. This method gives the user the possibility to modify and add variables that can effect the subsequent call of the class's methods. This method also has access to a instance of the Logic-Rules. One of the imaginable application of this method is the mixed logic problems (or switched systems). In this particular application, the class can be informed about the current active logic (such as current active subsystem). The optimizer always makes sure that this class is called before any other main methods of the class.
+
+* ``<class_name>::clone``: The clone method is used to copy an object. It is usually implemented as
+  
+  .. code-block:: cpp
+  
+  	class_name* class_name::clone() const override
+  	{
+  	    return new class_name(*this);
+  	}
+  
+  where it uses the copy constructor of the class. User should take care of the deep/shallow copying in this case.
+
+
+
+
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_dynamics:
+
+System Dynamics
+~~~~~~~~~~~~~~~
+
+Your system dynamics should be implemented as a derived class of ocs2::ControlledSystemBase where the following method should be implemented
+
+* ocs2::ControlledSystemBase::computeFlowMap: This is the main routine where you define your system dynamics as a function of current time, state, and input
+
+* ocs2::ControlledSystemBase::computeJumpMap: This feature will let you define a state jump map (currently the optimizer do not considers this).
+
+* ocs2::ControlledSystemBase::computeGuardSurfaces: This feature will let you define switching surfaces (currently the optimizer do not considers this).
+
+* ocs2::ControlledSystemBase::initializeModel: The optimization algorithm will call this method a-prior to call of computeFlowMap and computeJumpMap. For more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+* ocs2::ControlledSystemBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+The derivative of the system dynamics are defined through the interface class ocs2::DerivativesBase. The following method should be implemented in the derived class
+
+* ocs2::DerivativesBase::setCurrentStateAndControl: Before computing the linearized model you need to set the internal state and input. This method also can be used to perform common operations needed later for calculating state or input derivatives check for example ... Also for more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+* ocs2::DerivativesBase::getFlowMapDerivativeState: This method should return the system dynamics derivatives w.r.t. state.
+
+* ocs2::DerivativesBase::getFlowMapDerivativeInput: This method should return the system dynamics derivatives w.r.t. input.
+
+* ocs2::DerivativesBase::initializeModel: The optimization algorithm will call this method a-prior to call of setCurrentStateAndControl, getFlowMapDerivativeState, etc.
+
+* ocs2::DerivativesBase::getFlowMapDerivativeTime: This method should return the system dynamics derivatives w.r.t. time (currently is not used).
+
+* ocs2::DerivativesBase::getJumpMapDerivativeTime: This method should return the system jump map derivatives w.r.t. time (currently is not used).
+
+* ocs2::DerivativesBase::getJumpMapDerivativeState: This method should return the system jump map derivatives w.r.t. state (currently is not used).
+
+* ocs2::DerivativesBase::getJumpMapDerivativeInput: This method should return the system jump map derivatives w.r.t. input (currently is not used).
+
+* ocs2::DerivativesBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_dynamics_ad:
+
+Automatic-Differentiation of Dynamics
+-------------------------------------
+
+If you plan to use the Automatic-Differentiation for computing the derivatives of the system dynamics, you should use ocs2::SystemDynamicsBaseAD interface instead of both ocs2::ControlledSystemBase and ocs2::DerivativesBase. To this end your derived class only needs to implement two templated methods where the template is over the floating point type.
+
+* ocs2::SystemDynamicsBaseAD::systemFlowMap: This is where you define your system dynamics as a function of current time, state, and input.
+
+* ocs2::SystemDynamicsBaseAD::systemGuardSurfaces: This feature will let you define a state jump map (currently the optimizer do not considers this).
+
+* initializeModel: One of the shortcoming of using ocs2::SystemDynamicsBaseAD for getting derivatives is that you cannot use initializeModel scheme.
+
+Note that the SystemDynamicsBaseAD is derived from both ocs2::ControlledSystemBase and ocs2::DerivativesBase, therefore you can pass it as an instance of both classes.
+
+
+
+
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_cost:
+
+Cost Function
+~~~~~~~~~~~~~
+
+The cost function and it second order approximation are defined through the interface class ocs2::CostFunctionBase. The following method should be overrided in your derived class
+
+* ocs2::CostFunctionBase::setCurrentStateAndControl: Before computing the cost and its derivatives you need to set the internal state and input. This method also can be used to perform common operations needed later for calculating state or input derivatives check for example ... Also for more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+* ocs2::CostFunctionBase::getIntermediateCost: This method gets the intermediate cost. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getIntermediateCostDerivativeState: This method gets the intermediate cost first order derivative w.r.t. state. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getIntermediateCostSecondDerivativeState: This method gets the intermediate cost second order derivative w.r.t. state. You can Either compute
+  
+  this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getIntermediateCostDerivativeInput: This method gets the intermediate cost first order derivative w.r.t. input. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getIntermediateCostSecondDerivativeInput: This method gets the intermediate cost second order derivative w.r.t. input. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getIntermediateCostDerivativeInputState: This method gets the intermediate cost second order derivative w.r.t. input and state. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getTerminalCost: This method gets the terminal cost. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_) and state (ocs2::CostFunctionBase::x\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getTerminalCostDerivativeState: This method gets the terminal cost first order derivative w.r.t. state. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::getTerminalCostSecondDerivativeState: This method gets the terminal cost. second order derivative w.r.t. state. You can Either compute You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
+
+* ocs2::CostFunctionBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_cost_ad:
+
+Automatic-Differentiation of Cost Function
+------------------------------------------
+
+If you plan to use the Automatic-Differentiation for computing the derivatives of the cost function, you should use ocs2::CostFunctionBaseAD interface instead of both ocs2::CostFunctionBase. To this end your derived class only needs to implement two templated methods where the template is over the floating point type.
+
+* ocs2::CostFunctionBaseAD::intermediateCostFunction: This is where you define your intermediate cost as a function of current time, state, and input.
+
+* ocs2::CostFunctionBaseAD::terminalCostFunction: This feature will let you define terminal cost as a function of current time and state.
+
+* initializeModel: One of the shortcoming of using ocs2::CostFunctionBaseAD for getting derivatives is that you cannot use initializeModel scheme.
+
+
+
+
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_constraints:
+
+Constraints
+~~~~~~~~~~~
+
+Your constraints should be implemented as a derived class of ocs2::ConstraintBase where the following method should be implemented
+
+* ocs2::ConstraintBase::setCurrentStateAndControl: : Before computing the constraint and its derivatives you need to set the internal state and input. This method also can be used to perform common operations needed later for calculating state or input derivatives check for example ... Also for more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+* ocs2::ConstraintBase::getConstraint1: Gets the state-input equality constraints.
+
+* ocs2::ConstraintBase::numStateInputConstraint: Gets the number of state-input active equality constraints.
+
+* ocs2::ConstraintBase::getConstraint2: Gets the state-only (in)equality constraints.
+
+* ocs2::ConstraintBase::numStateOnlyConstraint: Gets the number of state-only active (in)equality constraints.
+
+* ocs2::ConstraintBase::getFinalConstraint2: Gets the final state-only (in)equality constraints.
+
+* ocs2::ConstraintBase::numStateOnlyFinalConstraint: Gets the number of final state-only active (in)equality constraints.
+
+* ocs2::ConstraintBase::getConstraint1DerivativesState: State derivative of state-input active equality constraints.
+
+* ocs2::ConstraintBase::getConstraint1DerivativesControl: Input derivative of state-input active equality constraints.
+
+* ocs2::ConstraintBase::getConstraint2DerivativesState: State derivative of state-only active (in)equality constraints.
+
+* ocs2::ConstraintBase::getFinalConstraint2DerivativesState: State derivative of final state-only active (in)equality constraints.
+
+* ocs2::ConstraintBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_constraints_ad:
+
+Automatic-Differentiation of Constraints
+----------------------------------------
+
+If you plan to use the Automatic-Differentiation for computing the derivatives of the system dynamics, you should use ocs2::ConstraintBaseAD interface instead of ocs2::ConstraintBase. To this end your derived class only needs to implement two templated methods where the template is over the floating point type.
+
+* ocs2::ConstraintBaseAD::stateInputConstraint: This is where you define your state-input equality constraints as a function of current time, state, and input.
+
+* ocs2::ConstraintBaseAD::numStateInputConstraint: Gets the number of state-input active equality constraints.
+
+* ocs2::ConstraintBaseAD::stateOnlyConstraint: This is where you define your state-only equality constraints as a function of current time and state.
+
+* ocs2::ConstraintBaseAD::numStateOnlyConstraint: Gets the number of state-only active (in)equality constraints.
+
+* ocs2::ConstraintBaseAD::stateOnlyFinalConstraint: This is where you define your terminal state-only equality constraints as a function of current time and state.
+
+* ocs2::ConstraintBaseAD::numStateOnlyFinalConstraint: Gets the number of final state-only active (in)equality constraints.
+
+* initializeModel: One of the shortcoming of using ocs2::ConstraintBaseAD for getting derivatives is that you cannot use initializeModel scheme.
+
+
+
+
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_logic_rules:
+
+Logic-Rules
+~~~~~~~~~~~
+
+Logic rules structure gives the toolbox lots of flexibility. The interface class for logic rules is ocs2::LogicRulesBase. We have assumes that the logic rules only depend on time. One of the direct applications of the logic rules is for implementing switched systems where the logic is switching to different subsystems. Since this structure is passed to the system dynamics, derivatives, cost, and constraints, we can modify the behavior of these classes based on the logic rules at a given time. User also can modify the logic rules during the run of the optimizer (e.g. during the MPC loop). The optimizer will make sure to update the logic rules while the adjustment of the controller takes place based on a user defined method ocs2::LogicRulesBase::adjustController.
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_null_logic_rules:
+
+No Logic-Rules
+--------------
+
+For regular problem where there is no logic, user can simply use ocs2::NullLogicRules.
+
+
+
+
+
+
+
+.. _doxid-ocs2_doc_getting_started_1getting_started_main_operating_pointss:
+
+Operating Points
+~~~~~~~~~~~~~~~~
+
+As a sequential optimal control algorithm, SLQ requires a stable initial controller or equivalently an initial stable rollout. We have unified these two concepts by introducing the concept of the nominal trajectories (ocs2::SystemOperatingTrajectoriesBase). If an initial stable trajectory is already exist (e.g. from another optimization algorithm) user can directly use them as an initial solution. Otherwise, the user can conveniently define a few operation points where an LQR controller will be designed by SLQ automatically (ocs2::SystemOperatingPoint). In fact, ocs::SystemOperatingPoint interface is a derived case of the ocs2::SystemOperatingTrajectoriesBase. Note that using operating points instead of the operating trajectories causes the initial iteration of SLQ to have unrealistic cost and constraint ISE.
+

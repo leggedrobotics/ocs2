@@ -1,9 +1,10 @@
-.. include:: overview.rst
+.. include:: intro.rst
 
 Table of Contents
 -----------------
 
 .. toctree::
+   overview.rst
    installation.rst
    getting-started.rst
    example.rst

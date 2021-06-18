@@ -109,7 +109,7 @@ Usage:
 
 Generate a flamegraph from perf.data:
 
-* ``git clone `https://github.com/brendangregg/FlameGraph.git <https://github.com/brendangregg/FlameGraph.git>`__``
+* ``git clone https://github.com/brendangregg/FlameGraph.git``
 
 * ``cd FlameGraph``
 

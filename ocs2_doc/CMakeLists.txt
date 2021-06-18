@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-project (ocs2_doc)
+# TODO: dervive the version from a proper source. E.g., the most recent git tag
+# with Git describe
+project (ocs2_doc VERSION 1.0.0)
 
 # Modules to document
 list(APPEND OCS2_MODULES
@@ -32,7 +34,7 @@ set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/tools/doxygen/Doxyfile.in)
 set(DOXYFILE ${CMAKE_CURRENT_BINARY_DIR}/tools/doxygen/Doxyfile)
 
 set(DOXYGEN_PROJECT_NAME ${PROJECT})
-set(DOXYGEN_PROJECT_NUMBER "1.0-todo")
+set(DOXYGEN_PROJECT_NUMBER ${CMAKE_PROJECT_VERSION})
 set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/output/doxygen)
 set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/xml/index.xml)
 
@@ -73,7 +75,7 @@ add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
   COMMAND 
     ${SPHINX_EXECUTABLE} -b html -c ${SPHINX_CONF}
     -Dbreathe_projects.ocs2=${DOXYGEN_OUTPUT_DIR}
-    -Drelease="cmake-release"
+    -Drelease="${CMAKE_PROJECT_VERSION}"
     ${SPHINX_SOURCE} ${SPHINX_BUILD} 
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   BYPRODUCT ${SPHINX_BUILD}
@@ -84,3 +86,5 @@ add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
   )
 
 add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
+
+# TODO Add ROS target?

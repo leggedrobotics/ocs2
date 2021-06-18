@@ -110,8 +110,7 @@ class EXP0_System final : public SystemDynamicsBase {
 /******************************************************************************************************/
 class EXP0_CostFunction : public CostFunctionBase {
  public:
-  explicit EXP0_CostFunction(std::shared_ptr<ReferenceManager> referenceManagerPtr)
-      : referenceManagerPtr_(std::move(referenceManagerPtr)) {
+  explicit EXP0_CostFunction(std::shared_ptr<ReferenceManager> referenceManagerPtr) : referenceManagerPtr_(std::move(referenceManagerPtr)) {
     const matrix_t Q = (matrix_t(2, 2) << 0.0, 0.0, 0.0, 1.0).finished();
     const matrix_t R = (matrix_t(1, 1) << 1.0).finished();
     const matrix_t Qf = (matrix_t(2, 2) << 1.0, 0.0, 0.0, 1.0).finished();

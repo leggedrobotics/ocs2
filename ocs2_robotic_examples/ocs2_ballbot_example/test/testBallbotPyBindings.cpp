@@ -46,7 +46,7 @@ TEST(Ballbot, PyBindings) {
   targetTrajectories.stateTrajectory.resize(2, ocs2::vector_t::Zero(ocs2::ballbot::STATE_DIM));
   targetTrajectories.stateTrajectory[0] = initState;
 
-  bindings.reset(costDesiredTraj);
+  bindings.reset(targetTrajectories);
   bindings.setObservation(0.0, initState, zeroInput);
   bindings.advanceMpc();
 

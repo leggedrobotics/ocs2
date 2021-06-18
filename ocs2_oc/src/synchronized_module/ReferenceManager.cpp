@@ -108,4 +108,14 @@ void ReferenceManager::setTargetTrajectories(TargetTrajectories&& targetTrajecto
   targetTrajectoriesUpdated_ = true;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::swapReferences(TargetTrajectories& otherTargetTrajectories, ModeSchedule& otherModeSchedule) {
+  swap(targetTrajectories_, otherTargetTrajectories);
+  swap(modeSchedule_, otherModeSchedule);
+  targetTrajectoriesUpdated_ = false;
+  modeScheduleUpdated_ = false;
+}
+
 }  // namespace ocs2

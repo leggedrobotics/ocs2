@@ -45,10 +45,16 @@ LoopshapingReferenceManager::LoopshapingReferenceManager(std::shared_ptr<Referen
 /******************************************************************************************************/
 void LoopshapingReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
                                                    TargetTrajectories& targetTrajectories, ModeSchedule& modeSchedule) {
+  // to avoid copying, move references to the decorated ReferenceManager
+  referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
+  referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
+
+  // call the decorated class preSolverRun()
   const vector_t systemState = loopshapingDefinitionPtr_->getSystemState(initState);
   referenceManagerPtr_->preSolverRun(initTime, finalTime, systemState);
-  targetTrajectories = referenceManagerPtr_->getTargetTrajectories();
-  modeSchedule = referenceManagerPtr_->getModeSchedule();
+
+  // update the decorator's references
+  referenceManagerPtr_->swapReferences(targetTrajectories, modeSchedule);
 }
 
 }  // namespace ocs2

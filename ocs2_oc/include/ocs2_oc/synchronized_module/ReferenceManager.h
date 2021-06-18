@@ -111,6 +111,11 @@ class ReferenceManager {
    */
   void setTargetTrajectories(TargetTrajectories&& targetTrajectories);
 
+  /**
+   * Swaps the ModeSchedule and TargetTrajectories to the active references. This method is NOT thread safe.
+   */
+  void swapReferences(TargetTrajectories& otherTargetTrajectories, ModeSchedule& otherModeSchedule);
+
  private:
   /**
    * Modifies the active ModeSchedule and TargetTrajectories.

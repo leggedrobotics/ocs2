@@ -52,9 +52,15 @@ RosReferenceManager::RosReferenceManager(std::unique_ptr<ReferenceManager> refer
 /******************************************************************************************************/
 void RosReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
                                            TargetTrajectories& targetTrajectories, ModeSchedule& modeSchedule) {
+  // to avoid copying, move references to the decorated ReferenceManager
+  referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
+  referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
+
+  // call the decorated class preSolverRun()
   referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
-  targetTrajectories = referenceManagerPtr_->getTargetTrajectories();
-  modeSchedule = referenceManagerPtr_->getModeSchedule();
+
+  // update the decorator's references
+  referenceManagerPtr_->swapReferences(targetTrajectories, modeSchedule);
 }
 
 /******************************************************************************************************/
@@ -62,20 +68,19 @@ void RosReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime
 /******************************************************************************************************/
 void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle) {
   // ModeSchedule
-  boost::function<void(const ocs2_msgs::mode_schedule::ConstPtr&)> modeScheduleCallback =
-      [this](const ocs2_msgs::mode_schedule::ConstPtr& msg) {
-        const auto modeSchedule = ros_msg_conversions::readModeScheduleMsg(*msg);
-        referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
-      };
-  modeScheduleSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mode_schedule", 1, modeScheduleCallback);
+  auto modeScheduleCallback = [this](const ocs2_msgs::mode_schedule::ConstPtr& msg) {
+    auto modeSchedule = ros_msg_conversions::readModeScheduleMsg(*msg);
+    this->setModeSchedule(std::move(modeSchedule));
+  };
+  modeScheduleSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mode_schedule>(topicPrefix_ + "_mode_schedule", 1, modeScheduleCallback);
 
   // TargetTrajectories
-  boost::function<void(const ocs2_msgs::mpc_target_trajectories::ConstPtr&)> targetTrajectoriesCallback =
-      [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
-        const auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
-        referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
-      };
-  targetTrajectoriesSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_target", 1, targetTrajectoriesCallback);
+  auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
+    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
+    this->setTargetTrajectories(std::move(targetTrajectories));
+  };
+  targetTrajectoriesSubscriber_ =
+      nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>(topicPrefix_ + "_mpc_target", 1, targetTrajectoriesCallback);
 }
 
 }  // namespace ocs2

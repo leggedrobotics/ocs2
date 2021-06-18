@@ -31,15 +31,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
 
 namespace ocs2 {
 namespace {
 
-PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, const VectorFunctionLinearApproximation& dynamicsMatrices,
-                                        const ScalarFunctionQuadraticApproximation& costMatrices) {
+std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSetting(
+    bool feedback, bool emptyConstraint, const VectorFunctionLinearApproximation& dynamicsMatrices,
+    const ScalarFunctionQuadraticApproximation& costMatrices) {
   int n = dynamicsMatrices.dfdu.rows();
   int m = dynamicsMatrices.dfdu.cols();
 
@@ -54,7 +55,7 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
   settings.dt = 0.05;
-  settings.sqpIteration = 1;
+  settings.sqpIteration = 10;
   settings.projectStateInputEqualityConstraints = true;
   settings.useFeedbackPolicy = feedback;
   settings.printSolverStatistics = true;
@@ -65,23 +66,23 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
-  const ocs2::vector_t initState = ocs2::vector_t::Zero(n);
+  const ocs2::vector_t initState = ocs2::vector_t::Ones(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
-  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(m));
+  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Construct solver
   std::unique_ptr<ocs2::MultipleShootingSolver> solver;
   if (emptyConstraint) {
     ConstraintBase emptyBaseConstraints;
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &emptyBaseConstraints));
+    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &emptyBaseConstraints));
   } else {
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, nullptr));
+    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, nullptr));
   }
   solver->setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Solve
   solver->run(startTime, initState, finalTime, partitioningTimes);
-  return solver->primalSolution(finalTime);
+  return {solver->primalSolution(finalTime), solver->getIterationsLog()};
 }
 
 }  // namespace
@@ -90,13 +91,25 @@ PrimalSolution solveWithFeedbackSetting(bool feedback, bool emptyConstraint, con
 TEST(test_unconstrained, withFeedback) {
   int n = 3;
   int m = 2;
+  const double tol = 1e-9;
   const auto dynamics = ocs2::qp_solver::getRandomDynamics(n, m);
   const auto costs = ocs2::qp_solver::getRandomCost(n, m);
-  const auto withEmptyConstraint = ocs2::solveWithFeedbackSetting(true, true, dynamics, costs);
-  const auto withNullConstraint = ocs2::solveWithFeedbackSetting(true, false, dynamics, costs);
+  const auto solWithEmptyConstraint = ocs2::solveWithFeedbackSetting(true, true, dynamics, costs);
+  const auto solWithNullConstraint = ocs2::solveWithFeedbackSetting(true, false, dynamics, costs);
+
+  /*
+   * Assert performance
+   * - Contains 2 performance indices, 1 for the initialization, 1 for the iteration.
+   * - Linear dynamics should be satisfied after the step.
+   */
+  ASSERT_LE(solWithEmptyConstraint.second.size(), 2);
+  ASSERT_LE(solWithNullConstraint.second.size(), 2);
+  ASSERT_LT(solWithEmptyConstraint.second.back().stateEqConstraintISE, tol);
+  ASSERT_LT(solWithNullConstraint.second.back().stateEqConstraintISE, tol);
 
   // Compare
-  const double tol = 1e-9;
+  const auto& withEmptyConstraint = solWithEmptyConstraint.first;
+  const auto& withNullConstraint = solWithNullConstraint.first;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));
@@ -111,13 +124,25 @@ TEST(test_unconstrained, withFeedback) {
 TEST(test_unconstrained, noFeedback) {
   int n = 3;
   int m = 2;
+  const double tol = 1e-9;
   const auto dynamics = ocs2::qp_solver::getRandomDynamics(n, m);
   const auto costs = ocs2::qp_solver::getRandomCost(n, m);
-  const auto withEmptyConstraint = ocs2::solveWithFeedbackSetting(false, true, dynamics, costs);
-  const auto withNullConstraint = ocs2::solveWithFeedbackSetting(false, false, dynamics, costs);
+  const auto solWithEmptyConstraint = ocs2::solveWithFeedbackSetting(false, true, dynamics, costs);
+  const auto solWithNullConstraint = ocs2::solveWithFeedbackSetting(false, false, dynamics, costs);
+
+  /*
+   * Assert performance
+   * - Contains 2 performance indices, 1 for the initialization, 1 for the iteration.
+   * - Linear dynamics should be satisfied after the step.
+   */
+  ASSERT_LE(solWithEmptyConstraint.second.size(), 2);
+  ASSERT_LE(solWithNullConstraint.second.size(), 2);
+  ASSERT_LT(solWithEmptyConstraint.second.back().stateEqConstraintISE, tol);
+  ASSERT_LT(solWithNullConstraint.second.back().stateEqConstraintISE, tol);
 
   // Compare
-  const double tol = 1e-9;
+  const auto& withEmptyConstraint = solWithEmptyConstraint.first;
+  const auto& withNullConstraint = solWithNullConstraint.first;
   for (int i = 0; i < withEmptyConstraint.timeTrajectory_.size(); i++) {
     ASSERT_DOUBLE_EQ(withEmptyConstraint.timeTrajectory_[i], withNullConstraint.timeTrajectory_[i]);
     ASSERT_TRUE(withEmptyConstraint.stateTrajectory_[i].isApprox(withNullConstraint.stateTrajectory_[i], tol));

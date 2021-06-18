@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_sqp/TimeDiscretization.h"
 
 #include <ocs2_core/constraint/LinearConstraint.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
@@ -90,7 +90,7 @@ class SwitchedConstraint : public ocs2::ConstraintBase {
   std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
 };
 
-PrimalSolution solveWithEventTime(scalar_t eventTime) {
+std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scalar_t eventTime) {
   int n = 3;
   int m = 2;
 
@@ -124,16 +124,16 @@ PrimalSolution solveWithEventTime(scalar_t eventTime) {
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Random(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
-  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(m));
+  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Set up solver
-  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &operatingPoints, &switchedConstraint);
+  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &switchedConstraint);
   solver.setModeScheduleManager(modeScheduleManagerPtr);
   solver.setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Solve
   solver.run(startTime, initState, finalTime, partitioningTimes);
-  return solver.primalSolution(finalTime);
+  return {solver.primalSolution(finalTime), solver.getIterationsLog()};
 }
 
 }  // namespace
@@ -143,13 +143,24 @@ TEST(test_switched_problem, switched_constraint) {
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::scalar_t eventTime = 0.1875;
-  const auto primalSolution = ocs2::solveWithEventTime(eventTime);
+  const double tol = 1e-9;
+  const auto solution = ocs2::solveWithEventTime(eventTime);
+  const auto& primalSolution = solution.first;
+  const auto& performanceLog = solution.second;
+
+  /*
+   * Assert performance
+   * - Contains 2 performance indices, 1 for the initialization, 1 for the iteration.
+   * - Linear dynamics should be satisfied after the step.
+   */
+  ASSERT_LE(performanceLog.size(), 2);
+  ASSERT_LT(performanceLog.back().stateEqConstraintISE, tol);
 
   // Should have correct node pre and post event time, with corresponding inputs
   ASSERT_EQ(primalSolution.timeTrajectory_[4], eventTime);
   ASSERT_EQ(primalSolution.timeTrajectory_[5], eventTime);
-  ASSERT_LT(std::abs(primalSolution.inputTrajectory_[4][0]), 1e-9);
-  ASSERT_LT(std::abs(primalSolution.inputTrajectory_[5][1]), 1e-9);
+  ASSERT_LT(std::abs(primalSolution.inputTrajectory_[4][0]), tol);
+  ASSERT_LT(std::abs(primalSolution.inputTrajectory_[5][1]), tol);
 
   // Inspect solution, check at a dt smaller than solution to check interpolation around the switch.
   ocs2::scalar_t t_check = startTime;
@@ -161,11 +172,11 @@ TEST(test_switched_problem, switched_constraint) {
         ocs2::LinearInterpolation::interpolate(t_check, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_);
     ocs2::vector_t uControl = primalSolution.controllerPtr_->computeInput(t_check, xNominal);
     if (t_check < eventTime) {
-      ASSERT_LT(std::abs(uNominal[0]), 1e-9);
-      ASSERT_LT(std::abs(uControl[0]), 1e-9);
+      ASSERT_LT(std::abs(uNominal[0]), tol);
+      ASSERT_LT(std::abs(uControl[0]), tol);
     } else if (t_check > eventTime) {
-      ASSERT_LT(std::abs(uNominal[1]), 1e-9);
-      ASSERT_LT(std::abs(uControl[1]), 1e-9);
+      ASSERT_LT(std::abs(uNominal[1]), tol);
+      ASSERT_LT(std::abs(uControl[1]), tol);
     }
     t_check += dt_check;
   }
@@ -176,7 +187,18 @@ TEST(test_switched_problem, event_at_beginning) {
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::scalar_t eventTime = 1e-8;
-  const auto primalSolution = ocs2::solveWithEventTime(eventTime);
+  const double tol = 1e-9;
+  const auto solution = ocs2::solveWithEventTime(eventTime);
+  const auto& primalSolution = solution.first;
+  const auto& performanceLog = solution.second;
+
+  /*
+   * Assert performance
+   * - Contains 2 performance indices, 1 for the initialization, 1 for the iteration.
+   * - Linear dynamics should be satisfied after the step.
+   */
+  ASSERT_LE(performanceLog.size(), 2);
+  ASSERT_LT(performanceLog.back().stateEqConstraintISE, tol);
 
   // Should have correct post event time start
   ASSERT_EQ(primalSolution.timeTrajectory_[0], eventTime);
@@ -191,8 +213,8 @@ TEST(test_switched_problem, event_at_beginning) {
     ocs2::vector_t uNominal =
         ocs2::LinearInterpolation::interpolate(t_check, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_);
     ocs2::vector_t uControl = primalSolution.controllerPtr_->computeInput(t_check, xNominal);
-    ASSERT_LT(std::abs(uNominal[1]), 1e-9);
-    ASSERT_LT(std::abs(uControl[1]), 1e-9);
+    ASSERT_LT(std::abs(uNominal[1]), tol);
+    ASSERT_LT(std::abs(uControl[1]), tol);
     t_check += dt_check;
   }
 }
@@ -202,7 +224,18 @@ TEST(test_switched_problem, event_at_end) {
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::scalar_t eventTime = 1.0 - 1e-8;
-  const auto primalSolution = ocs2::solveWithEventTime(eventTime);
+  const double tol = 1e-9;
+  const auto solution = ocs2::solveWithEventTime(eventTime);
+  const auto& primalSolution = solution.first;
+  const auto& performanceLog = solution.second;
+
+  /*
+   * Assert performance
+   * - Contains 2 performance indices, 1 for the initialization, 1 for the iteration.
+   * - Linear dynamics should be satisfied after the step.
+   */
+  ASSERT_LE(performanceLog.size(), 2);
+  ASSERT_LT(performanceLog.back().stateEqConstraintISE, tol);
 
   // Should have correct node pre and post event time
   ASSERT_TRUE(std::none_of(primalSolution.timeTrajectory_.begin(), primalSolution.timeTrajectory_.end(),
@@ -217,8 +250,8 @@ TEST(test_switched_problem, event_at_end) {
     ocs2::vector_t uNominal =
         ocs2::LinearInterpolation::interpolate(t_check, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_);
     ocs2::vector_t uControl = primalSolution.controllerPtr_->computeInput(t_check, xNominal);
-    ASSERT_LT(std::abs(uNominal[0]), 1e-9);
-    ASSERT_LT(std::abs(uControl[0]), 1e-9);
+    ASSERT_LT(std::abs(uNominal[0]), tol);
+    ASSERT_LT(std::abs(uControl[0]), tol);
     t_check += dt_check;
   }
 }

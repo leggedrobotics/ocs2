@@ -34,22 +34,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
+#include "ocs2_sqp/MultipleShootingInitialization.h"
 #include "ocs2_sqp/MultipleShootingTranscription.h"
 
 namespace ocs2 {
 
 MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                                               const CostFunctionBase* costFunctionPtr,
-                                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
+                                               const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr,
                                                const ConstraintBase* constraintPtr, const CostFunctionBase* terminalCostFunctionPtr)
-    : SolverBase(), settings_(std::move(settings)), hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings) {
-  // Multithreading, set up threadpool for N-1 helpers, our main thread is the N-th one.
-  if (settings_.nThreads > 1) {
-    threadPoolPtr_.reset(new ThreadPool(settings_.nThreads - 1, settings_.threadPriority));
-  }
+    : SolverBase(),
+      settings_(std::move(settings)),
+      hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings),
+      threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
 
@@ -69,7 +67,7 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
   }
 
   // Operating points
-  operatingTrajectoriesPtr_.reset(operatingTrajectoriesPtr->clone());
+  initializerPtr_.reset(initializerPtr->clone());
 
   if (constraintPtr == nullptr) {
     settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
@@ -151,8 +149,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
 
   // Initialize the state and input
-  vector_array_t x = initializeStateTrajectory(initState, timeDiscretization);
-  vector_array_t u = initializeInputTrajectory(timeDiscretization, x);
+  vector_array_t x, u;
+  initializeStateInputTrajectories(initState, timeDiscretization, x, u);
 
   // Initialize cost
   for (auto& cost : costFunctionPtr_) {
@@ -203,66 +201,43 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 }
 
 void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) {
-  // Launch tasks in helper threads
-  std::vector<std::future<void>> futures;
-  if (threadPoolPtr_) {
-    int numHelpers = settings_.nThreads - 1;
-    futures.reserve(numHelpers);
-    for (int i = 0; i < numHelpers; i++) {
-      futures.emplace_back(threadPoolPtr_->run(taskFunction));
-    }
-  }
-  // Execute one instance in this thread.
-  const int workerId = settings_.nThreads - 1;  // threadpool uses 0 -> n-2
-  taskFunction(workerId);
-
-  // Wait for helpers to finish.
-  for (auto&& fut : futures) {
-    fut.get();
-  }
+  threadPool_.runParallel(std::move(taskFunction), settings_.nThreads);
 }
 
-vector_array_t MultipleShootingSolver::initializeInputTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
-                                                                 const vector_array_t& stateTrajectory) const {
-  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& initState,
+                                                              const std::vector<AnnotatedTime>& timeDiscretization,
+                                                              vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;  // // size of the input trajectory
+  stateTrajectory.clear();
+  stateTrajectory.reserve(N + 1);
+  inputTrajectory.clear();
+  inputTrajectory.reserve(N);
+
+  // Determine till when to use the previous solution
   const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
 
-  vector_array_t u;
-  u.reserve(N);
+  stateTrajectory.push_back(initState);
   for (int i = 0; i < N; i++) {
-    const scalar_t ti = getInterpolationTime(timeDiscretization[i]);
-    if (ti < interpolateTill) {
-      // Interpolate previous input trajectory
-      u.emplace_back(primalSolution_.controllerPtr_->computeInput(ti, stateTrajectory[i]));
+    if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
+      // Event Node
+      inputTrajectory.push_back(vector_t());  // no input at event node
+      stateTrajectory.push_back(multiple_shooting::initializeEventNode(timeDiscretization[i].time, stateTrajectory.back()));
     } else {
-      // No previous control at this time-point -> fall back to heuristics
-      // Ask for operating trajectory between t[k] and t[k+1]. Take the returned input at t[k] as our heuristic.
-      const scalar_t tNext = getIntervalEnd(timeDiscretization[i + 1]);
-      scalar_array_t timeArray;
-      vector_array_t stateArray;
-      vector_array_t inputArray;
-      operatingTrajectoriesPtr_->getSystemOperatingTrajectories(stateTrajectory[i], ti, tNext, timeArray, stateArray, inputArray, false);
-      u.push_back(std::move(inputArray.front()));
+      // Intermediate node
+      const scalar_t time = getIntervalStart(timeDiscretization[i]);
+      const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
+      vector_t input, nextState;
+      if (time < interpolateTill) {  // Using previous solution
+        const bool useController = (i == 0);
+        std::tie(input, nextState) =
+            multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back(), useController);
+      } else {  // Using initializer
+        std::tie(input, nextState) =
+            multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
+      }
+      inputTrajectory.push_back(std::move(input));
+      stateTrajectory.push_back(std::move(nextState));
     }
-  }
-
-  return u;
-}
-
-vector_array_t MultipleShootingSolver::initializeStateTrajectory(const vector_t& initState,
-                                                                 const std::vector<AnnotatedTime>& timeDiscretization) const {
-  const int trajectoryLength = static_cast<int>(timeDiscretization.size());
-  if (totalNumIterations_ == 0) {  // first iteration
-    return vector_array_t(trajectoryLength, initState);
-  } else {  // interpolation of previous solution
-    vector_array_t x;
-    x.reserve(trajectoryLength);
-    x.push_back(initState);  // Force linearization of the first node around the current state
-    for (int i = 1; i < trajectoryLength; i++) {
-      const scalar_t ti = getInterpolationTime(timeDiscretization[i]);
-      x.emplace_back(LinearInterpolation::interpolate(ti, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
-    }
-    return x;
   }
 }
 
@@ -413,7 +388,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
     // Accumulate! Same worker might run multiple tasks
     performance[workerId] += workerPerformance;
   };
-  runParallel(parallelTask);
+  runParallel(std::move(parallelTask));
 
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
@@ -462,7 +437,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
     // Accumulate! Same worker might run multiple tasks
     performance[workerId] += workerPerformance;
   };
-  runParallel(parallelTask);
+  runParallel(std::move(parallelTask));
 
   // Account for init state in performance
   performance.front().stateEqConstraintISE += (initState - x.front()).squaredNorm();
@@ -538,7 +513,7 @@ bool MultipleShootingSolver::takeStep(const PerformanceIndex& baseline, const st
     const bool stepAccepted = [&]() {
       if (newConstraintViolation > g_max) {
         return false;
-      } else if (newConstraintViolation < g_min) {
+      } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min) {
         // With low violation only care about cost, reference paper implements here armijo condition
         return (performanceNew.merit < baseline.merit);
       } else {

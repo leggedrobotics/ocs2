@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/ThreadPool.h>
@@ -56,12 +56,12 @@ class MultipleShootingSolver : public SolverBase {
    * @param settings : settings for the multiple shooting solver.
    * @param systemDynamicsPtr : The system dynamics.
    * @param costFunctionPtr : The cost function used for the intermediate costs.
-   * @param operatingTrajectoriesPtr : The operating trajectories of system used for initialization.
+   * @param initializerPtr: This class initializes the state-input for the time steps that no controller is available.
    * @param constraintPtr : The system constraint function.
    * @param terminalCostPtr : The cost function used for the terminal (=at the end of the horizon) costs.
    */
   MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr, const CostFunctionBase* costFunctionPtr,
-                         const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, const ConstraintBase* constraintPtr = nullptr,
+                         const Initializer* initializerPtr, const ConstraintBase* constraintPtr = nullptr,
                          const CostFunctionBase* terminalCostFunctionPtr = nullptr);
 
   ~MultipleShootingSolver() override;
@@ -107,12 +107,9 @@ class MultipleShootingSolver : public SolverBase {
   /** Get profiling information as a string */
   std::string getBenchmarkingInformation() const;
 
-  /** Returns initial guess for the state trajectory */
-  vector_array_t initializeStateTrajectory(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization) const;
-
-  /** Returns initial guess for the input trajectory */
-  vector_array_t initializeInputTrajectory(const std::vector<AnnotatedTime>& timeDiscretization,
-                                           const vector_array_t& stateTrajectory) const;
+  /** Initializes for the state-input trajectories */
+  void initializeStateInputTrajectories(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization,
+                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
 
   /** Creates QP around t, x(t), u(t). Returns performance metrics at the current {t, x(t), u(t)} */
   PerformanceIndex setupQuadraticSubproblem(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
@@ -143,11 +140,11 @@ class MultipleShootingSolver : public SolverBase {
   std::vector<std::unique_ptr<CostFunctionBase>> costFunctionPtr_;
   std::vector<std::unique_ptr<ConstraintBase>> constraintPtr_;
   std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
-  std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
+  std::unique_ptr<Initializer> initializerPtr_;
   std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // Threading
-  std::unique_ptr<ThreadPool> threadPoolPtr_;
+  ThreadPool threadPool_;
 
   // Solution
   PrimalSolution primalSolution_;

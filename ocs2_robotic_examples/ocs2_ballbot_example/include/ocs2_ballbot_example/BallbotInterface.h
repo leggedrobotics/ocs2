@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
@@ -82,7 +82,7 @@ class BallbotInterface final : public RobotInterface {
 
   const RolloutBase& getRollout() const { return *ddpBallbotRolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *ballbotOperatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *ballbotInitializerPtr_; }
 
  protected:
   /**
@@ -107,7 +107,7 @@ class BallbotInterface final : public RobotInterface {
   std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
   std::unique_ptr<QuadraticCostFunction> ballbotCostPtr_;
   std::unique_ptr<ConstraintBase> ballbotConstraintPtr_;
-  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr_;
+  std::unique_ptr<Initializer> ballbotInitializerPtr_;
 
   // cost parameters
   matrix_t Q_{STATE_DIM, STATE_DIM};

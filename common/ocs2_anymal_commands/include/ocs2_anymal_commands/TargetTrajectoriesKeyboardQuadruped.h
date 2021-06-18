@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <mutex>
 
-#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardInterface.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 

@@ -83,7 +83,7 @@ class MPC_ROS_Interface {
    *
    * @param [in] initTargetTrajectories: The initial desired cost trajectories.
    */
-  void resetMpcNode(const TargetTrajectories& initTargetTrajectories);
+  void resetMpcNode(TargetTrajectories&& initTargetTrajectories);
 
   /**
    * Shutdowns the ROS node.

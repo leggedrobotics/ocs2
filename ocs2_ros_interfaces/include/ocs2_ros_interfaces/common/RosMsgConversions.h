@@ -45,35 +45,34 @@ namespace ocs2 {
 namespace ros_msg_conversions {
 
 /** Creates the observation message. */
-void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation& observationMsg);
+ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation);
 
 /** Reads the observation message. */
-void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, SystemObservation& observation);
+SystemObservation readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg);
 
 /** Creates the mode sequence message. */
-void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_schedule& modeScheduleMsg);
+ocs2_msgs::mode_schedule createModeScheduleMsg(const ModeSchedule& modeSchedule);
 
 /** Reads the mode sequence message. */
 ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg);
+
+/** Creates the target trajectories message. */
+ocs2_msgs::mpc_target_trajectories createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories);
+
+/** Returns the TargetTrajectories message. */
+TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
 
 /**
  * Creates the performance indices message.
  *
  * @param [in] initTime: The initial time for which the MPC is computed.
  * @param [in] performanceIndices: The performance indices of the solver.
- * @param [out] performanceIndicesMsg: The performance indices ROS message.
+ * @return The performance indices ROS message.
  */
-void createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices,
-                                 ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
+ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices);
 
 /** Reads the performance indices message. */
 PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
-
-/** Creates the target trajectories message. */
-void createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories, ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
-
-/** Returns the TargetTrajectories message. */
-TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
 
 }  // namespace ros_msg_conversions
 }  // namespace ocs2

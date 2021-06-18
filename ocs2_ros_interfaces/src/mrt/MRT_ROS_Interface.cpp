@@ -64,15 +64,14 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 
   ocs2_msgs::reset resetSrv;
   resetSrv.request.reset = static_cast<uint8_t>(true);
-
-  ros_msg_conversions::createTargetTrajectoriesMsg(initTargetTrajectories, resetSrv.request.targetTrajectories);
+  resetSrv.request.targetTrajectories = ros_msg_conversions::createTargetTrajectoriesMsg(initTargetTrajectories);
 
   while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) {
     ROS_ERROR_STREAM("Failed to call service to reset MPC, retrying...");
   }
 
   mpcResetServiceClient_.call(resetSrv);
-  ROS_INFO_STREAM("MPC node is reset.");
+  ROS_INFO_STREAM("MPC node has been reset.");
 }
 
 /******************************************************************************************************/
@@ -84,7 +83,7 @@ void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentOb
 #endif
 
   // create the message
-  ros_msg_conversions::createObservationMsg(currentObservation, mpcObservationMsg_);
+  mpcObservationMsg_ = ros_msg_conversions::createObservationMsg(currentObservation);
 
   // publish the current observation
 #ifdef PUBLISH_THREAD
@@ -130,7 +129,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   auto& inputBuffer = primalSolution.inputTrajectory_;
   auto& controlBuffer = primalSolution.controllerPtr_;
 
-  ros_msg_conversions::readObservationMsg(msg.initObservation, commandData.mpcInitObservation_);
+  commandData.mpcInitObservation_ = ros_msg_conversions::readObservationMsg(msg.initObservation);
   commandData.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
   primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);

@@ -51,9 +51,9 @@ TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::
   targetCommandLimits_ = Eigen::Map<const vector_t>(targetCommandLimits.data(), targetCommandSize_);
 
   // observation subscriber
-  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) -> void {
+  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
-    ros_msg_conversions::readObservationMsg(*msg, latestObservation_);
+    latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
   };
   observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "_mpc_observation", 1, observationCallback);
 

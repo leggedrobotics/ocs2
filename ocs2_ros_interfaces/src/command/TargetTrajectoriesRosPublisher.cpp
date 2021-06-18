@@ -40,7 +40,7 @@ namespace ocs2 {
 TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, std::string topicPrefix) {
   targetTrajectoriesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_target_trajectories>(topicPrefix + "_mpc_target", 1, false);
   ros::spinOnce();
-  ROS_INFO_STREAM(topicPrefix + " TargetTrajectories publisher node is ready.");
+  ROS_INFO_STREAM("The TargetTrajectories is publishing on " + topicPrefix + "_mpc_target topic.");
 }
 
 /******************************************************************************************************/
@@ -54,8 +54,7 @@ TargetTrajectoriesRosPublisher::~TargetTrajectoriesRosPublisher() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void TargetTrajectoriesRosPublisher::publishTargetTrajectories(const TargetTrajectories& targetTrajectories) {
-  ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;
-  ros_msg_conversions::createTargetTrajectoriesMsg(targetTrajectories, mpcTargetTrajectoriesMsg);
+  const auto mpcTargetTrajectoriesMsg = ros_msg_conversions::createTargetTrajectoriesMsg(targetTrajectories);
   targetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg);
 }
 

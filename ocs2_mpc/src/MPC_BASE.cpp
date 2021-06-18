@@ -85,13 +85,6 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
     return false;
   }
 
-  // Check if a goal has been set
-  if (initRun_ && getSolverPtr()->getReferenceManager().getTargetTrajectories().empty()) {
-    std::cerr << "### WARNING: The initial TargetTrajectories are not set. This may cause undefined behavior. "
-                 "Use the MPC_BASE::getSolverPtr()->getReferenceManager().setTargetTrajectories() method "
-                 "to provide target trajectories.\n";
-  }
-
   // adjusting the partitioning times based on the initial time
   if (initRun_) {
     const scalar_t deltaTime = currentTime - partitionTimes_[mpcSettings_.numPartitions_];

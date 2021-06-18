@@ -1,6 +1,7 @@
 // command
 #include <ocs2_ros_interfaces/command/TargetPoseCommand.h>
 #include <ocs2_ros_interfaces/command/TargetPoseTransformation.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesInteractiveMarker.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 

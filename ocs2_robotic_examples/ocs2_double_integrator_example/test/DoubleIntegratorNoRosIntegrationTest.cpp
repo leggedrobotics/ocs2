@@ -70,7 +70,7 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
 TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
   auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.setTargetTrajectories(targetTrajectories);
+  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
   SystemObservation observation;
   observation.time = initTime;
@@ -107,7 +107,7 @@ TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
 TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
   auto mpcPtr = doubleIntegratorInterfacePtr->getMpc(false);
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.setTargetTrajectories(targetTrajectories);
+  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
   SystemObservation observation;
   observation.time = initTime;
@@ -144,7 +144,7 @@ TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
 TEST_F(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.setTargetTrajectories(targetTrajectories);
+  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
   const scalar_t f_mrt = 100;
   const scalar_t mrtTimeIncrement = 1.0 / f_mrt;

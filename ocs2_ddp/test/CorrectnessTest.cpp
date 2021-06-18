@@ -265,7 +265,7 @@ TEST_P(DDPCorrectness, TestSLQ) {
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
 
-  ddp.setTargetTrajectories(targetTrajectories);
+  ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);
@@ -284,7 +284,7 @@ TEST_P(DDPCorrectness, TestILQR) {
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
 
-  ddp.setTargetTrajectories(targetTrajectories);
+  ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);

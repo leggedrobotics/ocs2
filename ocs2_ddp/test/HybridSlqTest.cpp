@@ -87,6 +87,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   vector_t xNominal = vector_t::Zero(stateDim);
   vector_t uNominal = vector_t::Zero(inputDim);
   TargetTrajectories targetTrajectories({startTime}, {xNominal}, {uNominal});
+  auto referenceManager = std::make_shared<ReferenceManager>(std::move(targetTrajectories));
 
   QuadraticCostFunction systemCost(Q, R, Qf);
 
@@ -98,7 +99,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   std::cout << "Starting SLQ Procedure" << std::endl;
   // SLQ
   SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, ddpSettings);
-  slq.setTargetTrajectories(targetTrajectories);
+  slq.setReferenceManager(referenceManager);
   slq.run(startTime, initState, finalTime, partitioningTimes);
   auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;

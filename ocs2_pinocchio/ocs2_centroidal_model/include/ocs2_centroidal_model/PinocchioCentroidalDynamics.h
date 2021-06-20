@@ -97,19 +97,9 @@ class PinocchioCentroidalDynamics {
   CentroidalModelPinocchioMapping<scalar_t>* mappingPtr_;
 
   // partial derivatives of the system dynamics
-  Matrix3x normalizedLinearMomentumRateDerivativeState_;
+  Matrix3x normalizedLinearMomentumRateDerivativeQ_;
+  Matrix3x normalizedAngularMomentumRateDerivativeQ_;
   Matrix3x normalizedLinearMomentumRateDerivativeInput_;
-  Matrix3x normalizedAngularMomentumRateDerivativeState_;
   Matrix3x normalizedAngularMomentumRateDerivativeInput_;
-  Matrix6x floatingBaseVelocitiesDerivativeState_;
-  Matrix6x floatingBaseVelocitiesDerivativeInput_;
-  matrix_t jointVelocitiesDerivativeState_;
-  matrix_t jointVelocitiesDerivativeInput_;
-
-  // centroidal momentum derivatives
-  Matrix6x dh_dq_;
-  Matrix6x dhdot_dq_;
-  Matrix6x dhdot_dv_;
-  Matrix6x dhdot_da_;
 };
 }  // namespace ocs2

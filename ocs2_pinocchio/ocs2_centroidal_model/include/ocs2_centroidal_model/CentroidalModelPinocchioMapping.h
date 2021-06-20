@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
 #include <pinocchio/algorithm/center-of-mass.hpp>
+#include <pinocchio/algorithm/centroidal-derivatives.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 
 namespace ocs2 {
@@ -163,6 +164,9 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * @param [in] Jq: jacobian with respect to pinocchio joint positions
    * @param [in] Jv: jacobian with respect to pinocchio joint velocities
    * @return a pair {dfdx, dfdu} containing the jacobians with respect to the system state and input
+   *
+   * @warning: The function pinocchio::computeCentroidalDynamicsDerivatives(model, data, q, v, ...)
+   * should have been called first
    */
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 

@@ -30,9 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 #include "ocs2_centroidal_model/helpers.h"
 
-#include <pinocchio/container/aligned-vector.hpp>
-#include "pinocchio/algorithm/centroidal-derivatives.hpp"
-
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -75,43 +72,16 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapL
   // Partial derivatives of the normalized momentum rates
   computeNormalizedCentroidalMomentumRateGradients(state, input);
 
-  // Partial derivatives of the floating base variables
-  const auto& A = mappingPtr_->getCentroidalMomentumMatrix();
-  const Matrix6 Ab = A.template leftCols<6>();
-  // TODO: move getFloatingBaseCentroidalMomentumMatrixInverse(Ab) to PreComputation
-  const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
-  const auto Aj = A.rightCols(info.actuatedDofNum);
+  matrix_t dfdq = matrix_t::Zero(info.stateDim, info.generalizedCoordinatesNum);
+  matrix_t dfdv = matrix_t::Zero(info.stateDim, info.generalizedCoordinatesNum);
+  dfdq.topRows<6>() << normalizedLinearMomentumRateDerivativeQ_, normalizedAngularMomentumRateDerivativeQ_;
+  dfdv.bottomRows(info.generalizedCoordinatesNum).setIdentity();
 
-  floatingBaseVelocitiesDerivativeInput_.setZero(6, inputDim);
-  floatingBaseVelocitiesDerivativeState_.setZero(6, stateDim);
-  floatingBaseVelocitiesDerivativeState_.leftCols(6) = info.robotMass * Ab_inv;
-  dh_dq_.resize(6, info.generalizedCoordinatesNum);
-  dhdot_dq_.resize(6, info.generalizedCoordinatesNum);
-  dhdot_dv_.resize(6, info.generalizedCoordinatesNum);
-  dhdot_da_.resize(6, info.generalizedCoordinatesNum);
+  std::tie(dynamics.dfdx, dynamics.dfdu) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
 
-  // TODO: Check how to get the correct value for dh_dq_
-  const pinocchio::Inertia& Ytot = data.oYcrb[0];
-  const typename pinocchio::Inertia::Vector3& com = Ytot.lever();
-  pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(Matrix6x, dh_dq_));
-  dh_dq_.leftCols(3).setZero();
-
-  if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    floatingBaseVelocitiesDerivativeState_.rightCols(info.generalizedCoordinatesNum).noalias() = -Ab_inv * dh_dq_;
-    floatingBaseVelocitiesDerivativeInput_.rightCols(info.actuatedDofNum).noalias() = -Ab_inv * Aj;
-  } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    floatingBaseVelocitiesDerivativeState_.middleCols(6, 6).noalias() = -Ab_inv * dh_dq_.leftCols(6);
-  }
-
-  // Partial derivatives of the actuated joints
-  jointVelocitiesDerivativeInput_.setZero(info.actuatedDofNum, inputDim);
-  jointVelocitiesDerivativeInput_.rightCols(info.actuatedDofNum).setIdentity();
-  jointVelocitiesDerivativeState_.setZero(info.actuatedDofNum, state.rows());
-
-  dynamics.dfdx << normalizedLinearMomentumRateDerivativeState_, normalizedAngularMomentumRateDerivativeState_,
-      floatingBaseVelocitiesDerivativeState_, jointVelocitiesDerivativeState_;
-  dynamics.dfdu << normalizedLinearMomentumRateDerivativeInput_, normalizedAngularMomentumRateDerivativeInput_,
-      floatingBaseVelocitiesDerivativeInput_, jointVelocitiesDerivativeInput_;
+  // Add partial derivative of f with respect to u since part of f depends explicitly on the inputs (contact forces + torques)
+  dynamics.dfdu.topRows<3>() += normalizedLinearMomentumRateDerivativeInput_;
+  dynamics.dfdu.middleRows(3, 3) += normalizedAngularMomentumRateDerivativeInput_;
 
   return dynamics;
 }
@@ -128,9 +98,9 @@ void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradien
   assert(info.inputDim == inputDim);
 
   // compute partial derivatives of the center of robotMass acceleration and normalized angular momentum
-  normalizedLinearMomentumRateDerivativeState_.setZero(3, stateDim);
+  normalizedLinearMomentumRateDerivativeQ_.setZero(3, info.generalizedCoordinatesNum);
+  normalizedAngularMomentumRateDerivativeQ_.setZero(3, info.generalizedCoordinatesNum);
   normalizedLinearMomentumRateDerivativeInput_.setZero(3, inputDim);
-  normalizedAngularMomentumRateDerivativeState_.setZero(3, stateDim);
   normalizedAngularMomentumRateDerivativeInput_.setZero(3, inputDim);
   Matrix3 f_hat, p_hat;
 
@@ -139,8 +109,7 @@ void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradien
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     const Vector3 contactForceInWorldFrame = getForce(i);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
-    normalizedAngularMomentumRateDerivativeState_.rightCols(info.generalizedCoordinatesNum) -=
-        f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
+    normalizedAngularMomentumRateDerivativeQ_ -= f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, 3 * i).diagonal().array() = 1.0 / info.robotMass;
     p_hat = skewSymmetricMatrix(mappingPtr_->getPositionComToContactPointInWorldFrame(i)) / info.robotMass;
     normalizedAngularMomentumRateDerivativeInput_.block<3, 3>(0, 3 * i) = p_hat;
@@ -150,11 +119,8 @@ void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradien
     const size_t inputIdx = 3 * info.numThreeDofContacts + 6 * (i - info.numThreeDofContacts);
     const Vector3 contactForceInWorldFrame = getForce(i);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
-    normalizedAngularMomentumRateDerivativeState_.rightCols(info.generalizedCoordinatesNum) -=
-        f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
-
+    normalizedAngularMomentumRateDerivativeQ_ -= f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, inputIdx).diagonal().array() = 1.0 / info.robotMass;
-
     p_hat = skewSymmetricMatrix(mappingPtr_->getPositionComToContactPointInWorldFrame(i)) / info.robotMass;
     normalizedAngularMomentumRateDerivativeInput_.block<3, 3>(0, 3 * inputIdx) = p_hat;
     normalizedAngularMomentumRateDerivativeInput_.block<3, 3>(0, 3 * inputIdx + 3).diagonal().array() = 1.0 / info.robotMass;

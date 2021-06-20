@@ -100,13 +100,53 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   const auto& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
 
-  // TODO: Fix. This is currently wrong since dfdx = dfdq * dqdx + dfdv * dvdx, and dvdx is not zero
+  matrix6x_t floatingBaseVelocitiesDerivativeState;
+  matrix6x_t floatingBaseVelocitiesDerivativeInput;
+  matrix_t jointVelocitiesDerivativeInput;
+  matrix6x_t dhdq;
+
+  // Partial derivatives of the floating base variables
+  const auto& A = getCentroidalMomentumMatrix();
+  const matrix6_t Ab = A.template leftCols<6>();
+  // TODO: move getFloatingBaseCentroidalMomentumMatrixInverse(Ab) to PreComputation
+  const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Aj = A.rightCols(info.actuatedDofNum);
+
+  floatingBaseVelocitiesDerivativeInput.setZero(6, info.inputDim);
+  floatingBaseVelocitiesDerivativeState.setZero(6, info.stateDim);
+  floatingBaseVelocitiesDerivativeState.leftCols(6) = info.robotMass * Ab_inv;
+
+  dhdq.resize(6, info.generalizedCoordinatesNum);
+
+  // TODO: Check how to get the correct value for dhdq
+  const pinocchio::InertiaTpl<SCALAR>& Ytot = data.oYcrb[0];
+  const typename pinocchio::InertiaTpl<SCALAR>::Vector3& com = Ytot.lever();
+  pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(matrix6x_t, dhdq));
+  dhdq.leftCols(3).setZero();
+
+  if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
+    floatingBaseVelocitiesDerivativeState.rightCols(info.generalizedCoordinatesNum).noalias() = -Ab_inv * dhdq;
+    floatingBaseVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).noalias() = -Ab_inv * Aj;
+  } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
+    floatingBaseVelocitiesDerivativeState.middleCols(6, 6).noalias() = -Ab_inv * dhdq.leftCols(6);
+  }
+
+  // Partial derivatives of the actuated joints
+  jointVelocitiesDerivativeInput.setZero(info.actuatedDofNum, info.inputDim);
+  jointVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).setIdentity();
+
+  matrix_t dvdx = matrix_t::Zero(info.generalizedCoordinatesNum, info.stateDim);
+  dvdx.template topRows<6>() = floatingBaseVelocitiesDerivativeState;
+
+  matrix_t dvdu = matrix_t::Zero(info.generalizedCoordinatesNum, info.inputDim);
+  dvdu << floatingBaseVelocitiesDerivativeInput, jointVelocitiesDerivativeInput;
+
   matrix_t dfdx = matrix_t::Zero(Jq.rows(), centroidalModelInfo_.stateDim);
   dfdx.middleCols(6, info.generalizedCoordinatesNum) = Jq;
+  dfdx += Jv * dvdx;
 
-  // TODO: Fix. This is currently wrong since dfdu = dfdv * dvdu, and dvdu is wrong now
   matrix_t dfdu = matrix_t::Zero(Jv.rows(), centroidalModelInfo_.inputDim);
-  dfdu.rightCols(info.actuatedDofNum) = Jv.rightCols(info.actuatedDofNum);
+  dfdu = Jv * dvdu;
 
   return {dfdx, dfdu};
 }

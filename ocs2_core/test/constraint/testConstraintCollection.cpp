@@ -78,7 +78,7 @@ TEST(TestConstraintCollection, activatingConstraints) {
 
 TEST(TestConstraintCollection, clone) {
   ocs2::StateInputConstraintCollection constraintCollection;
-  std::unique_ptr<TestLinearConstraint> constraintTerm(new TestLinearConstraint());
+  std::unique_ptr<TestDummyConstraint> constraintTerm(new TestDummyConstraint());
   const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
   constraintCollection.add("Constraint1", std::move(constraintTerm));
 

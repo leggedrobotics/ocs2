@@ -40,7 +40,7 @@ TYPED_TEST(testLoopshapingPreComputation, getCachedStateInput) {
   const auto x_filter = this->loopshapingDefinition_->getFilterState(x);
   const auto u_filter = this->loopshapingDefinition_->getFilteredInput(x, u);
 
-  preComp.request(PreComputation::Request::Cost, t, x, u);
+  preComp.request(Request::Cost, t, x, u);
 
   EXPECT_TRUE(x_system.isApprox(preComp.getSystemState()));
   EXPECT_TRUE(u_system.isApprox(preComp.getSystemInput()));

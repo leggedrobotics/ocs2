@@ -5,7 +5,6 @@
 #include <ocs2_core/test/testTools.h>
 
 using namespace ocs2;
-using Request = PreComputation::Request;
 
 TYPED_TEST_CASE(TestFixtureLoopShapingSoftConstraint, FilterConfigurations);
 

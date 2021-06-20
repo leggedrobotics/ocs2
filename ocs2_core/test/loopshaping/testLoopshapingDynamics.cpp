@@ -8,8 +8,6 @@ using namespace ocs2;
 TYPED_TEST_CASE(TestFixtureLoopShapingDynamics, FilterConfigurations);
 
 TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamics) {
-  using Request = PreComputation::Request;
-
   // Evaluate system
   this->preComp_sys_->request(Request::Dynamics, this->t, this->x_, this->u_);
   vector_t dx_sys = this->testSystem->computeFlowMap(this->t, this->x_sys_, this->u_sys_, *this->preComp_sys_);
@@ -23,8 +21,6 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamics) {
 };
 
 TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamicsApproximation) {
-  using Request = PreComputation::Request;
-
   // Extract linearization
   this->preComp_->request(Request::Dynamics + Request::Approximation, this->t, this->x_, this->u_);
   const auto linearization = this->testLoopshapingDynamics->linearApproximation(this->t, this->x_, this->u_, *this->preComp_);
@@ -42,8 +38,6 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateDynamicsApproximation) {
 }
 
 TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMap) {
-  using Request = PreComputation::Request;
-
   // Evaluate jump map
   this->preComp_sys_->requestPreJump(Request::Dynamics, this->t, this->x_sys_);
   const vector_t jumpMap_sys = this->testSystem->computeJumpMap(this->t, this->x_sys_, *this->preComp_sys_);
@@ -55,8 +49,6 @@ TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMap) {
 }
 
 TYPED_TEST(TestFixtureLoopShapingDynamics, evaluateJumpMapApproximation) {
-  using Request = PreComputation::Request;
-
   // Evaluate linearization
   this->preComp_sys_->requestPreJump(Request::Dynamics + Request::Approximation, this->t, this->x_sys_);
   const auto jumpMap_sys = this->testSystem->jumpMapLinearApproximation(this->t, this->x_sys_, *this->preComp_sys_);

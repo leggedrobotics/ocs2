@@ -6,8 +6,6 @@
 
 using namespace ocs2;
 
-using Request = PreComputation::Request;
-
 TYPED_TEST_CASE(TestFixtureLoopShapingConstraint, FilterConfigurations);
 
 TYPED_TEST(TestFixtureLoopShapingConstraint, testFilterConstraint) {

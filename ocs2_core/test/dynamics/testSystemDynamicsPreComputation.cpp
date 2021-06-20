@@ -8,23 +8,21 @@
 
 using namespace ocs2;
 
-using Request = PreComputation::Request;
-
 class DummyPreComputation final : public PreComputation {
  public:
   DummyPreComputation() = default;
   PreComputation* clone() const override { return new DummyPreComputation(*this); }
 
-  void request(Request request, scalar_t t, const vector_t& x, const vector_t& u) override { lastRequest = request; }
+  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override { lastRequest = request; }
 
-  void requestPreJump(Request request, scalar_t t, const vector_t& x) override { lastRequest = request; }
+  void requestPreJump(RequestSet request, scalar_t t, const vector_t& x) override { lastRequest = request; }
 
-  static void reset() { lastRequest = static_cast<PreComputation::Request::Computation>(0); }
+  static void reset() { lastRequest = RequestSet(static_cast<Request>(0)); }
 
-  static Request lastRequest;
+  static RequestSet lastRequest;
 };
 
-Request DummyPreComputation::lastRequest = Request(static_cast<Request::Computation>(0));
+RequestSet DummyPreComputation::lastRequest = RequestSet(static_cast<Request>(0));
 
 class DummySystem final : public SystemDynamicsBase {
  public:
@@ -101,7 +99,7 @@ TEST(testSystemDynamicsPreComputation, testPreJumpCallback) {
 }
 
 TEST(testSystemDynamicsPreComputation, testPreComputationRequestLogic) {
-  constexpr Request a = Request::Cost + Request::Constraint;
+  constexpr RequestSet a = Request::Cost + Request::Constraint;
 
   // Test for individual flags
   EXPECT_TRUE(a.contains(Request::Cost));
@@ -112,8 +110,8 @@ TEST(testSystemDynamicsPreComputation, testPreComputationRequestLogic) {
   // a.contains(int(42)); // this should not compile
   // a.contains(Request(Request::Cost)); // this should not compile
 
-  constexpr Request b = Request::Cost + Request::Approximation;
-  constexpr Request c = a + b;  // union
+  constexpr RequestSet b = Request::Cost + Request::Approximation;
+  constexpr RequestSet c = a + b;  // union
 
   // Test for subset
   EXPECT_TRUE(c.containsAll(a));

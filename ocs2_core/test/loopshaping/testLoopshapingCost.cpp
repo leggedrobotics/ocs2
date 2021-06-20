@@ -4,8 +4,6 @@
 
 using namespace ocs2;
 
-using Request = PreComputation::Request;
-
 TYPED_TEST_CASE(TestFixtureLoopShapingCost, FilterConfigurations);
 
 TYPED_TEST(TestFixtureLoopShapingCost, testStateInputCostApproximation) {

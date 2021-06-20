@@ -35,26 +35,32 @@ namespace ros_msg_conversions {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation& observationMsg) {
+ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation) {
+  ocs2_msgs::mpc_observation observationMsg;
+
   observationMsg.time = observation.time;
 
   observationMsg.state.value.resize(observation.state.rows());
   for (size_t i = 0; i < observation.state.rows(); i++) {
-    observationMsg.state.value[i] = observation.state(i);
+    observationMsg.state.value[i] = static_cast<float>(observation.state(i));
   }
 
   observationMsg.input.value.resize(observation.input.rows());
   for (size_t i = 0; i < observation.input.rows(); i++) {
-    observationMsg.input.value[i] = observation.input(i);
+    observationMsg.input.value[i] = static_cast<float>(observation.input(i));
   }
 
   observationMsg.mode = observation.mode;
+
+  return observationMsg;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, SystemObservation& observation) {
+SystemObservation readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg) {
+  SystemObservation observation;
+
   observation.time = observationMsg.time;
 
   const auto& state = observationMsg.state.value;
@@ -64,12 +70,15 @@ void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, System
   observation.input = Eigen::Map<const Eigen::VectorXf>(input.data(), input.size()).cast<scalar_t>();
 
   observation.mode = observationMsg.mode;
+
+  return observation;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_schedule& modeScheduleMsg) {
+ocs2_msgs::mode_schedule createModeScheduleMsg(const ModeSchedule& modeSchedule) {
+  ocs2_msgs::mode_schedule modeScheduleMsg;
   // event times
   modeScheduleMsg.eventTimes.clear();
   modeScheduleMsg.eventTimes.reserve(modeSchedule.eventTimes.size());
@@ -83,6 +92,8 @@ void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_sch
   for (const auto& si : modeSchedule.modeSequence) {
     modeScheduleMsg.modeSequence.push_back(si);
   }
+
+  return modeScheduleMsg;
 }
 
 /******************************************************************************************************/
@@ -109,8 +120,8 @@ ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices,
-                                 ocs2_msgs::mpc_performance_indices& performanceIndicesMsg) {
+ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices) {
+  ocs2_msgs::mpc_performance_indices performanceIndicesMsg;
   performanceIndicesMsg.initTime = initTime;
   performanceIndicesMsg.merit = performanceIndices.merit;
   performanceIndicesMsg.totalCost = performanceIndices.totalCost;
@@ -121,6 +132,7 @@ void createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& perf
   performanceIndicesMsg.stateInputEqConstraintISE = performanceIndices.stateInputEqConstraintISE;
   performanceIndicesMsg.inequalityConstraintISE = performanceIndices.inequalityConstraintISE;
   performanceIndicesMsg.inequalityConstraintPenalty = performanceIndices.inequalityConstraintPenalty;
+  return performanceIndicesMsg;
 }
 
 /******************************************************************************************************/
@@ -145,49 +157,46 @@ PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTrajectories,
-                                 ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
-  const auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
-  const auto& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
-  const auto& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
+ocs2_msgs::mpc_target_trajectories createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories) {
+  ocs2_msgs::mpc_target_trajectories targetTrajectoriesMsg;
+  const auto& timeTrajectory = targetTrajectories.timeTrajectory;
+  const auto& stateTrajectory = targetTrajectories.stateTrajectory;
+  const auto& inputTrajectory = targetTrajectories.inputTrajectory;
 
   // time and state
-  size_t N = desiredStateTrajectory.size();
+  size_t N = stateTrajectory.size();
   targetTrajectoriesMsg.timeTrajectory.resize(N);
   targetTrajectoriesMsg.stateTrajectory.resize(N);
   for (size_t i = 0; i < N; i++) {
-    targetTrajectoriesMsg.timeTrajectory[i] = desiredTimeTrajectory[i];
+    targetTrajectoriesMsg.timeTrajectory[i] = timeTrajectory[i];
 
     targetTrajectoriesMsg.stateTrajectory[i].value =
-        std::vector<float>(desiredStateTrajectory[i].data(), desiredStateTrajectory[i].data() + desiredStateTrajectory[i].size());
+        std::vector<float>(stateTrajectory[i].data(), stateTrajectory[i].data() + stateTrajectory[i].size());
   }  // end of i loop
 
   // input
-  N = desiredInputTrajectory.size();
+  N = inputTrajectory.size();
   targetTrajectoriesMsg.inputTrajectory.resize(N);
   for (size_t i = 0; i < N; i++) {
     targetTrajectoriesMsg.inputTrajectory[i].value =
-        std::vector<float>(desiredInputTrajectory[i].data(), desiredInputTrajectory[i].data() + desiredInputTrajectory[i].size());
+        std::vector<float>(inputTrajectory[i].data(), inputTrajectory[i].data() + inputTrajectory[i].size());
   }  // end of i loop
+
+  return targetTrajectoriesMsg;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg,
-                               CostDesiredTrajectories& costDesiredTrajectories) {
-  auto& desiredTimeTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
-  auto& desiredStateTrajectory = costDesiredTrajectories.desiredStateTrajectory();
-  auto& desiredInputTrajectory = costDesiredTrajectories.desiredInputTrajectory();
-
+TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg) {
   size_t N = targetTrajectoriesMsg.stateTrajectory.size();
   if (N == 0) {
     throw std::runtime_error("An empty target trajectories message is received.");
   }
 
   // state and time
-  desiredTimeTrajectory.resize(N);
-  desiredStateTrajectory.resize(N);
+  scalar_array_t desiredTimeTrajectory(N);
+  vector_array_t desiredStateTrajectory(N);
   for (size_t i = 0; i < N; i++) {
     desiredTimeTrajectory[i] = targetTrajectoriesMsg.timeTrajectory[i];
 
@@ -198,12 +207,14 @@ void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetT
 
   // input
   N = targetTrajectoriesMsg.inputTrajectory.size();
-  desiredInputTrajectory.resize(N);
+  vector_array_t desiredInputTrajectory(N);
   for (size_t i = 0; i < N; i++) {
     desiredInputTrajectory[i] = Eigen::Map<const Eigen::VectorXf>(targetTrajectoriesMsg.inputTrajectory[i].value.data(),
                                                                   targetTrajectoriesMsg.inputTrajectory[i].value.size())
                                     .cast<scalar_t>();
   }  // end of i loop
+
+  return {desiredTimeTrajectory, desiredStateTrajectory, desiredInputTrajectory};
 }
 
 }  // namespace ros_msg_conversions

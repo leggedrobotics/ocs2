@@ -230,15 +230,15 @@ TEST(test_hpiphm_interface, noInputs) {
     uSolGiven.emplace_back(ocs2::vector_t::Random(nu));
 
     // Set optimal next x consistent with dynamics
-    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
     xSolGiven.emplace_back(system[k].f + system[k].dfdx * xSolGiven[k] + system[k].dfdu * uSolGiven[k]);
 
     // Pick cost that minimizes at the given trajectory
-    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
     cost[k].dfdx = -(cost[k].dfdxx * xSolGiven[k] + cost[k].dfdux.transpose() * uSolGiven[k]);
     cost[k].dfdu = -(cost[k].dfduu * uSolGiven[k] + cost[k].dfdux * xSolGiven[k]);
   }
-  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
   const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr);
@@ -251,8 +251,8 @@ TEST(test_hpiphm_interface, noInputs) {
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(xSolGiven, xSol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(uSolGiven, uSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(xSolGiven, xSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(uSolGiven, uSol, 1e-9));
 }
 
 TEST(test_hpiphm_interface, retrieveRiccati) {

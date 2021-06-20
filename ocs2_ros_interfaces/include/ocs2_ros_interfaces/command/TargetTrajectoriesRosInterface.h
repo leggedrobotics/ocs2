@@ -47,7 +47,7 @@ namespace ocs2 {
 /**
  * This class implements TargetTrajectories communication interface using ROS.
  */
-class TargetTrajectories_ROS_Interface {
+class TargetTrajectoriesRosInterface {
  public:
   /**
    * Constructor.
@@ -56,17 +56,12 @@ class TargetTrajectories_ROS_Interface {
    * @param [in] argv: Command line arguments
    * @param [in] robotName: The robot's name.
    */
-  TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName = "robot");
+  TargetTrajectoriesRosInterface(int argc, char* argv[], std::string robotName = "robot");
 
-  /**
-   * Destructor.
-   */
-  virtual ~TargetTrajectories_ROS_Interface();
+  /** Destructor. */
+  virtual ~TargetTrajectoriesRosInterface();
 
-  /**
-   * This is the main routine which launches the publisher node for MPC's
-   * desired trajectories.
-   */
+  /** Launches the publisher node for the MPC's target point. */
   void launchNodes();
 
   /**

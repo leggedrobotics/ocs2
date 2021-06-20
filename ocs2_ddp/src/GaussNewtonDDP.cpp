@@ -57,9 +57,6 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
       : SolverBase(),
       ddpSettings_(std::move(ddpSettings)),
       threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
-  // thread-pool
-  threadPoolPtr_.reset(new ThreadPool(ddpSettings_.nThreads_, ddpSettings_.threadPriority_));
-
   // Dynamics, Constraints, derivatives, and cost
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
   initializerRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -72,7 +69,7 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
     // initialize rollout
     dynamicsForwardRolloutPtrStock_.emplace_back(rollout.clone());
 
-       // initialize initializerRollout
+    // initialize initializerRollout
     initializerRolloutPtrStock_.emplace_back(new InitializerRollout(*initializerPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
@@ -1519,6 +1516,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  }
+
+  // infeasible learning rate adjustment scheme
+  if (!numerics::almost_ge(ddpSettings_.lineSearch_.maxStepLength_, ddpSettings_.lineSearch_.minStepLength_)) {
+    throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
   }
 
   if (partitioningTimes.empty()) {

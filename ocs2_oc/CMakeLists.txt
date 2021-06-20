@@ -62,7 +62,7 @@ add_library(${PROJECT_NAME}
   src/rollout/InitializerRollout.cpp
   src/rollout/StateTriggeredRollout.cpp
   src/rollout/TimeTriggeredRollout.cpp
-  src/rollout/Rollout_Settings.cpp
+  src/rollout/RolloutSettings.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

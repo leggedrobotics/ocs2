@@ -53,9 +53,10 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     // rollout settings
     const auto rolloutSettings = []() {
       ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE_ = 1e-9;
-      rolloutSettings.relTolODE_ = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond_ = 10000;
+      rolloutSettings.absTolODE = 1e-9;
+      rolloutSettings.relTolODE = 1e-7;
+      rolloutSettings.timeStep = 1e-3;
+      rolloutSettings.maxNumStepsPerSecond = 10000;
       return rolloutSettings;
     }();
 

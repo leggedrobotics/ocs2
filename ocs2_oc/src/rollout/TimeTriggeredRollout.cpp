@@ -45,7 +45,7 @@ vector_t TimeTriggeredRollout::runImpl(const time_interval_array_t& timeInterval
   const int numEvents = numSubsystems - 1;
 
   // max number of steps for integration
-  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond_ *
+  const auto maxNumSteps = static_cast<size_t>(this->settings().maxNumStepsPerSecond *
                                                std::max(1.0, timeIntervalArray.back().second - timeIntervalArray.front().first));
 
   // clearing the output trajectories
@@ -74,15 +74,15 @@ vector_t TimeTriggeredRollout::runImpl(const time_interval_array_t& timeInterval
       Observer observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
       // integrate controlled system
       dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, observer, beginState, timeIntervalArray[i].first,
-                                                timeIntervalArray[i].second, this->settings().minTimeStep_, this->settings().absTolODE_,
-                                                this->settings().relTolODE_, maxNumSteps);
+                                                timeIntervalArray[i].second, this->settings().timeStep, this->settings().absTolODE,
+                                                this->settings().relTolODE, maxNumSteps);
     } else {
       timeTrajectory.push_back(timeIntervalArray[i].second);
       stateTrajectory.push_back(beginState);
     }
 
     // compute control input trajectory and concatenate to inputTrajectory
-    if (this->settings().reconstructInputTrajectory_) {
+    if (this->settings().reconstructInputTrajectory) {
       for (; k_u < timeTrajectory.size(); k_u++) {
         inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
       }  // end of k_u loop

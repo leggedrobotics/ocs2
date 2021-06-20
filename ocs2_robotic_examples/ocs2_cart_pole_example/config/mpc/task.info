@@ -25,7 +25,7 @@ ddp
   AbsTolODE                      1e-9
   RelTolODE                      1e-6
   maxNumStepsPerSecond           100000
-  minTimeStep                    1e-3
+  timeStep                       1e-3
   backwardPassIntegratorType     ODE45
 
   inequalityConstraintMu         100.0
@@ -51,7 +51,7 @@ rollout
 {
   AbsTolODE                    1e-9
   RelTolODE                    1e-6
-  minTimeStep                  1e-3
+  timeStep                     1e-2
   maxNumStepsPerSecond         100000
   checkNumericalStability      false
 }

@@ -60,9 +60,9 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     // rollout settings
     const auto rolloutSettings = []() {
       ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE_ = 1e-10;
-      rolloutSettings.relTolODE_ = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond_ = 10000;
+      rolloutSettings.absTolODE = 1e-10;
+      rolloutSettings.relTolODE = 1e-7;
+      rolloutSettings.maxNumStepsPerSecond = 10000;
       return rolloutSettings;
     }();
 

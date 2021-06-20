@@ -27,13 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-// #include <csignal>
-// #include <iomanip>
 #include <iostream>
 #include <thread>
-// #include <vector>
 
-#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardInterface.h>
 
 namespace ocs2 {
 
@@ -43,7 +40,7 @@ namespace ocs2 {
 TargetTrajectoriesKeyboardInterface::TargetTrajectoriesKeyboardInterface(int argc, char* argv[], const std::string& robotName /*= "robot"*/,
                                                                          const size_t targetCommandSize /*= 0*/,
                                                                          const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-    : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
+    : TargetTrajectoriesRosInterface(argc, argv, robotName),
       targetCommandSize_(targetCommandSize),
       targetCommandLimits_(targetCommandLimits) {
   if (targetCommandLimits.size() != targetCommandSize) {
@@ -104,7 +101,7 @@ void TargetTrajectoriesKeyboardInterface::getKeyboardCommand(const std::string& 
     std::cout << "\b\b]" << std::endl << std::endl;
 
     // publish cost desired trajectories
-    ocs2::TargetTrajectories_ROS_Interface::publishTargetTrajectories(toCostDesiredTrajectories(targetCommand_));
+    TargetTrajectoriesRosInterface::publishTargetTrajectories(toCostDesiredTrajectories(targetCommand_));
 
   }  // end of while loop
 }

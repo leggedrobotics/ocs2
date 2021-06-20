@@ -89,11 +89,12 @@ TEST(BouncingMassTest, DISABLED_state_rollout_slq) {
   ddpSettings.debugPrintRollout_ = false;
 
   ocs2::rollout::Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-10;
-  rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 10000;
-  rolloutSettings.maxSingleEventIterations_ = 5;
-  rolloutSettings.useTrajectorySpreadingController_ = true;
+  rolloutSettings.absTolODE = 1e-10;
+  rolloutSettings.relTolODE = 1e-7;
+  rolloutSettings.timeStep = 1e-3;
+  rolloutSettings.maxNumStepsPerSecond = 10000;
+  rolloutSettings.maxSingleEventIterations = 5;
+  rolloutSettings.useTrajectorySpreadingController = true;
 
   // Parameters
   const scalar_t startTime = 0.0;

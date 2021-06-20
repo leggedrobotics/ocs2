@@ -66,7 +66,7 @@ class Collection {
    * @return A reference to the underlying term
    */
   template <typename Derived = T>
-  T& get(const std::string& name);
+  Derived& get(const std::string& name);
 
  protected:
   /** Copy constructor */
@@ -99,7 +99,7 @@ void Collection<T>::add(std::string name, std::unique_ptr<T> term) {
 /******************************************************************************************************/
 template <typename T>
 template <typename Derived>
-T& Collection<T>::get(const std::string& name) {
+Derived& Collection<T>::get(const std::string& name) {
   static_assert(std::is_base_of<T, Derived>::value, "Template argument must derive from the base type of this collection");
   // if the key does not exist throws an exception
   const auto costIndex = termNameMap_.at(name);

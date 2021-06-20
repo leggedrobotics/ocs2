@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesRosInterface.h>
 
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class TargetTrajectories_IMarker_Mobile_Manipulator : public TargetTrajectories_ROS_Interface {
+class TargetTrajectories_IMarker_Mobile_Manipulator : public TargetTrajectoriesRosInterface {
  public:
   TargetTrajectories_IMarker_Mobile_Manipulator(int argc, char* argv[], std::string robotName = "robot");
   ~TargetTrajectories_IMarker_Mobile_Manipulator() override = default;

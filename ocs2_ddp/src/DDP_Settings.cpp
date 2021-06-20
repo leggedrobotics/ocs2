@@ -83,7 +83,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.absTolODE_, fieldName + ".AbsTolODE", verbose);
   loadData::loadPtreeValue(pt, settings.relTolODE_, fieldName + ".RelTolODE", verbose);
   loadData::loadPtreeValue(pt, settings.maxNumStepsPerSecond_, fieldName + ".maxNumStepsPerSecond", verbose);
-  loadData::loadPtreeValue(pt, settings.minTimeStep_, fieldName + ".minTimeStep", verbose);
+  loadData::loadPtreeValue(pt, settings.timeStep_, fieldName + ".timeStep", verbose);
   auto integratorName = integrator_type::toString(settings.backwardPassIntegratorType_);  // keep default
   loadData::loadPtreeValue(pt, integratorName, fieldName + ".backwardPassIntegratorType", verbose);
   settings.backwardPassIntegratorType_ = integrator_type::fromString(integratorName);

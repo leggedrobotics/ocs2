@@ -42,8 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class Ocs2QpSolverTest : public testing::Test {
  protected:
-  using Request = ocs2::PreComputation::Request;
-
   static constexpr size_t N = 10;  // Trajectory length
   static constexpr size_t STATE_DIM = 5;
   static constexpr size_t INPUT_DIM = 3;
@@ -130,7 +128,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
   const auto t0 = constrainedSolution.timeTrajectory[0];
   const auto& x0 = constrainedSolution.stateTrajectory[0];
   const auto& u0 = constrainedSolution.inputTrajectory[0];
-  preComputation.request(Request::Constraint, t0, x0, u0);
+  preComputation.request(ocs2::Request::Constraint, t0, x0, u0);
 
   const auto g0 = unconstrainedProblem.equalityConstraintPtr->getValue(t0, x0, u0, preComputation);
   ASSERT_TRUE(g0.isZero(precision));
@@ -139,7 +137,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
     const auto t = constrainedSolution.timeTrajectory[k];
     const auto& x = constrainedSolution.stateTrajectory[k];
     const auto& u = constrainedSolution.inputTrajectory[k];
-    preComputation.request(Request::Constraint, t, x, u);
+    preComputation.request(ocs2::Request::Constraint, t, x, u);
 
     const auto g = unconstrainedProblem.equalityConstraintPtr->getValue(t, x, u, preComputation);
     ASSERT_TRUE(g.isZero(precision));
@@ -150,7 +148,7 @@ TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
 
   const auto tf = constrainedSolution.timeTrajectory[N];
   const auto& xf = constrainedSolution.stateTrajectory[N];
-  preComputation.requestFinal(Request::Constraint, tf, xf);
+  preComputation.requestFinal(ocs2::Request::Constraint, tf, xf);
 
   const auto gf = unconstrainedProblem.finalEqualityConstraintPtr->getValue(tf, xf, preComputation);
   ASSERT_TRUE(gf.isZero(precision));

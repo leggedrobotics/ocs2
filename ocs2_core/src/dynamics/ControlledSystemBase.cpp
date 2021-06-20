@@ -59,7 +59,7 @@ vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) {
   assert(preCompPtr_ != nullptr);
-  preCompPtr_->request(PreComputation::Request::Dynamics, t, x, u);
+  preCompPtr_->request(Request::Dynamics, t, x, u);
   return computeFlowMap(t, x, u, *preCompPtr_);
 }
 
@@ -68,7 +68,7 @@ vector_t ControlledSystemBase::computeFlowMap(scalar_t t, const vector_t& x, con
 /******************************************************************************************************/
 vector_t ControlledSystemBase::computeJumpMap(scalar_t t, const vector_t& x) {
   assert(preCompPtr_ != nullptr);
-  preCompPtr_->requestPreJump(PreComputation::Request::Dynamics, t, x);
+  preCompPtr_->requestPreJump(Request::Dynamics, t, x);
   return computeJumpMap(t, x, *preCompPtr_);
 }
 

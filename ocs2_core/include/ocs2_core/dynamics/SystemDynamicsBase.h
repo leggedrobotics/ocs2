@@ -132,9 +132,6 @@ class SystemDynamicsBase : public ControlledSystemBase {
  protected:
   /** Copy constructor */
   SystemDynamicsBase(const SystemDynamicsBase& other);
-
- private:
-  using Request = PreComputation::Request;
 };
 
 }  // namespace ocs2

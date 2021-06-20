@@ -74,7 +74,6 @@ add_library(${PROJECT_NAME}
   src/constraint/StateInputConstraintCppAd.cpp
   src/constraint/StateConstraintCollection.cpp
   src/constraint/StateInputConstraintCollection.cpp
-  src/constraint/LinearConstraint.cpp
   src/constraint/LinearStateConstraint.cpp
   src/constraint/LinearStateInputConstraint.cpp
   src/control/FeedforwardController.cpp
@@ -84,7 +83,6 @@ add_library(${PROJECT_NAME}
   src/cost/CostDesiredTrajectories.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
-  src/cost/StateCost.cpp
   src/cost/StateCostCollection.cpp
   src/cost/StateCostCppAd.cpp
   src/cost/StateInputCostCollection.cpp
@@ -108,6 +106,7 @@ add_library(${PROJECT_NAME}
   src/logic/ModeSchedule.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
+  src/loopshaping/LoopshapingPreComputation.cpp
   src/loopshaping/cost/LoopshapingCost.cpp
   src/loopshaping/cost/LoopshapingStateCost.cpp
   src/loopshaping/cost/LoopshapingStateInputCost.cpp

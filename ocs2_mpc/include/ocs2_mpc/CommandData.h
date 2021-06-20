@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 #include "ocs2_mpc/SystemObservation.h"
 
@@ -41,7 +41,7 @@ namespace ocs2 {
  */
 struct CommandData {
   SystemObservation mpcInitObservation_;
-  CostDesiredTrajectories mpcCostDesiredTrajectories_;
+  TargetTrajectories mpcTargetTrajectories_;
 };
 
 }  // namespace ocs2

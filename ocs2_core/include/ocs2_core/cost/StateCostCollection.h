@@ -51,11 +51,13 @@ class StateCostCollection : public Collection<StateCost> {
   virtual StateCostCollection* clone() const;
 
   /** Get state-only cost value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+                            const PreComputation& preComp) const;
 
   /** Get state-only cost quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const CostDesiredTrajectories& desiredTrajectory) const;
+                                                                         const CostDesiredTrajectories& desiredTrajectory,
+                                                                         const PreComputation& preComp) const;
 
  protected:
   /** Copy constructor */

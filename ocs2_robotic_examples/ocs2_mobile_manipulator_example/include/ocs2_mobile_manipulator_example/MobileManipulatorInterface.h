@@ -63,10 +63,10 @@ class MobileManipulatorInterface final : public RobotInterface {
   std::unique_ptr<MPC_DDP> getMpc();
 
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
-  
-  const OperatingPoints& getOperatingPoints() const override { return *operatingPointPtr_; }
 
   const Initializer& getInitializer() const override { return *initializerPtr_; }
+
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 

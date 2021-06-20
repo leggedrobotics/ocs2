@@ -54,7 +54,7 @@ MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::request(Request request, scalar_t t, const vector_t& x, const vector_t& u) {
+void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
   if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
     return;
   }
@@ -77,7 +77,7 @@ void MobileManipulatorPreComputation::request(Request request, scalar_t t, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::requestFinal(Request request, scalar_t t, const vector_t& x) {
+void MobileManipulatorPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) {
   if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
     return;
   }

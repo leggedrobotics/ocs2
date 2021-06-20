@@ -113,7 +113,6 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  operatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 

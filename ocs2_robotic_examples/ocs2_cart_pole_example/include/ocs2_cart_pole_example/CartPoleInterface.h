@@ -102,7 +102,6 @@ class CartPoleInterface final : public RobotInterface {
   std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::unique_ptr<Initializer> cartPoleInitializerPtr_;
 
-
   vector_t initialState_{STATE_DIM};
   vector_t xFinal_{STATE_DIM};
 };

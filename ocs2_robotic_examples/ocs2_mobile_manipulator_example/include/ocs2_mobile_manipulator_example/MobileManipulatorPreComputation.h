@@ -43,16 +43,14 @@ namespace mobile_manipulator {
 /** Callback for caching and reference update */
 class MobileManipulatorPreComputation : public PreComputation {
  public:
-  using Request = PreComputation::Request;
-
   MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface);
   ~MobileManipulatorPreComputation() override = default;
 
   MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
   MobileManipulatorPreComputation* clone() const override;
 
-  void request(Request request, scalar_t t, const vector_t& x, const vector_t& u) override;
-  void requestFinal(Request request, scalar_t t, const vector_t& x) override;
+  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
+  void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
 
   PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
   const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }

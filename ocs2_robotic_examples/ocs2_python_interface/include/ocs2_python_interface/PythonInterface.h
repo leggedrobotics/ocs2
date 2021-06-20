@@ -168,8 +168,6 @@ class PythonInterface {
   }
 
  protected:
-  using Request = PreComputation::Request;
-
   std::unique_ptr<PenaltyBase> penalty_;
 
  private:

@@ -51,9 +51,6 @@ add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
   src/oc_solver/SolverBase.cpp
-  src/synchronized_module/ModeScheduleManager.cpp
-  src/synchronized_module/LoopshapingModeScheduleManager.cpp
-  src/synchronized_module/LoopshapingSynchronizedModule.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp
   src/rollout/RootFinder.cpp
@@ -61,6 +58,9 @@ add_library(${PROJECT_NAME}
   src/rollout/StateTriggeredRollout.cpp
   src/rollout/TimeTriggeredRollout.cpp
   src/rollout/RolloutSettings.cpp
+  src/synchronized_module/ReferenceManager.cpp
+  src/synchronized_module/LoopshapingReferenceManager.cpp
+  src/synchronized_module/LoopshapingSynchronizedModule.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

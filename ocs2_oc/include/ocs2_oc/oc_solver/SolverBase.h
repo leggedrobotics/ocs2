@@ -29,17 +29,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <vector>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/ModeSchedule.h>
 
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
@@ -52,7 +51,7 @@ class SolverBase {
   /**
    * Constructor.
    */
-  SolverBase() = default;
+  SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 
   /**
    * Default destructor.
@@ -91,18 +90,27 @@ class SolverBase {
            const std::vector<ControllerBase*>& controllersPtrStock);
 
   /**
-   * Set mode schedule manager. This module is updated once before and once after solving the problem.
+   * Sets the ReferenceManager which manages both ModeSchedule and TargetTrajectories. This module updates before SynchronizedModules.
    */
-  void setModeScheduleManager(std::shared_ptr<ModeScheduleManager> modeScheduleManager) {
-    modeScheduleManager_ = std::move(modeScheduleManager);
-  };
+  void setReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr) {
+    if (referenceManagerPtr == nullptr) {
+      throw std::runtime_error("[SolverBase] ReferenceManager pointer cannot be a nullptr!");
+    }
+    referenceManagerPtr_ = std::move(referenceManagerPtr);
+  }
+
+  /*
+   * Gets the ReferenceManager which manages both ModeSchedule and TargetTrajectories.
+   */
+  ReferenceManager& getReferenceManager() { return *referenceManagerPtr_; }
+  const ReferenceManager& getReferenceManager() const { return *referenceManagerPtr_; }
 
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
    */
   void setSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedModule>>& synchronizedModules) {
     synchronizedModules_ = synchronizedModules;
-  };
+  }
 
   /**
    * Returns the cost, merit function and ISEs of constraints for the latest optimized trajectory.
@@ -138,34 +146,6 @@ class SolverBase {
    * @return partitioning times
    */
   virtual const scalar_array_t& getPartitioningTimes() const = 0;
-
-  /**
-   * Gets the cost function desired trajectories.
-   *
-   * @param [out] costDesiredTrajectories: A pointer to the cost function desired trajectories
-   */
-  const CostDesiredTrajectories& getCostDesiredTrajectories() const { return costDesiredTrajectories_; };
-
-  /**
-   * Sets the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  void setCostDesiredTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
-    costDesiredTrajectories_ = costDesiredTrajectories;
-  };
-
-  /**
-   * Swaps the cost function desired trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The cost function desired trajectories
-   */
-  void swapCostDesiredTrajectories(CostDesiredTrajectories& costDesiredTrajectories) {
-    costDesiredTrajectories_.swap(costDesiredTrajectories);
-  };
-
-  /** gets mode schedule */
-  const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
 
   /**
    * @brief Returns the optimized policy data.
@@ -239,10 +219,8 @@ class SolverBase {
 
  private:
   mutable std::mutex outputDisplayGuardMutex_;
-  CostDesiredTrajectories costDesiredTrajectories_{0};
-  std::shared_ptr<ModeScheduleManager> modeScheduleManager_;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
-  ModeSchedule modeSchedule_;
 };
 
 }  // namespace ocs2

@@ -27,36 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_oc/synchronized_module/LoopshapingSynchronizedModule.h"
+#pragma once
 
-#include "ocs2_oc/oc_data/LoopshapingPrimalSolution.h"
+#include <memory>
+
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+
+#include "ocs2_oc/synchronized_module/ReferenceManager.h"
 
 namespace ocs2 {
 
-LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
-    std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-    std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray)
-    : loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)),
-      synchronizedModulesPtrArray_(std::move(synchronizedModulesPtrArray)) {}
+class LoopshapingReferenceManager : public ReferenceManager {
+ public:
+  /**
+   * Constructor.
+   * @param [in] referenceManagerPtr: A shared pointer to the original ReferenceManager.
+   * @param [in] loopshapingDefinitionPtr: A shared pointer to the loopshaping definition.
+   */
+  LoopshapingReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr,
+                              std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr);
 
-void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                                                 const ReferenceManager& referenceManager) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemState = loopshapingDefinitionPtr_->getSystemState(initState);
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->preSolverRun(initTime, finalTime, systemState, referenceManager);
-    }
-  }
-}
+  /** Destructor */
+  ~LoopshapingReferenceManager() override = default;
 
-void LoopshapingSynchronizedModule::postSolverRun(const PrimalSolution& primalSolution) {
-  if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemPrimalSolution = loopshapingToSystemPrimalSolution(primalSolution, *loopshapingDefinitionPtr_);
+ private:
+  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
+                        ModeSchedule& modeSchedule) override;
 
-    for (auto& module : synchronizedModulesPtrArray_) {
-      module->postSolverRun(systemPrimalSolution);
-    }
-  }
-}
+  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr_;
+  std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinitionPtr_;
+};
 
 }  // namespace ocs2

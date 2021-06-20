@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,73 +27,95 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <iostream>
-#include <mutex>
-
-#include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/misc/Numerics.h>
-
-#include <ocs2_oc/oc_solver/SolverBase.h>
+#include "ocs2_oc/synchronized_module/ReferenceManager.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) {
-  preRun(initTime, initState, finalTime);
-  runImpl(initTime, initState, finalTime, partitioningTimes);
-  postRun();
-}
+ReferenceManager::ReferenceManager(TargetTrajectories initialTargetTrajectories, ModeSchedule initialModeSchedule)
+    : targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                     const std::vector<ControllerBase*>& controllersPtrStock) {
-  preRun(initTime, initState, finalTime);
-  runImpl(initTime, initState, finalTime, partitioningTimes, controllersPtrStock);
-  postRun();
-}
+void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const {
-  PrimalSolution primalSolution;
-  getPrimalSolution(finalTime, &primalSolution);
-  return primalSolution;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SolverBase::printString(const std::string& text) const {
-  std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
-  std::cerr << text << '\n';
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
-
-  for (auto& module : synchronizedModules_) {
-    module->preSolverRun(initTime, finalTime, initState, *referenceManagerPtr_);
+  if (modeScheduleUpdated_) {
+    swap(modeSchedule_, modeScheduleBuffer_);
+    modeScheduleUpdated_ = false;
   }
+
+  if (targetTrajectoriesUpdated_) {
+    swap(targetTrajectories_, targetTrajectoriesBuffer_);
+    targetTrajectoriesUpdated_ = false;
+  }
+
+  modifyReferences(initTime, finalTime, initState, targetTrajectories_, modeSchedule_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::postRun() {
-  if (!synchronizedModules_.empty()) {
-    const auto solution = primalSolution(getFinalTime());
-    for (auto& module : synchronizedModules_) {
-      module->postSolverRun(solution);
-    }
-  }
+ModeSchedule ReferenceManager::getModeScheduleImage() const {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  return modeSchedule_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TargetTrajectories ReferenceManager::getTargetTrajectoriesImage() const {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  return targetTrajectories_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::setModeSchedule(const ModeSchedule& modeSchedule) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  modeScheduleBuffer_ = modeSchedule;
+  modeScheduleUpdated_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::setModeSchedule(ModeSchedule&& modeSchedule) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  swap(modeScheduleBuffer_, modeSchedule);
+  modeScheduleUpdated_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::setTargetTrajectories(const TargetTrajectories& targetTrajectories) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  targetTrajectoriesBuffer_ = targetTrajectories;
+  targetTrajectoriesUpdated_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::setTargetTrajectories(TargetTrajectories&& targetTrajectories) {
+  std::lock_guard<std::mutex> lock(dataMutex_);
+  swap(targetTrajectoriesBuffer_, targetTrajectories);
+  targetTrajectoriesUpdated_ = true;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::swapReferences(TargetTrajectories& otherTargetTrajectories, ModeSchedule& otherModeSchedule) {
+  swap(targetTrajectories_, otherTargetTrajectories);
+  swap(modeSchedule_, otherModeSchedule);
+  targetTrajectoriesUpdated_ = false;
+  modeScheduleUpdated_ = false;
 }
 
 }  // namespace ocs2

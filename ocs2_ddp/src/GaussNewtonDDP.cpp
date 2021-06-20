@@ -53,10 +53,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
-                               const Initializer* initializerPtr)
-      : SolverBase(),
-      ddpSettings_(std::move(ddpSettings)),
-      threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
+                               const Initializer& initializer)
+    : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
   // Dynamics, Constraints, derivatives, and cost
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
   initializerRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -70,18 +68,7 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
     dynamicsForwardRolloutPtrStock_.emplace_back(rollout.clone());
 
     // initialize initializerRollout
-    initializerRolloutPtrStock_.emplace_back(new InitializerRollout(*initializerPtr, rolloutPtr->settings()));
-
-    // initialize LQ approximator
-    linearQuadraticApproximatorPtrStock_.emplace_back(new LinearQuadraticApproximator(
-        *systemDynamicsPtr, *systemConstraintsPtr, *costFunctionPtr, ddpSettings_.checkNumericalStability_));
-
-    // initialize heuristics functions
-    if (heuristicsFunctionPtr != nullptr) {
-      heuristicsFunctionsPtrStock_.emplace_back(heuristicsFunctionPtr->clone());
-    } else {  // use the cost function if no heuristics function is defined
-      heuristicsFunctionsPtrStock_.emplace_back(costFunctionPtr->clone());
-    }
+    initializerRolloutPtrStock_.emplace_back(new InitializerRollout(initializer, rollout.settings()));
   }  // end of i loop
 
   // initialize penalty functions

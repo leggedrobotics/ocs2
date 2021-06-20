@@ -72,14 +72,14 @@ class GaussNewtonDDP : public SolverBase {
 
   /**
    * Constructor
-   
+
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
    * @param [in] rollout: The rollout class used for simulating the system dynamics.
    * @param [in] optimalControlProblem: The optimal control problem formulation.
-   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
   GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
-                 const Initializer* initializerPtr);
+                 const Initializer& initializer);
 
   /**
    * Destructor.
@@ -490,7 +490,7 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
-std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
+  std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
   std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is

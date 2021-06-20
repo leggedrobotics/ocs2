@@ -135,7 +135,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
   std::unique_ptr<ocs2::OptimalControlProblem> problemPtr;
-  std::unique_ptr<ocs2::OperatingPoints> initializerPtr;
+  std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
 constexpr size_t Exp1::STATE_DIM;

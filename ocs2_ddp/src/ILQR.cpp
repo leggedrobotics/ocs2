@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_ddp/ILQR.h>
-
+#include "ocs2_ddp/ILQR.h"
 #include <ocs2_ddp/riccati_equations/RiccatiTransversalityConditions.h>
 
 namespace ocs2 {
@@ -37,8 +36,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
-           const Initializer* initializerPtr)
-    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, operatingTrajectories) {
+           const Initializer& initializer)
+    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::ILQR) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");

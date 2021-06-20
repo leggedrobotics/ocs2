@@ -44,8 +44,6 @@ namespace ocs2 {
  */
 class LinearQuadraticApproximator {
  public:
-  using Request = PreComputation::Request;
-
   /**
    * Constructor
    * @note This class does not take ownership of any of the parameters.

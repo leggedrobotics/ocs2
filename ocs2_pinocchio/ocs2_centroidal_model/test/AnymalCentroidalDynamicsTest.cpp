@@ -110,7 +110,7 @@ public:
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);
-    input = ocs2::vector_t::Random(anymal::INPUT_DIM);
+    input = 10000 * ocs2::vector_t::Random(anymal::INPUT_DIM);
   }
 
   ocs2::scalar_t time;
@@ -194,8 +194,8 @@ TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
   qPinocchioSRBD.head(6) = qPinocchio.head(6);
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  vector_t vPinocchioSRBD = vPinocchio;
-  vPinocchioSRBD.tail(12).setZero();
+  vector_t vPinocchioSRBD = vector_t::Zero(GENERALIZED_VEL_NUM);
+  vPinocchioSRBD.head(6) = vPinocchio.head(6);
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
@@ -206,7 +206,6 @@ TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
                                                   vector_t::Zero(GENERALIZED_VEL_NUM),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::computeJointJacobians(model, data, qPinocchio);
-  pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
 }
@@ -238,8 +237,8 @@ TEST_F(AnymalCentroidalModelTest, CompareFlowMapLinearApproximations) {
   qPinocchioSRBD.head(6) = qPinocchio.head(6);
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  vector_t vPinocchioSRBD = vPinocchio;
-  vPinocchioSRBD.tail(12).setZero();
+  vector_t vPinocchioSRBD = vector_t::Zero(GENERALIZED_VEL_NUM);
+  vPinocchioSRBD.head(6) = vPinocchio.head(6);
   dh_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
   dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
@@ -249,7 +248,6 @@ TEST_F(AnymalCentroidalModelTest, CompareFlowMapLinearApproximations) {
                                                   vector_t::Zero(GENERALIZED_VEL_NUM),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::computeJointJacobians(model, data, qPinocchio);
-  pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
   const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
   compareApproximation(linearApproximation, linearApproximationAd);

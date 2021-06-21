@@ -150,7 +150,6 @@ class EXP0_CostFunction : public CostFunctionBase {
 
   std::shared_ptr<ReferenceManager> referenceManagerPtr_;
   std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_{2};
-  TargetTrajectories targetTrajectories_;
 };
 
 /******************************************************************************************************/

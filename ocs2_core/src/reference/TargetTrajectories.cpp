@@ -29,9 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_core/reference/TargetTrajectories.h"
 
+#include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-
-#include <iomanip>
 
 namespace ocs2 {
 
@@ -86,7 +85,6 @@ vector_t TargetTrajectories::getDesiredState(scalar_t time) const {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 vector_t TargetTrajectories::getDesiredInput(scalar_t time) const {
-  vector_t desiredInput;
   if (this->empty()) {
     throw std::runtime_error("[TargetTrajectories] TargetTrajectories is empty!");
   } else if (inputTrajectory.empty()) {
@@ -109,24 +107,10 @@ void swap(TargetTrajectories& lh, TargetTrajectories& rh) {
 /******************************************************************************************************/
 /***************************************************************************************************** */
 std::ostream& operator<<(std::ostream& out, const TargetTrajectories& targetTrajectories) {
-  constexpr int dispPrecision = 4;
-  auto printTidy = [dispPrecision](std::ostream& out, const vector_t& vec) {
-    out << "[";
-    for (size_t j = 0; j < vec.size(); j++) {
-      out << vec(j);
-      if (j + 1 != vec.size()) {
-        out << ",  ";
-      }
-    }
-    out << " ]\n";
-  };
-
-  for (size_t i = 0; i < targetTrajectories.timeTrajectory.size(); i++) {
-    out << "time: " << std::setprecision(dispPrecision) << targetTrajectories.timeTrajectory[i] << "\n";
-    out << "state: " << std::setprecision(dispPrecision);
-    printTidy(out, targetTrajectories.stateTrajectory[i]);
-    out << "input: " << std::setprecision(dispPrecision);
-    printTidy(out, targetTrajectories.inputTrajectory[i]);
+  for (size_t i = 0; i < targetTrajectories.size(); i++) {
+    out << "time: " << targetTrajectories.timeTrajectory[i] << "\n";
+    out << "state: [" << toDelimitedString(targetTrajectories.stateTrajectory[i]) << "]\n";
+    out << "input: [" << toDelimitedString(targetTrajectories.inputTrajectory[i]) << "]\n";
   }  // end of i loop
 
   return out;

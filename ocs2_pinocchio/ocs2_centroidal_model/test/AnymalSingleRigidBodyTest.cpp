@@ -49,7 +49,7 @@ static PinocchioInterface getAnymalPinocchioInterface() {
   return pinocchioInterface;
 }
 
-TEST(AnymalCentroidalModelTestInit, InitModelFromUrdf) {
+TEST(AnymalSingleRigidBodyModelTestInit, InitModelFromUrdf) {
   PinocchioInterface pinocchioInterface = getAnymalPinocchioInterface();
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
@@ -69,7 +69,7 @@ TEST(AnymalCentroidalModelTestInit, InitModelFromUrdf) {
   EXPECT_EQ(info.inputDim, anymal::INPUT_DIM);
 }
 
-TEST(AnymalCentroidalModelTestInit, InitModelFromUrdfAD) {
+TEST(AnymalSingleRigidBodyModelTestInit, InitModelFromUrdfAD) {
   PinocchioInterface pinocchioInterface = getAnymalPinocchioInterface();
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
@@ -90,10 +90,10 @@ TEST(AnymalCentroidalModelTestInit, InitModelFromUrdfAD) {
   EXPECT_EQ(model.nq - 6 + 3 * centroidalModelInfo.numThreeDofContacts + 6 * centroidalModelInfo.numSixDofContacts, anymal::INPUT_DIM);
 }
 
-class AnymalCentroidalModelTest : public testing::Test {
+class AnymalSingleRigidBodyModelTest : public testing::Test {
 public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
-  AnymalCentroidalModelTest() : pinocchioInterface_(getAnymalPinocchioInterface()) {
+  AnymalSingleRigidBodyModelTest() : pinocchioInterface_(getAnymalPinocchioInterface()) {
     size_t nq = pinocchioInterface_.getModel().nq;
     CentroidalModelInfoTpl<scalar_t> info(pinocchioInterface_, CentroidalModelType::SingleRigidBodyDynamics,
                                           anymalInitialState.tail(nq), anymal3DofContactNames,
@@ -172,7 +172,7 @@ static void compareApproximation(const ocs2::VectorFunctionLinearApproximation& 
   EXPECT_TRUE(a.dfdu.isApprox(b.dfdu));
 }
 
-TEST_F(AnymalCentroidalModelTest, ComputeFlowMap) {
+TEST_F(AnymalSingleRigidBodyModelTest, ComputeFlowMap) {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
@@ -182,73 +182,72 @@ TEST_F(AnymalCentroidalModelTest, ComputeFlowMap) {
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
-  const auto dynamics = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
+  const auto dynamics = AnymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
 }
 
-TEST_F(AnymalCentroidalModelTest, ComputeLinearApproximation) {
+TEST_F(AnymalSingleRigidBodyModelTest, ComputeLinearApproximation) {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
-  const size_t GENERALIZED_VEL_NUM = model.nq;
+  const auto& info = mapping_->getCentroidalModelInfo();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
   qPinocchioSRBD.head(6) = qPinocchio.head(6);
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  vector_t vPinocchioSRBD = vector_t::Zero(GENERALIZED_VEL_NUM);
+  vector_t vPinocchioSRBD = vector_t::Zero(info.generalizedCoordinatesNum);
   vPinocchioSRBD.head(6) = vPinocchio.head(6);
-  dh_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_da_.resize(6, GENERALIZED_VEL_NUM);
+  dh_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dv_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_da_.resize(6, info.generalizedCoordinatesNum);
   //TODO: Fix. Not the most efficient since computeCentroidalMap already calls forwardKinematics and computeJointJacobians internally
   pinocchio::computeCentroidalDynamicsDerivatives(model, data,
                                                   qPinocchioSRBD, vPinocchioSRBD,
-                                                  vector_t::Zero(GENERALIZED_VEL_NUM),
+                                                  vector_t::Zero(info.generalizedCoordinatesNum),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::computeJointJacobians(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
-  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
+  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
 }
 
-TEST_F(AnymalCentroidalModelTest, CompareFlowMaps) {
-  const auto stateDerivativeAd = AnymalKinoCentroidalDynamicsAdPtr->getSystemFlowMap(time, state, input);
-
+TEST_F(AnymalSingleRigidBodyModelTest, CompareFlowMaps) {
+  const auto stateDerivativeAd = AnymalKinoCentroidalDynamicsAdPtr->getValue(time, state, input);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
+  const auto& info = mapping_->getCentroidalModelInfo();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
   qPinocchioSRBD.head(6) = qPinocchio.head(6);
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   pinocchio::forwardKinematics(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
-  const auto stateDerivative = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
-
+  const auto stateDerivative = AnymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
   EXPECT_TRUE(stateDerivative.isApprox(stateDerivativeAd));
 }
 
-TEST_F(AnymalCentroidalModelTest, CompareFlowMapLinearApproximations) {
-  const auto linearApproximationAd = AnymalKinoCentroidalDynamicsAdPtr->getSystemFlowMapLinearApproximation(time, state, input);
+TEST_F(AnymalSingleRigidBodyModelTest, CompareFlowMapLinearApproximations) {
+  const auto linearApproximationAd = AnymalKinoCentroidalDynamicsAdPtr->getLinearApproximation(time, state, input);
 
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
-  const size_t GENERALIZED_VEL_NUM = model.nq;
+  const auto& info = mapping_->getCentroidalModelInfo();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   vector_t qPinocchioSRBD = mapping_->getCentroidalModelInfo().qPinocchioNominal;
   qPinocchioSRBD.head(6) = qPinocchio.head(6);
   pinocchio::computeCentroidalMap(model, data, qPinocchioSRBD);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  vector_t vPinocchioSRBD = vector_t::Zero(GENERALIZED_VEL_NUM);
+  vector_t vPinocchioSRBD = vector_t::Zero(info.generalizedCoordinatesNum);
   vPinocchioSRBD.head(6) = vPinocchio.head(6);
-  dh_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_da_.resize(6, GENERALIZED_VEL_NUM);
+  dh_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dv_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_da_.resize(6, info.generalizedCoordinatesNum);
   pinocchio::computeCentroidalDynamicsDerivatives(model, data,
                                                   qPinocchioSRBD, vPinocchioSRBD,
-                                                  vector_t::Zero(GENERALIZED_VEL_NUM),
+                                                  vector_t::Zero(info.generalizedCoordinatesNum),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::computeJointJacobians(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
-  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
+  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
   compareApproximation(linearApproximation, linearApproximationAd);
 }

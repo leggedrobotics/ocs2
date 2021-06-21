@@ -29,9 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_centroidal_model/example/alma_c/AlmaKinoCentroidalDynamics.h>
-#include <ocs2_centroidal_model/example/alma_c/AlmaKinoCentroidalDynamicsAD.h>
-#include <ocs2_centroidal_model/example/alma_c/definitions.h>
+#include <ocs2_centroidal_model/example/anymal/AnymalKinoCentroidalDynamics.h>
+#include <ocs2_centroidal_model/example/anymal/AnymalKinoCentroidalDynamicsAD.h>
+#include <ocs2_centroidal_model/example/anymal/definitions.h>
 
 #include <ocs2_pinocchio_interface/urdf.h>
 
@@ -40,80 +40,80 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-static PinocchioInterface getAlmaPinocchioInterface() {
+static PinocchioInterface getAnymalPinocchioInterface() {
   // build a joint model having just 2 joints: one translational joint and one spherical joint
   pinocchio::JointModelComposite jointComposite(2);
   jointComposite.addJoint(pinocchio::JointModelTranslation());
   jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-  PinocchioInterface pinocchioInterface(getPinocchioInterfaceFromUrdfFile(almaUrdfPath, jointComposite));
+  PinocchioInterface pinocchioInterface(getPinocchioInterfaceFromUrdfFile(anymalUrdfPath, jointComposite));
   return pinocchioInterface;
 }
 
-TEST(AlmaCentroidalModelTestInit, InitModelFromUrdf) {
-  PinocchioInterface pinocchioInterface = getAlmaPinocchioInterface();
+TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdf) {
+  PinocchioInterface pinocchioInterface = getAnymalPinocchioInterface();
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
   CentroidalModelInfoTpl<scalar_t> info(pinocchioInterface,
                                         CentroidalModelType::FullCentroidalDynamics,
-                                        vector_t::Zero(nq), alma3DofContactNames,
-                                        alma6DofContactNames);
+                                        vector_t::Zero(nq), anymal3DofContactNames,
+                                        anymal6DofContactNames);
   CentroidalModelPinocchioMapping<scalar_t> mapping(info);
   mapping.setPinocchioInterface(pinocchioInterface);
 
   std::cerr << "nq " << model.nq << '\n';
   std::cerr << "nv " << model.nv << '\n';
-  std::cerr << "STATE_DIM " << alma_c::STATE_DIM << '\n';
-  std::cerr << "INPUT_DIM " << alma_c::INPUT_DIM << '\n';
+  std::cerr << "STATE_DIM " << anymal::STATE_DIM << '\n';
+  std::cerr << "INPUT_DIM " << anymal::INPUT_DIM << '\n';
 
-  EXPECT_EQ(info.stateDim, alma_c::STATE_DIM);
-  EXPECT_EQ(info.inputDim, alma_c::INPUT_DIM);
+  EXPECT_EQ(info.stateDim, anymal::STATE_DIM);
+  EXPECT_EQ(info.inputDim, anymal::INPUT_DIM);
 }
 
-TEST(AlmaCentroidalModelTestInit, InitModelFromUrdfAD) {
-  PinocchioInterface pinocchioInterface = getAlmaPinocchioInterface();
+TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdfAD) {
+  PinocchioInterface pinocchioInterface = getAnymalPinocchioInterface();
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
   CentroidalModelInfoTpl<ad_scalar_t> infoAD(pinocchioInterface,
                                              CentroidalModelType::FullCentroidalDynamics,
-                                             vector_t::Zero(nq), alma3DofContactNames,
-                                             alma6DofContactNames);
+                                             vector_t::Zero(nq), anymal3DofContactNames,
+                                             anymal6DofContactNames);
   CentroidalModelPinocchioMapping<ad_scalar_t> mappingAD(infoAD);
   mappingAD.setPinocchioInterface(pinocchioInterface.toCppAd());
 
   std::cerr << "nq " << model.nq << '\n';
   std::cerr << "nv " << model.nv << '\n';
-  std::cerr << "STATE_DIM " << alma_c::STATE_DIM << '\n';
-  std::cerr << "INPUT_DIM " << alma_c::INPUT_DIM << '\n';
+  std::cerr << "STATE_DIM " << anymal::STATE_DIM << '\n';
+  std::cerr << "INPUT_DIM " << anymal::INPUT_DIM << '\n';
 
-  EXPECT_EQ(infoAD.stateDim, alma_c::STATE_DIM);
-  EXPECT_EQ(infoAD.inputDim, alma_c::INPUT_DIM);
+  EXPECT_EQ(infoAD.stateDim, anymal::STATE_DIM);
+  EXPECT_EQ(infoAD.inputDim, anymal::INPUT_DIM);
 }
 
-class AlmaCentroidalModelTest : public testing::Test {
+class AnymalFullCentroidalModelTest : public testing::Test {
  public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
-  AlmaCentroidalModelTest() : pinocchioInterface_(getAlmaPinocchioInterface()) {
+  AnymalFullCentroidalModelTest() : pinocchioInterface_(getAnymalPinocchioInterface()) {
     size_t nq = pinocchioInterface_.getModel().nq;
     CentroidalModelInfoTpl<scalar_t> info(pinocchioInterface_,
                                           CentroidalModelType::FullCentroidalDynamics,
-                                          vector_t::Zero(nq), alma3DofContactNames,
-                                          alma6DofContactNames);
+                                          vector_t::Zero(nq), anymal3DofContactNames,
+                                          anymal6DofContactNames);
     mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(info));
-    AlmaKinoCentroidalDynamicsPtr = std::make_shared<AlmaKinoCentroidalDynamics>(pinocchioInterface_, *mapping_);
+    AnymalKinoCentroidalDynamicsPtr = std::make_shared<AnymalKinoCentroidalDynamics>(pinocchioInterface_, *mapping_);
 
     CentroidalModelInfoTpl<ad_scalar_t> infoAD(pinocchioInterface_,
                                           CentroidalModelType::FullCentroidalDynamics,
-                                          vector_t::Zero(nq), alma3DofContactNames,
-                                          alma6DofContactNames);
+                                          vector_t::Zero(nq), anymal3DofContactNames,
+                                          anymal6DofContactNames);
     mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(infoAD));
-    AlmaKinoCentroidalDynamicsAdPtr = std::make_shared<AlmaKinoCentroidalDynamicsAD>(pinocchioInterface_, *mappingAD_);
+    AnymalKinoCentroidalDynamicsAdPtr = std::make_shared<AnymalKinoCentroidalDynamicsAD>(pinocchioInterface_, *mappingAD_);
 
     srand(0);
     time = 0.0;
-    state = ocs2::vector_t::Random(alma_c::STATE_DIM);
-    input = ocs2::vector_t::Random(alma_c::INPUT_DIM);
+    state = ocs2::vector_t::Random(anymal::STATE_DIM);
+    input = ocs2::vector_t::Random(anymal::INPUT_DIM);
   }
 
   ocs2::scalar_t time;
@@ -123,8 +123,8 @@ class AlmaCentroidalModelTest : public testing::Test {
   PinocchioInterface pinocchioInterface_;
   std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> mapping_;
   std::unique_ptr<CentroidalModelPinocchioMapping<ad_scalar_t>> mappingAD_;
-  std::shared_ptr<AlmaKinoCentroidalDynamics> AlmaKinoCentroidalDynamicsPtr;
-  std::shared_ptr<AlmaKinoCentroidalDynamicsAD> AlmaKinoCentroidalDynamicsAdPtr;
+  std::shared_ptr<AnymalKinoCentroidalDynamics> AnymalKinoCentroidalDynamicsPtr;
+  std::shared_ptr<AnymalKinoCentroidalDynamicsAD> AnymalKinoCentroidalDynamicsAdPtr;
 
   // centroidal momentum derivatives
   Matrix6x dh_dq_;
@@ -169,68 +169,67 @@ static void compareApproximation(const ocs2::VectorFunctionLinearApproximation& 
   // EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
   // The gradients of the base pose time derivatives are not correct due to a wrong dh_dq_ in pinocchio
   EXPECT_TRUE(a.dfdx.topRows<6>().isApprox(b.dfdx.topRows<6>()));
-  EXPECT_TRUE(a.dfdx.bottomRows<16>().isApprox(b.dfdx.bottomRows<16>()));
+  EXPECT_TRUE(a.dfdx.bottomRows<12>().isApprox(b.dfdx.bottomRows<12>()));
   EXPECT_TRUE(a.dfdx.leftCols<9>().isApprox(b.dfdx.leftCols<9>()));
   EXPECT_TRUE(a.dfdu.isApprox(b.dfdu));
 }
 
-TEST_F(AlmaCentroidalModelTest, ComputeFlowMap) {
+TEST_F(AnymalFullCentroidalModelTest, ComputeFlowMap) {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   pinocchio::computeCentroidalMap(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
-  const auto dynamics = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
+  const auto dynamics = AnymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
 }
 
-TEST_F(AlmaCentroidalModelTest, ComputeLinearApproximation) {
+TEST_F(AnymalFullCentroidalModelTest, ComputeLinearApproximation) {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
+  const auto& info = mapping_->getCentroidalModelInfo();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   pinocchio::computeCentroidalMap(model, data, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  dh_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_da_.resize(6, GENERALIZED_VEL_NUM);
+  dh_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dv_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_da_.resize(6, info.generalizedCoordinatesNum);
   pinocchio::computeCentroidalDynamicsDerivatives(model, data,
                                                   qPinocchio, vPinocchio,
-                                                  vector_t::Zero(GENERALIZED_VEL_NUM),
+                                                  vector_t::Zero(info.generalizedCoordinatesNum),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::updateFramePlacements(model, data);
-  const auto linearApproximation = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
+  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
 }
 
-TEST_F(AlmaCentroidalModelTest, CompareFlowMaps) {
-  const auto stateDerivativeAd = AlmaKinoCentroidalDynamicsAdPtr->getSystemFlowMap(time, state, input);
-
+TEST_F(AnymalFullCentroidalModelTest, CompareFlowMaps) {
+  const auto stateDerivativeAd = AnymalKinoCentroidalDynamicsAdPtr->getValue(time, state, input);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   pinocchio::computeCentroidalMap(model, data, qPinocchio);
   pinocchio::updateFramePlacements(model, data);
-  const auto stateDerivative = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMap(time, state, input);
-
+  const auto stateDerivative = AnymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
   EXPECT_TRUE(stateDerivative.isApprox(stateDerivativeAd));
 }
 
-TEST_F(AlmaCentroidalModelTest, CompareFlowMapLinearApproximations) {
-  const auto linearApproximationAd = AlmaKinoCentroidalDynamicsAdPtr->getSystemFlowMapLinearApproximation(time, state, input);
-
+TEST_F(AnymalFullCentroidalModelTest, CompareFlowMapLinearApproximations) {
+  const auto linearApproximationAd = AnymalKinoCentroidalDynamicsAdPtr->getLinearApproximation(time, state, input);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
+  const auto& info = mapping_->getCentroidalModelInfo();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   pinocchio::computeCentroidalMap(model, data, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  dh_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dq_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_dv_.resize(6, GENERALIZED_VEL_NUM);
-  dhdot_da_.resize(6, GENERALIZED_VEL_NUM);
+  dh_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dq_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_dv_.resize(6, info.generalizedCoordinatesNum);
+  dhdot_da_.resize(6, info.generalizedCoordinatesNum);
   pinocchio::computeCentroidalDynamicsDerivatives(model, data,
                                                   qPinocchio, vPinocchio,
-                                                  vector_t::Zero(GENERALIZED_VEL_NUM),
+                                                  vector_t::Zero(info.generalizedCoordinatesNum),
                                                   dh_dq_, dhdot_dq_, dhdot_dv_, dhdot_da_);
   pinocchio::updateFramePlacements(model, data);
-  const auto linearApproximation = AlmaKinoCentroidalDynamicsPtr->getSystemFlowMapLinearApproximation(time, state, input);
+  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
   compareApproximation(linearApproximation, linearApproximationAd);
 }

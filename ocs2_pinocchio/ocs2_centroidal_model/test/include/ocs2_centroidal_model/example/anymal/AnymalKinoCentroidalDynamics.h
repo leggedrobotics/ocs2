@@ -39,7 +39,7 @@ namespace ocs2 {
     AnymalKinoCentroidalDynamics(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& mapping)
             : PinocchioCentroidalDynamics(pinocchioInterface, mapping) {}
 
-    ~AnymalKinoCentroidalDynamics() = default;
+    ~AnymalKinoCentroidalDynamics() override = default;
   };
 
 }  // namespace ocs2

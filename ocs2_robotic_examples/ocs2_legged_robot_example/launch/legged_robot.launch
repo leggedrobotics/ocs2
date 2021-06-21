@@ -12,7 +12,7 @@
   <arg name="mesh"                     default="false"/>
 
     <group if="$(arg rviz)">
-        <include file="$(find anymal_c_simple_description)/launch/legged_robot_vis.launch"/>
+        <include file="$(find ocs2_legged_robot_example)/launch/legged_robot_vis.launch"/>
     </group>
 
     <group if="$(arg multiplot)">

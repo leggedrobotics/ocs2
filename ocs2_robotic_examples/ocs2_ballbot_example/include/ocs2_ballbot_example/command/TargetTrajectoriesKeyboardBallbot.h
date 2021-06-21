@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ballbot_example/definitions.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_robotic_tools/command/TargetTrajectoriesKeyboardInterface.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardInterface.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
 namespace ocs2 {

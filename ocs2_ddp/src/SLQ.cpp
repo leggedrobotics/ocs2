@@ -318,7 +318,7 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
 
     Observer observer(&allSsTrajectory);
     // solve Riccati equations
-    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().minTimeStep_,
+    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().timeStep_,
                                      settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
@@ -366,7 +366,7 @@ void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator
 
     Observer observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
-    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().minTimeStep_,
+    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().timeStep_,
                                         settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     // if not the last interval which definitely does not have any event at

@@ -49,7 +49,7 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
       inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
       dataExtractionCallback_(std::move(dataExtractionCallback)),
       inputToRaisimPdTargets_(std::move(inputToRaisimPdTargets)) {
-  world_.setTimeStep(this->settings().minTimeStep_);
+  world_.setTimeStep(this->settings().timeStep);
 
   system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_);
   system_->setControlMode(raisimRolloutSettings_.controlMode_);
@@ -113,12 +113,12 @@ vector_t RaisimRollout::runImpl(const time_interval_array_t& timeIntervalArray, 
                                 vector_array_t& inputTrajectory) {
   assert(controller != nullptr);
 
-  world_.setTimeStep(this->settings().minTimeStep_);
+  world_.setTimeStep(this->settings().timeStep);
 
   // Prepare arrays
   const int numSubsystems = timeIntervalArray.size();
   const auto maxNumSteps =
-      static_cast<int>(std::round((timeIntervalArray.back().second - timeIntervalArray.front().first) / this->settings().minTimeStep_));
+      static_cast<int>(std::round((timeIntervalArray.back().second - timeIntervalArray.front().first) / this->settings().timeStep));
   timeTrajectory.clear();
   timeTrajectory.reserve(maxNumSteps + numSubsystems);
   stateTrajectory.clear();
@@ -200,10 +200,10 @@ void RaisimRollout::deleteGroundPlane() {
 /******************************************************************************************************/
 void RaisimRollout::runSimulation(const time_interval_t& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
                                   vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
-  const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().minTimeStep_));
+  const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().timeStep));
 
   for (int i = 0; i < numSteps; i++) {
-    const auto time = timeInterval.first + i * this->settings().minTimeStep_;
+    const auto time = timeInterval.first + i * this->settings().timeStep;
 
     if (i == (numSteps - 1)) {
       // last step uses potentially smaller time step
@@ -213,7 +213,7 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
       }
       world_.setTimeStep(shortened_dt);
     } else {
-      world_.setTimeStep(this->settings().minTimeStep_);
+      world_.setTimeStep(this->settings().timeStep);
     }
 
     world_.integrate1();  // prepares all kinematic and dynamic quantities for the current time step
@@ -255,7 +255,7 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
 #endif
   }
 
-  world_.setTimeStep(this->settings().minTimeStep_);
+  world_.setTimeStep(this->settings().timeStep);
 
   // also push back final state and input
   timeTrajectory.push_back(timeInterval.second);

@@ -1,6 +1,9 @@
 // Command
 #include <ocs2_ros_interfaces/TargetPoseCommand.h>
-#include <ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h>
+#include <ocs2_ros_interfaces/command/TargetPoseTransformation.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesJoystickInterface.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardInterface.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesRosInterface.h>
 
 // Common
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>

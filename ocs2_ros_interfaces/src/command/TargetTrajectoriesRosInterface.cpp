@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,36 +27,48 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_robotic_tools/command/TargetTrajectoriesJoystickInterface.h>
+#include "ocs2_ros_interfaces/command/TargetTrajectoriesRosInterface.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesJoystickInterface::TargetTrajectoriesJoystickInterface(int argc, char* argv[], const std::string& robotName /*= "robot"*/,
-                                                                         const size_t targetCommandSize /*= 0*/,
-                                                                         const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-    : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
-      targetCommandSize_(targetCommandSize),
-      targetCommandLimits_(targetCommandLimits) {
-  if (targetCommandLimits.size() != targetCommandSize) {
-    throw std::runtime_error("Target command limits are not set properly");
-  }
+TargetTrajectoriesRosInterface::TargetTrajectoriesRosInterface(int argc, char* argv[], std::string robotName /*= "robot"*/)
+    : robotName_(std::move(robotName)) {
+  ::ros::init(argc, argv, robotName_ + "_mpc_target");
+  nodeHandle_.reset(new ::ros::NodeHandle);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t& TargetTrajectoriesJoystickInterface::targetCommandSize() {
-  return targetCommandSize_;
+TargetTrajectoriesRosInterface::~TargetTrajectoriesRosInterface() {
+  mpcTargetTrajectoriesPublisher_.shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectoriesJoystickInterface::publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories) {
-  // publish cost desired trajectories
-  ocs2::TargetTrajectories_ROS_Interface::publishTargetTrajectories(costDesiredTrajectories);
+void TargetTrajectoriesRosInterface::publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
+  ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;
+  ros_msg_conversions::createTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg);
+  mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg);
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void TargetTrajectoriesRosInterface::launchNodes() {
+  // display
+  ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
+
+  mpcTargetTrajectoriesPublisher_ = nodeHandle_->advertise<ocs2_msgs::mpc_target_trajectories>(robotName_ + "_mpc_target", 1, false);
+
+  ros::spinOnce();
+
+  // display
+  ROS_INFO_STREAM(robotName_ + " target trajectories command node is ready.");
+}
+
 }  // namespace ocs2

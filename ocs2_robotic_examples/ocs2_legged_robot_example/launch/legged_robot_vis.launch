@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <arg name="rviz"    default="true" />
+    <arg name="rvizconfig" default="$(find anymal_c_simple_description)/config/rviz/standalone.rviz" />
+    <!--<arg name="rvizconfig" default="$(find ocs2_legged_robot_example)/rviz/legged_robot.rviz" />-->
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rvizconfig)" output="screen" if="$(arg rviz)"/>
+</launch>

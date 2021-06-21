@@ -1,0 +1,231 @@
+cmake_minimum_required(VERSION 3.0)
+project(ocs2_legged_robot_example)
+
+# Generate compile_commands.json for clang tools
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+find_package(catkin REQUIRED COMPONENTS
+    roslib
+    cmake_modules
+    ocs2_core
+    ocs2_mpc
+    ocs2_robotic_tools
+    ocs2_ddp
+    ocs2_pinocchio_interface
+    ocs2_switched_model_interface
+    ocs2_centroidal_model
+    tf
+    urdf
+    kdl_parser
+    robot_state_publisher
+    alma_c_description
+)
+
+find_package(Boost REQUIRED COMPONENTS
+    system
+    filesystem
+)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(pinocchio REQUIRED pinocchio)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wfatal-errors -Wl,--no-as-needed")
+
+###################################
+## catkin specific configuration ##
+###################################
+
+catkin_package(
+  INCLUDE_DIRS
+    include
+    ${EIGEN3_INCLUDE_DIRS}
+  LIBRARIES
+    ocs2_legged_robot_example
+    CATKIN_DEPENDS
+    ocs2_robotic_tools
+    ocs2_core
+    ocs2_mpc
+    ocs2_ddp
+    ocs2_pinocchio_interface
+    ocs2_switched_model_interface
+    ocs2_centroidal_model
+    tf
+    urdf
+    kdl_parser
+    robot_state_publisher
+    alma_c_description
+  DEPENDS
+    pinocchio
+    Boost
+)
+###########
+## Build ##
+###########
+
+include_directories(
+    include
+    ${pinocchio_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
+)
+link_directories(${pinocchio_LIBRARY_DIRS})
+
+# Legged robot interface library
+add_library(ocs2_legged_robot_example
+    src/LeggedRobotInterface.cpp
+    src/visualization/LeggedRobotDummyVisualization.cpp
+
+    src/common/ModelSettings.cpp
+    src/common/utils.cpp
+
+    # src/constraint/LeggedRobotConstraint.cpp
+    src/constraint/LeggedRobotConstraintAD.cpp
+    src/constraint/EndEffectorVelocityConstraint.cpp
+    src/constraint/FrictionConeConstraint.cpp
+    src/constraint/ZeroForceConstraint.cpp
+
+	src/cost/LeggedRobotCost.cpp
+	src/cost/LeggedRobotStateInputQuadraticCost.cpp
+
+    src/initialization/LeggedRobotInitializer.cpp
+
+    src/foot_planner/SwingTrajectoryPlanner.cpp
+	src/foot_planner/CubicSpline.cpp
+	src/foot_planner/SplineCpg.cpp
+
+    src/logic/SwitchedModelModeScheduleManager.cpp
+    src/logic/GaitReceiver.cpp
+    src/logic/GaitSchedule.cpp
+	src/logic/Gait.cpp
+	src/logic/ModeSequenceTemplate.cpp
+)
+
+add_dependencies(ocs2_legged_robot_example
+    ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ocs2_legged_robot_example
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${pinocchio_LIBRARIES}
+    dl
+)
+target_compile_options(ocs2_legged_robot_example PUBLIC ${pinocchio_CFLAGS_OTHER} -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR)
+
+# Mpc node
+add_executable(legged_robot_mpc_node
+    src/LeggedRobotMpcNode.cpp
+)
+add_dependencies(legged_robot_mpc_node
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(legged_robot_mpc_node
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+)
+target_compile_options(legged_robot_mpc_node PUBLIC ${pinocchio_CFLAGS_OTHER})
+
+# Dummy node
+add_executable(legged_robot_dummy_test
+    src/LeggedRobotDummyNode.cpp
+)
+add_dependencies(legged_robot_dummy_test
+    ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(legged_robot_dummy_test
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+)
+target_compile_options(legged_robot_dummy_test PUBLIC ${pinocchio_CFLAGS_OTHER})
+
+# Keyboard Command node for legged robot walking (gait selection and target selection)
+add_executable(target_command_node_base_pose
+    src/command/LeggedRobotTargetPoseCommand.cpp
+)
+add_dependencies(target_command_node_base_pose
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(target_command_node_base_pose
+    ${catkin_LIBRARIES}
+)
+target_compile_options(target_command_node_base_pose PUBLIC ${pinocchio_CFLAGS_OTHER})
+
+add_executable(gait_command_node_legged_robot
+    src/logic/Gait.cpp
+	src/logic/ModeSequenceTemplate.cpp
+    src/command/LeggedRobotModeSequenceKeyboard.cpp
+    src/command/LeggedRobotModeSequenceCommand.cpp
+)
+add_dependencies(gait_command_node_legged_robot
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(gait_command_node_legged_robot
+    ${catkin_LIBRARIES}
+)
+target_compile_options(gait_command_node_legged_robot PUBLIC ${pinocchio_CFLAGS_OTHER})
+
+add_executable(build_ad_libraries
+        src/build_ad_libraries.cpp
+        )
+add_dependencies(build_ad_libraries
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(build_ad_libraries
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        ${Boost_LIBRARIES}
+        )
+target_compile_options(build_ad_libraries PUBLIC ${pinocchio_CFLAGS_OTHER})
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if(cmake_clang_tools_FOUND)
+   message(STATUS "Run clang tooling for target ocs2_legged_robot_example")
+   add_clang_tooling(
+       TARGETS
+       legged_robot_mpc_node
+       legged_robot_dummy_test
+       gait_command_node_legged_robot
+       SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
+       CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+       CF_WERROR
+)
+endif(cmake_clang_tools_FOUND)
+
+#############
+## Install ##
+#############
+
+install(TARGETS ocs2_legged_robot_example
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(TARGETS
+    legged_robot_mpc_node
+    legged_robot_dummy_test
+    target_command_node_base_pose
+    gait_command_node_legged_robot
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY urdf launch config rviz
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+#############
+## Testing ##
+#############

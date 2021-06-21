@@ -1,0 +1,249 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; SETTINGS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+legged_robot_interface
+{
+  useCaching                            true
+  useAnalyticalGradientsDynamics        false
+  useAnalyticalGradientsConstraints     false
+}
+
+model_settings
+{
+  constrainedIntegration        true
+
+  gravitationalAcceleration     9.81
+
+  contactForceWeight            1.0
+  zDirectionPositionWeight      0.0
+  zDirectionVelocityWeight      0.5
+  positionErrorGain             5
+
+  enforceFrictionConeConstraint false
+  frictionCoefficient           0.7
+
+  swing_trajectory_settings
+  {
+    liftOffVelocity             0.2
+    touchDownVelocity          -0.4
+    swingHeight                 0.1
+    touchdownAfterHorizon       0.2
+    swingTimeScale              0.15
+  }
+
+  mpcGoalCommandDelay           0.1
+
+  gaitOptimization              false
+
+  recompileLibraries            true
+}
+
+initialModeSchedule
+{
+  modeSequence
+  {
+    [0]  STANCE
+    [1]  STANCE
+  }
+  eventTimes
+  {
+    [0]  0.5
+  }
+}
+
+defaultModeSequenceTemplate
+{
+  modeSequence
+  {
+    [0]  STANCE
+  }
+  switchingTimes
+  {
+    [0]  0.0
+    [1]  1.0
+  }
+}
+
+; DDP settings
+ddp
+{
+  algorithm                       SLQ
+
+  nThreads                        3
+  threadPriority                  50
+
+  maxNumIterations                10
+  minRelCost                      0.1
+  constraintTolerance             5e-3
+
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
+
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            50000
+  minTimeStep                     1e-2
+  backwardPassIntegratorType      ODE45
+
+  constraintPenaltyInitialValue   2.0
+  constraintPenaltyIncreaseRate   2.0
+  inequalityConstraintMu          0.1
+  inequalityConstraintDelta       5.0
+
+  preComputeRiccatiTerms          true
+  useNominalTimeForBackwardPass   true
+
+  useFeedbackPolicy               false
+
+  riskSensitiveCoeff              0.0
+
+  strategy                        LINE_SEARCH
+  lineSearch
+  {
+      minStepLength                 1e-4
+      maxStepLength                 1.0
+      hessianCorrectionStrategy     DIAGONAL_SHIFT
+      hessianCorrectionMultiple     1e-5
+  }
+}
+
+; Rollout settings
+rollout
+{
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  minTimeStep                     1e-2
+  maxNumStepsPerSecond            50000
+  checkNumericalStability         false
+}
+
+mpc
+{
+  timeHorizon                     1.0
+  numPartitions                   2
+
+  runtimeMaxNumIterations         1
+  initMaxNumIterations            10
+
+  runtimeMinStepLength            1e-2
+  runtimeMaxStepLength            1.0
+  initMinStepLength               1e-2
+  initMaxStepLength               1.0
+
+  debugPrint                      false
+  coldStart                       false
+
+  useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
+
+  solutionTimeWindow              -1  ; [s]
+
+  mpcDesiredFrequency             60  ; [Hz]
+  mrtDesiredFrequency             400 ; [Hz]
+}
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; INITIAL STATE & DEFAULT STATE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+initialState
+{
+   ;; Normalized Centroidal Momentum: [linear, angular] ;;
+   (0,0)  0.0    ; vcom_x
+   (1,0)  0.0    ; vcom_y
+   (2,0)  0.0    ; vcom_z
+   (3,0)  0.0    ; L_x / robotMass
+   (4,0)  0.0    ; L_y / robotMass
+   (5,0)  0.0    ; L_z / robotMass
+
+   ;; Base Pose: [position, orientation] ;;
+   (6,0)  0.0    ; p_base_x
+   (7,0)  0.0    ; p_base_y
+   (8,0)  0.57    ; p_base_z
+   (9,0)  0.0    ; theta_base_z
+   (10,0) 0.0    ; theta_base_y
+   (11,0) 0.0    ; theta_base_x
+
+   ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
+   (12,0) -0.25  ; LF_HAA
+   (13,0) 0.6    ; LF_HFE
+   (14,0) -0.85   ; LF_KFE
+   (15,0) -0.25  ; LH_HAA
+   (16,0) -0.6   ; LH_HFE
+   (17,0) 0.85    ; LH_KFE
+   (18,0) 0.25   ; RF_HAA
+   (19,0) 0.6    ; RF_HFE
+   (20,0) -0.85   ; RF_KFE
+   (21,0) 0.25   ; RH_HAA
+   (22,0) -0.6   ; RH_HFE
+   (23,0) 0.85    ; RH_KFE
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MATRICES USED FOR BASE CONTROL ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; standard state weight matrix
+Q
+{
+    scaling 1e+0
+
+   ;; Normalized Centroidal Momentum: [linear, angular] ;;
+   (0,0)  15.0    ; vcom_x
+   (1,1)  15.0    ; vcom_y
+   (2,2)  30.0    ; vcom_z
+   (3,3)  1.0     ; L_x / robotMass
+   (4,4)  10.0    ; L_y / robotMass
+   (5,5)  10.0    ; L_z / robotMass
+
+   ;; Base Pose: [position, orientation] ;;
+   (6,6)  100.0    ; p_base_x
+   (7,7)  100.0    ; p_base_y
+   (8,8)  3000.0    ; p_base_z
+   (9,9)  200.0     ; theta_base_z
+   (10,10) 400.0    ; theta_base_y
+   (11,11) 100.0    ; theta_base_x
+
+   ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
+   (12,12) 20.0    ; LF_HAA
+   (13,13) 20.0    ; LF_HFE
+   (14,14) 10.0    ; LF_KFE
+   (15,15) 20.0    ; LH_HAA
+   (16,16) 20.0    ; LH_HFE
+   (17,17) 10.0    ; LH_KFE
+   (18,18) 20.0    ; RF_HAA
+   (19,19) 20.0    ; RF_HFE
+   (20,20) 10.0    ; RF_KFE
+   (21,21) 20.0    ; RH_HAA
+   (22,22) 20.0    ; RH_HFE
+   (23,23) 10.0    ; RH_KFE
+}
+
+; control weight matrix
+R
+{
+   scaling 1e-3
+
+   ;; Feet Contact Forces: [LF, RF, LH, RH] ;;
+   (0,0)   1.0   ; left_front_force
+   (1,1)   1.0   ; left_front_force
+   (2,2)   1.0   ; left_front_force
+   (3,3)   1.0   ; right_front_force
+   (4,4)   1.0   ; right_front_force
+   (5,5)   1.0   ; right_front_force
+   (6,6)   1.0   ; left_hind_force
+   (7,7)   1.0   ; left_hind_force
+   (8,8)   1.0   ; left_hind_force
+   (9,9)   1.0   ; right_hind_force
+   (10,10) 1.0   ; right_hind_force
+   (11,11) 1.0   ; right_hind_force
+
+   ;; Leg Joint Velocities: [LF, LH, RF, RH] ;;
+   (12,12) 4000.0    ; LF_HAA
+   (13,13) 4000.0    ; LF_HFE
+   (14,14) 400.0    ; LF_KFE
+   (15,15) 4000.0    ; LH_HAA
+   (16,16) 4000.0    ; LH_HFE
+   (17,17) 400.0    ; LH_KFE
+   (18,18) 4000.0    ; RF_HAA
+   (19,19) 4000.0    ; RF_HFE
+   (20,20) 400.0    ; RF_KFE
+   (21,21) 4000.0    ; RH_HAA
+   (22,22) 4000.0    ; RH_HFE
+   (23,23) 400.0    ; RH_KFE
+}

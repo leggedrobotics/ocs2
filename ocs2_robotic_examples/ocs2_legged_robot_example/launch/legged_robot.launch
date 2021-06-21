@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <arg name="rviz"       default="true" />
+    <arg name="multiplot"  default="false"/>
+    <arg name="task_name"  default="mpc"/>
+
+  <!-- Arguments for urdf loading -->
+  <arg name="simulation"               default="false"/>
+  <arg name="description_name"         default="legged_robot_description"/>
+  <arg name="description_file"         default="$(find anymal_c_simple_description)/urdf/anymal.urdf"/>
+  <arg name="mesh"                     default="false"/>
+
+    <group if="$(arg rviz)">
+        <include file="$(find anymal_c_simple_description)/launch/legged_robot_vis.launch"/>
+    </group>
+
+    <group if="$(arg multiplot)">
+        <include file="$(find ocs2_legged_robot_example)/launch/multiplot.launch"/>
+    </group>
+
+    <include file="$(find anymal_c_simple_description)/launch/load.launch" pass_all_args="true"/>
+
+    <node pkg="ocs2_legged_robot_example" type="legged_robot_mpc_node" name="legged_robot_mpc_node"
+          output="screen" args="$(arg task_name)" launch-prefix=""/>
+
+    <node pkg="ocs2_legged_robot_example" type="legged_robot_dummy_test" name="legged_robot_dummy_test"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_legged_robot_example" type="target_command_node_base_pose" name="target_command_node_base_pose"
+          output="screen" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_legged_robot_example" type="gait_command_node_legged_robot" name="gait_command_node_legged_robot"
+          output="screen" launch-prefix="gnome-terminal --"/>
+</launch>

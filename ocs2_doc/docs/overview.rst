@@ -4,14 +4,26 @@
 Overview
 ========
 
+OCS2 is a C++ toolbox tailored for Optimal Control of Switched Systems (OCS2). The toolbox provides an efficient implementation 
+of the following algoirithms:
+
+* SLQ: Continuous-time domin DDP 
+* iLQR: Discrete-time domain DDP
+* SQP: Multiple-shooting algorithm based on HPIPM <a href="https://github.com/giaf/hpipm">HPIPM</a>
+* PISOC: Constrained path integral stochatic optimal control   
+
+OCS2 handles general path constraints through Augmented Lagrangian and relaxed barrier methods. To facilitate the 
+application of OCS2 in robotic tasks, it provides the user with additional tools to set up the system dynamics (such as 
+kinematic or dynamic models) and cost/constraints (such as self-collision avoidance and end-effector tracking) 
+from a URDF model. The library also provides an automatic differentiation tool to calculate derivatives of the system 
+dynamics, constraints, and cost. The toolbox’s efficient and numerically stable implementations in conjunction with its 
+user-friendly interface have paved the way for deploying it in an MPC fashion for numerous robotic applications with 
+limited onboard computation power. The library consists of the following main modules:
+
 .. _doxid-index_1ocs2_doc_link_section:
 
 OCS2 Modules
 ~~~~~~~~~~~~
-
-This library consists of the following main modules:
-
-
 
 .. _doxid-index_1ocs2_doc_ocs2_core:
 
@@ -27,9 +39,6 @@ The Core Module provides the followings features:
 * An efficient linear interpolation class.
 * Linear system representation in time and frequency domain.
 * Jacobian and Hessian of general functions using Numerical Differentiation, or Automatic-Differentiation with code-generation or just-in-time (JIT) compilation.
-
-
-
 
 
 .. _doxid-index_1ocs2_doc_ocs2_ddp:

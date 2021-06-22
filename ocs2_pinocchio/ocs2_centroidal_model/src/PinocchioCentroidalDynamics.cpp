@@ -44,7 +44,7 @@ PinocchioCentroidalDynamics::PinocchioCentroidalDynamics(const PinocchioInterfac
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t PinocchioCentroidalDynamics::getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
+vector_t PinocchioCentroidalDynamics::getValue(scalar_t time, const vector_t& state, const vector_t& input) {
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   const auto& info = mappingPtr_->getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
@@ -56,8 +56,8 @@ vector_t PinocchioCentroidalDynamics::getSystemFlowMap(scalar_t time, const vect
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                                   const vector_t& input) {
+VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                      const vector_t& input) {
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
   const size_t stateDim = state.rows();
@@ -67,7 +67,7 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getSystemFlowMapL
   assert(info.inputDim == inputDim);
 
   auto dynamics = ocs2::VectorFunctionLinearApproximation::Zero(state.rows(), state.rows(), inputDim);
-  dynamics.f = getSystemFlowMap(time, state, input);
+  dynamics.f = getValue(time, state, input);
 
   // Partial derivatives of the normalized momentum rates
   computeNormalizedCentroidalMomentumRateGradients(state, input);

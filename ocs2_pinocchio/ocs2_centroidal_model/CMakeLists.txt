@@ -110,8 +110,8 @@ install(
 ## Testing ##
 #############
 catkin_add_gtest(${PROJECT_NAME}_test
-  test/AnymalCentroidalDynamicsTest.cpp
-  test/AlmaCentroidalDynamicsTest.cpp
+        test/AnymalSingleRigidBodyTest.cpp
+        test/AnymalFullCentroidalTest.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
   gtest_main

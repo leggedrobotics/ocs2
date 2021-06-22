@@ -37,7 +37,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <typename SCALAR>
 CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo)
-    : centroidalModelInfo_(centroidalModelInfo) {}
+    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(centroidalModelInfo) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -68,22 +68,13 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
   vector_t vPinocchio(info.generalizedCoordinatesNum);
   const auto normalizedMomentum = getNormalizedMomentum(state, info);
   const auto jointVelocities = getJointVelocities(input, info).head(info.actuatedDofNum);
+  vector6_t momentum = info.robotMass * normalizedMomentum;
 
-  switch (info.centroidalModelType) {
-    case CentroidalModelType::FullCentroidalDynamics: {
-      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * normalizedMomentum - Aj * jointVelocities);
-      break;
-    }
-    case CentroidalModelType::SingleRigidBodyDynamics: {
-      vPinocchio.template head<6>() = Ab_inv * (info.robotMass * normalizedMomentum);
-      break;
-    }
-    default: {
-      throw std::runtime_error("The chosen centroidal model type is not supported.");
-      break;
-    }
+  if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
+    momentum -= Aj * jointVelocities;
   }
 
+  vPinocchio.template head<6>().noalias() = Ab_inv * momentum;
   vPinocchio.tail(info.actuatedDofNum) = jointVelocities;
 
   return vPinocchio;
@@ -145,8 +136,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   dfdx.middleCols(6, info.generalizedCoordinatesNum) = Jq;
   dfdx += Jv * dvdx;
 
-  matrix_t dfdu = matrix_t::Zero(Jv.rows(), centroidalModelInfo_.inputDim);
-  dfdu = Jv * dvdu;
+  const matrix_t dfdu = Jv * dvdu;
 
   return {dfdx, dfdu};
 }

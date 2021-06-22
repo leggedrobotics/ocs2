@@ -51,7 +51,7 @@ PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInte
   auto systemFlowMapFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
     ad_vector_t state = x.head(info.stateDim);
     ad_vector_t input = x.tail(info.inputDim);
-    y = getSystemFlowMapCppAd(pinocchioInterfaceCppAd, mapping, state, input);
+    y = getValueCppAd(pinocchioInterfaceCppAd, mapping, state, input);
   };
   systemFlowMapCppAdInterfacePtr_.reset(
       new CppAdInterface(systemFlowMapFunc, info.stateDim + info.inputDim, modelName + "_systemFlowMap", modelFolder));
@@ -66,9 +66,9 @@ PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInte
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ad_vector_t PinocchioCentroidalDynamicsAD::getSystemFlowMapCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
-                                                                 const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
-                                                                 const ad_vector_t& state, const ad_vector_t& input) {
+ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
+                                                         const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+                                                         const ad_vector_t& state, const ad_vector_t& input) {
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
   const auto& info = mapping.getCentroidalModelInfo();
@@ -100,7 +100,7 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getSystemFlowMapCppAd(PinocchioInterf
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t PinocchioCentroidalDynamicsAD::getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input) const {
+vector_t PinocchioCentroidalDynamicsAD::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
   vector_t stateInput(state.rows() + input.rows());
   stateInput << state, input;
   return systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);
@@ -109,8 +109,8 @@ vector_t PinocchioCentroidalDynamicsAD::getSystemFlowMap(scalar_t time, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation PinocchioCentroidalDynamicsAD::getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                                     const vector_t& input) const {
+VectorFunctionLinearApproximation PinocchioCentroidalDynamicsAD::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                        const vector_t& input) const {
   vector_t stateInput(state.rows() + input.rows());
   stateInput << state, input;
   const vector_t dynamicsValues = systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);

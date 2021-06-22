@@ -40,7 +40,7 @@ namespace ocs2 {
             : PinocchioCentroidalDynamicsAD(pinocchioInterface, mapping,"AnymalKinoCentroidalDynamicsAD",
                                             anymalCppAdModelPath, /*recompileLibraries=*/true, /*verbose=*/false) {}
 
-    ~AnymalKinoCentroidalDynamicsAD() = default;
+    ~AnymalKinoCentroidalDynamicsAD() override = default;
   };
 
 }  // namespace ocs2

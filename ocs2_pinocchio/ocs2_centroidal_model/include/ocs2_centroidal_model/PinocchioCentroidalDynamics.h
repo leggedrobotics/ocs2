@@ -53,7 +53,11 @@ class PinocchioCentroidalDynamics {
    */
   PinocchioCentroidalDynamics(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& mapping);
 
-  ~PinocchioCentroidalDynamics() = default;
+  /** Copy Constructor */
+  PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs)
+      : pinocchioInterfacePtr_(rhs.pinocchioInterfacePtr_), mappingPtr_(rhs.mappingPtr_) {}
+
+  virtual ~PinocchioCentroidalDynamics() = default;
 
   /** Computes system flow map x_dot = f(x, u)
    *
@@ -66,7 +70,7 @@ class PinocchioCentroidalDynamics {
    * @remark: For the SRBD model, call computeCentroidalMap(model, data, qSRBD) where qSRBD = (qbase, qJointsNominal),
    * followed by forwardKinematics(model, data, q)
    */
-  vector_t getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input);
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input);
 
   /** Computes first order approximation of the system flow map x_dot = f(x, u)
    *
@@ -81,7 +85,7 @@ class PinocchioCentroidalDynamics {
    * @remark: For the SRBD model, use qSRBD = (qbase, qJointsNominal) and vSRBD = (vbase, 0) in computeCentroidalDynamicsDerivatives(...),
    * followed by computeJointJacobians(model, data, q)
    */
-  VectorFunctionLinearApproximation getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 
  private:
   /**

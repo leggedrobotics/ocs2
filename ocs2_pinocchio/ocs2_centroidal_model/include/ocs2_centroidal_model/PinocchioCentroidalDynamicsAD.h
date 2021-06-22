@@ -40,16 +40,19 @@ class PinocchioCentroidalDynamicsAD {
   PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
                                 const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose);
 
-  ~PinocchioCentroidalDynamicsAD() = default;
+  /** Copy Constructor */
+  PinocchioCentroidalDynamicsAD(const PinocchioCentroidalDynamicsAD& rhs)
+      : systemFlowMapCppAdInterfacePtr_(new CppAdInterface(*rhs.systemFlowMapCppAdInterfacePtr_)) {}
 
-  vector_t getSystemFlowMap(scalar_t time, const vector_t& state, const vector_t& input) const;
+  virtual ~PinocchioCentroidalDynamicsAD() = default;
 
-  VectorFunctionLinearApproximation getSystemFlowMapLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const;
+
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
 
  private:
-  ad_vector_t getSystemFlowMapCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
-                                    const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping, const ad_vector_t& state,
-                                    const ad_vector_t& input);
+  ad_vector_t getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+                            const ad_vector_t& state, const ad_vector_t& input);
 
   std::unique_ptr<CppAdInterface> systemFlowMapCppAdInterfacePtr_;
 };

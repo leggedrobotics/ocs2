@@ -112,6 +112,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  using Base = PinocchioStateInputMapping<SCALAR>;
+
   using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
   using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -129,17 +131,10 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
 
   explicit CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo);
 
-  CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs)
-      : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(std::move(rhs.centroidalModelInfo_)) {}
+  CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs) : centroidalModelInfo_(std::move(rhs.centroidalModelInfo_)) {}
 
   ~CentroidalModelPinocchioMapping() override = default;
   CentroidalModelPinocchioMapping<SCALAR>* clone() const override { return new CentroidalModelPinocchioMapping<SCALAR>(*this); }
-
-  /** Sets the pinocchio interface for caching
-   * @note The pinocchio interface must be set before calling the getters.
-   * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
-   */
-  void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
 
   /**
    * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state variables
@@ -220,7 +215,6 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   vector6_t normalizedCentroidalMomentumRate(const vector_t& input) const;
 
  private:
-  const PinocchioInterfaceTpl<SCALAR>* pinocchioInterfacePtr_;
   const CentroidalModelInfoTpl<SCALAR> centroidalModelInfo_;
 };
 

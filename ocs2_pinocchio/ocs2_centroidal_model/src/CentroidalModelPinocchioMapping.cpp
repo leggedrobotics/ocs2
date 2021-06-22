@@ -37,7 +37,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <typename SCALAR>
 CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo)
-    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(centroidalModelInfo) {}
+    : centroidalModelInfo_(centroidalModelInfo) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -45,7 +45,7 @@ CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const C
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
   assert(centroidalModelInfo_.stateDim == state.rows());
-  const Model& model = pinocchioInterfacePtr_->getModel();
+  const Model& model = Base::pinocchioInterfacePtr_->getModel();
   return state.segment(6, centroidalModelInfo_.generalizedCoordinatesNum);
 }
 
@@ -54,8 +54,8 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const ve
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
-  const Model& model = pinocchioInterfacePtr_->getModel();
-  const Data& data = pinocchioInterfacePtr_->getData();
+  const Model& model = Base::pinocchioInterfacePtr_->getModel();
+  const Data& data = Base::pinocchioInterfacePtr_->getData();
   const CentroidalModelInfo& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
   assert(info.inputDim == input.rows());
@@ -86,8 +86,8 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
     -> std::pair<matrix_t, matrix_t> {
-  const Model& model = pinocchioInterfacePtr_->getModel();
-  const Data& data = pinocchioInterfacePtr_->getData();
+  const Model& model = Base::pinocchioInterfacePtr_->getModel();
+  const Data& data = Base::pinocchioInterfacePtr_->getData();
   const auto& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
 
@@ -146,7 +146,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() const -> const matrix6x_t& {
-  const Data& data = pinocchioInterfacePtr_->getData();
+  const Data& data = Base::pinocchioInterfacePtr_->getData();
   return data.Ag;
 }
 
@@ -155,7 +155,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() cons
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPositionComToContactPointInWorldFrame(size_t contactIndex) const -> vector3_t {
-  const Data& data = pinocchioInterfacePtr_->getData();
+  const Data& data = Base::pinocchioInterfacePtr_->getData();
   return (data.oMf[centroidalModelInfo_.endEffectorFrameIndices[contactIndex]].translation() - data.com[0]);
 }
 
@@ -165,9 +165,9 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPositionComToContactPointInWorl
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const
     -> matrix3x_t {
-  const Model& model = pinocchioInterfacePtr_->getModel();
+  const Model& model = Base::pinocchioInterfacePtr_->getModel();
   // TODO: Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
-  Data data = pinocchioInterfacePtr_->getData();
+  Data data = Base::pinocchioInterfacePtr_->getData();
 
   matrix6x_t jacobianWorldToContactPointInWorldFrame;
   jacobianWorldToContactPointInWorldFrame.setZero(6, centroidalModelInfo_.generalizedCoordinatesNum);

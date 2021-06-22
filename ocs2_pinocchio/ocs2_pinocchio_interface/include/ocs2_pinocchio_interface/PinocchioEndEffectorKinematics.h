@@ -73,7 +73,10 @@ class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar
    * @note The pinocchio interface must be set before calling the getters.
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
    */
-  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) {
+    pinocchioInterfacePtr_ = &pinocchioInterface;
+    mappingPtr_->setPinocchioInterface(pinocchioInterface);
+  }
 
   /** Get end-effector IDs (names) */
   const std::vector<std::string>& getIds() const override;

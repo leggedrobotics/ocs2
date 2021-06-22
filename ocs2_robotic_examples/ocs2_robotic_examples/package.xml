@@ -13,9 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>ocs2_ballbot_example</run_depend>
-  <run_depend>ocs2_ballbot_raisim_example</run_depend>
   <run_depend>ocs2_cart_pole_example</run_depend>
-  <run_depend>ocs2_cart_pole_raisim_example</run_depend>
   <run_depend>ocs2_double_integrator_example</run_depend>
   <run_depend>ocs2_quadrotor_example</run_depend>
   <run_depend>ocs2_mobile_manipulator_example</run_depend>

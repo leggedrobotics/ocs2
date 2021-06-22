@@ -7,20 +7,17 @@ project (ocs2_doc VERSION 1.0.0)
 # Modules to document
 list(APPEND OCS2_MODULES
   ocs2_core
-  ocs2_ddp
   ocs2_frank_wolfe
-  ocs2_mpc
-  ocs2_msgs
   ocs2_oc
-  ocs2_ocs2
-  ocs2_pinocchio
-  ocs2_raisim
-  ocs2_raisim_ros
-  ocs2_robotic_examples
-  ocs2_robotic_tools
-  ocs2_ros_interfaces
+  ocs2_mpc
+  ocs2_ddp
   ocs2_sqp
-  ocs2_test_tools)
+  ocs2_python_interface
+  ocs2_ros_interfaces
+  ocs2_robotic_tools
+  ocs2_robotic_examples
+  ocs2_pinocchio
+)
 
 # Set up CMake environment
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})

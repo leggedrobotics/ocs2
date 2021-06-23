@@ -48,7 +48,7 @@ vector_t PinocchioCentroidalDynamics::getValue(scalar_t time, const vector_t& st
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   const auto& info = mappingPtr_->getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
-  return (vector_t(state.rows()) << mappingPtr_->normalizedCentroidalMomentumRate(input),
+  return (vector_t(state.rows()) << mappingPtr_->getNormalizedCentroidalMomentumRate(input),
           mappingPtr_->getPinocchioJointVelocity(state, input))
       .finished();
 }
@@ -70,7 +70,7 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getLinearApproxim
   dynamics.f = getValue(time, state, input);
 
   // Partial derivatives of the normalized momentum rates
-  computeNormalizedCentroidalMomentumRateGradients(state, input);
+  getNormalizedCentroidalMomentumRateGradients(state, input);
 
   matrix_t dfdq = matrix_t::Zero(info.stateDim, info.generalizedCoordinatesNum);
   matrix_t dfdv = matrix_t::Zero(info.stateDim, info.generalizedCoordinatesNum);
@@ -89,7 +89,7 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getLinearApproxim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input) {
+void PinocchioCentroidalDynamics::getNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input) {
   const pinocchio::Model& model = pinocchioInterfacePtr_->getModel();
   const size_t stateDim = state.rows();
   const size_t inputDim = input.rows();

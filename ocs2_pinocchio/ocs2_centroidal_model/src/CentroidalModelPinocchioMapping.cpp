@@ -184,7 +184,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToConta
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::normalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
+auto CentroidalModelPinocchioMapping<SCALAR>::getNormalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
   const auto& info = centroidalModelInfo_;
   const vector3_t gravityVector = vector3_t(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
   vector6_t normalizedCentroidalMomentumRate;

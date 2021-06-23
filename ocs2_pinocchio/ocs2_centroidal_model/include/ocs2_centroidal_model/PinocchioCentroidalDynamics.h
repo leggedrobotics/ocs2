@@ -95,7 +95,7 @@ class PinocchioCentroidalDynamics {
    * @param [in] input: system input vector
    * @return: time derivative of normalized centroidal momentum
    */
-  void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
+  void getNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
   const PinocchioInterface* pinocchioInterfacePtr_;
   CentroidalModelPinocchioMapping<scalar_t>* mappingPtr_;

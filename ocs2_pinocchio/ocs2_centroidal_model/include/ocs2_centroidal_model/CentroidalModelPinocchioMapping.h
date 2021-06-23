@@ -217,7 +217,7 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * @warning: The functions pinocchio::computeCentroidalMap(model, data, q) and pinocchio::updateFramePlacements(model, data)
    * should have been called first.
    */
-  vector6_t normalizedCentroidalMomentumRate(const vector_t& input) const;
+  vector6_t getNormalizedCentroidalMomentumRate(const vector_t& input) const;
 
  private:
   const PinocchioInterfaceTpl<SCALAR>* pinocchioInterfacePtr_;

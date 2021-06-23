@@ -81,7 +81,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   baseVelocity.tail<3>() = o_baseAngularVel_;
 
   Adot_ = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
-  qb_ddot_ = Ab_inv * (info.robotMass * mappingPtr_->normalizedCentroidalMomentumRate(input) - Adot_ * vPinocchio -
+  qb_ddot_ = Ab_inv * (info.robotMass * mappingPtr_->getNormalizedCentroidalMomentumRate(input) - Adot_ * vPinocchio -
                        Aj * jointAccelerations.head(info.actuatedDofNum));
 
   // Base Acceleration in world frame

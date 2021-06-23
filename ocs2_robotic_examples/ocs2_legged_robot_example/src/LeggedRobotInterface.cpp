@@ -6,23 +6,7 @@ namespace ocs2 {
 namespace legged_robot {
 
 LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
-  // Add 6 DoF for the floating base
-  pinocchio::JointModelComposite jointComposite(2);
-  jointComposite.addJoint(pinocchio::JointModelTranslation());
-  jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-
-  // Remove extraneous joints from urdf
-  ::urdf::ModelInterfaceSharedPtr newModel = std::make_shared<::urdf::ModelInterface>(*urdfTree);
-  for (std::pair<const std::string, std::shared_ptr<::urdf::Joint>>& jointPair : newModel->joints_) {
-    if (std::find(JOINT_NAMES_.begin(), JOINT_NAMES_.end(), jointPair.first) == JOINT_NAMES_.end()) {
-      jointPair.second->type = urdf::Joint::FIXED;
-    }
-  }
-
-  // Initialize the pinocchio interface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(getPinocchioInterfaceFromUrdfModel(newModel, jointComposite)));
-
-  //  pinocchioInterfacePtr_.reset(new PinocchioInterface(getPinocchioInterfaceFromUrdfModel(urdfTree, jointComposite)));
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfTree)));
 
   // Load the task file
   std::string taskFolder = ros::package::getPath("ocs2_legged_robot_example") + "/config/" + taskFileFolderName;
@@ -142,5 +126,38 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] mpc_ocs2 not configured, set gait optimization to 0");
   }
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioInterface LeggedRobotInterface::buildPinocchioInterface(const std::string& urdfPath) {
+  // Add 6 DoF for the floating base
+  pinocchio::JointModelComposite jointComposite(2);
+  jointComposite.addJoint(pinocchio::JointModelTranslation());
+  jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+
+  return ocs2::getPinocchioInterfaceFromUrdfFile(urdfPath, jointComposite);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioInterface LeggedRobotInterface::buildPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
+  // Add 6 DoF for the floating base
+  pinocchio::JointModelComposite jointComposite(2);
+  jointComposite.addJoint(pinocchio::JointModelTranslation());
+  jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+
+  // Remove extraneous joints from urdf
+  ::urdf::ModelInterfaceSharedPtr newModel = std::make_shared<::urdf::ModelInterface>(*urdfTree);
+  for (std::pair<const std::string, std::shared_ptr<::urdf::Joint>>& jointPair : newModel->joints_) {
+    if (std::find(JOINT_NAMES_.begin(), JOINT_NAMES_.end(), jointPair.first) == JOINT_NAMES_.end()) {
+      jointPair.second->type = urdf::Joint::FIXED;
+    }
+  }
+
+  return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
+}
+
 }  // namespace legged_robot
 }  // namespace ocs2

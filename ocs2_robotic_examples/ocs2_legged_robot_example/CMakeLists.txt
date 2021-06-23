@@ -172,20 +172,6 @@ target_link_libraries(gait_command_node_legged_robot
 )
 target_compile_options(gait_command_node_legged_robot PUBLIC ${pinocchio_CFLAGS_OTHER})
 
-add_executable(build_ad_libraries
-        src/build_ad_libraries.cpp
-        )
-add_dependencies(build_ad_libraries
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(build_ad_libraries
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        ${Boost_LIBRARIES}
-        )
-target_compile_options(build_ad_libraries PUBLIC ${pinocchio_CFLAGS_OTHER})
-
 #########################
 ###   CLANG TOOLING   ###
 #########################

@@ -78,6 +78,10 @@ class LeggedRobotInterface final : public ocs2::RobotInterface {
 
   PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
 
+  /** MobileManipulator PinocchioInterface factory */
+  static PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
+  static PinocchioInterface buildPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+
  protected:
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> pinocchioMappingPtr_;

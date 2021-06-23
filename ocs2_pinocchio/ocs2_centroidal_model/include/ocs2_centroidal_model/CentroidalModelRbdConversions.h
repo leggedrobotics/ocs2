@@ -30,6 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
+#include "ocs2_centroidal_model/helpers.h"
+#include "ocs2_centroidal_model/utils.h"
 
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 

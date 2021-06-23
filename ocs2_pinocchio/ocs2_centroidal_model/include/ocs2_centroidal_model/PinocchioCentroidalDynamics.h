@@ -65,10 +65,8 @@ class PinocchioCentroidalDynamics {
    * @param state: system state vector
    * @param input: system input vector
    * @return system flow map x_dot = f(x, u)
-   * @warning: The function computeCentroidalMap(model, data, q) and pinocchio::updateFramePlacements(model, data) should have been called
-   * first.
-   * @remark: For the SRBD model, call computeCentroidalMap(model, data, qSRBD) where qSRBD = (qbase, qJointsNominal),
-   * followed by forwardKinematics(model, data, q)
+   *
+   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first,
    */
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input);
 
@@ -79,11 +77,7 @@ class PinocchioCentroidalDynamics {
    * @param input: system input vector
    * @return linear approximation of system flow map x_dot = f(x, u)
    *
-   * @warning: The function pinocchio::computeCentroidalDynamicsDerivatives(model, data, q, v, ...)
-   * and pinocchio::updateFramePlacements(model, data) should have been called first.
-   *
-   * @remark: For the SRBD model, use qSRBD = (qbase, qJointsNominal) and vSRBD = (vbase, 0) in computeCentroidalDynamicsDerivatives(...),
-   * followed by computeJointJacobians(model, data, q)
+   * @warning: The function updateCentroidalDynamicsDerivatives(interface, info, q, v) should have been called first
    */
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 
@@ -93,7 +87,7 @@ class PinocchioCentroidalDynamics {
    *
    * @param [in] state: system state vector
    * @param [in] input: system input vector
-   * @return: time derivative of normalized centroidal momentum
+   * @return: time derivative of normalized centroidal momentum (required for the linear approximation)
    */
   void getNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 

@@ -126,15 +126,15 @@ const Eigen::Block<const Derived, 6, 1> getBasePose(const Eigen::MatrixBase<Deri
 }
 
 template <typename Derived, typename SCALAR>
-Eigen::Block<Derived, -1, 1> getJointCoordinates(Eigen::MatrixBase<Derived>& state, const CentroidalModelInfoTpl<SCALAR>& info) {
+Eigen::Block<Derived, -1, 1> getJointAngles(Eigen::MatrixBase<Derived>& state, const CentroidalModelInfoTpl<SCALAR>& info) {
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
   return Eigen::Block<Derived, -1, 1>(state.derived(), 12, 0, info.actuatedDofNum, 1);
 }
 
 template <typename Derived, typename SCALAR>
-const Eigen::Block<const Derived, -1, 1> getJointCoordinates(const Eigen::MatrixBase<Derived>& state,
-                                                             const CentroidalModelInfoTpl<SCALAR>& info) {
+const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state,
+                                                        const CentroidalModelInfoTpl<SCALAR>& info) {
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
   return Eigen::Block<const Derived, -1, 1>(state.derived(), 12, 0, info.actuatedDofNum, 1);

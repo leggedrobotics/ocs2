@@ -27,13 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
-
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
-
-#include <pinocchio/algorithm/centroidal.hpp>
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/container/aligned-vector.hpp>
 
 namespace ocs2 {
 
@@ -73,19 +67,8 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd
   auto& data = pinocchioInterfaceCppAd.getData();
   const auto& info = mapping.getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
-
   const ad_vector_t qPinocchio = mapping.getPinocchioJointPosition(state);
-
-  if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    pinocchio::computeCentroidalMap(model, data, qPinocchio);
-  } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    auto qPinocchioSrbd = info.qPinocchioNominal;
-    qPinocchioSrbd.head<6>() = qPinocchio.head<6>();
-    pinocchio::computeCentroidalMap(model, data, qPinocchioSrbd);
-    pinocchio::forwardKinematics(model, data, qPinocchio);
-  }
-  pinocchio::updateFramePlacements(model, data);
-
+  updateCentroidalDynamics(pinocchioInterfaceCppAd, info, qPinocchio);
   ad_vector_t stateDerivative(state.rows());
 
   // compute center of mass acceleration and derivative of the normalized angular momentum

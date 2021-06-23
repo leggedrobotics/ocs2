@@ -27,12 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "pinocchio/fwd.hpp"
-
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
-
-#include "pinocchio/algorithm/centroidal.hpp"
-#include "pinocchio/algorithm/frames.hpp"
 
 namespace ocs2 {
 
@@ -56,14 +51,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   const auto& info = mappingPtr_->getCentroidalModelInfo();
   const vector_t qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
 
-  if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    pinocchio::computeCentroidalMap(model, data, qPinocchio);
-  } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    auto qPinocchioSrbd = info.qPinocchioNominal;
-    qPinocchioSrbd.head<6>() = qPinocchio.head<6>();
-    pinocchio::computeCentroidalMap(model, data, qPinocchioSrbd);
-  }
-  pinocchio::updateFramePlacements(model, data);
+  updateCentroidalDynamics(*pinocchioInterfacePtr_, info, qPinocchio);
 
   // Base Pose in world frame
   basePose = qPinocchio.head<6>();
@@ -114,7 +102,6 @@ void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vec
   vPinocchio.tail(info.actuatedDofNum) = rbdState.segment(info.generalizedCoordinatesNum + 6, info.actuatedDofNum);
 
   centroidalMomentum_ = pinocchio::computeCentroidalMomentum(model, data, qPinocchio, vPinocchio);
-
   state.head(6) = centroidalMomentum_ / info.robotMass;
   state.segment(6, info.generalizedCoordinatesNum) = qPinocchio;
 }
@@ -127,17 +114,14 @@ void CentroidalModelRbdConversions::computeRbdStateFromCentroidalModel(const vec
   const auto& model = pinocchioInterfacePtr_->getModel();
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& info = mappingPtr_->getCentroidalModelInfo();
-
   Vector6 basePose, baseVelocity, baseAcceleration;
   computeBaseKinematicsFromCentroidalModel(state, input, jointAccelerations, basePose, baseVelocity, baseAcceleration);
-
   rbdState.head<3>() = basePose.tail<3>();
   rbdState.segment<3>(3) = basePose.head<3>();
-  rbdState.segment(6, info.actuatedDofNum) << state.segment(12, info.actuatedDofNum);
-
+  rbdState.segment(6, info.actuatedDofNum) = getJointAngles(state, info).head(info.actuatedDofNum);
   rbdState.segment<3>(info.generalizedCoordinatesNum) = baseVelocity.tail<3>();
   rbdState.segment<3>(info.generalizedCoordinatesNum + 3) = baseVelocity.head<3>();
-  rbdState.tail(info.actuatedDofNum) << input.tail(info.actuatedDofNum);
+  rbdState.tail(info.actuatedDofNum) = getJointVelocities(input, info).head(info.actuatedDofNum);
 }
 
 }  // namespace ocs2

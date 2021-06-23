@@ -62,7 +62,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
 
   const auto& A = getCentroidalMomentumMatrix();
   const matrix6_t Ab = A.template leftCols<6>();
-  const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   const auto Aj = A.rightCols(info.actuatedDofNum);
 
   vector_t vPinocchio(info.generalizedCoordinatesNum);
@@ -100,7 +100,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   const auto& A = getCentroidalMomentumMatrix();
   const matrix6_t Ab = A.template leftCols<6>();
   // TODO: move getFloatingBaseCentroidalMomentumMatrixInverse(Ab) to PreComputation
-  const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   const auto Aj = A.rightCols(info.actuatedDofNum);
 
   floatingBaseVelocitiesDerivativeInput.setZero(6, info.inputDim);

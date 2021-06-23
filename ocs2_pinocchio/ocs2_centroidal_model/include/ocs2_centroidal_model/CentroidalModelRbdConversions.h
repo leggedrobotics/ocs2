@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
+#include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
+
 namespace ocs2 {
 
 class CentroidalModelRbdConversions {
@@ -92,11 +94,11 @@ class CentroidalModelRbdConversions {
   CentroidalModelPinocchioMapping<scalar_t>* mappingPtr_;
 
   Matrix6 Adot_;
-  Vector6 qb_ddot_;
+  Vector6 qbaseDdot_;
   Vector6 centroidalMomentum_;
   Vector3 derivativeEulerAnglesZyx_;
-  Vector3 o_baseAngularVel_;
-  Vector3 o_baseAngularAccel_;
+  Vector3 baseAngularVelocityInWorld_;
+  Vector3 baseAngularAccelerationInWorld_;
 };
 
 }  // namespace ocs2

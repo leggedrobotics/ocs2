@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
     urdf
     kdl_parser
     robot_state_publisher
-    alma_c_description
+    anymal_c_simple_description
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -54,7 +54,7 @@ catkin_package(
     urdf
     kdl_parser
     robot_state_publisher
-    alma_c_description
+    anymal_c_simple_description
   DEPENDS
     pinocchio
     Boost

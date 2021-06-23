@@ -1,8 +1,0 @@
-<launch>
-  <!-- Launch RQT Multi-plot -->
-  <node name="rqt_multiplot_2"
-        pkg="rqt_multiplot"
-        type="rqt_multiplot"
-        args="--multiplot-run-all --multiplot-config $(find ocs2_legged_robot_example)/config/multiplot/performance_indices.xml"
-        output="screen"/>
-</launch>

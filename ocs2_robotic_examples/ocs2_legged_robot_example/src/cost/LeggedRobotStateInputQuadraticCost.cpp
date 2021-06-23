@@ -48,8 +48,8 @@ std::pair<vector_t, vector_t> LeggedRobotStateInputQuadraticCost::getStateInputD
   // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
 
-  const vector_t xNominal = desiredTrajectory.getDesiredState(time).tail(STATE_DIM_ + 1).head(STATE_DIM_);
-  vector_t uNominal = desiredTrajectory.getDesiredInput(time).head(INPUT_DIM_);
+  const vector_t xNominal = desiredTrajectory.getDesiredState(time);
+  vector_t uNominal = desiredTrajectory.getDesiredInput(time);
 
   // Distribute total mass equally over active stance legs.
   const scalar_t totalWeight = ROBOT_TOTAL_MASS_ * 9.81;

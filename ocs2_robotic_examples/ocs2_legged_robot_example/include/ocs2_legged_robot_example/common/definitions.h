@@ -15,9 +15,9 @@
  * centroidal model definition:
  *
  * state = [linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_angles]
- * input = [feet_force, arm_ee_wrench, joint_velocities] + slack variables corresponding to the inequality constraints
- * lambda: Force order [LF, RF, LH, RH, arm_ee_force, arm_ee_torque] in World Frame (3x1)
- * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1) + Arm joint velocities
+ * input = [feet_force, joint_velocities] + slack variables corresponding to the inequality constraints
+ * lambda: Force order [LF, RF, LH, RH] in World Frame (3x1)
+ * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1)
  */
 
 namespace ocs2 {
@@ -38,9 +38,6 @@ constexpr size_t GENERALIZED_VEL_NUM_ = BASE_DOF_NUM_ + ACTUATED_DOF_NUM_;
 constexpr size_t STATE_DIM_ = 2 * BASE_DOF_NUM_ + ACTUATED_DOF_NUM_;
 constexpr size_t INPUT_DIM_ = TOTAL_CONTACTS_DIM_ + ACTUATED_DOF_NUM_;
 
-// Used for task-space cost: [quat_x, quat_y, quat_z, quat_w, p_x, p_y, p_z]
-constexpr size_t EE_COST_REFERENCE_DIM_ = 7;
-
 // An approximation of the total mass, to be used when defining the nominal input force_z
 const double ROBOT_TOTAL_MASS_ = 50;
 
@@ -48,8 +45,8 @@ const double ROBOT_TOTAL_MASS_ = 50;
 const static std::array<std::string, FOOT_CONTACTS_NUM_> CONTACT_POINTS_NAMES_ = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
 
 // This is only used to get names for the knees and to check urdf for extra joints that need to be fixed.
-const static std::array<std::string, 3 * FOOT_CONTACTS_NUM_ + 6> JOINT_NAMES_ = {
-    "LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE", "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+const static std::array<std::string, 3 * FOOT_CONTACTS_NUM_> JOINT_NAMES_ = {"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
+                                                                             "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
 
 const static std::vector<std::string> LEGGED_ROBOT_3_DOF_CONTACT_NAMES_ = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
 const static std::vector<std::string> LEGGED_ROBOT_6_DOF_CONTACT_NAMES_ = {};
@@ -58,7 +55,7 @@ template <typename T>
 using feet_array_t = std::array<T, FOOT_CONTACTS_NUM_>;
 using contact_flag_t = feet_array_t<bool>;
 
-/* Import ocs2 types into the alma_c namespace */
+/* Import ocs2 types into the legged_robot namespace */
 using ocs2::matrix_array_t;
 using ocs2::matrix_t;
 using ocs2::scalar_array_t;

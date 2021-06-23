@@ -16,7 +16,7 @@ model_settings
   zDirectionVelocityWeight      0.5
   positionErrorGain             5
 
-  enforceFrictionConeConstraint false
+  enforceFrictionConeConstraint true
   frictionCoefficient           0.7
 
   swing_trajectory_settings

@@ -23,6 +23,6 @@
   <depend>kdl_parser</depend>
   <depend>robot_state_publisher</depend>
   <depend>pinocchio</depend>
-  <depend>alma_c_description</depend>
+  <depend>anymal_c_simple_description</depend>
 
 </package>

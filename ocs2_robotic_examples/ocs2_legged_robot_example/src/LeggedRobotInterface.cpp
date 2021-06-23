@@ -22,6 +22,8 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName
   // Initialize the pinocchio interface
   pinocchioInterfacePtr_.reset(new PinocchioInterface(getPinocchioInterfaceFromUrdfModel(newModel, jointComposite)));
 
+  //  pinocchioInterfacePtr_.reset(new PinocchioInterface(getPinocchioInterfaceFromUrdfModel(urdfTree, jointComposite)));
+
   // Load the task file
   std::string taskFolder = ros::package::getPath("ocs2_legged_robot_example") + "/config/" + taskFileFolderName;
   taskFile_ = taskFolder + "/task.info";
@@ -84,12 +86,14 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   initializerPtr_.reset(new LeggedRobotInitializer(modeScheduleManagerPtr_));
   initialState_.setZero();
   loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
+  std::cerr << "[Cost] " << initialState_.transpose() << "\n";
 
-  CentroidalModelInfoTpl<scalar_t> info(*pinocchioInterfacePtr_, CentroidalModelType::FullCentroidalDynamics, initialState_,
+  const vector_t& qNominal = initialState_.tail(GENERALIZED_VEL_NUM_);
+  CentroidalModelInfoTpl<scalar_t> info(*pinocchioInterfacePtr_, CentroidalModelType::FullCentroidalDynamics, qNominal,
                                         LEGGED_ROBOT_3_DOF_CONTACT_NAMES_, LEGGED_ROBOT_6_DOF_CONTACT_NAMES_);
   pinocchioMappingPtr_.reset(new CentroidalModelPinocchioMapping<scalar_t>(info));
 
-  CentroidalModelInfoTpl<ad_scalar_t> infoAD(*pinocchioInterfacePtr_, CentroidalModelType::FullCentroidalDynamics, initialState_,
+  CentroidalModelInfoTpl<ad_scalar_t> infoAD(*pinocchioInterfacePtr_, CentroidalModelType::FullCentroidalDynamics, qNominal,
                                              LEGGED_ROBOT_3_DOF_CONTACT_NAMES_, LEGGED_ROBOT_6_DOF_CONTACT_NAMES_);
   pinocchioMappingAdPtr_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(infoAD));
 

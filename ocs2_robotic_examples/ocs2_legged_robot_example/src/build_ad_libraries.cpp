@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   std::string urdfString;
-  const bool gotUrdfParam = ros::param::get("/alma_c_description", urdfString);
+  const bool gotUrdfParam = ros::param::get("/legged_robot_description", urdfString);
   if (gotUrdfParam) {
     ::urdf::ModelInterfaceSharedPtr urdfModel = ::urdf::parseURDF(urdfString);
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     return 0;
 
   } else {
-    std::cerr << "build_ad_libraries requires the robot description to be loaded into /alma_c_description" << std::endl;
+    std::cerr << "build_ad_libraries requires the robot description to be loaded into /legged_robot_description" << std::endl;
     return 0;
   }
 }

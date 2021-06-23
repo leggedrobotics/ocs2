@@ -50,10 +50,7 @@ int main(int argc, char** argv) {
   initObservation.mode = ModeNumber::STANCE;
 
   // Initial command
-  vector_t initState(STATE_DIM_ + 1);
-  initState.head<STATE_DIM_>() = initObservation.state;
-
-  CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {initState}, {initObservation.input});
+  CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {initObservation.state}, {initObservation.input});
 
   // run dummy
   leggedRobotDummySimulator.run(initObservation, initCostDesiredTrajectories);

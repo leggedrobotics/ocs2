@@ -131,7 +131,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
 
   explicit CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo);
 
-  CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs) : centroidalModelInfo_(std::move(rhs.centroidalModelInfo_)) {}
+  CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs)
+      : Base(rhs), centroidalModelInfo_(std::move(rhs.centroidalModelInfo_)) {}
 
   ~CentroidalModelPinocchioMapping() override = default;
   CentroidalModelPinocchioMapping<SCALAR>* clone() const override { return new CentroidalModelPinocchioMapping<SCALAR>(*this); }

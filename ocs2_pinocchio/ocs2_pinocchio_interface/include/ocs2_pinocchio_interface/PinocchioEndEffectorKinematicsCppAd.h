@@ -63,7 +63,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
    *                                  available.
    * @param [in] verbose : print information.
    */
-  PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+  PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, PinocchioStateInputMapping<ad_scalar_t>& mapping,
                                       std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim,
                                       const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
                                       bool recompileLibraries = true, bool verbose = false);

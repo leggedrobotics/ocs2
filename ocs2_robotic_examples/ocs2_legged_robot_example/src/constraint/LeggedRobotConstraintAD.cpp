@@ -22,8 +22,6 @@ LeggedRobotConstraintAD::LeggedRobotConstraintAD(std::shared_ptr<const SwitchedM
   if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
     throw std::runtime_error("[LeggedRobotConstraintAD] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
   }
-  auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
-  pinocchioMappingAd.setPinocchioInterface(pinocchioInterfaceCppAd);
   initializeConstraintTerms(pinocchioInterface, pinocchioMappingAd);
 }
 
@@ -46,7 +44,7 @@ LeggedRobotConstraintAD* LeggedRobotConstraintAD::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                                        const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd) {
+                                                        CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd) {
   for (int i = 0; i < FOOT_CONTACTS_NUM_; i++) {
     auto footName = CONTACT_POINTS_NAMES_[i];
     // Friction cone constraint (state-input inequality)

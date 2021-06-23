@@ -51,12 +51,12 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LeggedRobotCost::LeggedRobotCost(std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                                 PinocchioInterface pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& pinocchioMapping,
+                                 PinocchioInterface pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t> pinocchioMapping,
                                  const std::string& taskFile)
 
     : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
       pinocchioInterface_(std::move(pinocchioInterface)),
-      pinocchioMapping_(pinocchioMapping) {
+      pinocchioMapping_(std::move(pinocchioMapping)) {
   pinocchioMapping_.setPinocchioInterface(pinocchioInterface_);
 
   // Intermediate costs

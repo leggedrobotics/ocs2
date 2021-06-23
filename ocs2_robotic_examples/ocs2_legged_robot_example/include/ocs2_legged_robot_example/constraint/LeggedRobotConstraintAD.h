@@ -30,7 +30,7 @@ class LeggedRobotConstraintAD : public ocs2::ConstraintBase {
    * Initialize Constraint Terms
    */
   void initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                 const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd);
+                                 CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd);
 
   ~LeggedRobotConstraintAD() override = default;
 

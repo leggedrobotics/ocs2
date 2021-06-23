@@ -49,7 +49,7 @@ class LeggedRobotCost : public CostFunctionBase {
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
   LeggedRobotCost(std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr, PinocchioInterface pinocchioInterface,
-                  CentroidalModelPinocchioMapping<scalar_t>& pinocchioMapping, const std::string& taskFile);
+                  CentroidalModelPinocchioMapping<scalar_t> pinocchioMapping, const std::string& taskFile);
   ~LeggedRobotCost() override = default;
   LeggedRobotCost* clone() const override { return new LeggedRobotCost(*this); }
 

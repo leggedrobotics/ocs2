@@ -49,8 +49,7 @@ class LeggedRobotCost : public CostFunctionBase {
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
   LeggedRobotCost(std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr, PinocchioInterface pinocchioInterface,
-                  CentroidalModelPinocchioMapping<scalar_t>& pinocchioMapping, const std::string& taskFile, bool useCaching,
-                  const std::string& libraryFolder, bool recompileLibraries);
+                  CentroidalModelPinocchioMapping<scalar_t>& pinocchioMapping, const std::string& taskFile);
   ~LeggedRobotCost() override = default;
   LeggedRobotCost* clone() const override { return new LeggedRobotCost(*this); }
 
@@ -67,7 +66,6 @@ class LeggedRobotCost : public CostFunctionBase {
   void initializeInputCostWeight(const std::string& taskFile, matrix_t& R);
 
   std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile);
-  //  bool useCaching_;
 
   std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 

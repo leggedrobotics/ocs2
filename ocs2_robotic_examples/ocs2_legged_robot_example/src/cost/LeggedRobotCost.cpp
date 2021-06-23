@@ -52,8 +52,8 @@ namespace legged_robot {
 /******************************************************************************************************/
 LeggedRobotCost::LeggedRobotCost(std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
                                  PinocchioInterface pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& pinocchioMapping,
-                                 const std::string& taskFile, bool useCaching, const std::string& libraryFolder, bool recompileLibraries)
-    //    : useCaching_(useCaching),
+                                 const std::string& taskFile)
+
     : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
       pinocchioInterface_(std::move(pinocchioInterface)),
       pinocchioMapping_(pinocchioMapping) {
@@ -70,7 +70,6 @@ LeggedRobotCost::LeggedRobotCost(std::shared_ptr<const SwitchedModelModeSchedule
 /******************************************************************************************************/
 LeggedRobotCost::LeggedRobotCost(const LeggedRobotCost& rhs)
     : BASE(rhs),
-      //      useCaching_(rhs.useCaching_),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
       pinocchioInterface_(rhs.pinocchioInterface_),
       pinocchioMapping_(rhs.pinocchioMapping_),
@@ -90,14 +89,6 @@ void LeggedRobotCost::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectorie
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t LeggedRobotCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  //  if (useCaching_) {
-  //    const auto& model = pinocchioInterface_.getModel();
-  //    auto& data = pinocchioInterface_.getData();
-  //    const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
-  //    pinocchio::forwardKinematics(model, data, q);
-  //    pinocchio::updateFramePlacements(model, data);
-  //  }
-
   scalar_t cost = stateInputCostCollection_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
   cost += stateCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
   return cost;
@@ -114,16 +105,6 @@ scalar_t LeggedRobotCost::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation LeggedRobotCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  //  if (useCaching_) {
-  //    const auto& model = pinocchioInterface_.getModel();
-  //    auto& data = pinocchioInterface_.getData();
-  //    const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
-  //    pinocchio::forwardKinematics(model, data, q);
-  //    pinocchio::updateFramePlacements(model, data);
-  //    pinocchio::computeJointJacobians(model, data);
-  //    pinocchio::updateGlobalPlacements(model, data);
-  //  }
-
   auto cost = stateInputCostCollection_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
   const auto stateCost = stateCostCollection_.getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_);
   cost.f += stateCost.f;
@@ -145,15 +126,17 @@ ScalarFunctionQuadraticApproximation LeggedRobotCost::finalCostQuadraticApproxim
 void LeggedRobotCost::initializeInputCostWeight(const std::string& taskFile, matrix_t& R) {
   state_vector_t initialState;
   loadData::loadEigenMatrix(taskFile, "initialState", initialState);
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
   const auto q = pinocchioMapping_.getPinocchioJointPosition(initialState);
-  pinocchio::computeJointJacobians(pinocchioInterface_.getModel(), pinocchioInterface_.getData(), q);
-  pinocchio::updateFramePlacements(pinocchioInterface_.getModel(), pinocchioInterface_.getData());
+  pinocchio::computeJointJacobians(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
 
   Eigen::Matrix<scalar_t, 3 * FOOT_CONTACTS_NUM_, 12> baseToFeetJacobians;
   for (size_t i = 0; i < FOOT_CONTACTS_NUM_; i++) {
     matrix_t jacobianWorldToContactPointInWorldFrame = matrix_t::Zero(6, GENERALIZED_VEL_NUM_);
-    pinocchio::getFrameJacobian(pinocchioInterface_.getModel(), pinocchioInterface_.getData(),
-                                pinocchioInterface_.getModel().getBodyId(CONTACT_POINTS_NAMES_[i]), pinocchio::LOCAL_WORLD_ALIGNED,
+    pinocchio::getFrameJacobian(model, data, model.getBodyId(CONTACT_POINTS_NAMES_[i]), pinocchio::LOCAL_WORLD_ALIGNED,
                                 jacobianWorldToContactPointInWorldFrame);
 
     baseToFeetJacobians.block(3 * i, 0, 3, 12) = (jacobianWorldToContactPointInWorldFrame.topRows<3>()).block(0, BASE_DOF_NUM_, 3, 12);

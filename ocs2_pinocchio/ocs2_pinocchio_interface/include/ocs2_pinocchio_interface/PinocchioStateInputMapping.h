@@ -31,8 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
 namespace ocs2 {
 /**
  * Mapping between OCS2 and pinocchio state and input
@@ -48,8 +46,6 @@ class PinocchioStateInputMapping {
   PinocchioStateInputMapping<SCALAR>& operator=(const PinocchioStateInputMapping<SCALAR>& rhs) = delete;
   virtual PinocchioStateInputMapping<SCALAR>* clone() const = 0;
 
-  void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; };
-
   /* Get the pinocchio joint configuration from OCS2 state and input vectors. */
   virtual vector_t getPinocchioJointPosition(const vector_t& state) const = 0;
 
@@ -60,9 +56,7 @@ class PinocchioStateInputMapping {
   virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const = 0;
 
  protected:
-  PinocchioStateInputMapping(const PinocchioStateInputMapping<SCALAR>& rhs) : pinocchioInterfacePtr_(nullptr){};
-
-  const PinocchioInterfaceTpl<SCALAR>* pinocchioInterfacePtr_;
+  PinocchioStateInputMapping(const PinocchioStateInputMapping<SCALAR>& rhs) = default;
 };
 
 }  // namespace ocs2

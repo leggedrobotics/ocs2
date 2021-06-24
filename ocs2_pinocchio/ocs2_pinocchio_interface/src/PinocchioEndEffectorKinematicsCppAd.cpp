@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
-#include <pinocchio/algorithm/centroidal.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
@@ -41,9 +40,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(
-    const PinocchioInterface& pinocchioInterface, PinocchioStateInputMapping<ad_scalar_t>& mapping, std::vector<std::string> endEffectorIds,
-    size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose)
+PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface,
+                                                                         const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                                                         std::vector<std::string> endEffectorIds, size_t stateDim,
+                                                                         size_t inputDim, const std::string& modelName,
+                                                                         const std::string& modelFolder, bool recompileLibraries,
+                                                                         bool verbose)
     : endEffectorIds_(std::move(endEffectorIds)) {
   for (const auto& bodyName : endEffectorIds_) {
     endEffectorFrameIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
@@ -51,7 +53,6 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(
 
   // initialize CppAD interface
   auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
-  mapping.setPinocchioInterface(pinocchioInterfaceCppAd);
 
   // position function
   auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) { y = getPositionCppAd(pinocchioInterfaceCppAd, mapping, x); };
@@ -170,8 +171,6 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocityCppAd(PinocchioInter
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
   const ad_vector_t q = mapping.getPinocchioJointPosition(state);
-  // TODO(jichiu): generalization for all kinds of mapping
-  pinocchio::computeCentroidalMap(model, data, q);
   const ad_vector_t v = mapping.getPinocchioJointVelocity(state, input);
 
   pinocchio::forwardKinematics(model, data, q, v);

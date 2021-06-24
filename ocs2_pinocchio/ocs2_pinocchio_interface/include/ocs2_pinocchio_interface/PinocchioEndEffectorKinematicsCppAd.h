@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -47,9 +48,11 @@ namespace ocs2 {
  */
 class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<scalar_t> {
  public:
+  enum class UpdateCallbackType { UpdatePosition, UpdateVelocity, UpdateOrientation };
   using EndEffectorKinematics<scalar_t>::vector3_t;
   using EndEffectorKinematics<scalar_t>::matrix3x_t;
   using EndEffectorKinematics<scalar_t>::quaternion_t;
+  using update_pinocchio_interface_callback = std::function<void(PinocchioInterfaceTpl<ad_scalar_t>&)>;
 
   /** Constructor
    * @param [in] pinocchioInterface pinocchio interface.
@@ -73,6 +76,8 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
   PinocchioEndEffectorKinematicsCppAd& operator=(const PinocchioEndEffectorKinematicsCppAd&) = delete;
 
   const std::vector<std::string>& getIds() const override;
+
+  void setUpdatePinocchioInterfaceCallback(UpdateCallbackType callbackType, update_pinocchio_interface_callback updateCallback);
 
   std::vector<vector3_t> getPosition(const vector_t& state) const override;
   std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override;
@@ -101,6 +106,10 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
 
   const std::vector<std::string> endEffectorIds_;
   std::vector<size_t> endEffectorFrameIds_;
+
+  update_pinocchio_interface_callback updatePinocchioInterfaceForPositionCallback_;
+  update_pinocchio_interface_callback updatePinocchioInterfaceForVelocityCallback_;
+  update_pinocchio_interface_callback updatePinocchioInterfaceForOrientationCallback_;
 };
 
 }  // namespace ocs2

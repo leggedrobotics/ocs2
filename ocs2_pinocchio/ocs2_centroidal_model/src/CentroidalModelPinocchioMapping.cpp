@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 #include "ocs2_centroidal_model/helpers.h"
+#include "ocs2_centroidal_model/utils.h"
 
 namespace ocs2 {
 
@@ -37,7 +38,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 template <typename SCALAR>
 CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo)
-    : centroidalModelInfo_(centroidalModelInfo) {}
+    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(centroidalModelInfo) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -45,7 +46,7 @@ CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const C
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
   assert(centroidalModelInfo_.stateDim == state.rows());
-  const Model& model = Base::pinocchioInterfacePtr_->getModel();
+  const Model& model = pinocchioInterfacePtr_->getModel();
   return state.segment(6, centroidalModelInfo_.generalizedCoordinatesNum);
 }
 
@@ -54,16 +55,15 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const ve
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
-  const Model& model = Base::pinocchioInterfacePtr_->getModel();
-  const Data& data = Base::pinocchioInterfacePtr_->getData();
+  const Model& model = pinocchioInterfacePtr_->getModel();
+  const Data& data = pinocchioInterfacePtr_->getData();
   const CentroidalModelInfo& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
   assert(info.inputDim == input.rows());
 
   const auto& A = getCentroidalMomentumMatrix();
   const matrix6_t Ab = A.template leftCols<6>();
-  const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
-  const auto Aj = A.rightCols(info.actuatedDofNum);
+  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
 
   vector_t vPinocchio(info.generalizedCoordinatesNum);
   const auto normalizedMomentum = getNormalizedMomentum(state, info);
@@ -71,6 +71,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
   vector6_t momentum = info.robotMass * normalizedMomentum;
 
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
+    const auto Aj = A.rightCols(info.actuatedDofNum);
     momentum -= Aj * jointVelocities;
   }
 
@@ -86,58 +87,48 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
     -> std::pair<matrix_t, matrix_t> {
-  const Model& model = Base::pinocchioInterfacePtr_->getModel();
-  const Data& data = Base::pinocchioInterfacePtr_->getData();
+  const Model& model = pinocchioInterfacePtr_->getModel();
+  const Data& data = pinocchioInterfacePtr_->getData();
   const auto& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
 
-  matrix6x_t floatingBaseVelocitiesDerivativeState;
-  matrix6x_t floatingBaseVelocitiesDerivativeInput;
-  matrix_t jointVelocitiesDerivativeInput;
-  matrix6x_t dhdq;
+  // Partial derivatives of joint velocities
+  matrix_t jointVelocitiesDerivativeInput = matrix_t::Zero(info.actuatedDofNum, info.inputDim);
+  jointVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).setIdentity();
 
   // Partial derivatives of the floating base variables
+  // TODO: move getFloatingBaseCentroidalMomentumMatrixInverse(Ab) to PreComputation
+  matrix_t floatingBaseVelocitiesDerivativeState = matrix_t::Zero(6, info.stateDim);
+  matrix_t floatingBaseVelocitiesDerivativeInput = matrix_t::Zero(6, info.inputDim);
   const auto& A = getCentroidalMomentumMatrix();
   const matrix6_t Ab = A.template leftCols<6>();
-  // TODO: move getFloatingBaseCentroidalMomentumMatrixInverse(Ab) to PreComputation
-  const auto& Ab_inv = getFloatingBaseCentroidalMomentumMatrixInverse(Ab);
-  const auto Aj = A.rightCols(info.actuatedDofNum);
-
-  floatingBaseVelocitiesDerivativeInput.setZero(6, info.inputDim);
-  floatingBaseVelocitiesDerivativeState.setZero(6, info.stateDim);
+  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   floatingBaseVelocitiesDerivativeState.leftCols(6) = info.robotMass * Ab_inv;
 
+  matrix6x_t dhdq;
   dhdq.resize(6, info.generalizedCoordinatesNum);
-
-  // TODO: Check how to get the correct value for dhdq
-  const pinocchio::InertiaTpl<SCALAR>& Ytot = data.oYcrb[0];
-  const typename pinocchio::InertiaTpl<SCALAR>::Vector3& com = Ytot.lever();
-  pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(matrix6x_t, dhdq));
-  dhdq.leftCols(3).setZero();
-
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
+    // TODO: Check how to compute the correct value for dhdq
+    const pinocchio::InertiaTpl<SCALAR>& Ytot = data.oYcrb[0];
+    const typename pinocchio::InertiaTpl<SCALAR>::Vector3& com = Ytot.lever();
+    pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(matrix6x_t, dhdq));
+    dhdq.template leftCols<3>().setZero();
+    const auto Aj = A.rightCols(info.actuatedDofNum);
     floatingBaseVelocitiesDerivativeState.rightCols(info.generalizedCoordinatesNum).noalias() = -Ab_inv * dhdq;
     floatingBaseVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).noalias() = -Ab_inv * Aj;
   } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
+    dhdq = data.dHdq;
     floatingBaseVelocitiesDerivativeState.middleCols(6, 6).noalias() = -Ab_inv * dhdq.leftCols(6);
   }
 
-  // Partial derivatives of the actuated joints
-  jointVelocitiesDerivativeInput.setZero(info.actuatedDofNum, info.inputDim);
-  jointVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).setIdentity();
-
   matrix_t dvdx = matrix_t::Zero(info.generalizedCoordinatesNum, info.stateDim);
   dvdx.template topRows<6>() = floatingBaseVelocitiesDerivativeState;
-
   matrix_t dvdu = matrix_t::Zero(info.generalizedCoordinatesNum, info.inputDim);
   dvdu << floatingBaseVelocitiesDerivativeInput, jointVelocitiesDerivativeInput;
-
   matrix_t dfdx = matrix_t::Zero(Jq.rows(), centroidalModelInfo_.stateDim);
   dfdx.middleCols(6, info.generalizedCoordinatesNum) = Jq;
   dfdx += Jv * dvdx;
-
   const matrix_t dfdu = Jv * dvdu;
-
   return {dfdx, dfdu};
 }
 
@@ -146,7 +137,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() const -> const matrix6x_t& {
-  const Data& data = Base::pinocchioInterfacePtr_->getData();
+  const Data& data = pinocchioInterfacePtr_->getData();
   return data.Ag;
 }
 
@@ -155,7 +146,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() cons
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPositionComToContactPointInWorldFrame(size_t contactIndex) const -> vector3_t {
-  const Data& data = Base::pinocchioInterfacePtr_->getData();
+  const Data& data = pinocchioInterfacePtr_->getData();
   return (data.oMf[centroidalModelInfo_.endEffectorFrameIndices[contactIndex]].translation() - data.com[0]);
 }
 
@@ -165,18 +156,15 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPositionComToContactPointInWorl
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const
     -> matrix3x_t {
-  const Model& model = Base::pinocchioInterfacePtr_->getModel();
-  // TODO: Need to copy here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
-  Data data = Base::pinocchioInterfacePtr_->getData();
-
+  // TODO: Need to copy data here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
+  const Model& model = pinocchioInterfacePtr_->getModel();
+  Data data = pinocchioInterfacePtr_->getData();
+  const auto& info = centroidalModelInfo_;
   matrix6x_t jacobianWorldToContactPointInWorldFrame;
-  jacobianWorldToContactPointInWorldFrame.setZero(6, centroidalModelInfo_.generalizedCoordinatesNum);
-  pinocchio::getFrameJacobian(model, data, centroidalModelInfo_.endEffectorFrameIndices[contactIndex], pinocchio::LOCAL_WORLD_ALIGNED,
+  jacobianWorldToContactPointInWorldFrame.setZero(6, info.generalizedCoordinatesNum);
+  pinocchio::getFrameJacobian(model, data, info.endEffectorFrameIndices[contactIndex], pinocchio::LOCAL_WORLD_ALIGNED,
                               jacobianWorldToContactPointInWorldFrame);
-  matrix3x_t J_com = getCentroidalMomentumMatrix().template topRows<3>() / centroidalModelInfo_.robotMass;
-  if (centroidalModelInfo_.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    J_com.rightCols(centroidalModelInfo_.actuatedDofNum).setZero();
-  }
+  matrix3x_t J_com = getCentroidalMomentumMatrix().template topRows<3>() / info.robotMass;
   return (jacobianWorldToContactPointInWorldFrame.template topRows<3>() - J_com);
 }
 
@@ -184,7 +172,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToConta
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::normalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
+auto CentroidalModelPinocchioMapping<SCALAR>::getNormalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
   const auto& info = centroidalModelInfo_;
   const vector3_t gravityVector = vector3_t(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
   vector6_t normalizedCentroidalMomentumRate;

@@ -48,11 +48,11 @@ namespace ocs2 {
  */
 class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<scalar_t> {
  public:
-  enum class UpdateCallbackType { UpdatePosition, UpdateVelocity, UpdateOrientation };
   using EndEffectorKinematics<scalar_t>::vector3_t;
   using EndEffectorKinematics<scalar_t>::matrix3x_t;
   using EndEffectorKinematics<scalar_t>::quaternion_t;
-  using update_pinocchio_interface_callback = std::function<void(PinocchioInterfaceTpl<ad_scalar_t>&)>;
+  using update_pinocchio_interface_callback =
+      std::function<void(const ad_vector_t& state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterface)>;
 
   /** Constructor
    * @param [in] pinocchioInterface pinocchio interface.
@@ -71,13 +71,30 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
                                       const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
                                       bool recompileLibraries = true, bool verbose = false);
 
+  /** Constructor
+   * @param [in] pinocchioInterface pinocchio interface.
+   * @param [in] mapping mapping from OCS2 to pinocchio state.
+   * @param [in] endEffectorIds array of end effector names.
+   * @param [in] stateDim : size of state vector
+   * @param [in] inputDim : size of input vector
+   * @param [in] updateCallback : In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
+   * use this callback.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   *                                  available.
+   * @param [in] verbose : print information.
+   */
+  PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                      std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim,
+                                      update_pinocchio_interface_callback updateCallback, const std::string& modelName,
+                                      const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = false);
+
   ~PinocchioEndEffectorKinematicsCppAd() override = default;
   PinocchioEndEffectorKinematicsCppAd* clone() const override;
   PinocchioEndEffectorKinematicsCppAd& operator=(const PinocchioEndEffectorKinematicsCppAd&) = delete;
 
   const std::vector<std::string>& getIds() const override;
-
-  void setUpdatePinocchioInterfaceCallback(UpdateCallbackType callbackType, update_pinocchio_interface_callback updateCallback);
 
   std::vector<vector3_t> getPosition(const vector_t& state) const override;
   std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override;
@@ -106,10 +123,6 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
 
   const std::vector<std::string> endEffectorIds_;
   std::vector<size_t> endEffectorFrameIds_;
-
-  update_pinocchio_interface_callback updatePinocchioInterfaceForPositionCallback_;
-  update_pinocchio_interface_callback updatePinocchioInterfaceForVelocityCallback_;
-  update_pinocchio_interface_callback updatePinocchioInterfaceForOrientationCallback_;
 };
 
 }  // namespace ocs2

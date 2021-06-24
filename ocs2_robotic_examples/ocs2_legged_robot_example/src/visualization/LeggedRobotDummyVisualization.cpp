@@ -1,5 +1,7 @@
+
 #include <ocs2_legged_robot_example/common/utils.h>
 #include <ocs2_legged_robot_example/visualization/LeggedRobotDummyVisualization.h>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 #include <array>
 
@@ -121,10 +123,9 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
 
 void LeggedRobotDummyVisualization::publishBaseTransform(ros::Time timeStamp, const SystemObservation& observation) const {
   // publish measured tf
-  Eigen::Vector3d p_base = observation.state.template segment<3>(6);
-  Eigen::Vector3d eulerAnglesWorldToBase = observation.state.template segment<3>(9);
-  Eigen::Quaterniond quaternionWorldToBase;
-  getQuaternionFromEulerAnglesZyx(eulerAnglesWorldToBase, quaternionWorldToBase);
+  const Eigen::Vector3d p_base = observation.state.template segment<3>(6);
+  const Eigen::Vector3d eulerAnglesWorldToBase = observation.state.template segment<3>(9);
+  const Eigen::Quaterniond quaternionWorldToBase = getQuaternionFromEulerAnglesZyx(eulerAnglesWorldToBase);
 
   geometry_msgs::TransformStamped base_transform;
   base_transform.header.stamp = timeStamp;

@@ -50,11 +50,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotCost::LeggedRobotCost(std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                                 PinocchioInterface pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t> pinocchioMapping,
-                                 const std::string& taskFile)
+LeggedRobotCost::LeggedRobotCost(const SwitchedModelModeScheduleManager& modeScheduleManager, PinocchioInterface pinocchioInterface,
+                                 CentroidalModelPinocchioMapping<scalar_t> pinocchioMapping, const std::string& taskFile)
 
-    : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
+    : modeScheduleManagerPtr_(&modeScheduleManager),
       pinocchioInterface_(std::move(pinocchioInterface)),
       pinocchioMapping_(std::move(pinocchioMapping)) {
   pinocchioMapping_.setPinocchioInterface(pinocchioInterface_);
@@ -124,7 +123,7 @@ ScalarFunctionQuadraticApproximation LeggedRobotCost::finalCostQuadraticApproxim
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotCost::initializeInputCostWeight(const std::string& taskFile, matrix_t& R) {
-  state_vector_t initialState;
+  vector_t initialState;
   loadData::loadEigenMatrix(taskFile, "initialState", initialState);
 
   const auto& model = pinocchioInterface_.getModel();

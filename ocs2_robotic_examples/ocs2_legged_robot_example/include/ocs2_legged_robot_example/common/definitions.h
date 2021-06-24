@@ -22,6 +22,7 @@
 
 namespace ocs2 {
 namespace legged_robot {
+
 const std::string ROBOT_NAME_ = "legged_robot";
 const std::string ROBOT_URDF_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/urdf/" + ROBOT_NAME_ + ".urdf";
 const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetCommand.info";
@@ -54,34 +55,6 @@ const static std::vector<std::string> LEGGED_ROBOT_6_DOF_CONTACT_NAMES_ = {};
 template <typename T>
 using feet_array_t = std::array<T, FOOT_CONTACTS_NUM_>;
 using contact_flag_t = feet_array_t<bool>;
-
-/* Import ocs2 types into the legged_robot namespace */
-using ocs2::matrix_array_t;
-using ocs2::matrix_t;
-using ocs2::scalar_array_t;
-using ocs2::scalar_t;
-using ocs2::size_array_t;
-using ocs2::vector_array_t;
-using ocs2::vector_t;
-
-using ocs2::ScalarFunctionQuadraticApproximation;
-using ocs2::VectorFunctionLinearApproximation;
-using ocs2::VectorFunctionQuadraticApproximation;
-
-/* Define fixed-size types */
-using state_vector_t = Eigen::Matrix<scalar_t, STATE_DIM_, 1>;
-using input_vector_t = Eigen::Matrix<scalar_t, INPUT_DIM_, 1>;
-
-using state_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM_, STATE_DIM_>;
-using input_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM_, INPUT_DIM_>;
-using input_state_matrix_t = Eigen::Matrix<scalar_t, INPUT_DIM_, STATE_DIM_>;
-using state_input_matrix_t = Eigen::Matrix<scalar_t, STATE_DIM_, INPUT_DIM_>;
-
-using state_vector_array_t = std::vector<state_vector_t, Eigen::aligned_allocator<state_vector_t>>;
-using input_vector_array_t = std::vector<input_vector_t, Eigen::aligned_allocator<input_vector_t>>;
-using state_matrix_array_t = std::vector<state_matrix_t, Eigen::aligned_allocator<state_matrix_t>>;
-using input_matrix_array_t = std::vector<input_matrix_t, Eigen::aligned_allocator<input_matrix_t>>;
-using input_state_matrix_array_t = std::vector<input_state_matrix_t, Eigen::aligned_allocator<input_state_matrix_t>>;
 
 template <typename scalar_t>
 using vector3_s_t = Eigen::Matrix<scalar_t, 3, 1>;

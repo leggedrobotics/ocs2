@@ -53,7 +53,7 @@ class LeggedRobotInterface final : public ocs2::RobotInterface {
 
   void setupOptimizer(const std::string& taskFile);
 
-  state_vector_t getInitialState() { return initialState_; }
+  vector_t getInitialState() { return initialState_; }
 
   ocs2::MPC_DDP& getMpc() { return *mpcPtr_; }
 
@@ -89,7 +89,7 @@ class LeggedRobotInterface final : public ocs2::RobotInterface {
 
   std::string taskFile_;
 
-  state_vector_t initialState_;
+  vector_t initialState_;
 
   ocs2::ddp::Settings ddpSettings_;
   ocs2::rollout::Settings rolloutSettings_;
@@ -108,5 +108,6 @@ class LeggedRobotInterface final : public ocs2::RobotInterface {
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
   std::vector<std::shared_ptr<SolverSynchronizedModule>> solverModules_;
 };
+
 }  // namespace legged_robot
 }  // namespace ocs2

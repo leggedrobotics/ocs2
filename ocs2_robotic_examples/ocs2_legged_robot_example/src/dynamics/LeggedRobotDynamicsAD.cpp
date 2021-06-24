@@ -10,13 +10,7 @@ LeggedRobotDynamicsAD::LeggedRobotDynamicsAD(const PinocchioInterface& pinocchio
                                              CentroidalModelPinocchioMapping<ad_scalar_t>& mapping, const std::string& modelName,
                                              const std::string& modelFolder /*= "/tmp/ocs2"*/, bool recompileLibraries /*= true*/,
                                              bool verbose /*= true*/)
-    : Base(), pinocchioCentroidalDynamicsAd_(pinocchioInterface, mapping, modelName, modelFolder, recompileLibraries, verbose) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LeggedRobotDynamicsAD::LeggedRobotDynamicsAD(const LeggedRobotDynamicsAD& rhs)
-    : Base(rhs), pinocchioCentroidalDynamicsAd_(rhs.pinocchioCentroidalDynamicsAd_) {}
+    : pinocchioCentroidalDynamicsAd_(pinocchioInterface, mapping, modelName, modelFolder, recompileLibraries, verbose) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

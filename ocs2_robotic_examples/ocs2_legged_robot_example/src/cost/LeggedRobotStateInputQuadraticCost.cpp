@@ -29,45 +29,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_legged_robot_example/cost/LeggedRobotStateInputQuadraticCost.h>
 
+#include <ocs2_legged_robot_example/common/utils.h>
+
 namespace ocs2 {
 namespace legged_robot {
 
-LeggedRobotStateInputQuadraticCost::LeggedRobotStateInputQuadraticCost(
-    std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr, std::string taskFile, matrix_t Q, matrix_t R)
-    : BASE(std::move(Q), std::move(R)), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)), taskFile_(std::move(taskFile)) {}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LeggedRobotStateInputQuadraticCost::LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R,
+                                                                       const SwitchedModelModeScheduleManager& modeScheduleManager)
+    : BASE(std::move(Q), std::move(R)), modeScheduleManagerPtr_(&modeScheduleManager) {}
 
-LeggedRobotStateInputQuadraticCost::LeggedRobotStateInputQuadraticCost(const LeggedRobotStateInputQuadraticCost& rhs)
-    : BASE(rhs), modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_), taskFile_(rhs.taskFile_) {}
-
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 LeggedRobotStateInputQuadraticCost* LeggedRobotStateInputQuadraticCost::clone() const {
   return new LeggedRobotStateInputQuadraticCost(*this);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::pair<vector_t, vector_t> LeggedRobotStateInputQuadraticCost::getStateInputDeviation(
     scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
-  // Get stance configuration
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-
   const vector_t xNominal = desiredTrajectory.getDesiredState(time);
-  vector_t uNominal = desiredTrajectory.getDesiredInput(time);
-
-  // Distribute total mass equally over active stance legs.
-  const scalar_t totalWeight = ROBOT_TOTAL_MASS_ * 9.81;
-  size_t numStanceLegs(0);
-
-  for (size_t i = 0; i < FOOT_CONTACTS_NUM_; i++) {
-    if (contactFlags[i]) {
-      ++numStanceLegs;
-    }
-  }
-
-  if (numStanceLegs > 0) {
-    for (size_t i = 0; i < FOOT_CONTACTS_NUM_; i++) {
-      if (contactFlags[i]) {
-        uNominal(3 * i + 2) = totalWeight / numStanceLegs;
-      }
-    }
-  }
+  const vector_t uNominal = weightCompensatingInputs(ROBOT_TOTAL_MASS_, contactFlags);
 
   return {state - xNominal, input - uNominal};
 }

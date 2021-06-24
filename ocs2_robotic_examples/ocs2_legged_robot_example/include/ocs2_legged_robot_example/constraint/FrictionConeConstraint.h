@@ -2,8 +2,6 @@
 
 #include <ocs2_core/constraint/StateInputConstraint.h>
 
-#include <ocs2_switched_model_interface/core/SwitchedModel.h>
-
 #include <ocs2_legged_robot_example/common/definitions.h>
 
 namespace ocs2 {

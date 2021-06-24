@@ -4,7 +4,7 @@ project(ocs2_legged_robot_example)
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(catkin REQUIRED COMPONENTS
+set(CATKIN_PACKAGE_DEPENDENCIES
     roslib
     cmake_modules
     ocs2_core
@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
     ocs2_robotic_tools
     ocs2_ddp
     ocs2_pinocchio_interface
-    ocs2_switched_model_interface
     ocs2_centroidal_model
     tf
     urdf
@@ -21,9 +20,13 @@ find_package(catkin REQUIRED COMPONENTS
     anymal_c_simple_description
 )
 
+find_package(catkin REQUIRED COMPONENTS
+  ${CATKIN_PACKAGE_DEPENDENCIES}
+)
+
 find_package(Boost REQUIRED COMPONENTS
-    system
-    filesystem
+  system
+  filesystem
 )
 
 find_package(PkgConfig REQUIRED)
@@ -41,20 +44,7 @@ catkin_package(
     include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
-    ocs2_legged_robot_example
-    CATKIN_DEPENDS
-    ocs2_robotic_tools
-    ocs2_core
-    ocs2_mpc
-    ocs2_ddp
-    ocs2_pinocchio_interface
-    ocs2_switched_model_interface
-    ocs2_centroidal_model
-    tf
-    urdf
-    kdl_parser
-    robot_state_publisher
-    anymal_c_simple_description
+    ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     pinocchio
     Boost
@@ -78,7 +68,6 @@ add_library(ocs2_legged_robot_example
     src/visualization/LeggedRobotDummyVisualization.cpp
 
     src/common/ModelSettings.cpp
-    src/common/utils.cpp
 
     # src/constraint/LeggedRobotConstraint.cpp
     src/constraint/LeggedRobotConstraintAD.cpp

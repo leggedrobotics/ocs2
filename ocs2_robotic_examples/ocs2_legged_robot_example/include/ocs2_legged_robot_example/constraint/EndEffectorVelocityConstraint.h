@@ -13,8 +13,8 @@ namespace legged_robot {
 
 struct EndEffectorVelocityConstraintSettings {
   // Constraints are  A * x + b
-  Eigen::MatrixXd A;
-  Eigen::VectorXd b;
+  matrix_t A;
+  vector_t b;
 };
 
 class EndEffectorVelocityConstraint final : public ocs2::StateInputConstraint {

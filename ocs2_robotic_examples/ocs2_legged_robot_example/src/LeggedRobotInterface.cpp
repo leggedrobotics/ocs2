@@ -5,6 +5,9 @@
 namespace ocs2 {
 namespace legged_robot {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
   pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfTree)));
 
@@ -67,7 +70,7 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   /*
    * Initialization
    */
-  initializerPtr_.reset(new LeggedRobotInitializer(modeScheduleManagerPtr_));
+  initializerPtr_.reset(new LeggedRobotInitializer(*modeScheduleManagerPtr_));
   initialState_.setZero();
   loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
   std::cerr << "[Cost] " << initialState_.transpose() << "\n";
@@ -84,7 +87,7 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   /*
    * Cost function
    */
-  costPtr_.reset(new LeggedRobotCost(modeScheduleManagerPtr_, *pinocchioInterfacePtr_, *pinocchioMappingPtr_, taskFile_));
+  costPtr_.reset(new LeggedRobotCost(*modeScheduleManagerPtr_, *pinocchioInterfacePtr_, *pinocchioMappingPtr_, taskFile_));
 
   /*
    * Constraints
@@ -94,7 +97,7 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   if (useAnalyticalGradientsConstraints) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical constraint class is not yet implemented.");
   } else {
-    constraintsPtr_.reset(new LeggedRobotConstraintAD(modeScheduleManagerPtr_, modeScheduleManagerPtr_->getSwingTrajectoryPlanner(),
+    constraintsPtr_.reset(new LeggedRobotConstraintAD(*modeScheduleManagerPtr_, modeScheduleManagerPtr_->getSwingTrajectoryPlanner(),
                                                       *pinocchioInterfacePtr_, *pinocchioMappingAdPtr_, modelSettings_));
   }
 
@@ -118,13 +121,9 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   /*
    * Solver
    */
-  if (!modelSettings_.gaitOptimization_) {
-    mpcPtr_.reset(new ocs2::MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintsPtr_.get(), costPtr_.get(), initializerPtr_.get(),
-                                    ddpSettings_, mpcSettings_));
-    mpcPtr_->getSolverPtr()->setModeScheduleManager(modeScheduleManagerPtr_);
-  } else {
-    throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] mpc_ocs2 not configured, set gait optimization to 0");
-  }
+  mpcPtr_.reset(new ocs2::MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintsPtr_.get(), costPtr_.get(), initializerPtr_.get(),
+                                  ddpSettings_, mpcSettings_));
+  mpcPtr_->getSolverPtr()->setModeScheduleManager(modeScheduleManagerPtr_);
 }
 
 /******************************************************************************************************/

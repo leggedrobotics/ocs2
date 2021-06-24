@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_centroidal_model/example/anymal/AnymalKinoCentroidalDynamics.h"
-#include "ocs2_centroidal_model/example/anymal/AnymalKinoCentroidalDynamicsAD.h"
+#include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
+#include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
 #include "ocs2_centroidal_model/example/anymal/definitions.h"
 #include "ocs2_centroidal_model/utils.h"
 
@@ -99,15 +99,18 @@ class AnymalFullCentroidalModelTest : public testing::Test {
                                           vector_t::Zero(nq), anymal3DofContactNames,
                                           anymal6DofContactNames);
     mapping_.reset(new CentroidalModelPinocchioMapping<scalar_t>(info));
-    AnymalKinoCentroidalDynamicsPtr = std::make_shared<AnymalKinoCentroidalDynamics>(pinocchioInterface_, *mapping_);
+    mapping_->setPinocchioInterface(pinocchioInterface_);
+    anymalKinoCentroidalDynamicsPtr = std::make_shared<PinocchioCentroidalDynamics>(*mapping_);
+    anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(pinocchioInterface_);
 
     CentroidalModelInfoTpl<ad_scalar_t> infoAD(pinocchioInterface_.toCppAd(),
                                           CentroidalModelType::FullCentroidalDynamics,
                                           ad_vector_t::Zero(nq), anymal3DofContactNames,
                                           anymal6DofContactNames);
     mappingAD_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(infoAD));
-    AnymalKinoCentroidalDynamicsAdPtr = std::make_shared<AnymalKinoCentroidalDynamicsAD>(pinocchioInterface_, *mappingAD_);
-
+    anymalKinoCentroidalDynamicsAdPtr = std::make_shared<PinocchioCentroidalDynamicsAD>(pinocchioInterface_,*mappingAD_,
+                                                                                        "AnymalFullCentroidalTestAD",
+                                                                                        anymalCppAdModelPath, true, false);
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);
@@ -121,26 +124,9 @@ class AnymalFullCentroidalModelTest : public testing::Test {
   PinocchioInterface pinocchioInterface_;
   std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> mapping_;
   std::unique_ptr<CentroidalModelPinocchioMapping<ad_scalar_t>> mappingAD_;
-  std::shared_ptr<AnymalKinoCentroidalDynamics> AnymalKinoCentroidalDynamicsPtr;
-  std::shared_ptr<AnymalKinoCentroidalDynamicsAD> AnymalKinoCentroidalDynamicsAdPtr;
+  std::shared_ptr<PinocchioCentroidalDynamics> anymalKinoCentroidalDynamicsPtr;
+  std::shared_ptr<PinocchioCentroidalDynamicsAD> anymalKinoCentroidalDynamicsAdPtr;
 };
-
-static void visualMatrixCompare(const ocs2::matrix_t& A, const ocs2::matrix_t& B, double tol = 1e-6) {
-  if (A.rows() != B.rows() || A.cols() != B.cols()) {
-    std::cerr << "Matrices are not of same size\n";
-  }
-  for (int row = 0; row < A.rows(); row++) {
-    for (int col = 0; col < A.cols(); col++) {
-      const double error = std::abs(A(row, col) - B(row, col));
-      if (error < tol) {
-        std::cerr << " ";
-      } else {
-        std::cerr << " (" << row << ", " << col << "): " << error;
-      }
-    }
-    std::cerr << '\n';
-  }
-}
 
 static void compareApproximation(const ocs2::VectorFunctionLinearApproximation& a, const ocs2::VectorFunctionLinearApproximation& b,
                                  double tol = 1e-6) {
@@ -158,8 +144,8 @@ static void compareApproximation(const ocs2::VectorFunctionLinearApproximation& 
   }
 
   EXPECT_TRUE(a.f.isApprox(b.f));
-  // EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
   // The gradients of the base pose time derivatives are not correct due to a wrong dh_dq_ in pinocchio
+  // EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
   EXPECT_TRUE(a.dfdx.topRows<6>().isApprox(b.dfdx.topRows<6>()));
   EXPECT_TRUE(a.dfdx.bottomRows<12>().isApprox(b.dfdx.bottomRows<12>()));
   EXPECT_TRUE(a.dfdx.leftCols<9>().isApprox(b.dfdx.leftCols<9>()));
@@ -172,7 +158,7 @@ TEST_F(AnymalFullCentroidalModelTest, ComputeFlowMap) {
   const auto& info = mapping_->getCentroidalModelInfo();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   updateCentroidalDynamics(pinocchioInterface_, info, qPinocchio);
-  const auto dynamics = AnymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
+  const auto dynamics = anymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
 }
 
 TEST_F(AnymalFullCentroidalModelTest, ComputeLinearApproximation) {
@@ -183,7 +169,7 @@ TEST_F(AnymalFullCentroidalModelTest, ComputeLinearApproximation) {
   updateCentroidalDynamics(pinocchioInterface_, info, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
   updateCentroidalDynamicsDerivatives(pinocchioInterface_, info, qPinocchio, vPinocchio);
-  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
+  const auto linearApproximation = anymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
 }
 
 TEST_F(AnymalFullCentroidalModelTest, CompareFlowMaps) {
@@ -191,8 +177,8 @@ TEST_F(AnymalFullCentroidalModelTest, CompareFlowMaps) {
   auto& data = pinocchioInterface_.getData();
   const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
   updateCentroidalDynamics(pinocchioInterface_, mapping_->getCentroidalModelInfo(), qPinocchio);
-  const auto stateDerivative = AnymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
-  const auto stateDerivativeAd = AnymalKinoCentroidalDynamicsAdPtr->getValue(time, state, input);
+  const auto stateDerivative = anymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
+  const auto stateDerivativeAd = anymalKinoCentroidalDynamicsAdPtr->getValue(time, state, input);
   EXPECT_TRUE(stateDerivative.isApprox(stateDerivativeAd));
 }
 
@@ -204,7 +190,7 @@ TEST_F(AnymalFullCentroidalModelTest, CompareFlowMapLinearApproximations) {
   updateCentroidalDynamics(pinocchioInterface_, info, qPinocchio);
   const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
   updateCentroidalDynamicsDerivatives(pinocchioInterface_, info, qPinocchio, vPinocchio);
-  const auto linearApproximation = AnymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
-  const auto linearApproximationAd = AnymalKinoCentroidalDynamicsAdPtr->getLinearApproximation(time, state, input);
+  const auto linearApproximation = anymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
+  const auto linearApproximationAd = anymalKinoCentroidalDynamicsAdPtr->getLinearApproximation(time, state, input);
   compareApproximation(linearApproximation, linearApproximationAd);
 }

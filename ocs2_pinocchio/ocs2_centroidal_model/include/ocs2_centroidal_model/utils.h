@@ -35,12 +35,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
 
+#include <pinocchio/algorithm/centroidal-derivatives.hpp>
+#include <pinocchio/algorithm/frames.hpp>
+
 namespace ocs2 {
 
 /**
  * Get the inverse of the sub-block of the centroidal momentum matrix which corresponds to the floating base variables.
- *  Ab_inv = [1/m I_{3,3}, -1/m*Ab_12*Ab_22^(-1),
- *               O_{3,3}, Ab_22^(-1)]
+ *  Ab_inv = [  1/m I_{3,3},    -1/m*Ab_12*Ab_22^(-1),
+ *                 O_{3,3},           Ab_22^(-1)     ]
  *
  * @param [in] A(q): centroidal momentum matrix
  * @return Ab_inv(q): inverse of the 6x6 left-block of A(q)

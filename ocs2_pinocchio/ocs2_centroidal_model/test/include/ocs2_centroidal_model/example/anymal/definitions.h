@@ -85,4 +85,20 @@ static const ocs2::vector_t anymalInitialState = []() {
   return x0;
 }();
 
+static void visualMatrixCompare(const ocs2::matrix_t& A, const ocs2::matrix_t& B, double tol = 1e-6) {
+  if (A.rows() != B.rows() || A.cols() != B.cols()) {
+    std::cerr << "Matrices are not of same size\n";
+  }
+  for (int row = 0; row < A.rows(); row++) {
+    for (int col = 0; col < A.cols(); col++) {
+      const double error = std::abs(A(row, col) - B(row, col));
+      if (error < tol) {
+        std::cerr << " ";
+      } else {
+        std::cerr << " (" << row << ", " << col << "): " << error;
+      }
+    }
+    std::cerr << '\n';
+  }
+}
 }  // namespace ocs2

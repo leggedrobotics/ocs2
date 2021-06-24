@@ -63,7 +63,7 @@ add_library(${PROJECT_NAME}
   src/PinocchioCentroidalDynamicsAD.cpp
   src/CentroidalModelRbdConversions.cpp
   src/CentroidalModelPinocchioMapping.cpp
-)
+  src/CentroidalModelInfo.cpp)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

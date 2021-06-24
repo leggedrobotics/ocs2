@@ -38,20 +38,20 @@ namespace ocs2 {
 
 class PinocchioCentroidalDynamicsAD {
  public:
-  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
                                 const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose);
 
-  /** Copy Constructor */
-  PinocchioCentroidalDynamicsAD(const PinocchioCentroidalDynamicsAD& rhs)
-      : systemFlowMapCppAdInterfacePtr_(new CppAdInterface(*rhs.systemFlowMapCppAdInterfacePtr_)) {}
-
-  virtual ~PinocchioCentroidalDynamicsAD() = default;
+  ~PinocchioCentroidalDynamicsAD() = default;
 
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const;
 
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
 
  private:
+  /** Copy Constructor */
+  PinocchioCentroidalDynamicsAD(const PinocchioCentroidalDynamicsAD& rhs)
+      : systemFlowMapCppAdInterfacePtr_(new CppAdInterface(*rhs.systemFlowMapCppAdInterfacePtr_)) {}
+
   ad_vector_t getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
                             const ad_vector_t& state, const ad_vector_t& input);
 

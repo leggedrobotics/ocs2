@@ -106,7 +106,10 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
       velocityCppAdInterfacePtr_(new CppAdInterface(*rhs.velocityCppAdInterfacePtr_)),
       orientationErrorCppAdInterfacePtr_(new CppAdInterface(*rhs.orientationErrorCppAdInterfacePtr_)),
       endEffectorIds_(rhs.endEffectorIds_),
-      endEffectorFrameIds_(rhs.endEffectorFrameIds_) {}
+      endEffectorFrameIds_(rhs.endEffectorFrameIds_),
+      updatePinocchioInterfaceForPositionCallback_(rhs.updatePinocchioInterfaceForPositionCallback_),
+      updatePinocchioInterfaceForVelocityCallback_(rhs.updatePinocchioInterfaceForVelocityCallback_),
+      updatePinocchioInterfaceForOrientationCallback_(rhs.updatePinocchioInterfaceForOrientationCallback_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -34,8 +34,7 @@ void ComKinoInitializer::compute(scalar_t time, const vector_t& state, scalar_t 
 
   input = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(comPose));
 
-  nextState.resize(STATE_DIM);
-  nextState << comPose, base_coordinate_t::Zero(), getJointPositions(comkinoState);
+  nextState = state;
 }
 
 }  // namespace switched_model

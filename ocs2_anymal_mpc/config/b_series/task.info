@@ -22,6 +22,8 @@ model_settings
     touchdownAfterHorizon       0.2
     errorGain                   20.0
     swingTimeScale              0.15
+    sdfMidswingMargin           0.04
+    terrainMargin               0.035
   }
 
   mpcGoalCommandDelay           0.1

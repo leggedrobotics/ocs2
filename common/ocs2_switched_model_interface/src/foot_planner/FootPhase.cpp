@@ -7,7 +7,7 @@
 
 namespace switched_model {
 
-FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain) {
+FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain, scalar_t margin) {
   FootTangentialConstraintMatrix constraints{};
 
   int numberOfConstraints = stanceTerrain.boundary.size();
@@ -20,10 +20,10 @@ FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const Conv
       int j = ((i + 1) < stanceTerrain.boundary.size()) ? i + 1 : 0;  // next point with wrap around
       vector2_t start2end = stanceTerrain.boundary[j] - stanceTerrain.boundary[i];
 
-      // Get 2D constraint A_terrain * p_terrain + b >= 0
+      // Get 2D constraint A_terrain * p_terrain + b - margin >= 0
       vector2_t A_terrain{-start2end.y(), start2end.x()};  // rotate 90deg around z to get a vector pointing to interior of the polygon
       A_terrain.normalize();                               // make it a unit vector.
-      scalar_t b_terrain = -A_terrain.dot(stanceTerrain.boundary[i]);  // Take offset of one of the points
+      scalar_t b_terrain = -A_terrain.dot(stanceTerrain.boundary[i]) - margin;  // Take offset of one of the points
 
       // 3D position in terrain frame = T_R_W * (p_w - p_0)
       // Take x-y only for the constraints: p_terrain = diag(1, 1, 0) * T_R_W * (p_w - p_0)
@@ -52,9 +52,9 @@ FootNormalConstraintMatrix computeFootNormalConstraint(scalar_t feedforwardVeloc
   return footNormalConstraint;
 }
 
-StancePhase::StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain)
+StancePhase::StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain, scalar_t terrainMargin)
     : stanceTerrain_(&stanceTerrain),
-      footTangentialConstraint_(tangentialConstraintsFromConvexTerrain(stanceTerrain)),
+      footTangentialConstraint_(tangentialConstraintsFromConvexTerrain(stanceTerrain, terrainMargin)),
       positionGain_(positionGain) {}
 
 vector3_t StancePhase::normalDirectionInWorldFrame(scalar_t time) const {
@@ -76,8 +76,12 @@ const FootTangentialConstraintMatrix* StancePhase::getFootTangentialConstraintIn
 }
 
 SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const SignedDistanceField* signedDistanceField,
-                       scalar_t positionGain)
-    : liftOff_(liftOff), touchDown_(touchDown), signedDistanceField_(signedDistanceField), positionGain_(positionGain) {
+                       scalar_t positionGain, scalar_t sdfMidswingMargin)
+    : liftOff_(liftOff),
+      touchDown_(touchDown),
+      signedDistanceField_(signedDistanceField),
+      positionGain_(positionGain),
+      sdfMidswingMargin_(sdfMidswingMargin) {
   if (touchDown_.terrainPlane == nullptr) {
     setHalveSwing(swingHeight);
   } else {
@@ -138,8 +142,9 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
   if (signedDistanceField_ != nullptr) {
     const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOffPositionInWorld), 0.0);
     const scalar_t sdfEndClearance_ = std::min(signedDistanceField_->value(touchDownPositionInWorld), 0.0);
+    const scalar_t midSwingTime = 0.5 * (liftOff_.time + touchDown_.time);
     SwingNode startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
-    SwingNode apexNode{apexTime, swingHeight - sdfMidClearance_, 0.0};
+    SwingNode apexNode{midSwingTime, sdfMidswingMargin_, 0.0};
     SwingNode endNode{touchDown_.time, sdfEndClearance_ - startEndMargin_, touchDownInTouchDownFrame.velocity};
     terrainClearanceMotion_.reset(new QuinticSwing(startNode, apexNode, endNode));
   } else {
@@ -160,8 +165,8 @@ void SwingPhase::setHalveSwing(scalar_t swingHeight) {
     if (signedDistanceField_ != nullptr) {
       const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOff_.terrainPlane->positionInWorld), 0.0);
       SwingNode startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
-      SwingNode endNode{touchDown_.time, swingHeight - sdfMidClearance_, 0.0};
-      terrainClearanceMotion_.reset(new QuinticSwing(startNode, swingHeight - sdfMidClearance_, endNode));
+      SwingNode endNode{touchDown_.time, sdfMidswingMargin_, 0.0};
+      terrainClearanceMotion_.reset(new QuinticSwing(startNode, sdfMidswingMargin_, endNode));
     } else {
       terrainClearanceMotion_.reset();
     }

@@ -71,7 +71,7 @@ class FootPhase {
  */
 class StancePhase final : public FootPhase {
  public:
-  explicit StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain = 0.0);
+  explicit StancePhase(const ConvexTerrain& stanceTerrain, scalar_t positionGain = 0.0, scalar_t terrainMargin = 0.0);
   ~StancePhase() override = default;
 
   bool contactFlag() const override { return true; };
@@ -98,7 +98,7 @@ class SwingPhase final : public FootPhase {
   };
 
   SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const SignedDistanceField* signedDistanceField = nullptr,
-             scalar_t positionGain = 0.0);
+             scalar_t positionGain = 0.0, scalar_t sdfMidswingMargin = 0.0);
   ~SwingPhase() override = default;
 
   bool contactFlag() const override { return false; };
@@ -121,10 +121,10 @@ class SwingPhase final : public FootPhase {
   std::unique_ptr<QuinticSwing> liftOffMotion_;
   std::unique_ptr<QuinticSwing> touchdownMotion_;
   scalar_t positionGain_;
-
   const SignedDistanceField* signedDistanceField_;
+
   std::unique_ptr<QuinticSwing> terrainClearanceMotion_;
-  const scalar_t sdfMidClearance_ = 0.05;
+  const scalar_t sdfMidswingMargin_;
   const scalar_t startEndMargin_ = 0.02;
 };
 

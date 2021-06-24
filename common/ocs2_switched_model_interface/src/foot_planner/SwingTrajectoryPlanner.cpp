@@ -70,8 +70,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
-    footPhases.emplace_back(
-        new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(), settings_.errorGain));
+    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(),
+                                           settings_.errorGain, scaling * settings_.sdfMidswingMargin));
   }
 
   // Loop through contact phases
@@ -88,7 +88,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     if (hasStartTime(currentContactTiming)) {
       eventTimes.push_back(currentContactTiming.start);
     }
-    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain));
+    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain, settings_.terrainMargin));
 
     // generate swing phase afterwards if the current contact is finite and ends before the horizon
     if (hasEndTime(currentContactTiming) && currentContactTiming.end < finalTime) {
@@ -107,7 +107,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       touchDown.velocity *= scaling;
       eventTimes.push_back(currentContactTiming.end);
       footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(),
-                                             settings_.errorGain));
+                                             settings_.errorGain, scaling * settings_.sdfMidswingMargin));
     }
   }
 
@@ -194,6 +194,8 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.touchdownAfterHorizon, prefix + "touchdownAfterHorizon", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.errorGain, prefix + "errorGain", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.sdfMidswingMargin, prefix + "sdfMidswingMargin", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.terrainMargin, prefix + "terrainMargin", verbose);
 
   if (verbose) {
     std::cerr << " #### ==================================================" << std::endl;

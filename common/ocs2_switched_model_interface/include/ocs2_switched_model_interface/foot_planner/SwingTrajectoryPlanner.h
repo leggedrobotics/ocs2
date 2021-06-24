@@ -23,9 +23,11 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t touchDownVelocity = 0.0;
   scalar_t swingHeight = 0.1;
   scalar_t touchdownAfterHorizon = 0.2;  // swing time added beyond the horizon if there is no touchdown in the current mode schedule
-  scalar_t errorGain = 0.0;        // proportional gain for returning to the planned swing trajectory. 10-90%-rise_time ~= 2.2 / errorGain
-                                   // alternatively can be measured as (velocity feedback) / (tracking error) ([m/s] / [m])
-  scalar_t swingTimeScale = 0.15;  // swing phases shorter than this time will be scaled down in height and velocity
+  scalar_t errorGain = 0.0;          // proportional gain for returning to the planned swing trajectory. 10-90%-rise_time ~= 2.2 / errorGain
+                                     // alternatively can be measured as (velocity feedback) / (tracking error) ([m/s] / [m])
+  scalar_t swingTimeScale = 0.15;    // swing phases shorter than this time will be scaled down in height and velocity
+  scalar_t sdfMidswingMargin = 0.0;  // desired sdf based clearance in the middle of the swing phase [m]
+  scalar_t terrainMargin = 0.0;      // shrinkage of the convex terrain constrains in [m]
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);

@@ -1,15 +1,14 @@
-.. index:: pair: page; Intro
-.. _doxid-intropage:
-
-.. _doxid-index_1ocs2_doc_intro:
+.. index:: pair: page; Introduction
+.. _doxid-introductionpage:
 
 Introduction
 ============
 
-This is a C++ library for an efficient continuous and discrete time optimal control implementation. It includes methods for solving optimal control for continuous time problem with exogenous signal for switching in between predefine modes. The toolbox is capable of solving constrained problems.
+**OCS2** is a C++ toolbox tailored for **O**\ ptimal **C**\ ontrol for **S**\ witched **S**\ ystems (OCS2). The toolbox provides an efficient implementation of the following algorithms:
 
-Our proposed method is based on a bi-level optimal control approach which synthesizes an optimal feedback control policy for continuous inputs in the bottom-level and optimizes the switching times in between two consecutive system modes in the top-level.
+* **SLQ**\: Continuous-time domin DDP
+* **iLQR**\: Discrete-time domain DDP
+* **SQP**\: Multiple-shooting algorithm based on `HPIPM <href="https://github.com/giaf/hpipm"/>`__
+* **PISOC**\: Path integral stochatic optimal control
 
-Our **O** ptimal **C** ontrol for **S** witched **S** ystems algorithm (OCS2 algorithm) consists of two main steps: a method which synthesizes the continuous input controller and a method which calculates the parametrized cost function derivatives with respect to the switching times. For synthesizing the continuous input controller, OCS2 uses the SLQ algorithm; a dynamic programming approach, which uses the Bellman equation of optimality to locally estimate the value function and consequently the optimal control law. In the second step, OCS2 uses a Riccati-based approach to compute the derivative of the total cost with respect to the switching times.
-
-Moreover, the library provides tools for implementing the SLQ algorithm in MPC fashion. It also includes a ROS interface for receiving and sending the MPC policy. This library also uses CppADCodeGen an automatic-differentiation toolbox to calculate the derivatives of the system dynamics, constraint, and cost function.
+OCS2 handles general path constraints through Augmented Lagrangian or relaxed barrier methods. To facilitate the application of OCS2 in robotic tasks, it provides the user with additional tools to set up the system dynamics (such as kinematic or dynamic models) and cost/constraints (such as self-collision avoidance and end-effector tracking) from a URDF model. The library also provides an automatic differentiation tool to calculate derivatives of the system dynamics, constraints, and cost. To facilitate its deployment on robotic platforms, the OCS2 provides tools for ROS interfaces. The toolbox’s efficient and numerically stable implementations in conjunction with its user-friendly interface have paved the way for employing it on numerous robotic applications with limited onboard computation power. 

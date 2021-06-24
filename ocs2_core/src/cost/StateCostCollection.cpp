@@ -27,36 +27,63 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_robotic_tools/command/TargetTrajectoriesJoystickInterface.h>
+#include <ocs2_core/cost/StateCostCollection.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesJoystickInterface::TargetTrajectoriesJoystickInterface(int argc, char* argv[], const std::string& robotName /*= "robot"*/,
-                                                                         const size_t targetCommandSize /*= 0*/,
-                                                                         const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
-    : ocs2::TargetTrajectories_ROS_Interface(argc, argv, robotName),
-      targetCommandSize_(targetCommandSize),
-      targetCommandLimits_(targetCommandLimits) {
-  if (targetCommandLimits.size() != targetCommandSize) {
-    throw std::runtime_error("Target command limits are not set properly");
+StateCostCollection::StateCostCollection(const StateCostCollection& other) : Collection<StateCost>(other) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateCostCollection* StateCostCollection::clone() const {
+  return new StateCostCollection(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+  scalar_t cost = 0.0;
+
+  // accumulate cost terms
+  for (const auto& costTerm : this->terms_) {
+    if (costTerm->isActive()) {
+      cost += costTerm->getValue(time, state, desiredTrajectory);
+    }
   }
+
+  return cost;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t& TargetTrajectoriesJoystickInterface::targetCommandSize() {
-  return targetCommandSize_;
+ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximation(
+    scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+  const auto firstActive =
+      std::find_if(terms_.begin(), terms_.end(), [](const std::unique_ptr<StateCost>& costTerm) { return costTerm->isActive(); });
+
+  // No active terms (or terms is empty).
+  if (firstActive == terms_.end()) {
+    return ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
+  }
+
+  // Initialize with first active term, accumulate potentially other active terms.
+  auto cost = (*firstActive)->getQuadraticApproximation(time, state, desiredTrajectory);
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) {
+    if (costTerm->isActive()) {
+      const auto costTermApproximation = costTerm->getQuadraticApproximation(time, state, desiredTrajectory);
+      cost.f += costTermApproximation.f;
+      cost.dfdx += costTermApproximation.dfdx;
+      cost.dfdxx += costTermApproximation.dfdxx;
+    }
+  });
+
+  return cost;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void TargetTrajectoriesJoystickInterface::publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories) {
-  // publish cost desired trajectories
-  ocs2::TargetTrajectories_ROS_Interface::publishTargetTrajectories(costDesiredTrajectories);
-}
 }  // namespace ocs2

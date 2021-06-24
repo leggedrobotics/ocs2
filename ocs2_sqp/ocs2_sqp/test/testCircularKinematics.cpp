@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/MultipleShootingSolver.h"
 
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 
 #include <ocs2_oc/test/circular_kinematics.h>
 
@@ -49,16 +49,17 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   settings.printSolverStatistics = true;
   settings.printSolverStatus = true;
   settings.printLinesearch = true;
+  settings.nThreads = 1;
 
   // Additional problem definitions
   const ocs2::scalar_t startTime = 0.0;
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
   const ocs2::scalar_array_t partitioningTimes{0.0};                            // doesn't matter
-  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(2));
+  ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solve
-  ocs2::MultipleShootingSolver solver(settings, &system, &cost, &operatingPoints, &constraint);
+  ocs2::MultipleShootingSolver solver(settings, &system, &cost, &zeroInitializer, &constraint);
   solver.run(startTime, initState, finalTime, partitioningTimes);
 
   // Inspect solution
@@ -108,10 +109,10 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
   const ocs2::scalar_array_t partitioningTimes{0.0};                            // doesn't matter
-  ocs2::OperatingPoints operatingPoints(initState, ocs2::vector_t::Zero(2));
+  ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solve
-  ocs2::MultipleShootingSolver solver(settings, &system, &cost, &operatingPoints, &constraint);
+  ocs2::MultipleShootingSolver solver(settings, &system, &cost, &zeroInitializer, &constraint);
   solver.run(startTime, initState, finalTime, partitioningTimes);
 
   // Inspect solution

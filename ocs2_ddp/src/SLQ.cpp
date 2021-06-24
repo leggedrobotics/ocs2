@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-         const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-         ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
+         const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
+         const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
+    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
            heuristicsFunctionPtr) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
@@ -318,7 +318,7 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
 
     Observer observer(&allSsTrajectory);
     // solve Riccati equations
-    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().minTimeStep_,
+    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().timeStep_,
                                      settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
@@ -366,7 +366,7 @@ void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator
 
     Observer observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
-    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().minTimeStep_,
+    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().timeStep_,
                                         settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     // if not the last interval which definitely does not have any event at

@@ -31,43 +31,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/initialization/Initializer.h>
 
 #include "RolloutBase.h"
 
 namespace ocs2 {
 
 /**
- * This class is an interface class for forward rollout of the system dynamics.
+ * This class is an interface class for forward rollout of the initializer.
  */
-class OperatingTrajectoriesRollout : public RolloutBase {
+class InitializerRollout : public RolloutBase {
  public:
-  using RolloutBase::time_interval_array_t;
-
   /**
    * Constructor.
    *
-   * @param [in] operatingTrajectories: The operating trajectories used for initialization.
+   * @param [in] initializer: The initializer for the state and the input.
    * @param [in] rolloutSettings: The rollout settings.
    */
-  explicit OperatingTrajectoriesRollout(const SystemOperatingTrajectoriesBase& operatingTrajectories,
-                                        rollout::Settings rolloutSettings = rollout::Settings())
-      : RolloutBase(std::move(rolloutSettings)), operatingTrajectoriesPtr_(operatingTrajectories.clone()) {}
+  explicit InitializerRollout(const Initializer& initializer, rollout::Settings rolloutSettings = rollout::Settings());
 
   /** Default destructor. */
-  ~OperatingTrajectoriesRollout() override = default;
+  ~InitializerRollout() override = default;
 
-  OperatingTrajectoriesRollout* clone() const override {
-    return new OperatingTrajectoriesRollout(*operatingTrajectoriesPtr_, this->settings());
-  }
+  InitializerRollout* clone() const override;
 
- protected:
-  vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+ private:
+  vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                    scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
                    vector_array_t& inputTrajectory) override;
 
- private:
-  std::unique_ptr<SystemOperatingTrajectoriesBase> operatingTrajectoriesPtr_;
+  std::unique_ptr<Initializer> initializerPtr_;
 };
 
 }  // namespace ocs2

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,62 +27,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include "ocs2_sqp/MultipleShootingInitialization.h"
 
-#include <string>
-#include <vector>
-
-#include <ros/ros.h>
-
-#include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-
-// MPC messages
-#include <ocs2_msgs/mpc_target_trajectories.h>
-
-#include "ocs2_ros_interfaces/common/RosMsgConversions.h"
+#include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2 {
+namespace multiple_shooting {
 
-/**
- * This class implements TargetTrajectories communication interface using ROS.
- */
-class TargetTrajectories_ROS_Interface {
- public:
-  /**
-   * Constructor.
-   *
-   * @param [in] argc: Commandline number of arguments
-   * @param [in] argv: Command line arguments
-   * @param [in] robotName: The robot's name.
-   */
-  TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName = "robot");
+std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x,
+                                                         bool useController) {
+  // Use interpolation for next state
+  const auto nextState = LinearInterpolation::interpolate(tNext, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_);
 
-  /**
-   * Destructor.
-   */
-  virtual ~TargetTrajectories_ROS_Interface();
+  // Determine input
+  if (useController) {
+    return {primalSolution.controllerPtr_->computeInput(t, x), nextState};
+  } else {
+    return {LinearInterpolation::interpolate(t, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_), nextState};
+  }
+}
 
-  /**
-   * This is the main routine which launches the publisher node for MPC's
-   * desired trajectories.
-   */
-  void launchNodes();
-
-  /**
-   * Publishes the target trajectories.
-   *
-   * @param [in] costDesiredTrajectories: The target trajectories.
-   */
-  void publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories);
-
- protected:
-  std::string robotName_;
-
-  std::shared_ptr<::ros::NodeHandle> nodeHandle_;
-
-  // Publisher
-  ::ros::Publisher mpcTargetTrajectoriesPublisher_;
-};
-
+}  // namespace multiple_shooting
 }  // namespace ocs2

@@ -89,11 +89,12 @@ TEST(BouncingMassTest, state_rollout_slq) {
   ddpSettings.debugPrintRollout_ = false;
 
   ocs2::rollout::Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-10;
-  rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 10000;
-  rolloutSettings.maxSingleEventIterations_ = 5;
-  rolloutSettings.useTrajectorySpreadingController_ = true;
+  rolloutSettings.absTolODE = 1e-10;
+  rolloutSettings.relTolODE = 1e-7;
+  rolloutSettings.timeStep = 1e-3;
+  rolloutSettings.maxNumStepsPerSecond = 10000;
+  rolloutSettings.maxSingleEventIterations = 5;
+  rolloutSettings.useTrajectorySpreadingController = true;
 
   // Parameters
   const scalar_t startTime = 0.0;
@@ -206,6 +207,6 @@ TEST(BouncingMassTest, state_rollout_slq) {
 
   // Test 2: Check of cost function
   auto performanceIndeces = slq.getPerformanceIndeces();
-  const scalar_t expectedCost = 7.12;
+  constexpr scalar_t expectedCost = 7.15;
   EXPECT_LT(std::fabs(performanceIndeces.totalCost - expectedCost), 100 * ddpSettings.minRelCost_);
 }

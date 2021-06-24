@@ -30,46 +30,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/misc/Collection.h>
 
 namespace ocs2 {
 
 /**
- * This is the base class for initializing the DDP-based algorithms.
+ * Constraint collection class
+ *
+ * This class collects a variable number of constraint functions and provides methods to get the
+ * concatenated constraint vectors and approximations. Each constraint can be accessed through its
+ * string name and can be activated or deactivated.
  */
-class SystemOperatingTrajectoriesBase {
+class StateConstraintCollection : public Collection<StateConstraint> {
  public:
-  /** Default constructor */
-  SystemOperatingTrajectoriesBase() = default;
+  StateConstraintCollection() = default;
+  ~StateConstraintCollection() override = default;
+  StateConstraintCollection* clone() const override;
 
-  /** Default destructor */
-  virtual ~SystemOperatingTrajectoriesBase() = default;
+  /** Returns the number of active constraints at given time. */
+  virtual size_t getNumConstraints(scalar_t time) const;
 
-  /**
-   * Returns pointer to the class.
-   *
-   * @return A raw pointer to the class.
-   */
-  virtual SystemOperatingTrajectoriesBase* clone() const = 0;
+  /** Get the constraint vector value */
+  virtual vector_t getValue(scalar_t time, const vector_t& state) const;
 
-  /**
-   * Gets the Operating Trajectories of the system in time interval [startTime, finalTime] where there is
-   * no intermediate switches except possibly the end time.
-   *
-   * @param [in] initialState: Initial state.
-   * @param [in] startTime: Initial time.
-   * @param [in] finalTime: Final time.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] inputTrajectory: Output control input trajectory.
-   * @param [in] concatOutput: Whether to concatenate the output to the input trajectories or override.
-   */
-  virtual void getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                              scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
-                                              vector_array_t& inputTrajectory, bool concatOutput) = 0;
+  /** Get the constraint linear approximation */
+  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const;
+
+  /** Get the constraint quadratic approximation */
+  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const;
 
  protected:
   /** Copy constructor */
-  SystemOperatingTrajectoriesBase(const SystemOperatingTrajectoriesBase& rhs) = default;
+  StateConstraintCollection(const StateConstraintCollection& other);
 };
 
 }  // namespace ocs2

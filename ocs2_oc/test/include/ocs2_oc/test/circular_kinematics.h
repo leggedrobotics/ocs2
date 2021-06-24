@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/StateInputCostCppAd.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
 
 namespace ocs2 {
 

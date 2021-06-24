@@ -73,9 +73,10 @@ TEST(time_rollout_test, time_rollout_test) {
   /******************************************************************************************************/
   // Rollout Settings
   rollout::Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-7;
-  rolloutSettings.relTolODE_ = 1e-5;
-  rolloutSettings.maxNumStepsPerSecond_ = 10000;
+  rolloutSettings.absTolODE = 1e-7;
+  rolloutSettings.relTolODE = 1e-5;
+  rolloutSettings.timeStep = 1e-3;
+  rolloutSettings.maxNumStepsPerSecond = 10000;
 
   // rollout class
   std::unique_ptr<RolloutBase> rolloutBasePtr(new TimeTriggeredRollout(systemDynamics, rolloutSettings));

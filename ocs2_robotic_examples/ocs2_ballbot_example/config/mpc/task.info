@@ -23,6 +23,7 @@ multiple_shooting
   printLinesearch               false
   useFeedbackPolicy             true
   integratorType                RK2
+  nThreads                      4
 }
 
 ; DDP settings
@@ -42,7 +43,7 @@ ddp
 
   AbsTolODE                     1e-5
   RelTolODE                     1e-3
-  minTimeStep                   1e-3
+  timeStep                      1e-3
   maxNumStepsPerSecond          100000
   backwardPassIntegratorType    ODE45
 
@@ -69,7 +70,7 @@ rollout
 {
   AbsTolODE                     1e-5
   RelTolODE                     1e-3
-  minTimeStep                   1e-3
+  timeStep                      1e-2
   maxNumStepsPerSecond          100000
   checkNumericalStability       false
 }

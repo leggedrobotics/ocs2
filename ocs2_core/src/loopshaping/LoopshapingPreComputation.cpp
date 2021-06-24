@@ -27,76 +27,69 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/initialization/OperatingPoints.h>
-#include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_core/misc/Numerics.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OperatingPoints::OperatingPoints(const vector_t& stateOperatingPoint, const vector_t& inputOperatingPoint)
-    : timeTrajectory_(1, 0.0), stateTrajectory_(1, stateOperatingPoint), inputTrajectory_(1, inputOperatingPoint) {}
+LoopshapingPreComputation::LoopshapingPreComputation(const PreComputation& systemPreComputation,
+                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+    : systemPreCompPtr_(systemPreComputation.clone()),
+      filteredSystemPreCompPtr_(systemPreComputation.clone()),
+      loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OperatingPoints::OperatingPoints(scalar_array_t timeTrajectory, vector_array_t stateTrajectory, vector_array_t inputTrajectory)
-    : timeTrajectory_(std::move(timeTrajectory)),
-      stateTrajectory_(std::move(stateTrajectory)),
-      inputTrajectory_(std::move(inputTrajectory)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-OperatingPoints* OperatingPoints::clone() const {
-  return new OperatingPoints(*this);
+LoopshapingPreComputation::LoopshapingPreComputation(const LoopshapingPreComputation& other)
+    : loopshapingDefinition_(other.loopshapingDefinition_) {
+  systemPreCompPtr_.reset(other.systemPreCompPtr_->clone());
+  filteredSystemPreCompPtr_.reset(other.filteredSystemPreCompPtr_->clone());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OperatingPoints::getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime,
-                                                     scalar_array_t& timeTrajectory, vector_array_t& stateTrajectory,
-                                                     vector_array_t& inputTrajectory, bool concatOutput /*= false*/) {
-  if (!concatOutput) {
-    timeTrajectory.clear();
-    stateTrajectory.clear();
-    inputTrajectory.clear();
-  }
-
-  getSystemOperatingTrajectoriesImpl(startTime, finalTime, timeTrajectory, stateTrajectory, inputTrajectory);
+LoopshapingPreComputation* LoopshapingPreComputation::clone() const {
+  return new LoopshapingPreComputation(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void OperatingPoints::getSystemOperatingTrajectoriesImpl(scalar_t startTime, scalar_t finalTime, scalar_array_t& timeTrajectory,
-                                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) const {
-  const auto initIndexAlpha = LinearInterpolation::timeSegment(startTime, timeTrajectory_);
-  const auto finalindexAlpha = LinearInterpolation::timeSegment(finalTime, timeTrajectory_);
+void LoopshapingPreComputation::request(Request request, scalar_t t, const vector_t& x, const vector_t& u) {
+  systemState_ = loopshapingDefinition_->getSystemState(x);
+  systemInput_ = loopshapingDefinition_->getSystemInput(x, u);
+  filterState_ = loopshapingDefinition_->getFilterState(x);
+  filterInput_ = loopshapingDefinition_->getFilteredInput(x, u);
 
-  vector_t x0 = LinearInterpolation::interpolate(initIndexAlpha, stateTrajectory_);
-  vector_t u0 = LinearInterpolation::interpolate(initIndexAlpha, inputTrajectory_);
-  timeTrajectory.push_back(startTime);
-  stateTrajectory.push_back(std::move(x0));
-  inputTrajectory.push_back(std::move(u0));
-
-  // if the time interval is not empty
-  if (!numerics::almost_eq(startTime, finalTime)) {
-    const auto beginIndex = initIndexAlpha.first + 1;
-    const auto lastIndex = finalindexAlpha.first + 1;
-    std::copy(timeTrajectory_.begin() + beginIndex, timeTrajectory_.begin() + lastIndex, std::back_inserter(timeTrajectory));
-    std::copy(stateTrajectory_.begin() + beginIndex, stateTrajectory_.begin() + lastIndex, std::back_inserter(stateTrajectory));
-    std::copy(inputTrajectory_.begin() + beginIndex, inputTrajectory_.begin() + lastIndex, std::back_inserter(inputTrajectory));
-
-    vector_t xf = LinearInterpolation::interpolate(finalindexAlpha, stateTrajectory_);
-    vector_t uf = LinearInterpolation::interpolate(finalindexAlpha, inputTrajectory_);
-    timeTrajectory.push_back(finalTime);
-    stateTrajectory.push_back(std::move(xf));
-    inputTrajectory.push_back(std::move(uf));
+  systemPreCompPtr_->request(request, t, x_system_, u_system_);
+  if (request.contains(Request::Cost)) {
+    // state-input cost function is evaluated on both u_system and u_filter.
+    filteredSystemPreCompPtr_->request(request, t, x_system_, u_filter_);
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LoopshapingPreComputation::requestPreJump(Request request, scalar_t t, const vector_t& x) {
+  systemState_ = loopshapingDefinition_->getSystemState(x);
+  filterState_ = loopshapingDefinition_->getFilterState(x);
+
+  systemPreCompPtr_->requestPreJump(request, t, x_system_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LoopshapingPreComputation::requestFinal(Request request, scalar_t t, const vector_t& x) {
+  systemState_ = loopshapingDefinition_->getSystemState(x);
+  filterState_ = loopshapingDefinition_->getFilterState(x);
+
+  systemPreCompPtr_->requestFinal(request, t, x_system_);
 }
 
 }  // namespace ocs2

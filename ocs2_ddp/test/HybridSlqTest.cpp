@@ -6,6 +6,7 @@
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include <ocs2_oc/test/dynamics_hybrid_slq_test.h>
 
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 
 #include <ocs2_ddp/SLQ.h>
@@ -44,7 +45,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.maxNumIterations_ = 30;
   ddpSettings.nThreads_ = 1;
   ddpSettings.inequalityConstraintMu_ = 0.1;
-  ddpSettings.inequalityConstraintDelta_ = 1e-6;
+  ddpSettings.inequalityConstraintDelta_ = 1e-4;
   ddpSettings.checkNumericalStability_ = false;
   ddpSettings.absTolODE_ = 1e-10;
   ddpSettings.relTolODE_ = 1e-7;
@@ -55,9 +56,10 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;
 
   rollout::Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-10;
-  rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 10000;
+  rolloutSettings.absTolODE = 1e-10;
+  rolloutSettings.relTolODE = 1e-7;
+  rolloutSettings.timeStep = 1e-3;
+  rolloutSettings.maxNumStepsPerSecond = 10000;
 
   scalar_t startTime = 0.0;
   scalar_t finalTime = 5.0;

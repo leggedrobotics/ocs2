@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/Numerics.h>
@@ -46,9 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
-#include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include "DDP_Settings.h"
@@ -85,14 +83,14 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization.
+   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
    * If it is not defined, we will use the final cost function defined in costFunctionPtr.
    */
   GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-                 const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-                 ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr);
+                 const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
+                 const CostFunctionBase* heuristicsFunctionPtr);
 
   /**
    * Destructor.
@@ -490,7 +488,7 @@ class GaussNewtonDDP : public SolverBase {
  private:
   ddp::Settings ddpSettings_;
 
-  std::unique_ptr<ThreadPool> threadPoolPtr_;
+  ThreadPool threadPool_;
 
   unsigned long long int rewindCounter_{0};
   unsigned long long int totalNumIterations_{0};
@@ -503,7 +501,7 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<PerformanceIndex> performanceIndexHistory_;
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
-  std::vector<std::unique_ptr<RolloutBase>> operatingTrajectoriesRolloutPtrStock_;
+  std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
   std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
   std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 

@@ -73,6 +73,8 @@ add_library(${PROJECT_NAME}
   src/constraint/ConstraintCollection.cpp
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
+  src/constraint/StateConstraintCollection.cpp
+  src/constraint/StateInputConstraintCollection.cpp
   src/constraint/LinearConstraint.cpp
   src/constraint/LinearStateConstraint.cpp
   src/constraint/LinearStateInputConstraint.cpp
@@ -87,7 +89,9 @@ add_library(${PROJECT_NAME}
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
   src/cost/StateCost.cpp
+  src/cost/StateCostCollection.cpp
   src/cost/StateCostCppAd.cpp
+  src/cost/StateInputCostCollection.cpp
   src/cost/StateInputCostCppAd.cpp
   src/cost/StateInputGaussNewtonCostAd.cpp
   src/dynamics/ControlledSystemBase.cpp
@@ -96,7 +100,6 @@ add_library(${PROJECT_NAME}
   src/dynamics/SystemDynamicsBaseAD.cpp
   src/dynamics/SystemDynamicsLinearizer.cpp
   src/dynamics/TransferFunctionBase.cpp
-  src/initialization/OperatingPoints.cpp
   src/integration/SensitivityIntegrator.cpp
   src/integration/SensitivityIntegratorImpl.cpp
   src/integration/Integrator.cpp
@@ -109,7 +112,6 @@ add_library(${PROJECT_NAME}
   src/logic/ModeSchedule.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
-  src/loopshaping/LoopshapingOperatingPoint.cpp
   src/loopshaping/cost/LoopshapingCost.cpp
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
@@ -123,6 +125,7 @@ add_library(${PROJECT_NAME}
   src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
+  src/loopshaping/initialization/LoopshapingInitializer.cpp
   src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/ThreadPool.cpp
@@ -279,6 +282,7 @@ catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testSynchronized.cpp
   test/misc/testLookup.cpp
   test/misc/testThreadPool.cpp
+  test/testPrecomputation.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}

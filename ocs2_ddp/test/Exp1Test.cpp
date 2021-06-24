@@ -32,9 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/Types.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/control/FeedforwardController.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP1.h>
 
@@ -61,9 +60,9 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     // rollout settings
     const auto rolloutSettings = []() {
       ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE_ = 1e-10;
-      rolloutSettings.relTolODE_ = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond_ = 10000;
+      rolloutSettings.absTolODE = 1e-10;
+      rolloutSettings.relTolODE = 1e-7;
+      rolloutSettings.maxNumStepsPerSecond = 10000;
       return rolloutSettings;
     }();
 
@@ -78,9 +77,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     constraintPtr.reset(new ocs2::ConstraintBase);
 
     // operatingTrajectories
-    const auto stateOperatingPoint = ocs2::vector_t::Zero(STATE_DIM);
-    const auto inputOperatingPoint = ocs2::vector_t::Zero(INPUT_DIM);
-    operatingPointsPtr.reset(new ocs2::OperatingPoints(stateOperatingPoint, inputOperatingPoint));
+    initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
@@ -137,7 +134,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
   std::unique_ptr<ocs2::CostFunctionBase> costPtr;
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr;
-  std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
+  std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
 constexpr size_t Exp1::STATE_DIM;
@@ -154,7 +151,7 @@ TEST_P(Exp1, SLQ) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
   ddp.setModeScheduleManager(modeScheduleManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
@@ -178,7 +175,7 @@ TEST_P(Exp1, ILQR) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
   ddp.setModeScheduleManager(modeScheduleManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {

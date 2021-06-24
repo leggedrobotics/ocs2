@@ -14,9 +14,9 @@
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 // rollout
-#include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
+#include <ocs2_oc/rollout/InitializerRollout.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
+#include <ocs2_oc/rollout/RolloutSettings.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 

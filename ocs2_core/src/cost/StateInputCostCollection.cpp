@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,48 +27,61 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_ros_interfaces/command/TargetTrajectories_ROS_Interface.h"
+#include <ocs2_core/cost/StateInputCostCollection.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectories_ROS_Interface::TargetTrajectories_ROS_Interface(int argc, char* argv[], std::string robotName /*= "robot"*/)
-    : robotName_(std::move(robotName)) {
-  ::ros::init(argc, argv, robotName_ + "_mpc_target");
-  nodeHandle_.reset(new ::ros::NodeHandle);
+StateInputCostCollection::StateInputCostCollection(const StateInputCostCollection& other) : Collection<StateInputCost>(other) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+StateInputCostCollection* StateInputCostCollection::clone() const {
+  return new StateInputCostCollection(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectories_ROS_Interface::~TargetTrajectories_ROS_Interface() {
-  mpcTargetTrajectoriesPublisher_.shutdown();
+scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                            const CostDesiredTrajectories& desiredTrajectory) const {
+  scalar_t cost = 0.0;
+
+  // accumulate cost terms
+  for (const auto& costTerm : this->terms_) {
+    if (costTerm->isActive()) {
+      cost += costTerm->getValue(time, state, input, desiredTrajectory);
+    }
+  }
+
+  return cost;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectories_ROS_Interface::publishTargetTrajectories(const CostDesiredTrajectories& costDesiredTrajectories) {
-  ocs2_msgs::mpc_target_trajectories mpcTargetTrajectoriesMsg;
-  ros_msg_conversions::createTargetTrajectoriesMsg(costDesiredTrajectories, mpcTargetTrajectoriesMsg);
-  mpcTargetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg);
-}
+ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(
+    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
+  const auto firstActive =
+      std::find_if(terms_.begin(), terms_.end(), [](const std::unique_ptr<StateInputCost>& costTerm) { return costTerm->isActive(); });
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void TargetTrajectories_ROS_Interface::launchNodes() {
-  // display
-  ROS_INFO_STREAM("TargetTrajectories node is setting up ...");
+  // No active terms (or terms is empty).
+  if (firstActive == terms_.end()) {
+    return ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
+  }
 
-  mpcTargetTrajectoriesPublisher_ = nodeHandle_->advertise<ocs2_msgs::mpc_target_trajectories>(robotName_ + "_mpc_target", 1, false);
+  // Initialize with first active term, accumulate potentially other active terms.
+  auto cost = (*firstActive)->getQuadraticApproximation(time, state, input, desiredTrajectory);
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateInputCost>& costTerm) {
+    if (costTerm->isActive()) {
+      cost += costTerm->getQuadraticApproximation(time, state, input, desiredTrajectory);
+    }
+  });
 
-  ros::spinOnce();
-
-  // display
-  ROS_INFO_STREAM(robotName_ + " target trajectories command node is ready.");
+  return cost;
 }
 
 }  // namespace ocs2

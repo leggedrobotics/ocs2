@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   /*
    * Initialization
    */
-  std::unique_ptr<OperatingPoints> ballbotOperatingPointPtr(new OperatingPoints(xInit, vector_t::Zero(INPUT_DIM)));
+  std::unique_ptr<Initializer> ballbotInitializerPtr(new DefaultInitializer(INPUT_DIM));
 
   /*
    * Time partitioning which defines the time horizon and the number of data partitioning
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
    */
   ddpSettings.nThreads_ = 1;
   SLQ slq(ballbotRolloutPtr.get(), ballbotSystemDynamicsPtr.get(), ballbotConstraintPtr.get(), ballbotCostPtr.get(),
-          ballbotOperatingPointPtr.get(), ddpSettings);
+          ballbotInitializerPtr.get(), ddpSettings);
   slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 

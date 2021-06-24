@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
@@ -82,7 +82,7 @@ class CartPoleInterface final : public RobotInterface {
 
   const RolloutBase& getRollout() const { return *ddpCartPoleRolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *cartPoleOperatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *cartPoleInitializerPtr_; }
 
  protected:
   /**
@@ -106,7 +106,7 @@ class CartPoleInterface final : public RobotInterface {
   std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
   std::unique_ptr<QuadraticCostFunction> cartPoleCostPtr_;
   std::unique_ptr<ConstraintBase> cartPoleConstraintPtr_;
-  std::unique_ptr<OperatingPoints> cartPoleOperatingPointPtr_;
+  std::unique_ptr<Initializer> cartPoleInitializerPtr_;
 
   // cost parameters
   matrix_t qm_{STATE_DIM, STATE_DIM};

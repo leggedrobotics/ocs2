@@ -27,45 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_oc/rollout/OperatingTrajectoriesRollout.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesJoystickInterface.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t OperatingTrajectoriesRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState,
-                                               ControllerBase* controller, scalar_array_t& timeTrajectory,
-                                               size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
-                                               vector_array_t& inputTrajectory) {
-  const int numSubsystems = timeIntervalArray.size();
-  const int numEvents = numSubsystems - 1;
-
-  // clearing the output trajectories
-  timeTrajectory.clear();
-  timeTrajectory.reserve(2 * numSubsystems);
-  stateTrajectory.clear();
-  stateTrajectory.reserve(2 * numSubsystems);
-  inputTrajectory.clear();
-  inputTrajectory.reserve(2 * numSubsystems);
-  postEventIndicesStock.clear();
-  postEventIndicesStock.reserve(numEvents);
-
-  vector_t beginState = initState;
-  scalar_t beginTime, endTime;
-  for (int i = 0; i < numSubsystems; i++) {
-    // get operating trajectories
-    operatingTrajectoriesPtr_->getSystemOperatingTrajectories(beginState, timeIntervalArray[i].first, timeIntervalArray[i].second,
-                                                              timeTrajectory, stateTrajectory, inputTrajectory, true);
-
-    if (i < numEvents) {
-      postEventIndicesStock.push_back(stateTrajectory.size());
-      beginState = stateTrajectory.back();
-    }
-
-  }  // end of i loop
-
-  return stateTrajectory.back();
+TargetTrajectoriesJoystickInterface::TargetTrajectoriesJoystickInterface(int argc, char* argv[], const std::string& robotName /*= "robot"*/,
+                                                                         const size_t targetCommandSize /*= 0*/,
+                                                                         const scalar_array_t& targetCommandLimits /*= scalar_array_t()*/)
+    : TargetTrajectoriesRosInterface(argc, argv, robotName),
+      targetCommandSize_(targetCommandSize),
+      targetCommandLimits_(targetCommandLimits) {
+  if (targetCommandLimits.size() != targetCommandSize) {
+    throw std::runtime_error("Target command limits are not set properly");
+  }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t& TargetTrajectoriesJoystickInterface::targetCommandSize() {
+  return targetCommandSize_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void TargetTrajectoriesJoystickInterface::publishTargetTrajectoriesFromDesiredState(CostDesiredTrajectories costDesiredTrajectories) {
+  // publish cost desired trajectories
+  TargetTrajectoriesRosInterface::publishTargetTrajectories(costDesiredTrajectories);
+}
 }  // namespace ocs2

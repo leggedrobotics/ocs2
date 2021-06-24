@@ -47,16 +47,6 @@ namespace ocs2 {
  * State: x = [ linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_positions ]'
  * @remark: The linear and angular momenta are expressed with respect to
  * the centroidal frame (a frame centered at the CoM and aligned with the inertial frame)
- *
- * Input: u = [ contact_forces, contact_wrenches, joint_velocities ]'
- * @remark: Contact forces and wrenches are expressed with respect to the inertial frame
- *
- *
- * Pinocchio Joint Positions: qPinocchio = [ base_position, base_orientation_zyx, joint_positions ]'
- * @remark: Base position is expressed with respect to the inertial frame
- *
- * Pinocchio Joint Velocities: vPinocchio = [ base_linear_velocity, base_orientation_zyx_derivatives, joint_velocities ]'
- * @remark: Base linear velocity is expressed with respect to the inertial frame
  */
 
 enum class CentroidalModelType { FullCentroidalDynamics, SingleRigidBodyDynamics };
@@ -69,9 +59,6 @@ struct CentroidalModelInfoTpl {
   using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
   using vector3_t = Eigen::Matrix<SCALAR, 3, 1>;
   using matrix3_t = Eigen::Matrix<SCALAR, 3, 3>;
-
-  using Model = pinocchio::ModelTpl<SCALAR>;
-  using Data = typename Model::Data;
 
   /** Constructor
    * @param [in] interface: Pinocchio interface

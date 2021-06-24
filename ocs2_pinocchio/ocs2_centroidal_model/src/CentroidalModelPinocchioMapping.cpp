@@ -40,6 +40,36 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
+CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo)
+    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(centroidalModelInfo) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs)
+    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(rhs.centroidalModelInfo_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+CentroidalModelPinocchioMapping<SCALAR>* CentroidalModelPinocchioMapping<SCALAR>::clone() const {
+  return new CentroidalModelPinocchioMapping<SCALAR>(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+void CentroidalModelPinocchioMapping<SCALAR>::setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {
+  pinocchioInterfacePtr_ = &pinocchioInterface;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
   assert(centroidalModelInfo_.stateDim == state.rows());
   const Model& model = pinocchioInterfacePtr_->getModel();

@@ -38,8 +38,8 @@ template <typename SCALAR>
 CentroidalModelInfoTpl<SCALAR>::CentroidalModelInfoTpl(const PinocchioInterfaceTpl<SCALAR>& interface, const CentroidalModelType& type,
                                                        const vector_t& qNominal, const std::vector<std::string>& threeDofContactNames,
                                                        const std::vector<std::string>& sixDofContactNames) {
-  const Model& model = interface.getModel();
-  Data data = interface.getData();
+  const auto& model = interface.getModel();
+  auto data = interface.getData();
   centroidalModelType = type;
   numThreeDofContacts = threeDofContactNames.size();
   numSixDofContacts = sixDofContactNames.size();

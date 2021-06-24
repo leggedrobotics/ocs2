@@ -11,7 +11,7 @@ Installation
 Requirements
 ~~~~~~~~~~~~
 
-This library is written in C++11. It is tested under Ubuntu 18.04 with library versions as provided in the package sources.
+The OCS2 library is written in C++11. It is tested under Ubuntu 20.04 with library versions as provided in the package sources.
 
 
 
@@ -39,9 +39,6 @@ Dependencies
 * ``pybind11_catkin`` ROS package, installable via ``sudo apt install ros-noetic-pybind11-catkin``
 
 * Doxygen for documentation. Install with ``sudo apt install doxygen doxygen-latex``
-
-
-
 
 
 .. _doxid-ocs2_doc_installation_1ocs2_doc_dep_optinal:
@@ -85,15 +82,10 @@ Optional Dependencies
 
 
 
-
-
-
-
 .. _doxid-ocs2_doc_installation_1ocs2_doc_install:
 
 Installation
 ~~~~~~~~~~~~
-
 
 
 .. _doxid-ocs2_doc_installation_1ocs2_doc_build_lib:
@@ -112,9 +104,6 @@ To build and run the unit tests run:
 .. code-block:: bash
 
 	catkin run_tests ocs2
-
-
-
 
 
 .. _doxid-ocs2_doc_installation_1ocs2_doc_build_doc:

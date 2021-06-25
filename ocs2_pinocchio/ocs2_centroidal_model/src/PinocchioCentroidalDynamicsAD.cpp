@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
+#include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
 
 namespace ocs2 {
 
@@ -64,6 +64,12 @@ PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInte
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioCentroidalDynamicsAD& rhs)
+    : systemFlowMapCppAdInterfacePtr_(new CppAdInterface(*rhs.systemFlowMapCppAdInterfacePtr_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                                          const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
                                                          const ad_vector_t& state, const ad_vector_t& input) {
@@ -76,7 +82,7 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd
   ad_vector_t stateDerivative(info.stateDim);
 
   // compute center of mass acceleration and derivative of the normalized angular momentum
-  stateDerivative.head(6) = mapping.getNormalizedCentroidalMomentumRate(input);
+  stateDerivative.head<6>() = getNormalizedCentroidalMomentumRate(pinocchioInterfaceCppAd, info, input);
 
   // derivatives of the floating base variables + joint velocities
   stateDerivative.tail(info.generalizedCoordinatesNum) = mapping.getPinocchioJointVelocity(state, input);
@@ -88,8 +94,7 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PinocchioCentroidalDynamicsAD::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
-  vector_t stateInput(state.rows() + input.rows());
-  stateInput << state, input;
+  const vector_t stateInput = (vector_t(state.rows() + input.rows()) << state, input).finished();
   return systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);
 }
 
@@ -98,15 +103,13 @@ vector_t PinocchioCentroidalDynamicsAD::getValue(scalar_t time, const vector_t& 
 /******************************************************************************************************/
 VectorFunctionLinearApproximation PinocchioCentroidalDynamicsAD::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                         const vector_t& input) const {
-  vector_t stateInput(state.rows() + input.rows());
-  stateInput << state, input;
-  const vector_t dynamicsValues = systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);
+  const vector_t stateInput = (vector_t(state.rows() + input.rows()) << state, input).finished();
+  VectorFunctionLinearApproximation approx;
+  approx.f = systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);
   const matrix_t dynamicsJacobian = systemFlowMapCppAdInterfacePtr_->getJacobian(stateInput);
-  VectorFunctionLinearApproximation dynamics;
-  dynamics.f = dynamicsValues;
-  dynamics.dfdx = dynamicsJacobian.leftCols(state.rows());
-  dynamics.dfdu = dynamicsJacobian.rightCols(input.rows());
-  return dynamics;
+  approx.dfdx = dynamicsJacobian.leftCols(state.rows());
+  approx.dfdu = dynamicsJacobian.rightCols(input.rows());
+  return approx;
 }
 
 }  // namespace ocs2

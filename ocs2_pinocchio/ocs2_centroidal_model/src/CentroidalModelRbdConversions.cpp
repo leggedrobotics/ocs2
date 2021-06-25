@@ -27,7 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
+#include "ocs2_centroidal_model/CentroidalModelRbdConversions.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
 
@@ -49,7 +50,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   const auto& model = pinocchioInterfacePtr_->getModel();
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& info = mappingPtr_->getCentroidalModelInfo();
-  const vector_t qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
+  const auto qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
 
   updateCentroidalDynamics(*pinocchioInterfacePtr_, info, qPinocchio);
 
@@ -59,9 +60,9 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   const auto baseOrientation = basePose.tail<3>();
 
   // Base Velocity in world frame
-  const auto& A = mappingPtr_->getCentroidalMomentumMatrix();
+  const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const Matrix6 Ab = A.template leftCols<6>();
-  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   const auto Aj = A.rightCols(info.actuatedDofNum);
 
   const vector_t vPinocchio = mappingPtr_->getPinocchioJointVelocity(state, input);
@@ -71,8 +72,10 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   baseVelocity.tail<3>() = baseAngularVelocityInWorld_;
 
   Adot_ = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
-  qbaseDdot_ = Ab_inv * (info.robotMass * mappingPtr_->getNormalizedCentroidalMomentumRate(input) - Adot_ * vPinocchio -
-                         Aj * jointAccelerations.head(info.actuatedDofNum));
+  Vector6 centroidalMomentumRate = info.robotMass * getNormalizedCentroidalMomentumRate(*pinocchioInterfacePtr_, info, input);
+  centroidalMomentumRate.noalias() -= Adot_ * vPinocchio;
+  centroidalMomentumRate.noalias() -= Aj * jointAccelerations.head(info.actuatedDofNum);
+  qbaseDdot_.noalias() = Ab_inv * centroidalMomentumRate;
 
   // Base Acceleration in world frame
   baseAcceleration.head<3>() = qbaseDdot_.head<3>();

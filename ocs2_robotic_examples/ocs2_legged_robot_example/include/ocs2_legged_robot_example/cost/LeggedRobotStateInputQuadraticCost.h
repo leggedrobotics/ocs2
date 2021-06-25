@@ -54,7 +54,7 @@ class LeggedRobotStateInputQuadraticCost : public ocs2::QuadraticStateInputCost 
 
  private:
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
-  std::string taskFile_;
 };
+
 }  // namespace legged_robot
 }  // namespace ocs2

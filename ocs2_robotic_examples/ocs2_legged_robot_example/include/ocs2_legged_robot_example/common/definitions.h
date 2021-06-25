@@ -1,8 +1,40 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 // ocs2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/misc/LoadData.h>
+
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 
 #include <Eigen/Dense>
 #include <array>
@@ -22,159 +54,37 @@
 
 namespace ocs2 {
 namespace legged_robot {
-
 const std::string ROBOT_NAME_ = "legged_robot";
-const std::string ROBOT_URDF_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/urdf/" + ROBOT_NAME_ + ".urdf";
-const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetCommand.info";
-
-constexpr size_t DOF_PER_LEG_NUM_ = 3;
-constexpr size_t FOOT_CONTACTS_NUM_ = 4;  // each contact involves a 3-DOF force
-constexpr size_t FOOT_CONTACTS_DOF_ = 3;
-
-constexpr size_t TOTAL_CONTACTS_DIM_ = FOOT_CONTACTS_DOF_ * FOOT_CONTACTS_NUM_;
-constexpr size_t BASE_DOF_NUM_ = 6;
-constexpr size_t ACTUATED_DOF_NUM_ = DOF_PER_LEG_NUM_ * FOOT_CONTACTS_NUM_;
-constexpr size_t GENERALIZED_VEL_NUM_ = BASE_DOF_NUM_ + ACTUATED_DOF_NUM_;
-
-constexpr size_t STATE_DIM_ = 2 * BASE_DOF_NUM_ + ACTUATED_DOF_NUM_;
-constexpr size_t INPUT_DIM_ = TOTAL_CONTACTS_DIM_ + ACTUATED_DOF_NUM_;
-
-// An approximation of the total mass, to be used when defining the nominal input force_z
-const double ROBOT_TOTAL_MASS_ = 50;
-
-// Names of feet contacts come first
-const static std::array<std::string, FOOT_CONTACTS_NUM_> CONTACT_POINTS_NAMES_ = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
+// const std::string ROBOT_URDF_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/urdf/" + ROBOT_NAME_ + ".urdf";
+const std::string ROBOT_URDF_PATH_ = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
+const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
+const std::string ROBOT_TASK_FILE_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
 
 // This is only used to get names for the knees and to check urdf for extra joints that need to be fixed.
-const static std::array<std::string, 3 * FOOT_CONTACTS_NUM_> JOINT_NAMES_ = {"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
-                                                                             "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+const static std::array<std::string, 12> JOINT_NAMES_ = {"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
+                                                         "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
 
-const static std::vector<std::string> LEGGED_ROBOT_3_DOF_CONTACT_NAMES_ = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
-const static std::vector<std::string> LEGGED_ROBOT_6_DOF_CONTACT_NAMES_ = {};
+const static std::vector<std::string> CONTACT_NAMES_3_DOF_ = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
+const static std::vector<std::string> CONTACT_NAMES_6_DOF_ = {};
 
 template <typename T>
-using feet_array_t = std::array<T, FOOT_CONTACTS_NUM_>;
+using feet_array_t = std::array<T, 4>;
 using contact_flag_t = feet_array_t<bool>;
 
-template <typename scalar_t>
-using vector3_s_t = Eigen::Matrix<scalar_t, 3, 1>;
-using vector3_t = vector3_s_t<double>;
-using vector3_ad_t = vector3_s_t<ocs2::CppAdInterface::ad_scalar_t>;
+CentroidalModelType loadCentroidalType(const std::string& taskFilePath);
+CentroidalModelInfoTpl<scalar_t> createCentroidalModelInfo(CentroidalModelType type, const std::string& robotUrdfPath,
+                                                           const std::string& robotCommanPath,
+                                                           const std::vector<std::string>& contactNames3Dof,
+                                                           const std::vector<std::string>& contactNames6Dof);
+CentroidalModelInfoTpl<ad_scalar_t> createCentroidalModelInfoAd(CentroidalModelType type, const std::string& robotUrdfPath,
+                                                                const std::string& robotCommanPath,
+                                                                const std::vector<std::string>& contactNames3Dof,
+                                                                const std::vector<std::string>& contactNames6Dof);
 
-template <typename scalar_t>
-using matrix3_s_t = Eigen::Matrix<scalar_t, 3, 3>;
-using matrix3_t = matrix3_s_t<double>;
-using matrix3_ad_t = matrix3_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using vector6_s_t = Eigen::Matrix<scalar_t, 6, 1>;
-using vector6_t = vector6_s_t<double>;
-using vector6_ad_t = vector6_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using matrix6_s_t = Eigen::Matrix<scalar_t, 6, 6>;
-using matrix6_t = matrix6_s_t<double>;
-using matrix6_ad_t = matrix6_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using base_coordinate_s_t = Eigen::Matrix<scalar_t, BASE_DOF_NUM_, 1>;
-using base_coordinate_t = base_coordinate_s_t<double>;
-using base_coordinate_ad_t = base_coordinate_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using joint_coordinate_s_t = Eigen::Matrix<scalar_t, ACTUATED_DOF_NUM_, 1>;
-using joint_coordinate_t = joint_coordinate_s_t<double>;
-using joint_coordinate_ad_t = joint_coordinate_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using generalized_coordinate_s_t = Eigen::Matrix<scalar_t, GENERALIZED_VEL_NUM_, 1>;
-using generalized_coordinate_t = generalized_coordinate_s_t<double>;
-using generalized_coordinate_ad_t = generalized_coordinate_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using state_s_t = Eigen::Matrix<scalar_t, STATE_DIM_, 1>;
-using state_t = state_s_t<double>;
-using state_ad_t = state_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using input_s_t = Eigen::Matrix<scalar_t, INPUT_DIM_, 1>;
-using input_t = input_s_t<double>;
-using input_ad_t = input_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using rbd_joint_coordinate_s_t = Eigen::Matrix<scalar_t, ACTUATED_DOF_NUM_, 1>;
-using rbd_joint_coordinate_t = rbd_joint_coordinate_s_t<double>;
-using rbd_joint_coordinate_ad_t = rbd_joint_coordinate_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-using rbd_state_s_t = Eigen::Matrix<scalar_t, 2 * GENERALIZED_VEL_NUM_, 1>;
-using rbd_state_t = rbd_state_s_t<double>;
-using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface::ad_scalar_t>;
-
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getComPose(const state_s_t<scalar_t>& state) {
-  return state.template segment<BASE_DOF_NUM_>(6);
-}
-
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getBasePose(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
-  return generalizedCoordinate.template head<BASE_DOF_NUM_>();
-}
-
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getBasePose(const rbd_state_s_t<scalar_t>& rbdState) {
-  return rbdState.template head<BASE_DOF_NUM_>();
-}
-
-template <typename scalar_t>
-vector3_s_t<scalar_t> getOrientation(base_coordinate_s_t<scalar_t> baseCoordinate) {
-  return baseCoordinate.template tail<3>();
-}
-
-template <typename scalar_t>
-vector3_s_t<scalar_t> getPositionInOrigin(base_coordinate_s_t<scalar_t> baseCoordinate) {
-  return baseCoordinate.template head<3>();
-}
-
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getBaseLocalVelocity(const rbd_state_s_t<scalar_t>& rbdState) {
-  return rbdState.template segment<BASE_DOF_NUM_>(GENERALIZED_VEL_NUM_);
-}
-
-template <typename scalar_t>
-vector3_s_t<scalar_t> getAngularVelocity(base_coordinate_s_t<scalar_t> baseTwist) {
-  return baseTwist.template tail<3>();
-}
-
-template <typename scalar_t>
-vector3_s_t<scalar_t> getLinearVelocity(base_coordinate_s_t<scalar_t> baseTwist) {
-  return baseTwist.template head<3>();
-}
-
-template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointPositions(const state_s_t<scalar_t>& state) {
-  return state.template segment<ACTUATED_DOF_NUM_>(2 * BASE_DOF_NUM_);
-}
-
-template <typename scalar_t>
-base_coordinate_s_t<scalar_t> getJointPositions(const generalized_coordinate_s_t<scalar_t>& generalizedCoordinate) {
-  return generalizedCoordinate.template segment<ACTUATED_DOF_NUM_>(BASE_DOF_NUM_);
-}
-
-template <typename scalar_t>
-rbd_joint_coordinate_s_t<scalar_t> getJointPositions(const rbd_state_s_t<scalar_t>& rbdState) {
-  return rbdState.template segment<ACTUATED_DOF_NUM_>(BASE_DOF_NUM_);
-}
-
-template <typename scalar_t>
-joint_coordinate_s_t<scalar_t> getJointVelocities(const input_s_t<scalar_t>& input) {
-  return input.template segment<ACTUATED_DOF_NUM_>(TOTAL_CONTACTS_DIM_);
-}
-
-template <typename scalar_t>
-rbd_joint_coordinate_s_t<scalar_t> getJointVelocities(const rbd_state_s_t<scalar_t>& rbdState) {
-  return rbdState.template segment<ACTUATED_DOF_NUM_>(GENERALIZED_VEL_NUM_ + BASE_DOF_NUM_);
-}
+const auto centroidalModelInfo = createCentroidalModelInfo(loadCentroidalType(ROBOT_TASK_FILE_PATH_), ROBOT_URDF_PATH_, ROBOT_COMMAND_PATH_,
+                                                           CONTACT_NAMES_3_DOF_, CONTACT_NAMES_6_DOF_);
+const auto centroidalModelInfoAd = createCentroidalModelInfoAd(loadCentroidalType(ROBOT_TASK_FILE_PATH_), ROBOT_URDF_PATH_,
+                                                               ROBOT_COMMAND_PATH_, CONTACT_NAMES_3_DOF_, CONTACT_NAMES_6_DOF_);
 
 }  // namespace legged_robot
 }  // namespace ocs2

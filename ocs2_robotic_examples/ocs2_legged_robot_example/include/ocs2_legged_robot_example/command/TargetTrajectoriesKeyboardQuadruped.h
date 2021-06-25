@@ -74,7 +74,7 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
    * goalPoseLimit(11): \omega_Z
    */
   TargetTrajectoriesKeyboardQuadruped(int argc, char* argv[], const std::string& robotName, scalar_t initZHeight,
-                                      joint_coordinate_t defaultJointCoordinates, scalar_t targetDisplacementVelocity,
+                                      vector_t defaultJointCoordinates, scalar_t targetDisplacementVelocity,
                                       scalar_t targetRotationVelocity,
                                       const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 0.5, 0.5, 0.5,
                                                                                            0.5, 0.5, 0.5},
@@ -135,7 +135,7 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
 
     // input
     // TODO(Ruben)
-    desiredInput = vector_t::Zero(INPUT_DIM_);
+    desiredInput = vector_t::Zero(centroidalModelInfo.inputDim);
     desiredInput[2 + 0] = 80.0;
     desiredInput[2 + 3] = 80.0;
     desiredInput[2 + 6] = 80.0;
@@ -168,11 +168,11 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
     // Desired state trajectory
     vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
     xDesiredTrajectory.resize(2);
-    xDesiredTrajectory[0].setZero(STATE_DIM_);
+    xDesiredTrajectory[0].setZero(centroidalModelInfo.stateDim);
     xDesiredTrajectory[0].head<12>() = observation.state.head<12>();
-    xDesiredTrajectory[0].segment<ACTUATED_DOF_NUM_>(12) = defaultJointCoordinates_;
+    xDesiredTrajectory[0].segment(12, centroidalModelInfo.actuatedDofNum) = defaultJointCoordinates_;
 
-    xDesiredTrajectory[1].resize(STATE_DIM_);
+    xDesiredTrajectory[1].resize(centroidalModelInfo.stateDim);
     xDesiredTrajectory[1].setZero();
     // Roll and pitch are absolute
     xDesiredTrajectory[1].segment(10, 2) = desiredBaseState.segment(10, 2);
@@ -185,7 +185,7 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
     // target velocities
     xDesiredTrajectory[1].segment(0, 6) = desiredBaseState.segment(0, 6);
     // joint angle from initialization
-    xDesiredTrajectory[1].segment(12, ACTUATED_DOF_NUM_) = defaultJointCoordinates_;
+    xDesiredTrajectory[1].segment(12, centroidalModelInfo.actuatedDofNum) = defaultJointCoordinates_;
 
     // Desired input trajectory
     vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
@@ -217,7 +217,7 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
   std::mutex latestObservationMutex_;
   ocs2_msgs::mpc_observation::ConstPtr latestObservation_;
   scalar_t initZHeight_;
-  joint_coordinate_t defaultJointCoordinates_;
+  vector_t defaultJointCoordinates_;
 
   scalar_t targetDisplacementVelocity_;
   scalar_t targetRotationVelocity_;

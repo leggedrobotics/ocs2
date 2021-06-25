@@ -51,12 +51,12 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LeggedRobotCost::LeggedRobotCost(const SwitchedModelModeScheduleManager& modeScheduleManager, PinocchioInterface pinocchioInterface,
-                                 CentroidalModelPinocchioMapping<scalar_t> pinocchioMapping, const std::string& taskFile)
+                                 const CentroidalModelPinocchioMapping<scalar_t>& pinocchioMapping, const std::string& taskFile)
 
     : modeScheduleManagerPtr_(&modeScheduleManager),
       pinocchioInterface_(std::move(pinocchioInterface)),
-      pinocchioMapping_(std::move(pinocchioMapping)) {
-  pinocchioMapping_.setPinocchioInterface(pinocchioInterface_);
+      pinocchioMappingPtr_(pinocchioMapping.clone()) {
+  pinocchioMappingPtr_->setPinocchioInterface(pinocchioInterface_);
 
   // Intermediate costs
   auto baseTrackingCost = getBaseTrackingCost(taskFile);
@@ -71,10 +71,10 @@ LeggedRobotCost::LeggedRobotCost(const LeggedRobotCost& rhs)
     : BASE(rhs),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
       pinocchioInterface_(rhs.pinocchioInterface_),
-      pinocchioMapping_(rhs.pinocchioMapping_),
+      pinocchioMappingPtr_(rhs.pinocchioMappingPtr_->clone()),
       stateInputCostCollection_(rhs.stateInputCostCollection_),
       stateCostCollection_(rhs.stateCostCollection_) {
-  pinocchioMapping_.setPinocchioInterface(pinocchioInterface_);
+  pinocchioMappingPtr_->setPinocchioInterface(pinocchioInterface_);
 }
 
 /******************************************************************************************************/
@@ -123,34 +123,35 @@ ScalarFunctionQuadraticApproximation LeggedRobotCost::finalCostQuadraticApproxim
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotCost::initializeInputCostWeight(const std::string& taskFile, matrix_t& R) {
-  vector_t initialState;
+  vector_t initialState(centroidalModelInfo.stateDim);
   loadData::loadEigenMatrix(taskFile, "initialState", initialState);
 
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
-  const auto q = pinocchioMapping_.getPinocchioJointPosition(initialState);
+  const auto q = pinocchioMappingPtr_->getPinocchioJointPosition(initialState);
   pinocchio::computeJointJacobians(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  Eigen::Matrix<scalar_t, 3 * FOOT_CONTACTS_NUM_, 12> baseToFeetJacobians;
-  for (size_t i = 0; i < FOOT_CONTACTS_NUM_; i++) {
-    matrix_t jacobianWorldToContactPointInWorldFrame = matrix_t::Zero(6, GENERALIZED_VEL_NUM_);
-    pinocchio::getFrameJacobian(model, data, model.getBodyId(CONTACT_POINTS_NAMES_[i]), pinocchio::LOCAL_WORLD_ALIGNED,
+  matrix_t baseToFeetJacobians(3 * centroidalModelInfo.numThreeDofContacts, 12);
+  for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+    matrix_t jacobianWorldToContactPointInWorldFrame = matrix_t::Zero(6, centroidalModelInfo.generalizedCoordinatesNum);
+    pinocchio::getFrameJacobian(model, data, model.getBodyId(CONTACT_NAMES_3_DOF_[i]), pinocchio::LOCAL_WORLD_ALIGNED,
                                 jacobianWorldToContactPointInWorldFrame);
 
-    baseToFeetJacobians.block(3 * i, 0, 3, 12) = (jacobianWorldToContactPointInWorldFrame.topRows<3>()).block(0, BASE_DOF_NUM_, 3, 12);
+    baseToFeetJacobians.block(3 * i, 0, 3, 12) = (jacobianWorldToContactPointInWorldFrame.topRows<3>()).block(0, 6, 3, 12);
   }
 
-  R.block(TOTAL_CONTACTS_DIM_, TOTAL_CONTACTS_DIM_, 12, 12) =
-      (baseToFeetJacobians.transpose() * R.block(TOTAL_CONTACTS_DIM_, TOTAL_CONTACTS_DIM_, 12, 12) * baseToFeetJacobians).eval();
+  const size_t totalContactDim = 3 * centroidalModelInfo.numThreeDofContacts;
+  R.block(totalContactDim, totalContactDim, 12, 12) =
+      (baseToFeetJacobians.transpose() * R.block(totalContactDim, totalContactDim, 12, 12) * baseToFeetJacobians).eval();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> LeggedRobotCost::getBaseTrackingCost(const std::string& taskFile) {
-  matrix_t Q(STATE_DIM_, STATE_DIM_);
-  matrix_t R(INPUT_DIM_, INPUT_DIM_);
+  matrix_t Q(centroidalModelInfo.stateDim, centroidalModelInfo.stateDim);
+  matrix_t R(centroidalModelInfo.inputDim, centroidalModelInfo.inputDim);
 
   std::cerr << "\n #### Base Tracking Cost Settings: ";
   std::cerr << "\n #### =============================================================================\n";
@@ -161,7 +162,7 @@ std::unique_ptr<StateInputCost> LeggedRobotCost::getBaseTrackingCost(const std::
   std::cerr << "R:  \n" << R << '\n';
   std::cerr << " #### =============================================================================" << std::endl;
 
-  return std::unique_ptr<StateInputCost>(new LeggedRobotStateInputQuadraticCost(modeScheduleManagerPtr_, taskFile, Q, R));
+  return std::unique_ptr<StateInputCost>(new LeggedRobotStateInputQuadraticCost(Q, R, *modeScheduleManagerPtr_));
 }
 
 }  // namespace legged_robot

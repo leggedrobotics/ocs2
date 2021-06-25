@@ -13,6 +13,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
     ocs2_ddp
     ocs2_pinocchio_interface
     ocs2_centroidal_model
+    ocs2_ros_interfaces
     tf
     urdf
     kdl_parser
@@ -67,6 +68,7 @@ add_library(ocs2_legged_robot_example
     src/LeggedRobotInterface.cpp
     src/visualization/LeggedRobotDummyVisualization.cpp
 
+    src/common/definitions.cpp
     src/common/ModelSettings.cpp
 
     # src/constraint/LeggedRobotConstraint.cpp
@@ -142,6 +144,7 @@ add_dependencies(target_command_node_base_pose
     ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(target_command_node_base_pose
+    ${PROJECT_NAME}
     ${catkin_LIBRARIES}
 )
 target_compile_options(target_command_node_base_pose PUBLIC ${pinocchio_CFLAGS_OTHER})
@@ -157,6 +160,7 @@ add_dependencies(gait_command_node_legged_robot
     ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(gait_command_node_legged_robot
+    ${PROJECT_NAME}
     ${catkin_LIBRARIES}
 )
 target_compile_options(gait_command_node_legged_robot PUBLIC ${pinocchio_CFLAGS_OTHER})
@@ -207,3 +211,13 @@ install(DIRECTORY urdf launch config rviz
 #############
 ## Testing ##
 #############
+
+catkin_add_gtest(EndEffectorVelocityConstraintTests
+  test/testEndEffectorVelocityConstraint.cpp
+)
+target_link_libraries(EndEffectorVelocityConstraintTests
+  gtest_main
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)

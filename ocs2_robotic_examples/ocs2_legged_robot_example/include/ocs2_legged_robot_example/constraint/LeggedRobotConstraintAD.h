@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #pragma once
 
 #include <ocs2_core/automatic_differentiation/Types.h>
@@ -19,9 +48,9 @@ class LeggedRobotConstraintAD : public ocs2::ConstraintBase {
  public:
   using Base = ocs2::ConstraintBase;
 
-  LeggedRobotConstraintAD(std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                          std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
-                          const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd,
+  LeggedRobotConstraintAD(const SwitchedModelModeScheduleManager& modeScheduleManager,
+                          const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr, const PinocchioInterface& pinocchioInterface,
+                          const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd,
                           const ModelSettings& options = ModelSettings());
 
   LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs);
@@ -30,7 +59,7 @@ class LeggedRobotConstraintAD : public ocs2::ConstraintBase {
    * Initialize Constraint Terms
    */
   void initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                 CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd);
+                                 const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd);
 
   ~LeggedRobotConstraintAD() override = default;
 
@@ -61,8 +90,8 @@ class LeggedRobotConstraintAD : public ocs2::ConstraintBase {
  private:
   void timeUpdate(scalar_t t);
 
-  std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
-  std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr_;
+  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
 
   ModelSettings options_;
 

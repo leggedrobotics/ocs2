@@ -1,7 +1,35 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <ocs2_legged_robot_example/constraint/FrictionConeConstraint.h>
 
-#include <ocs2_switched_model_interface/core/Rotations.h>
-#include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
+//#include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -19,7 +47,9 @@ FrictionConeConstraint::FrictionConeConstraint(Config config, int legNumber)
 /******************************************************************************************************/
 /******************************************************************************************************/
 void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld) {
-  t_R_w = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(surfaceNormalInWorld);
+  // TODO(jichiu) Make this independent of the package ocs2_switched_model_interface
+  //  t_R_w = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(surfaceNormalInWorld);
+  t_R_w = matrix3_t::Identity();
 }
 
 /******************************************************************************************************/
@@ -47,7 +77,7 @@ VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation
 
   ocs2::VectorFunctionLinearApproximation linearApproximation;
   linearApproximation.f = coneConstraint(localForce);
-  linearApproximation.dfdx = matrix_t::Zero(1, STATE_DIM_);
+  linearApproximation.dfdx = matrix_t::Zero(1, state.size());
   linearApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
   return linearApproximation;
 }
@@ -66,11 +96,11 @@ VectorFunctionQuadraticApproximation FrictionConeConstraint::getQuadraticApproxi
 
   ocs2::VectorFunctionQuadraticApproximation quadraticApproximation;
   quadraticApproximation.f = coneConstraint(localForce);
-  quadraticApproximation.dfdx = matrix_t::Zero(1, STATE_DIM_);
+  quadraticApproximation.dfdx = matrix_t::Zero(1, state.size());
   quadraticApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
   quadraticApproximation.dfdxx.emplace_back(frictionConeSecondDerivativeState(coneDerivatives));
   quadraticApproximation.dfduu.emplace_back(frictionConeSecondDerivativeInput(coneDerivatives));
-  quadraticApproximation.dfdux.emplace_back(matrix_t::Zero(INPUT_DIM_, STATE_DIM_));
+  quadraticApproximation.dfdux.emplace_back(matrix_t::Zero(input.size(), state.size()));
   return quadraticApproximation;
 }
 
@@ -142,7 +172,7 @@ FrictionConeConstraint::ConeDerivatives FrictionConeConstraint::computeConeConst
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const {
-  matrix_t dhdu = matrix_t::Zero(1, INPUT_DIM_);
+  matrix_t dhdu = matrix_t::Zero(1, centroidalModelInfo.inputDim);
   dhdu.block<1, 3>(0, 3 * legNumber_) = coneDerivatives.dCone_du;
   return dhdu;
 }
@@ -151,7 +181,7 @@ matrix_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivativ
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const {
-  matrix_t ddhdudu = matrix_t::Zero(INPUT_DIM_, INPUT_DIM_);
+  matrix_t ddhdudu = matrix_t::Zero(centroidalModelInfo.inputDim, centroidalModelInfo.inputDim);
   ddhdudu.block<3, 3>(3 * legNumber_, 3 * legNumber_) = coneDerivatives.d2Cone_du2;
   ddhdudu.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdudu;
@@ -161,7 +191,7 @@ matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDer
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t FrictionConeConstraint::frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const {
-  matrix_t ddhdxdx = matrix_t::Zero(STATE_DIM_, STATE_DIM_);
+  matrix_t ddhdxdx = matrix_t::Zero(centroidalModelInfo.stateDim, centroidalModelInfo.stateDim);
   ddhdxdx.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdxdx;
 }

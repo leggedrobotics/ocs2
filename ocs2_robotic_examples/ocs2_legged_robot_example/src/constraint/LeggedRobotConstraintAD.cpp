@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <ocs2_legged_robot_example/constraint/EndEffectorVelocityConstraint.h>
 #include <ocs2_legged_robot_example/constraint/FrictionConeConstraint.h>
 #include <ocs2_legged_robot_example/constraint/LeggedRobotConstraintAD.h>
@@ -5,26 +34,31 @@
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
+#include <ocs2_centroidal_model/ModelHelperFunctions.h>
+
 namespace ocs2 {
 namespace legged_robot {
 
-LeggedRobotConstraintAD::LeggedRobotConstraintAD(std::shared_ptr<const SwitchedModelModeScheduleManager> modeScheduleManagerPtr,
-                                                 std::shared_ptr<const SwingTrajectoryPlanner> swingTrajectoryPlannerPtr,
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+LeggedRobotConstraintAD::LeggedRobotConstraintAD(const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner,
                                                  const PinocchioInterface& pinocchioInterface,
-                                                 CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd,
+                                                 const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd,
                                                  const ModelSettings& options)
     : Base(),
-      modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)),
-      swingTrajectoryPlannerPtr_(std::move(swingTrajectoryPlannerPtr)),
+      modeScheduleManagerPtr_(&modeScheduleManager),
+      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       options_(options),
       equalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection),
       inequalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection) {
-  if (!modeScheduleManagerPtr_ || !swingTrajectoryPlannerPtr_) {
-    throw std::runtime_error("[LeggedRobotConstraintAD] ModeScheduleManager and SwingTrajectoryPlanner cannot be a nullptr");
-  }
   initializeConstraintTerms(pinocchioInterface, pinocchioMappingAd);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 LeggedRobotConstraintAD::LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs)
     : Base(rhs),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
@@ -44,9 +78,9 @@ LeggedRobotConstraintAD* LeggedRobotConstraintAD::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                                        CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd) {
-  for (int i = 0; i < FOOT_CONTACTS_NUM_; i++) {
-    auto footName = CONTACT_POINTS_NAMES_[i];
+                                                        const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd) {
+  for (int i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+    auto footName = CONTACT_NAMES_3_DOF_[i];
     // Friction cone constraint (state-input inequality)
     FrictionConeConstraint::Config newFrictionConeConConfig;
     auto newFrictionConeConstraintPtr = std::unique_ptr<FrictionConeConstraint>(new FrictionConeConstraint(newFrictionConeConConfig, i));
@@ -55,9 +89,15 @@ void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface
     auto zeroForceConstraintPtr = std::unique_ptr<ZeroForceConstraint>(new ZeroForceConstraint(i));
 
     // Zero velocity constraint (state-input equality)
-    PinocchioEndEffectorKinematicsCppAd eeKinematicsAd(pinocchioInterface, pinocchioMappingAd, {footName}, STATE_DIM_, INPUT_DIM_, footName,
-                                                       "/tmp/ocs2", options_.recompileLibraries_, true);
+    auto velocityUpdateCallback = [&](ad_vector_t state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterfaceAd) {
+      const ad_vector_t& q = state.tail(centroidalModelInfoAd.generalizedCoordinatesNum);
+      updateCentroidalDynamics(pinocchioInterfaceAd, centroidalModelInfoAd, q);
+    };
+    PinocchioEndEffectorKinematicsCppAd eeKinematicsAd(pinocchioInterface, pinocchioMappingAd, {footName}, centroidalModelInfo.stateDim,
+                                                       centroidalModelInfo.inputDim, velocityUpdateCallback, footName, "/tmp/ocs2",
+                                                       options_.recompileLibraries_, true);
     auto eeZeroVelConstraintPtr = std::unique_ptr<EndEffectorVelocityConstraint>(new EndEffectorVelocityConstraint(eeKinematicsAd, 3));
+
     // Normal velocity constraint (state-input equality)
     auto eeNormalVelConstraintPtr = std::unique_ptr<EndEffectorVelocityConstraint>(new EndEffectorVelocityConstraint(eeKinematicsAd, 1));
 
@@ -87,8 +127,8 @@ void LeggedRobotConstraintAD::timeUpdate(scalar_t t) {
   numEventTimes_ = modeScheduleManagerPtr_->getModeSchedule().eventTimes.size();
   stanceLegs_ = modeScheduleManagerPtr_->getContactFlags(t);
 
-  for (int i = 0; i < FOOT_CONTACTS_NUM_; i++) {
-    auto footName = CONTACT_POINTS_NAMES_[i];
+  for (int i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+    auto footName = CONTACT_NAMES_3_DOF_[i];
 
     if (options_.enforceFrictionConeConstraint_) {
       // Active friction cone constraint for stanceLegs
@@ -98,10 +138,10 @@ void LeggedRobotConstraintAD::timeUpdate(scalar_t t) {
     // Zero forces active for swing legs
     equalityStateInputConstraintCollectionPtr_->get(footName + "_ZeroForce").setActivity(!stanceLegs_[i]);
 
-    // Z-velocity for swing legs
+    // Active foot placement for stance legs
     equalityStateInputConstraintCollectionPtr_->get(footName + "_EEZeroVel").setActivity(stanceLegs_[i]);
 
-    // Active foot placement for stance legs
+    // Z-velocity for swing legs
     auto& eeNormalVelConstraint = equalityStateInputConstraintCollectionPtr_->get<EndEffectorVelocityConstraint>(footName + "_EENormalVel");
 
     EndEffectorVelocityConstraintSettings eeNormalVelConConfig;
@@ -124,17 +164,26 @@ vector_t LeggedRobotConstraintAD::stateInputEqualityConstraint(scalar_t t, const
   return equalityStateInputConstraintCollectionPtr_->getValue(t, x, u);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 vector_t LeggedRobotConstraintAD::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
   timeUpdate(t);
   return inequalityStateInputConstraintCollectionPtr_->getValue(t, x, u);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation LeggedRobotConstraintAD::stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
                                                                                                            const vector_t& u) {
   timeUpdate(t);
   return equalityStateInputConstraintCollectionPtr_->getLinearApproximation(t, x, u);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionQuadraticApproximation LeggedRobotConstraintAD::inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
                                                                                                          const vector_t& u) {
   timeUpdate(t);

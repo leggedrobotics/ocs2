@@ -1,7 +1,38 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include <ocs2_legged_robot_example/common/utils.h>
 #include <ocs2_legged_robot_example/visualization/LeggedRobotDummyVisualization.h>
+
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
+
+#include <ocs2_centroidal_model/AccessHelperFunctions.h>
 
 #include <array>
 
@@ -12,6 +43,9 @@
 namespace ocs2 {
 namespace legged_robot {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void LeggedRobotDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
 
@@ -34,6 +68,9 @@ void LeggedRobotDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHa
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void LeggedRobotDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) {
   const ros::Time timeStamp = ros::Time::now();
 
@@ -43,7 +80,7 @@ void LeggedRobotDummyVisualization::update(const SystemObservation& observation,
   rosMsg.data = policyDelayFromObservation_;
   policyDelayPublisher_.publish(rosMsg);
 
-  Eigen::Matrix<scalar_t, ACTUATED_DOF_NUM_, 1> q = observation.state.segment(2 * BASE_DOF_NUM_, ACTUATED_DOF_NUM_);
+  vector_t q = observation.state.segment(12, centroidalModelInfo.actuatedDofNum);
   for (int k = 2; k < pinocchioInterface_.getModel().njoints; ++k) {
     jointPositions_[pinocchioInterface_.getModel().names[k]] = q(k - 2);
   }
@@ -53,6 +90,9 @@ void LeggedRobotDummyVisualization::update(const SystemObservation& observation,
   publishOptimizedStateTrajectory(timeStamp, policy.stateTrajectory_);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 /* helpers taken from ocs2_quadruped_interface/QuadrupedVisualizationHelpers */
 
 static std_msgs::ColorRGBA getColor(std::array<scalar_t, 3> rgb, scalar_t alpha = 1.0) {
@@ -64,6 +104,9 @@ static std_msgs::ColorRGBA getColor(std::array<scalar_t, 3> rgb, scalar_t alpha 
   return colorMsg;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 static geometry_msgs::Quaternion getOrientationMsg(const Eigen::Quaterniond& orientation) {
   geometry_msgs::Quaternion orientationMsg;
   orientationMsg.x = orientation.x();
@@ -73,6 +116,9 @@ static geometry_msgs::Quaternion getOrientationMsg(const Eigen::Quaterniond& ori
   return orientationMsg;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 static visualization_msgs::Marker getLineMsg(std::vector<geometry_msgs::Point>&& points, std::array<scalar_t, 3> color,
                                              scalar_t lineWidth) {
   visualization_msgs::Marker line;
@@ -84,6 +130,9 @@ static visualization_msgs::Marker getLineMsg(std::vector<geometry_msgs::Point>&&
   return line;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 static Eigen::Quaternion<scalar_t> quaternionBaseToOrigin(const Eigen::Matrix<scalar_t, 3, 1>& eulerAngles) {
   const auto roll = eulerAngles(0);
   const auto pitch = eulerAngles(1);
@@ -92,6 +141,9 @@ static Eigen::Quaternion<scalar_t> quaternionBaseToOrigin(const Eigen::Matrix<sc
          Eigen::AngleAxis<scalar_t>(yaw, Eigen::Vector3d::UnitZ());
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 static geometry_msgs::Point getPointMsg(const Eigen::Vector3d& point) {
   geometry_msgs::Point pointMsg;
   pointMsg.x = point.x();
@@ -100,6 +152,9 @@ static geometry_msgs::Point getPointMsg(const Eigen::Vector3d& point) {
   return pointMsg;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 static std_msgs::Header getHeaderMsg(const std::string& frame_id, const ros::Time& timeStamp) {
   std_msgs::Header header;
   header.frame_id = frame_id;
@@ -107,6 +162,9 @@ static std_msgs::Header getHeaderMsg(const std::string& frame_id, const ros::Tim
   return header;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename It>
 void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
   for (; firstIt != lastIt; ++firstIt) {
@@ -114,6 +172,9 @@ void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename It>
 void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
   for (; firstIt != lastIt; ++firstIt) {
@@ -121,6 +182,9 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void LeggedRobotDummyVisualization::publishBaseTransform(ros::Time timeStamp, const SystemObservation& observation) const {
   // publish measured tf
   const Eigen::Vector3d p_base = observation.state.template segment<3>(6);
@@ -141,6 +205,9 @@ void LeggedRobotDummyVisualization::publishBaseTransform(ros::Time timeStamp, co
   tfBroadcasterPtr_->sendTransform(base_transform);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void LeggedRobotDummyVisualization::publishOptimizedStateTrajectory(ros::Time timeStamp, const vector_array_t& mpcStateTrajectory) {
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
@@ -151,9 +218,9 @@ void LeggedRobotDummyVisualization::publishOptimizedStateTrajectory(ros::Time ti
   std::vector<geometry_msgs::Point> basePose;
   basePose.reserve(mpcStateTrajectory.size());
 
-  std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const state_vector_array_t::value_type& state) {
-    const auto comPose = getComPose(state);
-    basePose.push_back(getPointMsg(getPositionInOrigin(comPose)));
+  std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_array_t::value_type& state) {
+    const auto comPose = ocs2::centroidal_model::getBasePose(state, centroidalModelInfo);
+    basePose.push_back(getPointMsg(comPose.head<3>()));
   });
 
   markerArray.markers.emplace_back(getLineMsg(std::move(basePose), red, TRAJECTORYLINEWIDTH));

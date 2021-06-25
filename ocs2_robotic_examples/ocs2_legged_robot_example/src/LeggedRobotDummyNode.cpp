@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   // Initial state
   ocs2::SystemObservation initObservation;
   initObservation.state = leggedRobotInterface.getInitialState();
-  initObservation.input = vector_t::Zero(INPUT_DIM_);
+  initObservation.input = vector_t::Zero(centroidalModelInfo.inputDim);
   initObservation.mode = ModeNumber::STANCE;
 
   // Initial command

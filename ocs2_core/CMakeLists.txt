@@ -277,6 +277,7 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
 )
 
 catkin_add_gtest(${PROJECT_NAME}_test_misc
+  test/misc/testBufferedValue.cpp
   test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
   test/misc/testSynchronized.cpp

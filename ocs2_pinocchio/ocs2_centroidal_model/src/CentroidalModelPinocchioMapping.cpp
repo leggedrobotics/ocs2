@@ -79,19 +79,19 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const ve
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
-  const Model& model = pinocchioInterfacePtr_->getModel();
-  const Data& data = pinocchioInterfacePtr_->getData();
-  const CentroidalModelInfo& info = centroidalModelInfo_;
+  const auto& model = pinocchioInterfacePtr_->getModel();
+  const auto& data = pinocchioInterfacePtr_->getData();
+  const auto& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
   assert(info.inputDim == input.rows());
 
   const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
-  const matrix6_t Ab = A.template leftCols<6>();
+  const Eigen::Matrix<SCALAR, 6, 6> Ab = A.template leftCols<6>();
   const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
 
   const auto jointVelocities = centroidal_model::getJointVelocities(input, info).head(info.actuatedDofNum);
 
-  vector6_t momentum = info.robotMass * centroidal_model::getNormalizedMomentum(state, info);
+  Eigen::Matrix<SCALAR, 6, 1> momentum = info.robotMass * centroidal_model::getNormalizedMomentum(state, info);
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
     momentum.noalias() -= A.rightCols(info.actuatedDofNum) * jointVelocities;
   }
@@ -109,8 +109,8 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
     -> std::pair<matrix_t, matrix_t> {
-  const Model& model = pinocchioInterfacePtr_->getModel();
-  const Data& data = pinocchioInterfacePtr_->getData();
+  const auto& model = pinocchioInterfacePtr_->getModel();
+  const auto& data = pinocchioInterfacePtr_->getData();
   const auto& info = centroidalModelInfo_;
   assert(info.stateDim == state.rows());
 
@@ -123,10 +123,11 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   matrix_t floatingBaseVelocitiesDerivativeState = matrix_t::Zero(6, info.stateDim);
   matrix_t floatingBaseVelocitiesDerivativeInput = matrix_t::Zero(6, info.inputDim);
   const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
-  const matrix6_t Ab = A.template leftCols<6>();
+  const Eigen::Matrix<SCALAR, 6, 6> Ab = A.template leftCols<6>();
   const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   floatingBaseVelocitiesDerivativeState.leftCols(6) = info.robotMass * Ab_inv;
 
+  using matrix6x_t = Eigen::Matrix<SCALAR, 6, Eigen::Dynamic>;
   matrix6x_t dhdq(6, info.generalizedCoordinatesNum);
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {

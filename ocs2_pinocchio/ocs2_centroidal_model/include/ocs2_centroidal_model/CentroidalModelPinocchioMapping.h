@@ -59,15 +59,6 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
 
   using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
   using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
-  using vector6_t = Eigen::Matrix<SCALAR, 6, 1>;
-  using vector3_t = Eigen::Matrix<SCALAR, 3, 1>;
-  using matrix3x_t = Eigen::Matrix<SCALAR, 3, Eigen::Dynamic>;
-  using matrix6x_t = Eigen::Matrix<SCALAR, 6, Eigen::Dynamic>;
-  using matrix3_t = Eigen::Matrix<SCALAR, 3, 3>;
-  using matrix6_t = Eigen::Matrix<SCALAR, 6, 6>;
-
-  using Model = pinocchio::ModelTpl<SCALAR>;
-  using Data = typename Model::Data;
   using CentroidalModelInfo = CentroidalModelInfoTpl<SCALAR>;
 
   explicit CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo);
@@ -114,9 +105,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   // TODO: Add Jacobian with respect to generalized accelerations as argument to get a full implicit dependence on the inputs
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
-  /** Returns a structure containing robot-specific information needed for the centroidal dynamics computations
-   *
-   * @return centroidalModelInfo_
+  /**
+   * Returns a structure containing robot-specific information needed for the centroidal dynamics computations.
    */
   const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
 

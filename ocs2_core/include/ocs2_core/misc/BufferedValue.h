@@ -34,11 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * Wraps a value with a thread-safe buffer.
- * A value remains constant and can be accessed through the get function until updateFromBuffer is called.
+ * Wraps a value with a thread-safe buffer. A value remains constant and can be accessed through the get function until
+ * updateFromBuffer is called.
  *
- * In the meantime, multiple threads can set new values to the buffer. The active value is not protected by a mutex, so only 1 thread should
- * use be the user of the active value (use both get() and updateFromBuffer()).
+ * In the meantime, multiple threads can set new values to the buffer. The active value is not protected by a mutex, so
+ * only one thread should access/modify the active value (i.e. not simultaneously calling get() and updateFromBuffer()).
  *
  * @tparam T : wrapped type
  */
@@ -71,11 +71,11 @@ class BufferedValue {
    */
   bool updateFromBuffer() {
     // Read buffer with a pointer swap to minimize time under the lock. The swapped value will be null if there was no new value set.
-    std::unique_ptr<T> updateValue_(nullptr);
-    buffer_.swap(updateValue_);
+    std::unique_ptr<T> updatedValuePtr(nullptr);
+    buffer_.swap(updatedValuePtr);
 
-    if (updateValue_) {
-      activeValue_ = std::move(*updateValue_);
+    if (updatedValuePtr != nullptr) {
+      activeValue_ = std::move(*updatedValuePtr);
       return true;
     } else {
       return false;

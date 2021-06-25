@@ -29,38 +29,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
-/**
- * Mapping between OCS2 and pinocchio state and input
- */
-template <typename SCALAR>
-class PinocchioStateInputMapping {
+
+class PinocchioCentroidalDynamicsAD {
  public:
-  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
-  using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+                                const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose);
 
-  PinocchioStateInputMapping() = default;
-  virtual ~PinocchioStateInputMapping() = default;
-  PinocchioStateInputMapping<SCALAR>& operator=(const PinocchioStateInputMapping<SCALAR>& rhs) = delete;
-  virtual PinocchioStateInputMapping<SCALAR>* clone() const = 0;
+  PinocchioCentroidalDynamicsAD(const PinocchioCentroidalDynamicsAD& rhs);
 
-  /** Get the pinocchio joint configuration from OCS2 state and input vectors. */
-  virtual vector_t getPinocchioJointPosition(const vector_t& state) const = 0;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const;
 
-  /** Get the pinocchio joint velocity from OCS2 state and input vectors. */
-  virtual vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const = 0;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
 
-  /** Mapps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu. */
-  virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const = 0;
+ private:
+  ad_vector_t getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+                            const ad_vector_t& state, const ad_vector_t& input);
 
-  /** If the mapping requires PinocchioInterface, use this method and set an updated PinocchioInterface. */
-  virtual void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {}
-
- protected:
-  PinocchioStateInputMapping(const PinocchioStateInputMapping<SCALAR>& rhs) = default;
+  std::unique_ptr<CppAdInterface> systemFlowMapCppAdInterfacePtr_;
 };
 
 }  // namespace ocs2

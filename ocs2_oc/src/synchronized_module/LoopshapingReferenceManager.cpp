@@ -34,27 +34,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LoopshapingReferenceManager::LoopshapingReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr,
+LoopshapingReferenceManager::LoopshapingReferenceManager(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr,
                                                          std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
-    : ReferenceManager(referenceManagerPtr->getTargetTrajectories(), referenceManagerPtr->getModeSchedule()),
-      referenceManagerPtr_(std::move(referenceManagerPtr)),
-      loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {}
+    : ReferenceManagerDecorator(std::move(referenceManagerPtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LoopshapingReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                                                   TargetTrajectories& targetTrajectories, ModeSchedule& modeSchedule) {
-  // to avoid copying, move references to the decorated ReferenceManager
-  referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
-  referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
-
-  // call the decorated class preSolverRun()
+void LoopshapingReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
   const vector_t systemState = loopshapingDefinitionPtr_->getSystemState(initState);
   referenceManagerPtr_->preSolverRun(initTime, finalTime, systemState);
-
-  // update the decorator's references
-  referenceManagerPtr_->swapReferences(targetTrajectories, modeSchedule);
-}
+};
 
 }  // namespace ocs2

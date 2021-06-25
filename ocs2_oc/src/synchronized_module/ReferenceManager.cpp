@@ -35,87 +35,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ReferenceManager::ReferenceManager(TargetTrajectories initialTargetTrajectories, ModeSchedule initialModeSchedule)
-    : targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
+    : ReferenceManagerInterface(),
+      targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-
-  if (modeScheduleUpdated_) {
-    swap(modeSchedule_, modeScheduleBuffer_);
-    modeScheduleUpdated_ = false;
-  }
-
-  if (targetTrajectoriesUpdated_) {
-    swap(targetTrajectories_, targetTrajectoriesBuffer_);
-    targetTrajectoriesUpdated_ = false;
-  }
-
-  modifyReferences(initTime, finalTime, initState, targetTrajectories_, modeSchedule_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ModeSchedule ReferenceManager::getModeScheduleImage() const {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  return modeSchedule_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-TargetTrajectories ReferenceManager::getTargetTrajectoriesImage() const {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  return targetTrajectories_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ReferenceManager::setModeSchedule(const ModeSchedule& modeSchedule) {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  modeScheduleBuffer_ = modeSchedule;
-  modeScheduleUpdated_ = true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ReferenceManager::setModeSchedule(ModeSchedule&& modeSchedule) {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  swap(modeScheduleBuffer_, modeSchedule);
-  modeScheduleUpdated_ = true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ReferenceManager::setTargetTrajectories(const TargetTrajectories& targetTrajectories) {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  targetTrajectoriesBuffer_ = targetTrajectories;
-  targetTrajectoriesUpdated_ = true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ReferenceManager::setTargetTrajectories(TargetTrajectories&& targetTrajectories) {
-  std::lock_guard<std::mutex> lock(dataMutex_);
-  swap(targetTrajectoriesBuffer_, targetTrajectories);
-  targetTrajectoriesUpdated_ = true;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ReferenceManager::swapReferences(TargetTrajectories& otherTargetTrajectories, ModeSchedule& otherModeSchedule) {
-  swap(targetTrajectories_, otherTargetTrajectories);
-  swap(modeSchedule_, otherModeSchedule);
-  targetTrajectoriesUpdated_ = false;
-  modeScheduleUpdated_ = false;
+  targetTrajectories_.updateFromBuffer();
+  modeSchedule_.updateFromBuffer();
+  modifyReferences(initTime, finalTime, initState, targetTrajectories_.get(), modeSchedule_.get());
 }
 
 }  // namespace ocs2

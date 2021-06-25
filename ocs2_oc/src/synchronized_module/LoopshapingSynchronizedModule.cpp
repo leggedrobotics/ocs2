@@ -40,7 +40,7 @@ LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
       synchronizedModulesPtrArray_(std::move(synchronizedModulesPtrArray)) {}
 
 void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                                                 const ReferenceManager& referenceManager) {
+                                                 const ReferenceManagerInterface& referenceManager) {
   if (!synchronizedModulesPtrArray_.empty()) {
     const auto systemState = loopshapingDefinitionPtr_->getSystemState(initState);
     for (auto& module : synchronizedModulesPtrArray_) {

@@ -29,30 +29,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include "ocs2_oc/synchronized_module/ReferenceManagerInterface.h"
 
 namespace ocs2 {
 
 /**
- * This wraps SolverSynchronizedModules and applies the loopshaping conversion before forwarding calls.
+ * Implements the basic decorator functionality for the ReferenceManager
+ * Forwards all methods to the wrapped object.
  */
-class LoopshapingSynchronizedModule : public SolverSynchronizedModule {
+class ReferenceManagerDecorator : public ReferenceManagerInterface {
  public:
-  LoopshapingSynchronizedModule(std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr,
-                                std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray);
+  explicit ReferenceManagerDecorator(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
+      : referenceManagerPtr_(std::move(referenceManagerPtr)) {}
 
-  ~LoopshapingSynchronizedModule() override = default;
+  ~ReferenceManagerDecorator() override = default;
+  ReferenceManagerDecorator& operator=(ReferenceManagerDecorator&&) = default;
+  ReferenceManagerDecorator(ReferenceManagerDecorator&&) = default;
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState, const ReferenceManagerInterface& referenceManager) override;
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) override {
+    referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
+  }
 
-  void postSolverRun(const PrimalSolution& primalSolution) override;
+  const ModeSchedule& getModeSchedule() const override { return referenceManagerPtr_->getModeSchedule(); };
+  void setModeSchedule(const ModeSchedule& modeSchedule) override { referenceManagerPtr_->setModeSchedule(modeSchedule); };
+  void setModeSchedule(ModeSchedule&& modeSchedule) override { referenceManagerPtr_->setModeSchedule(std::move(modeSchedule)); };
 
-  void add(std::shared_ptr<ocs2::SolverSynchronizedModule> module) { synchronizedModulesPtrArray_.push_back(std::move(module)); }
+  const TargetTrajectories& getTargetTrajectories() const override { return referenceManagerPtr_->getTargetTrajectories(); };
+  void setTargetTrajectories(const TargetTrajectories& targetTrajectories) override {
+    referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
+  };
+  void setTargetTrajectories(TargetTrajectories&& targetTrajectories) override {
+    referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
+  };
 
- private:
-  std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
-  std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModulesPtrArray_;
+ protected:
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;
 };
-
 }  // namespace ocs2

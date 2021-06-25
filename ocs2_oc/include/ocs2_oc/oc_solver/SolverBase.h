@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 namespace ocs2 {
@@ -51,7 +51,7 @@ class SolverBase {
   /**
    * Constructor.
    */
-  SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
+  SolverBase();
 
   /**
    * Default destructor.
@@ -92,7 +92,7 @@ class SolverBase {
   /**
    * Sets the ReferenceManager which manages both ModeSchedule and TargetTrajectories. This module updates before SynchronizedModules.
    */
-  void setReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr) {
+  void setReferenceManager(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr) {
     if (referenceManagerPtr == nullptr) {
       throw std::runtime_error("[SolverBase] ReferenceManager pointer cannot be a nullptr!");
     }
@@ -102,8 +102,8 @@ class SolverBase {
   /*
    * Gets the ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
-  ReferenceManager& getReferenceManager() { return *referenceManagerPtr_; }
-  const ReferenceManager& getReferenceManager() const { return *referenceManagerPtr_; }
+  ReferenceManagerInterface& getReferenceManager() { return *referenceManagerPtr_; }
+  const ReferenceManagerInterface& getReferenceManager() const { return *referenceManagerPtr_; }
 
   /**
    * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
@@ -219,7 +219,7 @@ class SolverBase {
 
  private:
   mutable std::mutex outputDisplayGuardMutex_;
-  std::shared_ptr<ReferenceManager> referenceManagerPtr_;  // this pointer cannot be nullptr
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr_;  // this pointer cannot be nullptr
   std::vector<std::shared_ptr<SolverSynchronizedModule>> synchronizedModules_;
 };
 

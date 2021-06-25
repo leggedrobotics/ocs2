@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 
 #include "ocs2_oc/oc_data/PrimalSolution.h"
-#include "ocs2_oc/synchronized_module/ReferenceManager.h"
+#include "ocs2_oc/synchronized_module/ReferenceManagerInterface.h"
 
 namespace ocs2 {
 
@@ -54,7 +54,7 @@ class SolverSynchronizedModule {
    * @param initState : State at the start of the MPC horizon
    * @param referenceManager : The ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
-  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState, const ReferenceManager& referenceManager) = 0;
+  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState, const ReferenceManagerInterface& referenceManager) = 0;
 
   /**
    * Method called right after the solver runs

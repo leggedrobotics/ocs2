@@ -42,26 +42,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RosReferenceManager::RosReferenceManager(std::unique_ptr<ReferenceManager> referenceManagerPtr, std::string topicPrefix)
-    : ReferenceManager(referenceManagerPtr->getTargetTrajectories(), referenceManagerPtr->getModeSchedule()),
-      referenceManagerPtr_(std::move(referenceManagerPtr)),
-      topicPrefix_(std::move(topicPrefix)) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void RosReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                                           TargetTrajectories& targetTrajectories, ModeSchedule& modeSchedule) {
-  // to avoid copying, move references to the decorated ReferenceManager
-  referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
-  referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
-
-  // call the decorated class preSolverRun()
-  referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
-
-  // update the decorator's references
-  referenceManagerPtr_->swapReferences(targetTrajectories, modeSchedule);
-}
+RosReferenceManager::RosReferenceManager(std::string topicPrefix, std::unique_ptr<ReferenceManagerInterface> referenceManagerPtr)
+    : ReferenceManagerDecorator(std::move(referenceManagerPtr)), topicPrefix_(std::move(topicPrefix)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -70,14 +52,14 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle) {
   // ModeSchedule
   auto modeScheduleCallback = [this](const ocs2_msgs::mode_schedule::ConstPtr& msg) {
     auto modeSchedule = ros_msg_conversions::readModeScheduleMsg(*msg);
-    this->setModeSchedule(std::move(modeSchedule));
+    referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
   };
   modeScheduleSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mode_schedule>(topicPrefix_ + "_mode_schedule", 1, modeScheduleCallback);
 
   // TargetTrajectories
   auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
-    this->setTargetTrajectories(std::move(targetTrajectories));
+    referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
   };
   targetTrajectoriesSubscriber_ =
       nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>(topicPrefix_ + "_mpc_target", 1, targetTrajectoriesCallback);

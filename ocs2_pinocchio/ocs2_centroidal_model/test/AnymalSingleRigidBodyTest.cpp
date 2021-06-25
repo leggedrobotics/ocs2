@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 #include "ocs2_centroidal_model/example/anymal/definitions.h"
-
 #include <ocs2_pinocchio_interface/urdf.h>
 
 using namespace ocs2;

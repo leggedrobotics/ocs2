@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_centroidal_model/CentroidalModelRbdConversions.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
 
@@ -59,7 +60,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   const auto baseOrientation = basePose.tail<3>();
 
   // Base Velocity in world frame
-  const auto& A = mappingPtr_->getCentroidalMomentumMatrix();
+  const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const Matrix6 Ab = A.template leftCols<6>();
   const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   const auto Aj = A.rightCols(info.actuatedDofNum);
@@ -70,9 +71,9 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   baseAngularVelocityInWorld_ = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(baseOrientation, derivativeEulerAnglesZyx_);
   baseVelocity.tail<3>() = baseAngularVelocityInWorld_;
 
+  const Vector6 centroidalMomentumRate = info.robotMass * getNormalizedCentroidalMomentumRate(*pinocchioInterfacePtr_, info, input);
   Adot_ = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
-  qbaseDdot_ = Ab_inv * (info.robotMass * mappingPtr_->getNormalizedCentroidalMomentumRate(input) - Adot_ * vPinocchio -
-                         Aj * jointAccelerations.head(info.actuatedDofNum));
+  qbaseDdot_ = Ab_inv * (centroidalMomentumRate - Adot_ * vPinocchio - Aj * jointAccelerations.head(info.actuatedDofNum));
 
   // Base Acceleration in world frame
   baseAcceleration.head<3>() = qbaseDdot_.head<3>();

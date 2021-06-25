@@ -76,7 +76,7 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd
   ad_vector_t stateDerivative(info.stateDim);
 
   // compute center of mass acceleration and derivative of the normalized angular momentum
-  stateDerivative.head(6) = mapping.getNormalizedCentroidalMomentumRate(input);
+  stateDerivative.head<6>() = getNormalizedCentroidalMomentumRate(pinocchioInterfaceCppAd, info, input);
 
   // derivatives of the floating base variables + joint velocities
   stateDerivative.tail(info.generalizedCoordinatesNum) = mapping.getPinocchioJointVelocity(state, input);

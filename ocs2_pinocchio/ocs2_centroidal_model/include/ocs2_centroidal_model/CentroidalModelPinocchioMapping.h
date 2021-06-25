@@ -120,49 +120,6 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    */
   const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
 
-  /** Returns the centroidal momentum matrix from the pinocchioInterface data
-   * @return centroidal momentum matrix from data.Ag
-   *
-   * @note requires pinocchioInterface to be updated with:
-   *       ocs2::updateCentroidalDynamics(interface, info, q)
-   */
-  const matrix6x_t& getCentroidalMomentumMatrix() const;
-
-  /**
-   * Computes the CoM to contact point position in world frame
-   *
-   * @param [in] contactIndex: index of the contact point
-   * @return: position of the contact point w.r.t CoM expressed in world frame
-   *
-   * @note requires pinocchioInterface to be updated with:
-   *       ocs2::updateCentroidalDynamics(interface, info, q)
-   */
-  vector3_t getPositionComToContactPointInWorldFrame(size_t contactIndex) const;
-
-  /**
-   * Computes the CoM to contact point translational Jacobian in world frame
-   *
-   * @param [in] contactIndex: index of the contact point
-   * @return: CoM to contact point translational Jacobian expressed in world frame
-   *
-   * @note requires pinocchioInterface to be updated with:
-   *       ocs2::updateCentroidalDynamics(interface, info, q) (should be called first)
-   *       pinocchio::computeJointJacobians(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   */
-  matrix3x_t getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const;
-
-  /**
-   * Computes the derivative of the normalized centroidal momentum (linear + angular) expressed in the centroidal frame
-   *
-   * @param [in] input: system input vector
-   * @return: time derivative of normalized centroidal momentum
-   *
-   * @note requires pinocchioInterface to be updated with:
-   *       ocs2::updateCentroidalDynamics(interface, info, q)
-   */
-  vector6_t getNormalizedCentroidalMomentumRate(const vector_t& input) const;
-
  private:
   CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs);
 

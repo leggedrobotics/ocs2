@@ -49,7 +49,7 @@ include_directories(
   include
   test/include
   ${pinocchio_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${Boost_LIBRARIES}
 )
@@ -63,7 +63,8 @@ add_library(${PROJECT_NAME}
   src/PinocchioCentroidalDynamicsAD.cpp
   src/CentroidalModelRbdConversions.cpp
   src/CentroidalModelPinocchioMapping.cpp
-  src/CentroidalModelInfo.cpp)
+  src/CentroidalModelInfo.cpp
+)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -74,7 +75,6 @@ target_compile_options(${PROJECT_NAME} PUBLIC
   ${pinocchio_CFLAGS_OTHER}
   -Wno-invalid-partial-specialization # to silence warning with unsupported Eigen Tensor
 )
-
 
 #########################
 ###   CLANG TOOLING   ###

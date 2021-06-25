@@ -50,7 +50,7 @@ class PinocchioCentroidalDynamics {
    * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
    * which are needed for pinocchio functions and algorithms
    */
-  explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping) : mappingPtr_(mapping.clone()) {}
+  explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping);
 
   ~PinocchioCentroidalDynamics() = default;
 
@@ -58,7 +58,10 @@ class PinocchioCentroidalDynamics {
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
    * @note The pinocchio interface must be set before calling the getters.
    */
-  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { mappingPtr_->setPinocchioInterface(pinocchioInterface); }
+  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) {
+    pinocchioInterfacePtr_ = &pinocchioInterface;
+    mappingPtr_->setPinocchioInterface(pinocchioInterface);
+  }
 
   /** Computes system flow map x_dot = f(x, u)
    *
@@ -86,7 +89,7 @@ class PinocchioCentroidalDynamics {
 
  private:
   /** Copy Constructor */
-  PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs) : mappingPtr_(rhs.mappingPtr_->clone()) {}
+  PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs);
 
   /**
    * Computes the gradients of the normalized centroidal momentum rate (linear + angular) expressed in the centroidal frame
@@ -95,8 +98,9 @@ class PinocchioCentroidalDynamics {
    * @param [in] input: system input vector
    * @return: time derivative of normalized centroidal momentum (required for the linear approximation)
    */
-  void getNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
+  void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
+  const PinocchioInterface* pinocchioInterfacePtr_;
   std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> mappingPtr_;
 
   // partial derivatives of the system dynamics

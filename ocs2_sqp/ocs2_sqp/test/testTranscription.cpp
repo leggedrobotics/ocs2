@@ -71,8 +71,8 @@ TEST(test_transcription, terminal_performance) {
 
   // cost
   auto costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(nx, nu), ocs2::qp_solver::getRandomCost(nx, nu));
-  const ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {ocs2::vector_t::Random(nx)}, {ocs2::vector_t::Random(nu)});
-  costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  const ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(nx)}, {ocs2::vector_t::Random(nu)});
+  costPtr->setTargetTrajectoriesPtr(&targetTrajectories);
 
   scalar_t t = 0.5;
   const ocs2::vector_t x = ocs2::vector_t::Random(nx);

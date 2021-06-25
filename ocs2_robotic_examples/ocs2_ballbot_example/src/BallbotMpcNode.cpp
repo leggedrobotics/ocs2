@@ -30,11 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/init.h>
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
-#include "ocs2_quadrotor_example/QuadrotorInterface.h"
+#include "ocs2_ballbot_example/BallbotInterface.h"
 
 int main(int argc, char** argv) {
-  const std::string robotName = "quadrotor";
+  const std::string robotName = "ballbot";
 
   // task file
   std::vector<std::string> programArgs{};
@@ -42,17 +43,22 @@ int main(int argc, char** argv) {
   if (programArgs.size() <= 1) {
     throw std::runtime_error("No task file specified. Aborting.");
   }
-  std::string taskFileFolderName(programArgs[1]);
+  std::string taskFileFolderName = std::string(programArgs[1]);
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  ocs2::quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
+  ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+
+  // ReferenceManager
+  auto rosReferenceManagerPtr = ocs2::RosReferenceManager::create<ocs2::ReferenceManager>(robotName);
+  rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // Launch MPC ROS node
-  auto mpcPtr = quadrotorInterface.getMpc();
+  auto mpcPtr = ballbotInterface.getMpc();
+  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
   ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 

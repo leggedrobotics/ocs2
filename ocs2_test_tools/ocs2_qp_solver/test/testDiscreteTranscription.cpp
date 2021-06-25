@@ -46,9 +46,9 @@ class DiscreteTranscriptionTest : public testing::Test {
     srand(0);
     cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
                                         ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
-    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    cost->setTargetTrajectoriesPtr(&targetTrajectories);
     system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     constraints =
         ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
@@ -103,7 +103,7 @@ class DiscreteTranscriptionTest : public testing::Test {
   }
 
   std::unique_ptr<ocs2::CostFunctionBase> cost;
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   std::unique_ptr<ocs2::ConstraintBase> constraints;
   ocs2::qp_solver::ContinuousTrajectory linearization;

@@ -40,7 +40,7 @@ TEST(DoubleIntegratorTest, pyBindings) {
   const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
   bindings.setObservation(0.0, state, zeroInput);
 
-  bindings.setTargetTrajectories(ocs2::CostDesiredTrajectories({0.0}, {state}, {zeroInput}));
+  bindings.setTargetTrajectories(ocs2::TargetTrajectories({0.0}, {state}, {zeroInput}));
 
   bindings.advanceMpc();
 

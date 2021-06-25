@@ -74,11 +74,11 @@ int main(int argc, char** argv) {
   initObservation.time = 0.0;
 
   // initial command
-  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {cartPoleInterface.getInitialTarget()},
-                                                                  {ocs2::vector_t::Zero(ocs2::cartpole::INPUT_DIM)});
+  const ocs2::TargetTrajectories initTargetTrajectories({0.0}, {cartPoleInterface.getInitialTarget()},
+                                                        {ocs2::vector_t::Zero(ocs2::cartpole::INPUT_DIM)});
 
   // Run dummy (loops while ros is ok)
-  dummyCartpole.run(initObservation, initCostDesiredTrajectories);
+  dummyCartpole.run(initObservation, initTargetTrajectories);
 
   return 0;
 }

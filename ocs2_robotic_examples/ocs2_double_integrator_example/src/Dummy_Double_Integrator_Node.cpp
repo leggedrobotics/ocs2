@@ -74,11 +74,11 @@ int main(int argc, char** argv) {
   initObservation.input = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);
 
   // initial command
-  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {doubleIntegratorInterface.getInitialTarget()},
-                                                                  {ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM)});
+  const ocs2::TargetTrajectories initTargetTrajectories({0.0}, {doubleIntegratorInterface.getInitialTarget()},
+                                                        {ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM)});
 
   // Run dummy (loops while ros is ok)
-  dummyDoubleIntegrator.run(initObservation, initCostDesiredTrajectories);
+  dummyDoubleIntegrator.run(initObservation, initTargetTrajectories);
 
   return 0;
 }

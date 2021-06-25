@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
 namespace ocs2 {
+namespace centroidal_model {
 
 template <typename Derived, typename SCALAR>
 Eigen::Block<Derived, 3, 1> getContactForce(Eigen::MatrixBase<Derived>& input, size_t contactIndex,
@@ -140,4 +141,20 @@ const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<
   return Eigen::Block<const Derived, -1, 1>(state.derived(), 12, 0, info.actuatedDofNum, 1);
 }
 
+template <typename Derived, typename SCALAR>
+Eigen::Block<Derived, -1, 1> getGeneralizedCoordinate(Eigen::MatrixBase<Derived>& state, const CentroidalModelInfoTpl<SCALAR>& info) {
+  assert(state.rows() == info.stateDim);
+  assert(state.cols() == 1);
+  return Eigen::Block<Derived, -1, 1>(state.derived(), 6, 0, info.generalizedCoordinatesNum, 1);
+}
+
+template <typename Derived, typename SCALAR>
+const Eigen::Block<const Derived, -1, 1> getGeneralizedCoordinate(const Eigen::MatrixBase<Derived>& state,
+                                                                  const CentroidalModelInfoTpl<SCALAR>& info) {
+  assert(state.rows() == info.stateDim);
+  assert(state.cols() == 1);
+  return Eigen::Block<const Derived, -1, 1>(state.derived(), 6, 0, info.generalizedCoordinatesNum, 1);
+}
+
+}  // namespace centroidal_model
 }  // namespace ocs2

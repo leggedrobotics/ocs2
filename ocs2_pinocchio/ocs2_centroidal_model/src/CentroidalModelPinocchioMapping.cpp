@@ -31,6 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_centroidal_model/helpers.h"
 #include "ocs2_centroidal_model/utils.h"
 
+#include <pinocchio/algorithm/centroidal-derivatives.hpp>
+#include <pinocchio/algorithm/frames.hpp>
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -44,10 +47,31 @@ CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const C
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
+CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs)
+    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(rhs.centroidalModelInfo_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+CentroidalModelPinocchioMapping<SCALAR>* CentroidalModelPinocchioMapping<SCALAR>::clone() const {
+  return new CentroidalModelPinocchioMapping<SCALAR>(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+void CentroidalModelPinocchioMapping<SCALAR>::setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {
+  pinocchioInterfacePtr_ = &pinocchioInterface;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
-  assert(centroidalModelInfo_.stateDim == state.rows());
-  const Model& model = pinocchioInterfacePtr_->getModel();
-  return state.segment(6, centroidalModelInfo_.generalizedCoordinatesNum);
+  return centroidal_model::getGeneralizedCoordinate(state, centroidalModelInfo_);
 }
 
 /******************************************************************************************************/
@@ -66,8 +90,8 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
   const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
 
   vector_t vPinocchio(info.generalizedCoordinatesNum);
-  const auto normalizedMomentum = getNormalizedMomentum(state, info);
-  const auto jointVelocities = getJointVelocities(input, info).head(info.actuatedDofNum);
+  const auto normalizedMomentum = centroidal_model::getNormalizedMomentum(state, info);
+  const auto jointVelocities = centroidal_model::getJointVelocities(input, info).head(info.actuatedDofNum);
   vector6_t momentum = info.robotMass * normalizedMomentum;
 
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
@@ -107,18 +131,27 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
 
   matrix6x_t dhdq;
   dhdq.resize(6, info.generalizedCoordinatesNum);
-  if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    // TODO: Check how to compute the correct value for dhdq
-    const pinocchio::InertiaTpl<SCALAR>& Ytot = data.oYcrb[0];
-    const typename pinocchio::InertiaTpl<SCALAR>::Vector3& com = Ytot.lever();
-    pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(matrix6x_t, dhdq));
-    dhdq.template leftCols<3>().setZero();
-    const auto Aj = A.rightCols(info.actuatedDofNum);
-    floatingBaseVelocitiesDerivativeState.rightCols(info.generalizedCoordinatesNum).noalias() = -Ab_inv * dhdq;
-    floatingBaseVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).noalias() = -Ab_inv * Aj;
-  } else if (info.centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    dhdq = data.dHdq;
-    floatingBaseVelocitiesDerivativeState.middleCols(6, 6).noalias() = -Ab_inv * dhdq.leftCols(6);
+  switch (info.centroidalModelType) {
+    case CentroidalModelType::FullCentroidalDynamics: {
+      // TODO: Check how to compute the correct value for dhdq
+      const pinocchio::InertiaTpl<SCALAR>& Ytot = data.oYcrb[0];
+      const typename pinocchio::InertiaTpl<SCALAR>::Vector3& com = Ytot.lever();
+      pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(matrix6x_t, dhdq));
+      dhdq.template leftCols<3>().setZero();
+      const auto Aj = A.rightCols(info.actuatedDofNum);
+      floatingBaseVelocitiesDerivativeState.rightCols(info.generalizedCoordinatesNum).noalias() = -Ab_inv * dhdq;
+      floatingBaseVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).noalias() = -Ab_inv * Aj;
+      break;
+    }
+    case CentroidalModelType::SingleRigidBodyDynamics: {
+      dhdq = data.dHdq;
+      floatingBaseVelocitiesDerivativeState.middleCols(6, 6).noalias() = -Ab_inv * dhdq.leftCols(6);
+      break;
+    }
+    default: {
+      throw std::runtime_error("The chosen centroidal model type is not supported.");
+      break;
+    }
   }
 
   matrix_t dvdx = matrix_t::Zero(info.generalizedCoordinatesNum, info.stateDim);
@@ -174,12 +207,12 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToConta
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getNormalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
   const auto& info = centroidalModelInfo_;
-  const vector3_t gravityVector = vector3_t(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
+  const vector3_t gravityVector(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
   vector6_t normalizedCentroidalMomentumRate;
   normalizedCentroidalMomentumRate << gravityVector, vector3_t::Zero();
 
-  auto getForce = [&](size_t index) { return getContactForce(input, index, info); };
-  auto getTorque = [&](size_t index) { return getContactTorque(input, index, info); };
+  auto getForce = [&](size_t index) { return centroidal_model::getContactForce(input, index, info); };
+  auto getTorque = [&](size_t index) { return centroidal_model::getContactTorque(input, index, info); };
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     const auto contactForceInWorldFrame = getForce(i);

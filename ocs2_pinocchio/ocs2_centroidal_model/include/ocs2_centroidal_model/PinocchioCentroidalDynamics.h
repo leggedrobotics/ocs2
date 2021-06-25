@@ -47,17 +47,18 @@ class PinocchioCentroidalDynamics {
 
   /** Constructor
    *
-   * @param pinocchioInterface: predefined pinocchio interface for a robot
    * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
    * which are needed for pinocchio functions and algorithms
    */
-  PinocchioCentroidalDynamics(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& mapping);
+  explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping) : mappingPtr_(mapping.clone()) {}
 
-  /** Copy Constructor */
-  PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs)
-      : pinocchioInterfacePtr_(rhs.pinocchioInterfacePtr_), mappingPtr_(rhs.mappingPtr_) {}
+  ~PinocchioCentroidalDynamics() = default;
 
-  virtual ~PinocchioCentroidalDynamics() = default;
+  /** Set the pinocchio interface for caching.
+   * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
+   * @note The pinocchio interface must be set before calling the getters.
+   */
+  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { mappingPtr_->setPinocchioInterface(pinocchioInterface); }
 
   /** Computes system flow map x_dot = f(x, u)
    *
@@ -66,7 +67,8 @@ class PinocchioCentroidalDynamics {
    * @param input: system input vector
    * @return system flow map x_dot = f(x, u)
    *
-   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first,
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamics(interface, info, q)
    */
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input);
 
@@ -77,11 +79,15 @@ class PinocchioCentroidalDynamics {
    * @param input: system input vector
    * @return linear approximation of system flow map x_dot = f(x, u)
    *
-   * @warning: The function updateCentroidalDynamicsDerivatives(interface, info, q, v) should have been called first
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamicsDerivatives(interface, info, q, v)
    */
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 
  private:
+  /** Copy Constructor */
+  PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs) : mappingPtr_(rhs.mappingPtr_->clone()) {}
+
   /**
    * Computes the gradients of the normalized centroidal momentum rate (linear + angular) expressed in the centroidal frame
    *
@@ -91,8 +97,7 @@ class PinocchioCentroidalDynamics {
    */
   void getNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
-  const PinocchioInterface* pinocchioInterfacePtr_;
-  CentroidalModelPinocchioMapping<scalar_t>* mappingPtr_;
+  std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> mappingPtr_;
 
   // partial derivatives of the system dynamics
   Matrix3x normalizedLinearMomentumRateDerivativeQ_;

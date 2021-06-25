@@ -48,7 +48,7 @@ static const std::vector<std::string> anymal3DofContactNames = {"LF_FOOT", "RF_F
 static const std::vector<std::string> anymal6DofContactNames = {};
 static const std::string anymalUrdfPath =
   ros::package::getPath("ocs2_centroidal_model") + "/test/include/ocs2_centroidal_model/example/anymal/anymal.urdf";
-static const std::string anymalCppAdModelPath = ros::package::getPath("ocs2_centroidal_model") + "/test/CppAD_generated";
+static const std::string anymalCppAdModelPath = ros::package::getPath("ocs2_centroidal_model") + "/test/cppad_generated";
 
 static const ocs2::vector_t anymalInitialState = []() {
   ocs2::vector_t x0 = ocs2::vector_t(size_t(anymal::STATE_DIM));
@@ -85,4 +85,20 @@ static const ocs2::vector_t anymalInitialState = []() {
   return x0;
 }();
 
+static void visualMatrixCompare(const ocs2::matrix_t& A, const ocs2::matrix_t& B, double tol = 1e-6) {
+  if (A.rows() != B.rows() || A.cols() != B.cols()) {
+    std::cerr << "Matrices are not of same size\n";
+  }
+  for (int row = 0; row < A.rows(); row++) {
+    for (int col = 0; col < A.cols(); col++) {
+      const double error = std::abs(A(row, col) - B(row, col));
+      if (error < tol) {
+        std::cerr << " ";
+      } else {
+        std::cerr << " (" << row << ", " << col << "): " << error;
+      }
+    }
+    std::cerr << '\n';
+  }
+}
 }  // namespace ocs2

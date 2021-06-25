@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * End-effector Kinematics implmentation using pinocchio.
+ * End-effector Kinematics implementation using pinocchio.
  *
  * This class uses caching of computation done on the pinocchio::Data in PinocchiInterface.
  * See in the method documentation which pinocchio functions are required to update pinocchio::Data.

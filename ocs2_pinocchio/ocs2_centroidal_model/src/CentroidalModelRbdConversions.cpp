@@ -50,7 +50,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   const auto& model = pinocchioInterfacePtr_->getModel();
   auto& data = pinocchioInterfacePtr_->getData();
   const auto& info = mappingPtr_->getCentroidalModelInfo();
-  const vector_t qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
+  const auto qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
 
   updateCentroidalDynamics(*pinocchioInterfacePtr_, info, qPinocchio);
 
@@ -62,7 +62,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   // Base Velocity in world frame
   const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const Matrix6 Ab = A.template leftCols<6>();
-  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   const auto Aj = A.rightCols(info.actuatedDofNum);
 
   const vector_t vPinocchio = mappingPtr_->getPinocchioJointVelocity(state, input);
@@ -71,9 +71,11 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   baseAngularVelocityInWorld_ = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(baseOrientation, derivativeEulerAnglesZyx_);
   baseVelocity.tail<3>() = baseAngularVelocityInWorld_;
 
-  const Vector6 centroidalMomentumRate = info.robotMass * getNormalizedCentroidalMomentumRate(*pinocchioInterfacePtr_, info, input);
   Adot_ = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
-  qbaseDdot_ = Ab_inv * (centroidalMomentumRate - Adot_ * vPinocchio - Aj * jointAccelerations.head(info.actuatedDofNum));
+  Vector6 centroidalMomentumRate = info.robotMass * getNormalizedCentroidalMomentumRate(*pinocchioInterfacePtr_, info, input);
+  centroidalMomentumRate.noalias() -= Adot_ * vPinocchio;
+  centroidalMomentumRate.noalias() -= Aj * jointAccelerations.head(info.actuatedDofNum);
+  qbaseDdot_.noalias() = Ab_inv * centroidalMomentumRate;
 
   // Base Acceleration in world frame
   baseAcceleration.head<3>() = qbaseDdot_.head<3>();

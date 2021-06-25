@@ -94,8 +94,7 @@ ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PinocchioCentroidalDynamicsAD::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
-  vector_t stateInput(state.rows() + input.rows());
-  stateInput << state, input;
+  const vector_t stateInput = (vector_t(state.rows() + input.rows()) << state, input).finished();
   return systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);
 }
 
@@ -104,15 +103,13 @@ vector_t PinocchioCentroidalDynamicsAD::getValue(scalar_t time, const vector_t& 
 /******************************************************************************************************/
 VectorFunctionLinearApproximation PinocchioCentroidalDynamicsAD::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                         const vector_t& input) const {
-  vector_t stateInput(state.rows() + input.rows());
-  stateInput << state, input;
-  const vector_t dynamicsValues = systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);
+  const vector_t stateInput = (vector_t(state.rows() + input.rows()) << state, input).finished();
+  VectorFunctionLinearApproximation approx;
+  approx.f = systemFlowMapCppAdInterfacePtr_->getFunctionValue(stateInput);
   const matrix_t dynamicsJacobian = systemFlowMapCppAdInterfacePtr_->getJacobian(stateInput);
-  VectorFunctionLinearApproximation dynamics;
-  dynamics.f = dynamicsValues;
-  dynamics.dfdx = dynamicsJacobian.leftCols(state.rows());
-  dynamics.dfdu = dynamicsJacobian.rightCols(input.rows());
-  return dynamics;
+  approx.dfdx = dynamicsJacobian.leftCols(state.rows());
+  approx.dfdu = dynamicsJacobian.rightCols(input.rows());
+  return approx;
 }
 
 }  // namespace ocs2

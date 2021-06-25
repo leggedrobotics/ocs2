@@ -87,18 +87,16 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
 
   const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const matrix6_t Ab = A.template leftCols<6>();
-  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
 
-  vector_t vPinocchio(info.generalizedCoordinatesNum);
-  const auto normalizedMomentum = centroidal_model::getNormalizedMomentum(state, info);
   const auto jointVelocities = centroidal_model::getJointVelocities(input, info).head(info.actuatedDofNum);
-  vector6_t momentum = info.robotMass * normalizedMomentum;
 
+  vector6_t momentum = info.robotMass * centroidal_model::getNormalizedMomentum(state, info);
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    const auto Aj = A.rightCols(info.actuatedDofNum);
-    momentum -= Aj * jointVelocities;
+    momentum.noalias() -= A.rightCols(info.actuatedDofNum) * jointVelocities;
   }
 
+  vector_t vPinocchio(info.generalizedCoordinatesNum);
   vPinocchio.template head<6>().noalias() = Ab_inv * momentum;
   vPinocchio.tail(info.actuatedDofNum) = jointVelocities;
 
@@ -126,11 +124,10 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   matrix_t floatingBaseVelocitiesDerivativeInput = matrix_t::Zero(6, info.inputDim);
   const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const matrix6_t Ab = A.template leftCols<6>();
-  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   floatingBaseVelocitiesDerivativeState.leftCols(6) = info.robotMass * Ab_inv;
 
-  matrix6x_t dhdq;
-  dhdq.resize(6, info.generalizedCoordinatesNum);
+  matrix6x_t dhdq(6, info.generalizedCoordinatesNum);
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
       // TODO: Check how to compute the correct value for dhdq
@@ -160,7 +157,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   dvdu << floatingBaseVelocitiesDerivativeInput, jointVelocitiesDerivativeInput;
   matrix_t dfdx = matrix_t::Zero(Jq.rows(), centroidalModelInfo_.stateDim);
   dfdx.middleCols(6, info.generalizedCoordinatesNum) = Jq;
-  dfdx += Jv * dvdx;
+  dfdx.noalias() += Jv * dvdx;
   const matrix_t dfdu = Jv * dvdu;
   return {dfdx, dfdu};
 }

@@ -289,7 +289,7 @@ Eigen::Matrix<SCALAR_T, 6, 1> getNormalizedCentroidalMomentumRate(const Pinocchi
     const auto contactForceInWorldFrame = centroidal_model::getContactForces(input, i, info);
     const auto positionComToContactPointInWorldFrame = getPositionComToContactPointInWorldFrame(interface, info, i);
     normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
-    normalizedCentroidalMomentumRate.template tail<3>() += positionComToContactPointInWorldFrame.cross(contactForceInWorldFrame);
+    normalizedCentroidalMomentumRate.template tail<3>().noalias() += positionComToContactPointInWorldFrame.cross(contactForceInWorldFrame);
   }  // end of i loop
 
   for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
@@ -297,10 +297,11 @@ Eigen::Matrix<SCALAR_T, 6, 1> getNormalizedCentroidalMomentumRate(const Pinocchi
     const auto contactTorqueInWorldFrame = centroidal_model::getContactTorques(input, i, info);
     const auto positionComToContactPointInWorldFrame = getPositionComToContactPointInWorldFrame(interface, info, i);
     normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
-    normalizedCentroidalMomentumRate.template tail<3>() +=
+    normalizedCentroidalMomentumRate.template tail<3>().noalias() +=
         positionComToContactPointInWorldFrame.cross(contactForceInWorldFrame) + contactTorqueInWorldFrame;
   }  // end of i loop
 
+  // normalize by the total mass
   normalizedCentroidalMomentumRate /= info.robotMass;
 
   return normalizedCentroidalMomentumRate;

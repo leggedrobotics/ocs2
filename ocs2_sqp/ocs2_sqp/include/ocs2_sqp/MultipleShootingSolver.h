@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/misc/ThreadPool.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_core/thread_support/ThreadPool.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include <hpipm_catkin/HpipmInterface.h>

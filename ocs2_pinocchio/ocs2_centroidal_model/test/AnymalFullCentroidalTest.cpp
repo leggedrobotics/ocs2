@@ -31,14 +31,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 #include "ocs2_centroidal_model/example/anymal/definitions.h"
-#include "ocs2_centroidal_model/utils.h"
-
 #include <ocs2_pinocchio_interface/urdf.h>
 
 using namespace ocs2;
+using namespace centroidal_model;
 
-static PinocchioInterface getAnymalPinocchioInterface() {
+inline PinocchioInterface getAnymalPinocchioInterface() {
   // build a joint model having just 2 joints: one translational joint and one spherical joint
   pinocchio::JointModelComposite jointComposite(2);
   jointComposite.addJoint(pinocchio::JointModelTranslation());
@@ -128,7 +128,7 @@ class AnymalFullCentroidalModelTest : public testing::Test {
   std::shared_ptr<PinocchioCentroidalDynamicsAD> anymalKinoCentroidalDynamicsAdPtr;
 };
 
-static void compareApproximation(const ocs2::VectorFunctionLinearApproximation& a, const ocs2::VectorFunctionLinearApproximation& b,
+inline void compareApproximation(const ocs2::VectorFunctionLinearApproximation& a, const ocs2::VectorFunctionLinearApproximation& b,
                                  double tol = 1e-6) {
   if (!a.f.isApprox(b.f)) {
     std::cerr << "compare dynamics\n";

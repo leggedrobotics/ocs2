@@ -31,12 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 #include "ocs2_centroidal_model/example/anymal/definitions.h"
-#include "ocs2_centroidal_model/utils.h"
-
 #include <ocs2_pinocchio_interface/urdf.h>
 
 using namespace ocs2;
+using namespace centroidal_model;
 
 static PinocchioInterface getAnymalPinocchioInterface() {
   // build a joint model having just 2 joints: one translational joint and one spherical joint

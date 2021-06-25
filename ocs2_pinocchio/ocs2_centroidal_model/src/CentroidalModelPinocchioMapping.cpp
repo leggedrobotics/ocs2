@@ -28,11 +28,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
-#include "ocs2_centroidal_model/helpers.h"
-#include "ocs2_centroidal_model/utils.h"
 
 #include <pinocchio/algorithm/centroidal-derivatives.hpp>
 #include <pinocchio/algorithm/frames.hpp>
+#include "ocs2_centroidal_model/AccessHelperFunctions.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
 
@@ -71,7 +71,7 @@ void CentroidalModelPinocchioMapping<SCALAR>::setPinocchioInterface(const Pinocc
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
-  return centroidal_model::getGeneralizedCoordinate(state, centroidalModelInfo_);
+  return centroidal_model::getGeneralizedCoordinates(state, centroidalModelInfo_);
 }
 
 /******************************************************************************************************/
@@ -85,20 +85,18 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
   assert(info.stateDim == state.rows());
   assert(info.inputDim == input.rows());
 
-  const auto& A = getCentroidalMomentumMatrix();
+  const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const matrix6_t Ab = A.template leftCols<6>();
-  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
 
-  vector_t vPinocchio(info.generalizedCoordinatesNum);
-  const auto normalizedMomentum = centroidal_model::getNormalizedMomentum(state, info);
   const auto jointVelocities = centroidal_model::getJointVelocities(input, info).head(info.actuatedDofNum);
-  vector6_t momentum = info.robotMass * normalizedMomentum;
 
+  vector6_t momentum = info.robotMass * centroidal_model::getNormalizedMomentum(state, info);
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    const auto Aj = A.rightCols(info.actuatedDofNum);
-    momentum -= Aj * jointVelocities;
+    momentum.noalias() -= A.rightCols(info.actuatedDofNum) * jointVelocities;
   }
 
+  vector_t vPinocchio(info.generalizedCoordinatesNum);
   vPinocchio.template head<6>().noalias() = Ab_inv * momentum;
   vPinocchio.tail(info.actuatedDofNum) = jointVelocities;
 
@@ -124,13 +122,12 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   // TODO: move getFloatingBaseCentroidalMomentumMatrixInverse(Ab) to PreComputation
   matrix_t floatingBaseVelocitiesDerivativeState = matrix_t::Zero(6, info.stateDim);
   matrix_t floatingBaseVelocitiesDerivativeInput = matrix_t::Zero(6, info.inputDim);
-  const auto& A = getCentroidalMomentumMatrix();
+  const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const matrix6_t Ab = A.template leftCols<6>();
-  const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   floatingBaseVelocitiesDerivativeState.leftCols(6) = info.robotMass * Ab_inv;
 
-  matrix6x_t dhdq;
-  dhdq.resize(6, info.generalizedCoordinatesNum);
+  matrix6x_t dhdq(6, info.generalizedCoordinatesNum);
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
       // TODO: Check how to compute the correct value for dhdq
@@ -160,77 +157,9 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
   dvdu << floatingBaseVelocitiesDerivativeInput, jointVelocitiesDerivativeInput;
   matrix_t dfdx = matrix_t::Zero(Jq.rows(), centroidalModelInfo_.stateDim);
   dfdx.middleCols(6, info.generalizedCoordinatesNum) = Jq;
-  dfdx += Jv * dvdx;
+  dfdx.noalias() += Jv * dvdx;
   const matrix_t dfdu = Jv * dvdu;
   return {dfdx, dfdu};
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getCentroidalMomentumMatrix() const -> const matrix6x_t& {
-  const Data& data = pinocchioInterfacePtr_->getData();
-  return data.Ag;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getPositionComToContactPointInWorldFrame(size_t contactIndex) const -> vector3_t {
-  const Data& data = pinocchioInterfacePtr_->getData();
-  return (data.oMf[centroidalModelInfo_.endEffectorFrameIndices[contactIndex]].translation() - data.com[0]);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const
-    -> matrix3x_t {
-  // TODO: Need to copy data here because getFrameJacobian() modifies data. Will be fixed in pinocchio version 3.
-  const Model& model = pinocchioInterfacePtr_->getModel();
-  Data data = pinocchioInterfacePtr_->getData();
-  const auto& info = centroidalModelInfo_;
-  matrix6x_t jacobianWorldToContactPointInWorldFrame;
-  jacobianWorldToContactPointInWorldFrame.setZero(6, info.generalizedCoordinatesNum);
-  pinocchio::getFrameJacobian(model, data, info.endEffectorFrameIndices[contactIndex], pinocchio::LOCAL_WORLD_ALIGNED,
-                              jacobianWorldToContactPointInWorldFrame);
-  matrix3x_t J_com = getCentroidalMomentumMatrix().template topRows<3>() / info.robotMass;
-  return (jacobianWorldToContactPointInWorldFrame.template topRows<3>() - J_com);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getNormalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
-  const auto& info = centroidalModelInfo_;
-  const vector3_t gravityVector(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
-  vector6_t normalizedCentroidalMomentumRate;
-  normalizedCentroidalMomentumRate << gravityVector, vector3_t::Zero();
-
-  auto getForce = [&](size_t index) { return centroidal_model::getContactForce(input, index, info); };
-  auto getTorque = [&](size_t index) { return centroidal_model::getContactTorque(input, index, info); };
-
-  for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    const auto contactForceInWorldFrame = getForce(i);
-    normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
-    normalizedCentroidalMomentumRate.template tail<3>() += getPositionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame);
-  }
-
-  for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
-    const auto contactForceInWorldFrame = getForce(i);
-    const auto contactTorqueInWorldFrame = getTorque(i);
-    normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
-    normalizedCentroidalMomentumRate.template tail<3>() +=
-        getPositionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame) + contactTorqueInWorldFrame;
-  }
-
-  normalizedCentroidalMomentumRate = normalizedCentroidalMomentumRate / info.robotMass;
-
-  return normalizedCentroidalMomentumRate;
 }
 
 // explicit template instantiation

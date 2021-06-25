@@ -53,7 +53,7 @@ class TestStateCost : public ocs2::StateCostCppAd {
 
 TEST(TestStateCostCppAd, getValue) {
   TestStateCost cost;
-  const ocs2::CostDesiredTrajectories desiredTrajectory;
+  const ocs2::TargetTrajectories desiredTrajectory;
 
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
@@ -91,7 +91,7 @@ class TestStateInputCost : public ocs2::StateInputCostCppAd {
 
 TEST(TestStateInputCostCppAd, getValue) {
   TestStateInputCost cost;
-  const ocs2::CostDesiredTrajectories desiredTrajectory;
+  const ocs2::TargetTrajectories desiredTrajectory;
 
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
@@ -134,7 +134,7 @@ class TestGNStateInputCost : public ocs2::StateInputCostGaussNewtonAd {
 
 TEST(TestGNStateInputCostCppAd, getValue) {
   TestGNStateInputCost cost;
-  const ocs2::CostDesiredTrajectories desiredTrajectory;
+  const ocs2::TargetTrajectories desiredTrajectory;
 
   const ocs2::scalar_t t = 0.4;
   const ocs2::vector_t x = (ocs2::vector_t(2) << 0.1, 0.2).finished();

@@ -69,7 +69,7 @@ target_compile_options(double_integrator_interface PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(double_integrator_mpc
-  src/MPC_Double_Integrator_Node.cpp
+  src/DoubleIntegratorMpcNode.cpp
 )
 add_dependencies(double_integrator_mpc
   ${catkin_EXPORTED_TARGETS}

@@ -38,7 +38,7 @@ void DoubleIntegratorDummyVisualization::launchVisualizerNode(ros::NodeHandle& n
 
 void DoubleIntegratorDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy,
                                                 const CommandData& command) {
-  const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
+  const auto& targetTrajectories = command.mpcTargetTrajectories_;
   sensor_msgs::JointState joint_state;
   joint_state.header.stamp = ros::Time::now();
   joint_state.name.resize(2);
@@ -46,7 +46,7 @@ void DoubleIntegratorDummyVisualization::update(const SystemObservation& observa
   joint_state.name[0] = "slider_to_cart";
   joint_state.position[0] = observation.state(0);
   joint_state.name[1] = "slider_to_target";
-  joint_state.position[1] = costDesiredTrajectories.desiredStateTrajectory()[0](0);
+  joint_state.position[1] = targetTrajectories.stateTrajectory[0](0);
 
   jointPublisher_.publish(joint_state);
 }

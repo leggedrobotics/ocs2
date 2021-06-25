@@ -19,8 +19,8 @@ ddp
   constraintTolerance            1e-3
 
   displayInfo                    false
-  displayShortSummary            true
-  checkNumericalStability        true
+  displayShortSummary            false
+  checkNumericalStability        false
 
   AbsTolODE                      1e-9
   RelTolODE                      1e-6
@@ -63,7 +63,7 @@ mpc
   numPartitions               2
   solutionTimeWindow          -1    ; maximum [s]
 
-  debugPrint                  true
+  debugPrint                  false
 
   coldStart                   false
 

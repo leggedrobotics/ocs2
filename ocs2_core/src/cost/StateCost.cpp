@@ -35,16 +35,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                             const CostDesiredTrajectories& desiredTrajectory) const {
-  return getValue(time, state, desiredTrajectory);
+                             const TargetTrajectories& targetTrajectories) const {
+  return getValue(time, state, targetTrajectories);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateCost::getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                          const CostDesiredTrajectories& desiredTrajectory) const {
-  auto cost = getQuadraticApproximation(time, state, desiredTrajectory);
+                                                                          const TargetTrajectories& targetTrajectories) const {
+  auto cost = getQuadraticApproximation(time, state, targetTrajectories);
   cost.dfdu.setZero(input.rows());
   cost.dfduu.setZero(input.rows(), input.rows());
   cost.dfdux.setZero(input.rows(), state.rows());

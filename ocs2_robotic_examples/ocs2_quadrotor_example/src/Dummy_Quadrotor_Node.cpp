@@ -75,10 +75,10 @@ int main(int argc, char** argv) {
   initObservation.time = 0.0;
 
   // initial command
-  const ocs2::CostDesiredTrajectories initCostDesiredTrajectories({initObservation.time}, {initObservation.state}, {initObservation.input});
+  const ocs2::TargetTrajectories initTargetTrajectories({initObservation.time}, {initObservation.state}, {initObservation.input});
 
   // Run dummy (loops while ros is ok)
-  dummyQuadrotor.run(initObservation, initCostDesiredTrajectories);
+  dummyQuadrotor.run(initObservation, initTargetTrajectories);
 
   return 0;
 }

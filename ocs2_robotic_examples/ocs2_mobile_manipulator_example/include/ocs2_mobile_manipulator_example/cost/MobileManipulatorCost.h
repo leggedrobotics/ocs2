@@ -62,7 +62,7 @@ class MobileManipulatorCost : public CostFunctionBase {
   void setCachePointers();
   void setEndEffectorReference(scalar_t time);
   void setFinalEndEffectorReference(scalar_t time);
-  std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(const CostDesiredTrajectories& costDesiredTrajectory, scalar_t time) const;
+  std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(const TargetTrajectories& targetTrajectories, scalar_t time) const;
 
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
   std::unique_ptr<StateCost> getEndEffectorCost(const std::string& taskFile, const std::string& fieldName, const std::string& libraryFolder,

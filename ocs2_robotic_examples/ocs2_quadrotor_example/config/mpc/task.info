@@ -33,7 +33,7 @@ ddp
   constraintTolerance           1e-3
 
   displayInfo                   false
-  displayShortSummary           true
+  displayShortSummary           false
   debugPrintRollout             false
   checkNumericalStability       false
 
@@ -77,7 +77,7 @@ mpc
   numPartitions               2
   solutionTimeWindow          0.5     ; [s]
 
-  debugPrint                  true
+  debugPrint                  false
 
   coldStart                   false
 

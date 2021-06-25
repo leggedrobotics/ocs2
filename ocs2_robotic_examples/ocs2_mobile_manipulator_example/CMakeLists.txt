@@ -11,7 +11,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   robot_state_publisher
   visualization_msgs
   geometry_msgs
-  interactive_markers
   ocs2_ros_interfaces
   ocs2_core
   ocs2_ddp
@@ -131,9 +130,8 @@ target_link_libraries(mobile_manipulator_dummy_mrt_node
 )
 target_compile_options(mobile_manipulator_dummy_mrt_node PUBLIC ${FLAGS})
 
-# Interactive Marker node
+# Target node
 add_executable(mobile_manipulator_target
-  src/TargetTrajectories_IMarker_Mobile_Manipulator.cpp
   src/MobileManipulatorTarget.cpp
 )
 add_dependencies(mobile_manipulator_target

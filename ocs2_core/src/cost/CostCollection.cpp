@@ -84,13 +84,13 @@ void CostCollection<COST>::add(std::string name, std::unique_ptr<COST> costTerm)
 template <>
 template <>
 scalar_t CostCollection<StateInputCost>::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                                  const CostDesiredTrajectories& desiredTrajectory) const {
+                                                  const TargetTrajectories& targetTrajectories) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getValue(time, state, input, desiredTrajectory);
+      cost += costPair.second->getValue(time, state, input, targetTrajectories);
     }
   }
 
@@ -103,13 +103,13 @@ scalar_t CostCollection<StateInputCost>::getValue(scalar_t time, const vector_t&
 template <>
 template <>
 ScalarFunctionQuadraticApproximation CostCollection<StateInputCost>::getQuadraticApproximation(
-    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
+    scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& targetTrajectories) const {
   auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
 
   // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getQuadraticApproximation(time, state, input, desiredTrajectory);
+      cost += costPair.second->getQuadraticApproximation(time, state, input, targetTrajectories);
     }
   }
 
@@ -121,13 +121,13 @@ ScalarFunctionQuadraticApproximation CostCollection<StateInputCost>::getQuadrati
 /******************************************************************************************************/
 template <>
 template <>
-scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      cost += costPair.second->getValue(time, state, desiredTrajectory);
+      cost += costPair.second->getValue(time, state, targetTrajectories);
     }
   }
 
@@ -140,13 +140,13 @@ scalar_t CostCollection<StateCost>::getValue(scalar_t time, const vector_t& stat
 template <>
 template <>
 ScalarFunctionQuadraticApproximation CostCollection<StateCost>::getQuadraticApproximation(
-    scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
+    scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const {
   auto cost = ScalarFunctionQuadraticApproximation::Zero(state.rows(), 0);
 
   // accumulate cost term quadratic approximation
   for (const auto& costPair : costTermMap_) {
     if (costPair.second->isActive()) {
-      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, desiredTrajectory);
+      const auto costTermApproximation = costPair.second->getQuadraticApproximation(time, state, targetTrajectories);
       cost.f += costTermApproximation.f;
       cost.dfdx += costTermApproximation.dfdx;
       cost.dfdxx += costTermApproximation.dfdxx;

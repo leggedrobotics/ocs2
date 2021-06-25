@@ -69,7 +69,7 @@ target_compile_options(quadrotor_interface PUBLIC ${OCS2_CXX_FLAGS})
 
 # MPC node
 add_executable(quadrotor_mpc
-  src/MPC_Quadrotor_Node.cpp
+  src/QuadrotorMpcNode.cpp
 )
 add_dependencies(quadrotor_mpc
   ${catkin_EXPORTED_TARGETS}

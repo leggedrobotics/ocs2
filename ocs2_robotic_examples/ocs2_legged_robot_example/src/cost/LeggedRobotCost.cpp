@@ -72,8 +72,7 @@ LeggedRobotCost::LeggedRobotCost(const LeggedRobotCost& rhs)
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
       pinocchioInterface_(rhs.pinocchioInterface_),
       pinocchioMappingPtr_(rhs.pinocchioMappingPtr_->clone()),
-      stateInputCostCollection_(rhs.stateInputCostCollection_),
-      stateCostCollection_(rhs.stateCostCollection_) {
+      stateInputCostCollection_(rhs.stateInputCostCollection_) {
   pinocchioMappingPtr_->setPinocchioInterface(pinocchioInterface_);
 }
 
@@ -88,9 +87,7 @@ void LeggedRobotCost::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectorie
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t LeggedRobotCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  scalar_t cost = stateInputCostCollection_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
-  cost += stateCostCollection_.getValue(t, x, *costDesiredTrajectoriesPtr_);
-  return cost;
+  return stateInputCostCollection_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/
@@ -104,12 +101,7 @@ scalar_t LeggedRobotCost::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation LeggedRobotCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  auto cost = stateInputCostCollection_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
-  const auto stateCost = stateCostCollection_.getQuadraticApproximation(t, x, *costDesiredTrajectoriesPtr_);
-  cost.f += stateCost.f;
-  cost.dfdx += stateCost.dfdx;
-  cost.dfdxx += stateCost.dfdxx;
-  return cost;
+  return stateInputCostCollection_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/

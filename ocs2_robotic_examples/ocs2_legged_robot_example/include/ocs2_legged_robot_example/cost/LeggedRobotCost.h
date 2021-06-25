@@ -73,7 +73,6 @@ class LeggedRobotCost : public CostFunctionBase {
   std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> pinocchioMappingPtr_;
 
   CostCollection<StateInputCost> stateInputCostCollection_;
-  CostCollection<StateCost> stateCostCollection_;
 
   StateInputCost* baseTrackingCostPtr_ = nullptr;
 };

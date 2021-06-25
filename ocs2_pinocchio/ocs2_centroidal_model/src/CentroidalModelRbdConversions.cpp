@@ -118,10 +118,10 @@ void CentroidalModelRbdConversions::computeRbdStateFromCentroidalModel(const vec
   computeBaseKinematicsFromCentroidalModel(state, input, jointAccelerations, basePose, baseVelocity, baseAcceleration);
   rbdState.head<3>() = basePose.tail<3>();
   rbdState.segment<3>(3) = basePose.head<3>();
-  rbdState.segment(6, info.actuatedDofNum) = getJointAngles(state, info).head(info.actuatedDofNum);
+  rbdState.segment(6, info.actuatedDofNum) = centroidal_model::getJointAngles(state, info).head(info.actuatedDofNum);
   rbdState.segment<3>(info.generalizedCoordinatesNum) = baseVelocity.tail<3>();
   rbdState.segment<3>(info.generalizedCoordinatesNum + 3) = baseVelocity.head<3>();
-  rbdState.tail(info.actuatedDofNum) = getJointVelocities(input, info).head(info.actuatedDofNum);
+  rbdState.tail(info.actuatedDofNum) = centroidal_model::getJointVelocities(input, info).head(info.actuatedDofNum);
 }
 
 }  // namespace ocs2

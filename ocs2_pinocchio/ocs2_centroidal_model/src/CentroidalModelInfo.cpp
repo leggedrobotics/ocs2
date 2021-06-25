@@ -69,7 +69,7 @@ CentroidalModelInfoTpl<SCALAR>::CentroidalModelInfoTpl(const PinocchioInterfaceT
 }
 
 // explicit template instantiation
-template class ocs2::CentroidalModelInfoTpl<ocs2::scalar_t>;
-template class ocs2::CentroidalModelInfoTpl<ocs2::ad_scalar_t>;
+template struct ocs2::CentroidalModelInfoTpl<ocs2::scalar_t>;
+template struct ocs2::CentroidalModelInfoTpl<ocs2::ad_scalar_t>;
 
 }  // namespace ocs2

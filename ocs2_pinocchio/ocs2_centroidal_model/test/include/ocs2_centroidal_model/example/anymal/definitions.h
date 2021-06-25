@@ -48,7 +48,7 @@ static const std::vector<std::string> anymal3DofContactNames = {"LF_FOOT", "RF_F
 static const std::vector<std::string> anymal6DofContactNames = {};
 static const std::string anymalUrdfPath =
   ros::package::getPath("ocs2_centroidal_model") + "/test/include/ocs2_centroidal_model/example/anymal/anymal.urdf";
-static const std::string anymalCppAdModelPath = ros::package::getPath("ocs2_centroidal_model") + "/test/CppAD_generated";
+static const std::string anymalCppAdModelPath = ros::package::getPath("ocs2_centroidal_model") + "/test/cppad_generated";
 
 static const ocs2::vector_t anymalInitialState = []() {
   ocs2::vector_t x0 = ocs2::vector_t(size_t(anymal::STATE_DIM));

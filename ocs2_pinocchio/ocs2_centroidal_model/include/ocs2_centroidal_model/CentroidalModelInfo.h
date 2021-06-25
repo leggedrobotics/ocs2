@@ -85,6 +85,6 @@ struct CentroidalModelInfoTpl {
 };
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */
-extern template class CentroidalModelInfoTpl<scalar_t>;
-extern template class CentroidalModelInfoTpl<ad_scalar_t>;
+extern template struct CentroidalModelInfoTpl<scalar_t>;
+extern template struct CentroidalModelInfoTpl<ad_scalar_t>;
 }  // namespace ocs2

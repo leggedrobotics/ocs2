@@ -52,7 +52,6 @@ namespace ocs2 {
  * Pinocchio Joint Velocities: vPinocchio = [ base_linear_velocity, base_orientation_zyx_derivatives, joint_velocities ]'
  * @remark: Base linear velocity is expressed with respect to the inertial frame
  */
-
 template <typename SCALAR>
 class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
  public:
@@ -60,7 +59,6 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
 
   using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
   using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
-
   using vector6_t = Eigen::Matrix<SCALAR, 6, 1>;
   using vector3_t = Eigen::Matrix<SCALAR, 3, 1>;
   using matrix3x_t = Eigen::Matrix<SCALAR, 3, Eigen::Dynamic>;
@@ -70,7 +68,6 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
 
   using Model = pinocchio::ModelTpl<SCALAR>;
   using Data = typename Model::Data;
-
   using CentroidalModelInfo = CentroidalModelInfoTpl<SCALAR>;
 
   explicit CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo);

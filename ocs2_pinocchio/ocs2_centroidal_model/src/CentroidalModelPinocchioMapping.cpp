@@ -71,9 +71,7 @@ void CentroidalModelPinocchioMapping<SCALAR>::setPinocchioInterface(const Pinocc
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
-  assert(centroidalModelInfo_.stateDim == state.rows());
-  const Model& model = pinocchioInterfacePtr_->getModel();
-  return state.segment(6, centroidalModelInfo_.generalizedCoordinatesNum);
+  return centroidal_model::getGeneralizedCoordinate(state, centroidalModelInfo_);
 }
 
 /******************************************************************************************************/
@@ -92,8 +90,8 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
   const auto& Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
 
   vector_t vPinocchio(info.generalizedCoordinatesNum);
-  const auto normalizedMomentum = getNormalizedMomentum(state, info);
-  const auto jointVelocities = getJointVelocities(input, info).head(info.actuatedDofNum);
+  const auto normalizedMomentum = centroidal_model::getNormalizedMomentum(state, info);
+  const auto jointVelocities = centroidal_model::getJointVelocities(input, info).head(info.actuatedDofNum);
   vector6_t momentum = info.robotMass * normalizedMomentum;
 
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
@@ -209,12 +207,12 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getTranslationalJacobianComToConta
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getNormalizedCentroidalMomentumRate(const vector_t& input) const -> vector6_t {
   const auto& info = centroidalModelInfo_;
-  const vector3_t gravityVector = vector3_t(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
+  const vector3_t gravityVector(SCALAR(0.0), SCALAR(0.0), SCALAR(-9.81));
   vector6_t normalizedCentroidalMomentumRate;
   normalizedCentroidalMomentumRate << gravityVector, vector3_t::Zero();
 
-  auto getForce = [&](size_t index) { return getContactForce(input, index, info); };
-  auto getTorque = [&](size_t index) { return getContactTorque(input, index, info); };
+  auto getForce = [&](size_t index) { return centroidal_model::getContactForce(input, index, info); };
+  auto getTorque = [&](size_t index) { return centroidal_model::getContactTorque(input, index, info); };
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     const auto contactForceInWorldFrame = getForce(i);

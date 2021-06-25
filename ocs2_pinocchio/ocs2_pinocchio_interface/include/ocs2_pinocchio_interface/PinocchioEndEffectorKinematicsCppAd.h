@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * End-effector Kinematics implmentation using pinocchio and CppAD.
+ * End-effector Kinematics implementation using pinocchio and CppAD.
  *
  * See also PinocchioEndEffectorKinematics, which uses analytical computation and caching.
  */

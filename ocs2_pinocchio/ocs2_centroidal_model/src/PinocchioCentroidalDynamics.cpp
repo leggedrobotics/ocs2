@@ -87,7 +87,7 @@ void PinocchioCentroidalDynamics::getNormalizedCentroidalMomentumRateGradients(c
   normalizedAngularMomentumRateDerivativeInput_.setZero(3, info.inputDim);
   Matrix3 f_hat, p_hat;
 
-  auto getForce = [&](size_t index) { return getContactForce(input, index, info); };
+  auto getForce = [&](size_t index) { return centroidal_model::getContactForce(input, index, info); };
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     const Vector3 contactForceInWorldFrame = getForce(i);

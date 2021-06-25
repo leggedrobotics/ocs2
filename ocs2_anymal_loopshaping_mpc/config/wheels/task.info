@@ -53,19 +53,6 @@ terrainPlane
   }
 }
 
-initialModeSchedule
-{
-  modeSequence
-  {
-    [0]  STANCE
-    [1]  STANCE
-  }
-  eventTimes
-  {
-    [0]  0.5
-  }
-}
-
 defaultModeSequenceTemplate
 {
   modeSequence

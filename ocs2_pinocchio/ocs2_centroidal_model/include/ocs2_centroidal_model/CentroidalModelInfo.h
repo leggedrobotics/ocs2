@@ -41,14 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/**
- * Centroidal Dynamics:
- *
- * State: x = [ linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_positions ]'
- * @remark: The linear and angular momenta are expressed with respect to
- * the centroidal frame (a frame centered at the CoM and aligned with the inertial frame)
- */
-
 enum class CentroidalModelType { FullCentroidalDynamics, SingleRigidBodyDynamics };
 
 template <typename SCALAR>
@@ -63,7 +55,8 @@ struct CentroidalModelInfoTpl {
   /** Constructor
    * @param [in] interface: Pinocchio interface
    * @param [in] type: Type of template model (SRBD or FRBD)
-   * @param [in] qNominal: nominal robot configuration used in the SRBD model (same structure as qPinocchio)
+   * @param [in] qNominal: nominal robot configuration used in the SRBD model. It is the same as the qPinocchio
+   * i.e. qPinocchio = [ base_position, base_orientation_zyx, joint_positions ])
    * @param [in] threeDofContactNames: Names of end-effectors with 3 DoF contacts (force)
    * @param [in] sixDofContactNames: Names of end-effectors with 6 DoF contacts (force + torque)
    */

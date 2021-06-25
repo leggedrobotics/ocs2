@@ -76,8 +76,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   CentroidalModelPinocchioMapping<SCALAR>* clone() const override;
 
   /** Sets the pinocchio interface for caching
-   * @note The pinocchio interface must be set before calling the getters.
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
+   * @note The pinocchio interface must be set before calling the getters.
    */
   void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) override;
 

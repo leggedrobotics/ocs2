@@ -28,11 +28,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
-#include "ocs2_centroidal_model/helpers.h"
-#include "ocs2_centroidal_model/utils.h"
 
 #include <pinocchio/algorithm/centroidal-derivatives.hpp>
 #include <pinocchio/algorithm/frames.hpp>
+#include "ocs2_centroidal_model/AccessHelperFunctions.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
 
@@ -71,7 +71,7 @@ void CentroidalModelPinocchioMapping<SCALAR>::setPinocchioInterface(const Pinocc
 /******************************************************************************************************/
 template <typename SCALAR>
 auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
-  return centroidal_model::getGeneralizedCoordinate(state, centroidalModelInfo_);
+  return centroidal_model::getGeneralizedCoordinates(state, centroidalModelInfo_);
 }
 
 /******************************************************************************************************/
@@ -211,18 +211,18 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getNormalizedCentroidalMomentumRat
   vector6_t normalizedCentroidalMomentumRate;
   normalizedCentroidalMomentumRate << gravityVector, vector3_t::Zero();
 
-  auto getForce = [&](size_t index) { return centroidal_model::getContactForce(input, index, info); };
-  auto getTorque = [&](size_t index) { return centroidal_model::getContactTorque(input, index, info); };
+  auto getForces = [&](size_t index) { return centroidal_model::getContactForces(input, index, info); };
+  auto getTorques = [&](size_t index) { return centroidal_model::getContactTorques(input, index, info); };
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    const auto contactForceInWorldFrame = getForce(i);
+    const auto contactForceInWorldFrame = getForces(i);
     normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
     normalizedCentroidalMomentumRate.template tail<3>() += getPositionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame);
   }
 
   for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
-    const auto contactForceInWorldFrame = getForce(i);
-    const auto contactTorqueInWorldFrame = getTorque(i);
+    const auto contactForceInWorldFrame = getForces(i);
+    const auto contactTorqueInWorldFrame = getTorques(i);
     normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
     normalizedCentroidalMomentumRate.template tail<3>() +=
         getPositionComToContactPointInWorldFrame(i).cross(contactForceInWorldFrame) + contactTorqueInWorldFrame;

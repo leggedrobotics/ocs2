@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
+#include "ocs2_centroidal_model/CentroidalModelInfo.h"
 
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
@@ -40,14 +40,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/**
- * Get the inverse of the sub-block of the centroidal momentum matrix which corresponds to the floating base variables.
- *  Ab_inv = [  1/m I_{3,3},    -1/m*Ab_12*Ab_22^(-1),
- *                 O_{3,3},           Ab_22^(-1)     ]
- *
- * @param [in] A(q): centroidal momentum matrix
- * @return Ab_inv(q): inverse of the 6x6 left-block of A(q)
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 6, 6> computeFloatingBaseCentroidalMomentumMatrixInverse(const Eigen::Matrix<SCALAR_T, 6, 6>& Ab) {
   const SCALAR_T mass = Ab(0, 0);
@@ -58,18 +53,9 @@ Eigen::Matrix<SCALAR_T, 6, 6> computeFloatingBaseCentroidalMomentumMatrixInverse
   return Ab_inv;
 }
 
-/**
- * Updates the centroidal momentum matrix in data.Ag and the CoM position in data.com[0]
- * for the FullCentroidalDynamics model and the SingleRigidBodyDynamics Model
- * @param [in] interface: pinocchio robot interface containing model + data
- * @param [in] info: centroidal model information
- * @param [in] q: pinocchio joint positions (generalized coordinates)
- *
- * @remark: This function also internally calls:
- *       pinocchio::forwardKinematics(model, data, q)
- *       pinocchio::computeJointJacobians(model, data, q) (only for the FullCentroidalDynamics case)
- *       pinocchio::updateFramePlacements(model, data)
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
                               const Eigen::Matrix<SCALAR_T, -1, 1>& q) {
@@ -108,19 +94,9 @@ void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const 
   }
 }
 
-/**
- * Updates the centroidal momentum derivatives (such as in data.dHdq) for the FullCentroidalDynamics model
- * and the SingleRigidBodyDynamics Model
- * @param [in] interface: pinocchio robot interface containing model + data
- * @param [in] info: centroidal model information
- * @param [in] q: pinocchio joint positions (generalized coordinates)
- * @param [in] v: pinocchio joint velocities (derivatives of generalized coordinates)
- *
- * @remark: This function also internally calls:
- *       pinocchio::forwardKinematics(model, data, q)
- *       pinocchio::computeJointJacobians(model, data, q)
- *       pinocchio::updateFramePlacements(model, data)
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
                                          const Eigen::Matrix<SCALAR_T, -1, 1>& q, const Eigen::Matrix<SCALAR_T, -1, 1>& v) {
@@ -163,13 +139,9 @@ void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interf
   }
 }
 
-/**
- * Computes derivatives of the mapping (ZYX-Euler angles derivatives --> Global angular velocities)
- * with respect to the base orientation (ZYX-Euler angles)
- *
- * @param [in] eulerAngles: ZYX-Euler angles extracted from qPinocchio
- * @return A tensor representing the derivative of the mapping w.r.t the ZYX-Euler angles
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 std::array<Eigen::Matrix<SCALAR_T, 3, 3>, 3> getMappingZyxGradient(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   const SCALAR_T z = eulerAngles(0);
@@ -192,13 +164,9 @@ std::array<Eigen::Matrix<SCALAR_T, 3, 3>, 3> getMappingZyxGradient(const Eigen::
   return {dTdz, dTdy, dTdx};
 }
 
-/**
- * Computes derivatives of the rotation matrix (base frame --> world frame) with respect to
- * the base orientation (in ZYX-Euler angles)
- *
- * @param [in] eulerAngles: ZYX-Euler angles extracted from qPinocchio
- * @return A tensor representing the derivative of the rotation matrix w.r.t the ZYX-Euler angles
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 std::array<Eigen::Matrix<SCALAR_T, 3, 3>, 3> getRotationMatrixZyxGradient(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   const SCALAR_T z = eulerAngles(0);
@@ -237,14 +205,9 @@ std::array<Eigen::Matrix<SCALAR_T, 3, 3>, 3> getRotationMatrixZyxGradient(const 
   return {dRdz, dRdy, dRdx};
 }
 
-/**
- * Computes derivatives of centroidal momentum with respect to the base orientation (in ZYX-Euler angles)
- *
- * @param [in] info: centroidal model information
- * @param [in] eulerAngles: ZYX-Euler angles extracted from qPinocchio
- * @param [in] eulerAnglesDerivatives: derivatives of ZYX-Euler angles extracted from vPinocchio
- * @return Derivative of centroidal momentum w.r.t the ZYX-Euler Angles
- */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const CentroidalModelInfoTpl<SCALAR_T>& info,
                                                                const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles,
@@ -274,4 +237,5 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const CentroidalM
 
   return dhdq;
 }
+
 }  // namespace ocs2

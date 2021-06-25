@@ -28,7 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
-#include "ocs2_centroidal_model/helpers.h"
+
+#include "ocs2_centroidal_model/AccessHelperFunctions.h"
 
 namespace ocs2 {
 
@@ -87,10 +88,10 @@ void PinocchioCentroidalDynamics::getNormalizedCentroidalMomentumRateGradients(c
   normalizedAngularMomentumRateDerivativeInput_.setZero(3, info.inputDim);
   Matrix3 f_hat, p_hat;
 
-  auto getForce = [&](size_t index) { return centroidal_model::getContactForce(input, index, info); };
+  auto getForces = [&](size_t index) { return centroidal_model::getContactForces(input, index, info); };
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    const Vector3 contactForceInWorldFrame = getForce(i);
+    const Vector3 contactForceInWorldFrame = getForces(i);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
     normalizedAngularMomentumRateDerivativeQ_ -= f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, 3 * i).diagonal().array() = 1.0 / info.robotMass;
@@ -100,7 +101,7 @@ void PinocchioCentroidalDynamics::getNormalizedCentroidalMomentumRateGradients(c
 
   for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
     const size_t inputIdx = 3 * info.numThreeDofContacts + 6 * (i - info.numThreeDofContacts);
-    const Vector3 contactForceInWorldFrame = getForce(i);
+    const Vector3 contactForceInWorldFrame = getForces(i);
     f_hat = skewSymmetricMatrix(contactForceInWorldFrame) / info.robotMass;
     normalizedAngularMomentumRateDerivativeQ_ -= f_hat * (mappingPtr_->getTranslationalJacobianComToContactPointInWorldFrame(i));
     normalizedLinearMomentumRateDerivativeInput_.block<3, 3>(0, inputIdx).diagonal().array() = 1.0 / info.robotMass;

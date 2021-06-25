@@ -52,7 +52,8 @@ class PinocchioCentroidalDynamics {
    */
   explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping);
 
-  ~PinocchioCentroidalDynamics() = default;
+  /** Copy Constructor */
+  PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs);
 
   /** Set the pinocchio interface for caching.
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
@@ -88,9 +89,6 @@ class PinocchioCentroidalDynamics {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 
  private:
-  /** Copy Constructor */
-  PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs);
-
   /**
    * Computes the gradients of the normalized centroidal momentum rate (linear + angular) expressed in the centroidal frame
    *

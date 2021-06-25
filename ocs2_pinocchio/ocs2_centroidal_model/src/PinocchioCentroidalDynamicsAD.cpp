@@ -64,6 +64,12 @@ PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInte
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioCentroidalDynamicsAD& rhs)
+    : systemFlowMapCppAdInterfacePtr_(new CppAdInterface(*rhs.systemFlowMapCppAdInterfacePtr_)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                                          const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
                                                          const ad_vector_t& state, const ad_vector_t& input) {

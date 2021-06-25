@@ -128,7 +128,6 @@ add_library(${PROJECT_NAME}
   src/loopshaping/initialization/LoopshapingInitializer.cpp
   src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
-  src/misc/ThreadPool.cpp
   src/misc/Log.cpp
   src/soft_constraint/SoftConstraintPenalty.cpp
   src/soft_constraint/StateSoftConstraint.cpp
@@ -138,6 +137,7 @@ add_library(${PROJECT_NAME}
   src/soft_constraint/penalties/SmoothAbsolutePenalty.cpp
   src/soft_constraint/penalties/RelaxedBarrierPenalty.cpp
   src/soft_constraint/penalties/SquaredHingePenalty.cpp
+  src/thread_support/ThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -277,13 +277,9 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
 )
 
 catkin_add_gtest(${PROJECT_NAME}_test_misc
-  test/misc/testBufferedValue.cpp
   test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
-  test/misc/testSynchronized.cpp
   test/misc/testLookup.cpp
-  test/misc/testThreadPool.cpp
-  test/testPrecomputation.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}
@@ -349,6 +345,28 @@ catkin_add_gtest(test_softConstraint
   test/soft_constraint/testDoubleSidedPenalty.cpp
 )
 target_link_libraries(test_softConstraint
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(${PROJECT_NAME}_test_thread_support
+  test/thread_support/testBufferedValue.cpp
+  test/thread_support/testSynchronized.cpp
+  test/thread_support/testThreadPool.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test_thread_support
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(${PROJECT_NAME}_test_precomputation
+  test/testPrecomputation.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test_precomputation
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

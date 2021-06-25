@@ -70,8 +70,13 @@
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>
-#include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/randomMatrices.h>
+
+// thread_support
+#include <ocs2_core/thread_support/BufferedValue.h>
+#include <ocs2_core/thread_support/SetThreadPriority.h>
+#include <ocs2_core/thread_support/Synchronized.h>
+#include <ocs2_core/thread_support/ThreadPool.h>
 
 // model_data
 #include <ocs2_core/model_data/ModelData.h>

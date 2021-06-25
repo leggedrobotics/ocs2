@@ -85,8 +85,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state variables
    *
    * @param [in] state: system state vector
-   * @return pinocchio joint positions, which are also the robot's generalized positions
-   * with a ZYX-Euler angle parameterization of the base orientation
+   * @return pinocchio joint positions, which are also the robot's generalized positions with a ZYX-Euler angle
+   * parameterization of the base orientation
    */
   vector_t getPinocchioJointPosition(const vector_t& state) const override;
 
@@ -96,7 +96,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * @param [in] input: system input vector
    * @return pinocchio joint velocities, which are also the time derivatives of the pinocchio joint positions
    *
-   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first.
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamics(interface, info, q)
    */
   vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override;
 
@@ -107,7 +108,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * @param [in] Jv: jacobian with respect to pinocchio joint velocities
    * @return a pair {dfdx, dfdu} containing the jacobians with respect to the system state and input
    *
-   * @warning: The function updateCentroidalDynamicsDerivatives(interface, info, q, v) should have been called first
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamicsDerivatives(interface, info, q, v)
    */
   // TODO: Add Jacobian with respect to generalized accelerations as argument to get a full implicit dependence on the inputs
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
@@ -121,7 +123,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   /** Returns the centroidal momentum matrix from the pinocchioInterface data
    * @return centroidal momentum matrix from data.Ag
    *
-   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first.
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamics(interface, info, q)
    */
   const matrix6x_t& getCentroidalMomentumMatrix() const;
 
@@ -131,7 +134,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * @param [in] contactIndex: index of the contact point
    * @return: position of the contact point w.r.t CoM expressed in world frame
    *
-   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first.
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamics(interface, info, q)
    */
   vector3_t getPositionComToContactPointInWorldFrame(size_t contactIndex) const;
 
@@ -141,8 +145,10 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * @param [in] contactIndex: index of the contact point
    * @return: CoM to contact point translational Jacobian expressed in world frame
    *
-   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first,
-   * followed by pinocchio::computeJointJacobians(model, data, q) and updateFramePlacements(model, data)
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamics(interface, info, q) (should be called first)
+   *       pinocchio::computeJointJacobians(model, data, q)
+   *       pinocchio::updateFramePlacements(model, data)
    */
   matrix3x_t getTranslationalJacobianComToContactPointInWorldFrame(size_t contactIndex) const;
 
@@ -152,7 +158,8 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    * @param [in] input: system input vector
    * @return: time derivative of normalized centroidal momentum
    *
-   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first.
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamics(interface, info, q)
    */
   vector6_t getNormalizedCentroidalMomentumRate(const vector_t& input) const;
 

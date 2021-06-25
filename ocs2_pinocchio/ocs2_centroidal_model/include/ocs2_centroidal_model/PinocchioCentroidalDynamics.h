@@ -55,8 +55,8 @@ class PinocchioCentroidalDynamics {
   ~PinocchioCentroidalDynamics() = default;
 
   /** Set the pinocchio interface for caching.
-   * @note The pinocchio interface must be set before calling the getters.
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
+   * @note The pinocchio interface must be set before calling the getters.
    */
   void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { mappingPtr_->setPinocchioInterface(pinocchioInterface); }
 
@@ -67,7 +67,8 @@ class PinocchioCentroidalDynamics {
    * @param input: system input vector
    * @return system flow map x_dot = f(x, u)
    *
-   * @warning: The function updateCentroidalDynamics(interface, info, q) should have been called first,
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamics(interface, info, q)
    */
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input);
 
@@ -78,7 +79,8 @@ class PinocchioCentroidalDynamics {
    * @param input: system input vector
    * @return linear approximation of system flow map x_dot = f(x, u)
    *
-   * @warning: The function updateCentroidalDynamicsDerivatives(interface, info, q, v) should have been called first
+   * @note requires pinocchioInterface to be updated with:
+   *       ocs2::updateCentroidalDynamicsDerivatives(interface, info, q, v)
    */
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input);
 

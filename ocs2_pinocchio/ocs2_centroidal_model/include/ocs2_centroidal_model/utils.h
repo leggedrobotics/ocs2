@@ -65,9 +65,10 @@ Eigen::Matrix<SCALAR_T, 6, 6> computeFloatingBaseCentroidalMomentumMatrixInverse
  * @param [in] info: centroidal model information
  * @param [in] q: pinocchio joint positions (generalized coordinates)
  *
- * @remark: This function also internally calls pinocchio::forwardKinematics(model, data, q),
- * pinocchio::computeJointJacobians(model, data, q) (only for the FullCentroidalDynamics case),
- * and pinocchio::updateFramePlacements(model, data).
+ * @remark: This function also internally calls:
+ *       pinocchio::forwardKinematics(model, data, q)
+ *       pinocchio::computeJointJacobians(model, data, q) (only for the FullCentroidalDynamics case)
+ *       pinocchio::updateFramePlacements(model, data)
  */
 template <typename SCALAR_T>
 void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
@@ -115,8 +116,10 @@ void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const 
  * @param [in] q: pinocchio joint positions (generalized coordinates)
  * @param [in] v: pinocchio joint velocities (derivatives of generalized coordinates)
  *
- * @remark: This function also internally calls pinocchio::forwardKinematics(model, data, q),
- * pinocchio::computeJointJacobians(model, data, q), and pinocchio::updateFramePlacements(model, data).
+ * @remark: This function also internally calls:
+ *       pinocchio::forwardKinematics(model, data, q)
+ *       pinocchio::computeJointJacobians(model, data, q)
+ *       pinocchio::updateFramePlacements(model, data)
  */
 template <typename SCALAR_T>
 void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
@@ -140,11 +143,11 @@ void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interf
       break;
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
-      //      Eigen::Matrix<SCALAR_T, -1, 1> qSRBD = info.qPinocchioNominal;
-      //      qSRBD.template head<6>() = q.template head<6>();
-      //      Eigen::Matrix<SCALAR_T, -1, 1> vSRBD = Eigen::Matrix<SCALAR_T, -1, 1>::Zero(info.generalizedCoordinatesNum);
-      //      vSRBD.template head<6>() = v.template head<6>();
-      //      pinocchio::computeCentroidalDynamicsDerivatives(model, data, qSRBD, vSRBD, a, dhdq, dhdotdq, dhdotdv, dhdotda);
+      //  Eigen::Matrix<SCALAR_T, -1, 1> qSRBD = info.qPinocchioNominal;
+      //  qSRBD.template head<6>() = q.template head<6>();
+      //  Eigen::Matrix<SCALAR_T, -1, 1> vSRBD = Eigen::Matrix<SCALAR_T, -1, 1>::Zero(info.generalizedCoordinatesNum);
+      //  vSRBD.template head<6>() = v.template head<6>();
+      //  pinocchio::computeCentroidalDynamicsDerivatives(model, data, qSRBD, vSRBD, a, dhdq, dhdotdq, dhdotdv, dhdotda);
       const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyx = q.template segment<3>(3);
       const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyxDerivatives = v.template segment<3>(3);
       data.dHdq.setZero();

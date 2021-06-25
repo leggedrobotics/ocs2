@@ -15,7 +15,7 @@ model_settings
   contactForceWeight            1.0
   zDirectionPositionWeight      0.0
   zDirectionVelocityWeight      0.5
-  positionErrorGain             5
+  positionErrorGain             0.0
 
   enforceFrictionConeConstraint true
   frictionCoefficient           0.7

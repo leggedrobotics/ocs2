@@ -53,7 +53,7 @@ LeggedRobotInitializer* LeggedRobotInitializer::clone() const {
 /******************************************************************************************************/
 void LeggedRobotInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-  input = weightCompensatingInputs(centroidalModelInfo.robotMass, contactFlags);
+  input = weightCompensatingInput(centroidalModelInfo, contactFlags);
   nextState = state;
   nextState.head<6>() = vector_t::Zero(6);
 }

@@ -35,6 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <memory>
 
+#include <ocs2_centroidal_model/AccessHelperFunctions.h>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
+
 #include "ocs2_legged_robot_example/common/definitions.h"
 
 namespace ocs2 {
@@ -43,7 +46,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/** Count contact feet */
+/** Counts contact feet */
 inline size_t numberOfClosedContacts(const contact_flag_t& contactFlags) {
   size_t numStanceLegs = 0;
   for (auto legInContact : contactFlags) {
@@ -57,27 +60,20 @@ inline size_t numberOfClosedContacts(const contact_flag_t& contactFlags) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-inline vector_t weightCompensatingInputs(const scalar_t& totalMass, const contact_flag_t& contactFlags
-                                         /*, const vector3_t& baseOrientation*/) {
+/** Computes an input with zero joint velocity and forces which equally distribute the robot weight between contact feet. */
+inline vector_t weightCompensatingInput(const CentroidalModelInfoTpl<scalar_t>& info, const contact_flag_t& contactFlags) {
   const auto numStanceLegs = numberOfClosedContacts(contactFlags);
-
-  vector_t inputs = vector_t::Zero(centroidalModelInfo.inputDim);
+  vector_t input = vector_t::Zero(info.inputDim);
   if (numStanceLegs > 0) {
-    const scalar_t totalWeight = totalMass * 9.81;
-    //  TODO
-    //  const matrix3_t b_R_o = rotationMatrixOriginToBase(baseOrientation);
-    //  const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalWeight / numStanceLegs};
-    vector_t forceInBase(3);
-    forceInBase << 0.0, 0.0, totalWeight / numStanceLegs;
-
-    for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+    const scalar_t totalWeight = info.robotMass * 9.81;
+    const Eigen::Matrix<scalar_t, 3, 1> forceInInertialFrame(0.0, 0.0, totalWeight / numStanceLegs);
+    for (size_t i = 0; i < info.numThreeDofContacts; i++) {
       if (contactFlags[i]) {
-        inputs.segment<3>(3 * i) = forceInBase;
+        centroidal_model::getContactForces(input, i, info) = forceInInertialFrame;
       }
-    }
+    }  // end of i loop
   }
-
-  return inputs;
+  return input;
 }
 
 }  // namespace legged_robot

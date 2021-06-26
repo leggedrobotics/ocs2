@@ -55,7 +55,7 @@ std::pair<vector_t, vector_t> LeggedRobotStateInputQuadraticCost::getStateInputD
     scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
   const vector_t xNominal = desiredTrajectory.getDesiredState(time);
-  const vector_t uNominal = weightCompensatingInputs(centroidalModelInfo.robotMass, contactFlags);
+  const vector_t uNominal = weightCompensatingInput(centroidalModelInfo, contactFlags);
   return {state - xNominal, input - uNominal};
 }
 

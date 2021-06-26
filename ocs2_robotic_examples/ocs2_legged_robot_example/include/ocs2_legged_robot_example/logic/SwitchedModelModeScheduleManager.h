@@ -29,8 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/misc/Synchronized.h>
-
+#include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
 #include <ocs2_legged_robot_example/common/definitions.h>

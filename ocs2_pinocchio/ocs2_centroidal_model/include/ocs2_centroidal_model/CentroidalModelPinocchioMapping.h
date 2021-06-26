@@ -39,11 +39,11 @@ namespace ocs2 {
  * Centroidal Dynamics:
  *
  * State: x = [ linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_positions ]'
- * @remark: The linear and angular momenta are expressed with respect to
- * the centroidal frame (a frame centered at the CoM and aligned with the inertial frame)
+ * @remark: The linear and angular momenta are expressed with respect to the centroidal frame (a frame centered at
+ * the CoM and aligned with the inertial frame).
  *
  * Input: u = [ contact_forces, contact_wrenches, joint_velocities ]'
- * @remark: Contact forces and wrenches are expressed with respect to the inertial frame
+ * @remark: Contact forces and wrenches are expressed with respect to the inertial frame.
  *
  *
  * Pinocchio Joint Positions: qPinocchio = [ base_position, base_orientation_zyx, joint_positions ]'
@@ -61,6 +61,10 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
   using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
   using CentroidalModelInfo = CentroidalModelInfoTpl<SCALAR>;
 
+  /**
+   * Constructor
+   * @param [in] centroidalModelInfo : centroidal model information.
+   */
   explicit CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo);
   ~CentroidalModelPinocchioMapping() override = default;
 

@@ -35,7 +35,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class PinocchioCentroidalDynamics {
+/**
+ * Centroidal Dynamics:
+ *
+ * State: x = [ linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_positions ]'
+ * @remark: The linear and angular momenta are expressed with respect to the centroidal frame (a frame centered at
+ * the CoM and aligned with the inertial frame).
+ *
+ * Input: u = [ contact_forces, contact_wrenches, joint_velocities ]'
+ * @remark: Contact forces and wrenches are expressed with respect to the inertial frame.
+ */
+class PinocchioCentroidalDynamics final {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -45,7 +55,8 @@ class PinocchioCentroidalDynamics {
   using Matrix3 = Eigen::Matrix<scalar_t, 3, 3>;
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
-  /** Constructor
+  /**
+   * Constructor
    *
    * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
    * which are needed for pinocchio functions and algorithms
@@ -64,7 +75,8 @@ class PinocchioCentroidalDynamics {
     mappingPtr_->setPinocchioInterface(pinocchioInterface);
   }
 
-  /** Computes system flow map x_dot = f(x, u)
+  /**
+   * Computes system flow map x_dot = f(x, u)
    *
    * @param time: time
    * @param state: system state vector
@@ -76,7 +88,8 @@ class PinocchioCentroidalDynamics {
    */
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input);
 
-  /** Computes first order approximation of the system flow map x_dot = f(x, u)
+  /**
+   * Computes first order approximation of the system flow map x_dot = f(x, u)
    *
    * @param time: time
    * @param state: system state vector

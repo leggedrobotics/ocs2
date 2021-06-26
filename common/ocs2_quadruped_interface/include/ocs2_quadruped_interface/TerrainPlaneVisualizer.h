@@ -7,7 +7,7 @@
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
 
-#include <ocs2_core/misc/Synchronized.h>
+#include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>

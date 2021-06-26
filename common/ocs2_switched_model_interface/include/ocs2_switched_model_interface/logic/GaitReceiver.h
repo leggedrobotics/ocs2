@@ -8,10 +8,8 @@
 
 #include <ros/ros.h>
 
+#include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_msgs/mode_schedule.h>
-
-#include <ocs2_core/misc/Synchronized.h>
-
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ocs2_switched_model_msgs/scheduled_gait_sequence.h>

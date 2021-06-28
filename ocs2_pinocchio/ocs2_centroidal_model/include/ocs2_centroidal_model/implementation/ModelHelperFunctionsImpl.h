@@ -283,7 +283,7 @@ Eigen::Matrix<SCALAR_T, 6, 1> getNormalizedCentroidalMomentumRate(const Pinocchi
                                                                   const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& input) {
   const Eigen::Matrix<SCALAR_T, 3, 1> gravityVector(SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(-9.81));
   Eigen::Matrix<SCALAR_T, 6, 1> normalizedCentroidalMomentumRate;
-  normalizedCentroidalMomentumRate << gravityVector, Eigen::Matrix<SCALAR_T, 3, 1>::Zero();
+  normalizedCentroidalMomentumRate << info.robotMass * gravityVector, Eigen::Matrix<SCALAR_T, 3, 1>::Zero();
 
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     const auto contactForceInWorldFrame = centroidal_model::getContactForces(input, i, info);

@@ -29,19 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// ocs2
-#include <ocs2_core/Types.h>
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include <ocs2_core/misc/LoadData.h>
-
-#include <ocs2_centroidal_model/CentroidalModelInfo.h>
-
-#include <Eigen/Dense>
 #include <array>
 #include <cstddef>
+#include <vector>
 
 // ros
 #include <ros/package.h>
+
+// ocs2
+#include <ocs2_centroidal_model/FactoryFunctions.h>
 
 /**
  * centroidal model definition:
@@ -51,40 +47,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * lambda: Force order [LF, RF, LH, RH] in World Frame (3x1)
  * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1)
  */
-
 namespace ocs2 {
 namespace legged_robot {
-const std::string ROBOT_NAME_ = "legged_robot";
-// const std::string ROBOT_URDF_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/urdf/" + ROBOT_NAME_ + ".urdf";
-const std::string ROBOT_URDF_PATH_ = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
-const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
-const std::string ROBOT_TASK_FILE_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
-
-// This is only used to get names for the knees and to check urdf for extra joints that need to be fixed.
-const static std::array<std::string, 12> JOINT_NAMES_ = {"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
-                                                         "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
-
-const static std::vector<std::string> CONTACT_NAMES_3_DOF_ = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
-const static std::vector<std::string> CONTACT_NAMES_6_DOF_ = {};
 
 template <typename T>
 using feet_array_t = std::array<T, 4>;
 using contact_flag_t = feet_array_t<bool>;
 
-CentroidalModelType loadCentroidalType(const std::string& taskFilePath);
-CentroidalModelInfoTpl<scalar_t> createCentroidalModelInfo(CentroidalModelType type, const std::string& robotUrdfPath,
-                                                           const std::string& robotCommanPath,
-                                                           const std::vector<std::string>& contactNames3Dof,
-                                                           const std::vector<std::string>& contactNames6Dof);
-CentroidalModelInfoTpl<ad_scalar_t> createCentroidalModelInfoAd(CentroidalModelType type, const std::string& robotUrdfPath,
-                                                                const std::string& robotCommanPath,
-                                                                const std::vector<std::string>& contactNames3Dof,
-                                                                const std::vector<std::string>& contactNames6Dof);
+const std::string ROBOT_NAME_ = "legged_robot";
+const std::string ROBOT_URDF_PATH_ = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
+const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
+const std::string ROBOT_TASK_FILE_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
 
-const auto centroidalModelInfo = createCentroidalModelInfo(loadCentroidalType(ROBOT_TASK_FILE_PATH_), ROBOT_URDF_PATH_, ROBOT_COMMAND_PATH_,
-                                                           CONTACT_NAMES_3_DOF_, CONTACT_NAMES_6_DOF_);
-const auto centroidalModelInfoAd = createCentroidalModelInfoAd(loadCentroidalType(ROBOT_TASK_FILE_PATH_), ROBOT_URDF_PATH_,
-                                                               ROBOT_COMMAND_PATH_, CONTACT_NAMES_3_DOF_, CONTACT_NAMES_6_DOF_);
+// This is only used to get names for the knees and to check urdf for extra joints that need to be fixed.
+const static std::vector<std::string> JOINT_NAMES_{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
+                                                   "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+
+const static std::vector<std::string> CONTACT_NAMES_3_DOF_{"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
+const static std::vector<std::string> CONTACT_NAMES_6_DOF_{};
+
+const auto centroidalModelInfo = centroidal_model::createCentroidalModelInfo(
+    centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH_), centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
+    centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), CONTACT_NAMES_3_DOF_, CONTACT_NAMES_6_DOF_);
 
 }  // namespace legged_robot
 }  // namespace ocs2

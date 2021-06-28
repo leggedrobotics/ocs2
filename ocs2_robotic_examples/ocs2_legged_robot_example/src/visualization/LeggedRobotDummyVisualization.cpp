@@ -27,14 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/common/utils.h>
-#include <ocs2_legged_robot_example/visualization/LeggedRobotDummyVisualization.h>
+#include <array>
 
-#include <ocs2_robotic_tools/common/RotationTransforms.h>
+#include "ocs2_legged_robot_example/visualization/LeggedRobotDummyVisualization.h"
+
+#include <pinocchio/multibody/data.hpp>
+#include <pinocchio/multibody/model.hpp>
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
-
-#include <array>
+#include <ocs2_centroidal_model/FactoryFunctions.h>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
@@ -46,15 +48,25 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+LeggedRobotDummyVisualization::LeggedRobotDummyVisualization(PinocchioInterface pinocchioInterface, ros::NodeHandle& nodeHandle)
+    : pinocchioInterface_(std::move(pinocchioInterface)) {
+  launchVisualizerNode(nodeHandle);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void LeggedRobotDummyVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   tfBroadcasterPtr_.reset(new tf::TransformBroadcaster);
 
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
-  std::string urdfName = "legged_robot_description";
-  urdf::Model model;
-  if (!model.initParam(urdfName)) ROS_ERROR("URDF model load was NOT successful");
+  const std::string urdfName = "legged_robot_description";
+  urdf::Model urdfModel;
+  if (!urdfModel.initParam(urdfName)) {
+    ROS_ERROR("URDF model load was NOT successful");
+  }
   KDL::Tree tree;
-  if (!kdl_parser::treeFromUrdfModel(model, tree)) {
+  if (!kdl_parser::treeFromUrdfModel(urdfModel, tree)) {
     ROS_ERROR("Failed to extract kdl tree from xml robot description");
   }
   robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));

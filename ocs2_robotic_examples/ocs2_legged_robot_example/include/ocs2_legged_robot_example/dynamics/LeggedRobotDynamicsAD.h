@@ -40,7 +40,7 @@ namespace legged_robot {
 
 class LeggedRobotDynamicsAD final : public SystemDynamicsBase {
  public:
-  LeggedRobotDynamicsAD(const PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+  LeggedRobotDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMappingCppAd& mapping,
                         const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                         bool verbose = true);
 

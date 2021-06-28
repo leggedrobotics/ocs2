@@ -45,10 +45,9 @@ namespace legged_robot {
 LeggedRobotConstraintAD::LeggedRobotConstraintAD(const SwitchedModelModeScheduleManager& modeScheduleManager,
                                                  const SwingTrajectoryPlanner& swingTrajectoryPlanner,
                                                  const PinocchioInterface& pinocchioInterface,
-                                                 const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd,
+                                                 const CentroidalModelPinocchioMappingCppAd& pinocchioMappingAd,
                                                  const ModelSettings& options)
-    : Base(),
-      modeScheduleManagerPtr_(&modeScheduleManager),
+    : modeScheduleManagerPtr_(&modeScheduleManager),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       options_(options),
       equalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection),
@@ -78,7 +77,7 @@ LeggedRobotConstraintAD* LeggedRobotConstraintAD::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                                        const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd) {
+                                                        const CentroidalModelPinocchioMappingCppAd& pinocchioMappingAd) {
   for (int i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
     auto footName = CONTACT_NAMES_3_DOF_[i];
     // Friction cone constraint (state-input inequality)
@@ -90,8 +89,8 @@ void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface
 
     // Zero velocity constraint (state-input equality)
     auto velocityUpdateCallback = [&](ad_vector_t state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterfaceAd) {
-      const ad_vector_t& q = state.tail(centroidalModelInfoAd.generalizedCoordinatesNum);
-      updateCentroidalDynamics(pinocchioInterfaceAd, centroidalModelInfoAd, q);
+      const ad_vector_t& q = state.tail(pinocchioMappingAd.getCentroidalModelInfo().generalizedCoordinatesNum);
+      updateCentroidalDynamics(pinocchioInterfaceAd, pinocchioMappingAd.getCentroidalModelInfo(), q);
     };
     PinocchioEndEffectorKinematicsCppAd eeKinematicsAd(pinocchioInterface, pinocchioMappingAd, {footName}, centroidalModelInfo.stateDim,
                                                        centroidalModelInfo.inputDim, velocityUpdateCallback, footName, "/tmp/ocs2",

@@ -29,10 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// ocs2_legged_robot_example
-#include <ocs2_legged_robot_example/LeggedRobotInterface.h>
-
 // ocs2
+#include <ocs2_legged_robot_example/LeggedRobotInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 // visualization
@@ -49,10 +48,7 @@ namespace legged_robot {
 
 class LeggedRobotDummyVisualization final : public DummyObserver {
  public:
-  explicit LeggedRobotDummyVisualization(ros::NodeHandle& nodeHandle, const PinocchioInterface& pinocchioInterface)
-      : pinocchioInterface_(pinocchioInterface) {
-    launchVisualizerNode(nodeHandle);
-  }
+  LeggedRobotDummyVisualization(PinocchioInterface pinocchioInterface, ros::NodeHandle& nodeHandle);
 
   ~LeggedRobotDummyVisualization() override = default;
 
@@ -63,10 +59,11 @@ class LeggedRobotDummyVisualization final : public DummyObserver {
   void publishBaseTransform(ros::Time timeStamp, const ocs2::SystemObservation& observation) const;
   void launchVisualizerNode(ros::NodeHandle& nodeHandle);
 
+  PinocchioInterface pinocchioInterface_;
+
   std::unique_ptr<tf::TransformBroadcaster> tfBroadcasterPtr_;
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   std::map<std::string, scalar_t> jointPositions_;
-  PinocchioInterface pinocchioInterface_;
 
   ros::Publisher policyDelayPublisher_;
   ros::Publisher armTorquesPublished_;

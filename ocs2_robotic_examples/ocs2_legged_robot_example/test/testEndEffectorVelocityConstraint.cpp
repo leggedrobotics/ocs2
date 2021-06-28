@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -97,9 +97,8 @@ class testEndEffectorVelocityConstraint : public ::testing::Test {
     u = vector_t::Random(centroidalModelInfo.inputDim);
 
     // Zero velocity constraint (without position error gain in z-direction)
-    settings.A.resize(3, 6);
-    settings.A << Eigen::Matrix3d::Identity(), Eigen::Matrix3d::Zero();
-    settings.b = Eigen::Vector3d::Zero();
+    settings.A = (matrix_t(3, 6) << matrix_t::Identity(3, 3), matrix_t::Zero(3, 3)).finished();
+    settings.b = vector_t::Zero(3);
   }
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;

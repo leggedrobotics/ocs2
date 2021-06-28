@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -41,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * End-effector Kinematics implmentation using pinocchio and CppAD.
+ * End-effector Kinematics implementation using pinocchio and CppAD.
  *
  * See also PinocchioEndEffectorKinematics, which uses analytical computation and caching.
  */
@@ -50,6 +51,8 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
   using EndEffectorKinematics<scalar_t>::vector3_t;
   using EndEffectorKinematics<scalar_t>::matrix3x_t;
   using EndEffectorKinematics<scalar_t>::quaternion_t;
+  using update_pinocchio_interface_callback =
+      std::function<void(const ad_vector_t& state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterface)>;
 
   /** Constructor
    * @param [in] pinocchioInterface pinocchio interface.
@@ -67,6 +70,25 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
                                       std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim,
                                       const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
                                       bool recompileLibraries = true, bool verbose = false);
+
+  /** Constructor
+   * @param [in] pinocchioInterface pinocchio interface.
+   * @param [in] mapping mapping from OCS2 to pinocchio state.
+   * @param [in] endEffectorIds array of end effector names.
+   * @param [in] stateDim : size of state vector
+   * @param [in] inputDim : size of input vector
+   * @param [in] updateCallback : In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
+   * use this callback.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   *                                  available.
+   * @param [in] verbose : print information.
+   */
+  PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                      std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim,
+                                      update_pinocchio_interface_callback updateCallback, const std::string& modelName,
+                                      const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = false);
 
   ~PinocchioEndEffectorKinematicsCppAd() override = default;
   PinocchioEndEffectorKinematicsCppAd* clone() const override;

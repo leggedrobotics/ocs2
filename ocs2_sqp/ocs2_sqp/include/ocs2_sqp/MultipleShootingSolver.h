@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/misc/ThreadPool.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_core/thread_support/ThreadPool.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include <hpipm_catkin/HpipmInterface.h>
@@ -124,8 +124,9 @@ class MultipleShootingSolver : public SolverBase {
   static scalar_t trajectoryNorm(const vector_array_t& v);
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
-  bool takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization, const vector_t& initState,
-                const vector_array_t& dx, const vector_array_t& du, vector_array_t& x, vector_array_t& u);
+  std::pair<bool, PerformanceIndex> takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
+                                             const vector_t& initState, const vector_array_t& dx, const vector_array_t& du,
+                                             vector_array_t& x, vector_array_t& u);
 
   // Problem definition
   Settings settings_;

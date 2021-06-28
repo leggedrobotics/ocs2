@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/StateConstraintCollection.h>
 #include <ocs2_core/constraint/StateInputConstraintCollection.h>
@@ -41,21 +42,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /** Optimal Control Problem definition */
-struct OptimalControlProblem final {
-  /** System dynamics pointer */
-  std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
-
-  /* Constraints */
-  /** Intermediate equality constraints */
-  std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
-  /** Intermediate state-only equality constraints */
-  std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
-  /** Intermediate inequality constraints */
-  std::unique_ptr<StateInputConstraintCollection> inequalityConstraintPtr;
-  /** pre-jump constraints */
-  std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
-  /** final constraints */
-  std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
+struct OptimalControlProblem {
+  /* Cost */
+  /** Intermediate cost */
+  std::unique_ptr<StateInputCostCollection> costPtr;
+  /** Intermediate state-only cost */
+  std::unique_ptr<StateCostCollection> stateCostPtr;
+  /** Pre-jump cost */
+  std::unique_ptr<StateCostCollection> preJumpCostPtr;
+  /** Final cost */
+  std::unique_ptr<StateCostCollection> finalCostPtr;
 
   /* Soft constraints */
   /** Intermediate soft constraint penalty */
@@ -67,36 +63,46 @@ struct OptimalControlProblem final {
   /** Final soft constraint penalty */
   std::unique_ptr<StateCostCollection> finalSoftConstraintPtr;
 
-  /* Cost */
-  /** Intermediate cost */
-  std::unique_ptr<StateInputCostCollection> costPtr;
-  /** Intermediate state-only cost */
-  std::unique_ptr<StateCostCollection> stateCostPtr;
-  /** Pre-jump cost */
-  std::unique_ptr<StateCostCollection> preJumpCostPtr;
-  /** Final cost */
-  std::unique_ptr<StateCostCollection> finalCostPtr;
+  /* Constraints */
+  /** Intermediate equality constraints, full row rank w.r.t. inputs */
+  std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
+  /** Intermediate state-only equality constraints */
+  std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
+  /** Intermediate inequality constraints */
+  std::unique_ptr<StateInputConstraintCollection> inequalityConstraintPtr;
+  /** pre-jump constraints */
+  std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
+  /** final constraints */
+  std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
 
-  /** Desired trajectory reference */
-  const CostDesiredTrajectories* costDesiredTrajectories = nullptr;  // TODO(mspieler) remove this
+  /* Dynamics */
+  /** System dynamics pointer */
+  std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
 
+  /* Misc. */
   /** The pre-computation module */
   std::unique_ptr<PreComputation> preComputationPtr;
 
   /** Default constructor */
   OptimalControlProblem();
 
+  /** Default destructor */
+  ~OptimalControlProblem() = default;
+
   /** Copy constructor */
   OptimalControlProblem(const OptimalControlProblem& other);
-
-  /** Move constructor */
-  OptimalControlProblem(OptimalControlProblem&& other) noexcept;
 
   /** Copy assignment */
   OptimalControlProblem& operator=(const OptimalControlProblem& rhs);
 
+  /** Move constructor */
+  OptimalControlProblem(OptimalControlProblem&& other) noexcept = default;
+
   /** Move assignment */
-  OptimalControlProblem& operator=(OptimalControlProblem&& rhs);
+  OptimalControlProblem& operator=(OptimalControlProblem&& rhs) noexcept = default;
+
+  /** Swap */
+  void swap(OptimalControlProblem& other) noexcept;
 };
 
 }  // namespace ocs2

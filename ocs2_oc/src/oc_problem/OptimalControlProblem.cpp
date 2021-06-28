@@ -35,94 +35,89 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 OptimalControlProblem::OptimalControlProblem()
-    : preComputationPtr(new PreComputation),
+    : /* Cost */
+      costPtr(new StateInputCostCollection),
+      stateCostPtr(new StateCostCollection),
+      preJumpCostPtr(new StateCostCollection),
+      finalCostPtr(new StateCostCollection),
+      /* Soft constraints */
+      softConstraintPtr(new StateInputCostCollection),
+      stateSoftConstraintPtr(new StateCostCollection),
+      preJumpSoftConstraintPtr(new StateCostCollection),
+      finalSoftConstraintPtr(new StateCostCollection),
+      /* Constraints */
       equalityConstraintPtr(new StateInputConstraintCollection),
       stateEqualityConstraintPtr(new StateConstraintCollection),
       inequalityConstraintPtr(new StateInputConstraintCollection),
       preJumpEqualityConstraintPtr(new StateConstraintCollection),
       finalEqualityConstraintPtr(new StateConstraintCollection),
-      softConstraintPtr(new StateInputCostCollection),
-      stateSoftConstraintPtr(new StateCostCollection),
-      preJumpSoftConstraintPtr(new StateCostCollection),
-      finalSoftConstraintPtr(new StateCostCollection),
-      costPtr(new StateInputCostCollection),
-      stateCostPtr(new StateCostCollection),
-      preJumpCostPtr(new StateCostCollection),
-      finalCostPtr(new StateCostCollection) {}
+      /* Misc. */
+      preComputationPtr(new PreComputation) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
-    : equalityConstraintPtr(other.equalityConstraintPtr->clone()),
-      stateEqualityConstraintPtr(other.stateEqualityConstraintPtr->clone()),
-      inequalityConstraintPtr(other.inequalityConstraintPtr->clone()),
-      preJumpEqualityConstraintPtr(other.preJumpEqualityConstraintPtr->clone()),
-      finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
-      softConstraintPtr(other.softConstraintPtr->clone()),
-      stateSoftConstraintPtr(other.stateSoftConstraintPtr->clone()),
-      preJumpSoftConstraintPtr(other.preJumpSoftConstraintPtr->clone()),
-      finalSoftConstraintPtr(other.finalSoftConstraintPtr->clone()),
+    : /* Cost */
       costPtr(other.costPtr->clone()),
       stateCostPtr(other.stateCostPtr->clone()),
       preJumpCostPtr(other.preJumpCostPtr->clone()),
       finalCostPtr(other.finalCostPtr->clone()),
+      /* Soft constraints */
+      softConstraintPtr(other.softConstraintPtr->clone()),
+      stateSoftConstraintPtr(other.stateSoftConstraintPtr->clone()),
+      preJumpSoftConstraintPtr(other.preJumpSoftConstraintPtr->clone()),
+      finalSoftConstraintPtr(other.finalSoftConstraintPtr->clone()),
+      /* Constraints */
+      equalityConstraintPtr(other.equalityConstraintPtr->clone()),
+      stateEqualityConstraintPtr(other.stateEqualityConstraintPtr->clone()),
+      inequalityConstraintPtr(other.inequalityConstraintPtr->clone()),
+      preJumpEqualityConstraintPtr(other.preJumpEqualityConstraintPtr->clone()),
+      finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
+      /* Misc. */
       preComputationPtr(other.preComputationPtr->clone()) {
-  // validtity check
-  if (other.dynamicsPtr == nullptr) {
-    throw std::runtime_error("[OptimalControlProblem] dynamicsPtr is not set");
+  if (other.dynamicsPtr != nullptr) {
+    dynamicsPtr.reset(other.dynamicsPtr->clone());
   }
-  dynamicsPtr.reset(other.dynamicsPtr->clone());
 }
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-OptimalControlProblem::OptimalControlProblem(OptimalControlProblem&& other) noexcept
-    : dynamicsPtr(std::move(other.dynamicsPtr)),
-      equalityConstraintPtr(std::move(other.equalityConstraintPtr)),
-      stateEqualityConstraintPtr(std::move(other.stateEqualityConstraintPtr)),
-      inequalityConstraintPtr(std::move(other.inequalityConstraintPtr)),
-      preJumpEqualityConstraintPtr(std::move(other.preJumpEqualityConstraintPtr)),
-      finalEqualityConstraintPtr(std::move(other.finalEqualityConstraintPtr)),
-      softConstraintPtr(std::move(other.softConstraintPtr)),
-      stateSoftConstraintPtr(std::move(other.stateSoftConstraintPtr)),
-      preJumpSoftConstraintPtr(std::move(other.preJumpSoftConstraintPtr)),
-      finalSoftConstraintPtr(std::move(other.finalSoftConstraintPtr)),
-      costPtr(std::move(other.costPtr)),
-      stateCostPtr(std::move(other.stateCostPtr)),
-      preJumpCostPtr(std::move(other.preJumpCostPtr)),
-      finalCostPtr(std::move(other.finalCostPtr)),
-      preComputationPtr(std::move(other.preComputationPtr)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 OptimalControlProblem& OptimalControlProblem::operator=(const OptimalControlProblem& rhs) {
-  *this = OptimalControlProblem(rhs);
+  OptimalControlProblem tmp(rhs);
+  swap(tmp);
   return *this;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-OptimalControlProblem& OptimalControlProblem::operator=(OptimalControlProblem&& rhs) {
-  dynamicsPtr = std::move(rhs.dynamicsPtr);
-  equalityConstraintPtr = std::move(rhs.equalityConstraintPtr);
-  stateEqualityConstraintPtr = std::move(rhs.stateEqualityConstraintPtr);
-  inequalityConstraintPtr = std::move(rhs.inequalityConstraintPtr);
-  preJumpEqualityConstraintPtr = std::move(rhs.preJumpEqualityConstraintPtr);
-  finalEqualityConstraintPtr = std::move(rhs.finalEqualityConstraintPtr);
-  softConstraintPtr = std::move(rhs.softConstraintPtr);
-  stateSoftConstraintPtr = std::move(rhs.stateSoftConstraintPtr);
-  preJumpSoftConstraintPtr = std::move(rhs.preJumpSoftConstraintPtr);
-  finalSoftConstraintPtr = std::move(rhs.finalSoftConstraintPtr);
-  costPtr = std::move(rhs.costPtr);
-  stateCostPtr = std::move(rhs.stateCostPtr);
-  preJumpCostPtr = std::move(rhs.preJumpCostPtr);
-  finalCostPtr = std::move(rhs.finalCostPtr);
-  preComputationPtr = std::move(rhs.preComputationPtr);
-  return *this;
+void OptimalControlProblem::swap(OptimalControlProblem& other) noexcept {
+  /* Cost */
+  costPtr.swap(other.costPtr);
+  stateCostPtr.swap(other.stateCostPtr);
+  preJumpCostPtr.swap(other.preJumpCostPtr);
+  finalCostPtr.swap(other.finalCostPtr);
+
+  /* Soft constraints */
+  softConstraintPtr.swap(other.softConstraintPtr);
+  stateSoftConstraintPtr.swap(other.stateSoftConstraintPtr);
+  preJumpSoftConstraintPtr.swap(other.preJumpSoftConstraintPtr);
+  finalSoftConstraintPtr.swap(other.finalSoftConstraintPtr);
+
+  /* Constraints */
+  equalityConstraintPtr.swap(other.equalityConstraintPtr);
+  stateEqualityConstraintPtr.swap(other.stateEqualityConstraintPtr);
+  inequalityConstraintPtr.swap(other.inequalityConstraintPtr);
+  preJumpEqualityConstraintPtr.swap(other.preJumpEqualityConstraintPtr);
+  finalEqualityConstraintPtr.swap(other.finalEqualityConstraintPtr);
+
+  /* Dynamics */
+  dynamicsPtr.swap(other.dynamicsPtr);
+
+  /* Misc. */
+  preComputationPtr.swap(other.preComputationPtr);
 }
 
 }  // namespace ocs2

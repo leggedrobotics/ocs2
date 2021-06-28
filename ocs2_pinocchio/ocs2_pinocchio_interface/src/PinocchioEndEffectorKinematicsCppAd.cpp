@@ -35,6 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
+namespace {
+
+void defaultUpdatePinocchioInterface(const ocs2::ad_vector_t&, ocs2::PinocchioInterfaceTpl<ocs2::ad_scalar_t>&) {}
+
+}  // unnamed namespace
+
 namespace ocs2 {
 
 /******************************************************************************************************/
@@ -46,6 +52,17 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
                                                                          size_t inputDim, const std::string& modelName,
                                                                          const std::string& modelFolder, bool recompileLibraries,
                                                                          bool verbose)
+
+    : PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, mapping, std::move(endEffectorIds), stateDim, inputDim,
+                                          &defaultUpdatePinocchioInterface, modelName, modelFolder, recompileLibraries, verbose) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(
+    const PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+    std::vector<std::string> endEffectorIds, size_t stateDim, size_t inputDim, update_pinocchio_interface_callback updateCallback,
+    const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose)
     : endEffectorIds_(std::move(endEffectorIds)) {
   for (const auto& bodyName : endEffectorIds_) {
     endEffectorFrameIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
@@ -54,21 +71,30 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
   // initialize CppAD interface
   auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
 
+  // set pinocchioInterface to mapping
+  std::unique_ptr<PinocchioStateInputMapping<ad_scalar_t>> mappingPtr(mapping.clone());
+  mappingPtr->setPinocchioInterface(pinocchioInterfaceCppAd);
+
   // position function
-  auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) { y = getPositionCppAd(pinocchioInterfaceCppAd, mapping, x); };
+  auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
+    updateCallback(x, pinocchioInterfaceCppAd);
+    y = getPositionCppAd(pinocchioInterfaceCppAd, *mappingPtr, x);
+  };
   positionCppAdInterfacePtr_.reset(new CppAdInterface(positionFunc, stateDim, modelName + "_position", modelFolder));
 
   // velocity function
   auto velocityFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
-    ad_vector_t state = x.head(stateDim);
-    ad_vector_t input = x.tail(inputDim);
-    y = getVelocityCppAd(pinocchioInterfaceCppAd, mapping, state, input);
+    const ad_vector_t state = x.head(stateDim);
+    const ad_vector_t input = x.tail(inputDim);
+    updateCallback(state, pinocchioInterfaceCppAd);
+    y = getVelocityCppAd(pinocchioInterfaceCppAd, *mappingPtr, state, input);
   };
   velocityCppAdInterfacePtr_.reset(new CppAdInterface(velocityFunc, stateDim + inputDim, modelName + "_velocity", modelFolder));
 
   // orientation function
   auto orientationFunc = [&, this](const ad_vector_t& x, const ad_vector_t& params, ad_vector_t& y) {
-    y = getOrientationErrorCppAd(pinocchioInterfaceCppAd, mapping, x, params);
+    updateCallback(x, pinocchioInterfaceCppAd);
+    y = getOrientationErrorCppAd(pinocchioInterfaceCppAd, *mappingPtr, x, params);
   };
   orientationErrorCppAdInterfacePtr_.reset(
       new CppAdInterface(orientationFunc, stateDim, 4 * endEffectorFrameIds_.size(), modelName + "_orientation", modelFolder));

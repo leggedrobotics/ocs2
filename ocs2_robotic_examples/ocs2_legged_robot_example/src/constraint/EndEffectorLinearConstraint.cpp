@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/constraint/EndEffectorVelocityConstraint.h>
+#include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -35,70 +35,75 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EndEffectorVelocityConstraint::EndEffectorVelocityConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                                                             const size_t numConstraints)
-    : BASE(ConstraintOrder::Linear), endEffectorKinematicsPtr_(endEffectorKinematics.clone()), numConstraints_(numConstraints) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-EndEffectorVelocityConstraint::EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs)
-    : BASE(rhs),
-      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
-      numConstraints_(rhs.numConstraints_),
-      settings_(rhs.settings_) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-EndEffectorVelocityConstraint* EndEffectorVelocityConstraint::clone() const {
-  return new EndEffectorVelocityConstraint(*this);
+EndEffectorLinearConstraint::EndEffectorLinearConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
+                                                         size_t numConstraints, Config config)
+    : StateInputConstraint(ConstraintOrder::Linear),
+      endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
+      numConstraints_(numConstraints),
+      config_(std::move(config)) {
+  if (endEffectorKinematicsPtr_->getIds().size() != 1) {
+    throw std::runtime_error("[EndEffectorLinearConstraint] this class only accepts a single end-effector!");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void EndEffectorVelocityConstraint::configure(const EndEffectorVelocityConstraintSettings& settings) {
-  assert(settings.A.rows() == numConstraints_);
-  assert(settings.A.cols() == 6);
-  assert(settings.b.rows() == numConstraints_);
-  settings_ = settings;
-};
+EndEffectorLinearConstraint::EndEffectorLinearConstraint(const EndEffectorLinearConstraint& rhs)
+    : StateInputConstraint(rhs),
+      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
+      numConstraints_(rhs.numConstraints_),
+      config_(rhs.config_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t EndEffectorVelocityConstraint::getNumConstraints(scalar_t time) const {
-  return numConstraints_;
-};
+void EndEffectorLinearConstraint::configure(Config&& config) {
+  assert(config.b.rows() == numConstraints_);
+  assert(config.Ax.size() > 0 || config.Av.size());
+  assert(config.Ax.size() > 0 && config.Ax.rows() == numConstraints_);
+  assert(config.Ax.size() > 0 && config.Ax.cols() == 3);
+  assert(config.Av.size() > 0 && config.Av.rows() == numConstraints_);
+  assert(config.Av.size() > 0 && config.Av.cols() == 3);
+  config_ = std::move(config);
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t EndEffectorVelocityConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
-  // Compute constraints
-  const vector3_t eeVelocityWorld = endEffectorKinematicsPtr_->getVelocity(state, input)[0];
-  const vector3_t eePositionWorld = endEffectorKinematicsPtr_->getPosition(state)[0];
-
-  return settings_.A * (vector_t(6) << eeVelocityWorld, eePositionWorld).finished() + settings_.b;
-};
+vector_t EndEffectorLinearConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
+  vector_t f = config_.b;
+  if (config_.Ax.size() > 0) {
+    f.noalias() += config_.Ax * endEffectorKinematicsPtr_->getPosition(state).front();
+  }
+  if (config_.Av.size() > 0) {
+    f.noalias() += config_.Av * endEffectorKinematicsPtr_->getVelocity(state, input).front();
+  }
+  return f;
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation EndEffectorVelocityConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                        const vector_t& input) const {
-  // Convert to output format
-  VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.size(), input.size());
-  const auto velocityLinearApproximation = endEffectorKinematicsPtr_->getVelocityLinearApproximation(state, input)[0];
-  const auto positionLinearApproximation = endEffectorKinematicsPtr_->getPositionLinearApproximation(state)[0];
+VectorFunctionLinearApproximation EndEffectorLinearConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                      const vector_t& input) const {
+  VectorFunctionLinearApproximation linearApproximation =
+      VectorFunctionLinearApproximation::Zero(getNumConstraints(time), state.size(), input.size());
 
-  linearApproximation.f =
-      settings_.A * (vector_t(6) << velocityLinearApproximation.f, positionLinearApproximation.f).finished() + settings_.b;
-  linearApproximation.dfdx =
-      settings_.A * (matrix_t(6, state.size()) << velocityLinearApproximation.dfdx, positionLinearApproximation.dfdx).finished();
-  linearApproximation.dfdu =
-      settings_.A * (matrix_t(6, input.size()) << velocityLinearApproximation.dfdu, matrix_t::Zero(3, input.size())).finished();
+  linearApproximation.f = config_.b;
+
+  if (config_.Ax.size() > 0) {
+    const auto positionApprox = endEffectorKinematicsPtr_->getPositionLinearApproximation(state).front();
+    linearApproximation.f.noalias() += config_.Ax * positionApprox.f;
+    linearApproximation.dfdx.noalias() += config_.Ax * positionApprox.dfdx;
+  }
+
+  if (config_.Av.size() > 0) {
+    const auto velocityApprox = endEffectorKinematicsPtr_->getVelocityLinearApproximation(state, input).front();
+    linearApproximation.f.noalias() += config_.Av * velocityApprox.f;
+    linearApproximation.dfdx.noalias() += config_.Av * velocityApprox.dfdx;
+    linearApproximation.dfdu.noalias() += config_.Av * velocityApprox.dfdu;
+  }
 
   return linearApproximation;
 }

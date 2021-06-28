@@ -87,7 +87,7 @@ if(cmake_clang_tools_FOUND)
   add_clang_tooling(
           TARGETS
           ${PROJECT_NAME}
-          SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
+          SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
           CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
           CF_WERROR
   )

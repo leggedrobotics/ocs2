@@ -41,64 +41,59 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 
+#include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
+#include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
+#include "ocs2_legged_robot_example/constraint/ZeroForceConstraint.h"
+
 namespace ocs2 {
 namespace legged_robot {
 
-class LeggedRobotConstraintAD : public ocs2::ConstraintBase {
+class LeggedRobotConstraintAD : public ConstraintBase {
  public:
-  using Base = ocs2::ConstraintBase;
-
   LeggedRobotConstraintAD(const SwitchedModelModeScheduleManager& modeScheduleManager,
                           const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr, const PinocchioInterface& pinocchioInterface,
-                          const CentroidalModelPinocchioMappingCppAd& pinocchioMappingAd, const ModelSettings& options = ModelSettings());
-
-  LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs);
-
-  /**
-   * Initialize Constraint Terms
-   */
-  void initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                 const CentroidalModelPinocchioMappingCppAd& pinocchioMappingAd);
+                          const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd, ModelSettings options);
 
   ~LeggedRobotConstraintAD() override = default;
+  LeggedRobotConstraintAD* clone() const override { return new LeggedRobotConstraintAD(*this); }
 
-  LeggedRobotConstraintAD* clone() const override;
+  vector_t stateInputEqualityConstraint(scalar_t time, const vector_t& state, const vector_t& input) override;
+  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                    const vector_t& input) override;
 
-  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override;
-
-  vector_t inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override;
-
-  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                    const vector_t& u) override;
-
-  VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                  const vector_t& u) override;
-
-  vector_array_t stateInputEqualityConstraintDerivativesEventTimes(scalar_t t, const vector_t& x, const vector_t& u) override;
-
-  /**
-   * set the stance legs
-   */
-  void setStanceLegs(const contact_flag_t& stanceLegs);
-
-  /**
-   * get the model's stance leg
-   */
-  void getStanceLegs(contact_flag_t& stanceLegs);
+  vector_t inequalityConstraint(scalar_t time, const vector_t& state, const vector_t& input) override;
+  VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                  const vector_t& input) override;
 
  private:
-  void timeUpdate(scalar_t t);
+  /** Copy constructor */
+  LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs);
+
+  /** Initializes constraint terms */
+  void initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
+                                 const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd);
+
+  /** Gets pointer from constraint collections */
+  void collectConstraintPointers();
+
+  /** Sets up the state-input equality constraints for a inquiry time */
+  void updateStateInputEqualityConstraints(scalar_t time);
+
+  /** Sets up the inequality constraints for a inquiry time */
+  void updateInequalityConstraints(scalar_t time);
 
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
-
-  ModelSettings options_;
-
-  contact_flag_t stanceLegs_;
-  size_t numEventTimes_;
+  const ModelSettings options_;
 
   std::unique_ptr<ocs2::StateInputConstraintCollection> equalityStateInputConstraintCollectionPtr_;
   std::unique_ptr<ocs2::StateInputConstraintCollection> inequalityStateInputConstraintCollectionPtr_;
+
+  // Individual constraint access (non-owning)
+  feet_array_t<FrictionConeConstraint*> eeFrictionConeConstraints_;
+  feet_array_t<ZeroForceConstraint*> eeZeroForceConstraints_;
+  feet_array_t<EndEffectorLinearConstraint*> eeZeroVelocityConstraints_;
+  feet_array_t<EndEffectorLinearConstraint*> eeNormalVelocityConstraints_;
 };
 
 }  // namespace legged_robot

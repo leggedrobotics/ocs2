@@ -40,42 +40,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace legged_robot {
 
-struct EndEffectorVelocityConstraintSettings {
-  // Constraints are  A * x + b
-  matrix_t A;
-  vector_t b;
-};
-
-class EndEffectorVelocityConstraint final : public ocs2::StateInputConstraint {
+/**
+ * Defines a linear constraint on an end-effector position (xee) and linear velocity (vee).
+ * g(xee, vee) = Ax * xee + Av * vee + b
+ * - For defining constraint of type g(xee), set Av to matrix_t(0, 0)
+ * - For defining constraint of type g(vee), set Ax to matrix_t(0, 0)
+ */
+class EndEffectorLinearConstraint final : public StateInputConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using BASE = ocs2::StateInputConstraint;
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
+  /**
+   * Coefficients of the linear constraints of the form:
+   * g(xee, vee) = Ax * xee + Av * vee + b
+   */
+  struct Config {
+    vector_t b;
+    matrix_t Ax;
+    matrix_t Av;
+  };
 
-  explicit EndEffectorVelocityConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics, const size_t numConstraints);
+  EndEffectorLinearConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics, size_t numConstraints,
+                              Config config = Config());
 
-  ~EndEffectorVelocityConstraint() override = default;
-  EndEffectorVelocityConstraint* clone() const override;
+  ~EndEffectorLinearConstraint() override = default;
+  EndEffectorLinearConstraint* clone() const override { return new EndEffectorLinearConstraint(*this); }
 
-  void configure(const EndEffectorVelocityConstraintSettings& settings);
-
-  size_t getNumConstraints(scalar_t time) const override;
-
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
-
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
-
+  void configure(Config&& config);
+  void configure(const Config& config) { this->configure(Config(config)); }
   EndEffectorKinematics<scalar_t>& getEndEffectorKinematics() { return *endEffectorKinematicsPtr_; }
 
+  size_t getNumConstraints(scalar_t time) const override { return numConstraints_; }
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
+
  private:
-  EndEffectorVelocityConstraint(const EndEffectorVelocityConstraint& rhs);
+  EndEffectorLinearConstraint(const EndEffectorLinearConstraint& rhs);
 
   std::unique_ptr<EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
-
   const size_t numConstraints_;
-
-  EndEffectorVelocityConstraintSettings settings_;
+  Config config_;
 };
+
 }  // namespace legged_robot
 }  // namespace ocs2

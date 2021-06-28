@@ -50,7 +50,7 @@ namespace legged_robot {
  * sqrt(regularization) instead of Fz = 0
  *
  */
-class FrictionConeConstraint final : public ocs2::StateInputConstraint {
+class FrictionConeConstraint final : public StateInputConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -113,7 +113,7 @@ class FrictionConeConstraint final : public ocs2::StateInputConstraint {
 
   struct ConeLocalDerivatives {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    vector3_t dCone_dF;    // derivate w.r.t local force
+    vector3_t dCone_dF;    // derivative w.r.t local force
     matrix3_t d2Cone_dF2;  // second derivative w.r.t local force
   };
 

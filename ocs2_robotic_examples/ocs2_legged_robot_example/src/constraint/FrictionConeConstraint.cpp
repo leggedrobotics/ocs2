@@ -38,7 +38,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 FrictionConeConstraint::FrictionConeConstraint(Config config, int legNumber)
-    : ocs2::StateInputConstraint(ocs2::ConstraintOrder::Quadratic),
+    : StateInputConstraint(ocs2::ConstraintOrder::Quadratic),
       config_(std::move(config)),
       legNumber_(legNumber),
       t_R_w(matrix3_t::Identity()) {}
@@ -56,10 +56,8 @@ void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNor
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
-  const vector3_t forcesInWorldFrame = input.segment<3>(3 * legNumber_);
-
-  const auto localForce = t_R_w * forcesInWorldFrame;
-
+  const auto forcesInWorldFrame = input.segment<3>(3 * legNumber_);
+  const vector3_t localForce = t_R_w * forcesInWorldFrame;
   return coneConstraint(localForce);
 }
 
@@ -69,8 +67,8 @@ vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, 
 VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                  const vector_t& input) const {
   const vector3_t forcesInWorldFrame = input.segment<3>(3 * legNumber_);
+  const vector3_t localForce = t_R_w * forcesInWorldFrame;
 
-  const auto localForce = t_R_w * forcesInWorldFrame;
   const auto localForceDerivatives = computeLocalForceDerivatives(forcesInWorldFrame);
   const auto coneLocalDerivatives = computeConeLocalDerivatives(localForce);
   const auto coneDerivatives = computeConeConstraintDerivatives(coneLocalDerivatives, localForceDerivatives);

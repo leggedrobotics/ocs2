@@ -29,22 +29,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/initialization/Initializer.h>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
-#include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
+#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
-class LeggedRobotInitializer final : public ocs2::Initializer {
+class LeggedRobotInitializer final : public Initializer {
  public:
-  using Base = ocs2::Initializer;
-
-  LeggedRobotInitializer(const SwitchedModelModeScheduleManager& modeScheduleManager);
+  /*
+   * Constructor
+   * @param [in] info : The centroidal model information.
+   * @param [in] modeScheduleManager : Switched system mode schedule manager.
+   * @param [in] extendNormalizedMomentum: If true, it extrapolate the normalized momentum; otherwise sets it to zero.
+   */
+  LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
+                         bool extendNormalizedMomentum = false);
 
   ~LeggedRobotInitializer() override = default;
-
   LeggedRobotInitializer* clone() const override;
 
   void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override;
@@ -52,7 +56,9 @@ class LeggedRobotInitializer final : public ocs2::Initializer {
  private:
   LeggedRobotInitializer(const LeggedRobotInitializer& other) = default;
 
+  const CentroidalModelInfo info_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const bool extendNormalizedMomentum_;
 };
 
 }  // namespace legged_robot

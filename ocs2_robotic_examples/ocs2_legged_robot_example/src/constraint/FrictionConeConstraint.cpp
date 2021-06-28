@@ -27,9 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/constraint/FrictionConeConstraint.h>
+#include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
 
-//#include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
+#include <ocs2_centroidal_model/AccessHelperFunctions.h>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -37,26 +37,25 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FrictionConeConstraint::FrictionConeConstraint(Config config, int legNumber)
-    : StateInputConstraint(ocs2::ConstraintOrder::Quadratic),
+FrictionConeConstraint::FrictionConeConstraint(Config config, size_t contactPointIndex, CentroidalModelInfo info)
+    : StateInputConstraint(ConstraintOrder::Quadratic),
       config_(std::move(config)),
-      legNumber_(legNumber),
-      t_R_w(matrix3_t::Identity()) {}
+      contactPointIndex_(contactPointIndex),
+      info_(std::move(info)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld) {
-  // TODO(jichiu) Make this independent of the package ocs2_switched_model_interface
-  //  t_R_w = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(surfaceNormalInWorld);
-  t_R_w = matrix3_t::Identity();
+  t_R_w.setIdentity();
+  throw std::runtime_error("[FrictionConeConstraint] setSurfaceNormalInWorld() is not implemented!");
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
-  const auto forcesInWorldFrame = input.segment<3>(3 * legNumber_);
+  const auto forcesInWorldFrame = centroidal_model::getContactForces(input, contactPointIndex_, info_);
   const vector3_t localForce = t_R_w * forcesInWorldFrame;
   return coneConstraint(localForce);
 }
@@ -66,7 +65,7 @@ vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, 
 /******************************************************************************************************/
 VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                  const vector_t& input) const {
-  const vector3_t forcesInWorldFrame = input.segment<3>(3 * legNumber_);
+  const vector3_t forcesInWorldFrame = centroidal_model::getContactForces(input, contactPointIndex_, info_);
   const vector3_t localForce = t_R_w * forcesInWorldFrame;
 
   const auto localForceDerivatives = computeLocalForceDerivatives(forcesInWorldFrame);
@@ -85,9 +84,9 @@ VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation FrictionConeConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                        const vector_t& input) const {
-  const vector3_t forcesInWorldFrame = input.segment<3>(3 * legNumber_);
+  const vector3_t forcesInWorldFrame = centroidal_model::getContactForces(input, contactPointIndex_, info_);
+  const vector3_t localForce = t_R_w * forcesInWorldFrame;
 
-  const auto localForce = t_R_w * forcesInWorldFrame;
   const auto localForceDerivatives = computeLocalForceDerivatives(forcesInWorldFrame);
   const auto coneLocalDerivatives = computeConeLocalDerivatives(localForce);
   const auto coneDerivatives = computeConeConstraintDerivatives(coneLocalDerivatives, localForceDerivatives);
@@ -170,8 +169,8 @@ FrictionConeConstraint::ConeDerivatives FrictionConeConstraint::computeConeConst
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const {
-  matrix_t dhdu = matrix_t::Zero(1, centroidalModelInfo.inputDim);
-  dhdu.block<1, 3>(0, 3 * legNumber_) = coneDerivatives.dCone_du;
+  matrix_t dhdu = matrix_t::Zero(1, info_.inputDim);
+  dhdu.block<1, 3>(0, 3 * contactPointIndex_) = coneDerivatives.dCone_du;
   return dhdu;
 }
 
@@ -179,8 +178,8 @@ matrix_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivativ
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const {
-  matrix_t ddhdudu = matrix_t::Zero(centroidalModelInfo.inputDim, centroidalModelInfo.inputDim);
-  ddhdudu.block<3, 3>(3 * legNumber_, 3 * legNumber_) = coneDerivatives.d2Cone_du2;
+  matrix_t ddhdudu = matrix_t::Zero(info_.inputDim, info_.inputDim);
+  ddhdudu.block<3, 3>(3 * contactPointIndex_, 3 * contactPointIndex_) = coneDerivatives.d2Cone_du2;
   ddhdudu.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdudu;
 }
@@ -189,7 +188,7 @@ matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDer
 /******************************************************************************************************/
 /******************************************************************************************************/
 matrix_t FrictionConeConstraint::frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const {
-  matrix_t ddhdxdx = matrix_t::Zero(centroidalModelInfo.stateDim, centroidalModelInfo.stateDim);
+  matrix_t ddhdxdx = matrix_t::Zero(info_.stateDim, info_.stateDim);
   ddhdxdx.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdxdx;
 }

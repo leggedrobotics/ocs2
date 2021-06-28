@@ -98,7 +98,8 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   /*
    * Initialization
    */
-  initializerPtr_.reset(new LeggedRobotInitializer(*modeScheduleManagerPtr_));
+  constexpr bool extendNormalizedMomentum = true;
+  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo, *modeScheduleManagerPtr_, extendNormalizedMomentum));
   initialState_.setZero(centroidalModelInfo.stateDim);
   loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
 
@@ -118,8 +119,9 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   if (useAnalyticalGradientsConstraints) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical constraint class is not yet implemented.");
   } else {
-    constraintsPtr_.reset(new LeggedRobotConstraintAD(*modeScheduleManagerPtr_, *modeScheduleManagerPtr_->getSwingTrajectoryPlanner(),
-                                                      pinocchioInterface_, *pinocchioMappingCppAdPtr_, modelSettings_));
+    constraintsPtr_.reset(new LeggedRobotConstraintAD(centroidalModelInfo, *modeScheduleManagerPtr_,
+                                                      *modeScheduleManagerPtr_->getSwingTrajectoryPlanner(), pinocchioInterface_,
+                                                      *pinocchioMappingCppAdPtr_, modelSettings_));
   }
 
   /*

@@ -35,8 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
-
 namespace ocs2 {
 namespace legged_robot {
 
@@ -60,14 +58,24 @@ class EndEffectorLinearConstraint final : public StateInputConstraint {
     matrix_t Av;
   };
 
+  /**
+   * Constructor
+   * @param [in] endEffectorKinematics: The kinematic interface to the target end-effector.
+   * @param [in] numConstraints: The number of constraints {1, 2, 3}
+   * @param [in] config: The constraint coefficients, g(xee, vee) = Ax * xee + Av * vee + b
+   */
   EndEffectorLinearConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics, size_t numConstraints,
                               Config config = Config());
 
   ~EndEffectorLinearConstraint() override = default;
   EndEffectorLinearConstraint* clone() const override { return new EndEffectorLinearConstraint(*this); }
 
+  /** Sets a new constraint coefficients. */
   void configure(Config&& config);
+  /** Sets a new constraint coefficients. */
   void configure(const Config& config) { this->configure(Config(config)); }
+
+  /** Gets the underlying end-effector kinematics interface. */
   EndEffectorKinematics<scalar_t>& getEndEffectorKinematics() { return *endEffectorKinematicsPtr_; }
 
   size_t getNumConstraints(scalar_t time) const override { return numConstraints_; }

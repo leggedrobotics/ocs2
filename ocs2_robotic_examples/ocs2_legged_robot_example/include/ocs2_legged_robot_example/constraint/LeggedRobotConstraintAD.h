@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
 
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 
 #include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
@@ -50,7 +51,7 @@ namespace legged_robot {
 
 class LeggedRobotConstraintAD : public ConstraintBase {
  public:
-  LeggedRobotConstraintAD(const SwitchedModelModeScheduleManager& modeScheduleManager,
+  LeggedRobotConstraintAD(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
                           const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr, const PinocchioInterface& pinocchioInterface,
                           const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd, ModelSettings options);
 
@@ -82,6 +83,7 @@ class LeggedRobotConstraintAD : public ConstraintBase {
   /** Sets up the inequality constraints for a inquiry time */
   void updateInequalityConstraints(scalar_t time);
 
+  const CentroidalModelInfo info_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
   const ModelSettings options_;

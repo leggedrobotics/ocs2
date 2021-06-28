@@ -40,11 +40,12 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotConstraintAD::LeggedRobotConstraintAD(const SwitchedModelModeScheduleManager& modeScheduleManager,
+LeggedRobotConstraintAD::LeggedRobotConstraintAD(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
                                                  const SwingTrajectoryPlanner& swingTrajectoryPlanner,
                                                  const PinocchioInterface& pinocchioInterface,
                                                  const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd, ModelSettings options)
-    : modeScheduleManagerPtr_(&modeScheduleManager),
+    : info_(std::move(info)),
+      modeScheduleManagerPtr_(&modeScheduleManager),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       options_(std::move(options)),
       equalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection),
@@ -58,6 +59,7 @@ LeggedRobotConstraintAD::LeggedRobotConstraintAD(const SwitchedModelModeSchedule
 /******************************************************************************************************/
 LeggedRobotConstraintAD::LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs)
     : ConstraintBase(rhs),
+      info_(rhs.info_),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
       swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
       options_(rhs.options_),
@@ -79,12 +81,13 @@ void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface
     // Friction cone constraint (state-input inequality)
     if (options_.enforceFrictionConeConstraint_) {
       FrictionConeConstraint::Config frictionConeConConfig(options_.frictionCoefficient_);
-      std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(new FrictionConeConstraint(std::move(frictionConeConConfig), i));
+      std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(
+          new FrictionConeConstraint(std::move(frictionConeConConfig), i, info_));
       inequalityStateInputConstraintCollectionPtr_->add(footName + "_eeFrictionCone", std::move(frictionConeConstraintPtr));
     }
 
     // Zero force constraint (state-input equality)
-    std::unique_ptr<ZeroForceConstraint> zeroForceConstraintPtr(new ZeroForceConstraint(i));
+    std::unique_ptr<ZeroForceConstraint> zeroForceConstraintPtr(new ZeroForceConstraint(i, info_));
 
     // end-effector kinematics
     auto velocityUpdateCallback = [&info](ad_vector_t state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterfaceAd) {
@@ -122,12 +125,12 @@ void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotConstraintAD::collectConstraintPointers() {
-  eeFrictionConeConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
-  eeZeroForceConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
-  eeZeroVelocityConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
-  eeNormalVelocityConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
+  eeFrictionConeConstraints_.resize(info_.numThreeDofContacts);
+  eeZeroForceConstraints_.resize(info_.numThreeDofContacts);
+  eeZeroVelocityConstraints_.resize(info_.numThreeDofContacts);
+  eeNormalVelocityConstraints_.resize(info_.numThreeDofContacts);
 
-  for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+  for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
     const auto& footName = CONTACT_NAMES_3_DOF_[i];
     // Inequalities
     if (options_.enforceFrictionConeConstraint_) {
@@ -160,7 +163,7 @@ void LeggedRobotConstraintAD::updateStateInputEqualityConstraints(scalar_t time)
   };
 
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-  for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+  for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
     // zero force
     eeZeroForceConstraints_[i]->setActivity(!contactFlags[i]);
 
@@ -182,7 +185,7 @@ void LeggedRobotConstraintAD::updateInequalityConstraints(scalar_t time) {
   if (options_.enforceFrictionConeConstraint_) {
     // friction cone
     const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-    for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+    for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
       eeFrictionConeConstraints_[i]->setActivity(contactFlags[i]);
     }  // end of i loop
   }

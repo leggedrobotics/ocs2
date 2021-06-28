@@ -27,10 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/initialization/LeggedRobotInitializer.h>
+#include "ocs2_legged_robot_example/initialization/LeggedRobotInitializer.h"
 
-#include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_legged_robot_example/common/utils.h>
+#include "ocs2_legged_robot_example/common/utils.h"
+
+#include <ocs2_centroidal_model/AccessHelperFunctions.h>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -38,8 +39,9 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotInitializer::LeggedRobotInitializer(const SwitchedModelModeScheduleManager& modeScheduleManager)
-    : modeScheduleManagerPtr_(&modeScheduleManager) {}
+LeggedRobotInitializer::LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                               bool extendNormalizedMomentum)
+    : info_(std::move(info)), modeScheduleManagerPtr_(&modeScheduleManager), extendNormalizedMomentum_(extendNormalizedMomentum) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -53,9 +55,11 @@ LeggedRobotInitializer* LeggedRobotInitializer::clone() const {
 /******************************************************************************************************/
 void LeggedRobotInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-  input = weightCompensatingInput(centroidalModelInfo, contactFlags);
+  input = weightCompensatingInput(info_, contactFlags);
   nextState = state;
-  nextState.head<6>() = vector_t::Zero(6);
+  if (!extendNormalizedMomentum_) {
+    centroidal_model::getNormalizedMomentum(nextState, info_).setZero();
+  }
 }
 
 }  // namespace legged_robot

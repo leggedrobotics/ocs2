@@ -29,9 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
-
-#include <ocs2_legged_robot_example/common/definitions.h>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -84,26 +83,23 @@ class FrictionConeConstraint final : public StateInputConstraint {
   /**
    * Constructor
    * @param [in] config : Friction model settings.
-   * @param [in] legNumber : leg index in {0, 1, 2, 3}.
+   * @param [in] contactPointIndex : The 3 DoF contact index in.
+   * @param [in] info : The centroidal model information.
    */
-  FrictionConeConstraint(Config config, int legNumber);
+  FrictionConeConstraint(Config config, size_t contactPointIndex, CentroidalModelInfo info);
 
   ~FrictionConeConstraint() override = default;
-
   FrictionConeConstraint* clone() const override { return new FrictionConeConstraint(*this); }
 
-  // TODO(jichiu) check if it's necessary for this package
-  void setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld);
-
   size_t getNumConstraints(scalar_t time) const override { return 1; };
-
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
-
   VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const vector_t& state,
                                                            const vector_t& input) const override;
-
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                  const vector_t& input) const override;
+
+  /** Sets the estimated terrain normal expressed in the world frame. */
+  void setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld);
 
  private:
   struct LocalForceDerivatives {
@@ -135,8 +131,11 @@ class FrictionConeConstraint final : public StateInputConstraint {
   matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
 
   const Config config_;
-  const int legNumber_;
-  matrix3_t t_R_w;  // rotation world to terrain
+  const size_t contactPointIndex_;
+  const CentroidalModelInfo info_;
+
+  // rotation world to terrain
+  matrix3_t t_R_w = matrix3_t::Identity();
 };
 
 }  // namespace legged_robot

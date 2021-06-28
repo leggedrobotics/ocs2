@@ -36,14 +36,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
-#include <ocs2_centroidal_model/ModelHelperFunctions.h>
 #include <ocs2_centroidal_model/FactoryFunctions.h>
+#include <ocs2_centroidal_model/ModelHelperFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
 #include <ocs2_legged_robot_example/LeggedRobotInterface.h>
 #include <ocs2_legged_robot_example/constraint/EndEffectorVelocityConstraint.h>
-
 
 #include <gtest/gtest.h>
 #include <ros/package.h>

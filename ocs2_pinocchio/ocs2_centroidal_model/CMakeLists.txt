@@ -87,7 +87,7 @@ if(cmake_clang_tools_FOUND)
   add_clang_tooling(
           TARGETS
           ${PROJECT_NAME}
-          SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+          SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
           CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
           CF_WERROR
   )
@@ -112,7 +112,7 @@ install(
 ## Testing ##
 #############
 catkin_add_gtest(${PROJECT_NAME}_test
-  test/testAccessMethods.cpp
+  # test/testAccessMethods.cpp
   test/testAnymalSingleRigidBody.cpp
   test/testAnymalFullCentroidal.cpp
 )

@@ -50,8 +50,7 @@ class LeggedRobotConstraintAD : public ocs2::ConstraintBase {
 
   LeggedRobotConstraintAD(const SwitchedModelModeScheduleManager& modeScheduleManager,
                           const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr, const PinocchioInterface& pinocchioInterface,
-                          const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd,
-                          const ModelSettings& options = ModelSettings());
+                          const CentroidalModelPinocchioMappingCppAd& pinocchioMappingAd, const ModelSettings& options = ModelSettings());
 
   LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs);
 
@@ -59,7 +58,7 @@ class LeggedRobotConstraintAD : public ocs2::ConstraintBase {
    * Initialize Constraint Terms
    */
   void initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                 const CentroidalModelPinocchioMapping<ad_scalar_t>& pinocchioMappingAd);
+                                 const CentroidalModelPinocchioMappingCppAd& pinocchioMappingAd);
 
   ~LeggedRobotConstraintAD() override = default;
 

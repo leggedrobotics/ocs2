@@ -68,7 +68,6 @@ add_library(ocs2_legged_robot_example
     src/LeggedRobotInterface.cpp
     src/visualization/LeggedRobotDummyVisualization.cpp
 
-    src/common/definitions.cpp
     src/common/ModelSettings.cpp
 
     # src/constraint/LeggedRobotConstraint.cpp

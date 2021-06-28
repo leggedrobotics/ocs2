@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 
+#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
+
 #include "ocs2_centroidal_model/AccessHelperFunctions.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
@@ -37,7 +39,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioCentroidalDynamics::PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping)
+PinocchioCentroidalDynamics::PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping& mapping)
     : pinocchioInterfacePtr_(nullptr), mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/

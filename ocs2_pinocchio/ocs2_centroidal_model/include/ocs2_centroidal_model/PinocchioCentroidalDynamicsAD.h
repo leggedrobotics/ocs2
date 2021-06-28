@@ -29,9 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
-#include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
 
@@ -57,7 +60,7 @@ class PinocchioCentroidalDynamicsAD final {
    *                                  available.
    * @param [in] verbose : print information.
    */
-  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMappingCppAd& mapping,
                                 const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                                 bool verbose = false);
 
@@ -85,7 +88,7 @@ class PinocchioCentroidalDynamicsAD final {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const;
 
  private:
-  ad_vector_t getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+  ad_vector_t getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const CentroidalModelPinocchioMappingCppAd& mapping,
                             const ad_vector_t& state, const ad_vector_t& input);
 
   std::unique_ptr<CppAdInterface> systemFlowMapCppAdInterfacePtr_;

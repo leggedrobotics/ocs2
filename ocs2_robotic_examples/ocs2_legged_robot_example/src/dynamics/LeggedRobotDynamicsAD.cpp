@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/dynamics/LeggedRobotDynamicsAD.h>
+#include "ocs2_legged_robot_example/dynamics/LeggedRobotDynamicsAD.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -36,7 +36,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LeggedRobotDynamicsAD::LeggedRobotDynamicsAD(const PinocchioInterface& pinocchioInterface,
-                                             CentroidalModelPinocchioMapping<ad_scalar_t>& mapping, const std::string& modelName,
+                                             const CentroidalModelPinocchioMappingCppAd& mapping, const std::string& modelName,
                                              const std::string& modelFolder /*= "/tmp/ocs2"*/, bool recompileLibraries /*= true*/,
                                              bool verbose /*= true*/)
     : pinocchioCentroidalDynamicsAd_(pinocchioInterface, mapping, modelName, modelFolder, recompileLibraries, verbose) {}

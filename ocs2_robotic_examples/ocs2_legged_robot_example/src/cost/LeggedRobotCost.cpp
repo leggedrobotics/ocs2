@@ -27,9 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/cost/LeggedRobotCost.h>
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
-#include <pinocchio/fwd.hpp>
+#include <ocs2_legged_robot_example/cost/LeggedRobotCost.h>
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/jacobian.hpp>
@@ -51,7 +51,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LeggedRobotCost::LeggedRobotCost(const SwitchedModelModeScheduleManager& modeScheduleManager, PinocchioInterface pinocchioInterface,
-                                 const CentroidalModelPinocchioMapping<scalar_t>& pinocchioMapping, const std::string& taskFile)
+                                 const CentroidalModelPinocchioMapping& pinocchioMapping, const std::string& taskFile)
 
     : modeScheduleManagerPtr_(&modeScheduleManager),
       pinocchioInterface_(std::move(pinocchioInterface)),

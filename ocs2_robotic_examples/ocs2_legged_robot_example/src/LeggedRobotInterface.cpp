@@ -27,9 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/LeggedRobotInterface.h>
+#include "ocs2_legged_robot_example/LeggedRobotInterface.h"
 
-#include <ocs2_pinocchio_interface/urdf.h>
+#include <ocs2_centroidal_model/FactoryFunctions.h>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -37,9 +37,8 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfTree)));
-
+LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree)
+    : pinocchioInterface_(ocs2::centroidal_model::createPinocchioInterface(urdfTree, JOINT_NAMES_)) {
   // Load the task file
   std::string taskFolder = ros::package::getPath("ocs2_legged_robot_example") + "/config/" + taskFileFolderName;
   taskFile_ = taskFolder + "/task.info";
@@ -103,13 +102,13 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   initialState_.setZero(centroidalModelInfo.stateDim);
   loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
 
-  pinocchioMappingPtr_.reset(new CentroidalModelPinocchioMapping<scalar_t>(centroidalModelInfo));
-  pinocchioMappingAdPtr_.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(centroidalModelInfoAd));
+  pinocchioMappingPtr_.reset(new CentroidalModelPinocchioMapping(centroidalModelInfo));
+  pinocchioMappingCppAdPtr_.reset(new CentroidalModelPinocchioMappingCppAd(centroidalModelInfo.toCppAd()));
 
   /*
    * Cost function
    */
-  costPtr_.reset(new LeggedRobotCost(*modeScheduleManagerPtr_, *pinocchioInterfacePtr_, *pinocchioMappingPtr_, taskFile_));
+  costPtr_.reset(new LeggedRobotCost(*modeScheduleManagerPtr_, pinocchioInterface_, *pinocchioMappingPtr_, taskFile_));
 
   /*
    * Constraints
@@ -120,7 +119,7 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical constraint class is not yet implemented.");
   } else {
     constraintsPtr_.reset(new LeggedRobotConstraintAD(*modeScheduleManagerPtr_, *modeScheduleManagerPtr_->getSwingTrajectoryPlanner(),
-                                                      *pinocchioInterfacePtr_, *pinocchioMappingAdPtr_, modelSettings_));
+                                                      pinocchioInterface_, *pinocchioMappingCppAdPtr_, modelSettings_));
   }
 
   /*
@@ -131,7 +130,7 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   if (useAnalyticalGradientsDynamics) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical dynamics class is not yet implemented.");
   } else {
-    dynamicsPtr_.reset(new LeggedRobotDynamicsAD(*pinocchioInterfacePtr_, *pinocchioMappingAdPtr_, "dynamics", "/tmp/ocs2",
+    dynamicsPtr_.reset(new LeggedRobotDynamicsAD(pinocchioInterface_, *pinocchioMappingCppAdPtr_, "dynamics", "/tmp/ocs2",
                                                  modelSettings_.recompileLibraries_, true));
   }
 
@@ -146,38 +145,6 @@ void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
   mpcPtr_.reset(new ocs2::MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintsPtr_.get(), costPtr_.get(), initializerPtr_.get(),
                                   ddpSettings_, mpcSettings_));
   mpcPtr_->getSolverPtr()->setModeScheduleManager(modeScheduleManagerPtr_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface LeggedRobotInterface::buildPinocchioInterface(const std::string& urdfPath) {
-  // Add 6 DoF for the floating base
-  pinocchio::JointModelComposite jointComposite(2);
-  jointComposite.addJoint(pinocchio::JointModelTranslation());
-  jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-
-  return ocs2::getPinocchioInterfaceFromUrdfFile(urdfPath, jointComposite);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface LeggedRobotInterface::buildPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
-  // Add 6 DoF for the floating base
-  pinocchio::JointModelComposite jointComposite(2);
-  jointComposite.addJoint(pinocchio::JointModelTranslation());
-  jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-
-  // Remove extraneous joints from urdf
-  ::urdf::ModelInterfaceSharedPtr newModel = std::make_shared<::urdf::ModelInterface>(*urdfTree);
-  for (std::pair<const std::string, std::shared_ptr<::urdf::Joint>>& jointPair : newModel->joints_) {
-    if (std::find(JOINT_NAMES_.begin(), JOINT_NAMES_.end(), jointPair.first) == JOINT_NAMES_.end()) {
-      jointPair.second->type = urdf::Joint::FIXED;
-    }
-  }
-
-  return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
 }
 
 }  // namespace legged_robot

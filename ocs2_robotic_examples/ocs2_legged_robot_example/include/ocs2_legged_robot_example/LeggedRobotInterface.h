@@ -29,32 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// ocs2_legged_robot_example
-#include <ocs2_legged_robot_example/cost/LeggedRobotCost.h>
-#include <ocs2_legged_robot_example/initialization/LeggedRobotInitializer.h>
-#include <ocs2_legged_robot_example/logic/GaitReceiver.h>
-#include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
-//#include <ocs2_legged_robot_example/constraint/LeggedRobotConstraint.h>
-#include <ocs2_legged_robot_example/constraint/LeggedRobotConstraintAD.h>
-#include <ocs2_legged_robot_example/dynamics/LeggedRobotDynamicsAD.h>
+// ocs2
+#include <ocs2_core/misc/Display.h>
+#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
-// ocs2_centroidal_model
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
 
-// ocs2
-#include <ocs2_core/misc/Display.h>
-#include <ocs2_mpc/MPC_DDP.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
-#include <ocs2_robotic_tools/common/RobotInterface.h>
-
-// pinocchio
-#include <pinocchio/parsers/urdf/types.hpp>
-
-// ROS
-#include <ros/package.h>
+// ocs2_legged_robot_example
+#include "ocs2_legged_robot_example/constraint/LeggedRobotConstraintAD.h"
+#include "ocs2_legged_robot_example/cost/LeggedRobotCost.h"
+#include "ocs2_legged_robot_example/dynamics/LeggedRobotDynamicsAD.h"
+#include "ocs2_legged_robot_example/initialization/LeggedRobotInitializer.h"
+#include "ocs2_legged_robot_example/logic/GaitReceiver.h"
+#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
 
 /**
  * LeggedRobotInterface class
@@ -63,12 +56,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace legged_robot {
 
-class LeggedRobotInterface final : public ocs2::RobotInterface {
+class LeggedRobotInterface final : public RobotInterface {
  public:
-  using Ptr = std::shared_ptr<LeggedRobotInterface>;
-
   LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree);
-  ~LeggedRobotInterface() = default;
+
+  ~LeggedRobotInterface() override = default;
 
   void loadSettings(const std::string& taskFile);
 
@@ -105,16 +97,12 @@ class LeggedRobotInterface final : public ocs2::RobotInterface {
   /** Gets the mode schedule manager */
   std::shared_ptr<ocs2::ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
 
-  PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
-
-  /** LeggedRobot PinocchioInterface factory */
-  static PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
-  static PinocchioInterface buildPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
 
  protected:
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
-  std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> pinocchioMappingPtr_;
-  std::unique_ptr<CentroidalModelPinocchioMapping<ad_scalar_t>> pinocchioMappingAdPtr_;
+  PinocchioInterface pinocchioInterface_;
+  std::unique_ptr<CentroidalModelPinocchioMapping> pinocchioMappingPtr_;
+  std::unique_ptr<CentroidalModelPinocchioMappingCppAd> pinocchioMappingCppAdPtr_;
 
   std::string taskFile_;
 

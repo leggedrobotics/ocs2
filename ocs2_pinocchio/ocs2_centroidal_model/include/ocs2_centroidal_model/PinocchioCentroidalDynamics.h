@@ -29,9 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
+#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
 namespace ocs2 {
 
@@ -61,7 +62,7 @@ class PinocchioCentroidalDynamics final {
    * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
    * which are needed for pinocchio functions and algorithms
    */
-  explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping);
+  explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping& mapping);
 
   /** Copy Constructor */
   PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs);
@@ -112,7 +113,7 @@ class PinocchioCentroidalDynamics final {
   void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
   const PinocchioInterface* pinocchioInterfacePtr_;
-  std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> mappingPtr_;
+  std::unique_ptr<CentroidalModelPinocchioMapping> mappingPtr_;
 
   // partial derivatives of the system dynamics
   Matrix3x normalizedLinearMomentumRateDerivativeQ_;

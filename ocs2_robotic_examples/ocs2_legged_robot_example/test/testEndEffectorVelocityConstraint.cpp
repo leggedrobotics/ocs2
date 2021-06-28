@@ -27,21 +27,23 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
 #include <pinocchio/algorithm/centroidal.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics-derivatives.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
+#include <ocs2_centroidal_model/FactoryFunctions.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
 #include <ocs2_legged_robot_example/LeggedRobotInterface.h>
 #include <ocs2_legged_robot_example/constraint/EndEffectorVelocityConstraint.h>
 
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
 #include <gtest/gtest.h>
 #include <ros/package.h>
@@ -52,16 +54,16 @@ using namespace legged_robot;
 class testEndEffectorVelocityConstraint : public ::testing::Test {
  public:
   testEndEffectorVelocityConstraint() {
-    pinocchioInterfacePtr.reset(new PinocchioInterface(LeggedRobotInterface::buildPinocchioInterface(ROBOT_URDF_PATH_)));
+    pinocchioInterfacePtr.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH_)));
 
-    pinocchioMappingPtr.reset(new CentroidalModelPinocchioMapping<scalar_t>(centroidalModelInfo));
-    pinocchioMappingAdPtr.reset(new CentroidalModelPinocchioMapping<ad_scalar_t>(centroidalModelInfoAd));
+    pinocchioMappingPtr.reset(new CentroidalModelPinocchioMapping(centroidalModelInfo));
+    pinocchioMappingAdPtr.reset(new CentroidalModelPinocchioMappingCppAd(centroidalModelInfo.toCppAd()));
 
     eeKinematicsPtr.reset(new PinocchioEndEffectorKinematics(*pinocchioInterfacePtr, *pinocchioMappingPtr, {CONTACT_NAMES_3_DOF_[0]}));
 
     auto velocityUpdateCallback = [&](ad_vector_t state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterfaceAd) {
-      const ad_vector_t& q = state.tail(centroidalModelInfoAd.generalizedCoordinatesNum);
-      updateCentroidalDynamics(pinocchioInterfaceAd, centroidalModelInfoAd, q);
+      const ad_vector_t& q = state.tail(centroidalModelInfo.generalizedCoordinatesNum);
+      updateCentroidalDynamics(pinocchioInterfaceAd, centroidalModelInfo.toCppAd(), q);
     };
     eeKinematicsAdPtr.reset(new PinocchioEndEffectorKinematicsCppAd(
         *pinocchioInterfacePtr, *pinocchioMappingAdPtr, {CONTACT_NAMES_3_DOF_[0]}, centroidalModelInfo.stateDim,
@@ -102,8 +104,8 @@ class testEndEffectorVelocityConstraint : public ::testing::Test {
   }
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
-  std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> pinocchioMappingPtr;
-  std::unique_ptr<CentroidalModelPinocchioMapping<ad_scalar_t>> pinocchioMappingAdPtr;
+  std::unique_ptr<CentroidalModelPinocchioMapping> pinocchioMappingPtr;
+  std::unique_ptr<CentroidalModelPinocchioMappingCppAd> pinocchioMappingAdPtr;
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr;
   std::unique_ptr<PinocchioEndEffectorKinematicsCppAd> eeKinematicsAdPtr;
   vector_t x{centroidalModelInfo.stateDim};

@@ -90,10 +90,10 @@ class LeggedRobotConstraintAD : public ConstraintBase {
   std::unique_ptr<ocs2::StateInputConstraintCollection> inequalityStateInputConstraintCollectionPtr_;
 
   // Individual constraint access (non-owning)
-  feet_array_t<FrictionConeConstraint*> eeFrictionConeConstraints_;
-  feet_array_t<ZeroForceConstraint*> eeZeroForceConstraints_;
-  feet_array_t<EndEffectorLinearConstraint*> eeZeroVelocityConstraints_;
-  feet_array_t<EndEffectorLinearConstraint*> eeNormalVelocityConstraints_;
+  std::vector<FrictionConeConstraint*> eeFrictionConeConstraints_;
+  std::vector<ZeroForceConstraint*> eeZeroForceConstraints_;
+  std::vector<EndEffectorLinearConstraint*> eeZeroVelocityConstraints_;
+  std::vector<EndEffectorLinearConstraint*> eeNormalVelocityConstraints_;
 };
 
 }  // namespace legged_robot

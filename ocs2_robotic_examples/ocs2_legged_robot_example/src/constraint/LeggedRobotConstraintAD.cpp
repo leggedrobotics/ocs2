@@ -122,6 +122,11 @@ void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotConstraintAD::collectConstraintPointers() {
+  eeFrictionConeConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
+  eeZeroForceConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
+  eeZeroVelocityConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
+  eeNormalVelocityConstraints_.resize(centroidalModelInfo.numThreeDofContacts);
+
   for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
     const auto& footName = CONTACT_NAMES_3_DOF_[i];
     // Inequalities

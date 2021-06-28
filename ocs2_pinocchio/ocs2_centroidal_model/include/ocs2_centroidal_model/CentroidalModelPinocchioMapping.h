@@ -29,11 +29,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_centroidal_model/CentroidalModelInfo.h"
-
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
+#include "ocs2_centroidal_model/CentroidalModelInfo.h"
+
 namespace ocs2 {
+
+template <typename SCALAR>
+class CentroidalModelPinocchioMappingTpl;
+
+using CentroidalModelPinocchioMapping = CentroidalModelPinocchioMappingTpl<scalar_t>;
+using CentroidalModelPinocchioMappingCppAd = CentroidalModelPinocchioMappingTpl<ad_scalar_t>;
 
 /**
  * Centroidal Dynamics:
@@ -53,22 +59,21 @@ namespace ocs2 {
  * @remark: Base linear velocity is expressed with respect to the inertial frame
  */
 template <typename SCALAR>
-class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
+class CentroidalModelPinocchioMappingTpl final : public PinocchioStateInputMapping<SCALAR> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
   using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
-  using CentroidalModelInfo = CentroidalModelInfoTpl<SCALAR>;
 
   /**
    * Constructor
    * @param [in] centroidalModelInfo : centroidal model information.
    */
-  explicit CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo);
-  ~CentroidalModelPinocchioMapping() override = default;
+  explicit CentroidalModelPinocchioMappingTpl(CentroidalModelInfoTpl<SCALAR> centroidalModelInfo);
 
-  CentroidalModelPinocchioMapping<SCALAR>* clone() const override;
+  ~CentroidalModelPinocchioMappingTpl() override = default;
+  CentroidalModelPinocchioMappingTpl* clone() const override;
 
   /** Sets the pinocchio interface for caching
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
@@ -105,23 +110,25 @@ class CentroidalModelPinocchioMapping final : public PinocchioStateInputMapping<
    *
    * @note requires pinocchioInterface to be updated with:
    *       ocs2::updateCentroidalDynamicsDerivatives(interface, info, q, v)
+   *
+   * TODO: Add Jacobian w.r.t generalized accelerations as argument to get a full implicit dependence on the inputs
    */
-  // TODO: Add Jacobian with respect to generalized accelerations as argument to get a full implicit dependence on the inputs
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
   /**
    * Returns a structure containing robot-specific information needed for the centroidal dynamics computations.
    */
-  const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
+  const CentroidalModelInfoTpl<SCALAR>& getCentroidalModelInfo() const { return centroidalModelInfo_; }
 
  private:
-  CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs);
+  CentroidalModelPinocchioMappingTpl(const CentroidalModelPinocchioMappingTpl& rhs);
 
   const PinocchioInterfaceTpl<SCALAR>* pinocchioInterfacePtr_;
   const CentroidalModelInfoTpl<SCALAR> centroidalModelInfo_;
 };
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */
-extern template class CentroidalModelPinocchioMapping<scalar_t>;
-extern template class CentroidalModelPinocchioMapping<ad_scalar_t>;
+extern template class CentroidalModelPinocchioMappingTpl<scalar_t>;
+extern template class CentroidalModelPinocchioMappingTpl<ad_scalar_t>;
+
 }  // namespace ocs2

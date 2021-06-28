@@ -54,8 +54,6 @@ class RosReferenceManager : public ReferenceManagerDecorator {
   explicit RosReferenceManager(std::string topicPrefix, std::unique_ptr<ReferenceManagerInterface> referenceManagerPtr);
 
   ~RosReferenceManager() override = default;
-  RosReferenceManager(RosReferenceManager&& other) = default;
-  RosReferenceManager& operator=(RosReferenceManager&& other) = default;
 
   /**
    * Creates a pointer to RosReferenceManager using ReferenceManager(args...).

@@ -46,13 +46,11 @@ class ReferenceManagerInterface {
   /** Destructor */
   virtual ~ReferenceManagerInterface() = 0;
 
-  /** Disable copy */
+  /** Disable copy / move */
   ReferenceManagerInterface& operator=(const ReferenceManagerInterface&) = delete;
   ReferenceManagerInterface(const ReferenceManagerInterface&) = delete;
-
-  /** Enable move */
-  ReferenceManagerInterface& operator=(ReferenceManagerInterface&&) = default;
-  ReferenceManagerInterface(ReferenceManagerInterface&&) = default;
+  ReferenceManagerInterface& operator=(ReferenceManagerInterface&&) = delete;
+  ReferenceManagerInterface(ReferenceManagerInterface&&) = delete;
 
   /**
    * The method is called right before the solver runs and before any other SolverSynchronizedModule::preSolverRun().

@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ostream>
 #include <vector>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace legged_robot {

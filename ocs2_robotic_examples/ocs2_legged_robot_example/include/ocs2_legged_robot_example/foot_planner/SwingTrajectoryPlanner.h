@@ -29,27 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/logic/ModeSchedule.h>
 
-#include <ocs2_legged_robot_example/common/ModelSettings.h>
-#include <ocs2_legged_robot_example/common/definitions.h>
-#include <ocs2_legged_robot_example/foot_planner/SplineCpg.h>
+#include "ocs2_legged_robot_example/common/definitions.h"
+#include "ocs2_legged_robot_example/foot_planner/SplineCpg.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
-struct SwingTrajectoryPlannerSettings {
-  scalar_t liftOffVelocity = 0.0;
-  scalar_t touchDownVelocity = 0.0;
-  scalar_t swingHeight = 0.1;
-  scalar_t swingTimeScale = 0.15;  // swing phases shorter than this time will be scaled down in height and velocity
-};
-
-SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
-
 class SwingTrajectoryPlanner {
  public:
-  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings);
+  struct Config {
+    scalar_t liftOffVelocity = 0.0;
+    scalar_t touchDownVelocity = 0.0;
+    scalar_t swingHeight = 0.1;
+    scalar_t swingTimeScale = 0.15;  // swing phases shorter than this time will be scaled down in height and velocity
+  };
+
+  SwingTrajectoryPlanner(Config config, CentroidalModelInfo info);
 
   void update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
 
@@ -66,7 +64,7 @@ class SwingTrajectoryPlanner {
    * @param phaseIDsStock
    * @return contactFlagStock
    */
-  static feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock);
+  feet_array_t<std::vector<bool>> extractContactFlags(const std::vector<size_t>& phaseIDsStock) const;
 
   /**
    * Finds the take-off and touch-down times indices for a specific leg.
@@ -103,11 +101,15 @@ class SwingTrajectoryPlanner {
 
   static scalar_t swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale);
 
-  SwingTrajectoryPlannerSettings settings_;
+  const Config config_;
+  const CentroidalModelInfo info_;
 
   feet_array_t<std::vector<SplineCpg>> feetHeightTrajectories_;
   feet_array_t<std::vector<scalar_t>> feetHeightTrajectoriesEvents_;
 };
+
+SwingTrajectoryPlanner::Config loadSwingTrajectorySettings(const std::string& fileName,
+                                                           const std::string& fieldName = "swing_trajectory_config", bool verbose = true);
 
 }  // namespace legged_robot
 }  // namespace ocs2

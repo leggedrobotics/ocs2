@@ -44,8 +44,8 @@ ModelSettings loadModelSettings(const std::string& filename, const std::string& 
   boost::property_tree::read_info(filename, pt);
 
   if (verbose) {
-    std::cerr << "\n #### Legged Robot Model Settings:\n";
-    std::cerr << " #### ==================================================\n";
+    std::cerr << "\n #### Legged Robot Model Settings:";
+    std::cerr << "\n #### =============================================================================\n";
   }
 
   loadData::loadPtreeValue(pt, modelSettings.positionErrorGain, fieldName + ".positionErrorGain", verbose);
@@ -57,7 +57,7 @@ ModelSettings loadModelSettings(const std::string& filename, const std::string& 
   loadData::loadPtreeValue(pt, modelSettings.recompileLibrariesCppAd, fieldName + ".recompileLibrariesCppAd", verbose);
 
   if (verbose) {
-    std::cerr << " #### ================================================ ####" << std::endl;
+    std::cerr << " #### =============================================================================" << std::endl;
   }
 
   return modelSettings;

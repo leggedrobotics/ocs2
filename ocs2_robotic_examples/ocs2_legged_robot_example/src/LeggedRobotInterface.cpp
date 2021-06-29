@@ -97,7 +97,7 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 
   // Swing trajectory planner
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
-      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile), centroidalModelInfo_));
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config"), centroidalModelInfo_));
 
   // Mode schedule manager
   modeScheduleManagerPtr_ =

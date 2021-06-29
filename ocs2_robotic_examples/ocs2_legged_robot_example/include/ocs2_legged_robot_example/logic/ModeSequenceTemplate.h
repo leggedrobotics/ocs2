@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/logic/ModeSchedule.h>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
 #include <ocs2_legged_robot_example/logic/Gait.h>
 #include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
 

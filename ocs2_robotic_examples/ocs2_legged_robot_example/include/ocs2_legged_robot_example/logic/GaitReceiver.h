@@ -29,12 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/Types.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ros/ros.h>
 #include <mutex>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
 #include <ocs2_legged_robot_example/logic/GaitSchedule.h>
 #include <ocs2_legged_robot_example/logic/ModeSequenceTemplate.h>
 #include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>

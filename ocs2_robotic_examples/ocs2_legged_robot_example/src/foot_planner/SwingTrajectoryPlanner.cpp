@@ -27,7 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
+#include "ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h"
+
 #include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
 
 #include <ocs2_core/misc/Lookup.h>
@@ -38,7 +39,8 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings) : settings_(std::move(settings)) {}
+SwingTrajectoryPlanner::SwingTrajectoryPlanner(Config config, CentroidalModelInfo info)
+    : config_(std::move(config)), info_(std::move(info)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -80,11 +82,11 @@ void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, cons
 
   feet_array_t<std::vector<int>> startTimesIndices;
   feet_array_t<std::vector<int>> finalTimesIndices;
-  for (size_t leg = 0; leg < centroidalModelInfo.numThreeDofContacts; leg++) {
+  for (size_t leg = 0; leg < info_.numThreeDofContacts; leg++) {
     std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(eesContactFlagStocks[leg]);
   }
 
-  for (size_t j = 0; j < centroidalModelInfo.numThreeDofContacts; j++) {
+  for (size_t j = 0; j < info_.numThreeDofContacts; j++) {
     feetHeightTrajectories_[j].clear();
     feetHeightTrajectories_[j].reserve(modeSequence.size());
     for (int p = 0; p < modeSequence.size(); ++p) {
@@ -96,11 +98,11 @@ void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, cons
         const scalar_t swingStartTime = eventTimes[swingStartIndex];
         const scalar_t swingFinalTime = eventTimes[swingFinalIndex];
 
-        const scalar_t scaling = swingTrajectoryScaling(swingStartTime, swingFinalTime, settings_.swingTimeScale);
+        const scalar_t scaling = swingTrajectoryScaling(swingStartTime, swingFinalTime, config_.swingTimeScale);
 
-        const CubicSpline::Node liftOff{swingStartTime, liftOffHeightSequence[j][p], scaling * settings_.liftOffVelocity};
-        const CubicSpline::Node touchDown{swingFinalTime, touchDownHeightSequence[j][p], scaling * settings_.touchDownVelocity};
-        const scalar_t midHeight = std::min(liftOffHeightSequence[j][p], touchDownHeightSequence[j][p]) + scaling * settings_.swingHeight;
+        const CubicSpline::Node liftOff{swingStartTime, liftOffHeightSequence[j][p], scaling * config_.liftOffVelocity};
+        const CubicSpline::Node touchDown{swingFinalTime, touchDownHeightSequence[j][p], scaling * config_.touchDownVelocity};
+        const scalar_t midHeight = std::min(liftOffHeightSequence[j][p], touchDownHeightSequence[j][p]) + scaling * config_.swingHeight;
         feetHeightTrajectories_[j].emplace_back(liftOff, midHeight, touchDown);
       } else {  // for a stance leg
         const CubicSpline::Node liftOff{0.0, liftOffHeightSequence[j][p], 0.0};
@@ -133,7 +135,7 @@ std::pair<std::vector<int>, std::vector<int>> SwingTrajectoryPlanner::updateFoot
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-feet_array_t<std::vector<bool>> SwingTrajectoryPlanner::extractContactFlags(const std::vector<size_t>& phaseIDsStock) {
+feet_array_t<std::vector<bool>> SwingTrajectoryPlanner::extractContactFlags(const std::vector<size_t>& phaseIDsStock) const {
   const size_t numPhases = phaseIDsStock.size();
 
   feet_array_t<std::vector<bool>> contactFlagStock;
@@ -141,7 +143,7 @@ feet_array_t<std::vector<bool>> SwingTrajectoryPlanner::extractContactFlags(cons
 
   for (size_t i = 0; i < numPhases; i++) {
     const auto contactFlag = modeNumber2StanceLeg(phaseIDsStock[i]);
-    for (size_t j = 0; j < centroidalModelInfo.numThreeDofContacts; j++) {
+    for (size_t j = 0; j < info_.numThreeDofContacts; j++) {
       contactFlagStock[j][i] = contactFlag[j];
     }
   }
@@ -216,29 +218,28 @@ scalar_t SwingTrajectoryPlanner::swingTrajectoryScaling(scalar_t startTime, scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {
-  SwingTrajectoryPlannerSettings settings{};
-
+SwingTrajectoryPlanner::Config loadSwingTrajectorySettings(const std::string& fileName, const std::string& fieldName, bool verbose) {
   boost::property_tree::ptree pt;
-  boost::property_tree::read_info(filename, pt);
-
-  const std::string prefix{"model_settings.swing_trajectory_settings."};
+  boost::property_tree::read_info(fileName, pt);
 
   if (verbose) {
-    std::cerr << "\n #### Swing trajectory Settings:" << std::endl;
-    std::cerr << " #### ==================================================" << std::endl;
+    std::cerr << "\n #### Swing Trajectory Config:";
+    std::cerr << "\n #### =============================================================================\n";
   }
 
-  ocs2::loadData::loadPtreeValue(pt, settings.liftOffVelocity, prefix + "liftOffVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, settings.touchDownVelocity, prefix + "touchDownVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, settings.swingHeight, prefix + "swingHeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
+  SwingTrajectoryPlanner::Config config;
+  const std::string prefix = fieldName + ".";
+
+  ocs2::loadData::loadPtreeValue(pt, config.liftOffVelocity, prefix + "liftOffVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, config.touchDownVelocity, prefix + "touchDownVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, config.swingHeight, prefix + "swingHeight", verbose);
+  ocs2::loadData::loadPtreeValue(pt, config.swingTimeScale, prefix + "swingTimeScale", verbose);
 
   if (verbose) {
-    std::cerr << " #### ==================================================" << std::endl;
+    std::cerr << " #### =============================================================================" << std::endl;
   }
 
-  return settings;
+  return config;
 }
 
 }  // namespace legged_robot

@@ -58,11 +58,9 @@ class PinocchioCentroidalDynamics final {
 
   /**
    * Constructor
-   *
-   * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
-   * which are needed for pinocchio functions and algorithms
+   * CentroidalModelInfo : The centroidal model information.
    */
-  explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping& mapping);
+  explicit PinocchioCentroidalDynamics(CentroidalModelInfo info);
 
   /** Copy Constructor */
   PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs);
@@ -73,7 +71,7 @@ class PinocchioCentroidalDynamics final {
    */
   void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) {
     pinocchioInterfacePtr_ = &pinocchioInterface;
-    mappingPtr_->setPinocchioInterface(pinocchioInterface);
+    mapping_.setPinocchioInterface(pinocchioInterface);
   }
 
   /**
@@ -113,7 +111,7 @@ class PinocchioCentroidalDynamics final {
   void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
   const PinocchioInterface* pinocchioInterfacePtr_;
-  std::unique_ptr<CentroidalModelPinocchioMapping> mappingPtr_;
+  CentroidalModelPinocchioMapping mapping_;
 
   // partial derivatives of the system dynamics
   Matrix3x normalizedLinearMomentumRateDerivativeQ_;

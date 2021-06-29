@@ -92,12 +92,12 @@ class TestAnymalSingleRigidBodyModel : public testing::Test {
                                   anymal3DofContactNames, anymal6DofContactNames);
     mapping_.reset(new CentroidalModelPinocchioMapping(info));
     mapping_->setPinocchioInterface(pinocchioInterface_);
-    anymalKinoCentroidalDynamicsPtr = std::make_shared<PinocchioCentroidalDynamics>(*mapping_);
+
+    anymalKinoCentroidalDynamicsPtr = std::make_shared<PinocchioCentroidalDynamics>(info);
     anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(pinocchioInterface_);
 
-    mappingAD_.reset(new CentroidalModelPinocchioMappingCppAd(info.toCppAd()));
     anymalKinoCentroidalDynamicsAdPtr = std::make_shared<PinocchioCentroidalDynamicsAD>(
-        pinocchioInterface_, *mappingAD_, "AnymalSingleRigidBodyTestAD", anymalCppAdModelPath, true, false);
+        pinocchioInterface_, info, "AnymalSingleRigidBodyTestAD", anymalCppAdModelPath, true, false);
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);
@@ -110,7 +110,6 @@ class TestAnymalSingleRigidBodyModel : public testing::Test {
 
   PinocchioInterface pinocchioInterface_;
   std::unique_ptr<CentroidalModelPinocchioMapping> mapping_;
-  std::unique_ptr<CentroidalModelPinocchioMappingCppAd> mappingAD_;
   std::shared_ptr<PinocchioCentroidalDynamics> anymalKinoCentroidalDynamicsPtr;
   std::shared_ptr<PinocchioCentroidalDynamicsAD> anymalKinoCentroidalDynamicsAdPtr;
 };

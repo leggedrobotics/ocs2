@@ -29,6 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+#include <string>
+
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/automatic_differentiation/Types.h>
@@ -52,17 +55,16 @@ class PinocchioCentroidalDynamicsAD final {
  public:
   /**
    * Constructor
-   * @param [in] pinocchioInterface : pinocchio interface.
-   * @param [in] mapping : centroidal model mapping from OCS2 to pinocchio state.
-   * @param [in] modelName : name of the generate model library
-   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] pinocchioInterface : The pinocchio interface.
+   * @param [in] CentroidalModelInfo : The centroidal model information.
+   * @param [in] modelName : Name of the generate model library
+   * @param [in] modelFolder : Folder to save the model library files to
    * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
    *                                  available.
    * @param [in] verbose : print information.
    */
-  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMappingCppAd& mapping,
-                                const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                                bool verbose = false);
+  PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info, const std::string& modelName,
+                                const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = false);
 
   /** Copy Constructor */
   PinocchioCentroidalDynamicsAD(const PinocchioCentroidalDynamicsAD& rhs);

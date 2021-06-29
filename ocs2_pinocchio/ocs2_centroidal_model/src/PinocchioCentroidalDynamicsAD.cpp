@@ -37,24 +37,22 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface,
-                                                             const CentroidalModelPinocchioMappingCppAd& mappingCppAd,
+PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info,
                                                              const std::string& modelName, const std::string& modelFolder,
                                                              bool recompileLibraries, bool verbose) {
   auto systemFlowMapFunc = [&](const ad_vector_t& x, ad_vector_t& y) {
     // initialize CppAD interface
     auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
 
-    // set pinocchioInterface to mapping
-    std::unique_ptr<CentroidalModelPinocchioMappingCppAd> mappingCppAdPtr(mappingCppAd.clone());
-    mappingCppAdPtr->setPinocchioInterface(pinocchioInterfaceCppAd);
+    // mapping
+    CentroidalModelPinocchioMappingCppAd mappingCppAd(info.toCppAd());
+    mappingCppAd.setPinocchioInterface(pinocchioInterfaceCppAd);
 
-    ad_vector_t state = x.head(mappingCppAdPtr->getCentroidalModelInfo().stateDim);
-    ad_vector_t input = x.tail(mappingCppAdPtr->getCentroidalModelInfo().inputDim);
-    y = getValueCppAd(pinocchioInterfaceCppAd, *mappingCppAdPtr, state, input);
+    ad_vector_t state = x.head(info.stateDim);
+    ad_vector_t input = x.tail(info.inputDim);
+    y = getValueCppAd(pinocchioInterfaceCppAd, mappingCppAd, state, input);
   };
 
-  const auto& info = mappingCppAd.getCentroidalModelInfo();
   systemFlowMapCppAdInterfacePtr_.reset(
       new CppAdInterface(systemFlowMapFunc, info.stateDim + info.inputDim, modelName + "_systemFlowMap", modelFolder));
 

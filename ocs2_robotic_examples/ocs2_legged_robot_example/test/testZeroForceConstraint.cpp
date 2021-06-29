@@ -28,25 +28,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <gtest/gtest.h>
+#include <iostream>
 
+#include <ocs2_centroidal_model/FactoryFunctions.h>
+
+#include <ocs2_legged_robot_example/common/ModelSettings.h>
 #include <ocs2_legged_robot_example/common/definitions.h>
 #include "ocs2_legged_robot_example/constraint/ZeroForceConstraint.h"
 
 using namespace ocs2;
 using namespace legged_robot;
 
-TEST(TestZeroForceConstraint, evaluate) {
-  ZeroForceConstraint zeroForceConstraint(0, centroidalModelInfo);
+class TestZeroForceConstraint : public ::testing::Test {
+ public:
+  TestZeroForceConstraint() {
+    pinocchioInterfacePtr.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH_)));
+    centroidalModelInfo = centroidal_model::createCentroidalModelInfo(
+        *pinocchioInterfacePtr, centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
+        centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
+  }
 
-  // evaluation point
-  double t = 0.0;
-  vector_t u = vector_t::Zero(centroidalModelInfo.inputDim);
-  vector_t x = vector_t::Zero(centroidalModelInfo.stateDim);
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
+  CentroidalModelInfo centroidalModelInfo;
+  const ModelSettings modelSettings;  // default constructor just to get contactNames3DoF
+};
 
-  auto linearApproximation = zeroForceConstraint.getLinearApproximation(t, x, u);
-  std::cout << "f \n" << linearApproximation.f.transpose() << std::endl;
+TEST_F(TestZeroForceConstraint, evaluate) {
+  for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
+    ZeroForceConstraint zeroForceConstraint(i, centroidalModelInfo);
 
-  std::cout << "dfdx \n" << linearApproximation.dfdx << "\n";
+    // evaluation point
+    const scalar_t t = 0.0;
+    const vector_t u = vector_t::Random(centroidalModelInfo.inputDim);
+    const vector_t x = vector_t::Random(centroidalModelInfo.stateDim);
 
-  std::cout << "dddu \n" << linearApproximation.dfdu << "\n";
+    const auto value = zeroForceConstraint.getValue(t, x, u);
+    const auto linearApproximation = zeroForceConstraint.getLinearApproximation(t, x, u);
+
+    std::cerr << "Contact: " << modelSettings.contactNames3DoF[i] << "\n";
+    std::cerr << "Value\n" << value.transpose() << "\n";
+    std::cerr << "LinearApproximation\n" << linearApproximation << "\n";
+
+    EXPECT_TRUE(value.isApprox(linearApproximation.f));
+  }
 }

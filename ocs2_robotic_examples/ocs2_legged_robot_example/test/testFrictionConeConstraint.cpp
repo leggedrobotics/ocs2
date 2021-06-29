@@ -28,18 +28,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <gtest/gtest.h>
-
-#include "ocs2_legged_robot_example/common/definitions.h"
-#include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
+#include <iostream>
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
-
+#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
+
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
+#include "ocs2_legged_robot_example/common/definitions.h"
+#include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
 
 using namespace ocs2;
 using namespace legged_robot;
 
-TEST(TestFrictionConeConstraint, finiteDifference) {
+class TestFrictionConeConstraint : public testing::Test {
+ public:
+  using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
+  TestFrictionConeConstraint() {
+    pinocchioInterfacePtr.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH_)));
+    const ModelSettings modelSettings;  // default constructor just to get contactNames3DoF
+    centroidalModelInfo = centroidal_model::createCentroidalModelInfo(
+        *pinocchioInterfacePtr, centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
+        centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
+  }
+
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
+  CentroidalModelInfo centroidalModelInfo;
+};
+
+TEST_F(TestFrictionConeConstraint, finiteDifference) {
   const FrictionConeConstraint::Config config;
 
   scalar_t t = 0.0;
@@ -118,7 +135,7 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
   }
 }
 
-TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
+TEST_F(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   // Check friction cone for the case where the body is aligned with the terrain
   const FrictionConeConstraint::Config config(0.7, 25.0, 0.0, 0.0);
   const auto mu = config.frictionCoefficient;
@@ -169,7 +186,7 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   }
 }
 
-TEST(TestFrictionConeConstraint, negativeDefinite) {
+TEST_F(TestFrictionConeConstraint, negativeDefinite) {
   const FrictionConeConstraint::Config config;
 
   // evaluation point

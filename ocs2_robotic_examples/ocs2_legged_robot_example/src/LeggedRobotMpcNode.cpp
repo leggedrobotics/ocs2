@@ -31,8 +31,9 @@ int main(int argc, char** argv) {
   solverModules.push_back(gaitReceiver);
 
   // Launch MPC nodes
-  leggedRobotInterface.getMpc().getSolverPtr()->setSynchronizedModules(solverModules);
-  ocs2::MPC_ROS_Interface mpcNode(leggedRobotInterface.getMpc(), ocs2::legged_robot::ROBOT_NAME_);
+  auto mpcPtr = leggedRobotInterface.getMpcPtr();
+  mpcPtr->getSolverPtr()->setSynchronizedModules(solverModules);
+  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, ocs2::legged_robot::ROBOT_NAME_);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

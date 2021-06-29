@@ -29,38 +29,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
-
 #include <iostream>
+#include <string>
+#include <vector>
 
-#include <boost/property_tree/info_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-
-#include <ocs2_core/misc/LoadData.h>
-
-#include "ocs2_legged_robot_example/common/definitions.h"
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 namespace legged_robot {
 
 struct ModelSettings {
-  bool constrainedIntegration_ = true;
-  scalar_t gravitationalAcceleration_ = 9.81;
-  scalar_t contactForceWeight_ = 0.1;
-  scalar_t zDirectionPositionWeight_ = 5.0;
-  scalar_t zDirectionVelocityWeight_ = 0.5;
-  scalar_t positionErrorGain_ = 0.5;
-  scalar_t phaseTransitionStanceTime_ = 0.4;
-  scalar_t mpcGoalCommandDelay_ = 0.5;
-  scalar_t targetDisplacementVelocity_ = 0.5;
-  scalar_t targetRotationVelocity_ = 0.3;
-  bool enforceFrictionConeConstraint_ = false;
-  scalar_t frictionCoefficient_ = 1.0;
-  scalar_t frictionConeConstraintWeight_ = 1.0;
-  bool recompileLibraries_ = true;
+  scalar_t positionErrorGain = 0.0;
+  scalar_t frictionCoefficient = 1.0;
+
+  scalar_t phaseTransitionStanceTime = 0.4;
+
+  bool verboseCppAd = true;
+  bool recompileLibrariesCppAd = true;
+  std::string modelFolderCppAd = "/tmp/ocs2";
+
+  // This is only used to get names for the knees and to check urdf for extra joints that need to be fixed.
+  std::vector<std::string> jointNames{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
+                                      "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
+  std::vector<std::string> contactNames6DoF{};
+  std::vector<std::string> contactNames3DoF{"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
 };
 
-ModelSettings loadModelSettings(const std::string& filename, bool verbose = "true");
+ModelSettings loadModelSettings(const std::string& filename, const std::string& fieldName = "model_settings", bool verbose = "true");
 
 }  // namespace legged_robot
 }  // namespace ocs2

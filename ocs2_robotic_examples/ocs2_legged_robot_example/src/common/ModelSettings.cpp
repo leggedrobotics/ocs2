@@ -1,11 +1,33 @@
-//
-// Created by jpsleiman on 26.04.20.
-//
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
-#include <ocs2_legged_robot_example/common/ModelSettings.h>
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-#include <iostream>
-#include <string>
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
 
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -15,33 +37,24 @@
 namespace ocs2 {
 namespace legged_robot {
 
-ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
+ModelSettings loadModelSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
   ModelSettings modelSettings;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
-  const std::string prefix{"model_settings."};
-
   if (verbose) {
-    std::cerr << "\n #### Robot Model Settings:" << std::endl;
-    std::cerr << " #### ==================================================" << std::endl;
+    std::cerr << "\n #### Legged Robot Model Settings:\n";
+    std::cerr << " #### ==================================================\n";
   }
 
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.constrainedIntegration_, prefix + "constrainedIntegration", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.gravitationalAcceleration_, prefix + "gravitationalAcceleration", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.contactForceWeight_, prefix + "contactForceWeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.zDirectionPositionWeight_, prefix + "zDirectionPositionWeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.zDirectionVelocityWeight_, prefix + "zDirectionVelocityWeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.positionErrorGain_, prefix + "positionErrorGain", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime_, prefix + "phaseTransitionStanceTime", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.mpcGoalCommandDelay_, prefix + "mpcGoalCommandDelay", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.targetDisplacementVelocity_, prefix + "targetDisplacementVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.targetRotationVelocity_, prefix + "targetRotationVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceFrictionConeConstraint_, prefix + "enforceFrictionConeConstraint", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient_, prefix + "frictionCoefficient", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionConeConstraintWeight_, prefix + "frictionConeConstraintWeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
+  loadData::loadPtreeValue(pt, modelSettings.positionErrorGain, fieldName + ".positionErrorGain", verbose);
+  loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient, fieldName + ".frictionCoefficient", verbose);
+
+  loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime, fieldName + ".phaseTransitionStanceTime", verbose);
+
+  loadData::loadPtreeValue(pt, modelSettings.verboseCppAd, fieldName + ".verboseCppAd", verbose);
+  loadData::loadPtreeValue(pt, modelSettings.recompileLibrariesCppAd, fieldName + ".recompileLibrariesCppAd", verbose);
 
   if (verbose) {
     std::cerr << " #### ================================================ ####" << std::endl;
@@ -49,5 +62,6 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
 
   return modelSettings;
 }
+
 }  // namespace legged_robot
 }  // namespace ocs2

@@ -31,22 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <array>
 #include <cstddef>
-#include <vector>
 
 // ros
 #include <ros/package.h>
 
-// ocs2
-#include <ocs2_centroidal_model/FactoryFunctions.h>
-
-/**
- * centroidal model definition:
- *
- * state = [linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_angles]
- * input = [feet_force, joint_velocities] + slack variables corresponding to the inequality constraints
- * lambda: Force order [LF, RF, LH, RH] in World Frame (3x1)
- * qj: Joint velocities per leg [HAA, HFE, KFE] (3x1)
- */
 namespace ocs2 {
 namespace legged_robot {
 
@@ -58,17 +46,6 @@ const std::string ROBOT_NAME_ = "legged_robot";
 const std::string ROBOT_URDF_PATH_ = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
 const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
 const std::string ROBOT_TASK_FILE_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
-
-// This is only used to get names for the knees and to check urdf for extra joints that need to be fixed.
-const static std::vector<std::string> JOINT_NAMES_{"LF_HAA", "LF_HFE", "LF_KFE", "RF_HAA", "RF_HFE", "RF_KFE",
-                                                   "LH_HAA", "LH_HFE", "LH_KFE", "RH_HAA", "RH_HFE", "RH_KFE"};
-
-const static std::vector<std::string> CONTACT_NAMES_3_DOF_{"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
-const static std::vector<std::string> CONTACT_NAMES_6_DOF_{};
-
-const auto centroidalModelInfo = centroidal_model::createCentroidalModelInfo(
-    centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH_), centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
-    centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), CONTACT_NAMES_3_DOF_, CONTACT_NAMES_6_DOF_);
 
 }  // namespace legged_robot
 }  // namespace ocs2

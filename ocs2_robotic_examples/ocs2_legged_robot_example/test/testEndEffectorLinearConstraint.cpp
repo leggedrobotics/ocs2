@@ -105,9 +105,9 @@ class testEndEffectorLinearConstraint : public ::testing::Test {
     u = vector_t::Random(centroidalModelInfo.inputDim);
 
     // Zero velocity constraint (without position error gain in z-direction)
-    config.b = vector_t::Zero(3);
-    config.Ax = matrix_t::Zero(3, 3);
-    config.Av = matrix_t::Identity(3, 3);
+    config.b = vector_t::Random(3);
+    config.Ax = matrix_t::Random(3, 3);
+    config.Av = matrix_t::Random(3, 3);
   }
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;

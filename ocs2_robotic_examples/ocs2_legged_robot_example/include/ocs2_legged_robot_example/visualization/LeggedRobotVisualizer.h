@@ -33,15 +33,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/node_handle.h>
 #include <tf/transform_broadcaster.h>
 
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/Types.h>
-
-#include <ocs2_legged_robot_example/common/definitions.h>
-
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-
+#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include <ocs2_ros_interfaces/visualization/VisualizationColors.h>
 
-#include <ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include "ocs2_legged_robot_example/common/definitions.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -67,8 +65,9 @@ class LeggedRobotVisualizer : public DummyObserver {
    * @param n
    * @param maxUpdateFrequency : maximum publish frequency measured in MPC time.
    */
-  LeggedRobotVisualizer(PinocchioInterface pinocchioInterface, const PinocchioEndEffectorKinematics& endEffectorKinematics,
-                        ros::NodeHandle& nodeHandle, scalar_t maxUpdateFrequency = 1000.0);
+  LeggedRobotVisualizer(PinocchioInterface pinocchioInterface, CentroidalModelInfo centroidalModelInfo,
+                        const PinocchioEndEffectorKinematics& endEffectorKinematics, ros::NodeHandle& nodeHandle,
+                        scalar_t maxUpdateFrequency = 100.0);
 
   ~LeggedRobotVisualizer() override = default;
 
@@ -86,12 +85,14 @@ class LeggedRobotVisualizer : public DummyObserver {
                                        const vector_array_t& mpcStateTrajectory, const ModeSchedule& modeSchedule);
 
  private:
+  LeggedRobotVisualizer(const LeggedRobotVisualizer&) = delete;
   void publishJointTransforms(ros::Time timeStamp, const vector_t& jointAngles) const;
   void publishBaseTransform(ros::Time timeStamp, const vector_t& basePose);
   void publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags, const std::vector<vector3_t>& feetPositions,
                                const std::vector<vector3_t>& feetForces) const;
 
   PinocchioInterface pinocchioInterface_;
+  const CentroidalModelInfo centroidalModelInfo_;
   std::unique_ptr<PinocchioEndEffectorKinematics> endEffectorKinematicsPtr_;
 
   tf::TransformBroadcaster tfBroadcaster_;

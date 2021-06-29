@@ -58,28 +58,29 @@ int main(int argc, char** argv) {
     std::cerr << "Param " << descriptionName << " not found; unable to generate urdf" << std::endl;
   }
 
-  LeggedRobotInterface leggedRobotInterface(taskName, urdf::parseURDF(urdfString));
+  LeggedRobotInterface interface(taskName, urdf::parseURDF(urdfString));
 
   // MRT
   MRT_ROS_Interface mrt(ROBOT_NAME_);
-  mrt.initRollout(&leggedRobotInterface.getRollout());
+  mrt.initRollout(&interface.getRollout());
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  PinocchioEndEffectorKinematics endEffectorKinematics(leggedRobotInterface.getPinocchioInterface(),
-                                                       leggedRobotInterface.getPinocchioMapping(), CONTACT_NAMES_3_DOF_);
+  CentroidalModelPinocchioMapping pinocchioMapping(interface.getCentroidalModelInfo());
+  PinocchioEndEffectorKinematics endEffectorKinematics(interface.getPinocchioInterface(), pinocchioMapping,
+                                                       interface.modelSettings().contactNames3DoF);
   std::shared_ptr<LeggedRobotVisualizer> leggedRobotVisualizer(
-      new LeggedRobotVisualizer(leggedRobotInterface.getPinocchioInterface(), endEffectorKinematics, nodeHandle));
+      new LeggedRobotVisualizer(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle));
 
   // Dummy legged robot
-  MRT_ROS_Dummy_Loop leggedRobotDummySimulator(mrt, leggedRobotInterface.mpcSettings().mrtDesiredFrequency_,
-                                               leggedRobotInterface.mpcSettings().mpcDesiredFrequency_);
+  MRT_ROS_Dummy_Loop leggedRobotDummySimulator(mrt, interface.mpcSettings().mrtDesiredFrequency_,
+                                               interface.mpcSettings().mpcDesiredFrequency_);
   leggedRobotDummySimulator.subscribeObservers({leggedRobotVisualizer});
 
   // Initial state
   SystemObservation initObservation;
-  initObservation.state = leggedRobotInterface.getInitialState();
-  initObservation.input = vector_t::Zero(centroidalModelInfo.inputDim);
+  initObservation.state = interface.getInitialState();
+  initObservation.input = vector_t::Zero(interface.getCentroidalModelInfo().inputDim);
   initObservation.mode = ModeNumber::STANCE;
 
   // Initial command

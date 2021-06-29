@@ -84,20 +84,22 @@ TEST(AnymalSingleRigidBodyModelTestInit, InitModelFromUrdfAD) {
 class TestAnymalSingleRigidBodyModel : public testing::Test {
  public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
-  TestAnymalSingleRigidBodyModel() : pinocchioInterface_(createPinocchioInterface(anymalUrdfPath)) {
-    size_t nq = pinocchioInterface_.getModel().nq;
+  TestAnymalSingleRigidBodyModel() {
+    pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfPath)));
+
+    size_t nq = pinocchioInterfacePtr->getModel().nq;
     const size_t numJoints = nq - 6;
     CentroidalModelInfo info =
-        createCentroidalModelInfo(pinocchioInterface_, CentroidalModelType::SingleRigidBodyDynamics, anymalInitialState.tail(numJoints),
+        createCentroidalModelInfo(*pinocchioInterfacePtr, CentroidalModelType::SingleRigidBodyDynamics, anymalInitialState.tail(numJoints),
                                   anymal3DofContactNames, anymal6DofContactNames);
-    mapping_.reset(new CentroidalModelPinocchioMapping(info));
-    mapping_->setPinocchioInterface(pinocchioInterface_);
+    mappingPtr.reset(new CentroidalModelPinocchioMapping(info));
+    mappingPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
     anymalKinoCentroidalDynamicsPtr = std::make_shared<PinocchioCentroidalDynamics>(info);
-    anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(pinocchioInterface_);
+    anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
     anymalKinoCentroidalDynamicsAdPtr = std::make_shared<PinocchioCentroidalDynamicsAD>(
-        pinocchioInterface_, info, "AnymalSingleRigidBodyTestAD", anymalCppAdModelPath, true, false);
+        *pinocchioInterfacePtr, info, "AnymalSingleRigidBodyTestAD", anymalCppAdModelPath, true, false);
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);
@@ -108,8 +110,8 @@ class TestAnymalSingleRigidBodyModel : public testing::Test {
   ocs2::vector_t state;
   ocs2::vector_t input;
 
-  PinocchioInterface pinocchioInterface_;
-  std::unique_ptr<CentroidalModelPinocchioMapping> mapping_;
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
+  std::unique_ptr<CentroidalModelPinocchioMapping> mappingPtr;
   std::shared_ptr<PinocchioCentroidalDynamics> anymalKinoCentroidalDynamicsPtr;
   std::shared_ptr<PinocchioCentroidalDynamicsAD> anymalKinoCentroidalDynamicsAdPtr;
 };
@@ -135,44 +137,44 @@ static void compareApproximation(const ocs2::VectorFunctionLinearApproximation& 
 }
 
 TEST_F(TestAnymalSingleRigidBodyModel, ComputeFlowMap) {
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto& info = mapping_->getCentroidalModelInfo();
-  const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
-  updateCentroidalDynamics(pinocchioInterface_, info, qPinocchio);
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  const auto& info = mappingPtr->getCentroidalModelInfo();
+  const vector_t qPinocchio = mappingPtr->getPinocchioJointPosition(state);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, info, qPinocchio);
   const auto dynamics = anymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
 }
 
 TEST_F(TestAnymalSingleRigidBodyModel, ComputeLinearApproximation) {
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto& info = mapping_->getCentroidalModelInfo();
-  const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
-  updateCentroidalDynamics(pinocchioInterface_, info, qPinocchio);
-  const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  updateCentroidalDynamicsDerivatives(pinocchioInterface_, info, qPinocchio, vPinocchio);
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  const auto& info = mappingPtr->getCentroidalModelInfo();
+  const vector_t qPinocchio = mappingPtr->getPinocchioJointPosition(state);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, info, qPinocchio);
+  const vector_t vPinocchio = mappingPtr->getPinocchioJointVelocity(state, input);
+  updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, info, qPinocchio, vPinocchio);
   const auto linearApproximation = anymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
 }
 
 TEST_F(TestAnymalSingleRigidBodyModel, CompareFlowMaps) {
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto& info = mapping_->getCentroidalModelInfo();
-  const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
-  updateCentroidalDynamics(pinocchioInterface_, info, qPinocchio);
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  const auto& info = mappingPtr->getCentroidalModelInfo();
+  const vector_t qPinocchio = mappingPtr->getPinocchioJointPosition(state);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, info, qPinocchio);
   const auto stateDerivative = anymalKinoCentroidalDynamicsPtr->getValue(time, state, input);
   const auto stateDerivativeAd = anymalKinoCentroidalDynamicsAdPtr->getValue(time, state, input);
   EXPECT_TRUE(stateDerivative.isApprox(stateDerivativeAd));
 }
 
 TEST_F(TestAnymalSingleRigidBodyModel, CompareFlowMapLinearApproximations) {
-  const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto& info = mapping_->getCentroidalModelInfo();
-  const vector_t qPinocchio = mapping_->getPinocchioJointPosition(state);
-  updateCentroidalDynamics(pinocchioInterface_, info, qPinocchio);
-  const vector_t vPinocchio = mapping_->getPinocchioJointVelocity(state, input);
-  updateCentroidalDynamicsDerivatives(pinocchioInterface_, info, qPinocchio, vPinocchio);
+  const auto& model = pinocchioInterfacePtr->getModel();
+  auto& data = pinocchioInterfacePtr->getData();
+  const auto& info = mappingPtr->getCentroidalModelInfo();
+  const vector_t qPinocchio = mappingPtr->getPinocchioJointPosition(state);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, info, qPinocchio);
+  const vector_t vPinocchio = mappingPtr->getPinocchioJointVelocity(state, input);
+  updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, info, qPinocchio, vPinocchio);
   const auto linearApproximation = anymalKinoCentroidalDynamicsPtr->getLinearApproximation(time, state, input);
   const auto linearApproximationAd = anymalKinoCentroidalDynamicsAdPtr->getLinearApproximation(time, state, input);
   compareApproximation(linearApproximation, linearApproximationAd);

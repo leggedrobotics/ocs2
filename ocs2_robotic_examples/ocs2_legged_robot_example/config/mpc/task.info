@@ -8,32 +8,21 @@ legged_robot_interface
 
 model_settings
 {
-  constrainedIntegration        true
-
-  gravitationalAcceleration     9.81
-
-  contactForceWeight            1.0
-  zDirectionPositionWeight      0.0
-  zDirectionVelocityWeight      0.5
   positionErrorGain             0.0
-
-  enforceFrictionConeConstraint true
   frictionCoefficient           0.7
+  phaseTransitionStanceTime     0.4
 
-  swing_trajectory_settings
-  {
-    liftOffVelocity             0.2
-    touchDownVelocity          -0.4
-    swingHeight                 0.1
-    touchdownAfterHorizon       0.2
-    swingTimeScale              0.15
-  }
+  verboseCppAd                  true
+  recompileLibrariesCppAd       true
+}
 
-  mpcGoalCommandDelay           0.1
-
-  gaitOptimization              false
-
-  recompileLibraries            true
+swing_trajectory_config
+{
+  liftOffVelocity               0.2
+  touchDownVelocity            -0.4
+  swingHeight                   0.1
+  touchdownAfterHorizon         0.2
+  swingTimeScale                0.15
 }
 
 initialModeSchedule

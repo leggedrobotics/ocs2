@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 #include <iostream>
 
+#include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/FactoryFunctions.h>
 
 #include <ocs2_legged_robot_example/common/ModelSettings.h>
@@ -61,14 +62,39 @@ TEST_F(TestZeroForceConstraint, evaluate) {
     const scalar_t t = 0.0;
     const vector_t u = vector_t::Random(centroidalModelInfo.inputDim);
     const vector_t x = vector_t::Random(centroidalModelInfo.stateDim);
+    const auto eeForce = centroidal_model::getContactForces(u, i, centroidalModelInfo);
 
     const auto value = zeroForceConstraint.getValue(t, x, u);
-    const auto linearApproximation = zeroForceConstraint.getLinearApproximation(t, x, u);
+    const auto approx = zeroForceConstraint.getLinearApproximation(t, x, u);
 
     std::cerr << "Contact: " << modelSettings.contactNames3DoF[i] << "\n";
     std::cerr << "Value\n" << value.transpose() << "\n";
-    std::cerr << "LinearApproximation\n" << linearApproximation << "\n";
+    std::cerr << "LinearApproximation\n" << approx << "\n";
 
-    EXPECT_TRUE(value.isApprox(linearApproximation.f));
+    EXPECT_TRUE(value.isApprox(approx.f));
+    EXPECT_TRUE(approx.dfdx.isApproxToConstant(0.0));
+    EXPECT_TRUE(eeForce.isApprox(approx.dfdu * u));
   }
+}
+
+TEST_F(TestZeroForceConstraint, clone) {
+  constexpr size_t eeIndex = 0;
+  ZeroForceConstraint zeroForceConstraint(eeIndex, centroidalModelInfo);
+  std::unique_ptr<ZeroForceConstraint> zeroForceConstraintPtr(zeroForceConstraint.clone());
+
+  // evaluation point
+  const scalar_t t = 0.0;
+  const vector_t u = vector_t::Random(centroidalModelInfo.inputDim);
+  const vector_t x = vector_t::Random(centroidalModelInfo.stateDim);
+
+  const auto value = zeroForceConstraint.getValue(t, x, u);
+  const auto cloneValue = zeroForceConstraintPtr->getValue(t, x, u);
+
+  const auto approx = zeroForceConstraint.getLinearApproximation(t, x, u);
+  const auto cloneApprox = zeroForceConstraintPtr->getLinearApproximation(t, x, u);
+
+  EXPECT_TRUE(value.isApprox(cloneValue));
+  EXPECT_TRUE(approx.f.isApprox(cloneApprox.f));
+  EXPECT_TRUE(approx.dfdx.isApprox(cloneApprox.dfdx));
+  EXPECT_TRUE(approx.dfdu.isApprox(cloneApprox.dfdu));
 }

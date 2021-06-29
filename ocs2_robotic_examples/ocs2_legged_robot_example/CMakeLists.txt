@@ -66,7 +66,7 @@ link_directories(${pinocchio_LIBRARY_DIRS})
 # Legged robot interface library
 add_library(ocs2_legged_robot_example
     src/LeggedRobotInterface.cpp
-    src/visualization/LeggedRobotDummyVisualization.cpp
+    src/visualization/LeggedRobotVisualizer.cpp
 
     src/common/ModelSettings.cpp
 

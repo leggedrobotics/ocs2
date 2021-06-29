@@ -98,6 +98,7 @@ class LeggedRobotInterface final : public RobotInterface {
   std::shared_ptr<ocs2::ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
 
   PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
+  CentroidalModelPinocchioMapping& getPinocchioMapping() { return *pinocchioMappingPtr_; }
 
  protected:
   PinocchioInterface pinocchioInterface_;

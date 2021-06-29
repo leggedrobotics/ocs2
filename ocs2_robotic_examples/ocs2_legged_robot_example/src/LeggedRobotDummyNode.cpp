@@ -27,8 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/visualization/LeggedRobotDummyVisualization.h>
+#include <ocs2_legged_robot_example/visualization/LeggedRobotVisualizer.h>
 #include "ocs2_legged_robot_example/LeggedRobotInterface.h"
+
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
@@ -59,21 +61,23 @@ int main(int argc, char** argv) {
   LeggedRobotInterface leggedRobotInterface(taskName, urdf::parseURDF(urdfString));
 
   // MRT
-  ocs2::MRT_ROS_Interface mrt(ROBOT_NAME_);
+  MRT_ROS_Interface mrt(ROBOT_NAME_);
   mrt.initRollout(&leggedRobotInterface.getRollout());
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<LeggedRobotDummyVisualization> leggedRobotDummyVisualization(
-      new LeggedRobotDummyVisualization(leggedRobotInterface.getPinocchioInterface(), nodeHandle));
+  PinocchioEndEffectorKinematics endEffectorKinematics(leggedRobotInterface.getPinocchioInterface(),
+                                                       leggedRobotInterface.getPinocchioMapping(), CONTACT_NAMES_3_DOF_);
+  std::shared_ptr<LeggedRobotVisualizer> leggedRobotVisualizer(
+      new LeggedRobotVisualizer(leggedRobotInterface.getPinocchioInterface(), endEffectorKinematics, nodeHandle));
 
   // Dummy legged robot
-  ocs2::MRT_ROS_Dummy_Loop leggedRobotDummySimulator(mrt, leggedRobotInterface.mpcSettings().mrtDesiredFrequency_,
-                                                     leggedRobotInterface.mpcSettings().mpcDesiredFrequency_);
-  leggedRobotDummySimulator.subscribeObservers({leggedRobotDummyVisualization});
+  MRT_ROS_Dummy_Loop leggedRobotDummySimulator(mrt, leggedRobotInterface.mpcSettings().mrtDesiredFrequency_,
+                                               leggedRobotInterface.mpcSettings().mpcDesiredFrequency_);
+  leggedRobotDummySimulator.subscribeObservers({leggedRobotVisualizer});
 
   // Initial state
-  ocs2::SystemObservation initObservation;
+  SystemObservation initObservation;
   initObservation.state = leggedRobotInterface.getInitialState();
   initObservation.input = vector_t::Zero(centroidalModelInfo.inputDim);
   initObservation.mode = ModeNumber::STANCE;

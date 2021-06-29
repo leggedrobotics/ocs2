@@ -42,13 +42,14 @@ namespace legged_robot {
 /**
  * This class implements TargetTrajectories communication using ROS.
  */
-class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeyboardInterface {
+class TargetTrajectoriesKeyboardQuadruped : public TargetTrajectoriesKeyboardInterface {
  public:
-  enum { command_dim_ = 12 };
-
   enum class COMMAND_MODE { POSITION, VELOCITY };
 
-  using BASE = ocs2::TargetTrajectoriesKeyboardInterface;
+  static constexpr size_t commandDim_ = 12;
+  static constexpr size_t stateDim_ = 24;
+  static constexpr size_t inputDim_ = 24;
+  static constexpr size_t actuatedDofNum_ = 12;
 
   /**
    * Constructor.
@@ -79,7 +80,7 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
                                       const scalar_array_t& goalPoseLimit = scalar_array_t{2.0, 1.0, 0.3, 45.0, 45.0, 360.0, 0.5, 0.5, 0.5,
                                                                                            0.5, 0.5, 0.5},
                                       const COMMAND_MODE command_mode = COMMAND_MODE::POSITION)
-      : BASE(argc, argv, robotName, command_dim_, goalPoseLimit),
+      : TargetTrajectoriesKeyboardInterface(argc, argv, robotName, commandDim_, goalPoseLimit),
         command_mode_(command_mode),
         initZHeight_(initZHeight),
         defaultJointCoordinates_(defaultJointCoordinates),
@@ -89,10 +90,7 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
                                                           &TargetTrajectoriesKeyboardQuadruped::observationCallback, this);
   }
 
-  /**
-   * Default destructor
-   */
-  ~TargetTrajectoriesKeyboardQuadruped() = default;
+  ~TargetTrajectoriesKeyboardQuadruped() override = default;
 
   /**
    * From command line loaded command to desired time, state, and input.
@@ -103,10 +101,10 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
    * @param [in] desiredInput: Desired input to be published.
    */
   void toCostDesiredTimeStateInput(const scalar_array_t& commandLineTarget, scalar_t& desiredTime, vector_t& desiredState,
-                                   vector_t& desiredInput) final {
+                                   vector_t& desiredInput) override {
     auto deg2rad = [](scalar_t deg) { return (deg * M_PI / 180.0); };
 
-    desiredState.resize(command_dim_);
+    desiredState.resize(commandDim_);
     if (command_mode_ == COMMAND_MODE::POSITION) {
       for (size_t j = 0; j < 3; j++) {
         // pose
@@ -135,14 +133,14 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
 
     // input
     // TODO(Ruben)
-    desiredInput = vector_t::Zero(centroidalModelInfo.inputDim);
+    desiredInput = vector_t::Zero(inputDim_);
     desiredInput[2 + 0] = 80.0;
     desiredInput[2 + 3] = 80.0;
     desiredInput[2 + 6] = 80.0;
     desiredInput[2 + 9] = 80.0;
   }
 
-  ocs2::CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commandLineTarget) final {
+  CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commandLineTarget) override {
     ocs2::SystemObservation observation;
     ::ros::spinOnce();
     {
@@ -156,24 +154,13 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
     vector_t desiredInput;
     toCostDesiredTimeStateInput(commandLineTarget, desiredTime, desiredBaseState, desiredInput);
 
-    // Trajectory to publish
-    ocs2::CostDesiredTrajectories costDesiredTrajectories(2);
-
     // Desired time trajectory
-    scalar_array_t& tDesiredTrajectory = costDesiredTrajectories.desiredTimeTrajectory();
-    tDesiredTrajectory.resize(2);
-    tDesiredTrajectory[0] = observation.time;
-    tDesiredTrajectory[1] = observation.time + desiredTime;
+    const scalar_array_t tDesiredTrajectory{observation.time, observation.time + desiredTime};
 
     // Desired state trajectory
-    vector_array_t& xDesiredTrajectory = costDesiredTrajectories.desiredStateTrajectory();
-    xDesiredTrajectory.resize(2);
-    xDesiredTrajectory[0].setZero(centroidalModelInfo.stateDim);
-    xDesiredTrajectory[0].head<12>() = observation.state.head<12>();
-    xDesiredTrajectory[0].segment(12, centroidalModelInfo.actuatedDofNum) = defaultJointCoordinates_;
+    vector_array_t xDesiredTrajectory(2, vector_t::Zero(stateDim_));
+    xDesiredTrajectory[0] << observation.state.head<12>(), defaultJointCoordinates_;
 
-    xDesiredTrajectory[1].resize(centroidalModelInfo.stateDim);
-    xDesiredTrajectory[1].setZero();
     // Roll and pitch are absolute
     xDesiredTrajectory[1].segment(10, 2) = desiredBaseState.segment(10, 2);
     // Yaw relative to current
@@ -185,15 +172,12 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
     // target velocities
     xDesiredTrajectory[1].segment(0, 6) = desiredBaseState.segment(0, 6);
     // joint angle from initialization
-    xDesiredTrajectory[1].segment(12, centroidalModelInfo.actuatedDofNum) = defaultJointCoordinates_;
+    xDesiredTrajectory[1].segment(12, actuatedDofNum_) = defaultJointCoordinates_;
 
     // Desired input trajectory
-    vector_array_t& uDesiredTrajectory = costDesiredTrajectories.desiredInputTrajectory();
-    uDesiredTrajectory.resize(2);
-    uDesiredTrajectory[0] = desiredInput;
-    uDesiredTrajectory[1] = desiredInput;
+    vector_array_t uDesiredTrajectory(2, desiredInput);
 
-    return costDesiredTrajectories;
+    return {tDesiredTrajectory, xDesiredTrajectory, uDesiredTrajectory};
   }
 
   void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
@@ -222,5 +206,11 @@ class TargetTrajectoriesKeyboardQuadruped : public ocs2::TargetTrajectoriesKeybo
   scalar_t targetDisplacementVelocity_;
   scalar_t targetRotationVelocity_;
 };
+
+constexpr size_t TargetTrajectoriesKeyboardQuadruped::commandDim_;
+constexpr size_t TargetTrajectoriesKeyboardQuadruped::stateDim_;
+constexpr size_t TargetTrajectoriesKeyboardQuadruped::inputDim_;
+constexpr size_t TargetTrajectoriesKeyboardQuadruped::actuatedDofNum_;
+
 }  // namespace legged_robot
 }  // namespace ocs2

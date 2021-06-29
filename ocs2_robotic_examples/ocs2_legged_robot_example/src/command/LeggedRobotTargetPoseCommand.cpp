@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
   const auto targetDisplacementVelocity = pt.get<double>("targetDisplacementVelocity");
   const auto targetRotationVelocity = pt.get<double>("targetRotationVelocity");
   const auto initZHeight = pt.get<double>("comHeight");
-  vector_t initJoints(centroidalModelInfo.actuatedDofNum);
+  vector_t initJoints(quadrupedKeyboard::actuatedDofNum_);
   ocs2::loadData::loadEigenMatrix(filename, "defaultJointState", initJoints);
 
   quadrupedKeyboard targetPoseCommand(argc, argv, ROBOT_NAME_, initZHeight, initJoints, targetDisplacementVelocity, targetRotationVelocity);

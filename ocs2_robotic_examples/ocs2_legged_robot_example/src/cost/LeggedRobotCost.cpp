@@ -150,7 +150,7 @@ std::unique_ptr<StateInputCost> LeggedRobotCost::getBaseTrackingCost(const std::
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadEigenMatrix(taskFile, "Q", Q);
   loadData::loadEigenMatrix(taskFile, "R", R);
-  //  initializeInputCostWeight(taskFile, info, R);
+  initializeInputCostWeight(taskFile, info, R);
   std::cerr << "Q:\n" << Q << "\n";
   std::cerr << "R:\n" << R << "\n";
   std::cerr << " #### =============================================================================" << std::endl;

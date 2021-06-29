@@ -144,18 +144,23 @@ void LeggedRobotCost::initializeInputCostWeight(const std::string& taskFile, con
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> LeggedRobotCost::getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info) {
   matrix_t Q(info.stateDim, info.stateDim);
-  matrix_t R(info.inputDim, info.inputDim);
-
-  std::cerr << "\n #### Base Tracking Cost Settings: ";
-  std::cerr << "\n #### =============================================================================\n";
   loadData::loadEigenMatrix(taskFile, "Q", Q);
+  matrix_t R(info.inputDim, info.inputDim);
   loadData::loadEigenMatrix(taskFile, "R", R);
-  initializeInputCostWeight(taskFile, info, R);
-  std::cerr << "Q:\n" << Q << "\n";
-  std::cerr << "R:\n" << R << "\n";
-  std::cerr << " #### =============================================================================" << std::endl;
 
-  return std::unique_ptr<StateInputCost>(new LeggedRobotStateInputQuadraticCost(Q, R, info, *modeScheduleManagerPtr_));
+  initializeInputCostWeight(taskFile, info, R);
+
+  constexpr bool display = false;
+  if (display) {
+    std::cerr << "\n #### Base Tracking Cost Coefficients: ";
+    std::cerr << "\n #### =============================================================================\n";
+    std::cerr << "Q:\n" << Q << "\n";
+    std::cerr << "R:\n" << R << "\n";
+    std::cerr << " #### =============================================================================\n";
+  }
+
+  return std::unique_ptr<StateInputCost>(
+      new LeggedRobotStateInputQuadraticCost(std::move(Q), std::move(R), info, *modeScheduleManagerPtr_));
 }
 
 }  // namespace legged_robot

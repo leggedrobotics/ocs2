@@ -4,13 +4,20 @@
   <version>0.0.1</version>
   <description>The ocs2_legged_robot_example package</description>
 
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
   <maintainer email="jeanpierre.sleiman@mavt.ethz.ch">Jean-Pierre Sleiman</maintainer>
 
-  <license>TODO</license>
+  <license>BSD3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roslib</depend>
+  <depend>tf</depend>
+  <depend>urdf</depend>
+  <depend>kdl_parser</depend>
+  <depend>robot_state_publisher</depend>
+
   <depend>ocs2_core</depend>
   <depend>ocs2_mpc</depend>
   <depend>ocs2_robotic_tools</depend>
@@ -18,10 +25,7 @@
   <depend>ocs2_pinocchio_interface</depend>
   <depend>ocs2_centroidal_model</depend>
   <depend>ocs2_ros_interfaces</depend>
-  <depend>tf</depend>
-  <depend>urdf</depend>
-  <depend>kdl_parser</depend>
-  <depend>robot_state_publisher</depend>
+
   <depend>pinocchio</depend>
   <depend>anymal_c_simple_description</depend>
 

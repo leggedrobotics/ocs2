@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_ddp/GaussNewtonDDP.h>
 
-#include "MPC_BASE.h"
+#include "ocs2_mpc/MPC_BASE.h"
 
 namespace ocs2 {
 

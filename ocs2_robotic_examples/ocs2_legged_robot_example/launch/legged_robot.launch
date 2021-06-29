@@ -17,15 +17,15 @@
 
     <include file="$(find anymal_c_simple_description)/launch/load.launch" pass_all_args="true"/>
 
-    <node pkg="ocs2_legged_robot_example" type="legged_robot_mpc_node" name="legged_robot_mpc_node"
+    <node pkg="ocs2_legged_robot_example" type="legged_robot_mpc" name="legged_robot_mpc"
           output="screen" args="$(arg task_name)" launch-prefix=""/>
 
-    <node pkg="ocs2_legged_robot_example" type="legged_robot_dummy_test" name="legged_robot_dummy_test"
+    <node pkg="ocs2_legged_robot_example" type="legged_robot_dummy" name="legged_robot_dummy"
           output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 
-    <node pkg="ocs2_legged_robot_example" type="target_command_node_base_pose" name="target_command_node_base_pose"
+    <node pkg="ocs2_legged_robot_example" type="legged_robot_target" name="legged_robot_target"
           output="screen" launch-prefix="gnome-terminal --"/>
 
-    <node pkg="ocs2_legged_robot_example" type="gait_command_node_legged_robot" name="gait_command_node_legged_robot"
+    <node pkg="ocs2_legged_robot_example" type="legged_robot_gait_command" name="legged_robot_gait_command"
           output="screen" launch-prefix="gnome-terminal --"/>
 </launch>

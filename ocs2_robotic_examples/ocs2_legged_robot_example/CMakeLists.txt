@@ -206,9 +206,9 @@ install(DIRECTORY urdf launch config rviz
 ## Testing ##
 #############
 catkin_add_gtest(${PROJECT_NAME}_test
-  test/testEndEffectorLinearConstraint.cpp
-  test/testFrictionConeConstraint.cpp
-  test/testZeroForceConstraint.cpp
+  test/constraint/testEndEffectorLinearConstraint.cpp
+  test/constraint/testFrictionConeConstraint.cpp
+  test/constraint/testZeroForceConstraint.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
   gtest_main

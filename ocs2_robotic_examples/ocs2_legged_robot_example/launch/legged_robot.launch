@@ -2,9 +2,8 @@
 
 <launch>
     <arg name="rviz"               default="true" />
-    <arg name="multiplot"          default="true"/>
+    <arg name="multiplot"          default="false"/>
     <arg name="task_name"          default="mpc"/>
-    <arg name="debug"              default="false" />
     <arg name="description_name"   default="legged_robot_description"/>
     <arg name="description_file"   default="$(find anymal_c_simple_description)/urdf/anymal.urdf"/>
     
@@ -18,9 +17,7 @@
 
     <include file="$(find anymal_c_simple_description)/launch/load.launch" pass_all_args="true"/>
 
-    <node if="$(arg debug)" pkg="ocs2_legged_robot_example" type="legged_robot_mpc_node" name="legged_robot_mpc_node"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb -ex run --args"/>
-    <node unless="$(arg debug)" pkg="ocs2_legged_robot_example" type="legged_robot_mpc_node" name="legged_robot_mpc_node"
+    <node pkg="ocs2_legged_robot_example" type="legged_robot_mpc_node" name="legged_robot_mpc_node"
           output="screen" args="$(arg task_name)" launch-prefix=""/>
 
     <node pkg="ocs2_legged_robot_example" type="legged_robot_dummy_test" name="legged_robot_dummy_test"

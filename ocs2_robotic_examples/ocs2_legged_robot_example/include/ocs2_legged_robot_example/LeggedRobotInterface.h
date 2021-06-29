@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
+#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
 
@@ -62,59 +63,46 @@ class LeggedRobotInterface final : public RobotInterface {
 
   ~LeggedRobotInterface() override = default;
 
-  void loadSettings(const std::string& taskFile);
-
-  ocs2::mpc::Settings& mpcSettings() { return mpcSettings_; }
-
-  ModelSettings& modelSettings() { return modelSettings_; }
+  std::unique_ptr<ocs2::MPC_DDP> getMpcPtr() const;
 
   const ModelSettings& modelSettings() const { return modelSettings_; }
+  const ddp::Settings& ddpSettings() const { return ddpSettings_; }
+  const mpc::Settings& mpcSettings() const { return mpcSettings_; }
+  const rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
 
-  const ocs2::rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
+  PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
 
-  void setupOptimizer(const std::string& taskFile);
+  const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
 
-  vector_t getInitialState() { return initialState_; }
+  const vector_t& getInitialState() const { return initialState_; }
 
-  ocs2::MPC_DDP& getMpc() { return *mpcPtr_; }
-
-  const SystemDynamicsBase& getDynamics() const override { return *dynamicsPtr_; }
-
-  const CostFunctionBase& getCost() const override { return *costPtr_; }
-
-  const ConstraintBase* getConstraintPtr() const override { return constraintsPtr_.get(); }
-
-  const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
-
-  const RolloutBase& getRollout() { return *rolloutPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   /** Gets the solver synchronized modules */
   const std::vector<std::shared_ptr<SolverSynchronizedModule>>& getSynchronizedModules() const { return solverModules_; };
 
-  /** Gets the switched-model mode schedule manager */
   std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
 
-  /** Gets the mode schedule manager */
-  std::shared_ptr<ocs2::ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
-
-  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
-  CentroidalModelPinocchioMapping& getPinocchioMapping() { return *pinocchioMappingPtr_; }
+  const SystemDynamicsBase& getDynamics() const override { return *dynamicsPtr_; }
+  const CostFunctionBase& getCost() const override { return *costPtr_; }
+  const ConstraintBase* getConstraintPtr() const override { return constraintsPtr_.get(); }
+  const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
+  std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
 
  protected:
-  PinocchioInterface pinocchioInterface_;
-  std::unique_ptr<CentroidalModelPinocchioMapping> pinocchioMappingPtr_;
-  std::unique_ptr<CentroidalModelPinocchioMappingCppAd> pinocchioMappingCppAdPtr_;
+  std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
+  void setupOptimalConrolProblem(const std::string& taskFile, const ::urdf::ModelInterfaceSharedPtr& urdfTree);
 
-  std::string taskFile_;
-
-  vector_t initialState_;
-
-  ocs2::ddp::Settings ddpSettings_;
-  ocs2::rollout::Settings rolloutSettings_;
-  ocs2::mpc::Settings mpcSettings_;
   ModelSettings modelSettings_;
+  ddp::Settings ddpSettings_;
+  mpc::Settings mpcSettings_;
+  rollout::Settings rolloutSettings_;
 
-  std::unique_ptr<ocs2::MPC_DDP> mpcPtr_;
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  CentroidalModelInfo centroidalModelInfo_;
+
+  std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
+  std::vector<std::shared_ptr<SolverSynchronizedModule>> solverModules_;
 
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<SystemDynamicsBase> dynamicsPtr_;
@@ -122,9 +110,7 @@ class LeggedRobotInterface final : public RobotInterface {
   std::unique_ptr<ConstraintBase> constraintsPtr_;
   std::unique_ptr<LeggedRobotInitializer> initializerPtr_;
 
-  // switched model interface
-  std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
-  std::vector<std::shared_ptr<SolverSynchronizedModule>> solverModules_;
+  vector_t initialState_;
 };
 
 }  // namespace legged_robot

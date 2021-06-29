@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/cost/LeggedRobotStateInputQuadraticCost.h>
+#include "ocs2_legged_robot_example/cost/LeggedRobotStateInputQuadraticCost.h"
 
 #include <ocs2_legged_robot_example/common/utils.h>
 
@@ -37,9 +37,9 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotStateInputQuadraticCost::LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R,
+LeggedRobotStateInputQuadraticCost::LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R, CentroidalModelInfo info,
                                                                        const SwitchedModelModeScheduleManager& modeScheduleManager)
-    : BASE(std::move(Q), std::move(R)), modeScheduleManagerPtr_(&modeScheduleManager) {}
+    : QuadraticStateInputCost(std::move(Q), std::move(R)), info_(std::move(info)), modeScheduleManagerPtr_(&modeScheduleManager) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -55,7 +55,7 @@ std::pair<vector_t, vector_t> LeggedRobotStateInputQuadraticCost::getStateInputD
     scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const {
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
   const vector_t xNominal = desiredTrajectory.getDesiredState(time);
-  const vector_t uNominal = weightCompensatingInput(centroidalModelInfo, contactFlags);
+  const vector_t uNominal = weightCompensatingInput(info_, contactFlags);
   return {state - xNominal, input - uNominal};
 }
 

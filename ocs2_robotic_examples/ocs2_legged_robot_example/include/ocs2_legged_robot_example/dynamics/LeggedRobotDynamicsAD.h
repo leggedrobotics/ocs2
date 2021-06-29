@@ -29,20 +29,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+
+#include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
 class LeggedRobotDynamicsAD final : public SystemDynamicsBase {
  public:
-  LeggedRobotDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMappingCppAd& mapping,
-                        const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                        bool verbose = true);
+  LeggedRobotDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info, const std::string& modelName,
+                        const ModelSettings& modelSettings);
 
   ~LeggedRobotDynamicsAD() override = default;
   LeggedRobotDynamicsAD* clone() const override { return new LeggedRobotDynamicsAD(*this); }

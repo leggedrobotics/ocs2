@@ -35,11 +35,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotDynamicsAD::LeggedRobotDynamicsAD(const PinocchioInterface& pinocchioInterface,
-                                             const CentroidalModelPinocchioMappingCppAd& mapping, const std::string& modelName,
-                                             const std::string& modelFolder /*= "/tmp/ocs2"*/, bool recompileLibraries /*= true*/,
-                                             bool verbose /*= true*/)
-    : pinocchioCentroidalDynamicsAd_(pinocchioInterface, mapping, modelName, modelFolder, recompileLibraries, verbose) {}
+LeggedRobotDynamicsAD::LeggedRobotDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info,
+                                             const std::string& modelName, const ModelSettings& modelSettings)
+    : pinocchioCentroidalDynamicsAd_(pinocchioInterface, info, modelName, modelSettings.modelFolderCppAd,
+                                     modelSettings.recompileLibrariesCppAd, modelSettings.verboseCppAd) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

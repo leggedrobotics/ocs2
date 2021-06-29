@@ -37,22 +37,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace legged_robot {
 
-class LeggedRobotStateInputQuadraticCost : public ocs2::QuadraticStateInputCost {
+class LeggedRobotStateInputQuadraticCost final : public QuadraticStateInputCost {
  public:
-  using BASE = ocs2::QuadraticStateInputCost;
+  LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R, CentroidalModelInfo info,
+                                     const SwitchedModelModeScheduleManager& modeScheduleManager);
 
-  LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R, const SwitchedModelModeScheduleManager& modeScheduleManager);
   ~LeggedRobotStateInputQuadraticCost() override = default;
-
   LeggedRobotStateInputQuadraticCost* clone() const override;
 
- protected:
+ private:
   LeggedRobotStateInputQuadraticCost(const LeggedRobotStateInputQuadraticCost& rhs) = default;
 
   std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
                                                        const CostDesiredTrajectories& desiredTrajectory) const override;
 
- private:
+  const CentroidalModelInfo info_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
 };
 

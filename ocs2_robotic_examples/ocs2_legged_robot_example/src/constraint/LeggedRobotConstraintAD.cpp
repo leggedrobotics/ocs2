@@ -40,17 +40,16 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotConstraintAD::LeggedRobotConstraintAD(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner,
-                                                 const PinocchioInterface& pinocchioInterface,
-                                                 const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd, ModelSettings options)
+LeggedRobotConstraintAD::LeggedRobotConstraintAD(const PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
+                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings modelSettings)
     : info_(std::move(info)),
       modeScheduleManagerPtr_(&modeScheduleManager),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
-      options_(std::move(options)),
+      modelSettings_(std::move(modelSettings)),
       equalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection),
       inequalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection) {
-  initializeConstraintTerms(pinocchioInterface, pinocchioMappingCppAd);
+  initializeConstraintTerms(pinocchioInterface);
   collectConstraintPointers();
 }
 
@@ -62,7 +61,7 @@ LeggedRobotConstraintAD::LeggedRobotConstraintAD(const LeggedRobotConstraintAD& 
       info_(rhs.info_),
       modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
       swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
-      options_(rhs.options_),
+      modelSettings_(rhs.modelSettings_),
       equalityStateInputConstraintCollectionPtr_(rhs.equalityStateInputConstraintCollectionPtr_->clone()),
       inequalityStateInputConstraintCollectionPtr_(rhs.inequalityStateInputConstraintCollectionPtr_->clone()) {
   collectConstraintPointers();
@@ -71,31 +70,31 @@ LeggedRobotConstraintAD::LeggedRobotConstraintAD(const LeggedRobotConstraintAD& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                                        const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd) {
-  const auto& info = pinocchioMappingCppAd.getCentroidalModelInfo();
+void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface& pinocchioInterface) {
+  // create a centroidal PinocchioMapping
+  const auto infoCppAd = info_.toCppAd();
+  const CentroidalModelPinocchioMappingCppAd pinocchioMappingCppAd(infoCppAd);
 
-  for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    const auto& footName = CONTACT_NAMES_3_DOF_[i];
+  for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
+    const auto& footName = modelSettings_.contactNames3DoF[i];
 
     // Friction cone constraint (state-input inequality)
-    if (options_.enforceFrictionConeConstraint_) {
-      FrictionConeConstraint::Config frictionConeConConfig(options_.frictionCoefficient_);
-      std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(
-          new FrictionConeConstraint(std::move(frictionConeConConfig), i, info_));
-      inequalityStateInputConstraintCollectionPtr_->add(footName + "_eeFrictionCone", std::move(frictionConeConstraintPtr));
-    }
+    FrictionConeConstraint::Config frictionConeConConfig(modelSettings_.frictionCoefficient);
+    std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(
+        new FrictionConeConstraint(std::move(frictionConeConConfig), i, info_));
+    inequalityStateInputConstraintCollectionPtr_->add(footName + "_eeFrictionCone", std::move(frictionConeConstraintPtr));
 
     // Zero force constraint (state-input equality)
     std::unique_ptr<ZeroForceConstraint> zeroForceConstraintPtr(new ZeroForceConstraint(i, info_));
 
     // end-effector kinematics
-    auto velocityUpdateCallback = [&info](ad_vector_t state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterfaceAd) {
-      const ad_vector_t q = centroidal_model::getGeneralizedCoordinates(state, info);
-      updateCentroidalDynamics(pinocchioInterfaceAd, info, q);
+    auto velocityUpdateCallback = [&infoCppAd](const ad_vector_t& state, PinocchioInterfaceCppAd& pinocchioInterfaceAd) {
+      const ad_vector_t q = centroidal_model::getGeneralizedCoordinates(state, infoCppAd);
+      updateCentroidalDynamics(pinocchioInterfaceAd, infoCppAd, q);
     };
-    PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {footName}, info.stateDim, info.inputDim,
-                                                     velocityUpdateCallback, footName, "/tmp/ocs2", options_.recompileLibraries_, true);
+    PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {footName}, info_.stateDim, info_.inputDim,
+                                                     velocityUpdateCallback, footName, modelSettings_.modelFolderCppAd,
+                                                     modelSettings_.recompileLibrariesCppAd, modelSettings_.verboseCppAd);
 
     // Zero velocity constraint (state-input equality)
     auto eeZeroVelConConfig = [](scalar_t positionErrorGain) {
@@ -109,7 +108,7 @@ void LeggedRobotConstraintAD::initializeConstraintTerms(const PinocchioInterface
       return config;
     };
     std::unique_ptr<EndEffectorLinearConstraint> eeZeroVelConstraintPtr(
-        new EndEffectorLinearConstraint(eeKinematics, 3, eeZeroVelConConfig(options_.positionErrorGain_)));
+        new EndEffectorLinearConstraint(eeKinematics, 3, eeZeroVelConConfig(modelSettings_.positionErrorGain)));
 
     // Normal velocity constraint (state-input equality)
     std::unique_ptr<EndEffectorLinearConstraint> eeNormalVelConstraintPtr(new EndEffectorLinearConstraint(eeKinematics, 1));
@@ -131,12 +130,11 @@ void LeggedRobotConstraintAD::collectConstraintPointers() {
   eeNormalVelocityConstraints_.resize(info_.numThreeDofContacts);
 
   for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
-    const auto& footName = CONTACT_NAMES_3_DOF_[i];
+    const auto& footName = modelSettings_.contactNames3DoF[i];
     // Inequalities
-    if (options_.enforceFrictionConeConstraint_) {
-      eeFrictionConeConstraints_[i] =
-          &inequalityStateInputConstraintCollectionPtr_->get<FrictionConeConstraint>(footName + "_eeFrictionCone");
-    }
+    eeFrictionConeConstraints_[i] =
+        &inequalityStateInputConstraintCollectionPtr_->get<FrictionConeConstraint>(footName + "_eeFrictionCone");
+
     // State input equalities
     eeZeroForceConstraints_[i] = &equalityStateInputConstraintCollectionPtr_->get<ZeroForceConstraint>(footName + "_eeZeroForce");
     eeZeroVelocityConstraints_[i] =
@@ -155,9 +153,9 @@ void LeggedRobotConstraintAD::updateStateInputEqualityConstraints(scalar_t time)
     EndEffectorLinearConstraint::Config config;
     config.b = (vector_t(1) << -swingTrajectoryPlannerPtr_->getZvelocityConstraint(footIndex, time)).finished();
     config.Av = (matrix_t(1, 3) << 0.0, 0.0, 1.0).finished();
-    if (!numerics::almost_eq(options_.positionErrorGain_, 0.0)) {
-      config.b(0) -= options_.positionErrorGain_ * swingTrajectoryPlannerPtr_->getZpositionConstraint(footIndex, time);
-      config.Ax = (matrix_t(1, 3) << 0.0, 0.0, options_.positionErrorGain_).finished();
+    if (!numerics::almost_eq(modelSettings_.positionErrorGain, 0.0)) {
+      config.b(0) -= modelSettings_.positionErrorGain * swingTrajectoryPlannerPtr_->getZpositionConstraint(footIndex, time);
+      config.Ax = (matrix_t(1, 3) << 0.0, 0.0, modelSettings_.positionErrorGain).finished();
     }
     return config;
   };
@@ -182,13 +180,11 @@ void LeggedRobotConstraintAD::updateStateInputEqualityConstraints(scalar_t time)
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotConstraintAD::updateInequalityConstraints(scalar_t time) {
-  if (options_.enforceFrictionConeConstraint_) {
-    // friction cone
-    const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-    for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
-      eeFrictionConeConstraints_[i]->setActivity(contactFlags[i]);
-    }  // end of i loop
-  }
+  // friction cone
+  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
+  for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
+    eeFrictionConeConstraints_[i]->setActivity(contactFlags[i]);
+  }  // end of i loop
 }
 
 /******************************************************************************************************/

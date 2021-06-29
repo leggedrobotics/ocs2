@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_legged_robot_example/LeggedRobotInterface.h"
 
-#include <ocs2_centroidal_model/FactoryFunctions.h>
+#include "ocs2_legged_robot_example/common/definitions.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -37,34 +37,33 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree)
-    : pinocchioInterface_(ocs2::centroidal_model::createPinocchioInterface(urdfTree, JOINT_NAMES_)) {
+LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
   // Load the task file
-  std::string taskFolder = ros::package::getPath("ocs2_legged_robot_example") + "/config/" + taskFileFolderName;
-  taskFile_ = taskFolder + "/task.info";
-  std::cerr << "Loading task file: " << taskFile_ << std::endl;
+  const std::string taskFolder = ros::package::getPath("ocs2_legged_robot_example") + "/config/" + taskFileFolderName;
+  const std::string taskFile = taskFolder + "/task.info";
+  std::cerr << "Loading task file: " << taskFile << std::endl;
 
   // load setting from loading file
-  loadSettings(taskFile_);
+  modelSettings_ = loadModelSettings(taskFile);
+  ddpSettings_ = ocs2::ddp::loadSettings(taskFile);
+  mpcSettings_ = ocs2::mpc::loadSettings(taskFile);
+  rolloutSettings_ = ocs2::rollout::loadSettings(taskFile, "rollout");
 
-  // MPC
-  setupOptimizer(taskFile_);
+  // OptimalConrolProblem
+  setupOptimalConrolProblem(taskFile, urdfTree);
+
+  // initial state
+  initialState_.setZero(centroidalModelInfo_.stateDim);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotInterface::loadSettings(const std::string& taskFile) {
-  ddpSettings_ = ocs2::ddp::loadSettings(taskFile);
-  mpcSettings_ = ocs2::mpc::loadSettings(taskFile);
-  rolloutSettings_ = ocs2::rollout::loadSettings(taskFile, "rollout");
-  modelSettings_ = loadModelSettings(taskFile);
-  std::cerr << std::endl;
-
-  // Gait Schedule
-  std::cerr << std::endl;
+std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::string& taskFile) {
   const auto initModeSchedule = loadModeSchedule(taskFile, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(taskFile, "defaultModeSequenceTemplate", false);
+
   const auto defaultGait = [&] {
     Gait gait{};
     gait.duration = defaultModeSequenceTemplate.switchingTimes.back();
@@ -76,77 +75,74 @@ void LeggedRobotInterface::loadSettings(const std::string& taskFile) {
     return gait;
   }();
 
-  auto gaitSchedule =
-      std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings().phaseTransitionStanceTime_);
-
-  // Swing trajectory planner
-  const auto swingTrajectorySettings = loadSwingTrajectorySettings(taskFile);
-  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(new SwingTrajectoryPlanner(swingTrajectorySettings));
-
-  // Mode schedule manager
-  modeScheduleManagerPtr_ = std::make_shared<SwitchedModelModeScheduleManager>(std::move(gaitSchedule), std::move(swingTrajectoryPlanner));
-
-  // Display
+  // display
   std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
   std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
+
+  return std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings_.phaseTransitionStanceTime);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotInterface::setupOptimizer(const std::string& taskFile) {
-  /*
-   * Initialization
-   */
+void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile, const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
+  // PinocchioInterface
+  pinocchioInterfacePtr_.reset(
+      new PinocchioInterface(ocs2::centroidal_model::createPinocchioInterface(urdfTree, modelSettings_.jointNames)));
+
+  // CentroidalModelInfo
+  centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
+      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
+      centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
+
+  // Swing trajectory planner
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile), centroidalModelInfo_));
+
+  // Mode schedule manager
+  modeScheduleManagerPtr_ =
+      std::make_shared<SwitchedModelModeScheduleManager>(loadGaitSchedule(taskFile), std::move(swingTrajectoryPlanner));
+
+  // Initialization
   constexpr bool extendNormalizedMomentum = true;
-  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo, *modeScheduleManagerPtr_, extendNormalizedMomentum));
-  initialState_.setZero(centroidalModelInfo.stateDim);
-  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
+  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *modeScheduleManagerPtr_, extendNormalizedMomentum));
 
-  pinocchioMappingPtr_.reset(new CentroidalModelPinocchioMapping(centroidalModelInfo));
-  pinocchioMappingCppAdPtr_.reset(new CentroidalModelPinocchioMappingCppAd(centroidalModelInfo.toCppAd()));
+  // Cost function
+  costPtr_.reset(new LeggedRobotCost(*pinocchioInterfacePtr_, centroidalModelInfo_, *modeScheduleManagerPtr_, taskFile, modelSettings_));
 
-  /*
-   * Cost function
-   */
-  costPtr_.reset(new LeggedRobotCost(*modeScheduleManagerPtr_, pinocchioInterface_, *pinocchioMappingPtr_, taskFile_));
-
-  /*
-   * Constraints
-   */
+  // Constraints
   bool useAnalyticalGradientsConstraints = false;
-  loadData::loadCppDataType(taskFile_, "legged_robot_interface.useAnalyticalGradientsConstraints", useAnalyticalGradientsConstraints);
+  loadData::loadCppDataType(taskFile, "legged_robot_interface.useAnalyticalGradientsConstraints", useAnalyticalGradientsConstraints);
   if (useAnalyticalGradientsConstraints) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical constraint class is not yet implemented.");
   } else {
-    constraintsPtr_.reset(new LeggedRobotConstraintAD(centroidalModelInfo, *modeScheduleManagerPtr_,
-                                                      *modeScheduleManagerPtr_->getSwingTrajectoryPlanner(), pinocchioInterface_,
-                                                      *pinocchioMappingCppAdPtr_, modelSettings_));
+    constraintsPtr_.reset(new LeggedRobotConstraintAD(*pinocchioInterfacePtr_, centroidalModelInfo_, *modeScheduleManagerPtr_,
+                                                      *modeScheduleManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_));
   }
 
-  /*
-   * Dynamics
-   */
+  // Dynamics
   bool useAnalyticalGradientsDynamics = false;
-  loadData::loadCppDataType(taskFile_, "legged_robot_interface.useAnalyticalGradientsDynamics", useAnalyticalGradientsDynamics);
+  loadData::loadCppDataType(taskFile, "legged_robot_interface.useAnalyticalGradientsDynamics", useAnalyticalGradientsDynamics);
   if (useAnalyticalGradientsDynamics) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical dynamics class is not yet implemented.");
   } else {
-    dynamicsPtr_.reset(new LeggedRobotDynamicsAD(pinocchioInterface_, *pinocchioMappingCppAdPtr_, "dynamics", "/tmp/ocs2",
-                                                 modelSettings_.recompileLibraries_, true));
+    const std::string modelName = "dynamics";
+    dynamicsPtr_.reset(new LeggedRobotDynamicsAD(*pinocchioInterfacePtr_, centroidalModelInfo_, modelName, modelSettings_));
   }
 
-  /*
-   * Rollout
-   */
+  // Rollout
   rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings_));
+}
 
-  /*
-   * Solver
-   */
-  mpcPtr_.reset(new ocs2::MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintsPtr_.get(), costPtr_.get(), initializerPtr_.get(),
-                                  ddpSettings_, mpcSettings_));
-  mpcPtr_->getSolverPtr()->setModeScheduleManager(modeScheduleManagerPtr_);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<ocs2::MPC_DDP> LeggedRobotInterface::getMpcPtr() const {
+  std::unique_ptr<ocs2::MPC_DDP> mpcPtr(new ocs2::MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintsPtr_.get(), costPtr_.get(),
+                                                          initializerPtr_.get(), ddpSettings_, mpcSettings_));
+  mpcPtr->getSolverPtr()->setModeScheduleManager(modeScheduleManagerPtr_);
+
+  return mpcPtr;
 }
 
 }  // namespace legged_robot

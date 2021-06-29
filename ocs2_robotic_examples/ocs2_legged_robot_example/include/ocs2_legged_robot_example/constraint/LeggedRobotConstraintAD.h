@@ -35,25 +35,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/StateConstraintCollection.h>
 #include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
-#include <ocs2_legged_robot_example/common/ModelSettings.h>
-#include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
-#include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
-
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
 #include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
 #include "ocs2_legged_robot_example/constraint/ZeroForceConstraint.h"
+#include "ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h"
+#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
 class LeggedRobotConstraintAD : public ConstraintBase {
  public:
-  LeggedRobotConstraintAD(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                          const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr, const PinocchioInterface& pinocchioInterface,
-                          const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd, ModelSettings options);
+  LeggedRobotConstraintAD(const PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
+                          const SwitchedModelModeScheduleManager& modeScheduleManager,
+                          const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr, ModelSettings modelSettings);
 
   ~LeggedRobotConstraintAD() override = default;
   LeggedRobotConstraintAD* clone() const override { return new LeggedRobotConstraintAD(*this); }
@@ -71,8 +70,7 @@ class LeggedRobotConstraintAD : public ConstraintBase {
   LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs);
 
   /** Initializes constraint terms */
-  void initializeConstraintTerms(const PinocchioInterface& pinocchioInterface,
-                                 const CentroidalModelPinocchioMappingCppAd& pinocchioMappingCppAd);
+  void initializeConstraintTerms(const PinocchioInterface& pinocchioInterface);
 
   /** Gets pointer from constraint collections */
   void collectConstraintPointers();
@@ -86,7 +84,7 @@ class LeggedRobotConstraintAD : public ConstraintBase {
   const CentroidalModelInfo info_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
-  const ModelSettings options_;
+  const ModelSettings modelSettings_;
 
   std::unique_ptr<ocs2::StateInputConstraintCollection> equalityStateInputConstraintCollectionPtr_;
   std::unique_ptr<ocs2::StateInputConstraintCollection> inequalityStateInputConstraintCollectionPtr_;

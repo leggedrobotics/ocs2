@@ -34,22 +34,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/CostCollection.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 
+#include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
-
-#include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
+#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
 class LeggedRobotCost : public CostFunctionBase {
  public:
-  using BASE = CostFunctionBase;
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-  LeggedRobotCost(const SwitchedModelModeScheduleManager& modeScheduleManager, PinocchioInterface pinocchioInterface,
-                  const CentroidalModelPinocchioMapping& pinocchioMapping, const std::string& taskFile);
+  LeggedRobotCost(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info,
+                  const SwitchedModelModeScheduleManager& modeScheduleManager, const std::string& taskFile, ModelSettings modelSettings);
   ~LeggedRobotCost() override = default;
   LeggedRobotCost* clone() const override { return new LeggedRobotCost(*this); }
 
@@ -62,15 +61,13 @@ class LeggedRobotCost : public CostFunctionBase {
  private:
   LeggedRobotCost(const LeggedRobotCost& rhs);
 
-  void setCachePointers();
-  void initializeInputCostWeight(const std::string& taskFile, matrix_t& R);
-
-  std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile);
-
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info);
+  void initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info, matrix_t& R);
 
   PinocchioInterface pinocchioInterface_;
-  std::unique_ptr<CentroidalModelPinocchioMapping> pinocchioMappingPtr_;
+  CentroidalModelPinocchioMapping pinocchioMapping_;
+  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const ModelSettings modelSettings_;
 
   CostCollection<StateInputCost> stateInputCostCollection_;
 

@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
 
+#include "ocs2_legged_robot_example/common/Types.h"
+
 namespace ocs2 {
 namespace legged_robot {
 
@@ -52,9 +54,6 @@ namespace legged_robot {
 class FrictionConeConstraint final : public StateInputConstraint {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-  using matrix3_t = Eigen::Matrix<scalar_t, 3, 3>;
 
   /**
    * frictionCoefficient: The coefficient of friction.

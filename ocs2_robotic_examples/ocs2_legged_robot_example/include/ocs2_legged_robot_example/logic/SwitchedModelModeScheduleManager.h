@@ -41,10 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 namespace ocs2 {
 namespace legged_robot {
-class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager {
+class SwitchedModelModeScheduleManager : public ModeScheduleManager {
  public:
-  using Base = ocs2::ModeScheduleManager;
-
   SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
                                    std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
 

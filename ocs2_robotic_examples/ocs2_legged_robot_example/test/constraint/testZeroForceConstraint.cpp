@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/constraint/ZeroForceConstraint.h"
 
+#include "ocs2_legged_robot_example/common/Types.h"
 #include "ocs2_legged_robot_example/test/AnymalFactoryFunctions.h"
 
 using namespace ocs2;
@@ -57,7 +58,7 @@ TEST_F(TestZeroForceConstraint, evaluate) {
     const scalar_t t = 0.0;
     const vector_t u = vector_t::Random(centroidalModelInfo.inputDim);
     const vector_t x = vector_t::Random(centroidalModelInfo.stateDim);
-    const auto eeForce = centroidal_model::getContactForces(u, i, centroidalModelInfo);
+    const vector3_t eeForce = centroidal_model::getContactForces(u, i, centroidalModelInfo);
 
     const auto value = zeroForceConstraint.getValue(t, x, u);
     const auto approx = zeroForceConstraint.getLinearApproximation(t, x, u);

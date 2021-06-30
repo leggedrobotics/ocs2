@@ -1,17 +1,17 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Ruben Grandia. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- * Redistributions of source code must retain the above copyright notice, this
+* Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
- * Redistributions in binary form must reproduce the above copyright notice,
+* Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
- * Neither the name of the copyright holder nor the names of its
+* Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -25,34 +25,26 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <memory>
 
-#include "ocs2_double_integrator_example/definitions.h"
+#include <ocs2_core/cost/StateCostCollection.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
-namespace double_integrator {
+namespace LoopshapingSoftConstraint {
 
-class DoubleIntegratorCost : public QuadraticCostFunction {
- public:
-  /**
-   * Constructor for the running and final cost function defined as the following:
-   * - \f$ L = 0.5(x-x_{nominal})' Q (x-x_{nominal}) + 0.5(u-u_{nominal})' R (u-u_{nominal}) \f$
-   * - \f$ \Phi = 0.5(x-x_{final})' Q_{final} (x-x_{final}) \f$.
-   * @param [in] Q: \f$ Q \f$
-   * @param [in] R: \f$ R \f$
-   * @param [in] QFinal: \f$ Q_{final}\f$
-   */
-  DoubleIntegratorCost(const matrix_t& Q, const matrix_t& R, const matrix_t& Q_final) : QuadraticCostFunction(Q, R, Q_final) {}
+/** Factory for Loopshaping state-only soft constraint wrapper */
+std::unique_ptr<StateCostCollection> create(const StateCostCollection& systemSoftConstraint,
+                                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  /** Destructor */
-  ~DoubleIntegratorCost() override = default;
+/** Factory for Loopshaping state-input soft constraint wrapper */
+std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection& systemSoftConstraint,
+                                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  DoubleIntegratorCost* clone() const override { return new DoubleIntegratorCost(*this); }
-};
-
-}  // namespace double_integrator
+}  // namespace LoopshapingSoftConstraint
 }  // namespace ocs2

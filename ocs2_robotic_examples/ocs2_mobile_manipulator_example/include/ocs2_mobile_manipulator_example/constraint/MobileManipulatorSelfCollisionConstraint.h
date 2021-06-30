@@ -4,14 +4,14 @@ Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of the copyright holder nor the names of its
+ * Neither the name of the copyright holder nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -29,43 +29,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <memory>
+
+#include <ocs2_mobile_manipulator_example/MobileManipulatorPreComputation.h>
+#include <ocs2_self_collision/SelfCollisionConstraint.h>
 
 namespace ocs2 {
+namespace mobile_manipulator {
 
-/**
- * Quadratic Cost Function.
- */
-class QuadraticCostFunction : public CostFunctionBase {
+class MobileManipulatorSelfCollisionConstraint final : public SelfCollisionConstraint {
  public:
-  /**
-   * Constructor for the running and final cost function defined as the following:
-   * - \f$ L = 0.5(x-x_{n})' Q (x-x_{n}) + 0.5(u-u_{n})' R (u-u_{n}) + (u-u_{n})' P (x-x_{n}) \f$
-   * - \f$ \Phi = 0.5(x-x_{f})' Q_{f} (x-x_{f}) \f$.
-   * @param [in] Q: \f$ Q \f$
-   * @param [in] R: \f$ R \f$
-   * @param [in] QFinal: \f$ Q_{f}\f$
-   * @param [in] P: \f$ P \f$
-   */
-  QuadraticCostFunction(matrix_t Q, matrix_t R, matrix_t QFinal, matrix_t P = matrix_t());
+  MobileManipulatorSelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
+                                           PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
+      : SelfCollisionConstraint(mapping, std::move(pinocchioGeometryInterface), minimumDistance) {}
+  ~MobileManipulatorSelfCollisionConstraint() override = default;
+  MobileManipulatorSelfCollisionConstraint(const MobileManipulatorSelfCollisionConstraint& other) = default;
+  MobileManipulatorSelfCollisionConstraint* clone() const { return new MobileManipulatorSelfCollisionConstraint(*this); }
 
-  /** Destructor */
-  ~QuadraticCostFunction() override = default;
-
-  /** Clone */
-  QuadraticCostFunction* clone() const override;
-
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
-
- protected:
-  matrix_t Q_;
-  matrix_t R_;
-  matrix_t P_;
-  matrix_t QFinal_;
+  const PinocchioInterface& getPinocchioInterface(const PreComputation& preComputation) const override {
+    return cast<MobileManipulatorPreComputation>(preComputation).getPinocchioInterface();
+  }
 };
 
+}  // namespace mobile_manipulator
 }  // namespace ocs2

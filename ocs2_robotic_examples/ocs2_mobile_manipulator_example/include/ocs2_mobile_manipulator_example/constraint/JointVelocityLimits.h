@@ -45,8 +45,9 @@ class JointVelocityLimits final : public StateInputConstraint {
   JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
 
   size_t getNumConstraints(scalar_t time) const override { return INPUT_DIM; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const PreComputation&) const override;
 
  private:
   JointVelocityLimits(const JointVelocityLimits& other) = default;

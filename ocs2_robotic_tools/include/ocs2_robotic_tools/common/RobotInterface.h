@@ -32,10 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
 namespace ocs2 {
@@ -61,28 +60,10 @@ class RobotInterface {
   virtual std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const { return nullptr; }
 
   /**
-   * @brief getDynamics
-   * @return a reference to the internal system dynamics
+   * @brief Get the optimal control problem definition
+   * @return reference to the problem object
    */
-  virtual const SystemDynamicsBase& getDynamics() const = 0;
-
-  /**
-   * @brief getCost
-   * @return reference to internal cost function
-   */
-  virtual const CostFunctionBase& getCost() const = 0;
-
-  /**
-   * @brief getTerminalCostPtr
-   * @return pointer to internal cost function applied at the end of the horizon
-   */
-  virtual const CostFunctionBase* getTerminalCostPtr() const { return nullptr; }
-
-  /**
-   * @brief getConstraintPtr
-   * @return pointer to internal constraint object. Can be nullptr in case of zero constraints
-   */
-  virtual const ConstraintBase* getConstraintPtr() const { return nullptr; }
+  virtual const OptimalControlProblem& getOptimalControlProblem() const = 0;
 
   /**
    * @brief getInitializer

@@ -72,4 +72,5 @@ target_link_libraries(testDummyPyBindings
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
 )

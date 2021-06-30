@@ -37,9 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
@@ -48,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // CartPole
 #include "ocs2_cart_pole_example/CartPoleParameters.h"
 #include "ocs2_cart_pole_example/definitions.h"
-#include "ocs2_cart_pole_example/dynamics/CartPoleSystemDynamics.h"
 
 namespace ocs2 {
 namespace cartpole {
@@ -68,6 +66,7 @@ class CartPoleInterface final : public RobotInterface {
   ~CartPoleInterface() override = default;
 
   const vector_t& getInitialState() { return initialState_; }
+
   const vector_t& getInitialTarget() { return xFinal_; }
 
   ddp::Settings& ddpSettings() { return ddpSettings_; }
@@ -76,11 +75,9 @@ class CartPoleInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const CartPoleSytemDynamics& getDynamics() const override { return *cartPoleSystemDynamicsPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
-  const QuadraticCostFunction& getCost() const override { return *cartPoleCostPtr_; }
-
-  const RolloutBase& getRollout() const { return *ddpCartPoleRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const Initializer& getInitializer() const override { return *cartPoleInitializerPtr_; }
 
@@ -101,17 +98,9 @@ class CartPoleInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> ddpCartPoleRolloutPtr_;
-
-  std::unique_ptr<CartPoleSytemDynamics> cartPoleSystemDynamicsPtr_;
-  std::unique_ptr<QuadraticCostFunction> cartPoleCostPtr_;
-  std::unique_ptr<ConstraintBase> cartPoleConstraintPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::unique_ptr<Initializer> cartPoleInitializerPtr_;
-
-  // cost parameters
-  matrix_t qm_{STATE_DIM, STATE_DIM};
-  matrix_t rm_{INPUT_DIM, INPUT_DIM};
-  matrix_t qmFinal_{STATE_DIM, STATE_DIM};
 
   vector_t initialState_{STATE_DIM};
   vector_t xFinal_{STATE_DIM};

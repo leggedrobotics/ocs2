@@ -32,11 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <string>
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 
@@ -47,45 +46,11 @@ class LinearQuadraticApproximator {
  public:
   /**
    * Constructor
-   *
-   * @param [in] systemDerivatives: The system dynamics derivatives for subsystems of the system.
-   * @param [in] systemConstraints: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunction: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-   * @param [in] checkNumericalCharacteristics: check for the expected numerical characteristics of the model (default true)
+   * @note This class does not take ownership of any of the parameters.
+   *       Make sure that the parameter lifetime is longer than this class instance.
    */
-  LinearQuadraticApproximator(const SystemDynamicsBase& systemDerivatives, const ConstraintBase& systemConstraints,
-                              const CostFunctionBase& costFunction, bool checkNumericalCharacteristics = true)
-      : systemDynamicsPtr_(systemDerivatives.clone()),
-        systemConstraintsPtr_(systemConstraints.clone()),
-        costFunctionPtr_(costFunction.clone()),
-        checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
-
-  /**
-   * Default destructor.
-   */
-  ~LinearQuadraticApproximator() = default;
-
-  /**
-   * Whether or not to check the numerical characteristics of the model.
-   *
-   * @param [in] checkNumericalCharacteristics: True if the numerical characteristics of the model should be checked.
-   */
-  void checkNumericalCharacteristics(bool checkNumericalCharacteristics) { checkNumericalCharacteristics_ = checkNumericalCharacteristics; }
-
-  /**
-   * Returns the system derivatives
-   */
-  SystemDynamicsBase& systemDerivatives() const { return *systemDynamicsPtr_; }
-
-  /**
-   * Returns the constraints.
-   */
-  ConstraintBase& systemConstraints() const { return *systemConstraintsPtr_; }
-
-  /**
-   * Returns the intermediate cost.
-   */
-  CostFunctionBase& costFunction() const { return *costFunctionPtr_; }
+  LinearQuadraticApproximator(OptimalControlProblem& problem, bool checkNumericalCharacteristics = true)
+      : problem_(problem), checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
 
   /**
    * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
@@ -98,49 +63,29 @@ class LinearQuadraticApproximator {
   void approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
   /**
-   * Calculates an LQ approximate of the constrained optimal control problem at an event time.
+   * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
-   * @param [in] input: The current input.
    * @param [out] modelData: The output data model.
    */
-  void approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
+  void approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const;
 
   /**
-   * Calculates linearized system dynamics.
+   * Calculates an LQ approximate of the constrained optimal control problem at final time.
    *
    * @param [in] time: The current time.
    * @param [in] state: The current state.
-   * @param [in] input: The current input.
-   * @param [in] modelData: Model data object.
+   * @param [out] modelData: The output data model.
    */
-  void approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
-
-  /**
-   * Calculates the constraints and its linearized approximation.
-   *
-   * @param [in] time: The current time.
-   * @param [in] state: The current state.
-   * @param [in] input: The current input.
-   * @param [in] modelData: Model data object.
-   */
-  void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
-
-  /**
-   * Calculates the cost function and its quadratic approximation.
-   *
-   * @param [in] time: The current time.
-   * @param [in] state: The current state.
-   * @param [in] input: The current input.
-   * @param [in] modelData: Model data object.
-   */
-  void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
+  void approximateLQProblemAtFinalTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const;
 
  private:
-  std::unique_ptr<SystemDynamicsBase> systemDynamicsPtr_;
-  std::unique_ptr<ConstraintBase> systemConstraintsPtr_;
-  std::unique_ptr<CostFunctionBase> costFunctionPtr_;
+  void approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
+  void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
+  void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
+
+  OptimalControlProblem& problem_;
 
   bool checkNumericalCharacteristics_;
 };

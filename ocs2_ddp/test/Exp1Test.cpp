@@ -67,14 +67,16 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     }();
 
     // dynamics and rollout
-    systemPtr.reset(new ocs2::EXP1_System(modeScheduleManagerPtr));
-    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(*systemPtr, rolloutSettings));
+    ocs2::EXP1_System system(modeScheduleManagerPtr);
+    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(system, rolloutSettings));
+
+    // optimal control problem
+    problemPtr.reset(new ocs2::OptimalControlProblem);
+    problemPtr->dynamicsPtr.reset(system.clone());
 
     // cost function
-    costPtr.reset(new ocs2::EXP1_CostFunction(modeScheduleManagerPtr));
-
-    // constraint
-    constraintPtr.reset(new ocs2::ConstraintBase);
+    problemPtr->costPtr->add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP1_Cost()));
+    problemPtr->finalCostPtr->add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP1_FinalCost()));
 
     // operatingTrajectories
     initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
@@ -132,8 +134,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
 
   std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
-  std::unique_ptr<ocs2::CostFunctionBase> costPtr;
-  std::unique_ptr<ocs2::ConstraintBase> constraintPtr;
+  std::unique_ptr<ocs2::OptimalControlProblem> problemPtr;
   std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
@@ -151,7 +152,7 @@ TEST_P(Exp1, SLQ) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
   ddp.setModeScheduleManager(modeScheduleManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
@@ -175,7 +176,7 @@ TEST_P(Exp1, ILQR) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
+  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
   ddp.setModeScheduleManager(modeScheduleManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {

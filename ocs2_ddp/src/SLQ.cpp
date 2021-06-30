@@ -35,12 +35,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-         const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
-         const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
-
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
-           heuristicsFunctionPtr) {
+SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+         const Initializer& initializer)
+    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
@@ -85,8 +82,12 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
     // get next time index is atomic
     while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
       // execute approximateLQ for the given partition and time index
-      BASE::linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                                                               inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+
+      LinearQuadraticApproximator lqapprox(*BASE::optimalControlProblemPtrStock_[taskId], BASE::settings().checkNumericalStability_);
+
+      lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
+                                    modelDataTrajectory[timeIndex]);
+      modelDataTrajectory[timeIndex].checkSizes(stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
     }
   };
 

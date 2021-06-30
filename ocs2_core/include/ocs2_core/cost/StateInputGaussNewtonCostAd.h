@@ -68,10 +68,11 @@ class StateInputCostGaussNewtonAd : public StateInputCost {
   virtual vector_t getParameters(scalar_t time, const CostDesiredTrajectories& desiredTrajectory) const { return vector_t(0); };
 
   /** Cost evaluation */
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                    const CostDesiredTrajectories& desiredTrajectory) const override;
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
+                    const PreComputation&) const override;
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const override;
+                                                                 const CostDesiredTrajectories& desiredTrajectory,
+                                                                 const PreComputation&) const override;
 
  protected:
   StateInputCostGaussNewtonAd(const StateInputCostGaussNewtonAd& rhs);

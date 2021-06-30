@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Ruben Grandia. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,55 +29,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_core/Types.h"
-#include "ocs2_core/cost/CostDesiredTrajectories.h"
+#include <memory>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
 
-/**
- * Cost Function base class.
- */
-class CostFunctionBase {
+// TODO(mspieler): how should this constraint be added to the loopshaping collection wrapper?
+class LoopshapingFilterConstraint : public StateInputConstraint {
  public:
-  /** Constructor */
-  CostFunctionBase() = default;
+  LoopshapingFilterConstraint(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+      : StateInputConstraint(ConstraintOrder::Linear), loopshapingDefinition_(std::move(loopshapingDefinition)){};
+  ~LoopshapingFilterConstraint() override = default;
 
-  /** Copy constructor */
-  CostFunctionBase(const CostFunctionBase& rhs) = default;
+  LoopshapingFilterConstraint* clone() const override { return new LoopshapingFilterConstraint(*this); }
 
-  /** Default destructor */
-  virtual ~CostFunctionBase() = default;
+  size_t getNumConstraints(scalar_t time) const override { return loopshapingDefinition_->getInputFilter().getNumOutputs(); }
 
-  /**
-   * Sets the desired state and input trajectories used in the cost function.
-   *
-   * @param [in] CostDesiredTrajectoriesPtr: A cost pointer to desired trajectories.
-   */
-  virtual void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr);
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
 
-  /** Clone */
-  virtual CostFunctionBase* clone() const = 0;
-
-  /** Evaluate the cost */
-  virtual scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) = 0;
-
-  /** Evaluate the final cost */
-  virtual scalar_t finalCost(scalar_t t, const vector_t& x) = 0;
-
-  /** Evaluate the cost quadratic approximation */
-  virtual ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) = 0;
-
-  /** Evaluate the final cost quadratic approximation */
-  virtual ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) = 0;
-
-  /** Time derivative of the intermediate cost */
-  virtual scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) { return 0; }
-
-  /** Time derivative of final cost */
-  virtual scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) { return 0; }
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const PreComputation& preComp) const override;
 
  protected:
-  const CostDesiredTrajectories* costDesiredTrajectoriesPtr_ = nullptr;
+  LoopshapingFilterConstraint(const LoopshapingFilterConstraint& other)
+      : StateInputConstraint(other), loopshapingDefinition_(other.loopshapingDefinition_) {}
+
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 };
 
 }  // namespace ocs2

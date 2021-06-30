@@ -34,8 +34,8 @@ namespace mobile_manipulator {
 
 MobileManipulatorDynamics::MobileManipulatorDynamics(const std::string& modelName, const std::string& modelFolder /*= "/tmp/ocs2"*/,
                                                      bool recompileLibraries /*= true*/, bool verbose /*= true*/)
-    : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
-  Base::initialize(modelName, modelFolder, recompileLibraries, verbose);
+    : SystemDynamicsBaseAD() {
+  Base::initialize(STATE_DIM, INPUT_DIM, modelName, modelFolder, recompileLibraries, verbose);
 }
 
 ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,

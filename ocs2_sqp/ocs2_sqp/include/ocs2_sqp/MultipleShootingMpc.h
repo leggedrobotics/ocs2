@@ -42,18 +42,13 @@ class MultipleShootingMpc : public MPC_BASE {
    * @param mpcSettings : settings for the mpc wrapping of the solver. Do not use this for maxIterations and stepsize, use multiple shooting
    * settings directly.
    * @param settings : settings for the multiple shooting solver.
-   * @param systemDynamicsPtr : The system dynamics.
-   * @param costFunctionPtr : The cost function used for the intermediate costs.
-   * @param initializerPtr: This class initializes the state-input for the time steps that no controller is available.
-   * @param constraintPtr : The system constraint function.
-   * @param terminalCostPtr : The cost function used for the terminal (=at the end of the horizon) costs.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                      const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr,
-                      const ConstraintBase* constraintPtr = nullptr, const CostFunctionBase* terminalCostPtr = nullptr)
+  MultipleShootingMpc(mpc::Settings mpcSettings, multiple_shooting::Settings settings, const OptimalControlProblem& optimalControlProblem,
+                      const Initializer& initializer)
       : MPC_BASE(std::move(mpcSettings)) {
-    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), systemDynamicsPtr, costFunctionPtr, initializerPtr, constraintPtr,
-                                                terminalCostPtr));
+    solverPtr_.reset(new MultipleShootingSolver(std::move(settings), optimalControlProblem, initializer));
   };
 
   ~MultipleShootingMpc() override = default;

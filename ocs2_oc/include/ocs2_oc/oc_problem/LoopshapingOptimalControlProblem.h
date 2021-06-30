@@ -27,28 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/cost/StateCost.h>
+#pragma once
+
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
+namespace LoopshapingOptimalControlProblem {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-scalar_t StateCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                             const CostDesiredTrajectories& desiredTrajectory) const {
-  return getValue(time, state, desiredTrajectory);
+std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& problem,
+                                              std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+
 }
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ScalarFunctionQuadraticApproximation StateCost::getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                          const CostDesiredTrajectories& desiredTrajectory) const {
-  auto cost = getQuadraticApproximation(time, state, desiredTrajectory);
-  cost.dfdu.setZero(input.rows());
-  cost.dfduu.setZero(input.rows(), input.rows());
-  cost.dfdux.setZero(input.rows(), state.rows());
-  return cost;
-}
-
 }  // namespace ocs2

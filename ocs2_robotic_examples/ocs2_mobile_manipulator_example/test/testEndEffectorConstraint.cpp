@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
+#include <ocs2_mobile_manipulator_example/MobileManipulatorPreComputation.h>
 #include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -46,37 +47,43 @@ using namespace mobile_manipulator;
 
 class testEndEffectorConstraint : public ::testing::Test {
  public:
+  using quaternion_t = EndEffectorConstraint::quaternion_t;
+  using vector3_t = EndEffectorConstraint::vector3_t;
+
   testEndEffectorConstraint() {
     const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
-    pinocchioInterfacePtr.reset(new PinocchioInterface(MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
+    vector_t positionOrientation(7);
+    positionOrientation.head<3>() = vector3_t::Zero();
+    positionOrientation.tail<4>() = quaternion_t(1, 0, 0, 0).coeffs();
+    referenceTrajectoryPtr.reset(new CostDesiredTrajectories({0.0}, {positionOrientation}, {vector_t()}));
 
-    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematics(*pinocchioInterfacePtr, pinocchioMapping, {"WRIST_2"}));
+    auto pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
+    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematics(pinocchioInterface, pinocchioMapping, {"WRIST_2"}));
+    preComputationPtr.reset(new MobileManipulatorPreComputation(pinocchioInterface));
 
     x << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0;
   }
 
   vector_t x{STATE_DIM};
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
+  std::unique_ptr<PinocchioInterface> pinocchioInterface;
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr;
+  std::unique_ptr<MobileManipulatorPreComputation> preComputationPtr;
+  std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr;
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
 };
 
-TEST_F(testEndEffectorConstraint, testEndEffectorConstraint) {
-  using quaternion_t = EndEffectorConstraint::quaternion_t;
-  using vector3_t = EndEffectorConstraint::vector3_t;
+TEST_F(testEndEffectorConstraint, testConstraintEvaluation) {
+  EndEffectorConstraint eeConstraint(*eeKinematicsPtr, referenceTrajectoryPtr);
 
+  auto& pinocchioInterface = preComputationPtr->getPinocchioInterface();
+  const auto& model = pinocchioInterface.getModel();
+  auto& data = pinocchioInterface.getData();
   const auto q = pinocchioMapping.getPinocchioJointPosition(x);
-  const auto& model = pinocchioInterfacePtr->getModel();
-  auto& data = pinocchioInterfacePtr->getData();
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
   pinocchio::computeJointJacobians(model, data);
 
-  auto eeConstraintPtr = std::make_shared<EndEffectorConstraint>(*eeKinematicsPtr);
-  dynamic_cast<PinocchioEndEffectorKinematics&>(eeConstraintPtr->getEndEffectorKinematics()).setPinocchioInterface(*pinocchioInterfacePtr);
-  eeConstraintPtr->setDesiredPose(vector3_t::Zero(), quaternion_t(1, 0, 0, 0));
-
-  std::cerr << "constraint:\n" << eeConstraintPtr->getValue(0.0, x) << '\n';
-  std::cerr << "approximation:\n" << eeConstraintPtr->getLinearApproximation(0.0, x);
+  std::cerr << "constraint:\n" << eeConstraint.getValue(0.0, x, *preComputationPtr) << '\n';
+  std::cerr << "approximation:\n" << eeConstraint.getLinearApproximation(0.0, x, *preComputationPtr);
 }

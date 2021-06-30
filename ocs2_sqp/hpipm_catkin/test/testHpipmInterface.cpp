@@ -31,7 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hpipm_catkin/HpipmInterface.h"
 
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
+#include <ocs2_core/test/testTools.h>
+#include <ocs2_oc/test/testProblemsGeneration.h>
 
 TEST(test_hpiphm_interface, solve_and_check_dynamic) {
   int nx = 3;
@@ -43,10 +44,10 @@ TEST(test_hpiphm_interface, solve_and_check_dynamic) {
   std::vector<ocs2::VectorFunctionLinearApproximation> system;
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
   for (int k = 0; k < N; k++) {
-    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
-    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
   }
-  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
 
   // Interface
   ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
@@ -80,10 +81,10 @@ TEST(test_hpiphm_interface, solve_after_resize) {
   std::vector<ocs2::VectorFunctionLinearApproximation> system;
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
   for (int k = 0; k < N; k++) {
-    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
-    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
   }
-  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
 
   // Resize Interface
   ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
@@ -124,15 +125,15 @@ TEST(test_hpiphm_interface, knownSolution) {
     uSolGiven.emplace_back(ocs2::vector_t::Random(nu));
 
     // Set optimal next x consistent with dynamics
-    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
     xSolGiven.emplace_back(system[k].f + system[k].dfdx * xSolGiven[k] + system[k].dfdu * uSolGiven[k]);
 
     // Pick cost that minimizes at the given trajectory
-    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
     cost[k].dfdx = -(cost[k].dfdxx * xSolGiven[k] + cost[k].dfdux.transpose() * uSolGiven[k]);
     cost[k].dfdu = -(cost[k].dfduu * uSolGiven[k] + cost[k].dfdux * xSolGiven[k]);
   }
-  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
   // Interface
@@ -146,8 +147,8 @@ TEST(test_hpiphm_interface, knownSolution) {
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(xSolGiven, xSol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(uSolGiven, uSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(xSolGiven, xSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(uSolGiven, uSol, 1e-9));
 }
 
 TEST(test_hpiphm_interface, with_constraints) {
@@ -165,12 +166,12 @@ TEST(test_hpiphm_interface, with_constraints) {
   std::vector<ocs2::VectorFunctionLinearApproximation> constraints;
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
   for (int k = 0; k < N; k++) {
-    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
-    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
-    constraints.emplace_back(ocs2::qp_solver::getRandomConstraints(nx, nu, nc));
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
+    constraints.emplace_back(ocs2::getRandomConstraints(nx, nu, nc));
   }
-  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
-  constraints.emplace_back(ocs2::qp_solver::getRandomConstraints(nx, 0, nc));
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
+  constraints.emplace_back(ocs2::getRandomConstraints(nx, 0, nc));
 
   // Resize Interface
   ocs2::HpipmInterface::OcpSize ocpSize(N, nx, nu);
@@ -229,15 +230,15 @@ TEST(test_hpiphm_interface, noInputs) {
     uSolGiven.emplace_back(ocs2::vector_t::Random(nu));
 
     // Set optimal next x consistent with dynamics
-    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
     xSolGiven.emplace_back(system[k].f + system[k].dfdx * xSolGiven[k] + system[k].dfdu * uSolGiven[k]);
 
     // Pick cost that minimizes at the given trajectory
-    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
     cost[k].dfdx = -(cost[k].dfdxx * xSolGiven[k] + cost[k].dfdux.transpose() * uSolGiven[k]);
     cost[k].dfdu = -(cost[k].dfduu * uSolGiven[k] + cost[k].dfdux * xSolGiven[k]);
   }
-  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
   cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
 
   const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr);
@@ -250,8 +251,8 @@ TEST(test_hpiphm_interface, noInputs) {
   ASSERT_EQ(status, hpipm_status::SUCCESS);
 
   // Check!
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(xSolGiven, xSol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(uSolGiven, uSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(xSolGiven, xSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(uSolGiven, uSol, 1e-9));
 }
 
 TEST(test_hpiphm_interface, retrieveRiccati) {
@@ -264,10 +265,10 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   std::vector<ocs2::VectorFunctionLinearApproximation> system;
   std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
   for (int k = 0; k < N; k++) {
-    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
-    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    system.emplace_back(ocs2::getRandomDynamics(nx, nu));
+    cost.emplace_back(ocs2::getRandomCost(nx, nu));
   }
-  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  cost.emplace_back(ocs2::getRandomCost(nx, 0));
 
   // store the true cost-to-go and feedback/feedforward terms
   std::vector<ocs2::matrix_t> SmSolGiven(N + 1);
@@ -326,11 +327,11 @@ TEST(test_hpiphm_interface, retrieveRiccati) {
   }
 
   // Compare the two vector/matrix trajectory
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(SmSolGiven, SmSol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(svSolGiven, svSol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(s0SolGiven, s0Sol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(KSolGiven, KSol, 1e-9));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(kSolGiven, kSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(SmSolGiven, SmSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(svSolGiven, svSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(s0SolGiven, s0Sol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(KSolGiven, KSol, 1e-9));
+  ASSERT_TRUE(ocs2::isEqual(kSolGiven, kSol, 1e-9));
 
   // Check self-consistency of returned elements in u = K * x + k
   for (int k = 0; k < N; k++) {

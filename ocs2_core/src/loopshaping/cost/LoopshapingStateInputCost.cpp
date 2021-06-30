@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Ruben Grandia. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,15 +27,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void CostFunctionBase::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
-  costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
+scalar_t LoopshapingStateInputCost::getValue(scalar_t t, const vector_t& x, const vector_t& u,
+                                             const CostDesiredTrajectories& desiredTrajectory, const PreComputation& preComp) const {
+  if (this->empty()) {
+    return 0.0;
+  }
+
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& u_filter = preCompLS.getFilteredInput();
+
+  const scalar_t L_system =
+      StateInputCostCollection::getValue(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  const scalar_t L_filter =
+      StateInputCostCollection::getValue(t, x_system, u_filter, desiredTrajectory, preCompLS.getFilteredSystemPreComputation());
+  const scalar_t gamma = loopshapingDefinition_->gamma_;
+
+  return gamma * L_filter + (1.0 - gamma) * L_system;
 }
 
 }  // namespace ocs2

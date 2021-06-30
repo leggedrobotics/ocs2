@@ -18,21 +18,21 @@ static bool derivativeChecker(SystemDynamicsBase& nonlinearSystem, SystemDynamic
 /**
  * Pendulum system, \fn$ \theta = 0 \fn$ is upright
  */
-class PendulumSystem : public SystemDynamicsBase {
+class PendulumSystem final : public SystemDynamicsBase {
  public:
-  PendulumSystem() = default;
+  PendulumSystem() : SystemDynamicsBase() {}
   ~PendulumSystem() override = default;
-  PendulumSystem* clone() const final { return new PendulumSystem(*this); }
+  PendulumSystem* clone() const override { return new PendulumSystem(*this); }
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     vector_t dfdt(2);
     dfdt << x(1), sin(x(0)) + 0.1 * u(0);
     return dfdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     VectorFunctionLinearApproximation linearDynamics;
-    linearDynamics.f = computeFlowMap(t, x, u);
+    linearDynamics.f = computeFlowMap(t, x, u, PreComputation());
     linearDynamics.dfdx.resize(2, 2);
     linearDynamics.dfdx << 0, 1,  // clang-format off
                            cos(x(0)), 0;  // clang-format on
@@ -72,7 +72,7 @@ TEST(testSystemDynamicsLinearizer, testLinearSystem) {
   B << 1, 1;
   LinearSystemDynamics linSys(A, B);
 
-  SystemDynamicsLinearizer linearizedSys(std::shared_ptr<ControlledSystemBase>(linSys.clone()), /*doubleSidedDerivative=*/true,
+  SystemDynamicsLinearizer linearizedSys(std::unique_ptr<ControlledSystemBase>(linSys.clone()), /*doubleSidedDerivative=*/true,
                                          /*isSecondOrderSystem=*/false, EPSILON);
 
   ASSERT_TRUE(derivativeChecker(linSys, linearizedSys, TOLERANCE, time, state, input));
@@ -92,7 +92,7 @@ TEST(testSystemDynamicsLinearizer, testPendulum) {
   vector_t input = vector_t::Random(1);
 
   PendulumSystem nonLinSys;
-  SystemDynamicsLinearizer linearizedSys(std::shared_ptr<ControlledSystemBase>(nonLinSys.clone()), /*doubleSidedDerivative=*/true,
+  SystemDynamicsLinearizer linearizedSys(std::unique_ptr<ControlledSystemBase>(nonLinSys.clone()), /*doubleSidedDerivative=*/true,
                                          /*isSecondOrderSystem=*/false, EPSILON);
 
   for (auto i = 0; i < divisions; ++i) {
@@ -102,8 +102,8 @@ TEST(testSystemDynamicsLinearizer, testPendulum) {
 
 static bool derivativeChecker(SystemDynamicsBase& sys1, SystemDynamicsBase& sys2, scalar_t tolerance, scalar_t t, const vector_t& x,
                               const vector_t& u) {
-  auto derivatives1 = sys1.linearApproximation(t, x, u);
-  auto derivatives2 = sys2.linearApproximation(t, x, u);
+  auto derivatives1 = sys1.linearApproximation(t, x, u, PreComputation());
+  auto derivatives2 = sys2.linearApproximation(t, x, u, PreComputation());
   scalar_t A_error = (derivatives1.dfdx - derivatives2.dfdx).lpNorm<Eigen::Infinity>();
   scalar_t B_error = (derivatives1.dfdu - derivatives2.dfdu).lpNorm<Eigen::Infinity>();
   return tolerance > std::fmax(A_error, B_error);

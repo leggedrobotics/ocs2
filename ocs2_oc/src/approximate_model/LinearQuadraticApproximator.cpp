@@ -39,6 +39,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                        ModelData& modelData) const {
+  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
+  problem_.preComputationPtr->request(request, time, state, input);
+
   // dynamics
   approximateDynamics(time, state, input, modelData);
 
@@ -47,27 +50,50 @@ void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, con
 
   // cost
   approximateCost(time, state, input, modelData);
-
-  // check dimensions
-  modelData.checkSizes(state.rows(), input.rows());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input,
-                                                                  ModelData& modelData) const {
+void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const {
+  const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
+
+  auto& preComputation = *problem_.preComputationPtr;
+  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
+  preComputation.requestPreJump(request, time, state);
+
   // Jump map
-  modelData.dynamics_ = systemDynamicsPtr_->jumpMapLinearApproximation(time, state);
+  modelData.dynamics_ = problem_.dynamicsPtr->jumpMapLinearApproximation(time, state, preComputation);
 
-  // Final state-only equality constraint
-  modelData.stateEqConstr_ = systemConstraintsPtr_->finalStateEqualityConstraintLinearApproximation(time, state);
+  // Pre-jump constraints
+  // state-only equality constraint
+  modelData.stateEqConstr_ = problem_.preJumpEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
 
-  modelData.ineqConstr_.f.setZero(0);          // no inequality constraint
-  modelData.stateInputEqConstr_.f.setZero(0);  // no state-input equality constraint
+  // Pre-jump cost
+  modelData.cost_ = problem_.preJumpCostPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  if (!problem_.preJumpSoftConstraintPtr->empty()) {
+    modelData.cost_ += problem_.preJumpSoftConstraintPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LinearQuadraticApproximator::approximateLQProblemAtFinalTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const {
+  const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
+
+  auto& preComputation = *problem_.preComputationPtr;
+  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Approximation;
+  preComputation.requestFinal(request, time, state);
+
+  // state-only equality constraint
+  modelData.stateEqConstr_ = problem_.finalEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
 
   // Final cost
-  modelData.cost_ = costFunctionPtr_->finalCostQuadraticApproximation(time, state);
+  modelData.cost_ = problem_.finalCostPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  if (!problem_.finalSoftConstraintPtr->empty()) {
+    modelData.cost_ += problem_.finalSoftConstraintPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+  }
 }
 
 /******************************************************************************************************/
@@ -76,8 +102,8 @@ void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t
 void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                       ModelData& modelData) const {
   // get results
-  modelData.dynamics_ = systemDynamicsPtr_->linearApproximation(time, state, input);
-  modelData.dynamicsCovariance_ = systemDynamicsPtr_->dynamicsCovariance(time, state, input);
+  modelData.dynamics_ = problem_.dynamicsPtr->linearApproximation(time, state, input, *problem_.preComputationPtr);
+  modelData.dynamicsCovariance_ = problem_.dynamicsPtr->dynamicsCovariance(time, state, input);
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {
@@ -99,19 +125,19 @@ void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, cons
 void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                          ModelData& modelData) const {
   // State-input equality constraint
-  modelData.stateInputEqConstr_ = systemConstraintsPtr_->stateInputEqualityConstraintLinearApproximation(time, state, input);
+  modelData.stateInputEqConstr_ = problem_.equalityConstraintPtr->getLinearApproximation(time, state, input, *problem_.preComputationPtr);
   if (modelData.stateInputEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-input equality constraints should be less-equal to the input dimension.");
   }
 
   // State-only equality constraint
-  modelData.stateEqConstr_ = systemConstraintsPtr_->stateEqualityConstraintLinearApproximation(time, state);
+  modelData.stateEqConstr_ = problem_.stateEqualityConstraintPtr->getLinearApproximation(time, state, *problem_.preComputationPtr);
   if (modelData.stateEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-only equality constraints should be less-equal to the input dimension.");
   }
 
   // Inequality constraint
-  modelData.ineqConstr_ = systemConstraintsPtr_->inequalityConstraintQuadraticApproximation(time, state, input);
+  modelData.ineqConstr_ = problem_.inequalityConstraintPtr->getQuadraticApproximation(time, state, input, *problem_.preComputationPtr);
 
   if (checkNumericalCharacteristics_) {
     std::string err = modelData.checkConstraintProperties();
@@ -134,8 +160,27 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                   ModelData& modelData) const {
-  // get results
-  modelData.cost_ = costFunctionPtr_->costQuadraticApproximation(time, state, input);
+  const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
+  const auto& preComputation = *problem_.preComputationPtr;
+
+  // get the state-input cost approximations
+  modelData.cost_ = problem_.costPtr->getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
+  if (!problem_.softConstraintPtr->empty()) {
+    modelData.cost_ += problem_.softConstraintPtr->getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
+  }
+  // get the state only cost approximations
+  if (!problem_.stateCostPtr->empty()) {
+    auto stateCost = problem_.stateCostPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+    modelData.cost_.f += stateCost.f;
+    modelData.cost_.dfdx += stateCost.dfdx;
+    modelData.cost_.dfdxx += stateCost.dfdxx;
+  }
+  if (!problem_.stateSoftConstraintPtr->empty()) {
+    auto stateCost = problem_.stateSoftConstraintPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
+    modelData.cost_.f += stateCost.f;
+    modelData.cost_.dfdx += stateCost.dfdx;
+    modelData.cost_.dfdxx += stateCost.dfdxx;
+  }
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {

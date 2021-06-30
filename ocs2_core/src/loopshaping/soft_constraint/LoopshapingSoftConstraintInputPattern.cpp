@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Ruben Grandia. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,47 +27,35 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBaseAD.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
+#include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraintInputPattern.h>
 
 namespace ocs2 {
 
-class LinearConstraintAD : public ConstraintBaseAD {
- public:
-  LinearConstraintAD(const vector_t& e, const matrix_t& C, const matrix_t& D, const vector_t& h, const matrix_t& F, const vector_t& h_f,
-                     const matrix_t& F_f)
-      : ConstraintBaseAD(C.cols(), D.cols()), e_(e), C_(C), D_(D), h_(h), F_(F), h_f_(h_f), F_f_(F_f) {}
-
-  ~LinearConstraintAD() override = default;
-
-  LinearConstraintAD(const LinearConstraintAD& rhs)
-      : ConstraintBaseAD(rhs), e_(rhs.e_), C_(rhs.C_), D_(rhs.D_), h_(rhs.h_), F_(rhs.F_), h_f_(rhs.h_f_), F_f_(rhs.F_f_) {}
-
-  LinearConstraintAD* clone() const override { return new LinearConstraintAD(*this); }
-
- protected:
-  ad_vector_t stateInputConstraint(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const override {
-    return e_.cast<ad_scalar_t>() + C_.cast<ad_scalar_t>() * state + D_.cast<ad_scalar_t>() * input;
+ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintInputPattern::getQuadraticApproximation(
+    scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
+    const PreComputation& preComp) const {
+  if (this->empty()) {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
   }
 
-  ad_vector_t stateOnlyConstraint(ad_scalar_t time, const ad_vector_t& state) const override {
-    return h_.cast<ad_scalar_t>() + F_.cast<ad_scalar_t>() * state;
-  }
+  const auto& s_filter = loopshapingDefinition_->getInputFilter();
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
 
-  ad_vector_t stateOnlyFinalConstraint(ad_scalar_t time, const ad_vector_t& state) const override {
-    return h_f_.cast<ad_scalar_t>() + F_f_.cast<ad_scalar_t>() * state;
-  }
+  const auto L_system =
+      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
 
- private:
-  vector_t e_;
-  matrix_t C_;
-  matrix_t D_;
-  vector_t h_;
-  matrix_t F_;
-  vector_t h_f_;
-  matrix_t F_f_;
-};
+  ScalarFunctionQuadraticApproximation L = ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
+  L.f = L_system.f;
+  L.dfdx.head(x_system.rows()) = L_system.dfdx;
+  L.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = L_system.dfdxx;
+  L.dfdu.head(u_system.rows()) = L_system.dfdu;
+  L.dfduu.topLeftCorner(u_system.rows(), u_system.rows()) = L_system.dfduu;
+  L.dfdux.topLeftCorner(u_system.rows(), x_system.rows()) = L_system.dfdux;
+
+  return L;
+}
 
 }  // namespace ocs2

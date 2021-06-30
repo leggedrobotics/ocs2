@@ -1,8 +1,9 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
@@ -17,43 +18,40 @@ namespace pybindings_test {
 class DummyInterface final : public RobotInterface {
  public:
   DummyInterface() {
+    problemPtr_.reset(new OptimalControlProblem);
+
     const matrix_t A = (matrix_t(2, 2) << 0, 1, 0, 0).finished();
     const matrix_t B = (matrix_t(2, 1) << 0, 1).finished();
-    dynamicsPtr_.reset(new LinearSystemDynamics(A, B));
+    problemPtr_->dynamicsPtr.reset(new LinearSystemDynamics(A, B));
 
     const matrix_t Q = (matrix_t(2, 2) << 1, 0, 0, 1).finished();
     const matrix_t R = (matrix_t(1, 1) << 1).finished();
     const matrix_t Qf = (matrix_t(2, 2) << 2, 0, 0, 2).finished();
-    costPtr_.reset(new QuadraticCostFunction(Q, R, Qf));
+    problemPtr_->costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+    problemPtr_->finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
-    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(1)});
-    costPtr_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
-
-    constraintPtr_.reset(new ConstraintBase());
+    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(2)});
+    problemPtr_->costDesiredTrajectories = &costDesiredTrajectories_;
 
     initializerPtr_.reset(new DefaultInitializer(1));
 
     rollout::Settings rolloutSettings;
-    rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings));
+    rolloutPtr_.reset(new TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings));
   }
   ~DummyInterface() override = default;
 
   std::unique_ptr<ocs2::MPC_DDP> getMpc() {
+    mpc::Settings mpcSettings;
     ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
-    mpc::Settings mpcSettings;
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(rolloutPtr_.get(), dynamicsPtr_.get(), constraintPtr_.get(), costPtr_.get(),
-                                                initializerPtr_.get(), ddpSettings, mpcSettings));
+    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings, ddpSettings, *rolloutPtr_, *problemPtr_, *initializerPtr_));
   }
 
-  const SystemDynamicsBase& getDynamics() const override { return *dynamicsPtr_; }
-  const CostFunctionBase& getCost() const override { return *costPtr_; }
-  const ConstraintBase* getConstraintPtr() const override { return constraintPtr_.get(); }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
   const Initializer& getInitializer() const override { return *initializerPtr_; }
 
-  std::unique_ptr<LinearSystemDynamics> dynamicsPtr_;
-  std::unique_ptr<QuadraticCostFunction> costPtr_;
-  std::unique_ptr<ConstraintBase> constraintPtr_;
+ private:
+  std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::unique_ptr<Initializer> initializerPtr_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
   CostDesiredTrajectories costDesiredTrajectories_;
@@ -63,7 +61,7 @@ class DummyPyBindings final : public PythonInterface {
  public:
   using Base = PythonInterface;
 
-  DummyPyBindings(const std::string& taskFileFolder) {
+  DummyPyBindings() {
     DummyInterface robot;
     PythonInterface::init(robot, robot.getMpc());
   }
@@ -73,10 +71,5 @@ class DummyPyBindings final : public PythonInterface {
 }  // namespace ocs2
 
 TEST(OCS2PyBindingsTest, createDummyPyBindings) {
-  ocs2::pybindings_test::DummyPyBindings dummy("mpc");
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  ocs2::pybindings_test::DummyPyBindings dummy;
 }

@@ -67,7 +67,7 @@ StateConstraintCppAd::StateConstraintCppAd(const StateConstraintCppAd& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateConstraintCppAd::getValue(scalar_t time, const vector_t& state) const {
+vector_t StateConstraintCppAd::getValue(scalar_t time, const vector_t& state, const PreComputation&) const {
   vector_t tapedTimeState(1 + state.rows());
   tapedTimeState << time, state;
   return adInterfacePtr_->getFunctionValue(tapedTimeState, getParameters(time));
@@ -76,7 +76,8 @@ vector_t StateConstraintCppAd::getValue(scalar_t time, const vector_t& state) co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation StateConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state) const {
+VectorFunctionLinearApproximation StateConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                               const PreComputation&) const {
   VectorFunctionLinearApproximation constraint;
 
   const size_t stateDim = state.rows();
@@ -94,7 +95,8 @@ VectorFunctionLinearApproximation StateConstraintCppAd::getLinearApproximation(s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionQuadraticApproximation StateConstraintCppAd::getQuadraticApproximation(scalar_t time, const vector_t& state) const {
+VectorFunctionQuadraticApproximation StateConstraintCppAd::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                     const PreComputation&) const {
   if (getOrder() != ConstraintOrder::Quadratic) {
     throw std::runtime_error("[StateConstraintCppAd] Quadratic approximation not supported!");
   }

@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 
@@ -39,18 +39,17 @@ constexpr size_t INPUT_DIM = 1;
 
 namespace ocs2 {
 
-// #######################
-// ###DYNAMICS CLASSES####
-// #######################
-class hybridSysDynamics1 final : public LinearSystemDynamics {
+/* Hybrid system dynamics */
+
+class HybridSysDynamics1 final : public LinearSystemDynamics {
  public:
-  hybridSysDynamics1() : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM)) {
+  HybridSysDynamics1() : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM)) {
     LinearSystemDynamics::A_ << -0.1, 0.9, 0.0, -1.0, -0.01, 0.0, 0.0, 0.0, 0.0;
     LinearSystemDynamics::B_ << 0.0, 1.0, 0.0;
   };
-  ~hybridSysDynamics1() override = default;
+  ~HybridSysDynamics1() override = default;
 
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) override {
+  vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation&) override {
     vector_t mappedState = state;
     mappedState[2] = 1;
     return mappedState;
@@ -63,18 +62,18 @@ class hybridSysDynamics1 final : public LinearSystemDynamics {
     return guardSurfaces;
   }
 
-  hybridSysDynamics1* clone() const override { return new hybridSysDynamics1(*this); }
+  HybridSysDynamics1* clone() const override { return new HybridSysDynamics1(*this); }
 };
 
-class hybridSysDynamics2 final : public LinearSystemDynamics {
+class HybridSysDynamics2 final : public LinearSystemDynamics {
  public:
-  hybridSysDynamics2() : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM)) {
+  HybridSysDynamics2() : LinearSystemDynamics(matrix_t(STATE_DIM, STATE_DIM), matrix_t(STATE_DIM, INPUT_DIM)) {
     LinearSystemDynamics::A_ << -0.0, 3.0, 0.0, -3.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     LinearSystemDynamics::B_ << 0.0, 1.0, 0.0;
   };
-  ~hybridSysDynamics2() override = default;
+  ~HybridSysDynamics2() override = default;
 
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) override {
+  vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation&) override {
     vector_t mappedState = state;
     mappedState[2] = 0;
     return mappedState;
@@ -87,33 +86,33 @@ class hybridSysDynamics2 final : public LinearSystemDynamics {
     return guardSurfaces;
   }
 
-  hybridSysDynamics2* clone() const final { return new hybridSysDynamics2(*this); }
+  HybridSysDynamics2* clone() const final { return new HybridSysDynamics2(*this); }
 };
 
-class hybridSysDynamics final : public SystemDynamicsBase {
+class HybridSysDynamics final : public SystemDynamicsBase {
  public:
-  hybridSysDynamics() {
-    subsystemDynamicsPtr_[0].reset(new hybridSysDynamics1);
-    subsystemDynamicsPtr_[1].reset(new hybridSysDynamics2);
+  HybridSysDynamics() {
+    subsystemDynamicsPtr_[0].reset(new HybridSysDynamics1);
+    subsystemDynamicsPtr_[1].reset(new HybridSysDynamics2);
   }
 
-  ~hybridSysDynamics() override = default;
+  ~HybridSysDynamics() override = default;
 
-  hybridSysDynamics* clone() const override { return new hybridSysDynamics(*this); }
+  HybridSysDynamics* clone() const override { return new HybridSysDynamics(*this); }
 
-  hybridSysDynamics(const hybridSysDynamics& other) : subsystemDynamicsPtr_(2) {
+  HybridSysDynamics(const HybridSysDynamics& other) : subsystemDynamicsPtr_(2) {
     subsystemDynamicsPtr_[0].reset(other.subsystemDynamicsPtr_[0]->clone());
     subsystemDynamicsPtr_[1].reset(other.subsystemDynamicsPtr_[1]->clone());
   }
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) override {
     size_t activeSubsystem = x[2];
-    return subsystemDynamicsPtr_[activeSubsystem]->computeFlowMap(t, x, u);
+    return subsystemDynamicsPtr_[activeSubsystem]->computeFlowMap(t, x, u, preComp);
   }
 
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) override {
+  vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp) override {
     size_t activeSubsystem = state[2];
-    return subsystemDynamicsPtr_[activeSubsystem]->computeJumpMap(time, state);
+    return subsystemDynamicsPtr_[activeSubsystem]->computeJumpMap(time, state, preComp);
   }
 
   vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) override {
@@ -121,26 +120,28 @@ class hybridSysDynamics final : public SystemDynamicsBase {
     return subsystemDynamicsPtr_[activeSubsystem]->computeGuardSurfaces(time, state);
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation& preComp) override {
     size_t activeSubsystem = x[2];
-    return subsystemDynamicsPtr_[activeSubsystem]->linearApproximation(t, x, u);
+    return subsystemDynamicsPtr_[activeSubsystem]->linearApproximation(t, x, u, preComp);
   }
 
  private:
   std::vector<std::unique_ptr<SystemDynamicsBase>> subsystemDynamicsPtr_{2};
 };
 
-// #############################
-// #### CONSTRAINT CLASSES######
-// #############################
-class hybridSysConstraints1 final : public ConstraintBase {
+/* Hybrid system constraints */
+
+class HybridSysBounds final : public StateInputConstraint {
  public:
-  hybridSysConstraints1() = default;
-  ~hybridSysConstraints1() = default;
+  HybridSysBounds() : StateInputConstraint(ConstraintOrder::Quadratic) {}
+  ~HybridSysBounds() override = default;
 
-  hybridSysConstraints1* clone() const override { return new hybridSysConstraints1(*this); }
+  HybridSysBounds* clone() const override { return new HybridSysBounds(*this); }
 
-  vector_t inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+  size_t getNumConstraints(scalar_t time) const override { return 4; }
+
+  vector_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) const override {
     vector_t h(4);
     // clang-format off
     h << -u[0] + 2, // -2 < u < 2
@@ -151,9 +152,10 @@ class hybridSysConstraints1 final : public ConstraintBase {
     return h;
   }
 
-  VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                 const PreComputation& preComp) const override {
     VectorFunctionQuadraticApproximation h;
-    h.f = inequalityConstraint(t, x, u);
+    h.f = getValue(t, x, u, preComp);
     h.dfdx.setZero(4, STATE_DIM);
     h.dfdx.row(2) << 1, 0, 0;
     h.dfdx.row(3) << -1, 0, 0;
@@ -164,31 +166,6 @@ class hybridSysConstraints1 final : public ConstraintBase {
     h.dfdux.resize(4, matrix_t::Zero(INPUT_DIM, STATE_DIM));
     return h;
   }
-};
-
-class hybridSysConstraints final : public ConstraintBase {
- public:
-  hybridSysConstraints() {
-    subsystemConstPtr_[0].reset(new hybridSysConstraints1);
-    subsystemConstPtr_[1].reset(new hybridSysConstraints1);
-  }
-
-  ~hybridSysConstraints() override = default;
-
-  vector_t inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
-    size_t activeSubsystem_ = x[2];
-    return subsystemConstPtr_[activeSubsystem_]->inequalityConstraint(t, x, u);
-  }
-
-  VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-    size_t activeSubsystem_ = x[2];
-    return subsystemConstPtr_[activeSubsystem_]->inequalityConstraintQuadraticApproximation(t, x, u);
-  }
-
-  hybridSysConstraints* clone() const override { return new hybridSysConstraints(*this); }
-
- private:
-  std::vector<std::shared_ptr<ConstraintBase>> subsystemConstPtr_{2};
 };
 
 }  // namespace ocs2

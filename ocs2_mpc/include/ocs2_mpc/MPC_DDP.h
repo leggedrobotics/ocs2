@@ -44,19 +44,14 @@ class MPC_DDP : public MPC_BASE {
   /**
    * Constructor
    *
-   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDynamicsPtr: The system dynamics derivatives for subsystems of the system.
-   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
-   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
-   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
-   * defined, we will use the terminal cost function defined in costFunctionPtr.
+   * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
+   * @param [in] rollout: The rollout class used for simulating the system dynamics.
+   * @param [in] optimalControlProblem: The optimal control problem definition.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-          const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings, mpc::Settings mpcSettings,
-          const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+  MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
+          const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
   /** Default destructor. */
   ~MPC_DDP() override = default;

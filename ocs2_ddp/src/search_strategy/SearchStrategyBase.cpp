@@ -132,43 +132,66 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SearchStrategyBase::rolloutCostAndConstraints(
-    ConstraintBase& constraints, CostFunctionBase& costFunction, CostFunctionBase& heuristicsFunction,
-    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
-    const vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-    std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const {
+void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array2_t& timeTrajectoriesStock,
+                                                   const size_array2_t& postEventIndicesStock,
+                                                   const vector_array2_t& stateTrajectoriesStock,
+                                                   const vector_array2_t& inputTrajectoriesStock,
+                                                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
+                                                   scalar_t& heuristicsValue) const {
+  auto& preComputation = *problem.preComputationPtr;
+  const auto& desiredTrajectory = *problem.costDesiredTrajectories;
+
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
       const auto t = timeTrajectoriesStock[i][k];
       const auto& x = stateTrajectoriesStock[i][k];
       const auto& u = inputTrajectoriesStock[i][k];
+      auto& modelData = modelDataTrajectoriesStock[i][k];
+
+      preComputation.request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u);
 
       // intermediate cost
-      modelDataTrajectoriesStock[i][k].cost_.f = costFunction.cost(t, x, u);
+      modelData.cost_.f = problem.costPtr->getValue(t, x, u, desiredTrajectory, preComputation);
+      modelData.cost_.f += problem.stateCostPtr->getValue(t, x, desiredTrajectory, preComputation);
+      modelData.cost_.f += problem.softConstraintPtr->getValue(t, x, u, desiredTrajectory, preComputation);
+      modelData.cost_.f += problem.stateSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
 
       // state equality constraint
-      modelDataTrajectoriesStock[i][k].stateEqConstr_.f = constraints.stateEqualityConstraint(t, x);
+      modelData.stateEqConstr_.f = problem.stateEqualityConstraintPtr->getValue(t, x, preComputation);
 
       // state-input equality constraint
-      modelDataTrajectoriesStock[i][k].stateInputEqConstr_.f = constraints.stateInputEqualityConstraint(t, x, u);
+      modelData.stateInputEqConstr_.f = problem.equalityConstraintPtr->getValue(t, x, u, preComputation);
 
       // inequality constraints
-      modelDataTrajectoriesStock[i][k].ineqConstr_.f = constraints.inequalityConstraint(t, x, u);
+      modelData.ineqConstr_.f = problem.inequalityConstraintPtr->getValue(t, x, u, preComputation);
 
       // event time cost and constraints
       if (eventsPastTheEndItr != postEventIndicesStock[i].end() && k + 1 == *eventsPastTheEndItr) {
         const auto ke = std::distance(postEventIndicesStock[i].begin(), eventsPastTheEndItr);
-        modelDataEventTimesStock[i][ke].cost_.f = costFunction.finalCost(t, x);
-        modelDataEventTimesStock[i][ke].stateEqConstr_.f = constraints.finalStateEqualityConstraint(t, x);
+        auto& modelDataEvent = modelDataEventTimesStock[i][ke];
+
+        preComputation.requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x);
+
+        // pre-jump cost
+        modelDataEvent.cost_.f = problem.preJumpCostPtr->getValue(t, x, desiredTrajectory, preComputation);
+        modelDataEvent.cost_.f += problem.preJumpSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
+
+        // pre-jump constraint
+        modelDataEvent.stateEqConstr_.f = problem.preJumpEqualityConstraintPtr->getValue(t, x, preComputation);
+
         eventsPastTheEndItr++;
       }
     }  // end of k loop
   }    // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsValue = heuristicsFunction.finalCost(timeTrajectoriesStock[finalActivePartition_].back(),
-                                                 stateTrajectoriesStock[finalActivePartition_].back());
+  const auto t = timeTrajectoriesStock[finalActivePartition_].back();
+  const auto& x = stateTrajectoriesStock[finalActivePartition_].back();
+  preComputation.requestFinal(Request::Cost + Request::SoftConstraint, t, x);
+  heuristicsValue = problem.finalCostPtr->getValue(t, x, desiredTrajectory, preComputation);
+  heuristicsValue += problem.finalSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
 }
 
 /******************************************************************************************************/

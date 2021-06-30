@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
 #include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_legged_robot_example/logic/GaitSchedule.h>
 #include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>

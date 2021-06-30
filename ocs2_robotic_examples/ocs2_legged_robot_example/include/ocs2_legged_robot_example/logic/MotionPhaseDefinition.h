@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
+#include "ocs2_legged_robot_example/common/Types.h"
 
 namespace ocs2 {
 namespace legged_robot {

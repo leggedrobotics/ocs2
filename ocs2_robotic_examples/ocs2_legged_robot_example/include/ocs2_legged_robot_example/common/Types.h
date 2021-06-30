@@ -32,20 +32,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <array>
 #include <cstddef>
 
-// ros
-#include <ros/package.h>
-
 namespace ocs2 {
 namespace legged_robot {
 
 template <typename T>
 using feet_array_t = std::array<T, 4>;
 using contact_flag_t = feet_array_t<bool>;
-
-const std::string ROBOT_NAME_ = "legged_robot";
-const std::string ROBOT_URDF_PATH_ = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
-const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
-const std::string ROBOT_TASK_FILE_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
 
 }  // namespace legged_robot
 }  // namespace ocs2

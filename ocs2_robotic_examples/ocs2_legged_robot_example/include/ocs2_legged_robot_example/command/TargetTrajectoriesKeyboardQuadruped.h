@@ -34,8 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <mutex>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
-
 namespace ocs2 {
 namespace legged_robot {
 

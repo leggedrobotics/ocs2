@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
-#include <ocs2_legged_robot_example/common/definitions.h>
 #include <ocs2_legged_robot_example/cost/LeggedRobotStateInputQuadraticCost.h>
 
 #include <ocs2_core/misc/LinearInterpolation.h>

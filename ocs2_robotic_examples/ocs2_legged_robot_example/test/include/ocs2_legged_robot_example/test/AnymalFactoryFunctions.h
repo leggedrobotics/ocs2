@@ -29,15 +29,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ros/package.h>
+#include <memory>
+
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
 namespace legged_robot {
 
-const std::string ROBOT_NAME_ = "legged_robot";
-const std::string ROBOT_URDF_PATH_ = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
-const std::string ROBOT_COMMAND_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
-const std::string ROBOT_TASK_FILE_PATH_ = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
+/** Returns a Pinocchio interface based on a defined ROBOT_URDF_PATH  */
+std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface();
+
+/** Returns a Pinocchio interface based on a defined ROBOT_COMMAND_PATH  */
+CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pinocchioInterface, CentroidalModelType centroidalType);
 
 }  // namespace legged_robot
 }  // namespace ocs2

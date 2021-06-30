@@ -34,16 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/kinematics-derivatives.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
-#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
-#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
-#include "ocs2_legged_robot_example/Paths.h"
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
+#include "ocs2_legged_robot_example/test/AnymalFactoryFunctions.h"
 
 #include <gtest/gtest.h>
 #include <ros/package.h>
@@ -54,12 +52,7 @@ using namespace legged_robot;
 class testEndEffectorLinearConstraint : public ::testing::Test {
  public:
   testEndEffectorLinearConstraint() {
-    pinocchioInterfacePtr.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH_)));
-
     const ModelSettings modelSettings;  // default constructor just to get contactNames3DoF
-    centroidalModelInfo = centroidal_model::createCentroidalModelInfo(
-        *pinocchioInterfacePtr, centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
-        centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
 
     pinocchioMappingPtr.reset(new CentroidalModelPinocchioMapping(centroidalModelInfo));
     pinocchioMappingAdPtr.reset(new CentroidalModelPinocchioMappingCppAd(centroidalModelInfo.toCppAd()));
@@ -111,8 +104,10 @@ class testEndEffectorLinearConstraint : public ::testing::Test {
     config.Av = matrix_t::Random(3, 3);
   }
 
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
-  CentroidalModelInfo centroidalModelInfo;
+  const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
+  const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
+
   std::unique_ptr<CentroidalModelPinocchioMapping> pinocchioMappingPtr;
   std::unique_ptr<CentroidalModelPinocchioMappingCppAd> pinocchioMappingAdPtr;
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr;

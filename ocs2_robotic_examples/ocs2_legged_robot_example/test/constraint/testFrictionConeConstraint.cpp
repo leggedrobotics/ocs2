@@ -31,12 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
-#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
-#include "ocs2_legged_robot_example/Paths.h"
-#include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
+#include "ocs2_legged_robot_example/test/AnymalFactoryFunctions.h"
 
 using namespace ocs2;
 using namespace legged_robot;
@@ -44,16 +42,11 @@ using namespace legged_robot;
 class TestFrictionConeConstraint : public testing::Test {
  public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
-  TestFrictionConeConstraint() {
-    pinocchioInterfacePtr.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH_)));
-    const ModelSettings modelSettings;  // default constructor just to get contactNames3DoF
-    centroidalModelInfo = centroidal_model::createCentroidalModelInfo(
-        *pinocchioInterfacePtr, centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
-        centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
-  }
+  TestFrictionConeConstraint() {}
 
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
-  CentroidalModelInfo centroidalModelInfo;
+  const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
+  const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
 };
 
 TEST_F(TestFrictionConeConstraint, finiteDifference) {

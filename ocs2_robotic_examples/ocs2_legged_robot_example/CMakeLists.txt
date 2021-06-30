@@ -56,6 +56,7 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${pinocchio_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}

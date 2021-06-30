@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/FactoryFunctions.h>
 
-#include <ocs2_legged_robot_example/common/ModelSettings.h>
-#include <ocs2_legged_robot_example/common/definitions.h>
+#include "ocs2_legged_robot_example/Paths.h"
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/constraint/ZeroForceConstraint.h"
 
 using namespace ocs2;

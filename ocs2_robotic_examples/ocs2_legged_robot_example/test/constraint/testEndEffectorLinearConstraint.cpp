@@ -41,8 +41,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
-#include <ocs2_legged_robot_example/LeggedRobotInterface.h>
-#include <ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h>
+#include "ocs2_legged_robot_example/Paths.h"
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
+#include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
 
 #include <gtest/gtest.h>
 #include <ros/package.h>

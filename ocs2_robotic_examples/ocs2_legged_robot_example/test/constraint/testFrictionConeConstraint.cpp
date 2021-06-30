@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 
+#include "ocs2_legged_robot_example/Paths.h"
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
-#include "ocs2_legged_robot_example/common/definitions.h"
 #include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
 
 using namespace ocs2;

@@ -31,7 +31,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded: ~
-      Splitter Ratio: 0.7764706015586853
+      Splitter Ratio: 0.8294117450714111
     Tree Height: 450
 Preferences:
   PromptSaveOnExit: true
@@ -57,14 +57,6 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: odom
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /legged_robot_vis
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
       Value: true
     - Alpha: 0.4000000059604645
       Class: rviz/RobotModel
@@ -718,16 +710,17 @@ Visualization Manager:
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /legged_robot/optimizedStateTrajectory
-      Name: MarkerArray
+      Name: Optimized State Trajectory
       Namespaces:
         CoM Trajectory: true
         EE Trajectories: true
+        Future footholds: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /legged_robot/currentState
-      Name: MarkerArray
+      Name: Current State
       Namespaces:
         Center of Pressure: true
         EE Forces: true
@@ -771,18 +764,18 @@ Visualization Manager:
                 {}
               Queue Size: 100
               Value: true
-          Enabled: true
-          Name: DesiredFeetTrajectories
+          Enabled: false
+          Name: Target Feet Trajectories
         - Class: rviz/Marker
           Enabled: true
           Marker Topic: /legged_robot/desiredBaseTrajectory
-          Name: DesiredBaseTrajectory
+          Name: Target Base Trajectory
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
-      Enabled: false
-      Name: TargetTrajectories
+      Enabled: true
+      Name: Target Trajectories
   Enabled: true
   Global Options:
     Background Color: 238; 238; 238
@@ -827,7 +820,7 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 0.3903983533382416
       Target Frame: <Fixed Frame>
-      Yaw: 2.2086002826690674
+      Yaw: 2.2036001682281494
     Saved: ~
 Window Geometry:
   Displays:
@@ -845,5 +838,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1186
-  X: 2423
-  Y: 99
+  X: 2424
+  Y: 62

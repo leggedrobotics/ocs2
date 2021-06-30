@@ -38,7 +38,6 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
   initialState_ = switchedModelStateEstimator.estimateComkinoModelState(initRbdState);
 
   // Gait Schedule
-  const auto initModeSchedule = loadModeSchedule(pathToConfigFile, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(pathToConfigFile, "defaultModeSequenceTemplate", false);
   const auto defaultGait = [&] {
     Gait gait{};
@@ -67,7 +66,6 @@ void QuadrupedInterface::loadSettings(const std::string& pathToConfigFile) {
                                                                                std::move(terrainModel));
 
   // Display
-  std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
   std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
 }
 

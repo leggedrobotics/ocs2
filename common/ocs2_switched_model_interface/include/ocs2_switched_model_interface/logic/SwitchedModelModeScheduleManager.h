@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ocs2_core/misc/Synchronized.h>
+#include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"

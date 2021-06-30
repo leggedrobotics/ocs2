@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_legged_robot_example/LeggedRobotInterface.h"
 
-#include "ocs2_legged_robot_example/common/definitions.h"
+#include <ros/package.h>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -37,7 +37,8 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
+LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const std::string& targetCommandFile,
+                                           const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
   // Load the task file
   const std::string taskFolder = ros::package::getPath("ocs2_legged_robot_example") + "/config/" + taskFileFolderName;
   const std::string taskFile = taskFolder + "/task.info";
@@ -50,7 +51,7 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName
   rolloutSettings_ = ocs2::rollout::loadSettings(taskFile, "rollout");
 
   // OptimalConrolProblem
-  setupOptimalConrolProblem(taskFile, urdfTree);
+  setupOptimalConrolProblem(taskFile, targetCommandFile, urdfTree);
 
   // initial state
   initialState_.setZero(centroidalModelInfo_.stateDim);
@@ -85,15 +86,16 @@ std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile, const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
+void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile, const std::string& targetCommandFile,
+                                                     const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
   // PinocchioInterface
   pinocchioInterfacePtr_.reset(
       new PinocchioInterface(ocs2::centroidal_model::createPinocchioInterface(urdfTree, modelSettings_.jointNames)));
 
   // CentroidalModelInfo
   centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
-      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(ROBOT_TASK_FILE_PATH_),
-      centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH_), modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
+      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
+      centroidal_model::loadDefaultJointState(12, targetCommandFile), modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
 
   // Swing trajectory planner
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(

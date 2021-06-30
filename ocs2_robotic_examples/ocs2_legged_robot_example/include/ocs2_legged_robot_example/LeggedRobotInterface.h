@@ -59,7 +59,8 @@ namespace legged_robot {
 
 class LeggedRobotInterface final : public RobotInterface {
  public:
-  LeggedRobotInterface(const std::string& taskFileFolderName, const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+  LeggedRobotInterface(const std::string& taskFileFolderName, const std::string& targetCommandFile,
+                       const ::urdf::ModelInterfaceSharedPtr& urdfTree);
 
   ~LeggedRobotInterface() override = default;
 
@@ -91,7 +92,8 @@ class LeggedRobotInterface final : public RobotInterface {
 
  protected:
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
-  void setupOptimalConrolProblem(const std::string& taskFile, const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+  void setupOptimalConrolProblem(const std::string& taskFile, const std::string& targetCommandFile,
+                                 const ::urdf::ModelInterfaceSharedPtr& urdfTree);
 
   ModelSettings modelSettings_;
   ddp::Settings ddpSettings_;

@@ -43,25 +43,27 @@ using namespace legged_robot;
 int main(int argc, char** argv) {
   std::vector<std::string> programArgs{};
   ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() <= 1) {
-    throw std::runtime_error("No task file specified. Aborting.");
+  if (programArgs.size() < 5) {
+    throw std::runtime_error("No robot name, config folder, target command file, or description name specified. Aborting.");
   }
-  const std::string taskName(programArgs[1]);
+  const std::string robotName(programArgs[1]);
+  const std::string configName(programArgs[2]);
+  const std::string targetCommandFile(programArgs[3]);
+  const std::string descriptionName("/" + programArgs[4]);
 
   // Initialize ros node
-  ros::init(argc, argv, ROBOT_NAME_ + "_mrt");
+  ros::init(argc, argv, robotName + "_mrt");
   ros::NodeHandle nodeHandle;
 
   std::string urdfString;
-  const std::string descriptionName = "/legged_robot_description";
   if (!ros::param::get(descriptionName, urdfString)) {
     std::cerr << "Param " << descriptionName << " not found; unable to generate urdf" << std::endl;
   }
 
-  LeggedRobotInterface interface(taskName, urdf::parseURDF(urdfString));
+  LeggedRobotInterface interface(configName, targetCommandFile, urdf::parseURDF(urdfString));
 
   // MRT
-  MRT_ROS_Interface mrt(ROBOT_NAME_);
+  MRT_ROS_Interface mrt(robotName);
   mrt.initRollout(&interface.getRollout());
   mrt.launchNodes(nodeHandle);
 

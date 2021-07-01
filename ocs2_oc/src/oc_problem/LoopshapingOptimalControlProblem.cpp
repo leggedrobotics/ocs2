@@ -63,6 +63,9 @@ std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& probl
   // Pre-computation
   augmentedProblem->preComputationPtr.reset(new LoopshapingPreComputation(*problem.preComputationPtr, loopshapingDefinition));
 
+  /** The cost desired trajectories (will be substitute by ModelReferenceManager) */
+  augmentedProblem->costDesiredTrajectories = problem.costDesiredTrajectories;
+
   return augmentedProblem;
 }
 

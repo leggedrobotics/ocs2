@@ -83,6 +83,9 @@ struct OptimalControlProblem {
   /** The pre-computation module */
   std::unique_ptr<PreComputation> preComputationPtr;
 
+  /** The cost desired trajectories (will be substitute by ModelReferenceManager) */
+  const CostDesiredTrajectories* costDesiredTrajectories;
+
   /** Default constructor */
   OptimalControlProblem();
 

@@ -40,13 +40,13 @@ class SimpleQuadraticCost final : public ocs2::StateInputCost {
   SimpleQuadraticCost* clone() const override { return new SimpleQuadraticCost(*this); }
 
   ocs2::scalar_t getValue(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
-                          const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+                          const ocs2::TargetTrajectories& desiredTrajectory) const override {
     return 0.5 * x.dot(Q_ * x) + 0.5 * u.dot(R_ * u);
   }
 
   ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(
       ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
-      const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+      const ocs2::TargetTrajectories& desiredTrajectory) const override {
     ocs2::ScalarFunctionQuadraticApproximation quadraticApproximation;
     quadraticApproximation.f = 0.5 * x.dot(Q_ * x) + 0.5 * u.dot(R_ * u);
     quadraticApproximation.dfdx = Q_ * x;
@@ -88,7 +88,7 @@ class StateInputCost_TestFixture : public ::testing::Test {
     costCollection.add("Another simple quadratic cost", std::move(cost2));
   }
 
-  ocs2::CostDesiredTrajectories desiredTrajectory;
+  ocs2::TargetTrajectories desiredTrajectory;
   ocs2::StateInputCostCollection costCollection;
 
   ocs2::vector_t x;
@@ -158,12 +158,12 @@ class SimpleQuadraticFinalCost final : public ocs2::StateCost {
   SimpleQuadraticFinalCost* clone() const override { return new SimpleQuadraticFinalCost(*this); }
 
   ocs2::scalar_t getValue(ocs2::scalar_t t, const ocs2::vector_t& x,
-                          const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+                          const ocs2::TargetTrajectories& desiredTrajectory) const override {
     return 0.5 * x.dot(Q_ * x);
   }
 
   ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(
-      ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+      ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::TargetTrajectories& desiredTrajectory) const override {
     ocs2::ScalarFunctionQuadraticApproximation quadraticApproximation;
     quadraticApproximation.f = 0.5 * x.dot(Q_ * x);
     quadraticApproximation.dfdx = Q_ * x;
@@ -195,7 +195,7 @@ class StateCost_TestFixture : public ::testing::Test {
     costCollection.add("Simple quadratic final cost", std::move(cost));
   }
 
-  ocs2::CostDesiredTrajectories desiredTrajectory;
+  ocs2::TargetTrajectories desiredTrajectory;
   ocs2::StateCostCollection costCollection;
 
   ocs2::vector_t x;

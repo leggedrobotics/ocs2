@@ -27,17 +27,33 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_double_integrator_example/command/TargetTrajectoriesKeyboardDoubleIntegrator.h"
+#include <ocs2_double_integrator_example/definitions.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 using namespace ocs2;
 using namespace double_integrator;
 
-int main(int argc, char* argv[]) {
-  TargetTrajectoriesKeyboardDoubleIntegrator targetPoseCommand(argc, argv, "double_integrator");
-  targetPoseCommand.launchNodes();
+/**
+ * Converts command line to TargetTrajectories.
+ * @param [in] commadLineTarget : [X, v_X,]
+ * @param [in] observation : the current observation
+ */
+TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
+  const vector_t displacement = (vector_t(STATE_DIM) << observation.state(0) + commadLineTarget(0), 0.0).finished();
+  return TargetTrajectories({observation.time}, {displacement}, {vector_t::Zero(INPUT_DIM)});
+}
 
-  const std::string commadMsg = "Enter displacement and velocity for the double-integrator, separated by spaces";
-  targetPoseCommand.getKeyboardCommand(commadMsg);
+int main(int argc, char* argv[]) {
+  const std::string robotName = "double_integrator";
+  ::ros::init(argc, argv, robotName + "_target");
+  ::ros::NodeHandle nodeHandle;
+
+  const scalar_array_t goalLimit{10.0, 10.0};  // [X, v_X,]
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, goalLimit.size(), goalLimit,
+                                                        &commandLineToTargetTrajectories);
+
+  const std::string commadMsg = "Enter the desired displacement for the double-integrator";
+  targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit
   return 0;

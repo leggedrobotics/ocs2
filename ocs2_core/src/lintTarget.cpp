@@ -26,7 +26,6 @@
 
 // Cost
 #include <ocs2_core/cost/CostCollection.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
@@ -58,7 +57,8 @@
 #include <ocs2_core/integration/steppers.h>
 
 // Logic
-#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 // Loopshaping
 #include <ocs2_core/loopshaping/Loopshaping.h>

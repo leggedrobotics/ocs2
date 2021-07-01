@@ -59,10 +59,10 @@ void PythonInterface::init(const RobotInterface& robot, std::unique_ptr<MPC_BASE
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PythonInterface::reset(CostDesiredTrajectories targetTrajectories) {
+void PythonInterface::reset(TargetTrajectories targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
   mpcMrtInterface_->resetMpcNode(targetTrajectories_);
-  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
+  cost_->setTargetTrajectoriesPtr(&targetTrajectories_);
 }
 
 /******************************************************************************************************/
@@ -79,10 +79,10 @@ void PythonInterface::setObservation(scalar_t t, Eigen::Ref<const vector_t> x, E
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PythonInterface::setTargetTrajectories(CostDesiredTrajectories targetTrajectories) {
+void PythonInterface::setTargetTrajectories(TargetTrajectories targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
-  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
-  mpcMrtInterface_->setTargetTrajectories(targetTrajectories_);
+  cost_->setTargetTrajectoriesPtr(&targetTrajectories_);
+  mpcMrtInterface_->getReferenceManager().setTargetTrajectories(targetTrajectories_);
 }
 
 /******************************************************************************************************/

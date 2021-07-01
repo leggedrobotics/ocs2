@@ -83,8 +83,6 @@ add_library(${PROJECT_NAME}
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/CostCollection.cpp
-  src/cost/CostFunctionBase.cpp
-  src/cost/CostDesiredTrajectories.cpp
   src/cost/QuadraticCostFunction.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
@@ -109,7 +107,8 @@ add_library(${PROJECT_NAME}
   src/integration/Observer.cpp
   src/integration/StateTriggeredEventHandler.cpp
   src/integration/SystemEventHandler.cpp
-  src/logic/ModeSchedule.cpp
+  src/reference/ModeSchedule.cpp
+  src/reference/TargetTrajectories.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
   src/loopshaping/cost/LoopshapingCost.cpp

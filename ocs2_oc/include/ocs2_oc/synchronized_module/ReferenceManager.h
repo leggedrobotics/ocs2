@@ -44,8 +44,6 @@ class ReferenceManager : public ReferenceManagerInterface {
                             ModeSchedule initialModeSchedule = ModeSchedule());
 
   ~ReferenceManager() override = default;
-  ReferenceManager& operator=(ReferenceManager&&) = default;
-  ReferenceManager(ReferenceManager&&) = default;
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) override;
 

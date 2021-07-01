@@ -43,8 +43,6 @@ class ReferenceManagerDecorator : public ReferenceManagerInterface {
       : referenceManagerPtr_(std::move(referenceManagerPtr)) {}
 
   ~ReferenceManagerDecorator() override = default;
-  ReferenceManagerDecorator& operator=(ReferenceManagerDecorator&&) = default;
-  ReferenceManagerDecorator(ReferenceManagerDecorator&&) = default;
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) override {
     referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);

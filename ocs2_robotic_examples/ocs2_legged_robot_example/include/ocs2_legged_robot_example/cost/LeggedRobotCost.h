@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
+#include "ocs2_legged_robot_example/common/Types.h"
 #include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
 
 namespace ocs2 {
@@ -45,8 +46,6 @@ namespace legged_robot {
 
 class LeggedRobotCost : public CostFunctionBase {
  public:
-  using quaternion_t = Eigen::Quaternion<scalar_t>;
-
   LeggedRobotCost(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info,
                   const SwitchedModelModeScheduleManager& modeScheduleManager, const std::string& taskFile, ModelSettings modelSettings);
   ~LeggedRobotCost() override = default;

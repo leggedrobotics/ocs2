@@ -46,8 +46,6 @@ namespace legged_robot {
 
 class LeggedRobotVisualizer : public DummyObserver {
  public:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
-
   /** Visualization settings (publicly available) */
   std::string frameId_ = "odom";              // Frame name all messages are published in
   scalar_t footMarkerDiameter_ = 0.03;        // Size of the spheres at the feet

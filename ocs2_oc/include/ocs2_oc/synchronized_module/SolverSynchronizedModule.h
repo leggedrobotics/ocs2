@@ -54,7 +54,8 @@ class SolverSynchronizedModule {
    * @param initState : State at the start of the MPC horizon
    * @param referenceManager : The ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
-  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState, const ReferenceManagerInterface& referenceManager) = 0;
+  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                            const ReferenceManagerInterface& referenceManager) = 0;
 
   /**
    * Method called right after the solver runs

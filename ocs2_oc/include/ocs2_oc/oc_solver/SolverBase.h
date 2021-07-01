@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include <ocs2_core/Types.h>

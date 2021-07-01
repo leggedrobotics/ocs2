@@ -41,11 +41,9 @@ namespace ocs2 {
 class ReferenceManager : public ReferenceManagerInterface {
  public:
   explicit ReferenceManager(TargetTrajectories initialTargetTrajectories = TargetTrajectories(),
-                                    ModeSchedule initialModeSchedule = ModeSchedule());
+                            ModeSchedule initialModeSchedule = ModeSchedule());
 
   ~ReferenceManager() override = default;
-  ReferenceManager& operator=(ReferenceManager&&) = default;
-  ReferenceManager(ReferenceManager&&) = default;
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) override;
 

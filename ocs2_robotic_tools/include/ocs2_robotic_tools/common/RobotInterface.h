@@ -58,7 +58,7 @@ class RobotInterface {
    * Gets the ReferenceManager.
    * @return a shared pointer to the ReferenceManager.
    */
-  virtual std::shared_ptr<ReferenceManager> getReferenceManagerPtr() const { return nullptr; }
+  virtual std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const { return nullptr; }
 
   /**
    * @brief getDynamics

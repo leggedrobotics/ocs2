@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
-
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
 
 namespace ocs2 {

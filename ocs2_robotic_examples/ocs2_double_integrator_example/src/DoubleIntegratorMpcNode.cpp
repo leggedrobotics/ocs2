@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
   interface_t doubleIntegratorInterface(taskFileFolderName);
 
   // ReferenceManager
-  auto rosReferenceManagerPtr = ocs2::RosReferenceManager::create<ocs2::ReferenceManager>(robotName);
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr = ocs2::RosReferenceManager::create<ocs2::ReferenceManager>(robotName);
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // Launch MPC ROS node

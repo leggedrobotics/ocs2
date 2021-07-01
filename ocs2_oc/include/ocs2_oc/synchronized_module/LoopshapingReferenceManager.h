@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class LoopshapingReferenceManager : public ReferenceManagerDecorator {
+class LoopshapingReferenceManager final : public ReferenceManagerDecorator {
  public:
   /**
    * Constructor.

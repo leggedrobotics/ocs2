@@ -42,7 +42,7 @@ namespace ocs2 {
 /**
  * Decorates ReferenceManager with ROS subscribers to receive ModeSchedule and TargetTrajectories through ROS messages.
  */
-class RosReferenceManager : public ReferenceManagerDecorator {
+class RosReferenceManager final : public ReferenceManagerDecorator {
  public:
   /**
    * Constructor which decorates referenceManagerPtr.
@@ -56,11 +56,12 @@ class RosReferenceManager : public ReferenceManagerDecorator {
   ~RosReferenceManager() override = default;
 
   /**
-   * Creates a pointer to RosReferenceManager using ReferenceManager(args...).
+   * Creates a pointer to RosReferenceManager using a the derived class of type ReferenceManagerInterface, i.e.
+   * DerivedReferenceManager(args...).
    *
    * @param [in] topicPrefix: The ReferenceManager will subscribe to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target"
    * topics to receive user-commanded ModeSchedule and TargetTrajectories respectively.
-   * @param args: arguments to forward to the constructor of ReferenceManager
+   * @param args: arguments to forward to the constructor of DerivedReferenceManager
    */
   template <class ReferenceManagerType, class... Args>
   static std::unique_ptr<RosReferenceManager> create(const std::string& topicPrefix, Args&&... args);
@@ -73,7 +74,7 @@ class RosReferenceManager : public ReferenceManagerDecorator {
   void subscribe(ros::NodeHandle& nodeHandle);
 
  private:
-  std::string topicPrefix_;
+  const std::string topicPrefix_;
 
   ::ros::Subscriber modeScheduleSubscriber_;
   ::ros::Subscriber targetTrajectoriesSubscriber_;

@@ -82,7 +82,7 @@ target_link_libraries(cartpole_mpc
 
 # Dummy node
 add_executable(cartpole_dummy_test
-  src/Dummy_Cartpole_Node.cpp
+  src/DummyCartpoleNode.cpp
 )
 add_dependencies(cartpole_dummy_test
   ${catkin_EXPORTED_TARGETS}

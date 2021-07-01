@@ -81,7 +81,7 @@ target_link_libraries(double_integrator_mpc
 
 # Dummy node
 add_executable(double_integrator_dummy_test
-  src/Dummy_Double_Integrator_Node.cpp
+  src/DummyDoubleIntegratorNode.cpp
   src/DoubleIntegratorDummyVisualization.cpp
 )
 add_dependencies(double_integrator_dummy_test

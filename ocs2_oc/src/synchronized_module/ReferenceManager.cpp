@@ -35,8 +35,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ReferenceManager::ReferenceManager(TargetTrajectories initialTargetTrajectories, ModeSchedule initialModeSchedule)
-    : ReferenceManagerInterface(),
-      targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
+    : targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

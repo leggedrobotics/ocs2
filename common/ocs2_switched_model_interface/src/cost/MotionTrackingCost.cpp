@@ -49,10 +49,13 @@ Eigen::Matrix<SCALAR_T, -1, 1> costElementsToVector(const CostElements<SCALAR_T>
 
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCALAR_T>& x, const comkino_input_s_t<SCALAR_T>& u,
-                                                    const KinematicsModelBase<SCALAR_T>& kinematics) {
+                                                    const KinematicsModelBase<SCALAR_T>& kinematics,
+                                                    const ComModelBase<SCALAR_T>& comModel) {
   // Extract elements from reference
   const auto comPose = getComPose(x);
+  const auto basePose = comModel.calculateBasePose(comPose);
   const auto com_comTwist = getComLocalVelocities(x);
+  const auto base_baseTwist = comModel.calculateBaseLocalVelocities(com_comTwist);
   const auto o_R_b = rotationMatrixBaseToOrigin(getOrientation(comPose));
   const auto qJoints = getJointPositions(x);
   const auto dqJoints = getJointVelocities(u);
@@ -64,9 +67,9 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
   motionTarget.comLinearVelocity = o_R_b * getLinearVelocity(com_comTwist);
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     motionTarget.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
-    motionTarget.footPosition[leg] = kinematics.positionBaseToFootInBaseFrame(leg, qJoints);
+    motionTarget.footPosition[leg] = kinematics.footPositionInOriginFrame(leg, basePose, qJoints);
     motionTarget.jointVelocity[leg] = dqJoints.template segment<3>(3 * leg);
-    motionTarget.footVelocity[leg] = kinematics.footVelocityRelativeToBaseInBaseFrame(leg, qJoints, dqJoints);
+    motionTarget.footVelocity[leg] = kinematics.footVelocityInOriginFrame(leg, basePose, base_baseTwist, qJoints, dqJoints);
     motionTarget.contactForce[leg] = u.template segment<3>(3 * leg);
   }
   return costElementsToVector(motionTarget);
@@ -76,11 +79,12 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
 
 MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedModelModeScheduleManager& modeScheduleManager,
                                        const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                                       const com_model_t& comModel, bool recompile)
+                                       const com_model_t& comModel, const ad_com_model_t& adComModel, bool recompile)
     : modeScheduleManagerPtr_(&modeScheduleManager),
       kinematicModelPtr_(kinematicModel.clone()),
       adKinematicModelPtr_(adKinematicModel.clone()),
-      comModelPtr_(comModel.clone()) {
+      comModelPtr_(comModel.clone()),
+      adComModelPtr_(adComModel.clone()) {
   // Weights are sqrt of settings
   CostElements<ocs2::ad_scalar_t> weightStruct;
   weightStruct.eulerXYZ = settings.eulerXYZ.cwiseSqrt().cast<ocs2::ad_scalar_t>();
@@ -112,7 +116,7 @@ ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2
   }
 
   // The target references are the parameters
-  return computeMotionTargets<ocs2::scalar_t>(xRef, uRef, *kinematicModelPtr_);
+  return computeMotionTargets<ocs2::scalar_t>(xRef, uRef, *kinematicModelPtr_, *comModelPtr_);
 }
 
 MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
@@ -121,11 +125,12 @@ MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
       modeScheduleManagerPtr_(other.modeScheduleManagerPtr_),
       kinematicModelPtr_(other.kinematicModelPtr_->clone()),
       adKinematicModelPtr_(other.adKinematicModelPtr_->clone()),
-      comModelPtr_(other.comModelPtr_->clone()) {}
+      comModelPtr_(other.comModelPtr_->clone()),
+      adComModelPtr_(other.adComModelPtr_->clone()) {}
 
 ocs2::ad_vector_t MotionTrackingCost::costVectorFunction(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state,
                                                          const ocs2::ad_vector_t& input, const ocs2::ad_vector_t& parameters) const {
-  const auto currentTargets = computeMotionTargets<ocs2::ad_scalar_t>(state, input, *adKinematicModelPtr_);
+  const auto currentTargets = computeMotionTargets<ocs2::ad_scalar_t>(state, input, *adKinematicModelPtr_, *adComModelPtr_);
   return (currentTargets - parameters).cwiseProduct(sqrtWeights_);
 }
 

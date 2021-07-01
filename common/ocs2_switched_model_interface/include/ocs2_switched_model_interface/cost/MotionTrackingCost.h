@@ -35,13 +35,14 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
     vector3_t contactForce{vector3_t::Constant(0.001)};
   };
 
-  using com_model_t = ComModelBase<ocs2::scalar_t>;
   using kinematic_model_t = KinematicsModelBase<ocs2::scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>;
+  using ad_kinematic_model_t = KinematicsModelBase<ocs2::ad_scalar_t>;
+  using com_model_t = ComModelBase<ocs2::scalar_t>;
+  using ad_com_model_t = ComModelBase<ocs2::ad_scalar_t>;
 
   MotionTrackingCost(const Weights& settings, const SwitchedModelModeScheduleManager& modeScheduleManager,
                      const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                     bool recompile);
+                     const ad_com_model_t& adComModel, bool recompile);
 
   ~MotionTrackingCost() override = default;
   MotionTrackingCost* clone() const { return new MotionTrackingCost(*this); }
@@ -56,9 +57,10 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
 
  private:
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
-  std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
+  std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
+  std::unique_ptr<ad_com_model_t> adComModelPtr_;
 
   // Only needed during model generation
   ocs2::ad_vector_t sqrtWeights_;

@@ -42,7 +42,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RosReferenceManager::RosReferenceManager(std::string topicPrefix, std::unique_ptr<ReferenceManagerInterface> referenceManagerPtr)
+RosReferenceManager::RosReferenceManager(std::string topicPrefix, std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
     : ReferenceManagerDecorator(std::move(referenceManagerPtr)), topicPrefix_(std::move(topicPrefix)) {}
 
 /******************************************************************************************************/

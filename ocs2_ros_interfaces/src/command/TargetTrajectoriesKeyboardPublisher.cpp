@@ -40,7 +40,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::NodeHandle& nodeHandle, std::string topicPrefix,
+TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
                                                                          size_t targetCommandSize,
                                                                          const scalar_array_t& targetCommandLimits,
                                                                          CommandLineToTargetTrajectories commandLineToTargetTrajectoriesFun)
@@ -58,7 +58,7 @@ TargetTrajectoriesKeyboardPublisher::TargetTrajectoriesKeyboardPublisher(::ros::
   observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "_mpc_observation", 1, observationCallback);
 
   // Trajectories publisher
-  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, std::move(topicPrefix)));
+  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
 }
 
 /******************************************************************************************************/

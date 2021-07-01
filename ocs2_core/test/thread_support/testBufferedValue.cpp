@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <ocs2_core/misc/BufferedValue.h>
+#include <ocs2_core/thread_support/BufferedValue.h>
 
 TEST(testBufferedValue, basicSetGet) {
   // initialize
@@ -51,7 +51,7 @@ class MoveCounter {
  private:
   int count_;
 };
-}  // namespace
+}  // unnamed namespace
 
 TEST(testBufferedValue, moveCount) {
   // 1 move on creation

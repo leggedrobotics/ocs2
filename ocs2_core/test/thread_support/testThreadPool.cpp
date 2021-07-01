@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <ocs2_core/misc/ThreadPool.h>
+#include <ocs2_core/thread_support/ThreadPool.h>
 
 using namespace ocs2;
 

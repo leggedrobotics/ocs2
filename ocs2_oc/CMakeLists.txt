@@ -51,6 +51,7 @@ add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
   src/oc_solver/SolverBase.cpp
+  src/oc_problem/OptimalControlProblem.cpp
   src/rollout/PerformanceIndicesRollout.cpp
   src/rollout/RolloutBase.cpp
   src/rollout/RootFinder.cpp

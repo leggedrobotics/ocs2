@@ -37,8 +37,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FrictionConeConstraint::FrictionConeConstraint(Config config, size_t contactPointIndex, CentroidalModelInfo info)
+FrictionConeConstraint::FrictionConeConstraint(const SwitchedModelModeScheduleManager& modeScheduleManager, Config config,
+                                               size_t contactPointIndex, CentroidalModelInfo info)
     : StateInputConstraint(ConstraintOrder::Quadratic),
+      modeScheduleManagerPtr_(&modeScheduleManager),
       config_(std::move(config)),
       contactPointIndex_(contactPointIndex),
       info_(std::move(info)) {}
@@ -54,7 +56,15 @@ void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNor
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
+bool FrictionConeConstraint::isActive(scalar_t time) const {
+  return modeScheduleManagerPtr_->getContactFlags(time)[contactPointIndex_];
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                          const PreComputation& preComp) const {
   const auto forcesInWorldFrame = centroidal_model::getContactForces(input, contactPointIndex_, info_);
   const vector3_t localForce = t_R_w * forcesInWorldFrame;
   return coneConstraint(localForce);
@@ -64,7 +74,8 @@ vector_t FrictionConeConstraint::getValue(scalar_t time, const vector_t& state, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                 const vector_t& input) const {
+                                                                                 const vector_t& input,
+                                                                                 const PreComputation& preComp) const {
   const vector3_t forcesInWorldFrame = centroidal_model::getContactForces(input, contactPointIndex_, info_);
   const vector3_t localForce = t_R_w * forcesInWorldFrame;
 
@@ -72,7 +83,7 @@ VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation
   const auto coneLocalDerivatives = computeConeLocalDerivatives(localForce);
   const auto coneDerivatives = computeConeConstraintDerivatives(coneLocalDerivatives, localForceDerivatives);
 
-  ocs2::VectorFunctionLinearApproximation linearApproximation;
+  VectorFunctionLinearApproximation linearApproximation;
   linearApproximation.f = coneConstraint(localForce);
   linearApproximation.dfdx = matrix_t::Zero(1, state.size());
   linearApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
@@ -83,7 +94,8 @@ VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation FrictionConeConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                       const vector_t& input) const {
+                                                                                       const vector_t& input,
+                                                                                       const PreComputation& preComp) const {
   const vector3_t forcesInWorldFrame = centroidal_model::getContactForces(input, contactPointIndex_, info_);
   const vector3_t localForce = t_R_w * forcesInWorldFrame;
 
@@ -91,7 +103,7 @@ VectorFunctionQuadraticApproximation FrictionConeConstraint::getQuadraticApproxi
   const auto coneLocalDerivatives = computeConeLocalDerivatives(localForce);
   const auto coneDerivatives = computeConeConstraintDerivatives(coneLocalDerivatives, localForceDerivatives);
 
-  ocs2::VectorFunctionQuadraticApproximation quadraticApproximation;
+  VectorFunctionQuadraticApproximation quadraticApproximation;
   quadraticApproximation.f = coneConstraint(localForce);
   quadraticApproximation.dfdx = matrix_t::Zero(1, state.size());
   quadraticApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
@@ -146,7 +158,7 @@ vector_t FrictionConeConstraint::coneConstraint(const vector3_t& localForces) co
   const auto F_tangent_square = localForces.x() * localForces.x() + localForces.y() * localForces.y() + config_.regularization;
   const auto F_tangent_norm = sqrt(F_tangent_square);
   const scalar_t coneConstraint = config_.frictionCoefficient * (localForces.z() + config_.gripperForce) - F_tangent_norm;
-  return (ocs2::vector_t(1) << coneConstraint).finished();
+  return (vector_t(1) << coneConstraint).finished();
 }
 
 /******************************************************************************************************/

@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
 
@@ -85,17 +87,19 @@ class FrictionConeConstraint final : public StateInputConstraint {
    * @param [in] contactPointIndex : The 3 DoF contact index in.
    * @param [in] info : The centroidal model information.
    */
-  FrictionConeConstraint(Config config, size_t contactPointIndex, CentroidalModelInfo info);
+  FrictionConeConstraint(const SwitchedModelModeScheduleManager& modeScheduleManager, Config config, size_t contactPointIndex,
+                         CentroidalModelInfo info);
 
   ~FrictionConeConstraint() override = default;
   FrictionConeConstraint* clone() const override { return new FrictionConeConstraint(*this); }
 
+  bool isActive(scalar_t time) const override;
   size_t getNumConstraints(scalar_t time) const override { return 1; };
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const vector_t& state,
-                                                           const vector_t& input) const override;
-  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const vector_t& input) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const PreComputation& preComp) const override;
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                 const PreComputation& preComp) const override;
 
   /** Sets the estimated terrain normal expressed in the world frame. */
   void setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld);
@@ -128,6 +132,8 @@ class FrictionConeConstraint final : public StateInputConstraint {
   matrix_t frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const;
   matrix_t frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const;
   matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
+
+  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
 
   const Config config_;
   const size_t contactPointIndex_;

@@ -47,8 +47,9 @@ class LeggedRobotDynamicsAD final : public SystemDynamicsBase {
   ~LeggedRobotDynamicsAD() override = default;
   LeggedRobotDynamicsAD* clone() const override { return new LeggedRobotDynamicsAD(*this); }
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override;
-  VectorFunctionLinearApproximation linearApproximation(scalar_t time, const vector_t& state, const vector_t& input) override;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                        const PreComputation& preComp) override;
 
  private:
   LeggedRobotDynamicsAD(const LeggedRobotDynamicsAD& rhs) = default;

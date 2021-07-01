@@ -44,7 +44,7 @@ class ReferenceManagerInterface {
   ReferenceManagerInterface() = default;
 
   /** Destructor */
-  virtual ~ReferenceManagerInterface() = 0;
+  virtual ~ReferenceManagerInterface() = default;
 
   /** Disable copy / move */
   ReferenceManagerInterface& operator=(const ReferenceManagerInterface&) = delete;
@@ -66,13 +66,13 @@ class ReferenceManagerInterface {
 
   /**
    * Sets the ModeSchedule to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-   * This method must be thread safe.
+   * @note: This method must be thread safe.
    */
   virtual void setModeSchedule(const ModeSchedule& modeSchedule) = 0;
 
   /**
    * Move the ModeSchedule to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-   * This method must be thread safe.
+   * @note: This method must be thread safe.
    */
   virtual void setModeSchedule(ModeSchedule&& modeSchedule) = 0;
 
@@ -81,13 +81,13 @@ class ReferenceManagerInterface {
 
   /**
    * Sets the TargetTrajectories to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-   * This method must be thread safe.
+   * @note: This method must be thread safe.
    */
   virtual void setTargetTrajectories(const TargetTrajectories& targetTrajectories) = 0;
 
   /**
    * Move the TargetTrajectories to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-   * This method must be thread safe.
+   * @note: This method must be thread safe.
    */
   virtual void setTargetTrajectories(TargetTrajectories&& targetTrajectories) = 0;
 };

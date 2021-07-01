@@ -40,10 +40,10 @@ namespace legged_robot {
 
 struct ModelSettings {
   scalar_t positionErrorGain = 0.0;
-  scalar_t frictionCoefficient = 1.0;
 
   scalar_t phaseTransitionStanceTime = 0.4;
 
+  bool usePreComputation = true;
   bool verboseCppAd = true;
   bool recompileLibrariesCppAd = true;
   std::string modelFolderCppAd = "/tmp/ocs2";

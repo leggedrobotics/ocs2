@@ -32,20 +32,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ocs2
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
-#include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
 #include <ocs2_centroidal_model/FactoryFunctions.h>
-#include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
-#include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
 
 // ocs2_legged_robot_example
-#include "ocs2_legged_robot_example/constraint/LeggedRobotConstraintAD.h"
-#include "ocs2_legged_robot_example/cost/LeggedRobotCost.h"
-#include "ocs2_legged_robot_example/dynamics/LeggedRobotDynamicsAD.h"
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/initialization/LeggedRobotInitializer.h"
 #include "ocs2_legged_robot_example/logic/GaitReceiver.h"
 #include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
@@ -64,18 +61,24 @@ class LeggedRobotInterface final : public RobotInterface {
 
   ~LeggedRobotInterface() override = default;
 
-  std::unique_ptr<ocs2::MPC_DDP> getMpcPtr() const;
+  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
+
+  const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
+
+  std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
+
+  std::unique_ptr<MPC_DDP> getMpcPtr() const;
 
   const ModelSettings& modelSettings() const { return modelSettings_; }
   const ddp::Settings& ddpSettings() const { return ddpSettings_; }
   const mpc::Settings& mpcSettings() const { return mpcSettings_; }
   const rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
 
+  const vector_t& getInitialState() const { return initialState_; }
+
   PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
 
   const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
-
-  const vector_t& getInitialState() const { return initialState_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
@@ -84,17 +87,23 @@ class LeggedRobotInterface final : public RobotInterface {
 
   std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
 
-  const SystemDynamicsBase& getDynamics() const override { return *dynamicsPtr_; }
-  const CostFunctionBase& getCost() const override { return *costPtr_; }
-  const ConstraintBase* getConstraintPtr() const override { return constraintsPtr_.get(); }
-  const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
-  std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
-
- protected:
+ private:
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
   void setupOptimalConrolProblem(const std::string& taskFile, const std::string& targetCommandFile,
                                  const ::urdf::ModelInterfaceSharedPtr& urdfTree);
 
+  std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info);
+  void initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info, matrix_t& R);
+
+  std::unique_ptr<StateInputCost> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient, scalar_t mu,
+                                                            scalar_t delta);
+  std::unique_ptr<StateInputConstraint> getZeroForceConstraint(size_t contactPointIndex);
+  std::unique_ptr<StateInputConstraint> getZeroVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
+                                                                  size_t contactPointIndex, bool useAnalyticalGradients);
+  std::unique_ptr<StateInputConstraint> getNormalVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
+                                                                    size_t contactPointIndex, bool useAnalyticalGradients);
+
+  bool display_;
   ModelSettings modelSettings_;
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
@@ -106,10 +115,11 @@ class LeggedRobotInterface final : public RobotInterface {
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
   std::vector<std::shared_ptr<SolverSynchronizedModule>> solverModules_;
 
+  std::shared_ptr<SolverSynchronizedModule> referenceUpdateModulePtr_;
+  std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
+  std::unique_ptr<OptimalControlProblem> problemPtr_;
+
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<SystemDynamicsBase> dynamicsPtr_;
-  std::unique_ptr<CostFunctionBase> costPtr_;
-  std::unique_ptr<ConstraintBase> constraintsPtr_;
   std::unique_ptr<LeggedRobotInitializer> initializerPtr_;
 
   vector_t initialState_;

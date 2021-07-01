@@ -51,7 +51,7 @@ class TargetTrajectoriesRosPublisher final {
    * @param [in] nodeHandle: ROS node handle.
    * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic.
    */
-  TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, std::string topicPrefix = "anonymousRobot");
+  TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix = "anonymousRobot");
 
   /** Destructor. */
   ~TargetTrajectoriesRosPublisher();

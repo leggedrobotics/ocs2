@@ -61,14 +61,14 @@ void MPC_MRT_Interface::setCurrentObservation(const SystemObservation& currentOb
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ReferenceManager& MPC_MRT_Interface::getReferenceManager() {
+ReferenceManagerInterface& MPC_MRT_Interface::getReferenceManager() {
   return mpc_.getSolverPtr()->getReferenceManager();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const ReferenceManager& MPC_MRT_Interface::getReferenceManager() const {
+const ReferenceManagerInterface& MPC_MRT_Interface::getReferenceManager() const {
   return mpc_.getSolverPtr()->getReferenceManager();
 }
 

@@ -57,7 +57,7 @@ class TargetTrajectoriesInteractiveMarker final {
    * observation is be expected on "topicPrefix_mpc_observation" topic.
    * @param [in] gaolPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
    */
-  TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, std::string topicPrefix,
+  TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
                                       GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories);
 
   /**

@@ -73,7 +73,7 @@ class LoopshapingRobotInterface : public RobotInterface {
     return *p;
   }
 
-  std::shared_ptr<ReferenceManager> getReferenceManagerPtr() const override { return loopshapingReferenceManager_; }
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return loopshapingReferenceManager_; }
 
   const LoopshapingDynamics& getDynamics() const override { return *dynamicsPtr_; }
 

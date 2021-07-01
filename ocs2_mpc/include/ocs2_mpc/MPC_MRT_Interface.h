@@ -66,8 +66,8 @@ class MPC_MRT_Interface final : public MRT_BASE {
   /*
    * Gets the ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
-  ReferenceManager& getReferenceManager();
-  const ReferenceManager& getReferenceManager() const;
+  ReferenceManagerInterface& getReferenceManager();
+  const ReferenceManagerInterface& getReferenceManager() const;
 
   /**
    * Advance the mpc module for one iteration.

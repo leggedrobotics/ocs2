@@ -35,37 +35,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerDecorator.h>
 
 namespace ocs2 {
 
 /**
  * Decorates ReferenceManager with ROS subscribers to receive ModeSchedule and TargetTrajectories through ROS messages.
  */
-class RosReferenceManager : public ReferenceManager {
+class RosReferenceManager final : public ReferenceManagerDecorator {
  public:
   /**
    * Constructor which decorates referenceManagerPtr.
    *
-   * @param [in] referenceManagerPtr: The RosReferenceManager which will be decorated with ROS subscribers functionalities.
    * @param [in] topicPrefix: The ReferenceManager will subscribe to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target"
+   * @param [in] referenceManagerPtr: The ReferenceManager which will be decorated with ROS subscribers functionalities.
    * topics to receive user-commanded ModeSchedule and TargetTrajectories respectively.
    */
-  explicit RosReferenceManager(std::unique_ptr<ReferenceManager> referenceManagerPtr, std::string topicPrefix);
+  explicit RosReferenceManager(std::string topicPrefix, std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr);
 
   ~RosReferenceManager() override = default;
-  RosReferenceManager(RosReferenceManager&& other) = default;
-  RosReferenceManager& operator=(RosReferenceManager&& other) = default;
 
   /**
-   * Creates a shared pointer to RosReferenceManager using ReferenceManager(args...).
+   * Creates a pointer to RosReferenceManager using a the derived class of type ReferenceManagerInterface, i.e.
+   * DerivedReferenceManager(args...).
    *
    * @param [in] topicPrefix: The ReferenceManager will subscribe to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target"
    * topics to receive user-commanded ModeSchedule and TargetTrajectories respectively.
-   * @param args: arguments to forward to the constructor of ReferenceManager
+   * @param args: arguments to forward to the constructor of DerivedReferenceManager
    */
   template <class ReferenceManagerType, class... Args>
-  static std::shared_ptr<RosReferenceManager> create(const std::string& topicPrefix, Args&&... args);
+  static std::unique_ptr<RosReferenceManager> create(const std::string& topicPrefix, Args&&... args);
 
   /**
    * Subscribers to "topicPrefix_mode_schedule" and "topicPrefix_mpc_target" topics to receive respectively:
@@ -75,11 +74,7 @@ class RosReferenceManager : public ReferenceManager {
   void subscribe(ros::NodeHandle& nodeHandle);
 
  private:
-  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
-                        ModeSchedule& modeSchedule) override;
-
-  std::unique_ptr<ReferenceManager> referenceManagerPtr_;
-  std::string topicPrefix_;
+  const std::string topicPrefix_;
 
   ::ros::Subscriber modeScheduleSubscriber_;
   ::ros::Subscriber targetTrajectoriesSubscriber_;
@@ -89,9 +84,9 @@ class RosReferenceManager : public ReferenceManager {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class ReferenceManagerType, class... Args>
-std::shared_ptr<RosReferenceManager> RosReferenceManager::create(const std::string& topicPrefix, Args&&... args) {
-  std::unique_ptr<ReferenceManager> referenceManagerPtr(new ReferenceManagerType(std::forward<Args>(args)...));
-  return std::shared_ptr<RosReferenceManager>(new RosReferenceManager(std::move(referenceManagerPtr), topicPrefix));
+std::unique_ptr<RosReferenceManager> RosReferenceManager::create(const std::string& topicPrefix, Args&&... args) {
+  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr(new ReferenceManagerType(std::forward<Args>(args)...));
+  return std::unique_ptr<RosReferenceManager>(new RosReferenceManager(topicPrefix, std::move(referenceManagerPtr)));
 }
 
 }  // namespace ocs2

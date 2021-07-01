@@ -33,28 +33,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
-#include "ocs2_oc/synchronized_module/ReferenceManager.h"
+#include "ocs2_oc/synchronized_module/ReferenceManagerDecorator.h"
 
 namespace ocs2 {
 
-class LoopshapingReferenceManager : public ReferenceManager {
+class LoopshapingReferenceManager final : public ReferenceManagerDecorator {
  public:
   /**
    * Constructor.
    * @param [in] referenceManagerPtr: A shared pointer to the original ReferenceManager.
    * @param [in] loopshapingDefinitionPtr: A shared pointer to the loopshaping definition.
    */
-  LoopshapingReferenceManager(std::shared_ptr<ReferenceManager> referenceManagerPtr,
+  LoopshapingReferenceManager(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr,
                               std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr);
 
-  /** Destructor */
   ~LoopshapingReferenceManager() override = default;
 
- private:
-  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
-                        ModeSchedule& modeSchedule) override;
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) override;
 
-  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr_;
+ private:
   std::shared_ptr<ocs2::LoopshapingDefinition> loopshapingDefinitionPtr_;
 };
 

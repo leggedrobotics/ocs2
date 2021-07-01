@@ -29,94 +29,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <atomic>
-#include <mutex>
-
-#include <ocs2_core/Types.h>
-#include <ocs2_core/reference/ModeSchedule.h>
-#include <ocs2_core/reference/TargetTrajectories.h>
+#include "ocs2_core/misc/BufferedValue.h"
+#include "ocs2_oc/synchronized_module/ReferenceManagerInterface.h"
 
 namespace ocs2 {
 
 /**
- * Manages the ModeSchedule and the TargetTrajectories of the solver.
+ * Implements the reference manager with a thread-safe buffer for setting and getting the references.
+ * A protected virtual interface is provided to modify the references before each solver run.
  */
-class ReferenceManager {
+class ReferenceManager : public ReferenceManagerInterface {
  public:
-  /**
-   * Constructor
-   * @param [in] (optional) initialTargetTrajectories: Initial TargetTrajectories.
-   * @param [in] (optional) initialModeSchedule: Initial ModeSchedule.
-   */
   explicit ReferenceManager(TargetTrajectories initialTargetTrajectories = TargetTrajectories(),
                             ModeSchedule initialModeSchedule = ModeSchedule());
 
-  virtual ~ReferenceManager() = default;
-  ReferenceManager(ReferenceManager&& other) = default;
-  ReferenceManager& operator=(ReferenceManager&& other) = default;
+  ~ReferenceManager() override = default;
 
-  ReferenceManager(const ReferenceManager& other) = delete;
-  ReferenceManager& operator=(const ReferenceManager& other) = delete;
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) override;
 
-  /**
-   * The method is called right before the solver runs and before any other SolverSynchronizedModule::preSolverRun().
-   *
-   * @param [in] initTime : Start time of the optimization horizon.
-   * @param [in] finalTime : Final time of the optimization horizon.
-   * @param [in] initState : State at the start of the optimization horizon.
-   */
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState);
+  const ModeSchedule& getModeSchedule() const override { return modeSchedule_.get(); }
+  void setModeSchedule(const ModeSchedule& modeSchedule) override { modeSchedule_.setBuffer(modeSchedule); }
+  void setModeSchedule(ModeSchedule&& modeSchedule) override { modeSchedule_.setBuffer(std::move(modeSchedule)); }
 
-  /**
-   * Returns a const reference to ModeSchedule. This method is NOT thread safe.
-   */
-  const ModeSchedule& getModeSchedule() const { return modeSchedule_; }
+  const TargetTrajectories& getTargetTrajectories() const override { return targetTrajectories_.get(); }
+  void setTargetTrajectories(const TargetTrajectories& targetTrajectories) override {
+    return targetTrajectories_.setBuffer(targetTrajectories);
+  }
+  void setTargetTrajectories(TargetTrajectories&& targetTrajectories) override {
+    return targetTrajectories_.setBuffer(std::move(targetTrajectories));
+  }
 
-  /**
-   * Returns a const reference to ModeSchedule. This method is NOT thread safe.
-   */
-  const TargetTrajectories& getTargetTrajectories() const { return targetTrajectories_; }
-
-  /**
-   * Returns a a copy of ModeSchedule. This method is thread safe.
-   */
-  ModeSchedule getModeScheduleImage() const;
-
-  /**
-   * Returns a a copy of ModeSchedule. This method is thread safe.
-   */
-  TargetTrajectories getTargetTrajectoriesImage() const;
-
-  /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-   * This method is thread safe.
-   */
-  void setModeSchedule(const ModeSchedule& modeSchedule);
-
-  /**
-   * Sets the ModeSchedule to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-   * This method is thread safe.
-   */
-  void setModeSchedule(ModeSchedule&& modeSchedule);
-
-  /**
-   * Sets the TargetTrajectories to the buffer. The buffer will move to active TargetTrajectories once
-   * preSolverRun() is called. This method is thread safe.
-   */
-  void setTargetTrajectories(const TargetTrajectories& targetTrajectories);
-
-  /**
-   * Sets the TargetTrajectories to the buffer. The buffer will move to active TargetTrajectories once
-   * preSolverRun() is called. This method is thread safe.
-   */
-  void setTargetTrajectories(TargetTrajectories&& targetTrajectories);
-
-  /**
-   * Swaps the ModeSchedule and TargetTrajectories to the active references. This method is NOT thread safe.
-   */
-  void swapReferences(TargetTrajectories& otherTargetTrajectories, ModeSchedule& otherModeSchedule);
-
- private:
+ protected:
   /**
    * Modifies the active ModeSchedule and TargetTrajectories.
    *
@@ -131,15 +74,9 @@ class ReferenceManager {
   virtual void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
                                 ModeSchedule& modeSchedule) {}
 
-  TargetTrajectories targetTrajectories_;
-  TargetTrajectories targetTrajectoriesBuffer_;
-
-  ModeSchedule modeSchedule_;
-  ModeSchedule modeScheduleBuffer_;
-
-  mutable std::mutex dataMutex_;
-  bool modeScheduleUpdated_{false};
-  bool targetTrajectoriesUpdated_{false};
+ private:
+  BufferedValue<ModeSchedule> modeSchedule_;
+  BufferedValue<TargetTrajectories> targetTrajectories_;
 };
 
 }  // namespace ocs2

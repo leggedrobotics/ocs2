@@ -29,24 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/logic/ModeSchedule.h>
-#include <ocs2_core/misc/Lookup.h>
 #include <mutex>
 
-#include <ocs2_legged_robot_example/logic/ModeSequenceTemplate.h>
+#include <ocs2_core/misc/Lookup.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+
+#include "ocs2_legged_robot_example/logic/ModeSequenceTemplate.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
 class GaitSchedule {
  public:
-  GaitSchedule(ocs2::ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate, scalar_t phaseTransitionStanceTime);
+  GaitSchedule(ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate, scalar_t phaseTransitionStanceTime);
 
   /**
    * @param [in] lowerBoundTime: The smallest time for which the ModeSchedule should be defined.
    * @param [in] upperBoundTime: The greatest time for which the ModeSchedule should be defined.
    */
-  ocs2::ModeSchedule getModeSchedule(scalar_t lowerBoundTime, scalar_t upperBoundTime);
+  ModeSchedule getModeSchedule(scalar_t lowerBoundTime, scalar_t upperBoundTime);
 
   /**
    * Used to insert a new user defined logic in the given time period.
@@ -66,7 +67,7 @@ class GaitSchedule {
   void tileModeSequenceTemplate(scalar_t startTime, scalar_t finalTime);
 
  private:
-  ocs2::ModeSchedule modeSchedule_;
+  ModeSchedule modeSchedule_;
   ModeSequenceTemplate modeSequenceTemplate_;
   scalar_t phaseTransitionStanceTime_;
 };

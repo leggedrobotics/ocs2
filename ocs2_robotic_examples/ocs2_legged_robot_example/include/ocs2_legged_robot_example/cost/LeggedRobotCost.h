@@ -51,7 +51,6 @@ class LeggedRobotCost : public CostFunctionBase {
   ~LeggedRobotCost() override = default;
   LeggedRobotCost* clone() const override { return new LeggedRobotCost(*this); }
 
-  void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) override;
   scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
   scalar_t finalCost(scalar_t t, const vector_t& x) override;
   ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;

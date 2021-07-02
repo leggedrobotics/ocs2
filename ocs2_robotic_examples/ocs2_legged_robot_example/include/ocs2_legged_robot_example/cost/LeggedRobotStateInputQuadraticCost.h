@@ -48,7 +48,7 @@ class LeggedRobotStateInputQuadraticCost final : public QuadraticStateInputCost 
   LeggedRobotStateInputQuadraticCost(const LeggedRobotStateInputQuadraticCost& rhs) = default;
 
   std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                       const CostDesiredTrajectories& desiredTrajectory) const override;
+                                                       const TargetTrajectories& targetTrajectories) const override;
 
   const CentroidalModelInfo info_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;

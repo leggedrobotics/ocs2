@@ -98,7 +98,6 @@ class testEndEffectorLinearConstraint : public ::testing::Test {
 
     u = vector_t::Random(centroidalModelInfo.inputDim);
 
-    // Zero velocity constraint (without position error gain in z-direction)
     config.b = vector_t::Random(3);
     config.Ax = matrix_t::Random(3, 3);
     config.Av = matrix_t::Random(3, 3);
@@ -107,6 +106,7 @@ class testEndEffectorLinearConstraint : public ::testing::Test {
   const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
   const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
+  PreComputation preComputation;
 
   std::unique_ptr<CentroidalModelPinocchioMapping> pinocchioMappingPtr;
   std::unique_ptr<CentroidalModelPinocchioMappingCppAd> pinocchioMappingAdPtr;
@@ -137,8 +137,8 @@ TEST_F(testEndEffectorLinearConstraint, testValue) {
   pinocchio::forwardKinematics(model, data, q, v);
   pinocchio::updateFramePlacements(model, data);
 
-  const auto value = eeVelConstraintPtr->getValue(0.0, x, u);
-  const auto valueAd = eeVelConstraintAdPtr->getValue(0.0, x, u);
+  const auto value = eeVelConstraintPtr->getValue(0.0, x, u, preComputation);
+  const auto valueAd = eeVelConstraintAdPtr->getValue(0.0, x, u, preComputation);
 
   EXPECT_TRUE(value.isApprox(valueAd));
 }
@@ -171,8 +171,8 @@ TEST_F(testEndEffectorLinearConstraint, testLinearApproximation) {
   // For getOcs2Jacobian of CentroidalModelPinocchioMapping
   updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, centroidalModelInfo, q, v);
 
-  const auto linApprox = eeVelConstraintPtr->getLinearApproximation(0.0, x, u);
-  const auto linApproxAd = eeVelConstraintAdPtr->getLinearApproximation(0.0, x, u);
+  const auto linApprox = eeVelConstraintPtr->getLinearApproximation(0.0, x, u, preComputation);
+  const auto linApproxAd = eeVelConstraintAdPtr->getLinearApproximation(0.0, x, u, preComputation);
 
   EXPECT_TRUE(linApprox.f.isApprox(linApproxAd.f));
   EXPECT_TRUE(linApprox.dfdx.isApprox(linApproxAd.dfdx, 1e-14));

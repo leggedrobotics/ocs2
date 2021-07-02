@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace {
 const std::string ROBOT_URDF_PATH = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
+const std::string ROBOT_TASK_FILE_PATH = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
 const std::string ROBOT_COMMAND_PATH = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
 }  // unnamed namespace
 
@@ -55,6 +56,19 @@ CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pi
   return centroidal_model::createCentroidalModelInfo(pinocchioInterface, centroidalType,
                                                      centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH),
                                                      modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
+}
+
+/** Return a Switched model mode schedule manager based on ROBOT_TASK_FILE_PATH */
+std::shared_ptr<SwitchedModelModeScheduleManager> createModeScheduleManager(const CentroidalModelInfo& centroidalModelInfo) {
+  const auto initModeSchedule = loadModeSchedule(ROBOT_TASK_FILE_PATH, "initialModeSchedule", false);
+  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(ROBOT_TASK_FILE_PATH, "defaultModeSequenceTemplate", false);
+
+  const ModelSettings modelSettings;
+  std::shared_ptr<GaitSchedule> gaitSchedule(
+      new GaitSchedule(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime));
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), centroidalModelInfo));
+  return std::make_shared<SwitchedModelModeScheduleManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
 }
 
 }  // namespace legged_robot

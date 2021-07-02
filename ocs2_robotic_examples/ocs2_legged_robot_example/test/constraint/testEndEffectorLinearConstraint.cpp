@@ -44,7 +44,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot_example/test/AnymalFactoryFunctions.h"
 
 #include <gtest/gtest.h>
-#include <ros/package.h>
 
 using namespace ocs2;
 using namespace legged_robot;

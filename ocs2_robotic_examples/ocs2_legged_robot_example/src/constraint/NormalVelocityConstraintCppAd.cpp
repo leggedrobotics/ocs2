@@ -41,7 +41,7 @@ NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const SwitchedModel
                                                              size_t contactPointIndex, EndEffectorLinearConstraint::Config config)
     : StateInputConstraint(ConstraintOrder::Linear),
       modeScheduleManagerPtr_(&modeScheduleManager),
-      eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 3, config)),
+      eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 1, config)),
       contactPointIndex_(contactPointIndex) {}
 
 /******************************************************************************************************/

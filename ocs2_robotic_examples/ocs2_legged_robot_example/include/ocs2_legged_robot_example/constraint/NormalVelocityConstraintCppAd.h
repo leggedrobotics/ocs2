@@ -37,13 +37,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace legged_robot {
 
+/**
+ * Specializes the CppAd version of normal velocity constraint on an end-effector position and linear velocity.
+ * Constructs the member EndEffectorLinearConstraint object with number of constraints of 1.
+ *
+ * See also EndEffectorLinearConstraint for the underlying computation.
+ */
 class NormalVelocityConstraintCppAd final : public StateInputConstraint {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
+  /**
+   * Constructor
+   * @param [in] modeScheduleManager : SwitchedModelModeScheduleManager
+   * @param [in] endEffectorKinematics: The kinematic interface to the target end-effector.
+   * @param [in] contactPointIndex : The 3 DoF contact index.
+   */
   NormalVelocityConstraintCppAd(const SwitchedModelModeScheduleManager& modeScheduleManager,
-                                const EndEffectorKinematics<scalar_t>& endEffectorKinematics, size_t contactPointIndex,
-                                EndEffectorLinearConstraint::Config config = EndEffectorLinearConstraint::Config());
+                                const EndEffectorKinematics<scalar_t>& endEffectorKinematics, size_t contactPointIndex);
 
   ~NormalVelocityConstraintCppAd() override = default;
   NormalVelocityConstraintCppAd* clone() const override { return new NormalVelocityConstraintCppAd(*this); }

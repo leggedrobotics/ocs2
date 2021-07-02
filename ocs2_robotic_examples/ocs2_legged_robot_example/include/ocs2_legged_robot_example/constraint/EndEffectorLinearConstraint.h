@@ -46,8 +46,6 @@ namespace legged_robot {
  */
 class EndEffectorLinearConstraint final : public StateInputConstraint {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   /**
    * Coefficients of the linear constraints of the form:
    * g(xee, vee) = Ax * xee + Av * vee + b

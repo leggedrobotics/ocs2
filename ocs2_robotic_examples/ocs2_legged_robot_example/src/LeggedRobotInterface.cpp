@@ -138,7 +138,7 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   loadData::loadCppDataType(taskFile, "legged_robot_interface.useAnalyticalGradientsDynamics", useAnalyticalGradientsDynamics);
   std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
   if (useAnalyticalGradientsDynamics) {
-    throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical dynamics class is not yet implemented.");
+    throw std::runtime_error("[LeggedRobotInterface::setupOptimalConrolProblem] The analytical dynamics class is not yet implemented.");
   } else {
     const std::string modelName = "dynamics";
     dynamicsPtr.reset(new LeggedRobotDynamicsAD(*pinocchioInterfacePtr_, centroidalModelInfo_, modelName, modelSettings_));

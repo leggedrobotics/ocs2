@@ -40,7 +40,7 @@ ZeroVelocityConstraintCppAd::ZeroVelocityConstraintCppAd(const SwitchedModelMode
                                                          size_t contactPointIndex, EndEffectorLinearConstraint::Config config)
     : StateInputConstraint(ConstraintOrder::Linear),
       modeScheduleManagerPtr_(&modeScheduleManager),
-      eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 3, config)),
+      eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 3, std::move(config))),
       contactPointIndex_(contactPointIndex) {}
 
 /******************************************************************************************************/

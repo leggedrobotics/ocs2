@@ -56,6 +56,12 @@ namespace legged_robot {
 
 class LeggedRobotInterface final : public RobotInterface {
  public:
+  /**
+   * Constructor
+   * @param [in] taskFileFolderName: The name of the folder containing task file
+   * @param [in] targetCommandFile: The path of the target command file
+   * @param [in] urdfTree: Pointer to a URDF model tree
+   */
   LeggedRobotInterface(const std::string& taskFileFolderName, const std::string& targetCommandFile,
                        const ::urdf::ModelInterfaceSharedPtr& urdfTree);
 

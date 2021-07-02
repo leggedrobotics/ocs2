@@ -38,10 +38,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const SwitchedModelModeScheduleManager& modeScheduleManager,
                                                              const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                                                             size_t contactPointIndex, EndEffectorLinearConstraint::Config config)
+                                                             size_t contactPointIndex)
     : StateInputConstraint(ConstraintOrder::Linear),
       modeScheduleManagerPtr_(&modeScheduleManager),
-      eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 1, config)),
+      eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 1)),
       contactPointIndex_(contactPointIndex) {}
 
 /******************************************************************************************************/

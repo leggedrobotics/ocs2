@@ -83,8 +83,9 @@ class FrictionConeConstraint final : public StateInputConstraint {
 
   /**
    * Constructor
+   * @param [in] modeScheduleManager : SwitchedModelModeScheduleManager
    * @param [in] config : Friction model settings.
-   * @param [in] contactPointIndex : The 3 DoF contact index in.
+   * @param [in] contactPointIndex : The 3 DoF contact index.
    * @param [in] info : The centroidal model information.
    */
   FrictionConeConstraint(const SwitchedModelModeScheduleManager& modeScheduleManager, Config config, size_t contactPointIndex,

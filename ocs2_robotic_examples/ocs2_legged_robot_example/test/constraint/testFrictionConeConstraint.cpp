@@ -195,7 +195,7 @@ TEST_F(TestFrictionConeConstraint, negativeDefinite) {
     FrictionConeConstraint frictionConeConstraint(config, legNumber, centroidalModelInfo);
 
     const auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);
-    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfdxx.front()).maxCoeff(), 0.0);
-    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfduu.front()).maxCoeff(), 0.0);
+    ASSERT_LT(LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfdxx.front()).maxCoeff(), 0.0);
+    ASSERT_LT(LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfduu.front()).maxCoeff(), 0.0);
   }
 }

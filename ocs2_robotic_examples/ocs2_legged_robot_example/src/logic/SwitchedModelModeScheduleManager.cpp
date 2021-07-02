@@ -37,7 +37,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
                                                                    std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr)
-    : ModeScheduleManager(ocs2::ModeSchedule()),
+    : ModeScheduleManager(ModeSchedule()),
       gaitSchedulePtr_(std::move(gaitSchedulePtr)),
       swingTrajectoryPtr_(std::move(swingTrajectoryPtr)) {}
 
@@ -45,7 +45,7 @@ SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::shared_p
 /******************************************************************************************************/
 /******************************************************************************************************/
 SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(const SwitchedModelModeScheduleManager& rhs)
-    : ModeScheduleManager(ocs2::ModeSchedule()), gaitSchedulePtr_(rhs.gaitSchedulePtr_), swingTrajectoryPtr_(rhs.swingTrajectoryPtr_) {}
+    : ModeScheduleManager(ModeSchedule()), gaitSchedulePtr_(rhs.gaitSchedulePtr_), swingTrajectoryPtr_(rhs.swingTrajectoryPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -58,8 +58,7 @@ contact_flag_t SwitchedModelModeScheduleManager::getContactFlags(scalar_t time) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                                        const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
-                                                        ocs2::ModeSchedule& modeSchedule) {
+                                                        const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) {
   const auto timeHorizon = finalTime - initTime;
   modeSchedule = gaitSchedulePtr_->getModeSchedule(initTime - timeHorizon, finalTime + timeHorizon);
 

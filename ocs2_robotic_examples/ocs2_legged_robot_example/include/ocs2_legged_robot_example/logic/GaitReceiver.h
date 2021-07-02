@@ -41,12 +41,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 namespace legged_robot {
-class GaitReceiver : public ocs2::SolverSynchronizedModule {
+class GaitReceiver : public SolverSynchronizedModule {
  public:
   GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
+                    const CostDesiredTrajectories& costDesiredTrajectory) override;
 
   void postSolverRun(const PrimalSolution& primalSolution) override{};
 

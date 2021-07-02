@@ -49,9 +49,9 @@ class SwingTrajectoryPlanner {
 
   SwingTrajectoryPlanner(Config config, CentroidalModelInfo info);
 
-  void update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
+  void update(const ModeSchedule& modeSchedule, scalar_t terrainHeight);
 
-  void update(const ocs2::ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
+  void update(const ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
               const feet_array_t<scalar_array_t>& touchDownHeightSequence);
 
   scalar_t getZvelocityConstraint(size_t leg, scalar_t time) const;

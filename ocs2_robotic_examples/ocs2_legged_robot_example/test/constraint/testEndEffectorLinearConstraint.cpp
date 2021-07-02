@@ -130,7 +130,7 @@ TEST_F(testEndEffectorLinearConstraint, testValue) {
   auto& data = pinocchioInterfacePtr->getData();
 
   const auto q = pinocchioMappingPtr->getPinocchioJointPosition(x);
-  ocs2::updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
   const auto v = pinocchioMappingPtr->getPinocchioJointVelocity(x, u);
 
   // For getPosition() & getVelocity() of PinocchioEndEffectorKinematics
@@ -158,7 +158,7 @@ TEST_F(testEndEffectorLinearConstraint, testLinearApproximation) {
 
   // PinocchioInterface update for the analytical EndEffectorVelocityConstraint
   const auto q = pinocchioMappingPtr->getPinocchioJointPosition(x);
-  ocs2::updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
   const auto v = pinocchioMappingPtr->getPinocchioJointVelocity(x, u);
   const auto a = vector_t::Zero(q.size());
 
@@ -169,7 +169,7 @@ TEST_F(testEndEffectorLinearConstraint, testLinearApproximation) {
   // For getVelocityLinearApproximation of PinocchioEndEffectorKinematics
   pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a);
   // For getOcs2Jacobian of CentroidalModelPinocchioMapping
-  ocs2::updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, centroidalModelInfo, q, v);
+  updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, centroidalModelInfo, q, v);
 
   const auto linApprox = eeVelConstraintPtr->getLinearApproximation(0.0, x, u);
   const auto linApproxAd = eeVelConstraintAdPtr->getLinearApproximation(0.0, x, u);

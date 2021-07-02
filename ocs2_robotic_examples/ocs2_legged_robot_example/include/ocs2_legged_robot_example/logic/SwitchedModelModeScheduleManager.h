@@ -58,7 +58,7 @@ class SwitchedModelModeScheduleManager : public ModeScheduleManager {
 
  private:
   void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                        const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
+                        const CostDesiredTrajectories& costDesiredTrajectory, ModeSchedule& modeSchedule) override;
 
   std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;

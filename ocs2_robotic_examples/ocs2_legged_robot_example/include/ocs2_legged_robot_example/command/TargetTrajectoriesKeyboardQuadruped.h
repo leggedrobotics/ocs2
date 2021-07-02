@@ -139,11 +139,11 @@ class TargetTrajectoriesKeyboardQuadruped : public TargetTrajectoriesKeyboardInt
   }
 
   CostDesiredTrajectories toCostDesiredTrajectories(const scalar_array_t& commandLineTarget) override {
-    ocs2::SystemObservation observation;
+    SystemObservation observation;
     ::ros::spinOnce();
     {
       std::lock_guard<std::mutex> lock(latestObservationMutex_);
-      ocs2::ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
+      ros_msg_conversions::readObservationMsg(*latestObservation_, observation);
     }
 
     // Convert commandline target to base desired

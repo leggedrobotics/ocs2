@@ -39,8 +39,8 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::ostream& operator<<(std::ostream& stream, const ModeSequenceTemplate& modeSequenceTemplate) {
-  stream << "Template switching times: {" << ocs2::toDelimitedString(modeSequenceTemplate.switchingTimes) << "}\n";
-  stream << "Template mode sequence:   {" << ocs2::toDelimitedString(modeSequenceTemplate.modeSequence) << "}\n";
+  stream << "Template switching times: {" << toDelimitedString(modeSequenceTemplate.switchingTimes) << "}\n";
+  stream << "Template mode sequence:   {" << toDelimitedString(modeSequenceTemplate.modeSequence) << "}\n";
   return stream;
 }
 
@@ -49,10 +49,10 @@ std::ostream& operator<<(std::ostream& stream, const ModeSequenceTemplate& modeS
 /******************************************************************************************************/
 ModeSequenceTemplate loadModeSequenceTemplate(const std::string& filename, const std::string& topicName, bool verbose) {
   std::vector<scalar_t> switchingTimes;
-  ocs2::loadData::loadStdVector(filename, topicName + ".switchingTimes", switchingTimes, verbose);
+  loadData::loadStdVector(filename, topicName + ".switchingTimes", switchingTimes, verbose);
 
   std::vector<std::string> modeSequenceString;
-  ocs2::loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
+  loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
 
   if (switchingTimes.empty() || modeSequenceString.empty()) {
     throw std::runtime_error("[loadModeSequenceTemplate] failed to load : " + topicName + " from " + filename);
@@ -108,12 +108,12 @@ Gait toGait(const ModeSequenceTemplate& modeSequenceTemplate) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2::ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose) {
+ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose) {
   std::vector<scalar_t> eventTimes;
-  ocs2::loadData::loadStdVector(filename, topicName + ".eventTimes", eventTimes, verbose);
+  loadData::loadStdVector(filename, topicName + ".eventTimes", eventTimes, verbose);
 
   std::vector<std::string> modeSequenceString;
-  ocs2::loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
+  loadData::loadStdVector(filename, topicName + ".modeSequence", modeSequenceString, verbose);
 
   if (modeSequenceString.empty()) {
     throw std::runtime_error("[loadModeSchedule] failed to load : " + topicName + " from " + filename);

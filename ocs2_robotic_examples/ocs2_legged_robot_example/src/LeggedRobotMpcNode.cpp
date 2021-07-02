@@ -5,6 +5,9 @@
 
 #include <urdf_parser/urdf_parser.h>
 
+using namespace ocs2;
+using namespace legged_robot;
+
 int main(int argc, char** argv) {
   std::vector<std::string> programArgs{};
   ::ros::removeROSArgs(argc, argv, programArgs);
@@ -25,9 +28,9 @@ int main(int argc, char** argv) {
     std::cerr << "Param " << descriptionName << " not found; unable to generate urdf" << std::endl;
   }
 
-  ocs2::legged_robot::LeggedRobotInterface leggedRobotInterface(configName, targetCommandFile, urdf::parseURDF(urdfString));
+  LeggedRobotInterface leggedRobotInterface(configName, targetCommandFile, urdf::parseURDF(urdfString));
 
-  auto gaitReceiver = std::make_shared<ocs2::legged_robot::GaitReceiver>(
+  auto gaitReceiver = std::make_shared<GaitReceiver>(
       nodeHandle, leggedRobotInterface.getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
   auto solverModules = leggedRobotInterface.getSynchronizedModules();
   solverModules.push_back(gaitReceiver);
@@ -35,7 +38,7 @@ int main(int argc, char** argv) {
   // Launch MPC nodes
   auto mpcPtr = leggedRobotInterface.getMpcPtr();
   mpcPtr->getSolverPtr()->setSynchronizedModules(solverModules);
-  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
+  MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

@@ -45,7 +45,7 @@ GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSched
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+                                const CostDesiredTrajectories& costDesiredTrajectory) {
   if (gaitUpdated_) {
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
     std::cerr << "[GaitReceiver]: Setting new gait after time " << finalTime << "\n";

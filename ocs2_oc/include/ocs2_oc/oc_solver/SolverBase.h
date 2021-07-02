@@ -107,10 +107,18 @@ class SolverBase {
   const ReferenceManagerInterface& getReferenceManager() const { return *referenceManagerPtr_; }
 
   /**
-   * Set all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
+   * Sets all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
    */
   void setSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedModule>>& synchronizedModules) {
     synchronizedModules_ = synchronizedModules;
+  }
+
+  /**
+   * Adds one module to the vector of modules that need to be synchronized with the solver. Each module is updated once before and once
+   * after solving the problem
+   */
+  void addSynchronizedModule(std::shared_ptr<SolverSynchronizedModule> synchronizedModule) {
+    synchronizedModules_.push_back(std::move(synchronizedModule));
   }
 
   /**

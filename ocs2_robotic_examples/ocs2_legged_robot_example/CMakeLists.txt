@@ -135,7 +135,7 @@ target_compile_options(legged_robot_dummy PUBLIC ${pinocchio_CFLAGS_OTHER})
 
 # Keyboard Command node for legged robot walking (gait selection and target selection)
 add_executable(legged_robot_target
-  src/command/LeggedRobotTargetPoseCommand.cpp
+  src/LeggedRobotPoseCommandNode.cpp
 )
 add_dependencies(legged_robot_target
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -151,7 +151,7 @@ add_executable(legged_robot_gait_command
   src/logic/Gait.cpp
   src/logic/ModeSequenceTemplate.cpp
   src/command/LeggedRobotModeSequenceKeyboard.cpp
-  src/command/LeggedRobotModeSequenceCommand.cpp
+  src/LeggedRobotGaitCommandNode.cpp
 )
 add_dependencies(legged_robot_gait_command
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

@@ -28,7 +28,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ocs2_quadrotor_example/definitions.h>
-#include <ocs2_ros_interfaces/command/TargetPoseTransformation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 using namespace ocs2;
@@ -36,64 +35,34 @@ using namespace quadrotor;
 
 /**
  * Converts command line to TargetTrajectories.
- * @param [in] commadLineTarget : [X, Y, Yaw, v_X, v_Y, \omega_Z]
+ * @param [in] commadLineTarget : [deltaX, deltaY, deltaZ, deltaYaw]
  * @param [in] observation : the current observation
  */
 TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
-  // reversing the order of the position and orientation.
-  const vector_t commadLineTargetOrderCorrected = [&]() {
-    vector_t commadLineTargetOrderCorrected(STATE_DIM);
-    // pose
-    commadLineTargetOrderCorrected.segment<3>(0) = commadLineTarget.segment<3>(3);
-    commadLineTargetOrderCorrected.segment<3>(3) = commadLineTarget.segment<3>(0);
-    // velocities
-    commadLineTargetOrderCorrected.segment<3>(6) = commadLineTarget.segment<3>(9);
-    commadLineTargetOrderCorrected.segment<3>(9) = commadLineTarget.segment<3>(6);
-    return commadLineTargetOrderCorrected;
+  const vector_t targetState = [&]() {
+    vector_t targetState = vector_t::Zero(STATE_DIM);
+    targetState(0) = observation.state(0) + commadLineTarget(0);
+    targetState(1) = observation.state(1) + commadLineTarget(1);
+    targetState(2) = observation.state(2) + commadLineTarget(2);
+    targetState(3) = observation.state(3);
+    targetState(4) = observation.state(4);
+    targetState(5) = observation.state(5) + commadLineTarget(3) * M_PI / 180.0;  //  deg2rad
+    return targetState;
   }();
-
-  // relative state target
-  vector_t desiredStateRelative;
-  target_pose_transformation::toCostDesiredState(commadLineTargetOrderCorrected, desiredStateRelative);
-
-  // target transformation
-  Eigen::Matrix<scalar_t, target_pose_transformation::POSE_DIM_, 1> targetPoseDisplacement, targetVelocity;
-  target_pose_transformation::toTargetPoseDisplacement(desiredStateRelative, targetPoseDisplacement, targetVelocity);
-
-  // reversing the order of the position and orientation.
-  {
-    Eigen::Matrix<scalar_t, 3, 1> temp;
-    temp = targetPoseDisplacement.head<3>();
-    targetPoseDisplacement.head<3>() = targetPoseDisplacement.tail<3>();
-    targetPoseDisplacement.tail<3>() = temp;
-    temp = targetVelocity.head<3>();
-    targetVelocity.head<3>() = targetVelocity.tail<3>();
-    targetVelocity.tail<3>() = temp;
-  }
 
   // target reaching duration
   constexpr scalar_t averageSpeed = 2.0;
-  const scalar_t targetReachingDuration1 = targetPoseDisplacement.norm() / averageSpeed;
-  constexpr scalar_t averageAcceleration = 10.0;
-  const scalar_t targetReachingDuration2 = targetVelocity.norm() / averageAcceleration;
-  const scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
-
-  constexpr size_t numPoints = 2;
+  const vector_t deltaPose = (targetState - observation.state).head<6>();
+  const scalar_t targetTime = observation.time + deltaPose.norm() / averageSpeed;
 
   // Desired time trajectory
-  scalar_array_t timeTrajectory(numPoints);
-  timeTrajectory[0] = observation.time;
-  timeTrajectory[1] = observation.time + targetReachingDuration;
+  const scalar_array_t timeTrajectory{observation.time, targetTime};
 
   // Desired state trajectory
-  vector_array_t stateTrajectory(2, vector_t::Zero(STATE_DIM));
-  stateTrajectory[0].segment<6>(0) = observation.state.segment<6>(0);
-  stateTrajectory[0].segment<6>(6) = observation.state.segment<6>(6);
-  stateTrajectory[1].segment<6>(0) = observation.state.segment<6>(0) + targetPoseDisplacement;
-  stateTrajectory[1].segment<6>(6) = targetVelocity;
+  const vector_array_t stateTrajectory{observation.state, targetState};
 
   // Desired input trajectory
-  const vector_array_t inputTrajectory(numPoints, vector_t::Zero(INPUT_DIM));
+  const vector_array_t inputTrajectory(2, vector_t::Zero(INPUT_DIM));
 
   return {timeTrajectory, stateTrajectory, inputTrajectory};
 }
@@ -103,12 +72,11 @@ int main(int argc, char* argv[]) {
   ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
 
-  // goalPose: [X, Y, Z, Roll, Pitch, Yaw, v_X, v_Y, v_Z, \omega_X, \omega_Y, \omega_Z]
-  const scalar_array_t relativeStateLimit{10.0, 10.0, 10.0, 90.0, 90.0, 360.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit.size(), relativeStateLimit,
-                                                        &commandLineToTargetTrajectories);
+  // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
+  const scalar_array_t relativeStateLimit{10.0, 10.0, 10.0, 360.0};
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit, &commandLineToTargetTrajectories);
 
-  const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
+  const std::string commadMsg = "Enter XYZ, and Yaw (deg) displacements, separated by spaces";
   targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit

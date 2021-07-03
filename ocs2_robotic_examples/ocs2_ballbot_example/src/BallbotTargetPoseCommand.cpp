@@ -35,40 +35,33 @@ using namespace ballbot;
 
 /**
  * Converts command line to TargetTrajectories.
- * @param [in] commadLineTarget : [X, Y, Yaw, v_X, v_Y, \omega_Z]
+ * @param [in] commadLineTarget : [deltaX, deltaY, deltaYaw]
  * @param [in] observation : the current observation
  */
 TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
-  // desired state from command line (position is relative, velocity absolute)
-  const vector_t relativeState = [&commadLineTarget]() {
-    vector_t relativeState = commadLineTarget;
-    relativeState(2) = commadLineTarget[2] * M_PI / 180.0;  //  deg2rad
-    return relativeState;
+  const vector_t targetState = [&]() {
+    vector_t targetState = vector_t::Zero(STATE_DIM);
+    targetState(0) = observation.state(0) + commadLineTarget(0);
+    targetState(1) = observation.state(1) + commadLineTarget(1);
+    targetState(2) = observation.state(2) + commadLineTarget(2) * M_PI / 180.0;  //  deg2rad
+    targetState(3) = observation.state(3);
+    targetState(4) = observation.state(4);
+    return targetState;
   }();
 
   // Target reaching duration
   constexpr scalar_t averageSpeed = 2.0;
-  const scalar_t targetReachingDuration1 = relativeState.head<3>().norm() / averageSpeed;
-  constexpr scalar_t averageAcceleration = 10.0;
-  const scalar_t targetReachingDuration2 = relativeState.tail<3>().norm() / averageAcceleration;
-  const scalar_t targetReachingDuration = std::max(targetReachingDuration1, targetReachingDuration2);
-
-  constexpr size_t numPoints = 2;
+  const vector_t deltaPose = (targetState - observation.state).head<5>();
+  const scalar_t targetTime = observation.time + deltaPose.norm() / averageSpeed;
 
   // Desired time trajectory
-  scalar_array_t timeTrajectory(numPoints);
-  timeTrajectory[0] = observation.time;
-  timeTrajectory[1] = observation.time + targetReachingDuration;
+  const scalar_array_t timeTrajectory{observation.time, targetTime};
 
   // Desired state trajectory
-  vector_array_t stateTrajectory(2);
-  stateTrajectory[0] = observation.state;
-  stateTrajectory[1] = observation.state;
-  stateTrajectory[1].head<3>() += relativeState.head<3>();
-  stateTrajectory[1].tail<5>() << relativeState.tail<3>(), 0.0, 0.0;
+  const vector_array_t stateTrajectory{observation.state, targetState};
 
   // Desired input trajectory
-  const vector_array_t inputTrajectory(numPoints, vector_t::Zero(INPUT_DIM));
+  const vector_array_t inputTrajectory(2, vector_t::Zero(INPUT_DIM));
 
   return {timeTrajectory, stateTrajectory, inputTrajectory};
 }
@@ -81,12 +74,11 @@ int main(int argc, char* argv[]) {
   ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
 
-  // goalPose: [X, Y, Yaw, v_X, v_Y, \omega_Z]
-  const scalar_array_t relativeStateLimit{2.0, 2.0, 360.0, 2.0, 2.0, 2.0};
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit.size(), relativeStateLimit,
-                                                        &commandLineToTargetTrajectories);
+  // [deltaX, deltaY, deltaYaw]
+  const scalar_array_t relativeStateLimit{10.0, 10.0, 360.0};
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit, &commandLineToTargetTrajectories);
 
-  const std::string commadMsg = "Enter XY displacement and Yaw (deg) for the robot, separated by spaces";
+  const std::string commadMsg = "Enter XY and Yaw (deg) displacements, separated by spaces";
   targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit

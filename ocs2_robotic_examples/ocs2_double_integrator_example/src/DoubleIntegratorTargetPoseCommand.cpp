@@ -35,7 +35,7 @@ using namespace double_integrator;
 
 /**
  * Converts command line to TargetTrajectories.
- * @param [in] commadLineTarget : [X, v_X,]
+ * @param [in] commadLineTarget : [deltaX]
  * @param [in] observation : the current observation
  */
 TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
@@ -48,9 +48,8 @@ int main(int argc, char* argv[]) {
   ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
 
-  const scalar_array_t goalLimit{10.0, 10.0};  // [X, v_X,]
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, goalLimit.size(), goalLimit,
-                                                        &commandLineToTargetTrajectories);
+  const scalar_array_t goalLimit{10.0};  // [deltaX]
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, goalLimit, &commandLineToTargetTrajectories);
 
   const std::string commadMsg = "Enter the desired displacement for the double-integrator";
   targetPoseCommand.publishKeyboardCommand(commadMsg);

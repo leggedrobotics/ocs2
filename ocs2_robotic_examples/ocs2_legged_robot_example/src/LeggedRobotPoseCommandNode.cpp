@@ -55,13 +55,10 @@ scalar_t estimateTimeToTarget(const vector_t& desiredBaseDisplacement) {
 
 /**
  * Converts command line to TargetTrajectories.
- * @param [in] commadLineTarget : [p_x, p_y, p_z, theta_z, theta_y, theta_x]
+ * @param [in] commadLineTarget : [deltaX, deltaY, deltaZ, deltaYaw]
  * @param [in] observation : the current observation
  */
 TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
-  auto deg2rad = [](scalar_t deg) { return deg * M_PI / 180.0; };
-
-  // desired state from command line (p_x, p_y, theta_z are absolute, the reset are relative)
   const vector_t currentPose = observation.state.segment<6>(6);
   const vector_t targetPose = [&]() {
     vector_t target(6);
@@ -71,10 +68,10 @@ TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTar
     // base z relative to the default height
     target(2) = comHeight + commadLineTarget(2);
     // theta_z relative to current
-    target(3) = currentPose(3) + deg2rad(commadLineTarget(3));
-    // theta_y, theta_x are absolute
-    target(4) = deg2rad(commadLineTarget(4));
-    target(5) = deg2rad(commadLineTarget(5));
+    target(3) = currentPose(3) + commadLineTarget(3) * M_PI / 180.0;
+    // theta_y, theta_x
+    target(4) = currentPose(4);
+    target(5) = currentPose(5);
     return target;
   }();
 
@@ -115,10 +112,9 @@ int main(int argc, char* argv[]) {
   ::ros::init(argc, argv, robotName + "_target");
   ::ros::NodeHandle nodeHandle;
 
-  // goalPose: [X, Y, Z, Roll, pitch, yaw]
-  const scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 360.0, 45.0, 45.0};
-  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeBaseLimit.size(), relativeBaseLimit,
-                                                        &commandLineToTargetTrajectories);
+  // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
+  const scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 360.0};
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
 
   const std::string commandMsg = "Enter XYZ linear and ZYX Euler angular command (in degrees) for the TORSO, separated by spaces";
   targetPoseCommand.publishKeyboardCommand(commandMsg);

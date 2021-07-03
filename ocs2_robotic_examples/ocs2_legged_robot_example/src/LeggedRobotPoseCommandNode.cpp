@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
   const scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 360.0};
   TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeBaseLimit, &commandLineToTargetTrajectories);
 
-  const std::string commandMsg = "Enter XYZ linear and ZYX Euler angular command (in degrees) for the TORSO, separated by spaces";
+  const std::string commandMsg = "Enter XYZ and Yaw (deg) displacements for the TORSO, separated by spaces";
   targetPoseCommand.publishKeyboardCommand(commandMsg);
 
   // Successful exit

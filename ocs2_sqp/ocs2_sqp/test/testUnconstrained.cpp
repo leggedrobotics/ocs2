@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
+#include <ocs2_oc/test/testProblemsGeneration.h>
 
 namespace ocs2 {
 namespace {
@@ -44,13 +44,23 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   int n = dynamicsMatrices.dfdu.rows();
   int m = dynamicsMatrices.dfdu.cols();
 
+  ocs2::OptimalControlProblem problem;
+
   // System
-  auto systemPtr = ocs2::qp_solver::getOcs2Dynamics(dynamicsMatrices);
+  problem.dynamicsPtr = getOcs2Dynamics(dynamicsMatrices);
 
   // Cost
-  auto costPtr = ocs2::qp_solver::getOcs2Cost(costMatrices, costMatrices);
+  problem.costPtr->add("intermediateCost", ocs2::getOcs2Cost(costMatrices));
+  problem.finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(costMatrices));
+
   ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {ocs2::vector_t::Ones(n)}, {ocs2::vector_t::Ones(m)});
-  costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  problem.costDesiredTrajectories = &costDesiredTrajectories;
+
+  if (emptyConstraint) {
+    problem.equalityConstraintPtr->add("intermediateCost", ocs2::getOcs2Constraints(getRandomConstraints(n, m, 0)));
+  }
+
+  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
@@ -68,21 +78,14 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Ones(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
-  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Construct solver
-  std::unique_ptr<ocs2::MultipleShootingSolver> solver;
-  if (emptyConstraint) {
-    ConstraintBase emptyBaseConstraints;
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &emptyBaseConstraints));
-  } else {
-    solver.reset(new ocs2::MultipleShootingSolver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, nullptr));
-  }
-  solver->setCostDesiredTrajectories(costDesiredTrajectories);
+  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
+  solver.setCostDesiredTrajectories(costDesiredTrajectories);
 
   // Solve
-  solver->run(startTime, initState, finalTime, partitioningTimes);
-  return {solver->primalSolution(finalTime), solver->getIterationsLog()};
+  solver.run(startTime, initState, finalTime, partitioningTimes);
+  return {solver.primalSolution(finalTime), solver.getIterationsLog()};
 }
 
 }  // namespace
@@ -92,8 +95,8 @@ TEST(test_unconstrained, withFeedback) {
   int n = 3;
   int m = 2;
   const double tol = 1e-9;
-  const auto dynamics = ocs2::qp_solver::getRandomDynamics(n, m);
-  const auto costs = ocs2::qp_solver::getRandomCost(n, m);
+  const auto dynamics = ocs2::getRandomDynamics(n, m);
+  const auto costs = ocs2::getRandomCost(n, m);
   const auto solWithEmptyConstraint = ocs2::solveWithFeedbackSetting(true, true, dynamics, costs);
   const auto solWithNullConstraint = ocs2::solveWithFeedbackSetting(true, false, dynamics, costs);
 
@@ -125,8 +128,8 @@ TEST(test_unconstrained, noFeedback) {
   int n = 3;
   int m = 2;
   const double tol = 1e-9;
-  const auto dynamics = ocs2::qp_solver::getRandomDynamics(n, m);
-  const auto costs = ocs2::qp_solver::getRandomCost(n, m);
+  const auto dynamics = ocs2::getRandomDynamics(n, m);
+  const auto costs = ocs2::getRandomCost(n, m);
   const auto solWithEmptyConstraint = ocs2::solveWithFeedbackSetting(false, true, dynamics, costs);
   const auto solWithNullConstraint = ocs2::solveWithFeedbackSetting(false, false, dynamics, costs);
 

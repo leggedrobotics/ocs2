@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/initialization/DefaultInitializer.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
@@ -62,7 +62,7 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
   const Initializer& getInitializer() const override { return *initializerPtr_; }
 
@@ -90,7 +90,7 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   std::shared_ptr<SolverSynchronizedModule> referenceUpdateModulePtr_;
   std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
-  std::unique_ptr<OptimalControlProblem> problemPtr_;
+  OptimalControlProblem problem_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> initializerPtr_;
 

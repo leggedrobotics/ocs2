@@ -175,7 +175,7 @@ class PythonInterface {
   std::unique_ptr<MPC_MRT_Interface> mpcMrtInterface_;
 
   CostDesiredTrajectories targetTrajectories_;
-  std::unique_ptr<OptimalControlProblem> problem_;
+  OptimalControlProblem problem_;
 };
 
 }  // namespace ocs2

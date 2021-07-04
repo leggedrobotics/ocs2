@@ -35,8 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace LoopshapingOptimalControlProblem {
 
-std::unique_ptr<OptimalControlProblem> create(const OptimalControlProblem& problem,
-                                              std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
 }
 }  // namespace ocs2

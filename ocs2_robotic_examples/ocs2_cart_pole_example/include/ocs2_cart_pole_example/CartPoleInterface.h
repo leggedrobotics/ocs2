@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/initialization/DefaultInitializer.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
@@ -75,7 +75,7 @@ class CartPoleInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
@@ -99,7 +99,7 @@ class CartPoleInterface final : public RobotInterface {
   mpc::Settings mpcSettings_;
 
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<OptimalControlProblem> problemPtr_;
+  OptimalControlProblem problem_;
   std::unique_ptr<Initializer> cartPoleInitializerPtr_;
 
   vector_t initialState_{STATE_DIM};

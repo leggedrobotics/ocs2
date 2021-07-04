@@ -443,7 +443,7 @@ class GaussNewtonDDP : public SolverBase {
   scalar_array_t partitioningTimes_;
 
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
-  std::vector<std::unique_ptr<OptimalControlProblem>> optimalControlProblemPtrStock_;
+  std::vector<OptimalControlProblem> optimalControlProblemStock_;
 
   // optimized controller
   std::vector<LinearController> nominalControllersStock_;

@@ -18,25 +18,23 @@ namespace pybindings_test {
 class DummyInterface final : public RobotInterface {
  public:
   DummyInterface() {
-    problemPtr_.reset(new OptimalControlProblem);
-
     const matrix_t A = (matrix_t(2, 2) << 0, 1, 0, 0).finished();
     const matrix_t B = (matrix_t(2, 1) << 0, 1).finished();
-    problemPtr_->dynamicsPtr.reset(new LinearSystemDynamics(A, B));
+    problem_.dynamicsPtr.reset(new LinearSystemDynamics(A, B));
 
     const matrix_t Q = (matrix_t(2, 2) << 1, 0, 0, 1).finished();
     const matrix_t R = (matrix_t(1, 1) << 1).finished();
     const matrix_t Qf = (matrix_t(2, 2) << 2, 0, 0, 2).finished();
-    problemPtr_->costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-    problemPtr_->finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+    problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+    problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
     costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(2)});
-    problemPtr_->costDesiredTrajectories = &costDesiredTrajectories_;
+    problem_.costDesiredTrajectories = &costDesiredTrajectories_;
 
     initializerPtr_.reset(new DefaultInitializer(1));
 
     rollout::Settings rolloutSettings;
-    rolloutPtr_.reset(new TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings));
+    rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
   }
   ~DummyInterface() override = default;
 
@@ -44,14 +42,14 @@ class DummyInterface final : public RobotInterface {
     mpc::Settings mpcSettings;
     ddp::Settings ddpSettings;
     ddpSettings.algorithm_ = ddp::Algorithm::SLQ;
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings, ddpSettings, *rolloutPtr_, *problemPtr_, *initializerPtr_));
+    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings, ddpSettings, *rolloutPtr_, problem_, *initializerPtr_));
   }
 
-  const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
   const Initializer& getInitializer() const override { return *initializerPtr_; }
 
  private:
-  std::unique_ptr<OptimalControlProblem> problemPtr_;
+  OptimalControlProblem problem_;
   std::unique_ptr<Initializer> initializerPtr_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
   CostDesiredTrajectories costDesiredTrajectories_;

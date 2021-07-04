@@ -75,7 +75,7 @@ class LoopshapingRobotInterface : public RobotInterface {
 
   std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return loopshapingModeScheduleManager_; }
 
-  const OptimalControlProblem& getOptimalControlProblem() const override { return *optimalControlProblemPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return optimalControlProblem_; }
 
   const LoopshapingInitializer& getInitializer() const override { return *initializerPtr_; }
 
@@ -83,7 +83,7 @@ class LoopshapingRobotInterface : public RobotInterface {
   std::unique_ptr<RobotInterface> robotInterfacePtr_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr_;
 
-  std::unique_ptr<OptimalControlProblem> optimalControlProblemPtr_;
+  OptimalControlProblem optimalControlProblem_;
   std::unique_ptr<LoopshapingInitializer> initializerPtr_;
   std::shared_ptr<LoopshapingModeScheduleManager> loopshapingModeScheduleManager_;
 };

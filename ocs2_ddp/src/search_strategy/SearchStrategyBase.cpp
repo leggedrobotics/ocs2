@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 
+#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+
 #include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
 
 namespace ocs2 {
@@ -140,7 +142,6 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
                                                    std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
                                                    scalar_t& heuristicsValue) const {
   auto& preComputation = *problem.preComputationPtr;
-  const auto& desiredTrajectory = *problem.costDesiredTrajectories;
 
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
@@ -153,10 +154,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
       preComputation.request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u);
 
       // intermediate cost
-      modelData.cost_.f = problem.costPtr->getValue(t, x, u, desiredTrajectory, preComputation);
-      modelData.cost_.f += problem.stateCostPtr->getValue(t, x, desiredTrajectory, preComputation);
-      modelData.cost_.f += problem.softConstraintPtr->getValue(t, x, u, desiredTrajectory, preComputation);
-      modelData.cost_.f += problem.stateSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
+      modelData.cost_.f = computeCost(problem, t, x, u);
 
       // state equality constraint
       modelData.stateEqConstr_.f = problem.stateEqualityConstraintPtr->getValue(t, x, preComputation);
@@ -175,8 +173,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
         preComputation.requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x);
 
         // pre-jump cost
-        modelDataEvent.cost_.f = problem.preJumpCostPtr->getValue(t, x, desiredTrajectory, preComputation);
-        modelDataEvent.cost_.f += problem.preJumpSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
+        modelDataEvent.cost_.f = computeEventCost(problem, t, x);
 
         // pre-jump constraint
         modelDataEvent.stateEqConstr_.f = problem.preJumpEqualityConstraintPtr->getValue(t, x, preComputation);
@@ -190,8 +187,7 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
   const auto t = timeTrajectoriesStock[finalActivePartition_].back();
   const auto& x = stateTrajectoriesStock[finalActivePartition_].back();
   preComputation.requestFinal(Request::Cost + Request::SoftConstraint, t, x);
-  heuristicsValue = problem.finalCostPtr->getValue(t, x, desiredTrajectory, preComputation);
-  heuristicsValue += problem.finalSoftConstraintPtr->getValue(t, x, desiredTrajectory, preComputation);
+  heuristicsValue = computeFinalCost(problem, t, x);
 }
 
 /******************************************************************************************************/

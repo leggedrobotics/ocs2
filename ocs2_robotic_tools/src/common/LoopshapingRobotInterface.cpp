@@ -40,7 +40,7 @@ LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterf
                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
     : robotInterfacePtr_(std::move(robotInterfacePtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {
   // wrap with loopshaping
-  optimalControlProblemPtr_ =
+  optimalControlProblem_ =
       LoopshapingOptimalControlProblem::create(robotInterfacePtr->getOptimalControlProblem(), loopshapingDefinitionPtr_);
 
   initializerPtr_.reset(new ocs2::LoopshapingInitializer(robotInterfacePtr_->getInitializer(), loopshapingDefinitionPtr_));

@@ -83,7 +83,7 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
     while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
       // execute approximateLQ for the given partition and time index
 
-      LinearQuadraticApproximator lqapprox(*BASE::optimalControlProblemPtrStock_[taskId], BASE::settings().checkNumericalStability_);
+      LinearQuadraticApproximator lqapprox(BASE::optimalControlProblemStock_[taskId], BASE::settings().checkNumericalStability_);
 
       lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
                                     modelDataTrajectory[timeIndex]);

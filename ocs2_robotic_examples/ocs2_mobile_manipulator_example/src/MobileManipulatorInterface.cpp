@@ -133,20 +133,19 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   /*
    * Optimal control problem
    */
-  problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
+  problem_.dynamicsPtr = std::move(dynamicsPtr);
 
   /* Cost */
-  problemPtr_->costPtr->add("inputCost", getQuadraticInputCost(taskFile));
+  problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
 
   /* Constraints */
-  problemPtr_->softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  problemPtr_->stateSoftConstraintPtr->add(
+  problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
+  problem_.stateSoftConstraintPtr->add(
       "selfCollision",
       getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath, usePreComputation, libraryFolder, recompileLibraries));
-  problemPtr_->stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
+  problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
                                                                                    usePreComputation, libraryFolder, recompileLibraries));
-  problemPtr_->finalSoftConstraintPtr->add(
+  problem_.finalSoftConstraintPtr->add(
       "finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector", usePreComputation, libraryFolder,
                                                    recompileLibraries));
 
@@ -154,7 +153,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
    * Use pre-computation
    */
   if (usePreComputation) {
-    problemPtr_->preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
+    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
   }
 
   /*
@@ -170,7 +169,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
-  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *initializerPtr_));
+  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *initializerPtr_));
   mpc->getSolverPtr()->setSynchronizedModules({referenceUpdateModulePtr_});
   return mpc;
 }

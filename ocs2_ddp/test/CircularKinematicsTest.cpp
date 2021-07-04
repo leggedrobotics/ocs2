@@ -65,20 +65,11 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     rolloutPtr.reset(new ocs2::TimeTriggeredRollout(systemDynamics, rolloutSettings));
 
     // optimal control problem
-    problemPtr.reset(new ocs2::OptimalControlProblem);
-    problemPtr->dynamicsPtr.reset(systemDynamics.clone());
-
-    // cost function
     boost::filesystem::path filePath(__FILE__);
-    std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
-    std::unique_ptr<ocs2::StateInputCost> cost(new ocs2::CircularKinematicsCost(libraryFolder));
-    problemPtr->costPtr->add("cost", std::move(cost));
+    const std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
+    problem = ocs2::createCircularKinematicsProblem(libraryFolder);
 
-    // constraint
-    std::unique_ptr<ocs2::StateInputConstraint> constraint(new ocs2::CircularKinematicsConstraints);
-    problemPtr->equalityConstraintPtr->add("constraint", std::move(constraint));
-
-    // operatingTrajectories
+    // initializer
     initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
@@ -135,7 +126,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
 
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
-  std::unique_ptr<ocs2::OptimalControlProblem> problemPtr;
+  ocs2::OptimalControlProblem problem;
   std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
@@ -152,7 +143,7 @@ TEST_P(CircularKinematicsTest, SLQ) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, problem, *initializerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
@@ -175,7 +166,7 @@ TEST_P(CircularKinematicsTest, ILQR) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, problem, *initializerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";

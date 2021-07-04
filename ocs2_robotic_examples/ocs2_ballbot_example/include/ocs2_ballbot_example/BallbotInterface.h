@@ -81,7 +81,7 @@ class BallbotInterface final : public RobotInterface {
 
   const Initializer& getInitializer() const override { return *ballbotInitializerPtr_; }
 
- protected:
+ private:
   /**
    * Load the settings from the path file.
    *

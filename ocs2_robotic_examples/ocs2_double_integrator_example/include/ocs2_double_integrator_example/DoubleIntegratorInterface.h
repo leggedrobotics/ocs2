@@ -76,7 +76,7 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   const Initializer& getInitializer() const override { return *linearSystemInitializerPtr_; }
 
- protected:
+ private:
   /**
    * Loads the settings from the path file.
    *

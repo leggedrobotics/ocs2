@@ -71,7 +71,7 @@ class QuadrotorInterface final : public RobotInterface {
 
   const Initializer& getInitializer() const override { return *operatingPointPtr_; }
 
- protected:
+ private:
   /**
    * Load the settings from the path file.
    *

@@ -81,7 +81,7 @@ class CartPoleInterface final : public RobotInterface {
 
   const Initializer& getInitializer() const override { return *cartPoleInitializerPtr_; }
 
- protected:
+ private:
   /**
    * Loads the settings from the path file.
    *

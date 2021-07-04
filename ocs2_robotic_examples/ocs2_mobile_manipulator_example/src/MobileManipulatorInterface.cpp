@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
 
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
@@ -140,14 +141,12 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
 
   /* Constraints */
   problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  problem_.stateSoftConstraintPtr->add(
-      "selfCollision",
-      getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath, usePreComputation, libraryFolder, recompileLibraries));
-  problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
+  problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath,
                                                                                    usePreComputation, libraryFolder, recompileLibraries));
-  problem_.finalSoftConstraintPtr->add(
-      "finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector", usePreComputation, libraryFolder,
-                                                   recompileLibraries));
+  problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
+                                                                               usePreComputation, libraryFolder, recompileLibraries));
+  problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
+                                                                                    usePreComputation, libraryFolder, recompileLibraries));
 
   /*
    * Use pre-computation

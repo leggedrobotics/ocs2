@@ -43,6 +43,7 @@ VectorFunctionLinearApproximation ZeroForceConstraint::getLinearApproximation(sc
   for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     if (!contactFlags_[leg]) {
       const int legStartIdx = 3 * leg;
+      linearApproximation.f.segment<3>(constraintIdx) = input.segment(legStartIdx, 3);
       linearApproximation.dfdu.block<3, 3>(constraintIdx, legStartIdx).setIdentity();
       constraintIdx += 3;
     }

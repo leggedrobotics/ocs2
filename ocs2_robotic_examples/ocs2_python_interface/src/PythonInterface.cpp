@@ -47,7 +47,7 @@ void PythonInterface::init(const RobotInterface& robot, std::unique_ptr<MPC_BASE
 
   mpcMrtInterface_.reset(new MPC_MRT_Interface(*mpcPtr_));
 
-  problem_ = OptimalControlProblem();
+  problem_ = robot.getOptimalControlProblem();
 }
 
 /******************************************************************************************************/

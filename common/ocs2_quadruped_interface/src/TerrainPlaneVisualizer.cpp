@@ -4,8 +4,9 @@
 
 #include "ocs2_quadruped_interface/TerrainPlaneVisualizer.h"
 
+#include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
+
 #include "ocs2_switched_model_interface/terrain/PlaneFitting.h"
-#include "ocs2_switched_model_interface/visualization/VisualizationHelpers.h"
 
 namespace switched_model {
 
@@ -16,8 +17,9 @@ TerrainPlaneVisualizer::TerrainPlaneVisualizer(ros::NodeHandle& nodeHandle) {
 void TerrainPlaneVisualizer::update(scalar_t time, const TerrainPlane& terrainPlane) {
   // Headers
   Eigen::Quaterniond terrainOrientation(terrainPlane.orientationWorldToTerrain.transpose());
-  auto planeMsg = getPlaneMsg(terrainPlane.positionInWorld, terrainOrientation, Color::black, planeWidth_, planeLength_, planeThickness_);
-  planeMsg.header = getHeaderMsg(frameId_, ros::Time::now());
+  auto planeMsg =
+      getPlaneMsg(terrainPlane.positionInWorld, terrainOrientation, ocs2::Color::black, planeWidth_, planeLength_, planeThickness_);
+  planeMsg.header = ocs2::getHeaderMsg(frameId_, ros::Time::now());
   planeMsg.id = 0;
   planeMsg.color.a = planeAlpha_;
 

@@ -49,8 +49,8 @@ class LinearQuadraticApproximator {
    * @note This class does not take ownership of any of the parameters.
    *       Make sure that the parameter lifetime is longer than this class instance.
    */
-  LinearQuadraticApproximator(OptimalControlProblem& problem, bool checkNumericalCharacteristics = true)
-      : problem_(problem), checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
+  explicit LinearQuadraticApproximator(const OptimalControlProblem& problem, bool checkNumericalCharacteristics = true)
+      : problemPtr_(&problem), checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
 
   /**
    * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
@@ -85,8 +85,7 @@ class LinearQuadraticApproximator {
   void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
   void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
-  OptimalControlProblem& problem_;
-
+  const OptimalControlProblem* problemPtr_;
   bool checkNumericalCharacteristics_;
 };
 

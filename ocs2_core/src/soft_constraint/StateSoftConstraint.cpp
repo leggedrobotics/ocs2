@@ -48,7 +48,7 @@ StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constr
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateSoftConstraint::StateSoftConstraint(const StateSoftConstraint& other)
-    : BASE(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_) {}
+    : StateCost(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

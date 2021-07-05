@@ -59,12 +59,11 @@ ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximati
                                                                                    const CostDesiredTrajectories& desiredTrajectory,
                                                                                    const PreComputation&) const {
   const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
-  const vector_t qDeviation = Q_ * xDeviation;
 
   ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = 0.5 * xDeviation.dot(qDeviation);
-  Phi.dfdx = qDeviation;
   Phi.dfdxx = Q_;
+  Phi.dfdx.noalias() = Q_ * xDeviation;
+  Phi.f = 0.5 * xDeviation.dot(Phi.dfdx);
   return Phi;
 }
 

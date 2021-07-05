@@ -75,15 +75,12 @@ ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApprox
   vector_t stateDeviation, inputDeviation;
   std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, desiredTrajectory);
 
-  const vector_t qDeviation = Q_ * stateDeviation;
-  const vector_t rDeviation = R_ * inputDeviation;
-
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * stateDeviation.dot(qDeviation) + 0.5 * inputDeviation.dot(rDeviation);
-  L.dfdx = qDeviation;
-  L.dfdu = rDeviation;
   L.dfdxx = Q_;
   L.dfduu = R_;
+  L.dfdx.noalias() = Q_ * stateDeviation;
+  L.dfdu.noalias() = R_ * inputDeviation;
+  L.f = 0.5 * stateDeviation.dot(L.dfdx) + 0.5 * inputDeviation.dot(L.dfdu);
 
   if (P_.size() == 0) {
     L.dfdux.setZero(input.size(), state.size());

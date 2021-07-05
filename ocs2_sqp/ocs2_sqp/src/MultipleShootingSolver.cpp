@@ -160,7 +160,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
     // Apply step
     linesearchTimer_.startTimer();
-    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution.first, deltaSolution.second, x, u);
+    const auto stepInfo = takeStep(baselinePerformance, timeDiscretization, initState, deltaSolution, x, u);
     const bool converged = stepInfo.first;
     performanceIndeces_.push_back(stepInfo.second);
     linesearchTimer_.endTimer();
@@ -223,10 +223,11 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   }
 }
 
-std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
+MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolution(const vector_t& delta_x0) {
   // Solve the QP
-  vector_array_t deltaXSol;
-  vector_array_t deltaUSol;
+  OcpSubproblemSolution solution;
+  auto& deltaXSol = solution.deltaXSol;
+  auto& deltaUSol = solution.deltaUSol;
   hpipm_status status;
   const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
   if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
@@ -241,6 +242,17 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
     throw std::runtime_error("[MultipleShootingSolver] Failed to solve QP");
   }
 
+  // To determine if the solution is a descent direction for the cost: compute gradient(cost)' * [dx; du]
+  solution.armijoDescentMetric = 0.0;
+  for (int i = 0; i < cost_.size(); i++) {
+    if (cost_[i].dfdx.size() > 0) {
+      solution.armijoDescentMetric += cost_[i].dfdx.dot(deltaXSol[i]);
+    }
+    if (cost_[i].dfdu.size() > 0) {
+      solution.armijoDescentMetric += cost_[i].dfdu.dot(deltaUSol[i]);
+    }
+  }
+
   // remap the tilde delta u to real delta u
   if (settings_.projectStateInputEqualityConstraints) {
     vector_t tmp;  // 1 temporary for re-use.
@@ -253,7 +265,7 @@ std::pair<vector_array_t, vector_array_t> MultipleShootingSolver::getOCPSolution
     }
   }
 
-  return {deltaXSol, deltaUSol};
+  return solution;
 }
 
 void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u) {
@@ -436,8 +448,9 @@ scalar_t MultipleShootingSolver::trajectoryNorm(const vector_array_t& v) {
 
 std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const PerformanceIndex& baseline,
                                                                    const std::vector<AnnotatedTime>& timeDiscretization,
-                                                                   const vector_t& initState, const vector_array_t& dx,
-                                                                   const vector_array_t& du, vector_array_t& x, vector_array_t& u) {
+                                                                   const vector_t& initState,
+                                                                   const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                                                                   vector_array_t& u) {
   /*
    * Filter linesearch based on:
    * "On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming"
@@ -452,13 +465,17 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
               << "\t Penalty: " << baseline.inequalityConstraintPenalty << "\n";
   }
 
-  // Some settings
+  // Some settings and shorthands
   const scalar_t alpha_decay = settings_.alpha_decay;
   const scalar_t alpha_min = settings_.alpha_min;
   const scalar_t gamma_c = settings_.gamma_c;
   const scalar_t g_max = settings_.g_max;
   const scalar_t g_min = settings_.g_min;
   const scalar_t costTol = settings_.costTol;
+  const scalar_t armijoFactor = settings_.armijoFactor;
+  const auto& dx = subproblemSolution.deltaXSol;
+  const auto& du = subproblemSolution.deltaUSol;
+  const auto& armijoDescentMetric = subproblemSolution.armijoDescentMetric;
 
   // Total Constraint violation function
   auto constraintViolation = [](const PerformanceIndex& performance) -> scalar_t {
@@ -492,9 +509,9 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
     const bool stepAccepted = [&]() {
       if (newConstraintViolation > g_max) {
         return false;
-      } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min) {
-        // With low violation only care about cost, reference paper implements here armijo condition
-        return (performanceNew.merit < baseline.merit);
+      } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min && armijoDescentMetric < 0.0) {
+        // With low violation and having a descent direction, require the armijo condition.
+        return (performanceNew.merit < baseline.merit + armijoFactor * alpha * armijoDescentMetric);
       } else {
         // Medium violation: either merit or constraints decrease (with small gamma_c mixing of old constraints)
         return performanceNew.merit < (baseline.merit - gamma_c * baselineConstraintViolation) ||

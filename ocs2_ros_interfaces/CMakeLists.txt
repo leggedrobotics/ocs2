@@ -62,6 +62,8 @@ add_library(${PROJECT_NAME}
   src/mrt/LoopshapingDummyObserver.cpp
   src/mrt/MRT_ROS_Dummy_Loop.cpp
   src/mrt/MRT_ROS_Interface.cpp
+  src/visualization/VisualizationHelpers.cpp
+  src/visualization/VisualizationColors.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

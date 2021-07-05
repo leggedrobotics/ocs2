@@ -49,6 +49,9 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     FrictionConeConstraint::Config frictionConfig(options_.frictionCoefficient_);
     std::unique_ptr<FrictionConeConstraint> frictionCone(new FrictionConeConstraint(std::move(frictionConfig), i));
 
+    // EE force
+    auto zeroForceConstraint = std::unique_ptr<ocs2::StateInputConstraint>(new ZeroForceConstraint(i));
+
     // Velocity Constraint
     auto footNormalConstraint = std::unique_ptr<ocs2::StateInputConstraint>(
         new FootNormalConstraint(i, FootNormalConstraintMatrix(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
@@ -59,13 +62,10 @@ void ComKinoConstraintBaseAd::initializeConstraintTerms() {
     inequalityConstraintsCollectionPtr_->add(footName + "_FrictionCone", std::move(frictionCone));
 
     // State input equalities
+    equalityStateInputConstraintCollectionPtr_->add(footName + "_ZeroForce", std::move(zeroForceConstraint));
     equalityStateInputConstraintCollectionPtr_->add(footName + "_EENormal", std::move(footNormalConstraint));
     equalityStateInputConstraintCollectionPtr_->add(footName + "_EEVel", std::move(endEffectorVelocityConstraint));
   }
-
-  // EE force
-  auto zeroForceConstraint = std::unique_ptr<ocs2::StateInputConstraint>(new ZeroForceConstraint());
-  equalityStateInputConstraintCollectionPtr_->add("ZeroForce", std::move(zeroForceConstraint));
 }
 
 /******************************************************************************************************/
@@ -79,11 +79,10 @@ void ComKinoConstraintBaseAd::collectConstraintPointers() {
     frictionConeConstraints_[i] = &inequalityConstraintsCollectionPtr_->get<FrictionConeConstraint>(footName + "_FrictionCone");
 
     // State input equalities
+    zeroForceConstraints_[i] = &equalityStateInputConstraintCollectionPtr_->get<ZeroForceConstraint>(footName + "_ZeroForce");
     eeNormalConstraints_[i] = &equalityStateInputConstraintCollectionPtr_->get<FootNormalConstraint>(footName + "_EENormal");
     eeVelConstraints_[i] = &equalityStateInputConstraintCollectionPtr_->get<EndEffectorVelocityConstraint>(footName + "_EEVel");
   }
-
-  zeroForceConstraints_ = &equalityStateInputConstraintCollectionPtr_->get<ZeroForceConstraint>("ZeroForce");
 }
 
 /******************************************************************************************************/
@@ -93,6 +92,9 @@ void ComKinoConstraintBaseAd::updateStateInputEqualityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
     const bool inContact = footPhase.contactFlag();
+
+    // Zero forces active for swing legs
+    zeroForceConstraints_[i]->setActivity(!inContact);
 
     // Foot normal constraint always active
     auto& EENormalConstraint = *eeNormalConstraints_[i];
@@ -109,8 +111,6 @@ void ComKinoConstraintBaseAd::updateStateInputEqualityConstraints(scalar_t t) {
       EEVelConstraint.configure(eeVelConSettings);
     }
   }
-
-  zeroForceConstraints_->setContactFlags(modeScheduleManagerPtr_->getContactFlags(t));
 }
 
 /******************************************************************************************************/

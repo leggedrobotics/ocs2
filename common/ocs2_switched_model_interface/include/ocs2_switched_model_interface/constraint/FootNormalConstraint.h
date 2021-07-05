@@ -48,7 +48,7 @@ class FootNormalConstraint : public ocs2::StateInputConstraintCppAd {
   settings_t settings_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;
   std::unique_ptr<ad_kinematic_model_t> adKinematicsModelPtr_;
-  int legNumber_;
+  const int legNumber_;
 };
 
 }  // namespace switched_model

@@ -8,11 +8,9 @@ namespace switched_model {
 
 class ZeroForceConstraint final : public ocs2::StateInputConstraint {
  public:
-  ZeroForceConstraint();
+  explicit ZeroForceConstraint(int legNumber);
 
   ZeroForceConstraint* clone() const override;
-
-  void setContactFlags(const contact_flag_t& contactFlags);
 
   size_t getNumConstraints(scalar_t time) const override;
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
@@ -21,7 +19,7 @@ class ZeroForceConstraint final : public ocs2::StateInputConstraint {
  private:
   ZeroForceConstraint(const ZeroForceConstraint& rhs) = default;
 
-  contact_flag_t contactFlags_;
+  const int legStartIdx_;
 };
 
 }  // namespace switched_model

@@ -63,8 +63,8 @@ class ComKinoConstraintBaseAd : public ocs2::ConstraintBase {
   // Individual constraint access (non-owning)
   feet_array_t<FootNormalConstraint*> eeNormalConstraints_;
   feet_array_t<EndEffectorVelocityConstraint*> eeVelConstraints_;
+  feet_array_t<ZeroForceConstraint*> zeroForceConstraints_;
   feet_array_t<FrictionConeConstraint*> frictionConeConstraints_;
-  ZeroForceConstraint* zeroForceConstraints_;
 
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;

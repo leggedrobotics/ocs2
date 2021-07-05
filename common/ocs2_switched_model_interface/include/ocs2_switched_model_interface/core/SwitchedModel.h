@@ -251,4 +251,8 @@ inline int numberOfClosedContacts(const contact_flag_t& contactFlags) {
   return numStanceLegs;
 }
 
+inline int numberOfOpenContacts(const contact_flag_t& contactFlags) {
+  return NUM_CONTACT_POINTS - numberOfClosedContacts(contactFlags);
+}
+
 }  // end of namespace switched_model

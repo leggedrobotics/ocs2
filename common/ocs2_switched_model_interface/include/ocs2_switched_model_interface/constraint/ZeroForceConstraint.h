@@ -1,56 +1,27 @@
 #pragma once
 
-#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 namespace switched_model {
 
-class ZeroForceConstraint final : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
+class ZeroForceConstraint final : public ocs2::StateInputConstraint {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  ZeroForceConstraint();
 
-  using BASE = ConstraintTerm<STATE_DIM, INPUT_DIM>;
-  using typename BASE::input_matrix_t;
-  using typename BASE::input_state_matrix_t;
-  using typename BASE::input_vector_t;
-  using typename BASE::LinearApproximation_t;
-  using typename BASE::state_matrix_t;
-  using typename BASE::state_vector_t;
+  ZeroForceConstraint* clone() const override;
 
-  explicit ZeroForceConstraint(int legNumber) : BASE(ConstraintOrder::Linear), legNumber_(legNumber) {}
+  void setContactFlags(const contact_flag_t& contactFlags);
 
-  ZeroForceConstraint* clone() const override { return new ZeroForceConstraint(*this); }
-
-  size_t getNumConstraints(scalar_t time) const override { return 3; };
-
-  scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
-    const scalar_t Fx = input(3 * legNumber_ + 0);
-    const scalar_t Fy = input(3 * legNumber_ + 1);
-    const scalar_t Fz = input(3 * legNumber_ + 2);
-
-    scalar_array_t constraintValue;
-    constraintValue.push_back(Fx);
-    constraintValue.push_back(Fy);
-    constraintValue.push_back(Fz);
-    return constraintValue;
-  };
-
-  LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override {
-    LinearApproximation_t linearApproximation;
-    for (int i = 0; i < 3; i++) {
-      linearApproximation.constraintValues.push_back(input(3 * legNumber_ + i));
-      linearApproximation.derivativeState.emplace_back(state_vector_t::Zero());
-      input_vector_t dcdu = input_vector_t::Zero();
-      dcdu(3 * legNumber_ + i) = 1.0;
-      linearApproximation.derivativeInput.push_back(dcdu);
-    }
-
-    return linearApproximation;
-  }
+  size_t getNumConstraints(scalar_t time) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
 
  private:
-  int legNumber_;
+  ZeroForceConstraint(const ZeroForceConstraint& rhs) = default;
+
+  contact_flag_t contactFlags_;
 };
 
 }  // namespace switched_model

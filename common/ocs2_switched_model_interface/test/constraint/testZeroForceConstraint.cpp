@@ -8,30 +8,20 @@
 
 TEST(TestZeroForceConstraint, evaluate) {
   using TestedConstraint = switched_model::ZeroForceConstraint;
-  TestedConstraint zeroForceConstraint(0);
+  TestedConstraint zeroForceConstraint;
+  zeroForceConstraint.setContactFlags({false, true, false, true});
 
   // evaluation point
   double t = 0.0;
-  TestedConstraint::input_vector_t u;
-  TestedConstraint::state_vector_t x;
+  switched_model::input_vector_t u;
+  switched_model::state_vector_t x;
   u.setZero();
   x.setZero();
 
   auto linearApproximation = zeroForceConstraint.getLinearApproximation(t, x, u);
-  std::cout << "h" << std::endl;
-  for (auto h : linearApproximation.constraintValues) {
-    std::cout << h << std::endl;
-  }
-
-  std::cout << "dhdx" << std::endl;
-  for (auto dhdx : linearApproximation.derivativeState) {
-    std::cout << dhdx.transpose() << std::endl;
-  }
-
-  std::cout << "dhdu" << std::endl;
-  for (auto dhdu : linearApproximation.derivativeInput) {
-    std::cout << dhdu.transpose() << std::endl;
-  }
+  std::cout << "h: " << linearApproximation.f.transpose() << std::endl;
+  std::cout << "dhdx: \n" << linearApproximation.dfdx << std::endl;
+  std::cout << "dhdu: \n" << linearApproximation.dfdu << std::endl;
 }
 
 int main(int argc, char** argv) {

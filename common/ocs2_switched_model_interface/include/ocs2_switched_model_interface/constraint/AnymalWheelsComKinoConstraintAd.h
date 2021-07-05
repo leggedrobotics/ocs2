@@ -4,7 +4,6 @@
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
-#include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
@@ -56,15 +55,14 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase {
   /** Sets up the inequality constraints for a query at time t */
   void updateInequalityConstraints(scalar_t t);
 
-  using ConstraintCollection_t = ConstraintCollection<STATE_DIM, INPUT_DIM>;
-  ConstraintCollection_t equalityStateInputConstraintCollection_;  // state input equality constraints
+  std::unique_ptr<ocs2::StateInputConstraintCollection> equalityStateInputConstraintCollectionPtr_;
   std::unique_ptr<ocs2::StateInputConstraintCollection> inequalityConstraintsCollectionPtr_;
 
   // Individual constraint access (non-owning)
   feet_array_t<FootNormalConstraint*> eeNormalConstraints_;
   feet_array_t<EndEffectorVelocityInFootFrameConstraint*> eeVelConstraints_;
-  feet_array_t<ZeroForceConstraint*> zeroForceConstraints_;
   feet_array_t<FrictionConeConstraint*> frictionConeConstraints_;
+  ZeroForceConstraint* zeroForceConstraints_;
 
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<ad_com_model_t> adComModelPtr_;

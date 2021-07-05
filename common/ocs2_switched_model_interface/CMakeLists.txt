@@ -44,7 +44,14 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/constraint/AnymalWheelsComKinoConstraintAd.cpp
+	src/constraint/ComKinoConstraintBaseAd.cpp
+	src/constraint/EndEffectorConstraint.cpp
+	src/constraint/EndEffectorVelocityConstraint.cpp
+	src/constraint/EndEffectorVelocityInFootFrameConstraint.cpp
+	src/constraint/FootNormalConstraint.cpp
 	src/constraint/FrictionConeConstraint.cpp
+	src/constraint/ZeroForceConstraint.cpp
 	src/dynamics/ComKinoSystemDynamicsAd.cpp
 	src/dynamics/ComKinoDynamicsParameters.cpp
 	src/cost/MotionTrackingCost.cpp
@@ -65,10 +72,6 @@ add_library(${PROJECT_NAME}
 	src/ros_msg_conversions/RosMsgConversions.cpp
 	src/terrain/PlanarTerrainModel.cpp
 	src/terrain/TerrainPlane.cpp
-	src/EndEffectorConstraint.cpp
-	src/FootNormalConstraint.cpp
-	src/ComKinoConstraintBaseAd.cpp
-	src/AnymalWheelsComKinoConstraintAd.cpp
 	src/ComModelBase.cpp
 	src/KinematicsModelBase.cpp
 	src/ModelSettings.cpp
@@ -115,35 +118,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-catkin_add_gtest(test_constraintTerm
-	test/constraint/testConstraintTerm.cpp
-)
-target_link_libraries(test_constraintTerm
-	${PROJECT_NAME}
-	${catkin_LIBRARIES}
-)
-
-catkin_add_gtest(test_constraintCollection
-	test/constraint/testConstraintCollection.cpp
-)
-target_link_libraries(test_constraintCollection
-	${PROJECT_NAME}
-	${catkin_LIBRARIES}
-)
-
-catkin_add_gtest(test_zeroForceConstraint
-	test/constraint/testZeroForceConstraint.cpp)
-target_link_libraries(test_zeroForceConstraint
-	${PROJECT_NAME}
-	${catkin_LIBRARIES}
-)
-
-catkin_add_gtest(test_frictionConeConstraint
+catkin_add_gtest(test_constraints
+	test/constraint/testZeroForceConstraint.cpp
 	test/constraint/testFrictionConeConstraint.cpp
 )
-target_link_libraries(test_frictionConeConstraint
+target_link_libraries(test_constraints
 	${PROJECT_NAME}
 	${catkin_LIBRARIES}
+	gtest_main
 )
 
 catkin_add_gtest(test_${PROJECT_NAME}_core

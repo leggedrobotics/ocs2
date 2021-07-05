@@ -175,8 +175,3 @@ TEST(TestFrictionConeConstraint, negativeDefinite) {
     ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfduu.front()).maxCoeff(), 0.0);
   }
 }
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

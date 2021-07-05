@@ -23,8 +23,3 @@ TEST(TestZeroForceConstraint, evaluate) {
   std::cout << "dhdx: \n" << linearApproximation.dfdx << std::endl;
   std::cout << "dhdu: \n" << linearApproximation.dfdu << std::endl;
 }
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

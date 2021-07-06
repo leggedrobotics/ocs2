@@ -26,8 +26,8 @@ class DummyInterface final : public RobotInterface {
     const matrix_t Qf = (matrix_t(2, 2) << 2, 0, 0, 2).finished();
     costPtr_.reset(new QuadraticCostFunction(Q, R, Qf));
 
-    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(1)});
-    costPtr_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
+    targetTrajectories_ = TargetTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(1)});
+    costPtr_->setTargetTrajectoriesPtr(&targetTrajectories_);
 
     constraintPtr_.reset(new ConstraintBase());
 
@@ -56,7 +56,7 @@ class DummyInterface final : public RobotInterface {
   std::unique_ptr<ConstraintBase> constraintPtr_;
   std::unique_ptr<Initializer> initializerPtr_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  CostDesiredTrajectories costDesiredTrajectories_;
+  TargetTrajectories targetTrajectories_;
 };
 
 class DummyPyBindings final : public PythonInterface {

@@ -51,8 +51,8 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   Exp1() {
     // event times
     const ocs2::scalar_array_t eventTimes{0.2262, 1.0176};
-    const std::vector<size_t> subsystemsSequence{0, 1, 2};
-    modeScheduleManagerPtr.reset(new ocs2::ModeScheduleManager({eventTimes, subsystemsSequence}));
+    const std::vector<size_t> modeSequence{0, 1, 2};
+    referenceManagerPtr = ocs2::getExp1ReferenceManager(eventTimes, modeSequence);
 
     // partitioning times
     partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], eventTimes[1], finalTime};
@@ -67,11 +67,11 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     }();
 
     // dynamics and rollout
-    systemPtr.reset(new ocs2::EXP1_System(modeScheduleManagerPtr));
+    systemPtr.reset(new ocs2::EXP1_System(referenceManagerPtr));
     rolloutPtr.reset(new ocs2::TimeTriggeredRollout(*systemPtr, rolloutSettings));
 
     // cost function
-    costPtr.reset(new ocs2::EXP1_CostFunction(modeScheduleManagerPtr));
+    costPtr.reset(new ocs2::EXP1_CostFunction(referenceManagerPtr));
 
     // constraint
     constraintPtr.reset(new ocs2::ConstraintBase);
@@ -128,7 +128,7 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
   const ocs2::scalar_t finalTime = 3.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 2.0, 3.0).finished();
   ocs2::scalar_array_t partitioningTimes;
-  std::shared_ptr<ocs2::ModeScheduleManager> modeScheduleManagerPtr;
+  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr;
 
   std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
@@ -152,7 +152,7 @@ TEST_P(Exp1, SLQ) {
 
   // instantiate
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
@@ -176,7 +176,7 @@ TEST_P(Exp1, ILQR) {
 
   // instantiate
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";

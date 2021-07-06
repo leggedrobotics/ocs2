@@ -79,15 +79,8 @@ LeggedRobotCost::LeggedRobotCost(const LeggedRobotCost& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotCost::setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr) {
-  costDesiredTrajectoriesPtr_ = costDesiredTrajectoriesPtr;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 scalar_t LeggedRobotCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  return stateInputCostCollection_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
+  return stateInputCostCollection_.getValue(t, x, u, *targetTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/
@@ -101,7 +94,7 @@ scalar_t LeggedRobotCost::finalCost(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation LeggedRobotCost::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  return stateInputCostCollection_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
+  return stateInputCostCollection_.getQuadraticApproximation(t, x, u, *targetTrajectoriesPtr_);
 }
 
 /******************************************************************************************************/

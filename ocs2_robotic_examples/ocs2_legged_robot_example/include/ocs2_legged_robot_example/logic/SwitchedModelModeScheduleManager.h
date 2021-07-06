@@ -30,23 +30,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/thread_support/Synchronized.h>
-#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 #include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_legged_robot_example/logic/GaitSchedule.h>
 #include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
 
-/**
- * Manages the ModeSchedule for switched model.
- */
 namespace ocs2 {
 namespace legged_robot {
-class SwitchedModelModeScheduleManager : public ModeScheduleManager {
+
+/**
+ * Manages the ModeSchedule and the TargetTrajectories for switched model.
+ */
+class SwitchedModelModeScheduleManager : public ReferenceManager {
  public:
   SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
                                    std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
-
-  SwitchedModelModeScheduleManager(const SwitchedModelModeScheduleManager& rhs);
 
   ~SwitchedModelModeScheduleManager() override = default;
 
@@ -57,8 +56,8 @@ class SwitchedModelModeScheduleManager : public ModeScheduleManager {
   const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
 
  private:
-  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                        const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
+  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
+                        ModeSchedule& modeSchedule) override;
 
   std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;

@@ -77,7 +77,7 @@ class LeggedRobotVisualizer : public DummyObserver {
 
   void publishObservation(ros::Time timeStamp, const SystemObservation& observation);
 
-  void publishDesiredTrajectory(ros::Time timeStamp, const CostDesiredTrajectories& costDesiredTrajectory);
+  void publishDesiredTrajectory(ros::Time timeStamp, const TargetTrajectories& targetTrajectories);
 
   void publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                        const vector_array_t& mpcStateTrajectory, const ModeSchedule& modeSchedule);

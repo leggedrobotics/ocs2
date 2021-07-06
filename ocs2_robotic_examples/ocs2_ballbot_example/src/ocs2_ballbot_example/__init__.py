@@ -1,2 +1,2 @@
 from ocs2_ballbot_example.BallbotPyBindings import mpc_interface
-from ocs2_ballbot_example.BallbotPyBindings import scalar_array, vector_array, matrix_array, CostDesiredTrajectories
+from ocs2_ballbot_example.BallbotPyBindings import scalar_array, vector_array, matrix_array, TargetTrajectories

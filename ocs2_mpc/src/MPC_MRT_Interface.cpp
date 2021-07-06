@@ -37,26 +37,17 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_MRT_Interface::MPC_MRT_Interface(MPC_BASE& mpc) : MRT_BASE(), mpc_(mpc), costDesiredTrajectoriesBufferUpdated_(false) {
+MPC_MRT_Interface::MPC_MRT_Interface(MPC_BASE& mpc) : mpc_(mpc) {
   mpcTimer_.reset();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_MRT_Interface::resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MPC_MRT_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) {
   mpc_.reset();
+  mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(initTargetTrajectories);
   mpcTimer_.reset();
-  setTargetTrajectories(initCostDesiredTrajectories);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_MRT_Interface::setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories) {
-  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-  costDesiredTrajectoriesBuffer_ = targetTrajectories;
-  costDesiredTrajectoriesBufferUpdated_ = true;
 }
 
 /******************************************************************************************************/
@@ -70,6 +61,20 @@ void MPC_MRT_Interface::setCurrentObservation(const SystemObservation& currentOb
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+ReferenceManagerInterface& MPC_MRT_Interface::getReferenceManager() {
+  return mpc_.getSolverPtr()->getReferenceManager();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+const ReferenceManagerInterface& MPC_MRT_Interface::getReferenceManager() const {
+  return mpc_.getSolverPtr()->getReferenceManager();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MPC_MRT_Interface::advanceMpc() {
   // measure the delay in running MPC
   mpcTimer_.startTimer();
@@ -78,18 +83,6 @@ void MPC_MRT_Interface::advanceMpc() {
   {
     std::lock_guard<std::mutex> lock(observationMutex_);
     currentObservation = currentObservation_;
-  }
-
-  // Set latest cost desired trajectories
-  if (costDesiredTrajectoriesBufferUpdated_) {
-    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-    mpc_.getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
-    costDesiredTrajectoriesBufferUpdated_ = false;
-
-    if (mpc_.settings().debugPrint_) {
-      std::cerr << "### The target position is updated to\n";
-      mpc_.getSolverPtr()->getCostDesiredTrajectories().display();
-    }
   }
 
   bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
@@ -133,7 +126,7 @@ void MPC_MRT_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
   // command
   std::unique_ptr<CommandData> commandPtr(new CommandData);
   commandPtr->mpcInitObservation_ = mpcInitObservation;
-  commandPtr->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
+  commandPtr->mpcTargetTrajectories_ = mpc_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
 
   // performance indices
   std::unique_ptr<PerformanceIndex> performanceIndicesPtr(new PerformanceIndex);

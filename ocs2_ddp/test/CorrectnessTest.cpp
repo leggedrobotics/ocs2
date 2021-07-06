@@ -106,9 +106,9 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     // cost
     costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
                                            ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
-    costPtr->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    costPtr->setTargetTrajectoriesPtr(&targetTrajectories);
 
     // constraint
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
@@ -235,7 +235,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   ocs2::scalar_t finalTime;
 
   std::unique_ptr<ocs2::CostFunctionBase> costPtr;
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
@@ -265,7 +265,7 @@ TEST_P(DDPCorrectness, TestSLQ) {
   // ddp
   ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
 
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);
@@ -284,7 +284,7 @@ TEST_P(DDPCorrectness, TestILQR) {
   // ddp
   ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
 
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);

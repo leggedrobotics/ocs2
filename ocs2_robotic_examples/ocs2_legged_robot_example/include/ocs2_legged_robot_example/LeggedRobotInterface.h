@@ -80,7 +80,6 @@ class LeggedRobotInterface final : public RobotInterface {
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   /** Gets the solver synchronized modules */
-  const std::vector<std::shared_ptr<SolverSynchronizedModule>>& getSynchronizedModules() const { return solverModules_; };
 
   std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
 
@@ -88,7 +87,7 @@ class LeggedRobotInterface final : public RobotInterface {
   const CostFunctionBase& getCost() const override { return *costPtr_; }
   const ConstraintBase* getConstraintPtr() const override { return constraintsPtr_.get(); }
   const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
-  std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return modeScheduleManagerPtr_; }
 
  protected:
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
@@ -104,7 +103,6 @@ class LeggedRobotInterface final : public RobotInterface {
   CentroidalModelInfo centroidalModelInfo_;
 
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
-  std::vector<std::shared_ptr<SolverSynchronizedModule>> solverModules_;
 
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<SystemDynamicsBase> dynamicsPtr_;

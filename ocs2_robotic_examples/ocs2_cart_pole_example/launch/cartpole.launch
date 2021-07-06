@@ -1,9 +1,14 @@
 <launch>
     <arg name="rviz"       default="true" />
+    <arg name="multiplot"  default="true"/>
     <arg name="task_name"  default="mpc"/>
 
     <group if="$(arg rviz)">
       <include file="$(find ocs2_cart_pole_example)/launch/visualize.launch"/>
+    </group>
+
+    <group if="$(arg multiplot)">
+      <include file="$(find ocs2_cart_pole_example)/launch/multiplot.launch"/>
     </group>
 
     <node pkg="ocs2_cart_pole_example" type="cartpole_mpc" name="cartpole_mpc"

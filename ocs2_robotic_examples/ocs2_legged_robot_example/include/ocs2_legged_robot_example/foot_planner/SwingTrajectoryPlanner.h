@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
-#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/reference/ModeSchedule.h>
 
 #include "ocs2_legged_robot_example/common/Types.h"
 #include "ocs2_legged_robot_example/foot_planner/SplineCpg.h"

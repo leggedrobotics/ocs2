@@ -42,8 +42,8 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     R = (0.5 * R.transpose() + 0.5 * R).eval();
     testSystemCost.reset(new QuadraticCostFunction(Q, R, Q_final, P));
 
-    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {x_sys_}, {u_sys_});
-    testSystemCost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories_);
+    targetTrajectories_ = TargetTrajectories({0.0}, {x_sys_}, {u_sys_});
+    testSystemCost->setTargetTrajectoriesPtr(&targetTrajectories_);
 
     // Create Loopshaping costs
     testLoopshapingCost = LoopshapingCost::create(*testSystemCost, loopshapingDefinition_);
@@ -62,7 +62,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
   vector_t u_sys_{CONFIG::SYSTEM_INPUT_DIM};
   vector_t x_filter_{CONFIG::FILTER_STATE_DIM};
   vector_t u_filter_{CONFIG::FILTER_INPUT_DIM};
-  CostDesiredTrajectories costDesiredTrajectories_;
+  TargetTrajectories targetTrajectories_;
 
   vector_t x_disturbance_{CONFIG::FULL_STATE_DIM};
   vector_t u_disturbance_{CONFIG::FULL_INPUT_DIM};

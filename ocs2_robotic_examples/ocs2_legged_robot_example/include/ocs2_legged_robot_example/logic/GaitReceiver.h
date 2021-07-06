@@ -46,7 +46,7 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
   GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
+                    const ReferenceManagerInterface& referenceManager) override;
 
   void postSolverRun(const PrimalSolution& primalSolution) override{};
 

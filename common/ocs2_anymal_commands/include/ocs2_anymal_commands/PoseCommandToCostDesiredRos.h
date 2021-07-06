@@ -4,13 +4,13 @@
 
 #pragma once
 
+#include <memory>
 #include <mutex>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 
-#include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_msgs/mpc_state.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/terrain/TerrainModel.h>
@@ -19,37 +19,27 @@ namespace switched_model {
 
 class PoseCommandToCostDesiredRos {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   scalar_t targetDisplacementVelocity;
   scalar_t targetRotationVelocity;
-  scalar_t initZHeight;
+  scalar_t comHeight;
   joint_coordinate_t defaultJointState;
 
-  using PoseCommand_t = std::array<scalar_t, 6>; // [x, y, z, roll, pitch, yaw]
+  PoseCommandToCostDesiredRos(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix, const scalar_array_t& targetCommandLimits,
+                              const std::string& configFile);
 
-  PoseCommandToCostDesiredRos(const std::string& configFile, ros::NodeHandle& nodeHandle);
-
-  void publishCostDesiredFromCommand(const PoseCommand_t& command);
+  void publishKeyboardCommand(const std::string& commadMsg) { targetTrajectoriesKeyboardPublisherPtr_->publishKeyboardCommand(commadMsg); }
 
  private:
-  void observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
+  scalar_t desiredTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const;
+  ocs2::TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const ocs2::SystemObservation& observation) const;
 
   void terrainCallback(const visualization_msgs::Marker::ConstPtr& msg);
 
-  scalar_t desiredTimeToTarget(scalar_t dyaw, scalar_t dx, scalar_t dy) const;
+  std::unique_ptr<ocs2::TargetTrajectoriesKeyboardPublisher> targetTrajectoriesKeyboardPublisherPtr_;
 
-  ros::Publisher costDesiredPublisher_;
-
-  ros::Subscriber observationSubscriber_;
-  std::mutex observationMutex_;
-  ocs2_msgs::mpc_observation::ConstPtr observation_;
-
-  ros::Subscriber terrainSubscriber_;
-  std::mutex terrainMutex_;
   TerrainPlane localTerrain_;
-
-  ros::Subscriber commandSubscriber_;
+  mutable std::mutex terrainMutex_;
+  ros::Subscriber terrainSubscriber_;
 };
 
 }

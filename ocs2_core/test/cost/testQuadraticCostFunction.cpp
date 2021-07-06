@@ -15,7 +15,7 @@ class testQuadraticCost : public testing::Test {
 
     xNominal_.setRandom(2);
     uNominal_.setRandom(1);
-    costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {xNominal_}, {uNominal_});
+    costDesiredTrajectories_ = TargetTrajectories({0.0}, {xNominal_}, {uNominal_});
 
     x_.setRandom(2);
     u_.setRandom(1);

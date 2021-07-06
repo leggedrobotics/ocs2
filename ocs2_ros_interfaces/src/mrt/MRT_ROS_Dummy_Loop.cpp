@@ -52,7 +52,7 @@ MRT_ROS_Dummy_Loop::MRT_ROS_Dummy_Loop(MRT_ROS_Interface& mrt, scalar_t mrtDesir
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories) {
   ros::WallRate rosRate(mrtDesiredFrequency_);  // in Hz
 
   // time step
@@ -68,7 +68,7 @@ void MRT_ROS_Dummy_Loop::run(const SystemObservation& initObservation, const Cos
   scalar_t time = initObservation.time;
 
   // reset MPC node
-  mrt_.resetMpcNode(initCostDesiredTrajectories);
+  mrt_.resetMpcNode(initTargetTrajectories);
 
   // wait for the initial MPC plan
   ROS_INFO_STREAM("Waiting for the initial policy ...");

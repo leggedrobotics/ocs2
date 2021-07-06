@@ -29,7 +29,7 @@ class DummyInterface final : public RobotInterface {
     problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
     costDesiredTrajectories_ = CostDesiredTrajectories({0.0}, {vector_t::Zero(2)}, {vector_t::Zero(2)});
-    problem_.costDesiredTrajectories = &costDesiredTrajectories_;
+    problem_.costDesiredTrajectories = &targetTrajectories_;
 
     initializerPtr_.reset(new DefaultInitializer(1));
 
@@ -52,7 +52,7 @@ class DummyInterface final : public RobotInterface {
   OptimalControlProblem problem_;
   std::unique_ptr<Initializer> initializerPtr_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  CostDesiredTrajectories costDesiredTrajectories_;
+  CostDesiredTrajectories targetTrajectories_;
 };
 
 class DummyPyBindings final : public PythonInterface {

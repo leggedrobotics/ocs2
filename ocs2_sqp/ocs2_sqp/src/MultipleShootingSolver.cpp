@@ -137,7 +137,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
   // Initialize references
   for (auto& ocpDefinition : ocpDefinitions_) {
-    ocpDefinition.costDesiredTrajectories = &this->getCostDesiredTrajectories();
+    const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
+    ocpDefinition.costDesiredTrajectories = &targetTrajectories;
   }
 
   // Bookkeeping
@@ -316,7 +317,7 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   for (const auto& t : time) {
     primalSolution_.timeTrajectory_.push_back(t.time);
   }
-  primalSolution_.modeSchedule_ = this->getModeSchedule();
+  primalSolution_.modeSchedule_ = this->getReferenceManager().getModeSchedule();
 
   // Assign controller
   if (settings_.useFeedbackPolicy) {

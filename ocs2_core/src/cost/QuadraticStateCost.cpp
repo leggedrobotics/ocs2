@@ -46,7 +46,7 @@ QuadraticStateCost* QuadraticStateCost::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
                                       const PreComputation&) const {
   const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
   return 0.5 * xDeviation.dot(Q_ * xDeviation);
@@ -56,7 +56,7 @@ scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                   const CostDesiredTrajectories& desiredTrajectory,
+                                                                                   const TargetTrajectories& targetTrajectories,
                                                                                    const PreComputation&) const {
   const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
 
@@ -71,7 +71,7 @@ ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximati
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t QuadraticStateCost::getStateDeviation(scalar_t time, const vector_t& state,
-                                               const CostDesiredTrajectories& desiredTrajectory) const {
+                                               const TargetTrajectories& targetTrajectories) const {
   return state - desiredTrajectory.getDesiredState(time);
 }
 

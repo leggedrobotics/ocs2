@@ -33,16 +33,16 @@ namespace ocs2 {
 namespace quadrotor {
 
 void QuadrotorDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) {
-  const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
+  const auto& targetTrajectories = command.mpcTargetTrajectories_;
 
   // publish command transform
-  const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory().back()(0),
-                                                                       costDesiredTrajectories.desiredStateTrajectory().back()(1),
-                                                                       costDesiredTrajectories.desiredStateTrajectory().back()(2));
+  const Eigen::Vector3d desiredPositionWorldToTarget(targetTrajectories.stateTrajectory.back()(0),
+                                                     targetTrajectories.stateTrajectory.back()(1),
+                                                     targetTrajectories.stateTrajectory.back()(2));
   const Eigen::Quaterniond desiredQuaternionBaseToWorld =
-      Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(3), Eigen::Vector3d::UnitZ()} *
-      Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(4), Eigen::Vector3d::UnitY()} *
-      Eigen::AngleAxisd{costDesiredTrajectories.desiredStateTrajectory().back()(5), Eigen::Vector3d::UnitX()};
+      Eigen::AngleAxisd{targetTrajectories.stateTrajectory.back()(3), Eigen::Vector3d::UnitZ()} *
+      Eigen::AngleAxisd{targetTrajectories.stateTrajectory.back()(4), Eigen::Vector3d::UnitY()} *
+      Eigen::AngleAxisd{targetTrajectories.stateTrajectory.back()(5), Eigen::Vector3d::UnitX()};
   ros::Time timeMsg = ros::Time::now();
   geometry_msgs::TransformStamped command_frame_transform;
   command_frame_transform.header.stamp = timeMsg;

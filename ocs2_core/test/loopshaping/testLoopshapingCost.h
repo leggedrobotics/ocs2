@@ -45,7 +45,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     systemCost.reset(new QuadraticStateInputCost(Q, R, P));
     systemStateCost.reset(new QuadraticStateCost(Q_final));
 
-    costDesiredTrajectories = CostDesiredTrajectories({0.0}, {x_sys}, {u_sys});
+    costDesiredTrajectories = TargetTrajectories({0.0}, {x_sys}, {u_sys});
 
     StateInputCostCollection systemCostCollection;
     StateCostCollection systemStateCostCollection;

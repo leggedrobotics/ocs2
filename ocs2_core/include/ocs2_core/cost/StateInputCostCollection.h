@@ -51,12 +51,12 @@ class StateInputCostCollection : public Collection<StateInputCost> {
   StateInputCostCollection* clone() const override;
 
   /** Get state-input cost value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& targetTrajectories,
                             const PreComputation& preComp) const;
 
   /** Get state-input cost quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                         const CostDesiredTrajectories& desiredTrajectory,
+                                                                         const TargetTrajectories& targetTrajectories,
                                                                          const PreComputation& preComp) const;
 
  protected:

@@ -46,8 +46,8 @@ namespace {
  */
 class SwitchedConstraint : public StateInputConstraint {
  public:
-  explicit SwitchedConstraint(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr)
-      : StateInputConstraint(ConstraintOrder::Linear), modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
+  explicit SwitchedConstraint(std::shared_ptr<ReferenceManager> referenceManagerPtr)
+      : StateInputConstraint(ConstraintOrder::Linear), referenceManagerPtr_(std::move(referenceManagerPtr)) {
     int n = 3;
     int m = 2;
     int nc = 1;
@@ -91,7 +91,7 @@ class SwitchedConstraint : public StateInputConstraint {
 
  private:
   std::vector<std::unique_ptr<ocs2::StateInputConstraint>> subsystemConstraintsPtr_;
-  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
 };
 
 std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scalar_t eventTime) {
@@ -143,7 +143,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   // Set up solver
   ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
   solver.setModeScheduleManager(modeScheduleManagerPtr);
-  solver.setCostDesiredTrajectories(costDesiredTrajectories);
+  solver.setReferenceManager(referenceManagerPtr);
 
   // Solve
   solver.run(startTime, initState, finalTime, partitioningTimes);

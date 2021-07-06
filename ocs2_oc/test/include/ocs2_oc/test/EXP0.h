@@ -43,7 +43,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys1 : public LinearSystemDynamics {
+class EXP0_Sys1 final : public LinearSystemDynamics {
  public:
   EXP0_Sys1() : LinearSystemDynamics(matrix_t(2, 2), matrix_t(2, 1)) {
     LinearSystemDynamics::A_ << 0.6, 1.2, -0.8, 3.4;
@@ -57,7 +57,7 @@ class EXP0_Sys1 : public LinearSystemDynamics {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_Sys2 : public LinearSystemDynamics {
+class EXP0_Sys2 final : public LinearSystemDynamics {
  public:
   EXP0_Sys2() : LinearSystemDynamics(matrix_t(2, 2), matrix_t(2, 1)) {
     LinearSystemDynamics::A_ << 4, 3, -1, 0;
@@ -141,5 +141,18 @@ class EXP0_FinalCost final : public QuadraticStateCost {
  public:
   vector_t xDesired_;
 };
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline std::shared_ptr<ReferenceManager> getExp0ReferenceManager(scalar_array_t eventTimes, std::vector<size_t> modeSequence) {
+  const vector_t x = (vector_t(2) << 4.0, 2.0).finished();
+  const vector_t u = (vector_t(1) << 0.0).finished();
+  TargetTrajectories targetTrajectories({0.0}, {x}, {u});
+
+  ModeSchedule modeSchedule(std::move(eventTimes), std::move(modeSequence));
+
+  return std::make_shared<ReferenceManager>(std::move(targetTrajectories), std::move(modeSchedule));
+}
 
 }  // namespace ocs2

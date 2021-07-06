@@ -6,7 +6,7 @@ from ocs2_double_integrator_example import (
     scalar_array,
     vector_array,
     matrix_array,
-    CostDesiredTrajectories,
+    TargetTrajectories,
 )
 
 
@@ -28,7 +28,7 @@ class double_integrator_python_tests(unittest.TestCase):
         desiredStateTraj = vector_array()
         desiredStateTraj.push_back(np.zeros(self.stateDim))
 
-        targetTrajectories = CostDesiredTrajectories(
+        targetTrajectories = TargetTrajectories(
             desiredTimeTraj, desiredStateTraj, desiredInputTraj
         )
         self.mpc.reset(targetTrajectories)

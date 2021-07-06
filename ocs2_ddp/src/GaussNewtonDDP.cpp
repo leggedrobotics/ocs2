@@ -289,7 +289,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   }
 
   // fill mode schedule
-  primalSolutionPtr->modeSchedule_ = this->getModeSchedule();
+  primalSolutionPtr->modeSchedule_ = this->getReferenceManager().getModeSchedule();
 }
 
 /******************************************************************************************************/
@@ -543,7 +543,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(std::vector<LinearController>&
                                                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
                                                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
                                                   size_t workerIndex /*= 0*/) {
-  const scalar_array_t& eventTimes = this->getModeSchedule().eventTimes;
+  const scalar_array_t& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
 
   if (controllersStock.size() != numPartitions_) {
     throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
@@ -1559,7 +1559,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\nRewind Counter: " << rewindCounter_ << "\n";
     std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver starts from initial time " << initTime << " to final time "
               << finalTime << ".\n";
-    std::cerr << this->getModeSchedule() << "\n";
+    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
   }
 
   initState_ = initState;
@@ -1580,7 +1580,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // set cost desired trajectories
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
-    optimalControlProblemStock_[i].costDesiredTrajectories = &this->getCostDesiredTrajectories();
+    const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
+    optimalControlProblemStock_[i].targetTrajectories = &targetTrajectories;
   }
 
   // display

@@ -196,4 +196,17 @@ class EXP1_FinalCost final : public QuadraticStateCost {
   vector_t xDesired_;
 };
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline std::shared_ptr<ReferenceManager> getExp1ReferenceManager(scalar_array_t eventTimes, std::vector<size_t> modeSequence) {
+  const vector_t x = (vector_t(2) << 1.0, -1.0).finished();
+  const vector_t u = (vector_t(1) << 0.0).finished();
+  TargetTrajectories targetTrajectories({0.0}, {x}, {u});
+
+  ModeSchedule modeSchedule(std::move(eventTimes), std::move(modeSequence));
+
+  return std::make_shared<ReferenceManager>(std::move(targetTrajectories), std::move(modeSchedule));
+}
+
 }  // namespace ocs2

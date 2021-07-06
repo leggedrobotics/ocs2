@@ -82,11 +82,11 @@ class StateInputSoftConstraint final : public StateInputCost {
 
   bool isActive(scalar_t time) const override;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& /* desiredTrajectory */,
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& /* targetTrajectories */,
                     const PreComputation& preComp) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& /* desiredTrajectory */,
+                                                                 const TargetTrajectories& /* targetTrajectories */,
                                                                  const PreComputation& preComp) const override;
 
  private:

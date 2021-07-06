@@ -47,8 +47,8 @@ class DiscreteTranscriptionTest : public testing::Test {
   DiscreteTranscriptionTest() {
     srand(0);
 
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     system = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
 
@@ -117,7 +117,7 @@ class DiscreteTranscriptionTest : public testing::Test {
     }
   }
 
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   ocs2::OptimalControlProblem constrainedProblem;
   ocs2::qp_solver::ContinuousTrajectory linearization;

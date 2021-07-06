@@ -27,15 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+<<<<<<< HEAD:ocs2_oc/include/ocs2_oc/oc_problem/LoopshapingOptimalControlProblem.h
 #pragma once
 
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+=======
+#include "ocs2_oc/synchronized_module/ReferenceManager.h"
+>>>>>>> master:ocs2_oc/src/synchronized_module/ReferenceManager.cpp
 
 namespace ocs2 {
 namespace LoopshapingOptimalControlProblem {
 
+<<<<<<< HEAD:ocs2_oc/include/ocs2_oc/oc_problem/LoopshapingOptimalControlProblem.h
 OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
+=======
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ReferenceManager::ReferenceManager(TargetTrajectories initialTargetTrajectories, ModeSchedule initialModeSchedule)
+    : targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
+  targetTrajectories_.updateFromBuffer();
+  modeSchedule_.updateFromBuffer();
+  modifyReferences(initTime, finalTime, initState, targetTrajectories_.get(), modeSchedule_.get());
+}
+>>>>>>> master:ocs2_oc/src/synchronized_module/ReferenceManager.cpp
 
 }
 }  // namespace ocs2

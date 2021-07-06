@@ -167,7 +167,7 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
 
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the solution has only zeros.
-  costDesiredTrajectories = ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
+  targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
   unconstrainedProblem.costDesiredTrajectories = &costDesiredTrajectories;
   const auto zeroX0 = ocs2::vector_t::Zero(STATE_DIM);
 

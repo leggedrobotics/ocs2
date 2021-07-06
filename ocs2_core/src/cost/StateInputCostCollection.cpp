@@ -47,7 +47,7 @@ StateInputCostCollection* StateInputCostCollection::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                            const CostDesiredTrajectories& desiredTrajectory, const PreComputation& preComp) const {
+                                            const TargetTrajectories& targetTrajectories, const PreComputation& preComp) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
@@ -65,7 +65,7 @@ scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                          const vector_t& input,
-                                                                                         const CostDesiredTrajectories& desiredTrajectory,
+                                                                                         const TargetTrajectories& targetTrajectories,
                                                                                          const PreComputation& preComp) const {
   const auto firstActive = std::find_if(terms_.begin(), terms_.end(),
                                         [time](const std::unique_ptr<StateInputCost>& costTerm) { return costTerm->isActive(time); });

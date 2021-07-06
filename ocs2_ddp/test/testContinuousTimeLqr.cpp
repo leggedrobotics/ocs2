@@ -57,7 +57,7 @@ TEST(testContinousTimeLqr, compareWithMatlab) {
   ocs2::OptimalControlProblem problem;
   problem.dynamicsPtr.reset(dynamics.clone());
   problem.costPtr->add("cost", std::move(cost));
-  problem.costDesiredTrajectories = &costDesiredTrajectories;
+  problem.costDesiredTrajectories = &targetTrajectories;
 
   // Solve LQR
   const auto lqrSolution = continuous_time_lqr::solve(problem, time, state, input);
@@ -93,7 +93,7 @@ TEST(testContinousTimeLqr, evaluateCAREresidual) {
     ocs2::OptimalControlProblem problem;
     problem.dynamicsPtr.reset(dynamics->clone());
     problem.costPtr->add("cost", std::move(cost));
-    problem.costDesiredTrajectories = &costDesiredTrajectories;
+    problem.costDesiredTrajectories = &targetTrajectories;
 
     // Solve LQR
     const scalar_t timeLinearization = 0.0;

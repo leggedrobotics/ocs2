@@ -1,1 +1,1 @@
-[![Build Status](https://ci.leggedrobotics.com/buildStatus/icon?job=bitbucket_leggedrobotics/ocs2_anymal/master)](https://ci.leggedrobotics.com/job/bitbucket_leggedrobotics/job/ocs2_anymal/job/master/)
+[![Build Status](https://ci.leggedrobotics.com/buildStatus/icon?job=bitbucket_leggedrobotics/ocs2_anymal/master)](https://ci.leggedrobotics.com/job/bitbucket_leggedrobotics/job/ocs2_anymal/job/master/) 

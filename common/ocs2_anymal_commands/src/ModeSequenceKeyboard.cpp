@@ -4,11 +4,10 @@
 
 #include "ocs2_anymal_commands/ModeSequenceKeyboard.h"
 
+#include <ocs2_core/misc/CommandLine.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ocs2_msgs/mode_schedule.h>
-
-#include "ocs2_anymal_commands/CommandLineInterface.h"
 
 namespace switched_model {
 
@@ -30,7 +29,8 @@ void ModeSequenceKeyboard::getKeyboardCommand() {
   const std::string commadMsg = "Enter the desired gait, for the list of available gait enter \"list\"";
   std::cout << commadMsg << ": ";
 
-  const auto gaitCommand = getCommandLineString();
+  auto shouldTerminate = []() { return !ros::ok() || !ros::master::check(); };
+  const auto gaitCommand = ocs2::getCommandLineString(shouldTerminate);
 
   if (gaitCommand.empty()) {
     return;

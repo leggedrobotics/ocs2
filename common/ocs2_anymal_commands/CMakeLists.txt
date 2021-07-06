@@ -87,7 +87,7 @@ target_compile_options(target_command_node_velocity PRIVATE ${OCS2_CXX_FLAGS})
 
 add_executable(gait_command_node
   src/ModeSequenceKeyboard.cpp
-  src/AnymalModeSequenceCommand.cpp
+  src/AnymalGaitNode.cpp
 )
 add_dependencies(gait_command_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

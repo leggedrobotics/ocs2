@@ -88,7 +88,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   // State Derivative - base part
   linearApproximation.dfdx.resize(numConstraints, STATE_DIM);
   const auto baseStateSize = 2 * BASE_COORDINATE_SIZE;
-  linearApproximation.dfdx.middleCols<baseStateSize>(1).noalias() = settings_.A * stateInputJacobian.middleCols<baseStateSize>(1);
+  linearApproximation.dfdx.leftCols<baseStateSize>().noalias() = settings_.A * stateInputJacobian.middleCols<baseStateSize>(1);
 
   // State Derivative - joints positions part
   linearApproximation.dfdx.middleCols<JOINT_COORDINATE_SIZE>(baseStateSize).setZero();

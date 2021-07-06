@@ -6,7 +6,7 @@
 
 #include <geometry_msgs/PoseArray.h>
 
-#include "ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h"
+#include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
 
 namespace switched_model {
 
@@ -32,15 +32,15 @@ void SwingPlanningVisualizer::preSolverRun(scalar_t initTime, scalar_t finalTime
     std::for_each(nominalFootholds.begin(), nominalFootholds.end(), [&](const TerrainPlane& foothold) {
       // Construct pose msg
       geometry_msgs::Pose pose;
-      pose.position = getPointMsg(foothold.positionInWorld);
+      pose.position = ocs2::getPointMsg(foothold.positionInWorld);
       Eigen::Quaterniond terrainOrientation(foothold.orientationWorldToTerrain.transpose());
-      pose.orientation = getOrientationMsg(terrainOrientation);
+      pose.orientation = ocs2::getOrientationMsg(terrainOrientation);
 
       // Fill message container
       poseArray.poses.push_back(std::move(pose));
     });
 
-    poseArray.header = getHeaderMsg(frameId_, timeStamp);
+    poseArray.header = ocs2::getHeaderMsg(frameId_, timeStamp);
     nominalFootholdPublishers_[leg].publish(poseArray);
   }
 }

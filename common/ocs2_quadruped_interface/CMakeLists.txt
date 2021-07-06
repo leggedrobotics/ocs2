@@ -58,8 +58,6 @@ add_library(${PROJECT_NAME}
   src/QuadrupedLogger.cpp
   src/QuadrupedMpcNode.cpp
   src/QuadrupedPointfootInterface.cpp
-  src/QuadrupedVisualizationColors.cpp
-  src/QuadrupedVisualizationHelpers.cpp
   src/QuadrupedVisualizer.cpp
   src/QuadrupedWheeledInterface.cpp
   src/SwingPlanningVisualizer.cpp

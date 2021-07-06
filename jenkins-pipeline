@@ -1,2 +1,3 @@
 library 'continuous_integration_pipeline'
-ciPipeline("--environment anymal --release 21.01 --recipes raisimlib")
+ciPipeline("--environment anymal --release 21.01 --recipes raisimlib \
+            --dependencies 'git@bitbucket.org:leggedrobotics/ocs2_dev.git;feature/CostDesiredTrajectories_part1;git'")

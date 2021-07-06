@@ -4,7 +4,6 @@
 
 #include "ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpcNode.h"
 
-#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
@@ -12,6 +11,8 @@
 
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
 #include <ocs2_quadruped_interface/TerrainPlaneVisualizer.h>
+
+#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpc.h>
 
 namespace switched_model_loopshaping {
 
@@ -40,12 +41,8 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
   auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, quadrupedInterface.getReferenceManagerPtr());
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
-  // DDP-MPC
-  std::unique_ptr<ocs2::MPC_DDP> mpcPtr(new ocs2::MPC_DDP(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
-                                                          quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
-                                                          &quadrupedInterface.getInitializer(), ddpSettings, mpcSettings,
-                                                          quadrupedInterface.getTerminalCostPtr()));
-  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+  // MPC
+  auto mpcPtr = getSlqMpc(quadrupedInterface, mpcSettings, ddpSettings, rosReferenceManagerPtr);
   mpcPtr->getSolverPtr()->setSynchronizedModules({loopshapingSolverModule});
 
   // launch MPC nodes

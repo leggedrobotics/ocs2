@@ -8,8 +8,7 @@
 
 TEST(TestZeroForceConstraint, evaluate) {
   using TestedConstraint = switched_model::ZeroForceConstraint;
-  TestedConstraint zeroForceConstraint;
-  zeroForceConstraint.setContactFlags({false, true, false, true});
+  TestedConstraint zeroForceConstraint(0);
 
   // evaluation point
   double t = 0.0;

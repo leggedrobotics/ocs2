@@ -24,8 +24,8 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
   // Initialize cost to be able to query it
   const auto stanceFlags = switched_model::constantFeetArray(true);
   const auto uSystemForWeightCompensation = weightCompensatingInputs(getComModel(), stanceFlags, switched_model::vector3_t::Zero());
-  ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {getInitialState()}, {uSystemForWeightCompensation});
-  costFunctionPtr_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  ocs2::TargetTrajectories targetTrajectories({0.0}, {getInitialState()}, {uSystemForWeightCompensation});
+  costFunctionPtr_->setTargetTrajectoriesPtr(&targetTrajectories);
 
   const auto lqrSolution =
       ocs2::continuous_time_lqr::solve(*dynamicsPtr_, *costFunctionPtr_, 0.0, getInitialState(), uSystemForWeightCompensation);

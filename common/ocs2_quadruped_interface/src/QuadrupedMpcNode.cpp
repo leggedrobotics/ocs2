@@ -4,12 +4,13 @@
 
 #include "ocs2_quadruped_interface/QuadrupedMpcNode.h"
 
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
-#include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
 #include <ocs2_quadruped_interface/TerrainPlaneVisualizer.h>
 
@@ -36,9 +37,19 @@ void quadrupedMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& qua
       quadrupedInterface.getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
   solverModules.push_back(swingPlanningVisualizer);
 
-  // launch MPC nodes
-  auto mpcPtr = getMpc(quadrupedInterface, mpcSettings, ddpSettings);
+  // reference manager
+  auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, quadrupedInterface.getReferenceManagerPtr());
+  rosReferenceManagerPtr->subscribe(nodeHandle);
+
+  // DDP-MPC
+  std::unique_ptr<ocs2::MPC_DDP> mpcPtr(new ocs2::MPC_DDP(&quadrupedInterface.getRollout(), &quadrupedInterface.getDynamics(),
+                                                          quadrupedInterface.getConstraintPtr(), &quadrupedInterface.getCost(),
+                                                          &quadrupedInterface.getInitializer(), ddpSettings, mpcSettings,
+                                                          quadrupedInterface.getTerminalCostPtr()));
+  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
   mpcPtr->getSolverPtr()->setSynchronizedModules(solverModules);
+
+  // launch MPC nodes
   ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }

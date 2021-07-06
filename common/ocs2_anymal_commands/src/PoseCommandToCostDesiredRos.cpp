@@ -10,20 +10,13 @@
 
 namespace switched_model {
 
-PoseCommandToCostDesiredRos::PoseCommandToCostDesiredRos(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix, const scalar_array_t& targetCommandLimits,
-                                                         const std::string& configFile) {
+PoseCommandToCostDesiredRos::PoseCommandToCostDesiredRos(::ros::NodeHandle& nodeHandle, const std::string& configFile) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(configFile, pt);
   targetDisplacementVelocity = pt.get<scalar_t>("targetDisplacementVelocity");
   targetRotationVelocity = pt.get<scalar_t>("targetRotationVelocity");
   comHeight = pt.get<scalar_t>("comHeight");
   ocs2::loadData::loadEigenMatrix(configFile, "defaultJointState", defaultJointState);
-
-  auto commandLineToTargetTrajectoriesFun = [this](const vector_t& commadLineTarget, const ocs2::SystemObservation& observation) {
-    return this->commandLineToTargetTrajectories(commadLineTarget, observation);
-  };
-  targetTrajectoriesKeyboardPublisherPtr_.reset(new ocs2::TargetTrajectoriesKeyboardPublisher(
-      nodeHandle, topicPrefix, targetCommandLimits, commandLineToTargetTrajectoriesFun));
 
   // Setup ROS communication
   terrainSubscriber_ = nodeHandle.subscribe("/ocs2_anymal/localTerrain", 1, &PoseCommandToCostDesiredRos::terrainCallback, this);

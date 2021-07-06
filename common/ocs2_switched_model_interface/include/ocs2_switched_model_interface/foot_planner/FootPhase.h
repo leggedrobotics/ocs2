@@ -17,8 +17,8 @@ namespace switched_model {
  */
 struct FootNormalConstraintMatrix {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Eigen::Matrix<scalar_t, 1, 3> positionMatrix;
-  Eigen::Matrix<scalar_t, 1, 3> velocityMatrix;
+  Eigen::Matrix<scalar_t, 1, 3> positionMatrix = Eigen::Matrix<scalar_t, 1, 3>::Zero();
+  Eigen::Matrix<scalar_t, 1, 3> velocityMatrix = Eigen::Matrix<scalar_t, 1, 3>::Zero();
   scalar_t constant = 0;
 };
 

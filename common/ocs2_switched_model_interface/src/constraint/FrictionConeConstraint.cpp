@@ -77,7 +77,7 @@ FrictionConeConstraint::LocalForceDerivatives FrictionConeConstraint::computeLoc
 }
 
 vector3_t FrictionConeConstraint::computeLocalForces(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const {
-  const vector3_t forcesInWorld = rotationMatrixBaseToOrigin(eulerXYZ) * forcesInBodyFrame;
+  const vector3_t forcesInWorld = rotateVectorBaseToOrigin(forcesInBodyFrame, eulerXYZ);
   return t_R_w * forcesInWorld;
 }
 

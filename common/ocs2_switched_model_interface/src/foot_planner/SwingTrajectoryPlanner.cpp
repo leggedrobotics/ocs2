@@ -15,7 +15,7 @@ SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings se
     : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()) {}
 
 void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                                    const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+                                    const ocs2::TargetTrajectories& targetTrajectories,
                                     const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg,
                                     const TerrainModel& terrainModel) {
   const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
@@ -30,7 +30,7 @@ void SwingTrajectoryPlanner::update(scalar_t initTime, scalar_t finalTime, const
     }
 
     // Nominal footholds / terrain planes
-    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, costDesiredTrajectories, finalTime, terrainModel);
+    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, finalTime, terrainModel);
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
@@ -110,7 +110,7 @@ scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, sca
 }
 
 std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                                               const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+                                                                               const ocs2::TargetTrajectories& targetTrajectories,
                                                                                scalar_t finalTime, const TerrainModel& terrainModel) const {
   std::vector<TerrainPlane> nominalFootholdTerrain;
 
@@ -119,7 +119,7 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
     nominalFootholdTerrain.push_back(lastContacts_[leg].second);
   }
 
-  // For future contact phases, use costDesiredTrajectories at halve the contact phase
+  // For future contact phases, use TargetTrajectories at halve the contact phase
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase)) {
       const auto middleContactTime = [&] {
@@ -131,7 +131,7 @@ std::vector<TerrainPlane> SwingTrajectoryPlanner::selectNominalFootholdTerrain(i
       }();
 
       // Compute foot position from cost desired trajectory
-      vector_t state = costDesiredTrajectories.getDesiredState(middleContactTime);
+      vector_t state = targetTrajectories.getDesiredState(middleContactTime);
       const base_coordinate_t middleContactDesiredComPose = state.head<BASE_COORDINATE_SIZE>();
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);

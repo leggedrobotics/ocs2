@@ -99,10 +99,10 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedMo
   initialize(STATE_DIM, INPUT_DIM, costVectorLength, "MotionTrackingCost", "/tmp/ocs2", recompile);
 };
 
-ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::CostDesiredTrajectories& desiredTrajectory) const {
+ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const {
   // Interpolate reference
-  const comkino_state_t xRef = desiredTrajectory.getDesiredState(time);
-  comkino_input_t uRef = desiredTrajectory.getDesiredInput(time);
+  const comkino_state_t xRef = targetTrajectories.getDesiredState(time);
+  comkino_input_t uRef = targetTrajectories.getDesiredInput(time);
 
   // If the input has zero values, overwrite it.
   if (uRef.isZero()) {

@@ -27,17 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/TargetTrajectories_IMarker_Mobile_Manipulator.h>
+#include <ocs2_mobile_manipulator_example/definitions.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesInteractiveMarker.h>
+
+using namespace ocs2;
+using namespace mobile_manipulator;
+
+/**
+ * Converts the pose of the interactive marker to TargetTrajectories.
+ */
+TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position, const Eigen::Quaterniond& orientation,
+                                                const SystemObservation& observation) {
+  // time trajectory
+  const scalar_array_t timeTrajectory{observation.time};
+  // state trajectory: 3 + 4 for desired position vector and orientation quaternion
+  const vector_t target = (vector_t(7) << position, orientation.coeffs()).finished();
+  const vector_array_t stateTrajectory{target};
+  // input trajectory
+  const vector_array_t inputTrajectory{vector_t::Zero(INPUT_DIM)};
+
+  return {timeTrajectory, stateTrajectory, inputTrajectory};
+}
 
 int main(int argc, char* argv[]) {
-  ros::init(argc, argv, "mobile_manipulator_target");
+  const std::string robotName = "mobile_manipulator";
+  ::ros::init(argc, argv, robotName + "_target");
+  ::ros::NodeHandle nodeHandle;
 
-  ocs2::mobile_manipulator::TargetTrajectories_IMarker_Mobile_Manipulator targetPoseCommand(argc, argv, "mobile_manipulator");
+  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
+  targetPoseCommand.publishInteractiveMarker();
 
-  targetPoseCommand.launchNodes();
-
-  // start the ROS main loop
-  ros::spin();
   // Successful exit
   return 0;
 }

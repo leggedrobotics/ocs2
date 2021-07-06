@@ -49,9 +49,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
-#include "DDP_Settings.h"
-#include "riccati_equations/RiccatiModification.h"
-#include "search_strategy/SearchStrategyBase.h"
+#include "ocs2_ddp/DDP_Settings.h"
+#include "ocs2_ddp/riccati_equations/RiccatiModification.h"
+#include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
 
 namespace ocs2 {
 

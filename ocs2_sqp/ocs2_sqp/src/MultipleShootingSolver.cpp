@@ -146,18 +146,20 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // Determine time discretization, taking into account event times.
-  const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
+  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
+  const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, modeSchedule.eventTimes);
 
   // Initialize the state and input
   vector_array_t x, u;
   initializeStateInputTrajectories(initState, timeDiscretization, x, u);
 
   // Initialize cost
+  const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
   for (auto& cost : costFunctionPtr_) {
-    cost->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+    cost->setTargetTrajectoriesPtr(&targetTrajectories);
   }
   if (terminalCostFunctionPtr_) {
-    terminalCostFunctionPtr_->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+    terminalCostFunctionPtr_->setTargetTrajectoriesPtr(&targetTrajectories);
   }
 
   // Bookkeeping
@@ -335,7 +337,7 @@ void MultipleShootingSolver::setPrimalSolution(const std::vector<AnnotatedTime>&
   for (const auto& t : time) {
     primalSolution_.timeTrajectory_.push_back(t.time);
   }
-  primalSolution_.modeSchedule_ = this->getModeSchedule();
+  primalSolution_.modeSchedule_ = this->getReferenceManager().getModeSchedule();
 
   // Assign controller
   if (settings_.useFeedbackPolicy) {

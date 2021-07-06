@@ -78,11 +78,11 @@ class CircularKinematicsCost final : public CostFunctionBase {
   CircularKinematicsCost* clone() const override { return new CircularKinematicsCost(*this); }
 
   scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override {
-    return costFunction_.getValue(t, x, u, *costDesiredTrajectoriesPtr_);
+    return costFunction_.getValue(t, x, u, *targetTrajectoriesPtr_);
   }
 
   ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override {
-    return costFunction_.getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
+    return costFunction_.getQuadraticApproximation(t, x, u, *targetTrajectoriesPtr_);
   }
 
   scalar_t finalCost(scalar_t t, const vector_t& x) override { return 0.0; }

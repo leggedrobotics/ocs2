@@ -40,11 +40,11 @@ std::string toDelimitedString(const Container& container, const std::string& del
   std::stringstream ss;
 
   bool addDelimiter = false;
-  for (const auto& value : container) {
+  for (size_t i = 0; i < container.size(); i++) {
     if (addDelimiter) {
       ss << delimiter;
     }
-    ss << value;
+    ss << container[i];
     addDelimiter = true;
   }
 

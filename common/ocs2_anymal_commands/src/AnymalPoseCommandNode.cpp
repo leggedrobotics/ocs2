@@ -2,6 +2,7 @@
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 #include "ocs2_anymal_commands/PoseCommandToCostDesiredRos.h"
 
@@ -21,12 +22,19 @@ int main(int argc, char* argv[]) {
   ::ros::init(argc, argv, robotName + "_mpc_pose_command_node");
   ::ros::NodeHandle nodeHandle;
 
+  // PoseCommand To TargetTrajectories
+  switched_model::PoseCommandToCostDesiredRos targetPoseCommand(nodeHandle, filename);
+  auto commandLineToTargetTrajectoriesFun = [&](const ocs2::vector_t& commadLineTarget, const ocs2::SystemObservation& observation) {
+    return targetPoseCommand.commandLineToTargetTrajectories(commadLineTarget, observation);
+  };
+
   // goalPose: [deltaX, deltaY, deltaZ, Roll, Pitch, deltaYaw]
   const ocs2::scalar_array_t relativeBaseLimit{10.0, 10.0, 0.2, 45.0, 45.0, 360.0};
-  switched_model::PoseCommandToCostDesiredRos targetPoseCommand(nodeHandle, robotName, relativeBaseLimit, filename);
+  ocs2::TargetTrajectoriesKeyboardPublisher targetTrajectoriesKeyboardPublisher(
+      nodeHandle, robotName, relativeBaseLimit, commandLineToTargetTrajectoriesFun);
 
   const std::string commandMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
-  targetPoseCommand.publishKeyboardCommand(commandMsg);
+  targetTrajectoriesKeyboardPublisher.publishKeyboardCommand(commandMsg);
 
   // Successful exit
   return 0;

@@ -55,6 +55,7 @@ class EndEffectorConstraint : public ocs2::StateInputConstraint {
 
  private:
   Settings_t settings_;
+  const int legStartIdx_;
   std::unique_ptr<ocs2::CppAdInterface> adInterface_;
 };
 

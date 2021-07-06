@@ -66,14 +66,27 @@ feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::feetPositions
   return feetPositionsInOriginFrame;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+typename KinematicsModelBase<SCALAR_T>::joint_jacobian_t KinematicsModelBase<SCALAR_T>::baseToFootJacobianInBaseFrame(
+    size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  joint_jacobian_t footJacobian = joint_jacobian_t::Zero();
+  const auto footStartIdx = 3 * footIndex;
+  footJacobian.template block<6, 3>(0, footStartIdx) = baseToFootJacobianBlockInBaseFrame(footIndex, jointPositions);
+  return footJacobian;
+}
+
 ///******************************************************************************************************/
 ///******************************************************************************************************/
 ///******************************************************************************************************/
 template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footVelocityRelativeToBaseInBaseFrame(
     size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const {
-  const joint_jacobian_t b_baseToFootJacobian = baseToFootJacobianInBaseFrame(footIndex, jointPositions);
-  return b_baseToFootJacobian.template bottomRows<3>() * jointVelocities;
+  const auto b_baseToFootJacobianBlock = baseToFootJacobianBlockInBaseFrame(footIndex, jointPositions);
+  const auto legStartIdx = 3 * footIndex;
+  return b_baseToFootJacobianBlock.template bottomRows<3>() * jointVelocities.template segment<3>(legStartIdx);
 }
 
 ///******************************************************************************************************/

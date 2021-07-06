@@ -86,40 +86,31 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::footOrient
 /******************************************************************************************************/
 
 template <typename SCALAR_T>
-typename AnymalBearKinematics<SCALAR_T>::joint_jacobian_t AnymalBearKinematics<SCALAR_T>::baseToFootJacobianInBaseFrame(
+typename AnymalBearKinematics<SCALAR_T>::joint_jacobian_block_t AnymalBearKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-
-  joint_jacobian_t footJacobian;
-  footJacobian.setZero();
 
   switch (footIndex) {
     case LF: {
       typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_FOOT fr_trunk_J_fr_LF_foot_;
-      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_LF_foot_(jointPositions);
     }
     case RF: {
       typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_FOOT fr_trunk_J_fr_RF_foot_;
-      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_RF_foot_(jointPositions);
     }
     case LH: {
       typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_FOOT fr_trunk_J_fr_LH_foot_;
-      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_LH_foot_(jointPositions);
     }
     case RH: {
       typename iit::bear::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_FOOT fr_trunk_J_fr_RH_foot_;
-      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_RH_foot_(jointPositions);
     }
     default: {
       throw std::runtime_error("Not defined foot index.");
     }
   }
-
-  return footJacobian;
 }
 
 }  // namespace tpl

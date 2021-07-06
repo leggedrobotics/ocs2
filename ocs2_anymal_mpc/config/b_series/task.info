@@ -84,7 +84,7 @@ ddp
   minRelCost                      0.1
   constraintTolerance             5e-3
 
-  displayInfo                     true
+  displayInfo                     false
   displayShortSummary             false
   checkNumericalStability         false
   debugPrintRollout               false
@@ -148,7 +148,7 @@ mpc
 
   solutionTimeWindow              -1  ; [s]
 
-  mpcDesiredFrequency             50  ; [Hz]
+  mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
 }
 

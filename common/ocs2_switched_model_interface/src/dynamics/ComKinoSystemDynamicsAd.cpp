@@ -57,7 +57,6 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
 
   const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(comPose);
-  const matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin(baseEulerAngles);
 
   const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(com_comTwist);
   const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(com_comTwist);
@@ -68,7 +67,7 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   // gravity effect on CoM in CoM coordinate
   const vector3_s_t<SCALAR_T> o_gravityVector(SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(-9.81));
   vector6_s_t<SCALAR_T> MInverseG;
-  MInverseG << vector3_s_t<SCALAR_T>::Zero(), -o_R_b.transpose() * o_gravityVector;
+  MInverseG << vector3_s_t<SCALAR_T>::Zero(), -rotateVectorOriginToBase(o_gravityVector, baseEulerAngles);
 
   // Coriolis and centrifugal forces
   base_coordinate_s_t<SCALAR_T> C;
@@ -87,7 +86,7 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   }
 
   // External forces
-  const vector3_s_t<SCALAR_T> externalForceInBase = o_R_b.transpose() * parameters.externalForceInOrigin;
+  const vector3_s_t<SCALAR_T> externalForceInBase = rotateVectorOriginToBase(parameters.externalForceInOrigin, baseEulerAngles);
   JcTransposeLambda.head(3) += parameters.externalTorqueInBase - com_base2CoM.cross(externalForceInBase);  // += T + com_com2Base.cross(F)
   JcTransposeLambda.tail(3) += externalForceInBase;
 
@@ -97,7 +96,7 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   // CoM dynamics
   com_state_s_t<SCALAR_T> stateDerivativeCoM;
   stateDerivativeCoM.segment(0, 3) = transformAngVel2EulerAngDev * com_comAngularVelocity;
-  stateDerivativeCoM.segment(3, 3) = o_R_b * com_comLinearVelocity;
+  stateDerivativeCoM.segment(3, 3) = rotateVectorBaseToOrigin(com_comLinearVelocity, baseEulerAngles);
   stateDerivativeCoM.segment(6, 6) = MInverse * (-C + JcTransposeLambda) - MInverseG;
   return stateDerivativeCoM;
 }

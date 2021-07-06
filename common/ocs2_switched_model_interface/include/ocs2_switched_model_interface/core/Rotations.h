@@ -66,6 +66,70 @@ Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrixOriginToBase(const Eigen::Matrix<SCA
 }
 
 template <typename SCALAR_T>
+void rotateInPlaceZ(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v[0];
+  const SCALAR_T vy = v[1];
+  v[0] = c * vx - s * vy;
+  v[1] = s * vx + c * vy;
+}
+
+template <typename SCALAR_T>
+void rotateInPlaceY(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v[0];
+  const SCALAR_T vz = v[2];
+  v[0] = c * vx + s * vz;
+  v[2] = -s * vx + c * vz;
+}
+
+template <typename SCALAR_T>
+void rotateInPlaceX(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vy = v[1];
+  const SCALAR_T vz = v[2];
+  v[1] = c * vy - s * vz;
+  v[2] = s * vy + c * vz;
+}
+
+/**
+ * Directly rotates a vector from base to origin.
+ *
+ * Uses 12 (3*4) multiplications, and 6 (3*2) additions.
+ *
+ * Constructing just the rotation matrix already takes 14 multiplication, and 4 additions. Without having rotated the vector.
+ * Multiplication with the rotation matrix takes 9 multiplications and 6 additions.
+ * Constructing the rotation matrix could be cheaper when doing >5 rotations with the same matrix
+ *
+ * @tparam SCALAR_T
+ * @param v
+ * @param eulerAnglesXYZ
+ * @return
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotateVectorBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& v,
+                                                       const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesXYZ) {
+  Eigen::Matrix<SCALAR_T, 3, 1> rotatedVector = v;
+  rotateInPlaceX(rotatedVector, eulerAnglesXYZ[0]);
+  rotateInPlaceY(rotatedVector, eulerAnglesXYZ[1]);
+  rotateInPlaceZ(rotatedVector, eulerAnglesXYZ[2]);
+  return rotatedVector;
+}
+
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotateVectorOriginToBase(const Eigen::Matrix<SCALAR_T, 3, 1>& v,
+                                                       const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesXYZ) {
+  Eigen::Matrix<SCALAR_T, 3, 1> rotatedVector = v;
+  rotateInPlaceZ(rotatedVector, -eulerAnglesXYZ[2]);
+  rotateInPlaceY(rotatedVector, -eulerAnglesXYZ[1]);
+  rotateInPlaceX(rotatedVector, -eulerAnglesXYZ[0]);
+  return rotatedVector;
+}
+
+template <typename SCALAR_T>
 Eigen::Quaternion<SCALAR_T> quaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   const auto roll = eulerAngles(0);
   const auto pitch = eulerAngles(1);

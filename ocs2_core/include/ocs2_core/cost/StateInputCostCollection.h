@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/misc/Collection.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 #include "StateInputCost.h"
 

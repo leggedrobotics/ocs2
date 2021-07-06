@@ -77,8 +77,7 @@ scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateInputSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                         const vector_t& input,
-                                                                                         const TargetTrajectories&,
+                                                                                         const vector_t& input, const TargetTrajectories&,
                                                                                          const PreComputation& preComp) const {
   switch (constraintPtr_->getOrder()) {
     case ConstraintOrder::Linear:

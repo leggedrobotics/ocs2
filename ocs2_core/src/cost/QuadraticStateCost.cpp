@@ -48,7 +48,7 @@ QuadraticStateCost* QuadraticStateCost::clone() const {
 /******************************************************************************************************/
 scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
                                       const PreComputation&) const {
-  const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
+  const vector_t xDeviation = getStateDeviation(time, state, targetTrajectories);
   return 0.5 * xDeviation.dot(Q_ * xDeviation);
 }
 
@@ -58,7 +58,7 @@ scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, cons
 ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                    const TargetTrajectories& targetTrajectories,
                                                                                    const PreComputation&) const {
-  const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
+  const vector_t xDeviation = getStateDeviation(time, state, targetTrajectories);
 
   ScalarFunctionQuadraticApproximation Phi;
   Phi.dfdxx = Q_;
@@ -70,9 +70,8 @@ ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximati
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticStateCost::getStateDeviation(scalar_t time, const vector_t& state,
-                                               const TargetTrajectories& targetTrajectories) const {
-  return state - desiredTrajectory.getDesiredState(time);
+vector_t QuadraticStateCost::getStateDeviation(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const {
+  return state - targetTrajectories.getDesiredState(time);
 }
 
 }  // namespace ocs2

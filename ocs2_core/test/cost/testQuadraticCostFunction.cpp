@@ -15,7 +15,7 @@ class testQuadraticCost : public testing::Test {
 
     xNominal_.setRandom(2);
     uNominal_.setRandom(1);
-    costDesiredTrajectories_ = TargetTrajectories({0.0}, {xNominal_}, {uNominal_});
+    targetTrajectories_ = TargetTrajectories({0.0}, {xNominal_}, {uNominal_});
 
     x_.setRandom(2);
     u_.setRandom(1);
@@ -38,7 +38,7 @@ class testQuadraticCost : public testing::Test {
   vector_t u_;
   vector_t xNominal_;
   vector_t uNominal_;
-  CostDesiredTrajectories costDesiredTrajectories_;
+  TargetTrajectories targetTrajectories_;
   const ocs2::PreComputation preComputation_;
 
   scalar_t expectedCost_;
@@ -48,14 +48,14 @@ class testQuadraticCost : public testing::Test {
 TEST_F(testQuadraticCost, StateInputCostValue) {
   QuadraticStateInputCost costFunction(Q_, R_, P_);
 
-  auto L = costFunction.getValue(t_, x_, u_, costDesiredTrajectories_, preComputation_);
+  auto L = costFunction.getValue(t_, x_, u_, targetTrajectories_, preComputation_);
   EXPECT_NEAR(L, expectedCost_, PRECISION);
 }
 
 TEST_F(testQuadraticCost, StateInputCostApproximation) {
   QuadraticStateInputCost costFunction(Q_, R_, P_);
 
-  auto L = costFunction.getQuadraticApproximation(t_, x_, u_, costDesiredTrajectories_, preComputation_);
+  auto L = costFunction.getQuadraticApproximation(t_, x_, u_, targetTrajectories_, preComputation_);
 
   vector_t dx = x_ - xNominal_;
   vector_t du = u_ - uNominal_;
@@ -71,22 +71,22 @@ TEST_F(testQuadraticCost, StateInputCostClone) {
   QuadraticStateInputCost costFunction(Q_, R_, P_);
   auto costFunctionClone = std::unique_ptr<StateInputCost>(costFunction.clone());
 
-  auto L = costFunction.getValue(t_, x_, u_, costDesiredTrajectories_, preComputation_);
-  auto Lclone = costFunctionClone->getValue(t_, x_, u_, costDesiredTrajectories_, preComputation_);
+  auto L = costFunction.getValue(t_, x_, u_, targetTrajectories_, preComputation_);
+  auto Lclone = costFunctionClone->getValue(t_, x_, u_, targetTrajectories_, preComputation_);
   EXPECT_NEAR(L, Lclone, PRECISION);
 }
 
 TEST_F(testQuadraticCost, StateCostValue) {
   QuadraticStateCost costFunction(Qf_);
 
-  auto L = costFunction.getValue(t_, x_, costDesiredTrajectories_, preComputation_);
+  auto L = costFunction.getValue(t_, x_, targetTrajectories_, preComputation_);
   EXPECT_NEAR(L, expectedFinalCost_, PRECISION);
 }
 
 TEST_F(testQuadraticCost, StateCostApproximation) {
   QuadraticStateCost costFunction(Qf_);
 
-  auto Phi = costFunction.getQuadraticApproximation(t_, x_, costDesiredTrajectories_, preComputation_);
+  auto Phi = costFunction.getQuadraticApproximation(t_, x_, targetTrajectories_, preComputation_);
 
   vector_t dx = x_ - xNominal_;
   EXPECT_NEAR(Phi.f, expectedFinalCost_, PRECISION);
@@ -98,7 +98,7 @@ TEST_F(testQuadraticCost, StateCostClone) {
   QuadraticStateCost costFunction(Qf_);
   auto costFunctionClone = std::unique_ptr<StateCost>(costFunction.clone());
 
-  auto L = costFunction.getValue(t_, x_, costDesiredTrajectories_, preComputation_);
-  auto Lclone = costFunctionClone->getValue(t_, x_, costDesiredTrajectories_, preComputation_);
+  auto L = costFunction.getValue(t_, x_, targetTrajectories_, preComputation_);
+  auto Lclone = costFunctionClone->getValue(t_, x_, targetTrajectories_, preComputation_);
   EXPECT_NEAR(L, Lclone, PRECISION);
 }

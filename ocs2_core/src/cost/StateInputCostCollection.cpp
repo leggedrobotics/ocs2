@@ -53,7 +53,7 @@ scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state
   // accumulate cost terms
   for (const auto& costTerm : this->terms_) {
     if (costTerm->isActive(time)) {
-      cost += costTerm->getValue(time, state, input, desiredTrajectory, preComp);
+      cost += costTerm->getValue(time, state, input, targetTrajectories, preComp);
     }
   }
 
@@ -76,10 +76,10 @@ ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticAppro
   }
 
   // Initialize with first active term, accumulate potentially other active terms.
-  auto cost = (*firstActive)->getQuadraticApproximation(time, state, input, desiredTrajectory, preComp);
+  auto cost = (*firstActive)->getQuadraticApproximation(time, state, input, targetTrajectories, preComp);
   std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateInputCost>& costTerm) {
     if (costTerm->isActive(time)) {
-      cost += costTerm->getQuadraticApproximation(time, state, input, desiredTrajectory, preComp);
+      cost += costTerm->getQuadraticApproximation(time, state, input, targetTrajectories, preComp);
     }
   });
 

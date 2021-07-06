@@ -55,7 +55,7 @@ QuadraticStateInputCost* QuadraticStateInputCost::clone() const {
 scalar_t QuadraticStateInputCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
                                            const TargetTrajectories& targetTrajectories, const PreComputation&) const {
   vector_t stateDeviation, inputDeviation;
-  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, desiredTrajectory);
+  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, targetTrajectories);
 
   if (P_.size() == 0) {
     return 0.5 * stateDeviation.dot(Q_ * stateDeviation) + 0.5 * inputDeviation.dot(R_ * inputDeviation);
@@ -73,7 +73,7 @@ ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApprox
                                                                                         const TargetTrajectories& targetTrajectories,
                                                                                         const PreComputation&) const {
   vector_t stateDeviation, inputDeviation;
-  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, desiredTrajectory);
+  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, targetTrajectories);
 
   ScalarFunctionQuadraticApproximation L;
   L.dfdxx = Q_;
@@ -100,9 +100,9 @@ ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApprox
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::pair<vector_t, vector_t> QuadraticStateInputCost::getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                              const CostDesiredTrajectories& desiredTrajectory) const {
-  const vector_t stateDeviation = state - desiredTrajectory.getDesiredState(time);
-  const vector_t inputDeviation = input - desiredTrajectory.getDesiredInput(time);
+                                                                              const TargetTrajectories& targetTrajectories) const {
+  const vector_t stateDeviation = state - targetTrajectories.getDesiredState(time);
+  const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
   return {stateDeviation, inputDeviation};
 }
 

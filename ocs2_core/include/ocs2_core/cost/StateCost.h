@@ -48,7 +48,7 @@ class StateCost {
   virtual bool isActive(scalar_t time) const { return true; }
 
   /** Get cost term value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const const TargetTrajectories& targetTrajectories,
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
                             const PreComputation& preComp) const = 0;
 
   /** Get cost term quadratic approximation */

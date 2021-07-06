@@ -45,7 +45,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
     systemCost.reset(new QuadraticStateInputCost(Q, R, P));
     systemStateCost.reset(new QuadraticStateCost(Q_final));
 
-    costDesiredTrajectories = TargetTrajectories({0.0}, {x_sys}, {u_sys});
+    targetTrajectories = TargetTrajectories({0.0}, {x_sys}, {u_sys});
 
     StateInputCostCollection systemCostCollection;
     StateCostCollection systemStateCostCollection;
@@ -75,7 +75,7 @@ class TestFixtureLoopShapingCost : public ::testing::Test {
   vector_t u_sys{CONFIG::SYSTEM_INPUT_DIM};
   vector_t x_filter{CONFIG::FILTER_STATE_DIM};
   vector_t u_filter{CONFIG::FILTER_INPUT_DIM};
-  CostDesiredTrajectories costDesiredTrajectories;
+  TargetTrajectories targetTrajectories;
 
   vector_t x_disturbance{CONFIG::FULL_STATE_DIM};
   vector_t u_disturbance{CONFIG::FULL_INPUT_DIM};

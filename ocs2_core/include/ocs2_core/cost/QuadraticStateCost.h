@@ -46,8 +46,7 @@ class QuadraticStateCost : public StateCost {
   QuadraticStateCost* clone() const override;
 
   /** Get cost term value */
-  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
-                    const PreComputation&) const final;
+  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories, const PreComputation&) const final;
 
   /** Get cost term quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,

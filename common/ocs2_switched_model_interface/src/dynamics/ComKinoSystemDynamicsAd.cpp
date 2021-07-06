@@ -90,12 +90,9 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   JcTransposeLambda.head(3) += parameters.externalTorqueInBase - com_base2CoM.cross(externalForceInBase);  // += T + com_com2Base.cross(F)
   JcTransposeLambda.tail(3) += externalForceInBase;
 
-  // angular velocities to Euler angle derivatives transformation
-  const matrix3_s_t<SCALAR_T> transformAngVel2EulerAngDev = switched_model::angularVelocitiesToEulerAngleDerivativesMatrix(baseEulerAngles);
-
   // CoM dynamics
   com_state_s_t<SCALAR_T> stateDerivativeCoM;
-  stateDerivativeCoM.segment(0, 3) = transformAngVel2EulerAngDev * com_comAngularVelocity;
+  stateDerivativeCoM.segment(0, 3) = switched_model::angularVelocitiesToEulerAngleDerivatives(com_comAngularVelocity, baseEulerAngles);
   stateDerivativeCoM.segment(3, 3) = rotateVectorBaseToOrigin(com_comLinearVelocity, baseEulerAngles);
   stateDerivativeCoM.segment(6, 6) = MInverse * (-C + JcTransposeLambda) - MInverseG;
   return stateDerivativeCoM;

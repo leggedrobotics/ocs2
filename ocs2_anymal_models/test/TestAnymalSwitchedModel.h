@@ -60,9 +60,9 @@ class TestAnymalSwitchedModel : public ::testing::Test {
     x.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE) << -0.25, 0.60, -0.85, 0.25, 0.60, -0.85, -0.25, -0.60, 0.85, 0.25, -0.60,
         0.85;
     comkino_input_t u = weightCompensatingInputs(*comModel_, constantFeetArray(true), x.head(3));
-    ocs2::CostDesiredTrajectories costDesiredTrajectories({t}, {x}, {u});
+    ocs2::TargetTrajectories targetTrajectories({t}, {x}, {u});
 
-    const auto approx = motionTrackingCost.getQuadraticApproximation(t, x, u, costDesiredTrajectories);
+    const auto approx = motionTrackingCost.getQuadraticApproximation(t, x, u, targetTrajectories);
 
     // Reference equals current state input, should have zero cost and zero gradient.
     ASSERT_LT(approx.f, 1e-9);

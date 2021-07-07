@@ -25,22 +25,22 @@ class TestAnymalModel : public ::testing::Test {
     ocs2::scalar_t finalTime = 1.0;
     const ocs2::vector_t state = anymalInterface->getInitialState();
     const ocs2::vector_t input = ocs2::vector_t::Zero(switched_model::INPUT_DIM);
-    costDesiredTrajectories = ocs2::CostDesiredTrajectories{{initTime}, {state}, {input}};
+    targetTrajectories = ocs2::TargetTrajectories{{initTime}, {state}, {input}};
 
     dynamics.reset(anymalInterface->getDynamics().clone());
     cost.reset(anymalInterface->getCost().clone());
     constraints.reset(anymalInterface->getConstraintPtr()->clone());
 
     // Initialize
-    anymalInterface->getModeScheduleManagerPtr()->preSolverRun(initTime, finalTime, state, costDesiredTrajectories);
-    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    anymalInterface->getReferenceManagerPtr()->preSolverRun(initTime, finalTime, state);
+    cost->setTargetTrajectoriesPtr(&targetTrajectories);
   }
 
   std::unique_ptr<switched_model::QuadrupedInterface> anymalInterface;
   std::unique_ptr<ocs2::SystemDynamicsBase> dynamics;
   std::unique_ptr<ocs2::CostFunctionBase> cost;
   std::unique_ptr<ocs2::ConstraintBase> constraints;
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
 };
 
 TEST_F(TestAnymalModel, all) {

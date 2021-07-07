@@ -73,30 +73,28 @@ ocs2_switched_model_msgs::trajectory_request::Request toTrajectoryRequest(std::s
   ocs2_switched_model_msgs::trajectory_request::Request request;
   request.offsetTime = offsetTime;
   request.trajectoryCommand = std::move(command);
-  ocs2::ros_msg_conversions::createObservationMsg(observation, request.observation);
+  request.observation = ocs2::ros_msg_conversions::createObservationMsg(observation);
   return request;
 }
 
 std::tuple<std::string, ocs2::SystemObservation, scalar_t> fromTrajectoryRequest(
     const ocs2_switched_model_msgs::trajectory_request::Request& request) {
-  ocs2::SystemObservation observation;
-  ocs2::ros_msg_conversions::readObservationMsg(request.observation, observation);
+  ocs2::SystemObservation observation = ocs2::ros_msg_conversions::readObservationMsg(request.observation);
   return {request.trajectoryCommand, std::move(observation), request.offsetTime};
 }
 
-ocs2_switched_model_msgs::trajectory_request::Response toTrajectoryResponse(const ocs2::CostDesiredTrajectories& costTrajectories,
+ocs2_switched_model_msgs::trajectory_request::Response toTrajectoryResponse(const ocs2::TargetTrajectories& targetTrajectories,
                                                                             const GaitSchedule::GaitSequence& gaitSequence) {
   ocs2_switched_model_msgs::trajectory_request::Response response;
-  ocs2::ros_msg_conversions::createTargetTrajectoriesMsg(costTrajectories, response.trajectory);
+  response.trajectory = ocs2::ros_msg_conversions::createTargetTrajectoriesMsg(targetTrajectories);
   response.gaitSequence = toMessage(gaitSequence);
   return response;
 }
 
-std::pair<ocs2::CostDesiredTrajectories, GaitSchedule::GaitSequence> fromTrajectoryResponse(
+std::pair<ocs2::TargetTrajectories, GaitSchedule::GaitSequence> fromTrajectoryResponse(
     const ocs2_switched_model_msgs::trajectory_request::Response& response) {
-  ocs2::CostDesiredTrajectories costTrajectories;
-  ocs2::ros_msg_conversions::readTargetTrajectoriesMsg(response.trajectory, costTrajectories);
-  return {std::move(costTrajectories), fromMessage(response.gaitSequence)};
+  ocs2::TargetTrajectories targetTrajectories = ocs2::ros_msg_conversions::readTargetTrajectoriesMsg(response.trajectory);
+  return {std::move(targetTrajectories), fromMessage(response.gaitSequence)};
 }
 
 }  // namespace ros_msg_conversions

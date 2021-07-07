@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 
@@ -36,9 +36,9 @@ ocs2_switched_model_msgs::trajectory_request::Request toTrajectoryRequest(std::s
 std::tuple<std::string, ocs2::SystemObservation, scalar_t> fromTrajectoryRequest(
     const ocs2_switched_model_msgs::trajectory_request::Request& request);
 
-ocs2_switched_model_msgs::trajectory_request::Response toTrajectoryResponse(const ocs2::CostDesiredTrajectories& costTrajectories,
+ocs2_switched_model_msgs::trajectory_request::Response toTrajectoryResponse(const ocs2::TargetTrajectories& targetTrajectories,
                                                                             const GaitSchedule::GaitSequence& gaitSequence);
-std::pair<ocs2::CostDesiredTrajectories, GaitSchedule::GaitSequence> fromTrajectoryResponse(
+std::pair<ocs2::TargetTrajectories, GaitSchedule::GaitSequence> fromTrajectoryResponse(
     const ocs2_switched_model_msgs::trajectory_request::Response& response);
 
 }  // namespace ros_msg_conversions

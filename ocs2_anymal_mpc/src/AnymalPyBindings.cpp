@@ -1,8 +1,9 @@
 #include "ocs2_anymal_mpc/AnymalPyBindings.h"
 
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
-
-#include <ocs2_quadruped_interface/QuadrupedSlqMpc.h>
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_mpc/MPC_Settings.h>
 
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
@@ -39,7 +40,12 @@ AnymalPyBindings::AnymalPyBindings(std::string varargs) {
   const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePath(configName_));
   const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePath(configName_));
 
-  init(*anymalInterface, switched_model::getMpc(*anymalInterface, mpcSettings, ddpSettings));
+  std::unique_ptr<ocs2::MPC_DDP> mpcPtr(new ocs2::MPC_DDP(
+      &anymalInterface->getRollout(), &anymalInterface->getDynamics(), anymalInterface->getConstraintPtr(), &anymalInterface->getCost(),
+      &anymalInterface->getInitializer(), ddpSettings, mpcSettings, anymalInterface->getTerminalCostPtr()));
+  mpcPtr->getSolverPtr()->setReferenceManager(anymalInterface->getReferenceManagerPtr());
+
+  init(*anymalInterface, std::move(mpcPtr));
 
   penalty_.reset(new ocs2::RelaxedBarrierPenalty(
       ocs2::RelaxedBarrierPenalty::Config(ddpSettings.inequalityConstraintMu_, ddpSettings.inequalityConstraintDelta_)));

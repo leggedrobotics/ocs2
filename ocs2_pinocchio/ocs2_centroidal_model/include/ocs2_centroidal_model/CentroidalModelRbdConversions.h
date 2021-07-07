@@ -47,13 +47,10 @@ class CentroidalModelRbdConversions final {
 
   /**
    * Constructor
-   * @param pinocchioInterface: predefined pinocchio interface for a robot
-   * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
-   * which are needed for pinocchio functions and algorithms
+   * @param [in] pinocchioInterface: predefined pinocchio interface for a robot
+   * @param [in] CentroidalModelInfo : The centroidal model information.
    */
-  CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping& mapping);
-
-  ~CentroidalModelRbdConversions() = default;
+  CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info);
 
   /**
    * Computes the floating-base generalized positions, velocities, and accelerations.
@@ -91,8 +88,11 @@ class CentroidalModelRbdConversions final {
                                           vector_t& rbdState);
 
  private:
+  CentroidalModelRbdConversions(const CentroidalModelRbdConversions& other) = default;
+  CentroidalModelRbdConversions& operator=(const CentroidalModelRbdConversions& rhs) = default;
+
   PinocchioInterface* pinocchioInterfacePtr_;
-  std::unique_ptr<CentroidalModelPinocchioMapping> mappingPtr_;
+  CentroidalModelPinocchioMapping mapping_;
 
   Matrix6 Adot_;
   Vector6 qbaseDdot_;

@@ -58,7 +58,7 @@ class PinocchioCentroidalDynamics final {
 
   /**
    * Constructor
-   * CentroidalModelInfo : The centroidal model information.
+   * @param [in] CentroidalModelInfo : The centroidal model information.
    */
   explicit PinocchioCentroidalDynamics(CentroidalModelInfo info);
 

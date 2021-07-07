@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/test/dynamics_hybrid_slq_test.h>
 
 #include <ocs2_core/cost/QuadraticStateCost.h>

@@ -1193,9 +1193,10 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t expectedCost) {
   std::vector<std::vector<ModelData>> modelDataTrajectoriesStock(numPartitions_);
   std::vector<std::vector<ModelData>> modelDataEventTimesStock(numPartitions_);
 
-  bool success = searchStrategyPtr_->run(expectedCost, this->getModeSchedule(), nominalControllersStock_, performanceIndex,
-                                         timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                                         modelDataTrajectoriesStock, modelDataEventTimesStock, avgTimeStepFP_);
+  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
+  bool success = searchStrategyPtr_->run(expectedCost, modeSchedule, nominalControllersStock_, performanceIndex, timeTrajectoriesStock,
+                                         postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock,
+                                         modelDataEventTimesStock, avgTimeStepFP_);
 
   // accept or reject the search
   if (success) {
@@ -1581,7 +1582,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // set cost desired trajectories
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
-    optimalControlProblemStock_[i].targetTrajectories = &targetTrajectories;
+    optimalControlProblemStock_[i].targetTrajectoriesPtr = &targetTrajectories;
   }
 
   // display

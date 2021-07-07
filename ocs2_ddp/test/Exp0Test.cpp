@@ -232,7 +232,7 @@ TEST_F(Exp0, ddp_caching) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/* Add parametrized test suite */
+/* Add parameterized test suite */
 class Exp0Param : public Exp0, public testing::WithParamInterface<std::tuple<ocs2::search_strategy::Type, size_t>> {
  protected:
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }

@@ -108,8 +108,8 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     // cost
     problemPtr->costPtr->add("cost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     problemPtr->finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     // constraint
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
@@ -126,7 +126,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     initState = ocs2::vector_t::Random(STATE_DIM);
 
     // get QP
-    problemPtr->targetTrajectories = &costDesiredTrajectories;
+    problemPtr->targetTrajectoriesPtr = &targetTrajectories;
     ocs2::ScalarFunctionQuadraticApproximation qpCosts;
     ocs2::VectorFunctionLinearApproximation qpConstraints;
     const auto lqApproximation = getLinearQuadraticApproximation(*problemPtr, nominalTrajectory);

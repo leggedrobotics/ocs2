@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
 
 #include <ocs2_core/constraint/StateConstraint.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -46,10 +46,9 @@ class EndEffectorConstraint final : public StateConstraint {
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
   using quaternion_t = Eigen::Quaternion<scalar_t>;
 
-  EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                        std::shared_ptr<CostDesiredTrajectories> referenceTrajectory);
+  EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics, const ReferenceManager& referenceManager);
   ~EndEffectorConstraint() override = default;
-  EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*endEffectorKinematicsPtr_, referenceTrajectoryPtr_); }
+  EndEffectorConstraint* clone() const override { return new EndEffectorConstraint(*endEffectorKinematicsPtr_, *referenceManagerPtr_); }
 
   size_t getNumConstraints(scalar_t time) const override;
   vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const override;
@@ -57,6 +56,7 @@ class EndEffectorConstraint final : public StateConstraint {
                                                            const PreComputation& preComputation) const override;
 
  private:
+  EndEffectorConstraint(const EndEffectorConstraint& other) = default;
   std::pair<vector_t, quaternion_t> interpolateEndEffectorPose(scalar_t time) const;
 
   /** Cached pointer to the pinocchio end effector kinematics. Is set to nullptr if not used. */
@@ -65,7 +65,7 @@ class EndEffectorConstraint final : public StateConstraint {
   vector3_t eeDesiredPosition_;
   quaternion_t eeDesiredOrientation_;
   std::unique_ptr<EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
-  std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
+  const ReferenceManager* referenceManagerPtr_;
 };
 
 }  // namespace mobile_manipulator

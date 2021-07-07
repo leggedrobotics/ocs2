@@ -66,6 +66,8 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   const Initializer& getInitializer() const override { return *initializerPtr_; }
 
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
+
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
@@ -88,11 +90,10 @@ class MobileManipulatorInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::shared_ptr<SolverSynchronizedModule> referenceUpdateModulePtr_;
-  std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
   OptimalControlProblem problem_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> initializerPtr_;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
 

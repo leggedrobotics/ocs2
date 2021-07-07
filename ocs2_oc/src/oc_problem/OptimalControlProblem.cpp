@@ -53,7 +53,7 @@ OptimalControlProblem::OptimalControlProblem()
       finalEqualityConstraintPtr(new StateConstraintCollection),
       /* Misc. */
       preComputationPtr(new PreComputation),
-      costDesiredTrajectories(nullptr) {}
+      targetTrajectoriesPtr(nullptr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -77,7 +77,7 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
       /* Misc. */
       preComputationPtr(other.preComputationPtr->clone()),
-      costDesiredTrajectories(other.costDesiredTrajectories) {
+      targetTrajectoriesPtr(other.targetTrajectoriesPtr) {
   if (other.dynamicsPtr != nullptr) {
     dynamicsPtr.reset(other.dynamicsPtr->clone());
   }
@@ -120,7 +120,7 @@ void OptimalControlProblem::swap(OptimalControlProblem& other) noexcept {
 
   /* Misc. */
   preComputationPtr.swap(other.preComputationPtr);
-  std::swap(costDesiredTrajectories, other.costDesiredTrajectories);
+  std::swap(targetTrajectoriesPtr, other.targetTrajectoriesPtr);
 }
 
 }  // namespace ocs2

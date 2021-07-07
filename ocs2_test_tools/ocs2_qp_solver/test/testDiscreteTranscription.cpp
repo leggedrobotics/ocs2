@@ -47,8 +47,8 @@ class DiscreteTranscriptionTest : public testing::Test {
   DiscreteTranscriptionTest() {
     srand(0);
 
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     system = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
 
@@ -57,14 +57,14 @@ class DiscreteTranscriptionTest : public testing::Test {
 
     problem.costPtr->add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     problem.finalCostPtr->add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
-    problem.costDesiredTrajectories = &costDesiredTrajectories;
+    problem.targetTrajectoriesPtr = &targetTrajectories;
 
     linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
 
     unconstrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(problem, linearization);
 
     constrainedProblem = problem;  // copies unconstrained problem
-    constrainedProblem.costDesiredTrajectories = &costDesiredTrajectories;
+    constrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
 
     constrainedProblem.equalityConstraintPtr->add(
         "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
@@ -117,7 +117,7 @@ class DiscreteTranscriptionTest : public testing::Test {
     }
   }
 
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   ocs2::OptimalControlProblem constrainedProblem;
   ocs2::qp_solver::ContinuousTrajectory linearization;

@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_core/reference/ModeSchedule.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>

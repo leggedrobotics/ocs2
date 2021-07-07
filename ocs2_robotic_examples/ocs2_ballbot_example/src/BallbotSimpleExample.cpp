@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
    */
   ddpSettings.nThreads_ = 1;
   SLQ slq(ddpSettings, *ballbotRolloutPtr, problem, *ballbotInitializerPtr);
-  slq.setCostDesiredTrajectories(CostDesiredTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
+  slq.getReferenceManager().setTargetTrajectories(TargetTrajectories({0.0}, {xInit}, {vector_t::Zero(INPUT_DIM)}));
   slq.run(0.0, xInit, timeHorizon, partitioningTimes);
 
   /*

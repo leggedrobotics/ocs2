@@ -68,7 +68,7 @@ bool StateInputSoftConstraint::isActive(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories&,
+scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories&,
                                             const PreComputation& preComp) const {
   return penalty_.getValue(constraintPtr_->getValue(time, state, input, preComp));
 }
@@ -77,8 +77,7 @@ scalar_t StateInputSoftConstraint::getValue(scalar_t time, const vector_t& state
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateInputSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                         const vector_t& input,
-                                                                                         const CostDesiredTrajectories&,
+                                                                                         const vector_t& input, const TargetTrajectories&,
                                                                                          const PreComputation& preComp) const {
   switch (constraintPtr_->getOrder()) {
     case ConstraintOrder::Linear:

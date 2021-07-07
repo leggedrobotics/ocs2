@@ -72,7 +72,7 @@ void DDP_DataCollector::collect(const GaussNewtonDDP* constDdpPtr) {
 
   rewindCounter_ = ddpPtr->rewindCounter_;
 
-  modeSchedule_ = ddpPtr->getModeSchedule();
+  modeSchedule_ = ddpPtr->getReferenceManager().getModeSchedule();
 
   // optimized controller
   optimizedControllersStock_ = ddpPtr->nominalControllersStock_;
@@ -127,7 +127,7 @@ void DDP_DataCollector::calculateStateInputConstraintsSensitivity(const GaussNew
                                                                   vector_array3_t& EvDevEventTimesProjectedTrajectoriesStockSet) {
   auto* ddpPtr = const_cast<GaussNewtonDDP*>(constDdpPtr);
 
-  const size_t numEventTimes = constDdpPtr->getModeSchedule().eventTimes.size();
+  const size_t numEventTimes = constDdpPtr->getReferenceManager().getModeSchedule().eventTimes.size();
 
   // resizing EvDev container
   EvDevEventTimesTrajectoriesStockSet.resize(numEventTimes);

@@ -46,7 +46,7 @@ class TestFixtureLoopShapingSoftConstraint : public ::testing::Test {
     systemCost.reset(new QuadraticStateInputCost(Q, R, P));
     systemStateCost.reset(new QuadraticStateCost(Q_final));
 
-    costDesiredTrajectories = CostDesiredTrajectories({0.0}, {x_sys}, {u_sys});
+    targetTrajectories = TargetTrajectories({0.0}, {x_sys}, {u_sys});
 
     StateInputCostCollection systemCostCollection;
     StateCostCollection systemStateCostCollection;
@@ -80,7 +80,7 @@ class TestFixtureLoopShapingSoftConstraint : public ::testing::Test {
   vector_t u_sys{CONFIG::SYSTEM_INPUT_DIM};
   vector_t x_filter{CONFIG::FILTER_STATE_DIM};
   vector_t u_filter{CONFIG::FILTER_INPUT_DIM};
-  CostDesiredTrajectories costDesiredTrajectories;
+  TargetTrajectories targetTrajectories;
 
   void getRandomStateInput(vector_t& x_sys, vector_t& u_sys, vector_t& x_filter, vector_t& u_filter, vector_t& x, vector_t& u,
                            scalar_t range = 1.0) {

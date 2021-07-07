@@ -39,10 +39,10 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                                             std::shared_ptr<CostDesiredTrajectories> referenceTrajectory)
+                                             const ReferenceManager& referenceManager)
     : StateConstraint(ConstraintOrder::Linear),
       endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
-      referenceTrajectoryPtr_(std::move(referenceTrajectory)) {
+      referenceManagerPtr_(&referenceManager) {
   if (endEffectorKinematics.getIds().size() != 1) {
     throw std::runtime_error("[EndEffectorConstraint] endEffectorKinematics has wrong number of end effector IDs.");
   }
@@ -105,8 +105,9 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
 /******************************************************************************************************/
 /******************************************************************************************************/
 auto EndEffectorConstraint::interpolateEndEffectorPose(scalar_t time) const -> std::pair<vector_t, quaternion_t> {
-  const auto& desiredTrajectory = *referenceTrajectoryPtr_;
-  const auto& stateTrajectory = desiredTrajectory.desiredStateTrajectory();
+  const auto& targetTrajectories = referenceManagerPtr_->getTargetTrajectories();
+  const auto& timeTrajectory = targetTrajectories.timeTrajectory;
+  const auto& stateTrajectory = targetTrajectories.stateTrajectory;
 
   vector_t position;
   quaternion_t orientation;
@@ -115,7 +116,7 @@ auto EndEffectorConstraint::interpolateEndEffectorPose(scalar_t time) const -> s
     // Normal interpolation case
     int index;
     scalar_t alpha;
-    std::tie(index, alpha) = LinearInterpolation::timeSegment(time, desiredTrajectory.desiredTimeTrajectory());
+    std::tie(index, alpha) = LinearInterpolation::timeSegment(time, timeTrajectory);
 
     const auto& lhs = stateTrajectory[index];
     const auto& rhs = stateTrajectory[index + 1];

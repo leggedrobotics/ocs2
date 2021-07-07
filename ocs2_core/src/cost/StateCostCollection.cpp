@@ -46,14 +46,14 @@ StateCostCollection* StateCostCollection::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
                                        const PreComputation& preComp) const {
   scalar_t cost = 0.0;
 
   // accumulate cost terms
   for (const auto& costTerm : this->terms_) {
     if (costTerm->isActive(time)) {
-      cost += costTerm->getValue(time, state, desiredTrajectory, preComp);
+      cost += costTerm->getValue(time, state, targetTrajectories, preComp);
     }
   }
 
@@ -64,7 +64,7 @@ scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                    const CostDesiredTrajectories& desiredTrajectory,
+                                                                                    const TargetTrajectories& targetTrajectories,
                                                                                     const PreComputation& preComp) const {
   const auto firstActive =
       std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) { return costTerm->isActive(time); });
@@ -75,10 +75,10 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
   }
 
   // Initialize with first active term, accumulate potentially other active terms.
-  auto cost = (*firstActive)->getQuadraticApproximation(time, state, desiredTrajectory, preComp);
+  auto cost = (*firstActive)->getQuadraticApproximation(time, state, targetTrajectories, preComp);
   std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) {
     if (costTerm->isActive(time)) {
-      const auto costTermApproximation = costTerm->getQuadraticApproximation(time, state, desiredTrajectory, preComp);
+      const auto costTermApproximation = costTerm->getQuadraticApproximation(time, state, targetTrajectories, preComp);
       cost.f += costTermApproximation.f;
       cost.dfdx += costTermApproximation.dfdx;
       cost.dfdxx += costTermApproximation.dfdxx;

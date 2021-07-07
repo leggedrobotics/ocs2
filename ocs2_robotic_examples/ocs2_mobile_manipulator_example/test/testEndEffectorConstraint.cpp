@@ -53,10 +53,8 @@ class testEndEffectorConstraint : public ::testing::Test {
   testEndEffectorConstraint() {
     const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
 
-    vector_t positionOrientation(7);
-    positionOrientation.head<3>() = vector3_t::Zero();
-    positionOrientation.tail<4>() = quaternion_t(1, 0, 0, 0).coeffs();
-    referenceTrajectoryPtr.reset(new CostDesiredTrajectories({0.0}, {positionOrientation}, {vector_t()}));
+    const vector_t positionOrientation = (vector_t(7) << vector3_t::Zero(), quaternion_t(1, 0, 0, 0).coeffs()).finished();
+    referenceManagerPtr.reset(new ReferenceManager(TargetTrajectories({0.0}, {positionOrientation})));
 
     auto pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
     eeKinematicsPtr.reset(new PinocchioEndEffectorKinematics(pinocchioInterface, pinocchioMapping, {"WRIST_2"}));
@@ -69,12 +67,12 @@ class testEndEffectorConstraint : public ::testing::Test {
   std::unique_ptr<PinocchioInterface> pinocchioInterface;
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr;
   std::unique_ptr<MobileManipulatorPreComputation> preComputationPtr;
-  std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr;
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
 };
 
 TEST_F(testEndEffectorConstraint, testConstraintEvaluation) {
-  EndEffectorConstraint eeConstraint(*eeKinematicsPtr, referenceTrajectoryPtr);
+  EndEffectorConstraint eeConstraint(*eeKinematicsPtr, *referenceManagerPtr);
 
   auto& pinocchioInterface = preComputationPtr->getPinocchioInterface();
   const auto& model = pinocchioInterface.getModel();

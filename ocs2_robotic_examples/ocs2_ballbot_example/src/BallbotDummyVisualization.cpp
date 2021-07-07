@@ -39,7 +39,7 @@ namespace ocs2 {
 namespace ballbot {
 
 void BallbotDummyVisualization::update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) {
-  const auto& costDesiredTrajectories = command.mpcCostDesiredTrajectories_;
+  const auto& targetTrajectories = command.mpcTargetTrajectories_;
 
   // publish world transform
   ros::Time timeMsg = ros::Time::now();
@@ -57,10 +57,10 @@ void BallbotDummyVisualization::update(const SystemObservation& observation, con
   tfBroadcaster_.sendTransform(world_transform);
 
   // publish command transform
-  const Eigen::Vector3d desiredPositionWorldToTarget = Eigen::Vector3d(costDesiredTrajectories.desiredStateTrajectory().back()(0),
-                                                                       costDesiredTrajectories.desiredStateTrajectory().back()(1), 0.0);
+  const Eigen::Vector3d desiredPositionWorldToTarget(targetTrajectories.stateTrajectory.back()(0),
+                                                     targetTrajectories.stateTrajectory.back()(1), 0.0);
   const auto desiredQuaternionBaseToWorld =
-      getQuaternionFromEulerAnglesZyx<double>(costDesiredTrajectories.desiredStateTrajectory().back().segment<3>(2));
+      getQuaternionFromEulerAnglesZyx<double>(targetTrajectories.stateTrajectory.back().segment<3>(2));
   geometry_msgs::TransformStamped command_frame_transform;
   command_frame_transform.header.stamp = timeMsg;
   command_frame_transform.header.frame_id = "odom";

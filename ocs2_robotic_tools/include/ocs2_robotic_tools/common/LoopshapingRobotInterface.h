@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/loopshaping/Loopshaping.h>
 
-#include <ocs2_oc/synchronized_module/LoopshapingModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/LoopshapingReferenceManager.h>
 
 #include "ocs2_robotic_tools/common/RobotInterface.h"
 
@@ -53,7 +53,7 @@ class LoopshapingRobotInterface : public RobotInterface {
   ~LoopshapingRobotInterface() override = default;
 
   /**
-   * @brief getModeScheduleManagerPtr
+   * @brief getLoopshapingDefinition
    * @return a shared pointer to the loopshaping definition.
    */
   std::shared_ptr<LoopshapingDefinition> getLoopshapingDefinition() const { return loopshapingDefinitionPtr_; };
@@ -73,7 +73,7 @@ class LoopshapingRobotInterface : public RobotInterface {
     return *p;
   }
 
-  std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return loopshapingModeScheduleManager_; }
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return loopshapingReferenceManager_; }
 
   const OptimalControlProblem& getOptimalControlProblem() const override { return optimalControlProblem_; }
 
@@ -85,7 +85,7 @@ class LoopshapingRobotInterface : public RobotInterface {
 
   OptimalControlProblem optimalControlProblem_;
   std::unique_ptr<LoopshapingInitializer> initializerPtr_;
-  std::shared_ptr<LoopshapingModeScheduleManager> loopshapingModeScheduleManager_;
+  std::shared_ptr<LoopshapingReferenceManager> loopshapingReferenceManager_;
 };
 
 }  // namespace ocs2

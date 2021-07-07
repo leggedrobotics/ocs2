@@ -27,18 +27,57 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_quadrotor_example/command/TargetTrajectoriesKeyboardQuadrotor.h"
+#include <ocs2_quadrotor_example/definitions.h>
+#include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 using namespace ocs2;
 using namespace quadrotor;
 
+/**
+ * Converts command line to TargetTrajectories.
+ * @param [in] commadLineTarget : [deltaX, deltaY, deltaZ, deltaYaw]
+ * @param [in] observation : the current observation
+ */
+TargetTrajectories commandLineToTargetTrajectories(const vector_t& commadLineTarget, const SystemObservation& observation) {
+  const vector_t targetState = [&]() {
+    vector_t targetState = vector_t::Zero(STATE_DIM);
+    targetState(0) = observation.state(0) + commadLineTarget(0);
+    targetState(1) = observation.state(1) + commadLineTarget(1);
+    targetState(2) = observation.state(2) + commadLineTarget(2);
+    targetState(3) = observation.state(3);
+    targetState(4) = observation.state(4);
+    targetState(5) = observation.state(5) + commadLineTarget(3) * M_PI / 180.0;  //  deg2rad
+    return targetState;
+  }();
+
+  // target reaching duration
+  constexpr scalar_t averageSpeed = 2.0;
+  const vector_t deltaPose = (targetState - observation.state).head<6>();
+  const scalar_t targetTime = observation.time + deltaPose.norm() / averageSpeed;
+
+  // Desired time trajectory
+  const scalar_array_t timeTrajectory{observation.time, targetTime};
+
+  // Desired state trajectory
+  const vector_array_t stateTrajectory{observation.state, targetState};
+
+  // Desired input trajectory
+  const vector_array_t inputTrajectory(2, vector_t::Zero(INPUT_DIM));
+
+  return {timeTrajectory, stateTrajectory, inputTrajectory};
+}
+
 int main(int argc, char* argv[]) {
-  TargetTrajectoriesKeyboardQuadrotor targetPoseCommand(argc, argv, "quadrotor");
+  const std::string robotName = "quadrotor";
+  ::ros::init(argc, argv, robotName + "_target");
+  ::ros::NodeHandle nodeHandle;
 
-  targetPoseCommand.launchNodes();
+  // goalPose: [deltaX, deltaY, deltaZ, deltaYaw]
+  const scalar_array_t relativeStateLimit{10.0, 10.0, 10.0, 360.0};
+  TargetTrajectoriesKeyboardPublisher targetPoseCommand(nodeHandle, robotName, relativeStateLimit, &commandLineToTargetTrajectories);
 
-  const std::string commadMsg = "Enter XYZ displacement and RollPitchYaw for the robot, separated by spaces";
-  targetPoseCommand.getKeyboardCommand(commadMsg);
+  const std::string commadMsg = "Enter XYZ, and Yaw (deg) displacements, separated by spaces";
+  targetPoseCommand.publishKeyboardCommand(commadMsg);
 
   // Successful exit
   return 0;

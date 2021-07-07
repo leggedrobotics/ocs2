@@ -74,8 +74,8 @@ TEST(test_transcription, terminal_performance) {
   problem.finalCostPtr->add("finalCost", getOcs2StateCost(getRandomCost(nx, 0)));
   problem.finalSoftConstraintPtr->add("finalSoftCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
-  const CostDesiredTrajectories costDesiredTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
-  problem.costDesiredTrajectories = &costDesiredTrajectories;
+  const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
+  problem.targetTrajectoriesPtr = &targetTrajectories;
 
   scalar_t t = 0.5;
   const vector_t x = vector_t::Random(nx);
@@ -98,8 +98,8 @@ TEST(test_transcription, event_performance) {
   // cost
   problem.preJumpCostPtr->add("eventCost", getOcs2StateCost(getRandomCost(nx, 0)));
 
-  const CostDesiredTrajectories costDesiredTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
-  problem.costDesiredTrajectories = &costDesiredTrajectories;
+  const TargetTrajectories targetTrajectories({0.0}, {vector_t::Random(nx)}, {vector_t::Random(0)});
+  problem.targetTrajectoriesPtr = &targetTrajectories;
 
   const scalar_t t = 0.5;
   const vector_t x = (vector_t(nx) << 1.0, 0.1).finished();

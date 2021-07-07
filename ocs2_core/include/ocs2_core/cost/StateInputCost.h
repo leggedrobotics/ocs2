@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 namespace ocs2 {
 
@@ -48,12 +48,12 @@ class StateInputCost {
   virtual bool isActive(scalar_t time) const { return true; }
 
   /** Get cost term value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& targetTrajectories,
                             const PreComputation& preComp) const = 0;
 
   /** Get cost term quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                         const CostDesiredTrajectories& desiredTrajectory,
+                                                                         const TargetTrajectories& targetTrajectories,
                                                                          const PreComputation& preComp) const = 0;
 
  protected:

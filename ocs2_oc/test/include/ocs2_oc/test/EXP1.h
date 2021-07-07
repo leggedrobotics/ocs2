@@ -33,27 +33,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-
-#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP1_Sys1 : public SystemDynamicsBase {
+class EXP1_Sys1 final : public SystemDynamicsBase {
  public:
   EXP1_Sys1() = default;
   ~EXP1_Sys1() override = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     vector_t dxdt(2);
     dxdt(0) = x(0) + u(0) * sin(x(0));
     dxdt(1) = -x(1) - u(0) * cos(x(1));
     return dxdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation& preComp) override {
     VectorFunctionLinearApproximation dynamics;
     dynamics.f = computeFlowMap(t, x, u, preComp);
     dynamics.dfdx.resize(2, 2);
@@ -63,25 +63,29 @@ class EXP1_Sys1 : public SystemDynamicsBase {
     return dynamics;
   }
 
-  EXP1_Sys1* clone() const final { return new EXP1_Sys1(*this); }
+  EXP1_Sys1* clone() const override { return new EXP1_Sys1(*this); }
+
+ private:
+  EXP1_Sys1(const EXP1_Sys1& other) = default;
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP1_Sys2 : public SystemDynamicsBase {
+class EXP1_Sys2 final : public SystemDynamicsBase {
  public:
   EXP1_Sys2() = default;
-  ~EXP1_Sys2() = default;
+  ~EXP1_Sys2() override = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     vector_t dxdt(2);
     dxdt(0) = x(1) + u(0) * sin(x(1));
     dxdt(1) = -x(0) - u(0) * cos(x(0));
     return dxdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation& preComp) override {
     VectorFunctionLinearApproximation dynamics;
     dynamics.f = computeFlowMap(t, x, u, preComp);
     dynamics.dfdx.resize(2, 2);
@@ -91,25 +95,29 @@ class EXP1_Sys2 : public SystemDynamicsBase {
     return dynamics;
   }
 
-  EXP1_Sys2* clone() const final { return new EXP1_Sys2(*this); }
+  EXP1_Sys2* clone() const override { return new EXP1_Sys2(*this); }
+
+ private:
+  EXP1_Sys2(const EXP1_Sys2& other) = default;
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP1_Sys3 : public SystemDynamicsBase {
+class EXP1_Sys3 final : public SystemDynamicsBase {
  public:
   EXP1_Sys3() = default;
-  ~EXP1_Sys3() = default;
+  ~EXP1_Sys3() override = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override {
     vector_t dxdt(2);
     dxdt(0) = -x(0) - u(0) * sin(x(0));
     dxdt(1) = x(1) + u(0) * cos(x(1));
     return dxdt;
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation& preComp) override {
     VectorFunctionLinearApproximation dynamics;
     dynamics.f = computeFlowMap(t, x, u, preComp);
     dynamics.dfdx.resize(2, 2);
@@ -119,39 +127,39 @@ class EXP1_Sys3 : public SystemDynamicsBase {
     return dynamics;
   }
 
-  EXP1_Sys3* clone() const final { return new EXP1_Sys3(*this); }
+  EXP1_Sys3* clone() const override { return new EXP1_Sys3(*this); }
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP1_System : public SystemDynamicsBase {
+class EXP1_System final : public SystemDynamicsBase {
  public:
-  EXP1_System(std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr) : modeScheduleManagerPtr_(std::move(modeScheduleManagerPtr)) {
+  EXP1_System(std::shared_ptr<ReferenceManager> referenceManagerPtr) : referenceManagerPtr_(std::move(referenceManagerPtr)) {
     subsystemDynamicsPtr_[0].reset(new EXP1_Sys1());
     subsystemDynamicsPtr_[1].reset(new EXP1_Sys2());
     subsystemDynamicsPtr_[2].reset(new EXP1_Sys3());
   }
 
-  ~EXP1_System() = default;
+  ~EXP1_System() override = default;
 
-  EXP1_System(const EXP1_System& other) : EXP1_System(other.modeScheduleManagerPtr_) {}
+  EXP1_System* clone() const override { return new EXP1_System(*this); }
 
-  EXP1_System* clone() const final { return new EXP1_System(*this); }
-
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) final {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) override {
+    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
     return subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u, preComp);
   }
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                        const PreComputation& preComp) final {
-    const auto activeMode = modeScheduleManagerPtr_->getModeSchedule().modeAtTime(t);
+                                                        const PreComputation& preComp) override {
+    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
     return subsystemDynamicsPtr_[activeMode]->linearApproximation(t, x, u, preComp);
   }
 
  private:
-  std::shared_ptr<ModeScheduleManager> modeScheduleManagerPtr_;
+  EXP1_System(const EXP1_System& other) : EXP1_System(other.referenceManagerPtr_) {}
+
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
   std::vector<std::shared_ptr<SystemDynamicsBase>> subsystemDynamicsPtr_{3};
 };
 
@@ -160,22 +168,17 @@ class EXP1_System : public SystemDynamicsBase {
 /******************************************************************************************************/
 class EXP1_Cost final : public QuadraticStateInputCost {
  public:
-  EXP1_Cost() : QuadraticStateInputCost(matrix_t::Identity(2, 2), matrix_t::Identity(1, 1)) {
-    xDesired_ = (vector_t(2) << 1.0, -1.0).finished();
-    uDesired_ = (vector_t(1) << 0.0).finished();
-  }
+  EXP1_Cost() : QuadraticStateInputCost(matrix_t::Identity(2, 2), matrix_t::Identity(1, 1)) {}
   ~EXP1_Cost() override = default;
   EXP1_Cost* clone() const override { return new EXP1_Cost(*this); }
 
- protected:
-  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                       const CostDesiredTrajectories& desiredTrajectory) const override {
-    return {state - xDesired_, input - uDesired_};
-  }
+ private:
+  EXP1_Cost(const EXP1_Cost& other) = default;
 
- public:
-  vector_t xDesired_;
-  vector_t uDesired_;
+  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                       const TargetTrajectories& targetTrajectories) const override {
+    return {state - targetTrajectories.stateTrajectory[0], input - targetTrajectories.inputTrajectory[0]};
+  }
 };
 
 /******************************************************************************************************/
@@ -183,17 +186,30 @@ class EXP1_Cost final : public QuadraticStateInputCost {
 /******************************************************************************************************/
 class EXP1_FinalCost final : public QuadraticStateCost {
  public:
-  EXP1_FinalCost() : QuadraticStateCost(matrix_t::Identity(2, 2)), xDesired_((vector_t(2) << 1.0, -1.0).finished()) {}
+  EXP1_FinalCost() : QuadraticStateCost(matrix_t::Identity(2, 2)) {}
   ~EXP1_FinalCost() override = default;
   EXP1_FinalCost* clone() const override { return new EXP1_FinalCost(*this); }
 
- protected:
-  vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const override {
-    return state - xDesired_;
-  }
+ private:
+  EXP1_FinalCost(const EXP1_FinalCost& other) = default;
 
- public:
-  vector_t xDesired_;
+  vector_t getStateDeviation(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const override {
+    return state - targetTrajectories.stateTrajectory[0];
+  }
 };
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline std::shared_ptr<ReferenceManager> getExp1ReferenceManager(const scalar_array_t& eventTimes,
+                                                                 const std::vector<size_t>& modeSequence) {
+  const vector_t x = (vector_t(2) << 1.0, -1.0).finished();
+  const vector_t u = (vector_t(1) << 0.0).finished();
+  TargetTrajectories targetTrajectories({0.0}, {x}, {u});
+
+  ModeSchedule modeSchedule(eventTimes, modeSequence);
+
+  return std::make_shared<ReferenceManager>(std::move(targetTrajectories), std::move(modeSchedule));
+}
 
 }  // namespace ocs2

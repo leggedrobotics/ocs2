@@ -90,6 +90,18 @@ class LinearQuadraticApproximator {
 };
 
 /**
+ * Compute the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
+ */
+scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input);
+
+/**
+ * Compute the quadratic approximation of the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation
+ * request is already made.
+ */
+ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
+                                                     const vector_t& input);
+
+/**
  * Compute the total preJump cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
  */
 scalar_t computeEventCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state);
@@ -112,17 +124,5 @@ scalar_t computeFinalCost(const OptimalControlProblem& problem, const scalar_t& 
  */
 ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlProblem& problem, const scalar_t& time,
                                                           const vector_t& state);
-
-/**
- * Compute the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
- */
-scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input);
-
-/**
- * Compute the quadratic approximation of the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation
- * request is already made.
- */
-ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
-                                                     const vector_t& input);
 
 }  // namespace ocs2

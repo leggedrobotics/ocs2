@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -71,9 +71,9 @@ class MRT_BASE {
   /**
    * Request the MPC node to reset. This method is a blocking method.
    *
-   * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
+   * @param [in] initTargetTrajectories: The initial desired cost trajectories.
    */
-  virtual void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) = 0;
+  virtual void resetMpcNode(const TargetTrajectories& initTargetTrajectories) = 0;
 
   /**
    * Whether the initial MPC policy has been already received.

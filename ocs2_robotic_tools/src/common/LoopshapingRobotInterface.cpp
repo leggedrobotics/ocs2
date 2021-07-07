@@ -45,9 +45,9 @@ LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterf
 
   initializerPtr_.reset(new ocs2::LoopshapingInitializer(robotInterfacePtr_->getInitializer(), loopshapingDefinitionPtr_));
 
-  if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
-    loopshapingModeScheduleManager_ =
-        std::make_shared<LoopshapingModeScheduleManager>(robotInterfacePtr_->getModeScheduleManagerPtr(), loopshapingDefinitionPtr_);
+  if (robotInterfacePtr_->getReferenceManagerPtr() != nullptr) {
+    loopshapingReferenceManager_ =
+        std::make_shared<LoopshapingReferenceManager>(robotInterfacePtr_->getReferenceManagerPtr(), loopshapingDefinitionPtr_);
   }
 }
 

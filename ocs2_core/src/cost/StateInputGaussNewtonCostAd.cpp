@@ -62,10 +62,10 @@ StateInputCostGaussNewtonAd::StateInputCostGaussNewtonAd(const StateInputCostGau
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateInputCostGaussNewtonAd::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                               const CostDesiredTrajectories& desiredTrajectory, const PreComputation&) const {
+                                               const TargetTrajectories& targetTrajectories, const PreComputation&) const {
   vector_t timeStateInput(1 + state.rows() + input.rows());
   timeStateInput << time, state, input;
-  const auto parameters = getParameters(time, desiredTrajectory);
+  const auto parameters = getParameters(time, targetTrajectories);
   const auto costVector = adInterfacePtr_->getFunctionValue(timeStateInput, parameters);
   return 0.5 * costVector.squaredNorm();
 }
@@ -73,14 +73,15 @@ scalar_t StateInputCostGaussNewtonAd::getValue(scalar_t time, const vector_t& st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation StateInputCostGaussNewtonAd::getQuadraticApproximation(
-    scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory,
-    const PreComputation&) const {
+ScalarFunctionQuadraticApproximation StateInputCostGaussNewtonAd::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                            const vector_t& input,
+                                                                                            const TargetTrajectories& targetTrajectories,
+                                                                                            const PreComputation&) const {
   const auto stateDim = state.rows();
   const auto inputDim = input.rows();
   vector_t timeStateInput(1 + stateDim + inputDim);
   timeStateInput << time, state, input;
-  const auto parameters = getParameters(time, desiredTrajectory);
+  const auto parameters = getParameters(time, targetTrajectories);
   const auto gnApproximation = adInterfacePtr_->getGaussNewtonApproximation(timeStateInput, parameters);
 
   ScalarFunctionQuadraticApproximation L;

@@ -27,10 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
+#include <ros/init.h>
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-#include <ros/init.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
+
+#include "ocs2_mobile_manipulator_example/MobileManipulatorInterface.h"
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -53,8 +55,14 @@ int main(int argc, char** argv) {
   // Robot interface
   MobileManipulatorInterface interface(taskFileFolderName);
 
+  // Ros ReferenceManager
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
+      new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
+  rosReferenceManagerPtr->subscribe(nodeHandle);
+
   // Launch MPC ROS node
   auto mpcPtr = interface.getMpc();
+  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
   MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 

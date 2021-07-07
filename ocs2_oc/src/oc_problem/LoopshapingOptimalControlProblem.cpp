@@ -63,8 +63,8 @@ OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_p
   // Pre-computation
   augmentedProblem.preComputationPtr.reset(new LoopshapingPreComputation(*problem.preComputationPtr, loopshapingDefinition));
 
-  /** The cost desired trajectories (will be substitute by ModelReferenceManager) */
-  augmentedProblem.costDesiredTrajectories = problem.costDesiredTrajectories;
+  /** The cost desired trajectories (will be substitute by ReferenceManager) */
+  augmentedProblem.targetTrajectoriesPtr = problem.targetTrajectoriesPtr;
 
   return augmentedProblem;
 }

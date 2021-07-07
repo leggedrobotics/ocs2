@@ -44,8 +44,8 @@ class LoopshapingSynchronizedModule : public SolverSynchronizedModule {
 
   ~LoopshapingSynchronizedModule() override = default;
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const CostDesiredTrajectories& costDesiredTrajectory) override;
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                    const ReferenceManagerInterface& referenceManager) override;
 
   void postSolverRun(const PrimalSolution& primalSolution) override;
 

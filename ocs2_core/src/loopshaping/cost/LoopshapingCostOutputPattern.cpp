@@ -32,9 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::getQuadraticApproximation(
-    scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
-    const PreComputation& preComp) const {
+ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                             const vector_t& u,
+                                                                                             const TargetTrajectories& targetTrajectories,
+                                                                                             const PreComputation& preComp) const {
   if (this->empty()) {
     return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
   }
@@ -49,9 +50,9 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::getQuadraticA
   const auto& u_filter = preCompLS.getFilteredInput();
 
   const auto L_system =
-      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
 
-  const auto L_filter = StateInputCostCollection::getQuadraticApproximation(t, x_system, u_filter, desiredTrajectory,
+  const auto L_filter = StateInputCostCollection::getQuadraticApproximation(t, x_system, u_filter, targetTrajectories,
                                                                             preCompLS.getFilteredSystemPreComputation());
 
   ScalarFunctionQuadraticApproximation L(x.rows(), u.rows());

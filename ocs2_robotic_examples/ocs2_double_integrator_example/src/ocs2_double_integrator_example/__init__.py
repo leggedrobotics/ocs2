@@ -1,2 +1,2 @@
 from ocs2_double_integrator_example.DoubleIntegratorPyBindings import mpc_interface
-from ocs2_double_integrator_example.DoubleIntegratorPyBindings import scalar_array, vector_array, matrix_array, CostDesiredTrajectories
+from ocs2_double_integrator_example.DoubleIntegratorPyBindings import scalar_array, vector_array, matrix_array, TargetTrajectories

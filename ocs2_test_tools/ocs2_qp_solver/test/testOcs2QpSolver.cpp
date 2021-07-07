@@ -83,10 +83,10 @@ class Ocs2QpSolverTest : public testing::Test {
     constrainedProblem.finalEqualityConstraintPtr->add(
         "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
 
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
-    constrainedProblem.costDesiredTrajectories = &costDesiredTrajectories;
-    unconstrainedProblem.costDesiredTrajectories = &costDesiredTrajectories;
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    constrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
+    unconstrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
 
     nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     x0 = ocs2::vector_t::Random(STATE_DIM);
@@ -94,7 +94,7 @@ class Ocs2QpSolverTest : public testing::Test {
     constrainedSolution = solveLinearQuadraticOptimalControlProblem(constrainedProblem, nominalTrajectory, x0);
   }
 
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   ocs2::OptimalControlProblem unconstrainedProblem;
   ocs2::OptimalControlProblem constrainedProblem;
@@ -168,7 +168,7 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the solution has only zeros.
   targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
-  unconstrainedProblem.costDesiredTrajectories = &costDesiredTrajectories;
+  unconstrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
   const auto zeroX0 = ocs2::vector_t::Zero(STATE_DIM);
 
   // Obtain solution, with non-zero nominalTrajectory

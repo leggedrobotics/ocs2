@@ -57,14 +57,14 @@ class DiscreteTranscriptionTest : public testing::Test {
 
     problem.costPtr->add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     problem.finalCostPtr->add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
-    problem.costDesiredTrajectories = &costDesiredTrajectories;
+    problem.targetTrajectoriesPtr = &targetTrajectories;
 
     linearization = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
 
     unconstrainedLqr = ocs2::qp_solver::getLinearQuadraticApproximation(problem, linearization);
 
     constrainedProblem = problem;  // copies unconstrained problem
-    constrainedProblem.costDesiredTrajectories = &costDesiredTrajectories;
+    constrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
 
     constrainedProblem.equalityConstraintPtr->add(
         "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));

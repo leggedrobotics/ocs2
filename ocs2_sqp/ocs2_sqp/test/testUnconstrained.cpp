@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/test/testProblemsGeneration.h>
 
 namespace ocs2 {
@@ -53,8 +54,11 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
   problem.costPtr->add("intermediateCost", ocs2::getOcs2Cost(costMatrices));
   problem.finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(costMatrices));
 
-  ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {ocs2::vector_t::Ones(n)}, {ocs2::vector_t::Ones(m)});
-  problem.costDesiredTrajectories = &costDesiredTrajectories;
+  // Reference Managaer
+  ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Ones(n)}, {ocs2::vector_t::Ones(m)});
+  std::shared_ptr<ReferenceManager> referenceManagerPtr(new ReferenceManager(targetTrajectories));
+
+  problem.targetTrajectoriesPtr = &referenceManagerPtr->getTargetTrajectories();
 
   if (emptyConstraint) {
     problem.equalityConstraintPtr->add("intermediateCost", ocs2::getOcs2Constraints(getRandomConstraints(n, m, 0)));
@@ -81,7 +85,7 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithFeedbackSettin
 
   // Construct solver
   ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
-  solver.setCostDesiredTrajectories(costDesiredTrajectories);
+  solver.setReferenceManager(referenceManagerPtr);
 
   // Solve
   solver.run(startTime, initState, finalTime, partitioningTimes);

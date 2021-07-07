@@ -129,7 +129,8 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // Determine time discretization, taking into account event times.
-  const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, this->getModeSchedule().eventTimes);
+  const auto& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
+  const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, eventTimes);
 
   // Initialize the state and input
   vector_array_t x, u;
@@ -138,7 +139,7 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   // Initialize references
   for (auto& ocpDefinition : ocpDefinitions_) {
     const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
-    ocpDefinition.costDesiredTrajectories = &targetTrajectories;
+    ocpDefinition.targetTrajectoriesPtr = &targetTrajectories;
   }
 
   // Bookkeeping

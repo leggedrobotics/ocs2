@@ -29,13 +29,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
+#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
 namespace ocs2 {
 
-class PinocchioCentroidalDynamics {
+/**
+ * Centroidal Dynamics:
+ *
+ * State: x = [ linear_momentum / mass, angular_momentum / mass, base_position, base_orientation_zyx, joint_positions ]'
+ * @remark: The linear and angular momenta are expressed with respect to the centroidal frame (a frame centered at
+ * the CoM and aligned with the inertial frame).
+ *
+ * Input: u = [ contact_forces, contact_wrenches, joint_velocities ]'
+ * @remark: Contact forces and wrenches are expressed with respect to the inertial frame.
+ */
+class PinocchioCentroidalDynamics final {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -45,12 +56,11 @@ class PinocchioCentroidalDynamics {
   using Matrix3 = Eigen::Matrix<scalar_t, 3, 3>;
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
-  /** Constructor
-   *
-   * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
-   * which are needed for pinocchio functions and algorithms
+  /**
+   * Constructor
+   * CentroidalModelInfo : The centroidal model information.
    */
-  explicit PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping);
+  explicit PinocchioCentroidalDynamics(CentroidalModelInfo info);
 
   /** Copy Constructor */
   PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs);
@@ -61,10 +71,11 @@ class PinocchioCentroidalDynamics {
    */
   void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) {
     pinocchioInterfacePtr_ = &pinocchioInterface;
-    mappingPtr_->setPinocchioInterface(pinocchioInterface);
+    mapping_.setPinocchioInterface(pinocchioInterface);
   }
 
-  /** Computes system flow map x_dot = f(x, u)
+  /**
+   * Computes system flow map x_dot = f(x, u)
    *
    * @param time: time
    * @param state: system state vector
@@ -76,7 +87,8 @@ class PinocchioCentroidalDynamics {
    */
   vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input);
 
-  /** Computes first order approximation of the system flow map x_dot = f(x, u)
+  /**
+   * Computes first order approximation of the system flow map x_dot = f(x, u)
    *
    * @param time: time
    * @param state: system state vector
@@ -99,7 +111,7 @@ class PinocchioCentroidalDynamics {
   void computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input);
 
   const PinocchioInterface* pinocchioInterfacePtr_;
-  std::unique_ptr<CentroidalModelPinocchioMapping<scalar_t>> mappingPtr_;
+  CentroidalModelPinocchioMapping mapping_;
 
   // partial derivatives of the system dynamics
   Matrix3x normalizedLinearMomentumRateDerivativeQ_;

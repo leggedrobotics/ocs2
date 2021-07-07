@@ -29,15 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_centroidal_model/AccessHelperFunctions.h"
-#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
-#include "ocs2_centroidal_model/ModelHelperFunctions.h"
+#include <ocs2_core/Types.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
+#include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
 namespace ocs2 {
 
-class CentroidalModelRbdConversions {
+class CentroidalModelRbdConversions final {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -46,13 +45,13 @@ class CentroidalModelRbdConversions {
   using Matrix3 = Eigen::Matrix<scalar_t, 3, 3>;
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
-  /** Constructor
-   *
+  /**
+   * Constructor
    * @param pinocchioInterface: predefined pinocchio interface for a robot
    * @param mapping: maps centroidal model states and inputs to pinocchio generalized coordinates and velocities,
    * which are needed for pinocchio functions and algorithms
    */
-  CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface, CentroidalModelPinocchioMapping<scalar_t>& mapping);
+  CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface, const CentroidalModelPinocchioMapping& mapping);
 
   ~CentroidalModelRbdConversions() = default;
 
@@ -93,7 +92,7 @@ class CentroidalModelRbdConversions {
 
  private:
   PinocchioInterface* pinocchioInterfacePtr_;
-  CentroidalModelPinocchioMapping<scalar_t>* mappingPtr_;
+  std::unique_ptr<CentroidalModelPinocchioMapping> mappingPtr_;
 
   Matrix6 Adot_;
   Vector6 qbaseDdot_;

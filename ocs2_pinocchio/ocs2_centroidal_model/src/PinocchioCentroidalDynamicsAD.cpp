@@ -29,28 +29,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
 
+#include "ocs2_centroidal_model/AccessHelperFunctions.h"
+#include "ocs2_centroidal_model/ModelHelperFunctions.h"
+
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface,
-                                                             const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
+PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info,
                                                              const std::string& modelName, const std::string& modelFolder,
                                                              bool recompileLibraries, bool verbose) {
-  // initialize CppAD interface
-  auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
+  auto systemFlowMapFunc = [&](const ad_vector_t& x, ad_vector_t& y) {
+    // initialize CppAD interface
+    auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
 
-  // set pinocchioInterface to mapping
-  std::unique_ptr<CentroidalModelPinocchioMapping<ad_scalar_t>> mappingPtr(mapping.clone());
-  mappingPtr->setPinocchioInterface(pinocchioInterfaceCppAd);
-  const auto& info = mappingPtr->getCentroidalModelInfo();
+    // mapping
+    CentroidalModelPinocchioMappingCppAd mappingCppAd(info.toCppAd());
+    mappingCppAd.setPinocchioInterface(pinocchioInterfaceCppAd);
 
-  auto systemFlowMapFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) {
     ad_vector_t state = x.head(info.stateDim);
     ad_vector_t input = x.tail(info.inputDim);
-    y = getValueCppAd(pinocchioInterfaceCppAd, *mappingPtr, state, input);
+    y = getValueCppAd(pinocchioInterfaceCppAd, mappingCppAd, state, input);
   };
+
   systemFlowMapCppAdInterfacePtr_.reset(
       new CppAdInterface(systemFlowMapFunc, info.stateDim + info.inputDim, modelName + "_systemFlowMap", modelFolder));
 
@@ -71,21 +73,22 @@ PinocchioCentroidalDynamicsAD::PinocchioCentroidalDynamicsAD(const PinocchioCent
 /******************************************************************************************************/
 /******************************************************************************************************/
 ad_vector_t PinocchioCentroidalDynamicsAD::getValueCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
-                                                         const CentroidalModelPinocchioMapping<ad_scalar_t>& mapping,
-                                                         const ad_vector_t& state, const ad_vector_t& input) {
-  const auto& info = mapping.getCentroidalModelInfo();
+                                                         const CentroidalModelPinocchioMappingCppAd& mappingCppAd, const ad_vector_t& state,
+                                                         const ad_vector_t& input) {
+  const auto& info = mappingCppAd.getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
 
-  const ad_vector_t qPinocchio = mapping.getPinocchioJointPosition(state);
+  const ad_vector_t qPinocchio = mappingCppAd.getPinocchioJointPosition(state);
   updateCentroidalDynamics(pinocchioInterfaceCppAd, info, qPinocchio);
 
   ad_vector_t stateDerivative(info.stateDim);
 
   // compute center of mass acceleration and derivative of the normalized angular momentum
-  stateDerivative.head<6>() = getNormalizedCentroidalMomentumRate(pinocchioInterfaceCppAd, info, input);
+  centroidal_model::getNormalizedMomentum(stateDerivative, info) =
+      getNormalizedCentroidalMomentumRate(pinocchioInterfaceCppAd, info, input);
 
   // derivatives of the floating base variables + joint velocities
-  stateDerivative.tail(info.generalizedCoordinatesNum) = mapping.getPinocchioJointVelocity(state, input);
+  centroidal_model::getGeneralizedCoordinates(stateDerivative, info) = mappingCppAd.getPinocchioJointVelocity(state, input);
 
   return stateDerivative;
 }

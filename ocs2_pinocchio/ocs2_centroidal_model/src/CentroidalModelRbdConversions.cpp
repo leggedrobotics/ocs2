@@ -27,7 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+
 #include "ocs2_centroidal_model/CentroidalModelRbdConversions.h"
+
+#include <pinocchio/algorithm/centroidal.hpp>
+
+#include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
+
+#include "ocs2_centroidal_model/AccessHelperFunctions.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
@@ -36,8 +44,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 CentroidalModelRbdConversions::CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface,
-                                                             CentroidalModelPinocchioMapping<scalar_t>& mapping)
-    : pinocchioInterfacePtr_(&pinocchioInterface), mappingPtr_(&mapping) {
+                                                             const CentroidalModelPinocchioMapping& mapping)
+    : pinocchioInterfacePtr_(&pinocchioInterface), mappingPtr_(mapping.clone()) {
   mappingPtr_->setPinocchioInterface(pinocchioInterface);
 }
 
@@ -105,8 +113,8 @@ void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vec
   vPinocchio.tail(info.actuatedDofNum) = rbdState.segment(info.generalizedCoordinatesNum + 6, info.actuatedDofNum);
 
   centroidalMomentum_ = pinocchio::computeCentroidalMomentum(model, data, qPinocchio, vPinocchio);
-  state.head(6) = centroidalMomentum_ / info.robotMass;
-  state.segment(6, info.generalizedCoordinatesNum) = qPinocchio;
+  centroidal_model::getNormalizedMomentum(state, info) = centroidalMomentum_ / info.robotMass;
+  centroidal_model::getGeneralizedCoordinates(state, info) = qPinocchio;
 }
 
 /******************************************************************************************************/

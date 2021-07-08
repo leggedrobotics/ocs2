@@ -50,12 +50,12 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LeggedRobotCost::LeggedRobotCost(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info,
-                                 const SwitchedModelModeScheduleManager& modeScheduleManager, const std::string& taskFile,
+                                 const SwitchedModelReferenceManager& referenceManager, const std::string& taskFile,
                                  ModelSettings modelSettings)
 
     : pinocchioInterface_(pinocchioInterface),
       pinocchioMapping_(info),
-      modeScheduleManagerPtr_(&modeScheduleManager),
+      referenceManagerPtr_(&referenceManager),
       modelSettings_(std::move(modelSettings)) {
   pinocchioMapping_.setPinocchioInterface(pinocchioInterface_);
 
@@ -70,7 +70,7 @@ LeggedRobotCost::LeggedRobotCost(const LeggedRobotCost& rhs)
     : CostFunctionBase(rhs),
       pinocchioInterface_(rhs.pinocchioInterface_),
       pinocchioMapping_(rhs.pinocchioMapping_.getCentroidalModelInfo()),
-      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      referenceManagerPtr_(rhs.referenceManagerPtr_),
       modelSettings_(rhs.modelSettings_),
       stateInputCostCollection_(rhs.stateInputCostCollection_) {
   pinocchioMapping_.setPinocchioInterface(pinocchioInterface_);
@@ -151,8 +151,7 @@ std::unique_ptr<StateInputCost> LeggedRobotCost::getBaseTrackingCost(const std::
     std::cerr << " #### =============================================================================\n";
   }
 
-  return std::unique_ptr<StateInputCost>(
-      new LeggedRobotStateInputQuadraticCost(std::move(Q), std::move(R), info, *modeScheduleManagerPtr_));
+  return std::unique_ptr<StateInputCost>(new LeggedRobotStateInputQuadraticCost(std::move(Q), std::move(R), info, *referenceManagerPtr_));
 }
 
 }  // namespace legged_robot

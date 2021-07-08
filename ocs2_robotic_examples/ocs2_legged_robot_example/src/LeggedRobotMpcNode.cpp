@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
-#include "ocs2_legged_robot_example/gait/GaitReceiver.h"
 #include "ocs2_legged_robot_example/LeggedRobotInterface.h"
+#include "ocs2_legged_robot_example/gait/GaitReceiver.h"
 
 int main(int argc, char** argv) {
   std::vector<std::string> programArgs{};
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 
   // gait receiver
   auto gaitReceiverPtr = std::make_shared<ocs2::legged_robot::GaitReceiver>(
-      nodeHandle, interface.getSwitchedModelModeScheduleManagerPtr()->getGaitSchedule(), robotName);
+      nodeHandle, interface.getSwitchedModelReferenceManagerPtr()->getGaitSchedule(), robotName);
 
   // reference manager
   auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, interface.getReferenceManagerPtr());

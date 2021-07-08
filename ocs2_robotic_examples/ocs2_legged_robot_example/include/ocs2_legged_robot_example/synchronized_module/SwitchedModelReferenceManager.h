@@ -44,8 +44,7 @@ namespace legged_robot {
  */
 class SwitchedModelReferenceManager : public ReferenceManager {
  public:
-  SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
-                                   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
+  SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr, std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
 
   ~SwitchedModelReferenceManager() override = default;
 

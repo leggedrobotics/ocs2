@@ -38,12 +38,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 
-#include "ocs2_legged_robot_example/gait/SwitchedModelModeScheduleManager.h"
-#include "ocs2_legged_robot_example/reference/foot_planner/SwingTrajectoryPlanner.h"
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
 #include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
 #include "ocs2_legged_robot_example/constraint/ZeroForceConstraint.h"
+#include "ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -51,8 +51,8 @@ namespace legged_robot {
 class LeggedRobotConstraintAD : public ConstraintBase {
  public:
   LeggedRobotConstraintAD(const PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
-                          const SwitchedModelModeScheduleManager& modeScheduleManager,
-                          const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr, ModelSettings modelSettings);
+                          const SwitchedModelReferenceManager& referenceManager, const SwingTrajectoryPlanner& swingTrajectoryPlannerPtr,
+                          ModelSettings modelSettings);
 
   ~LeggedRobotConstraintAD() override = default;
   LeggedRobotConstraintAD* clone() const override { return new LeggedRobotConstraintAD(*this); }
@@ -82,7 +82,7 @@ class LeggedRobotConstraintAD : public ConstraintBase {
   void updateInequalityConstraints(scalar_t time);
 
   const CentroidalModelInfo info_;
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
   const ModelSettings modelSettings_;
 

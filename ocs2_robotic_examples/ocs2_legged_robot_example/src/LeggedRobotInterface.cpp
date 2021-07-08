@@ -102,15 +102,14 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
       new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config"), centroidalModelInfo_));
 
   // Mode schedule manager
-  modeScheduleManagerPtr_ =
-      std::make_shared<SwitchedModelModeScheduleManager>(loadGaitSchedule(taskFile), std::move(swingTrajectoryPlanner));
+  referenceManagerPtr_ = std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(taskFile), std::move(swingTrajectoryPlanner));
 
   // Initialization
   constexpr bool extendNormalizedMomentum = true;
-  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *modeScheduleManagerPtr_, extendNormalizedMomentum));
+  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedMomentum));
 
   // Cost function
-  costPtr_.reset(new LeggedRobotCost(*pinocchioInterfacePtr_, centroidalModelInfo_, *modeScheduleManagerPtr_, taskFile, modelSettings_));
+  costPtr_.reset(new LeggedRobotCost(*pinocchioInterfacePtr_, centroidalModelInfo_, *referenceManagerPtr_, taskFile, modelSettings_));
 
   // Constraints
   bool useAnalyticalGradientsConstraints = false;
@@ -118,8 +117,8 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   if (useAnalyticalGradientsConstraints) {
     throw std::runtime_error("[LeggedRobotInterface::setupOptimizer] The analytical constraint class is not yet implemented.");
   } else {
-    constraintsPtr_.reset(new LeggedRobotConstraintAD(*pinocchioInterfacePtr_, centroidalModelInfo_, *modeScheduleManagerPtr_,
-                                                      *modeScheduleManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_));
+    constraintsPtr_.reset(new LeggedRobotConstraintAD(*pinocchioInterfacePtr_, centroidalModelInfo_, *referenceManagerPtr_,
+                                                      *referenceManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_));
   }
 
   // Dynamics

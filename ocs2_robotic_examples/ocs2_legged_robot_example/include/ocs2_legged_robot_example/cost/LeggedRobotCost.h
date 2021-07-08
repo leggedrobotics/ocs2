@@ -37,9 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include "ocs2_legged_robot_example/gait/SwitchedModelModeScheduleManager.h"
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/common/Types.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -47,7 +47,7 @@ namespace legged_robot {
 class LeggedRobotCost : public CostFunctionBase {
  public:
   LeggedRobotCost(const PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& info,
-                  const SwitchedModelModeScheduleManager& modeScheduleManager, const std::string& taskFile, ModelSettings modelSettings);
+                  const SwitchedModelReferenceManager& referenceManager, const std::string& taskFile, ModelSettings modelSettings);
   ~LeggedRobotCost() override = default;
   LeggedRobotCost* clone() const override { return new LeggedRobotCost(*this); }
 
@@ -64,7 +64,7 @@ class LeggedRobotCost : public CostFunctionBase {
 
   PinocchioInterface pinocchioInterface_;
   CentroidalModelPinocchioMapping pinocchioMapping_;
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
   const ModelSettings modelSettings_;
 
   CostCollection<StateInputCost> stateInputCostCollection_;

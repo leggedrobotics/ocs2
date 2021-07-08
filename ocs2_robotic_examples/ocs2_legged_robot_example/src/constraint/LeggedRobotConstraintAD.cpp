@@ -41,10 +41,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LeggedRobotConstraintAD::LeggedRobotConstraintAD(const PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
-                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                                 const SwitchedModelReferenceManager& referenceManager,
                                                  const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings modelSettings)
     : info_(std::move(info)),
-      modeScheduleManagerPtr_(&modeScheduleManager),
+      referenceManagerPtr_(&referenceManager),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       modelSettings_(std::move(modelSettings)),
       equalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection),
@@ -59,7 +59,7 @@ LeggedRobotConstraintAD::LeggedRobotConstraintAD(const PinocchioInterface& pinoc
 LeggedRobotConstraintAD::LeggedRobotConstraintAD(const LeggedRobotConstraintAD& rhs)
     : ConstraintBase(rhs),
       info_(rhs.info_),
-      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      referenceManagerPtr_(rhs.referenceManagerPtr_),
       swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
       modelSettings_(rhs.modelSettings_),
       equalityStateInputConstraintCollectionPtr_(rhs.equalityStateInputConstraintCollectionPtr_->clone()),
@@ -160,7 +160,7 @@ void LeggedRobotConstraintAD::updateStateInputEqualityConstraints(scalar_t time)
     return config;
   };
 
-  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
+  const auto contactFlags = referenceManagerPtr_->getContactFlags(time);
   for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
     // zero force
     eeZeroForceConstraints_[i]->setActivity(!contactFlags[i]);
@@ -181,7 +181,7 @@ void LeggedRobotConstraintAD::updateStateInputEqualityConstraints(scalar_t time)
 /******************************************************************************************************/
 void LeggedRobotConstraintAD::updateInequalityConstraints(scalar_t time) {
   // friction cone
-  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
+  const auto contactFlags = referenceManagerPtr_->getContactFlags(time);
   for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
     eeFrictionConeConstraints_[i]->setActivity(contactFlags[i]);
   }  // end of i loop

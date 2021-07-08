@@ -39,7 +39,7 @@ namespace legged_robot {
 class LeggedRobotStateInputQuadraticCost final : public QuadraticStateInputCost {
  public:
   LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R, CentroidalModelInfo info,
-                                     const SwitchedModelModeScheduleManager& modeScheduleManager);
+                                     const SwitchedModelReferenceManager& referenceManager);
 
   ~LeggedRobotStateInputQuadraticCost() override = default;
   LeggedRobotStateInputQuadraticCost* clone() const override;
@@ -51,7 +51,7 @@ class LeggedRobotStateInputQuadraticCost final : public QuadraticStateInputCost 
                                                        const TargetTrajectories& targetTrajectories) const override;
 
   const CentroidalModelInfo info_;
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
 };
 
 }  // namespace legged_robot

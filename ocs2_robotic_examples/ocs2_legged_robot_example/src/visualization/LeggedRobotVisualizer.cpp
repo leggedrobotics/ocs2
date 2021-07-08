@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/kinematics.hpp>
 
 // OCS2
-#include "ocs2_legged_robot_example/visualization/LeggedRobotVisualizer.h"
 #include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
+#include "ocs2_legged_robot_example/visualization/LeggedRobotVisualizer.h"
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
@@ -50,7 +50,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // URDF related
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
-
 
 namespace ocs2 {
 namespace legged_robot {

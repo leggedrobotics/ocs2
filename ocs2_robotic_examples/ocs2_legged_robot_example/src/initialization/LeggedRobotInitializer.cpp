@@ -39,9 +39,9 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotInitializer::LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
+LeggedRobotInitializer::LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelReferenceManager& referenceManager,
                                                bool extendNormalizedMomentum)
-    : info_(std::move(info)), modeScheduleManagerPtr_(&modeScheduleManager), extendNormalizedMomentum_(extendNormalizedMomentum) {}
+    : info_(std::move(info)), referenceManagerPtr_(&referenceManager), extendNormalizedMomentum_(extendNormalizedMomentum) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -54,7 +54,7 @@ LeggedRobotInitializer* LeggedRobotInitializer::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
-  const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
+  const auto contactFlags = referenceManagerPtr_->getContactFlags(time);
   input = weightCompensatingInput(info_, contactFlags);
   nextState = state;
   if (!extendNormalizedMomentum_) {

@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
@@ -44,8 +44,7 @@ class ZeroForceConstraint final : public StateInputConstraint {
    * @param [in] contactPointIndex : The 3 DoF contact index.
    * @param [in] info : The centroidal model information.
    */
-  explicit ZeroForceConstraint(const SwitchedModelModeScheduleManager& modeScheduleManager, size_t contactPointIndex,
-                               CentroidalModelInfo info);
+  explicit ZeroForceConstraint(const SwitchedModelReferenceManager& referenceManager, size_t contactPointIndex, CentroidalModelInfo info);
 
   ~ZeroForceConstraint() override = default;
   ZeroForceConstraint* clone() const override { return new ZeroForceConstraint(*this); }
@@ -59,8 +58,7 @@ class ZeroForceConstraint final : public StateInputConstraint {
  private:
   ZeroForceConstraint(const ZeroForceConstraint& other) = default;
 
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
-
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
   const size_t contactPointIndex_;
   const CentroidalModelInfo info_;
 };

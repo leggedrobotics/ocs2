@@ -37,10 +37,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ZeroForceConstraint::ZeroForceConstraint(const SwitchedModelModeScheduleManager& modeScheduleManager, size_t contactPointIndex,
+ZeroForceConstraint::ZeroForceConstraint(const SwitchedModelReferenceManager& referenceManager, size_t contactPointIndex,
                                          CentroidalModelInfo info)
     : StateInputConstraint(ConstraintOrder::Linear),
-      modeScheduleManagerPtr_(&modeScheduleManager),
+      referenceManagerPtr_(&referenceManager),
       contactPointIndex_(contactPointIndex),
       info_(std::move(info)) {}
 
@@ -48,7 +48,7 @@ ZeroForceConstraint::ZeroForceConstraint(const SwitchedModelModeScheduleManager&
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool ZeroForceConstraint::isActive(scalar_t time) const {
-  return !modeScheduleManagerPtr_->getContactFlags(time)[contactPointIndex_];
+  return !referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
 }
 
 /******************************************************************************************************/

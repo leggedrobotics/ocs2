@@ -29,12 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+#include "ocs2_legged_robot_example/common/Types.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
-
-#include "ocs2_legged_robot_example/common/Types.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -88,7 +87,7 @@ class FrictionConeConstraint final : public StateInputConstraint {
    * @param [in] contactPointIndex : The 3 DoF contact index.
    * @param [in] info : The centroidal model information.
    */
-  FrictionConeConstraint(const SwitchedModelModeScheduleManager& modeScheduleManager, Config config, size_t contactPointIndex,
+  FrictionConeConstraint(const SwitchedModelReferenceManager& referenceManager, Config config, size_t contactPointIndex,
                          CentroidalModelInfo info);
 
   ~FrictionConeConstraint() override = default;
@@ -134,7 +133,7 @@ class FrictionConeConstraint final : public StateInputConstraint {
   matrix_t frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const;
   matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
 
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
 
   const Config config_;
   const size_t contactPointIndex_;

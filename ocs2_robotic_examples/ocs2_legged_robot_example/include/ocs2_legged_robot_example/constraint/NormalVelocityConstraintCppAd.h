@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 #include <ocs2_core/constraint/StateInputConstraint.h>
 
@@ -51,7 +51,7 @@ class NormalVelocityConstraintCppAd final : public StateInputConstraint {
    * @param [in] endEffectorKinematics: The kinematic interface to the target end-effector.
    * @param [in] contactPointIndex : The 3 DoF contact index.
    */
-  NormalVelocityConstraintCppAd(const SwitchedModelModeScheduleManager& modeScheduleManager,
+  NormalVelocityConstraintCppAd(const SwitchedModelReferenceManager& referenceManager,
                                 const EndEffectorKinematics<scalar_t>& endEffectorKinematics, size_t contactPointIndex);
 
   ~NormalVelocityConstraintCppAd() override = default;
@@ -66,7 +66,7 @@ class NormalVelocityConstraintCppAd final : public StateInputConstraint {
  private:
   NormalVelocityConstraintCppAd(const NormalVelocityConstraintCppAd& rhs);
 
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
   std::unique_ptr<EndEffectorLinearConstraint> eeLinearConstraintPtr_;
   const size_t contactPointIndex_;
 };

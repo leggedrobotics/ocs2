@@ -36,11 +36,11 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const SwitchedModelModeScheduleManager& modeScheduleManager,
+NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const SwitchedModelReferenceManager& referenceManager,
                                                              const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
                                                              size_t contactPointIndex)
     : StateInputConstraint(ConstraintOrder::Linear),
-      modeScheduleManagerPtr_(&modeScheduleManager),
+      referenceManagerPtr_(&referenceManager),
       eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 1)),
       contactPointIndex_(contactPointIndex) {}
 
@@ -49,7 +49,7 @@ NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const SwitchedModel
 /******************************************************************************************************/
 NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const NormalVelocityConstraintCppAd& rhs)
     : StateInputConstraint(rhs),
-      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      referenceManagerPtr_(rhs.referenceManagerPtr_),
       eeLinearConstraintPtr_(rhs.eeLinearConstraintPtr_->clone()),
       contactPointIndex_(rhs.contactPointIndex_) {}
 
@@ -57,7 +57,7 @@ NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const NormalVelocit
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool NormalVelocityConstraintCppAd::isActive(scalar_t time) const {
-  return !modeScheduleManagerPtr_->getContactFlags(time)[contactPointIndex_];
+  return !referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
 }
 
 /******************************************************************************************************/

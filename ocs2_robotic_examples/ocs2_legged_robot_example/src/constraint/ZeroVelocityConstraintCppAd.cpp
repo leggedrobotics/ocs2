@@ -35,11 +35,11 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ZeroVelocityConstraintCppAd::ZeroVelocityConstraintCppAd(const SwitchedModelModeScheduleManager& modeScheduleManager,
+ZeroVelocityConstraintCppAd::ZeroVelocityConstraintCppAd(const SwitchedModelReferenceManager& referenceManager,
                                                          const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
                                                          size_t contactPointIndex, EndEffectorLinearConstraint::Config config)
     : StateInputConstraint(ConstraintOrder::Linear),
-      modeScheduleManagerPtr_(&modeScheduleManager),
+      referenceManagerPtr_(&referenceManager),
       eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 3, std::move(config))),
       contactPointIndex_(contactPointIndex) {}
 
@@ -48,7 +48,7 @@ ZeroVelocityConstraintCppAd::ZeroVelocityConstraintCppAd(const SwitchedModelMode
 /******************************************************************************************************/
 ZeroVelocityConstraintCppAd::ZeroVelocityConstraintCppAd(const ZeroVelocityConstraintCppAd& rhs)
     : StateInputConstraint(rhs),
-      modeScheduleManagerPtr_(rhs.modeScheduleManagerPtr_),
+      referenceManagerPtr_(rhs.referenceManagerPtr_),
       eeLinearConstraintPtr_(rhs.eeLinearConstraintPtr_->clone()),
       contactPointIndex_(rhs.contactPointIndex_) {}
 
@@ -56,7 +56,7 @@ ZeroVelocityConstraintCppAd::ZeroVelocityConstraintCppAd(const ZeroVelocityConst
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool ZeroVelocityConstraintCppAd::isActive(scalar_t time) const {
-  return modeScheduleManagerPtr_->getContactFlags(time)[contactPointIndex_];
+  return referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
 }
 
 /******************************************************************************************************/

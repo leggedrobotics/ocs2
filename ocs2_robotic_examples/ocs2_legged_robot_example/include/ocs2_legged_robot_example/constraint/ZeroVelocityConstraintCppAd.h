@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 #include <ocs2_core/constraint/StateInputConstraint.h>
 
@@ -52,7 +52,7 @@ class ZeroVelocityConstraintCppAd final : public StateInputConstraint {
    * @param [in] contactPointIndex : The 3 DoF contact index.
    * @param [in] config: The constraint coefficients
    */
-  ZeroVelocityConstraintCppAd(const SwitchedModelModeScheduleManager& modeScheduleManager,
+  ZeroVelocityConstraintCppAd(const SwitchedModelReferenceManager& referenceManager,
                               const EndEffectorKinematics<scalar_t>& endEffectorKinematics, size_t contactPointIndex,
                               EndEffectorLinearConstraint::Config config = EndEffectorLinearConstraint::Config());
 
@@ -68,7 +68,7 @@ class ZeroVelocityConstraintCppAd final : public StateInputConstraint {
  private:
   ZeroVelocityConstraintCppAd(const ZeroVelocityConstraintCppAd& rhs);
 
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
   std::unique_ptr<EndEffectorLinearConstraint> eeLinearConstraintPtr_;
   const size_t contactPointIndex_;
 };

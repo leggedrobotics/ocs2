@@ -37,10 +37,10 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FrictionConeConstraint::FrictionConeConstraint(const SwitchedModelModeScheduleManager& modeScheduleManager, Config config,
+FrictionConeConstraint::FrictionConeConstraint(const SwitchedModelReferenceManager& referenceManager, Config config,
                                                size_t contactPointIndex, CentroidalModelInfo info)
     : StateInputConstraint(ConstraintOrder::Quadratic),
-      modeScheduleManagerPtr_(&modeScheduleManager),
+      referenceManagerPtr_(&referenceManager),
       config_(std::move(config)),
       contactPointIndex_(contactPointIndex),
       info_(std::move(info)) {}
@@ -57,7 +57,7 @@ void FrictionConeConstraint::setSurfaceNormalInWorld(const vector3_t& surfaceNor
 /******************************************************************************************************/
 /******************************************************************************************************/
 bool FrictionConeConstraint::isActive(scalar_t time) const {
-  return modeScheduleManagerPtr_->getContactFlags(time)[contactPointIndex_];
+  return referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
 }
 
 /******************************************************************************************************/

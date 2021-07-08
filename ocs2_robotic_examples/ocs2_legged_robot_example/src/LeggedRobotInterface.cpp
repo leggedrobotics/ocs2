@@ -125,12 +125,11 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
       new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config"), centroidalModelInfo_));
 
   // Mode schedule manager
-  modeScheduleManagerPtr_ =
-      std::make_shared<SwitchedModelModeScheduleManager>(loadGaitSchedule(taskFile), std::move(swingTrajectoryPlanner));
+  referenceManagerPtr_ = std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(taskFile), std::move(swingTrajectoryPlanner));
 
   // Initialization
   constexpr bool extendNormalizedMomentum = true;
-  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *modeScheduleManagerPtr_, extendNormalizedMomentum));
+  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedMomentum));
 
   // Dynamics
   bool useAnalyticalGradientsDynamics = false;

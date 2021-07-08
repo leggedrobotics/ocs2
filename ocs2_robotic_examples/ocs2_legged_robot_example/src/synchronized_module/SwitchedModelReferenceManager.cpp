@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/logic/GaitReceiver.h>
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -35,34 +35,29 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName)
-    : gaitSchedulePtr_(std::move(gaitSchedulePtr)), receivedGait_({0.0, 1.0}, {ModeNumber::STANCE}), gaitUpdated_(false) {
-  mpcModeSequenceSubscriber_ = nodeHandle.subscribe(robotName + "_mpc_mode_schedule", 1, &GaitReceiver::mpcModeSequenceCallback, this,
-                                                    ::ros::TransportHints().udp());
+SwitchedModelReferenceManager::SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
+                                                             std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr)
+    : ReferenceManager(TargetTrajectories(), ModeSchedule()),
+      gaitSchedulePtr_(std::move(gaitSchedulePtr)),
+      swingTrajectoryPtr_(std::move(swingTrajectoryPtr)) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+contact_flag_t SwitchedModelReferenceManager::getContactFlags(scalar_t time) const {
+  return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                const ReferenceManagerInterface& referenceManager) {
-  if (gaitUpdated_) {
-    std::lock_guard<std::mutex> lock(receivedGaitMutex_);
-    std::cerr << "[GaitReceiver]: Setting new gait after time " << finalTime << "\n";
-    std::cerr << receivedGait_;
-    const auto timeHorizon = finalTime - initTime;
-    gaitSchedulePtr_->insertModeSequenceTemplate(receivedGait_, finalTime, timeHorizon);
-    gaitUpdated_ = false;
-  }
-}
+void SwitchedModelReferenceManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                                                     TargetTrajectories& targetTrajectories, ModeSchedule& modeSchedule) {
+  const auto timeHorizon = finalTime - initTime;
+  modeSchedule = gaitSchedulePtr_->getModeSchedule(initTime - timeHorizon, finalTime + timeHorizon);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg) {
-  std::lock_guard<std::mutex> lock(receivedGaitMutex_);
-  receivedGait_ = readModeSequenceTemplateMsg(*msg);
-  gaitUpdated_ = true;
+  const scalar_t terrainHeight = 0.0;
+  swingTrajectoryPtr_->update(modeSchedule, terrainHeight);
 }
 
 }  // namespace legged_robot

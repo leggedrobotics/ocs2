@@ -67,29 +67,22 @@ link_directories(${pinocchio_LIBRARY_DIRS})
 # Legged robot interface library
 add_library(ocs2_legged_robot_example
   src/common/ModelSettings.cpp
-
   src/dynamics/LeggedRobotDynamicsAD.cpp
-
   src/constraint/EndEffectorLinearConstraint.cpp
   src/constraint/FrictionConeConstraint.cpp
   src/constraint/ZeroForceConstraint.cpp
   src/constraint/NormalVelocityConstraintCppAd.cpp
   src/constraint/ZeroVelocityConstraintCppAd.cpp
-
   src/cost/LeggedRobotStateInputQuadraticCost.cpp
-
   src/initialization/LeggedRobotInitializer.cpp
-
+  src/synchronized_module/SwitchedModelReferenceManager.cpp
   src/foot_planner/SplineCpg.cpp
   src/foot_planner/CubicSpline.cpp
   src/foot_planner/SwingTrajectoryPlanner.cpp
-
-  src/logic/Gait.cpp
-  src/logic/GaitReceiver.cpp
-  src/logic/GaitSchedule.cpp
-  src/logic/ModeSequenceTemplate.cpp
-  src/logic/SwitchedModelModeScheduleManager.cpp
-
+  src/gait/Gait.cpp
+  src/gait/GaitReceiver.cpp
+  src/gait/GaitSchedule.cpp
+  src/gait/ModeSequenceTemplate.cpp
   src/LeggedRobotInterface.cpp
   src/LeggedRobotPreComputation.cpp
   src/visualization/LeggedRobotVisualizer.cpp
@@ -149,8 +142,8 @@ target_link_libraries(legged_robot_target
 target_compile_options(legged_robot_target PUBLIC ${pinocchio_CFLAGS_OTHER})
 
 add_executable(legged_robot_gait_command
-  src/logic/Gait.cpp
-  src/logic/ModeSequenceTemplate.cpp
+  src/gait/Gait.cpp
+  src/gait/ModeSequenceTemplate.cpp
   src/command/LeggedRobotModeSequenceKeyboard.cpp
   src/LeggedRobotGaitCommandNode.cpp
 )

@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 
-#include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -39,7 +39,7 @@ namespace legged_robot {
 class LeggedRobotStateInputQuadraticCost final : public QuadraticStateInputCost {
  public:
   LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R, CentroidalModelInfo info,
-                                     const SwitchedModelModeScheduleManager& modeScheduleManager);
+                                     const SwitchedModelReferenceManager& referenceManager);
 
   ~LeggedRobotStateInputQuadraticCost() override = default;
   LeggedRobotStateInputQuadraticCost* clone() const override;
@@ -51,7 +51,7 @@ class LeggedRobotStateInputQuadraticCost final : public QuadraticStateInputCost 
                                                        const TargetTrajectories& targetTrajectories) const override;
 
   const CentroidalModelInfo info_;
-  const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
 };
 
 }  // namespace legged_robot

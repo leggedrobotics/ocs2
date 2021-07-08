@@ -29,38 +29,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/thread_support/Synchronized.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_core/Types.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
-#include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
-#include <ocs2_legged_robot_example/logic/GaitSchedule.h>
-#include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
+#include <ros/ros.h>
+#include <mutex>
+
+#include "ocs2_legged_robot_example/gait/GaitSchedule.h"
+#include "ocs2_legged_robot_example/gait/ModeSequenceTemplate.h"
+#include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
 
 namespace ocs2 {
 namespace legged_robot {
-
-/**
- * Manages the ModeSchedule and the TargetTrajectories for switched model.
- */
-class SwitchedModelModeScheduleManager : public ReferenceManager {
+class GaitReceiver : public SolverSynchronizedModule {
  public:
-  SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
-                                   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
+  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
-  ~SwitchedModelModeScheduleManager() override = default;
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
+                    const ReferenceManagerInterface& referenceManager) override;
 
-  contact_flag_t getContactFlags(scalar_t time) const;
-
-  const std::shared_ptr<GaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
-
-  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
+  void postSolverRun(const PrimalSolution& primalSolution) override{};
 
  private:
-  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
-                        ModeSchedule& modeSchedule) override;
+  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
 
   std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
-  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
+
+  ros::Subscriber mpcModeSequenceSubscriber_;
+
+  std::mutex receivedGaitMutex_;
+  std::atomic_bool gaitUpdated_;
+  ModeSequenceTemplate receivedGait_;
 };
 
 }  // namespace legged_robot

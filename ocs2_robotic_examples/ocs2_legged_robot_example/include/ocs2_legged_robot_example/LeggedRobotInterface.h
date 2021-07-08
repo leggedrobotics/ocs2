@@ -41,11 +41,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/FactoryFunctions.h>
 
-// ocs2_legged_robot_example
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/initialization/LeggedRobotInitializer.h"
-#include "ocs2_legged_robot_example/logic/GaitReceiver.h"
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 /**
  * LeggedRobotInterface class
@@ -69,8 +67,6 @@ class LeggedRobotInterface final : public RobotInterface {
 
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
-  const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
-
   std::unique_ptr<MPC_DDP> getMpcPtr() const;
 
   const ModelSettings& modelSettings() const { return modelSettings_; }
@@ -79,18 +75,13 @@ class LeggedRobotInterface final : public RobotInterface {
   const rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
 
   const vector_t& getInitialState() const { return initialState_; }
-
-  PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
-
-  const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
-
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
+  PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
+  const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
+  std::shared_ptr<SwitchedModelReferenceManager> getSwitchedModelReferenceManagerPtr() const { return referenceManagerPtr_; }
 
-  /** Gets the solver synchronized modules */
-
-  std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
-
-  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return modeScheduleManagerPtr_; }
+  const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
  private:
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
@@ -117,7 +108,7 @@ class LeggedRobotInterface final : public RobotInterface {
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;
 
-  std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
+  std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr_;
 
   std::unique_ptr<OptimalControlProblem> problemPtr_;
 

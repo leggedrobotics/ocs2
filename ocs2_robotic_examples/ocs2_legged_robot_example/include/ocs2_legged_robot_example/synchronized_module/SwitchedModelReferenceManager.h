@@ -29,47 +29,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <mutex>
+#include <ocs2_core/thread_support/Synchronized.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
-#include <ocs2_core/misc/Lookup.h>
-#include <ocs2_core/reference/ModeSchedule.h>
-
-#include "ocs2_legged_robot_example/logic/ModeSequenceTemplate.h"
+#include "ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h"
+#include "ocs2_legged_robot_example/gait/GaitSchedule.h"
+#include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
-class GaitSchedule {
+/**
+ * Manages the ModeSchedule and the TargetTrajectories for switched model.
+ */
+class SwitchedModelReferenceManager : public ReferenceManager {
  public:
-  GaitSchedule(ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate, scalar_t phaseTransitionStanceTime);
+  SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr, std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
 
-  /**
-   * @param [in] lowerBoundTime: The smallest time for which the ModeSchedule should be defined.
-   * @param [in] upperBoundTime: The greatest time for which the ModeSchedule should be defined.
-   */
-  ModeSchedule getModeSchedule(scalar_t lowerBoundTime, scalar_t upperBoundTime);
+  ~SwitchedModelReferenceManager() override = default;
 
-  /**
-   * Used to insert a new user defined logic in the given time period.
-   *
-   * @param [in] startTime: The initial time from which the new mode sequence template should start.
-   * @param [in] finalTime: The final time until when the new mode sequence needs to be defined.
-   */
-  void insertModeSequenceTemplate(const ModeSequenceTemplate& modeSequenceTemplate, scalar_t startTime, scalar_t finalTime);
+  contact_flag_t getContactFlags(scalar_t time) const;
+
+  const std::shared_ptr<GaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
+
+  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
 
  private:
-  /**
-   * Extends the switch information from lowerBoundTime to upperBoundTime based on the template mode sequence.
-   *
-   * @param [in] startTime: The initial time from which the mode schedule should be appended with the template.
-   * @param [in] finalTime: The final time to which the mode schedule should be appended with the template.
-   */
-  void tileModeSequenceTemplate(scalar_t startTime, scalar_t finalTime);
+  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
+                        ModeSchedule& modeSchedule) override;
 
- private:
-  ModeSchedule modeSchedule_;
-  ModeSequenceTemplate modeSequenceTemplate_;
-  scalar_t phaseTransitionStanceTime_;
+  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
 };
 
 }  // namespace legged_robot

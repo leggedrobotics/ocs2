@@ -29,37 +29,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
-
-#include <ros/ros.h>
 #include <mutex>
 
-#include <ocs2_legged_robot_example/logic/GaitSchedule.h>
-#include <ocs2_legged_robot_example/logic/ModeSequenceTemplate.h>
-#include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
+#include <ocs2_core/misc/Lookup.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+
+#include "ocs2_legged_robot_example/gait/ModeSequenceTemplate.h"
 
 namespace ocs2 {
 namespace legged_robot {
-class GaitReceiver : public SolverSynchronizedModule {
+
+class GaitSchedule {
  public:
-  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
+  GaitSchedule(ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate, scalar_t phaseTransitionStanceTime);
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ReferenceManagerInterface& referenceManager) override;
+  /**
+   * @param [in] lowerBoundTime: The smallest time for which the ModeSchedule should be defined.
+   * @param [in] upperBoundTime: The greatest time for which the ModeSchedule should be defined.
+   */
+  ModeSchedule getModeSchedule(scalar_t lowerBoundTime, scalar_t upperBoundTime);
 
-  void postSolverRun(const PrimalSolution& primalSolution) override{};
+  /**
+   * Used to insert a new user defined logic in the given time period.
+   *
+   * @param [in] startTime: The initial time from which the new mode sequence template should start.
+   * @param [in] finalTime: The final time until when the new mode sequence needs to be defined.
+   */
+  void insertModeSequenceTemplate(const ModeSequenceTemplate& modeSequenceTemplate, scalar_t startTime, scalar_t finalTime);
 
  private:
-  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  /**
+   * Extends the switch information from lowerBoundTime to upperBoundTime based on the template mode sequence.
+   *
+   * @param [in] startTime: The initial time from which the mode schedule should be appended with the template.
+   * @param [in] finalTime: The final time to which the mode schedule should be appended with the template.
+   */
+  void tileModeSequenceTemplate(scalar_t startTime, scalar_t finalTime);
 
-  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
-
-  ros::Subscriber mpcModeSequenceSubscriber_;
-
-  std::mutex receivedGaitMutex_;
-  std::atomic_bool gaitUpdated_;
-  ModeSequenceTemplate receivedGait_;
+ private:
+  ModeSchedule modeSchedule_;
+  ModeSequenceTemplate modeSequenceTemplate_;
+  scalar_t phaseTransitionStanceTime_;
 };
 
 }  // namespace legged_robot

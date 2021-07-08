@@ -53,9 +53,9 @@ QuadraticStateInputCost* QuadraticStateInputCost::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t QuadraticStateInputCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                           const CostDesiredTrajectories& desiredTrajectory, const PreComputation&) const {
+                                           const TargetTrajectories& targetTrajectories, const PreComputation&) const {
   vector_t stateDeviation, inputDeviation;
-  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, desiredTrajectory);
+  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, targetTrajectories);
 
   if (P_.size() == 0) {
     return 0.5 * stateDeviation.dot(Q_ * stateDeviation) + 0.5 * inputDeviation.dot(R_ * inputDeviation);
@@ -70,20 +70,17 @@ scalar_t QuadraticStateInputCost::getValue(scalar_t time, const vector_t& state,
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                         const vector_t& input,
-                                                                                        const CostDesiredTrajectories& desiredTrajectory,
+                                                                                        const TargetTrajectories& targetTrajectories,
                                                                                         const PreComputation&) const {
   vector_t stateDeviation, inputDeviation;
-  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, desiredTrajectory);
-
-  const vector_t qDeviation = Q_ * stateDeviation;
-  const vector_t rDeviation = R_ * inputDeviation;
+  std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, targetTrajectories);
 
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * stateDeviation.dot(qDeviation) + 0.5 * inputDeviation.dot(rDeviation);
-  L.dfdx = qDeviation;
-  L.dfdu = rDeviation;
   L.dfdxx = Q_;
   L.dfduu = R_;
+  L.dfdx.noalias() = Q_ * stateDeviation;
+  L.dfdu.noalias() = R_ * inputDeviation;
+  L.f = 0.5 * stateDeviation.dot(L.dfdx) + 0.5 * inputDeviation.dot(L.dfdu);
 
   if (P_.size() == 0) {
     L.dfdux.setZero(input.size(), state.size());
@@ -103,9 +100,9 @@ ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApprox
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::pair<vector_t, vector_t> QuadraticStateInputCost::getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                              const CostDesiredTrajectories& desiredTrajectory) const {
-  const vector_t stateDeviation = state - desiredTrajectory.getDesiredState(time);
-  const vector_t inputDeviation = input - desiredTrajectory.getDesiredInput(time);
+                                                                              const TargetTrajectories& targetTrajectories) const {
+  const vector_t stateDeviation = state - targetTrajectories.getDesiredState(time);
+  const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
   return {stateDeviation, inputDeviation};
 }
 

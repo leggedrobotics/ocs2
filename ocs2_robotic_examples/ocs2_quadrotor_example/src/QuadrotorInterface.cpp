@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
@@ -88,8 +89,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Optimal control problem
    */
-  problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
+  problem_.dynamicsPtr = std::move(dynamicsPtr);
 
   /*
    * Cost function
@@ -104,8 +104,8 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   std::cerr << "R:  \n" << Q << std::endl;
   std::cerr << "Q_final:\n" << Qf << std::endl;
 
-  problemPtr_->costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-  problemPtr_->finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+  problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+  problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   /*
    * Initialization
@@ -119,7 +119,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> QuadrotorInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *operatingPointPtr_));
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *operatingPointPtr_));
 }
 
 }  // namespace quadrotor

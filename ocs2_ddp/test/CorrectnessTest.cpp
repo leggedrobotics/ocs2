@@ -108,8 +108,8 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     // cost
     problemPtr->costPtr->add("cost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     problemPtr->finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     // constraint
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {
@@ -126,7 +126,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     initState = ocs2::vector_t::Random(STATE_DIM);
 
     // get QP
-    problemPtr->costDesiredTrajectories = &costDesiredTrajectories;
+    problemPtr->targetTrajectoriesPtr = &targetTrajectories;
     ocs2::ScalarFunctionQuadraticApproximation qpCosts;
     ocs2::VectorFunctionLinearApproximation qpConstraints;
     const auto lqApproximation = getLinearQuadraticApproximation(*problemPtr, nominalTrajectory);
@@ -202,7 +202,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
 
   ocs2::scalar_t getQpCost(const ocs2::qp_solver::ContinuousTrajectory& qpSolution) const {
     auto costFunc = [this](ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u) {
-      return problemPtr->costPtr->getValue(t, x, u, costDesiredTrajectories, ocs2::PreComputation());
+      return problemPtr->costPtr->getValue(t, x, u, targetTrajectories, ocs2::PreComputation());
     };
     auto inputTrajectoryTemp = qpSolution.inputTrajectory;
     inputTrajectoryTemp.emplace_back(inputTrajectoryTemp.back());
@@ -210,7 +210,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
         ocs2::PerformanceIndicesRollout::rolloutCost(costFunc, qpSolution.timeTrajectory, qpSolution.stateTrajectory, inputTrajectoryTemp);
 
     return lAccum + problemPtr->finalCostPtr->getValue(qpSolution.timeTrajectory.back(), qpSolution.stateTrajectory.back(),
-                                                       costDesiredTrajectories, ocs2::PreComputation());
+                                                       targetTrajectories, ocs2::PreComputation());
   }
 
   std::string getTestName(const ocs2::ddp::Settings& ddpSettings) const {
@@ -239,7 +239,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
   ocs2::scalar_t startTime;
   ocs2::scalar_t finalTime;
 
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::OptimalControlProblem> problemPtr;
   std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
@@ -269,7 +269,7 @@ TEST_P(DDPCorrectness, DISABLED_TestSLQ) {
   // ddp
   ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *operatingPointsPtr);
 
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);
@@ -288,7 +288,7 @@ TEST_P(DDPCorrectness, TestILQR) {
   // ddp
   ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *operatingPointsPtr);
 
-  ddp.setCostDesiredTrajectories(costDesiredTrajectories);
+  ddp.getReferenceManager().setTargetTrajectories(targetTrajectories);
   ddp.run(startTime, initState, finalTime, partitioningTimes);
   const auto performanceIndex = ddp.getPerformanceIndeces();
   const auto solution = ddp.primalSolution(finalTime);

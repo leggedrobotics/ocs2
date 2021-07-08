@@ -33,8 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintInputPattern::getQuadraticApproximation(
-    scalar_t t, const vector_t& x, const vector_t& u, const CostDesiredTrajectories& desiredTrajectory,
-    const PreComputation& preComp) const {
+    scalar_t t, const vector_t& x, const vector_t& u, const TargetTrajectories& targetTrajectories, const PreComputation& preComp) const {
   if (this->empty()) {
     return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
   }
@@ -45,7 +44,7 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintInputPattern::getQ
   const auto& u_system = preCompLS.getSystemInput();
 
   const auto L_system =
-      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
 
   ScalarFunctionQuadraticApproximation L = ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
   L.f = L_system.f;

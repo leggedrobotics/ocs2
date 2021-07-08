@@ -62,7 +62,7 @@ class PythonInterface {
    * @brief resets MPC to its original state
    * @param[in] targetTrajectories: The new target to be optimized for after resetting
    */
-  void reset(CostDesiredTrajectories targetTrajectories);
+  void reset(TargetTrajectories targetTrajectories);
 
   /**
    * @brief setObservation provides the MPC with a new starting time and state
@@ -76,7 +76,7 @@ class PythonInterface {
    * @brief setTargetTrajectories
    * @param targetTrajectories
    */
-  void setTargetTrajectories(CostDesiredTrajectories targetTrajectories);
+  void setTargetTrajectories(TargetTrajectories targetTrajectories);
 
   /**
    * @brief run MPC
@@ -174,8 +174,8 @@ class PythonInterface {
   std::unique_ptr<MPC_BASE> mpcPtr_;
   std::unique_ptr<MPC_MRT_Interface> mpcMrtInterface_;
 
-  CostDesiredTrajectories targetTrajectories_;
-  std::unique_ptr<OptimalControlProblem> problem_;
+  TargetTrajectories targetTrajectories_;
+  OptimalControlProblem problem_;
 };
 
 }  // namespace ocs2

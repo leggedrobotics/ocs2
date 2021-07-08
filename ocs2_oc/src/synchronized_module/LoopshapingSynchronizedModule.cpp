@@ -39,13 +39,12 @@ LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
     : loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)),
       synchronizedModulesPtrArray_(std::move(synchronizedModulesPtrArray)) {}
 
-void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                                 const CostDesiredTrajectories& costDesiredTrajectory) {
+void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                                                 const ReferenceManagerInterface& referenceManager) {
   if (!synchronizedModulesPtrArray_.empty()) {
-    const auto systemState = loopshapingDefinitionPtr_->getSystemState(currentState);
-
+    const auto systemState = loopshapingDefinitionPtr_->getSystemState(initState);
     for (auto& module : synchronizedModulesPtrArray_) {
-      module->preSolverRun(initTime, finalTime, systemState, costDesiredTrajectory);
+      module->preSolverRun(initTime, finalTime, systemState, referenceManager);
     }
   }
 }

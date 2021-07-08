@@ -92,7 +92,7 @@ class BouncingMassCost final : public ocs2::StateInputCost {
 
   BouncingMassCost* clone() const override { return new BouncingMassCost(*this); }
 
-  scalar_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const ocs2::CostDesiredTrajectories& desiredTrajectory,
+  scalar_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const ocs2::TargetTrajectories&,
                     const PreComputation&) const override {
     const auto stateInput = getNominalStateInput(t, x, u);
     vector_t xDeviation = x - stateInput.first;
@@ -101,7 +101,7 @@ class BouncingMassCost final : public ocs2::StateInputCost {
   }
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                 const ocs2::CostDesiredTrajectories& desiredTrajectory,
+                                                                 const ocs2::TargetTrajectories&,
                                                                  const PreComputation&) const override {
     const auto stateInput = getNominalStateInput(t, x, u);
     vector_t xDeviation = x - stateInput.first;
@@ -142,14 +142,13 @@ class BouncingMassFinalCost final : public ocs2::StateCost {
 
   BouncingMassFinalCost* clone() const override { return new BouncingMassFinalCost(*this); }
 
-  scalar_t getValue(scalar_t t, const vector_t& x, const ocs2::CostDesiredTrajectories& desiredTrajectory,
-                    const PreComputation&) const override {
+  scalar_t getValue(scalar_t t, const vector_t& x, const ocs2::TargetTrajectories&, const PreComputation&) const override {
     vector_t xDeviation = x - getNominalFinalState(t, x);
     return 0.5 * xDeviation.dot(QFinal_ * xDeviation);
   }
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                 const ocs2::CostDesiredTrajectories& desiredTrajectory,
+                                                                 const ocs2::TargetTrajectories&,
                                                                  const PreComputation&) const override {
     vector_t xDeviation = x - getNominalFinalState(t, x);
 

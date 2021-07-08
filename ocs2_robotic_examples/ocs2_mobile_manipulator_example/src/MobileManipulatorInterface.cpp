@@ -31,12 +31,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
 
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/soft_constraint/penalties/DoubleSidedPenalty.h>
 #include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_pinocchio_interface/urdf.h>
@@ -47,7 +49,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator_example/MobileManipulatorDynamics.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPreComputation.h>
-#include <ocs2_mobile_manipulator_example/MobileManipulatorRefernceUpdate.h>
 #include <ocs2_mobile_manipulator_example/constraint/EndEffectorConstraint.h>
 #include <ocs2_mobile_manipulator_example/constraint/JointVelocityLimits.h>
 #include <ocs2_mobile_manipulator_example/constraint/MobileManipulatorSelfCollisionConstraint.h>
@@ -100,8 +101,8 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   bool recompileLibraries = true;
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-  std::cerr << "\n #### model_settings: \n";
-  std::cerr << "#### =============================================================================\n";
+  std::cerr << "\n #### Model Settings:";
+  std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, usePreComputation, "model_settings.usePreComputation", true);
   loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
   std::cerr << " #### =============================================================================" << std::endl;
@@ -125,36 +126,32 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
 
   /*
-   * Desired trajectory reference
+   * Reference manager
    */
-  referenceTrajectoryPtr_.reset(new CostDesiredTrajectories);
-  referenceUpdateModulePtr_.reset(new MobileManipulatorRefernceUpdate(referenceTrajectoryPtr_));
+  referenceManagerPtr_.reset(new ReferenceManager);
 
   /*
    * Optimal control problem
    */
-  problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
+  problem_.dynamicsPtr = std::move(dynamicsPtr);
 
   /* Cost */
-  problemPtr_->costPtr->add("inputCost", getQuadraticInputCost(taskFile));
+  problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
 
   /* Constraints */
-  problemPtr_->softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  problemPtr_->stateSoftConstraintPtr->add(
-      "selfCollision",
-      getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath, usePreComputation, libraryFolder, recompileLibraries));
-  problemPtr_->stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
+  problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
+  problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath,
                                                                                    usePreComputation, libraryFolder, recompileLibraries));
-  problemPtr_->finalSoftConstraintPtr->add(
-      "finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector", usePreComputation, libraryFolder,
-                                                   recompileLibraries));
+  problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
+                                                                               usePreComputation, libraryFolder, recompileLibraries));
+  problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
+                                                                                    usePreComputation, libraryFolder, recompileLibraries));
 
   /*
    * Use pre-computation
    */
   if (usePreComputation) {
-    problemPtr_->preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
+    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
   }
 
   /*
@@ -170,8 +167,7 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
-  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *initializerPtr_));
-  mpc->getSolverPtr()->setSynchronizedModules({referenceUpdateModulePtr_});
+  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *initializerPtr_));
   return mpc;
 }
 
@@ -213,12 +209,12 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   if (usePreComputation) {
     MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
     PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, pinocchioMapping, {name});
-    constraint.reset(new EndEffectorConstraint(eeKinematics, referenceTrajectoryPtr_));
+    constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   } else {
     MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd;
     PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {name}, STATE_DIM, INPUT_DIM,
                                                      "end_effector_kinematics", libraryFolder, recompileLibraries, false);
-    constraint.reset(new EndEffectorConstraint(eeKinematics, referenceTrajectoryPtr_));
+    constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   }
 
   std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(6);

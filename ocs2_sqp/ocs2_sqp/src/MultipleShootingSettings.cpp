@@ -55,6 +55,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.gamma_c, fieldName + ".gamma_c", verbose);
   loadData::loadPtreeValue(pt, settings.g_max, fieldName + ".g_max", verbose);
   loadData::loadPtreeValue(pt, settings.g_min, fieldName + ".g_min", verbose);
+  loadData::loadPtreeValue(pt, settings.armijoFactor, fieldName + ".armijoFactor", verbose);
   loadData::loadPtreeValue(pt, settings.costTol, fieldName + ".costTol", verbose);
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
   loadData::loadPtreeValue(pt, settings.useFeedbackPolicy, fieldName + ".useFeedbackPolicy", verbose);

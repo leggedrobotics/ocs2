@@ -33,8 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 scalar_t LoopshapingStateInputSoftConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& u,
-                                                       const CostDesiredTrajectories& desiredTrajectory,
-                                                       const PreComputation& preComp) const {
+                                                       const TargetTrajectories& targetTrajectories, const PreComputation& preComp) const {
   if (this->empty()) {
     return 0.0;
   }
@@ -43,7 +42,7 @@ scalar_t LoopshapingStateInputSoftConstraint::getValue(scalar_t t, const vector_
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
 
-  return StateInputCostCollection::getValue(t, x_system, u_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  return StateInputCostCollection::getValue(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
 }
 
 }  // namespace ocs2

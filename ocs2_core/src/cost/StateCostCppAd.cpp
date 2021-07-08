@@ -61,23 +61,23 @@ StateCostCppAd::StateCostCppAd(const StateCostCppAd& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateCostCppAd::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory,
+scalar_t StateCostCppAd::getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
                                   const PreComputation&) const {
   vector_t tapedTimeState(1 + state.rows());
   tapedTimeState << time, state;
-  return adInterfacePtr_->getFunctionValue(tapedTimeState, getParameters(time, desiredTrajectory))(0);
+  return adInterfacePtr_->getFunctionValue(tapedTimeState, getParameters(time, targetTrajectories))(0);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateCostCppAd::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                               const CostDesiredTrajectories& desiredTrajectory,
+                                                                               const TargetTrajectories& targetTrajectories,
                                                                                const PreComputation&) const {
   ScalarFunctionQuadraticApproximation cost;
 
   const size_t stateDim = state.rows();
-  const vector_t params = getParameters(time, desiredTrajectory);
+  const vector_t params = getParameters(time, targetTrajectories);
   vector_t tapedTimeState(1 + stateDim);
   tapedTimeState << time, state;
 

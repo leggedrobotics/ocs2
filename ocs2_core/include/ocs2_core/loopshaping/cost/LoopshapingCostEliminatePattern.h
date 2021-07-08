@@ -19,7 +19,7 @@ class LoopshapingCostEliminatePattern final : public LoopshapingStateInputCost {
   LoopshapingCostEliminatePattern* clone() const override { return new LoopshapingCostEliminatePattern(*this); };
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
-                                                                 const CostDesiredTrajectories& desiredTrajectory,
+                                                                 const TargetTrajectories& targetTrajectories,
                                                                  const PreComputation& preComp) const override;
 
  protected:

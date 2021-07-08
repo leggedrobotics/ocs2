@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
@@ -44,73 +44,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace ros_msg_conversions {
 
-/**
- * Creates the observation message.
- *
- * @param [in] observation: The observation structure.
- * @param [out] observationMsg: The observation message.
- */
-void createObservationMsg(const SystemObservation& observation, ocs2_msgs::mpc_observation& observationMsg);
+/** Creates the observation message. */
+ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation);
 
-/**
- * Reads the observation message.
- *
- * @param [in] observationMsg: The observation message.
- * @param [out] observation: The observation structure.
- */
-void readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg, SystemObservation& observation);
+/** Reads the observation message. */
+SystemObservation readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg);
 
-/**
- * Creates the mode sequence message.
- *
- * @param [in] modeSchedule: The mode schedule which contains the event times and the mode sequence.
- * @param [out] modeScheduleMsg: The mode schedule message.
- */
-void createModeScheduleMsg(const ModeSchedule& modeSchedule, ocs2_msgs::mode_schedule& modeScheduleMsg);
+/** Creates the mode sequence message. */
+ocs2_msgs::mode_schedule createModeScheduleMsg(const ModeSchedule& modeSchedule);
 
-/**
- * Reads the mode sequence message.
- *
- * @param [in] modeScheduleMsg: The mode schedule message.
- * @return The mode schedule which contains the event times and the mode sequence.
- */
+/** Reads the mode sequence message. */
 ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg);
+
+/** Creates the target trajectories message. */
+ocs2_msgs::mpc_target_trajectories createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories);
+
+/** Returns the TargetTrajectories message. */
+TargetTrajectories readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
 
 /**
  * Creates the performance indices message.
  *
  * @param [in] initTime: The initial time for which the MPC is computed.
  * @param [in] performanceIndices: The performance indices of the solver.
- * @param [out] performanceIndicesMsg: The performance indices ROS message.
+ * @return The performance indices ROS message.
  */
-void createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices,
-                                 ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
+ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices);
 
-/**
- * Reads the performance indices message.
- *
- * @param [in] performanceIndicesMsg: The performance indices ROS message.
- * @return The performance indices of the solver.
- */
+/** Reads the performance indices message. */
 PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indices& performanceIndicesMsg);
-
-/**
- * Creates the target trajectories message.
- *
- * @param [in] costDesiredTrajectories: The desired trajectory of the cost.
- * @param [out] targetTrajectoriesMsg: The target trajectories message.
- */
-void createTargetTrajectoriesMsg(const CostDesiredTrajectories& costDesiredTrajectories,
-                                 ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg);
-
-/**
- * Reads the target trajectories message.
- *
- * @param [in] targetTrajectoriesMsg: The target trajectories message.
- * @param [out] costDesiredTrajectories: The desired trajectory of the cost.
- */
-void readTargetTrajectoriesMsg(const ocs2_msgs::mpc_target_trajectories& targetTrajectoriesMsg,
-                               CostDesiredTrajectories& costDesiredTrajectories);
 
 }  // namespace ros_msg_conversions
 }  // namespace ocs2

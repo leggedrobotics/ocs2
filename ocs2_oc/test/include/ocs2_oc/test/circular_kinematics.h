@@ -116,4 +116,23 @@ class CircularKinematicsConstraints final : public StateInputConstraint {
   }
 };
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline OptimalControlProblem createCircularKinematicsProblem(const std::string& libraryFolder) {
+  // optimal control problem
+  OptimalControlProblem problem;
+  problem.dynamicsPtr.reset(new CircularKinematicsSystem());
+
+  // cost function
+  std::unique_ptr<StateInputCost> cost(new CircularKinematicsCost(libraryFolder));
+  problem.costPtr->add("cost", std::move(cost));
+
+  // constraint
+  std::unique_ptr<StateInputConstraint> constraint(new CircularKinematicsConstraints());
+  problem.equalityConstraintPtr->add("constraint", std::move(constraint));
+
+  return problem;
+}
+
 }  // namespace ocs2

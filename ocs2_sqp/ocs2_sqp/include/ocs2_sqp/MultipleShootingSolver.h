@@ -29,14 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
+
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include <hpipm_catkin/HpipmInterface.h>
@@ -114,8 +112,13 @@ class MultipleShootingSolver : public SolverBase {
   PerformanceIndex computePerformance(const std::vector<AnnotatedTime>& time, const vector_t& initState, const vector_array_t& x,
                                       const vector_array_t& u);
 
-  /** Returns solution of the QP subproblem in delta coordinates: {delta_x(t), delta_u(t)} */
-  std::pair<vector_array_t, vector_array_t> getOCPSolution(const vector_t& delta_x0);
+  /** Returns solution of the QP subproblem in delta coordinates: */
+  struct OcpSubproblemSolution {
+    vector_array_t deltaXSol;      // delta_x(t)
+    vector_array_t deltaUSol;      // delta_u(t)
+    scalar_t armijoDescentMetric;  // inner product of the cost gradient and decision variable step
+  };
+  OcpSubproblemSolution getOCPSolution(const vector_t& delta_x0);
 
   /** Set up the primal solution based on the optimized state and input trajectories */
   void setPrimalSolution(const std::vector<AnnotatedTime>& time, vector_array_t&& x, vector_array_t&& u);
@@ -125,19 +128,15 @@ class MultipleShootingSolver : public SolverBase {
 
   /** Decides on the step to take and overrides given trajectories {x(t), u(t)} <- {x(t) + a*dx(t), u(t) + a*du(t)} */
   std::pair<bool, PerformanceIndex> takeStep(const PerformanceIndex& baseline, const std::vector<AnnotatedTime>& timeDiscretization,
-                                             const vector_t& initState, const vector_array_t& dx, const vector_array_t& du,
-                                             vector_array_t& x, vector_array_t& u);
+                                             const vector_t& initState, const OcpSubproblemSolution& subproblemSolution, vector_array_t& x,
+                                             vector_array_t& u);
 
   // Problem definition
   Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
-  std::vector<std::unique_ptr<SystemDynamicsBase>> systemDynamicsPtr_;
-  std::vector<std::unique_ptr<CostFunctionBase>> costFunctionPtr_;
-  std::vector<std::unique_ptr<ConstraintBase>> constraintPtr_;
-  std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
+  std::vector<OptimalControlProblem> ocpDefinitions_;
   std::unique_ptr<Initializer> initializerPtr_;
-  std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // Threading
   ThreadPool threadPool_;

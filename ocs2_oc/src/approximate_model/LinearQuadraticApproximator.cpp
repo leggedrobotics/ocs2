@@ -40,7 +40,7 @@ namespace ocs2 {
 void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                        ModelData& modelData) const {
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
-  problem_.preComputationPtr->request(request, time, state, input);
+  problemPtr_->preComputationPtr->request(request, time, state, input);
 
   // dynamics
   approximateDynamics(time, state, input, modelData);
@@ -56,44 +56,34 @@ void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const {
-  const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
-
-  auto& preComputation = *problem_.preComputationPtr;
+  auto& preComputation = *problemPtr_->preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
   preComputation.requestPreJump(request, time, state);
 
   // Jump map
-  modelData.dynamics_ = problem_.dynamicsPtr->jumpMapLinearApproximation(time, state, preComputation);
+  modelData.dynamics_ = problemPtr_->dynamicsPtr->jumpMapLinearApproximation(time, state, preComputation);
 
   // Pre-jump constraints
   // state-only equality constraint
-  modelData.stateEqConstr_ = problem_.preJumpEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
+  modelData.stateEqConstr_ = problemPtr_->preJumpEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
 
   // Pre-jump cost
-  modelData.cost_ = problem_.preJumpCostPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
-  if (!problem_.preJumpSoftConstraintPtr->empty()) {
-    modelData.cost_ += problem_.preJumpSoftConstraintPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
-  }
+  modelData.cost_ = approximateEventCost(*problemPtr_, time, state);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateLQProblemAtFinalTime(const scalar_t& time, const vector_t& state, ModelData& modelData) const {
-  const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
-
-  auto& preComputation = *problem_.preComputationPtr;
+  auto& preComputation = *problemPtr_->preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Approximation;
   preComputation.requestFinal(request, time, state);
 
   // state-only equality constraint
-  modelData.stateEqConstr_ = problem_.finalEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
+  modelData.stateEqConstr_ = problemPtr_->finalEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
 
   // Final cost
-  modelData.cost_ = problem_.finalCostPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
-  if (!problem_.finalSoftConstraintPtr->empty()) {
-    modelData.cost_ += problem_.finalSoftConstraintPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
-  }
+  modelData.cost_ = approximateFinalCost(*problemPtr_, time, state);
 }
 
 /******************************************************************************************************/
@@ -102,8 +92,8 @@ void LinearQuadraticApproximator::approximateLQProblemAtFinalTime(const scalar_t
 void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                       ModelData& modelData) const {
   // get results
-  modelData.dynamics_ = problem_.dynamicsPtr->linearApproximation(time, state, input, *problem_.preComputationPtr);
-  modelData.dynamicsCovariance_ = problem_.dynamicsPtr->dynamicsCovariance(time, state, input);
+  modelData.dynamics_ = problemPtr_->dynamicsPtr->linearApproximation(time, state, input, *problemPtr_->preComputationPtr);
+  modelData.dynamicsCovariance_ = problemPtr_->dynamicsPtr->dynamicsCovariance(time, state, input);
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {
@@ -125,19 +115,21 @@ void LinearQuadraticApproximator::approximateDynamics(const scalar_t& time, cons
 void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                          ModelData& modelData) const {
   // State-input equality constraint
-  modelData.stateInputEqConstr_ = problem_.equalityConstraintPtr->getLinearApproximation(time, state, input, *problem_.preComputationPtr);
+  modelData.stateInputEqConstr_ =
+      problemPtr_->equalityConstraintPtr->getLinearApproximation(time, state, input, *problemPtr_->preComputationPtr);
   if (modelData.stateInputEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-input equality constraints should be less-equal to the input dimension.");
   }
 
   // State-only equality constraint
-  modelData.stateEqConstr_ = problem_.stateEqualityConstraintPtr->getLinearApproximation(time, state, *problem_.preComputationPtr);
+  modelData.stateEqConstr_ = problemPtr_->stateEqualityConstraintPtr->getLinearApproximation(time, state, *problemPtr_->preComputationPtr);
   if (modelData.stateEqConstr_.f.rows() > input.rows()) {
     throw std::runtime_error("Number of active state-only equality constraints should be less-equal to the input dimension.");
   }
 
   // Inequality constraint
-  modelData.ineqConstr_ = problem_.inequalityConstraintPtr->getQuadraticApproximation(time, state, input, *problem_.preComputationPtr);
+  modelData.ineqConstr_ =
+      problemPtr_->inequalityConstraintPtr->getQuadraticApproximation(time, state, input, *problemPtr_->preComputationPtr);
 
   if (checkNumericalCharacteristics_) {
     std::string err = modelData.checkConstraintProperties();
@@ -160,27 +152,7 @@ void LinearQuadraticApproximator::approximateConstraints(const scalar_t& time, c
 /******************************************************************************************************/
 void LinearQuadraticApproximator::approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                   ModelData& modelData) const {
-  const auto& desiredTrajectory = *problem_.costDesiredTrajectories;
-  const auto& preComputation = *problem_.preComputationPtr;
-
-  // get the state-input cost approximations
-  modelData.cost_ = problem_.costPtr->getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
-  if (!problem_.softConstraintPtr->empty()) {
-    modelData.cost_ += problem_.softConstraintPtr->getQuadraticApproximation(time, state, input, desiredTrajectory, preComputation);
-  }
-  // get the state only cost approximations
-  if (!problem_.stateCostPtr->empty()) {
-    auto stateCost = problem_.stateCostPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
-    modelData.cost_.f += stateCost.f;
-    modelData.cost_.dfdx += stateCost.dfdx;
-    modelData.cost_.dfdxx += stateCost.dfdxx;
-  }
-  if (!problem_.stateSoftConstraintPtr->empty()) {
-    auto stateCost = problem_.stateSoftConstraintPtr->getQuadraticApproximation(time, state, desiredTrajectory, preComputation);
-    modelData.cost_.f += stateCost.f;
-    modelData.cost_.dfdx += stateCost.dfdx;
-    modelData.cost_.dfdxx += stateCost.dfdxx;
-  }
+  modelData.cost_ = ocs2::approximateCost(*problemPtr_, time, state, input);
 
   // checking the numerical stability
   if (checkNumericalCharacteristics_) {
@@ -200,6 +172,113 @@ void LinearQuadraticApproximator::approximateCost(const scalar_t& time, const ve
       throw std::runtime_error(err);
     }
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input) {
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  // Compute and sum all costs
+  auto cost = problem.costPtr->getValue(time, state, input, targetTrajectories, preComputation);
+  cost += problem.softConstraintPtr->getValue(time, state, input, targetTrajectories, preComputation);
+  cost += problem.stateCostPtr->getValue(time, state, targetTrajectories, preComputation);
+  cost += problem.stateSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
+                                                     const vector_t& input) {
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  // get the state-input cost approximations
+  auto cost = problem.costPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
+
+  if (!problem.softConstraintPtr->empty()) {
+    cost += problem.softConstraintPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
+  }
+
+  // get the state only cost approximations
+  if (!problem.stateCostPtr->empty()) {
+    auto stateCost = problem.stateCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    cost.f += stateCost.f;
+    cost.dfdx += stateCost.dfdx;
+    cost.dfdxx += stateCost.dfdxx;
+  }
+
+  if (!problem.stateSoftConstraintPtr->empty()) {
+    auto stateCost = problem.stateSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    cost.f += stateCost.f;
+    cost.dfdx += stateCost.dfdx;
+    cost.dfdxx += stateCost.dfdxx;
+  }
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t computeEventCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  auto cost = problem.preJumpCostPtr->getValue(time, state, targetTrajectories, preComputation);
+  cost += problem.preJumpSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation approximateEventCost(const OptimalControlProblem& problem, const scalar_t& time,
+                                                          const vector_t& state) {
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  auto cost = problem.preJumpCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+  if (!problem.preJumpSoftConstraintPtr->empty()) {
+    cost += problem.preJumpSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+  }
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t computeFinalCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  auto cost = problem.finalCostPtr->getValue(time, state, targetTrajectories, preComputation);
+  cost += problem.finalSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlProblem& problem, const scalar_t& time,
+                                                          const vector_t& state) {
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  auto cost = problem.finalCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+  if (!problem.finalSoftConstraintPtr->empty()) {
+    cost += problem.finalSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+  }
+
+  return cost;
 }
 
 }  // namespace ocs2

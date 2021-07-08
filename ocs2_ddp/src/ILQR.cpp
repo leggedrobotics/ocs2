@@ -76,7 +76,7 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
       // execute continuous time LQ approximation for the given partition and time index
       continuousTimeModelData = modelDataTrajectory[timeIndex];
 
-      LinearQuadraticApproximator lqapprox(*BASE::optimalControlProblemPtrStock_[taskId], BASE::settings().checkNumericalStability_);
+      LinearQuadraticApproximator lqapprox(BASE::optimalControlProblemStock_[taskId], BASE::settings().checkNumericalStability_);
       lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
                                     continuousTimeModelData);
       continuousTimeModelData.checkSizes(stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());

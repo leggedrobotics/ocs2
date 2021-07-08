@@ -57,11 +57,9 @@ int main(int argc, char** argv) {
   ocs2::multiple_shooting::Settings settings = ballbotInterface.sqpSettings();
 
   ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
-  std::unique_ptr<ocs2::MultipleShootingMpc> mpc(new ocs2::MultipleShootingMpc(
-      mpcSettings, settings, &ballbotInterface.getDynamics(), &ballbotInterface.getCost(), &ballbotInterface.getInitializer(),
-      ballbotInterface.getConstraintPtr(), ballbotInterface.getTerminalCostPtr()));
+  ocs2::MultipleShootingMpc mpc(mpcSettings, settings, ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
 
-  ocs2::MPC_ROS_Interface mpcNode(*mpc, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

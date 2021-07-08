@@ -9,8 +9,11 @@
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 // synchronized_module
-#include <ocs2_oc/synchronized_module/LoopshapingModeScheduleManager.h>
-#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/LoopshapingReferenceManager.h>
+#include <ocs2_oc/synchronized_module/LoopshapingSynchronizedModule.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerDecorator.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 // rollout

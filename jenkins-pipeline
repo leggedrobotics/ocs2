@@ -3,7 +3,7 @@ ciPipeline("--ros-distro noetic --publish-doxygen --recipes raisimlib \
             --dependencies 'git@github.com:leggedrobotics/hpp-fcl.git;master;git'\
                            'git@github.com:leggedrobotics/pinocchio.git;master;git'\
                            'git@github.com:ANYbotics/anymal_c_simple_description.git;master;git'\
-            --ignore ocs2_sqp ocs2_ballbot_example ocs2_ballbot_raisim_example ocs2_doc")
+            --ignore ocs2_doc")
 
 node {
     stage('Artifacts') {

@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
@@ -85,8 +86,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
   /*
    * Optimal control problem
    */
-  problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
+  problem_.dynamicsPtr = std::move(dynamicsPtr);
 
   /*
    * Cost function
@@ -101,8 +101,8 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
   std::cerr << "R:  \n" << Q << std::endl;
   std::cerr << "Q_final:\n" << Qf << std::endl;
 
-  problemPtr_->costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
-  problemPtr_->finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
+  problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+  problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   /*
    * Initialization
@@ -115,7 +115,7 @@ void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool v
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc(bool warmStart) {
   if (warmStart) {
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *linearSystemInitializerPtr_));
+    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *linearSystemInitializerPtr_));
 
   } else {
     auto mpcSettings = mpcSettings_;
@@ -123,7 +123,7 @@ std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc(bool warmStart) {
     mpcSettings.runtimeMaxNumIterations_ = mpcSettings.initMaxNumIterations_;
     mpcSettings.runtimeMinStepLength_ = mpcSettings.initMinStepLength_;
     mpcSettings.runtimeMaxStepLength_ = mpcSettings.initMaxStepLength_;
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *linearSystemInitializerPtr_));
+    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *linearSystemInitializerPtr_));
   }
 }
 

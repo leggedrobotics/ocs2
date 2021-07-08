@@ -49,8 +49,8 @@ class LinearQuadraticApproximator {
    * @note This class does not take ownership of any of the parameters.
    *       Make sure that the parameter lifetime is longer than this class instance.
    */
-  LinearQuadraticApproximator(OptimalControlProblem& problem, bool checkNumericalCharacteristics = true)
-      : problem_(problem), checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
+  explicit LinearQuadraticApproximator(const OptimalControlProblem& problem, bool checkNumericalCharacteristics = true)
+      : problemPtr_(&problem), checkNumericalCharacteristics_(checkNumericalCharacteristics) {}
 
   /**
    * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
@@ -85,9 +85,44 @@ class LinearQuadraticApproximator {
   void approximateConstraints(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
   void approximateCost(const scalar_t& time, const vector_t& state, const vector_t& input, ModelData& modelData) const;
 
-  OptimalControlProblem& problem_;
-
+  const OptimalControlProblem* problemPtr_;
   bool checkNumericalCharacteristics_;
 };
+
+/**
+ * Compute the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
+ */
+scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input);
+
+/**
+ * Compute the quadratic approximation of the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation
+ * request is already made.
+ */
+ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
+                                                     const vector_t& input);
+
+/**
+ * Compute the total preJump cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
+ */
+scalar_t computeEventCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state);
+
+/**
+ * Compute the quadratic approximation of the total preJump cost (i.e. cost + softConstraints). It is assumed that the precomputation
+ * request is already made.
+ */
+ScalarFunctionQuadraticApproximation approximateEventCost(const OptimalControlProblem& problem, const scalar_t& time,
+                                                          const vector_t& state);
+
+/**
+ * Compute the total final cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
+ */
+scalar_t computeFinalCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state);
+
+/**
+ * Compute the quadratic approximation of the total final cost (i.e. cost + softConstraints). It is assumed that the precomputation
+ * request is already made.
+ */
+ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlProblem& problem, const scalar_t& time,
+                                                          const vector_t& state);
 
 }  // namespace ocs2

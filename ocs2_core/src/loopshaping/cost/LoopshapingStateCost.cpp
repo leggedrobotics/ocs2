@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const CostDesiredTrajectories& desiredTrajectory,
+scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories,
                                         const PreComputation& preComp) const {
   if (this->empty()) {
     return 0.0;
@@ -41,11 +41,11 @@ scalar_t LoopshapingStateCost::getValue(scalar_t t, const vector_t& x, const Cos
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
 
-  return StateCostCollection::getValue(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+  return StateCostCollection::getValue(t, x_system, targetTrajectories, preCompLS.getSystemPreComputation());
 }
 
 ScalarFunctionQuadraticApproximation LoopshapingStateCost::getQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                     const CostDesiredTrajectories& desiredTrajectory,
+                                                                                     const TargetTrajectories& targetTrajectories,
                                                                                      const PreComputation& preComp) const {
   if (this->empty()) {
     return ScalarFunctionQuadraticApproximation::Zero(x.rows(), 0);
@@ -55,7 +55,7 @@ ScalarFunctionQuadraticApproximation LoopshapingStateCost::getQuadraticApproxima
   const auto& x_system = preCompLS.getSystemState();
 
   const auto Phi_system =
-      StateCostCollection::getQuadraticApproximation(t, x_system, desiredTrajectory, preCompLS.getSystemPreComputation());
+      StateCostCollection::getQuadraticApproximation(t, x_system, targetTrajectories, preCompLS.getSystemPreComputation());
   const size_t nx_filter = loopshapingDefinition_->getInputFilter().getNumStates();
 
   ScalarFunctionQuadraticApproximation Phi;

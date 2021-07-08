@@ -40,14 +40,14 @@ LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterf
                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
     : robotInterfacePtr_(std::move(robotInterfacePtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {
   // wrap with loopshaping
-  optimalControlProblemPtr_ =
+  optimalControlProblem_ =
       LoopshapingOptimalControlProblem::create(robotInterfacePtr->getOptimalControlProblem(), loopshapingDefinitionPtr_);
 
   initializerPtr_.reset(new ocs2::LoopshapingInitializer(robotInterfacePtr_->getInitializer(), loopshapingDefinitionPtr_));
 
-  if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
-    loopshapingModeScheduleManager_ =
-        std::make_shared<LoopshapingModeScheduleManager>(robotInterfacePtr_->getModeScheduleManagerPtr(), loopshapingDefinitionPtr_);
+  if (robotInterfacePtr_->getReferenceManagerPtr() != nullptr) {
+    loopshapingReferenceManager_ =
+        std::make_shared<LoopshapingReferenceManager>(robotInterfacePtr_->getReferenceManagerPtr(), loopshapingDefinitionPtr_);
   }
 }
 

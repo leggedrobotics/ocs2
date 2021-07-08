@@ -37,9 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
+#include "ocs2_legged_robot_example/gait/SwitchedModelModeScheduleManager.h"
 #include "ocs2_legged_robot_example/common/ModelSettings.h"
 #include "ocs2_legged_robot_example/common/Types.h"
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
 
 namespace ocs2 {
 namespace legged_robot {

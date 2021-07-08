@@ -30,16 +30,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Pinocchio forward declarations must be included first
 #include <pinocchio/fwd.hpp>
 
-#include <ocs2_legged_robot_example/visualization/LeggedRobotVisualizer.h>
+// Pinocchio
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
 
-#include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
+// OCS2
+#include "ocs2_legged_robot_example/visualization/LeggedRobotVisualizer.h"
+#include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
-
 #include <ocs2_core/misc/LinearInterpolation.h>
-
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
-
 #include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
 
 // Additional messages not in the helpers file
@@ -50,9 +51,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
 
-// Pinocchio
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/algorithm/kinematics.hpp>
 
 namespace ocs2 {
 namespace legged_robot {

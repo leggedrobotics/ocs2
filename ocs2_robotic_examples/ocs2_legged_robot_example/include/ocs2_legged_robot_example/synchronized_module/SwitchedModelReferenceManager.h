@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
-#include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
-#include <ocs2_legged_robot_example/logic/GaitSchedule.h>
-#include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
+#include "ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h"
+#include "ocs2_legged_robot_example/gait/GaitSchedule.h"
+#include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -42,12 +42,12 @@ namespace legged_robot {
 /**
  * Manages the ModeSchedule and the TargetTrajectories for switched model.
  */
-class SwitchedModelModeScheduleManager : public ReferenceManager {
+class SwitchedModelReferenceManager : public ReferenceManager {
  public:
-  SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
+  SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
                                    std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
 
-  ~SwitchedModelModeScheduleManager() override = default;
+  ~SwitchedModelReferenceManager() override = default;
 
   contact_flag_t getContactFlags(scalar_t time) const;
 

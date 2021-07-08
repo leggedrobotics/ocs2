@@ -35,9 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <mutex>
 
-#include <ocs2_legged_robot_example/logic/GaitSchedule.h>
-#include <ocs2_legged_robot_example/logic/ModeSequenceTemplate.h>
-#include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
+#include "ocs2_legged_robot_example/gait/GaitSchedule.h"
+#include "ocs2_legged_robot_example/gait/ModeSequenceTemplate.h"
+#include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
 
 namespace ocs2 {
 namespace legged_robot {

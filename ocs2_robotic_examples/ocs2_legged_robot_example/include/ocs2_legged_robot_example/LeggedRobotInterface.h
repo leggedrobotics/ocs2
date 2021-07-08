@@ -42,13 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h>
 
-// ocs2_legged_robot_example
+#include "ocs2_legged_robot_example/gait/GaitReceiver.h"
 #include "ocs2_legged_robot_example/constraint/LeggedRobotConstraintAD.h"
 #include "ocs2_legged_robot_example/cost/LeggedRobotCost.h"
 #include "ocs2_legged_robot_example/dynamics/LeggedRobotDynamicsAD.h"
 #include "ocs2_legged_robot_example/initialization/LeggedRobotInitializer.h"
-#include "ocs2_legged_robot_example/logic/GaitReceiver.h"
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 /**
  * LeggedRobotInterface class

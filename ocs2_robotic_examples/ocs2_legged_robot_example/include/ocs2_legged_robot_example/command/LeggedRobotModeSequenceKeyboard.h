@@ -29,12 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_legged_robot_example/logic/ModeSequenceTemplate.h>
-
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <string>
 #include <vector>
+
+#include "ocs2_legged_robot_example/gait/ModeSequenceTemplate.h"
 
 namespace ocs2 {
 namespace legged_robot {

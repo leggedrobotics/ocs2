@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot_example/foot_planner/SplineCpg.h>
+#include "ocs2_legged_robot_example/foot_planner/SplineCpg.h"
 
 namespace ocs2 {
 namespace legged_robot {

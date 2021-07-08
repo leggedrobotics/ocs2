@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 
-#include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
 namespace ocs2 {
 namespace legged_robot {

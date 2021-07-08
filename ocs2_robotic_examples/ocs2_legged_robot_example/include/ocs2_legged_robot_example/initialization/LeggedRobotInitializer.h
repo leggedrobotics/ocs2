@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/initialization/Initializer.h>
 
-#include "ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h"
+#include "ocs2_legged_robot_example/gait/SwitchedModelModeScheduleManager.h"
 
 namespace ocs2 {
 namespace legged_robot {

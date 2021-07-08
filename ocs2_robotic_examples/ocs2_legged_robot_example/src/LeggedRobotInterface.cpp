@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot_example/LeggedRobotInterface.h"
 
 #include "ocs2_legged_robot_example/LeggedRobotPreComputation.h"
-#include "ocs2_legged_robot_example/LeggedRobotRefernceUpdate.h"
 #include "ocs2_legged_robot_example/constraint/FrictionConeConstraint.h"
 #include "ocs2_legged_robot_example/constraint/NormalVelocityConstraintCppAd.h"
 #include "ocs2_legged_robot_example/constraint/ZeroForceConstraint.h"
@@ -146,11 +145,6 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 
   // Rollout
   rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings_));
-
-  // Desired trajectory reference
-  referenceTrajectoryPtr_.reset(new CostDesiredTrajectories);
-  referenceUpdateModulePtr_.reset(new LeggedRobotRefernceUpdate(referenceTrajectoryPtr_));
-  solverModules_.push_back(referenceUpdateModulePtr_);
 
   // Friction cone soft constraint settings
   scalar_t frictionCoefficient = 1.0;

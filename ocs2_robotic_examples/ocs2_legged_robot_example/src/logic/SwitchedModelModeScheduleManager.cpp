@@ -37,7 +37,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
                                                                    std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr)
-: ReferenceManager(TargetTrajectories(), ModeSchedule()),
+    : ReferenceManager(TargetTrajectories(), ModeSchedule()),
       gaitSchedulePtr_(std::move(gaitSchedulePtr)),
       swingTrajectoryPtr_(std::move(swingTrajectoryPtr)) {}
 

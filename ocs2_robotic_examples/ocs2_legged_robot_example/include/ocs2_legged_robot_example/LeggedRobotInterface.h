@@ -71,8 +71,6 @@ class LeggedRobotInterface final : public RobotInterface {
 
   const LeggedRobotInitializer& getInitializer() const override { return *initializerPtr_; }
 
-  std::shared_ptr<ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
-
   std::unique_ptr<MPC_DDP> getMpcPtr() const;
 
   const ModelSettings& modelSettings() const { return modelSettings_; }
@@ -121,8 +119,6 @@ class LeggedRobotInterface final : public RobotInterface {
 
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 
-  std::shared_ptr<SolverSynchronizedModule> referenceUpdateModulePtr_;
-  std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;
   std::unique_ptr<OptimalControlProblem> problemPtr_;
 
   std::unique_ptr<RolloutBase> rolloutPtr_;

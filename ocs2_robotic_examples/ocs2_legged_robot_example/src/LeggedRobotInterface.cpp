@@ -217,8 +217,6 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> LeggedRobotInterface::getMpcPtr() const {
   std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *initializerPtr_));
-  mpcPtr->getSolverPtr()->setModeScheduleManager(modeScheduleManagerPtr_);
-
   return mpcPtr;
 }
 

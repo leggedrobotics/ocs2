@@ -49,14 +49,8 @@ class LeggedRobotModeSequenceKeyboard {
   void getKeyboardCommand();
 
  private:
-  /** Gets the gait from the command line. */
-  static std::string getCommandLine();
-
   /** Prints the list of available gaits. */
   void printGaitList(const std::vector<std::string>& gaitList) const;
-
-  /** Publishes the mode sequence template. */
-  void publishModeSequenceTemplate(const ModeSequenceTemplate& modeSchedule);
 
   std::vector<std::string> gaitList_;
   std::map<std::string, ModeSequenceTemplate> gaitMap_;

@@ -29,11 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/logic/ModeSchedule.h>
-#include <ocs2_core/misc/Lookup.h>
 #include <mutex>
 
-#include <ocs2_legged_robot_example/logic/ModeSequenceTemplate.h>
+#include <ocs2_core/misc/Lookup.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+
+#include "ocs2_legged_robot_example/logic/ModeSequenceTemplate.h"
 
 namespace ocs2 {
 namespace legged_robot {

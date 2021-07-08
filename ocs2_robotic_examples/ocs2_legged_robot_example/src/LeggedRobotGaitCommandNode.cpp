@@ -27,41 +27,30 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include <ocs2_legged_robot_example/command/LeggedRobotModeSequenceKeyboard.h>
 
-#include <ocs2_core/thread_support/Synchronized.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
+using namespace ocs2;
+using namespace legged_robot;
 
-#include <ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h>
-#include <ocs2_legged_robot_example/logic/GaitSchedule.h>
-#include <ocs2_legged_robot_example/logic/MotionPhaseDefinition.h>
+int main(int argc, char* argv[]) {
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() < 3) {
+    throw std::runtime_error("No robot name or target command file specified. Aborting.");
+  }
+  const std::string robotName(programArgs[1]);
+  const std::string gaitFile(programArgs[2]);
+  std::cerr << "Loading gait file: " << gaitFile << std::endl;
 
-namespace ocs2 {
-namespace legged_robot {
+  ros::init(argc, argv, robotName + "_mpc_mode_schedule");
+  ros::NodeHandle nodeHandle;
 
-/**
- * Manages the ModeSchedule and the TargetTrajectories for switched model.
- */
-class SwitchedModelModeScheduleManager : public ReferenceManager {
- public:
-  SwitchedModelModeScheduleManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr,
-                                   std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
+  LeggedRobotModeSequenceKeyboard modeSequenceCommand(nodeHandle, gaitFile, robotName, true);
 
-  ~SwitchedModelModeScheduleManager() override = default;
+  while (ros::ok() && ros::master::check()) {
+    modeSequenceCommand.getKeyboardCommand();
+  }
 
-  contact_flag_t getContactFlags(scalar_t time) const;
-
-  const std::shared_ptr<GaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
-
-  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
-
- private:
-  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
-                        ModeSchedule& modeSchedule) override;
-
-  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
-  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
-};
-
-}  // namespace legged_robot
-}  // namespace ocs2
+  // Successful exit
+  return 0;
+}

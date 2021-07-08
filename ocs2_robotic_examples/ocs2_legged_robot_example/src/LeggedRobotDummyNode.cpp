@@ -86,10 +86,10 @@ int main(int argc, char** argv) {
   initObservation.mode = ModeNumber::STANCE;
 
   // Initial command
-  CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {initObservation.state}, {initObservation.input});
+  TargetTrajectories initTargetTrajectories({0.0}, {initObservation.state}, {initObservation.input});
 
   // run dummy
-  leggedRobotDummySimulator.run(initObservation, initCostDesiredTrajectories);
+  leggedRobotDummySimulator.run(initObservation, initTargetTrajectories);
 
   // Successful exit
   return 0;

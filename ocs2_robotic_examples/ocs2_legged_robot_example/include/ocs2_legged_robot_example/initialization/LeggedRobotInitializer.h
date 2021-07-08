@@ -43,7 +43,7 @@ class LeggedRobotInitializer final : public Initializer {
    * Constructor
    * @param [in] info : The centroidal model information.
    * @param [in] modeScheduleManager : Switched system mode schedule manager.
-   * @param [in] extendNormalizedMomentum: If true, it extrapolate the normalized momentum; otherwise sets it to zero.
+   * @param [in] extendNormalizedMomentum: If true, it extrapolates the normalized momenta; otherwise sets them to zero.
    */
   LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelModeScheduleManager& modeScheduleManager,
                          bool extendNormalizedMomentum = false);

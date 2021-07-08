@@ -89,9 +89,10 @@ class LeggedRobotInterface final : public RobotInterface {
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   /** Gets the solver synchronized modules */
-  const std::vector<std::shared_ptr<SolverSynchronizedModule>>& getSynchronizedModules() const { return solverModules_; };
 
   std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
+
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return modeScheduleManagerPtr_; }
 
  private:
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
@@ -119,7 +120,6 @@ class LeggedRobotInterface final : public RobotInterface {
   CentroidalModelInfo centroidalModelInfo_;
 
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
-  std::vector<std::shared_ptr<SolverSynchronizedModule>> solverModules_;
 
   std::shared_ptr<SolverSynchronizedModule> referenceUpdateModulePtr_;
   std::shared_ptr<CostDesiredTrajectories> referenceTrajectoryPtr_;

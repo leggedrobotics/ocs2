@@ -110,7 +110,7 @@ void LeggedRobotVisualizer::update(const SystemObservation& observation, const P
 
     const auto timeStamp = ros::Time::now();
     publishObservation(timeStamp, observation);
-    publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
+    publishDesiredTrajectory(timeStamp, command.mpcTargetTrajectories_);
     publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
                                     primalSolution.modeSchedule_);
     lastTime_ = observation.time;
@@ -217,9 +217,9 @@ void LeggedRobotVisualizer::publishCartesianMarkers(ros::Time timeStamp, const c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const CostDesiredTrajectories& costDesiredTrajectory) {
-  const auto& stateTrajectory = costDesiredTrajectory.desiredStateTrajectory();
-  const auto& inputTrajectory = costDesiredTrajectory.desiredInputTrajectory();
+void LeggedRobotVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const TargetTrajectories& targetTrajectories) {
+  const auto& stateTrajectory = targetTrajectories.stateTrajectory;
+  const auto& inputTrajectory = targetTrajectories.inputTrajectory;
 
   // Reserve com messages
   std::vector<geometry_msgs::Point> desiredBasePositionMsg;

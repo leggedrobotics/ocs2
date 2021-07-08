@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
-#include <ocs2_legged_robot_example/logic/SwitchedModelModeScheduleManager.h>
+#include <ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
@@ -45,7 +45,7 @@ std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface();
 CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pinocchioInterface, CentroidalModelType centroidalType);
 
 /** Return a Switched model mode schedule manager based on ROBOT_TASK_FILE_PATH */
-std::shared_ptr<SwitchedModelModeScheduleManager> createModeScheduleManager(const CentroidalModelInfo& centroidalModelInfo);
+std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(const CentroidalModelInfo& centroidalModelInfo);
 
 }  // namespace legged_robot
 }  // namespace ocs2

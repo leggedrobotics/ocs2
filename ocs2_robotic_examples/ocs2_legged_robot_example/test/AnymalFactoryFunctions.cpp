@@ -59,7 +59,7 @@ CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pi
 }
 
 /** Return a Switched model mode schedule manager based on ROBOT_TASK_FILE_PATH */
-std::shared_ptr<SwitchedModelModeScheduleManager> createModeScheduleManager(const CentroidalModelInfo& centroidalModelInfo) {
+std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(const CentroidalModelInfo& centroidalModelInfo) {
   const auto initModeSchedule = loadModeSchedule(ROBOT_TASK_FILE_PATH, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(ROBOT_TASK_FILE_PATH, "defaultModeSequenceTemplate", false);
 
@@ -68,7 +68,7 @@ std::shared_ptr<SwitchedModelModeScheduleManager> createModeScheduleManager(cons
       new GaitSchedule(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime));
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
       new SwingTrajectoryPlanner(loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), centroidalModelInfo));
-  return std::make_shared<SwitchedModelModeScheduleManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
+  return std::make_shared<SwitchedModelReferenceManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
 }
 
 }  // namespace legged_robot

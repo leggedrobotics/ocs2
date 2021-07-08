@@ -48,13 +48,13 @@ class TestZeroForceConstraint : public ::testing::Test {
   const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
   const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
-  const std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr = createModeScheduleManager(centroidalModelInfo);
+  const std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr = createReferenceManager(centroidalModelInfo);
   PreComputation preComputation;
 };
 
 TEST_F(TestZeroForceConstraint, evaluate) {
   for (size_t i = 0; i < centroidalModelInfo.numThreeDofContacts; i++) {
-    ZeroForceConstraint zeroForceConstraint(*modeScheduleManagerPtr, i, centroidalModelInfo);
+    ZeroForceConstraint zeroForceConstraint(*referenceManagerPtr, i, centroidalModelInfo);
 
     // evaluation point
     const scalar_t t = 0.0;
@@ -77,7 +77,7 @@ TEST_F(TestZeroForceConstraint, evaluate) {
 
 TEST_F(TestZeroForceConstraint, clone) {
   constexpr size_t eeIndex = 0;
-  ZeroForceConstraint zeroForceConstraint(*modeScheduleManagerPtr, eeIndex, centroidalModelInfo);
+  ZeroForceConstraint zeroForceConstraint(*referenceManagerPtr, eeIndex, centroidalModelInfo);
   std::unique_ptr<ZeroForceConstraint> zeroForceConstraintPtr(zeroForceConstraint.clone());
 
   // evaluation point

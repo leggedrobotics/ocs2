@@ -47,7 +47,7 @@ class TestFrictionConeConstraint : public testing::Test {
   const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
   const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
-  const std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr = createModeScheduleManager(centroidalModelInfo);
+  const std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr = createReferenceManager(centroidalModelInfo);
   PreComputation preComputation;
 };
 
@@ -60,7 +60,7 @@ TEST_F(TestFrictionConeConstraint, finiteDifference) {
   size_t N = 10000;
 
   for (size_t legNumber = 0; legNumber < centroidalModelInfo.numThreeDofContacts; ++legNumber) {
-    FrictionConeConstraint frictionConeConstraint(*modeScheduleManagerPtr, config, legNumber, centroidalModelInfo);
+    FrictionConeConstraint frictionConeConstraint(*referenceManagerPtr, config, legNumber, centroidalModelInfo);
 
     vector_t u0 = 10.0 * vector_t::Random(centroidalModelInfo.inputDim);
     u0(2) = 100.0;
@@ -142,7 +142,7 @@ TEST_F(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   vector_t u = vector_t::Random(centroidalModelInfo.inputDim);
 
   for (size_t legNumber = 0; legNumber < centroidalModelInfo.numThreeDofContacts; ++legNumber) {
-    FrictionConeConstraint frictionConeConstraint(*modeScheduleManagerPtr, config, legNumber, centroidalModelInfo);
+    FrictionConeConstraint frictionConeConstraint(*referenceManagerPtr, config, legNumber, centroidalModelInfo);
 
     // Local forces are equal to the body forces.
     const vector_t F = centroidal_model::getContactForces(u, legNumber, centroidalModelInfo);
@@ -194,7 +194,7 @@ TEST_F(TestFrictionConeConstraint, negativeDefinite) {
   u(11) = 100.0;
 
   for (size_t legNumber = 0; legNumber < centroidalModelInfo.numThreeDofContacts; ++legNumber) {
-    FrictionConeConstraint frictionConeConstraint(*modeScheduleManagerPtr, config, legNumber, centroidalModelInfo);
+    FrictionConeConstraint frictionConeConstraint(*referenceManagerPtr, config, legNumber, centroidalModelInfo);
 
     const auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u, preComputation);
     ASSERT_LT(LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfdxx.front()).maxCoeff(), 0.0);

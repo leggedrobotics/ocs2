@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_core/reference/ModeSchedule.h>
 
 #include "ocs2_legged_robot_example/common/Types.h"
@@ -47,7 +46,7 @@ class SwingTrajectoryPlanner {
     scalar_t swingTimeScale = 0.15;  // swing phases shorter than this time will be scaled down in height and velocity
   };
 
-  SwingTrajectoryPlanner(Config config, CentroidalModelInfo info);
+  SwingTrajectoryPlanner(Config config, size_t numOfFeet);
 
   void update(const ocs2::ModeSchedule& modeSchedule, scalar_t terrainHeight);
 
@@ -102,7 +101,7 @@ class SwingTrajectoryPlanner {
   static scalar_t swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale);
 
   const Config config_;
-  const CentroidalModelInfo info_;
+  const size_t numOfFeet_;
 
   feet_array_t<std::vector<SplineCpg>> feetHeightTrajectories_;
   feet_array_t<std::vector<scalar_t>> feetHeightTrajectoriesEvents_;

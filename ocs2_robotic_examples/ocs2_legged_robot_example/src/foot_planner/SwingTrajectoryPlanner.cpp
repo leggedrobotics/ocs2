@@ -39,8 +39,7 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SwingTrajectoryPlanner::SwingTrajectoryPlanner(Config config, CentroidalModelInfo info)
-    : config_(std::move(config)), info_(std::move(info)) {}
+SwingTrajectoryPlanner::SwingTrajectoryPlanner(Config config, size_t numFeet) : config_(std::move(config)), numOfFeet_(numFeet) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -82,11 +81,11 @@ void SwingTrajectoryPlanner::update(const ocs2::ModeSchedule& modeSchedule, cons
 
   feet_array_t<std::vector<int>> startTimesIndices;
   feet_array_t<std::vector<int>> finalTimesIndices;
-  for (size_t leg = 0; leg < info_.numThreeDofContacts; leg++) {
+  for (size_t leg = 0; leg < numOfFeet_; leg++) {
     std::tie(startTimesIndices[leg], finalTimesIndices[leg]) = updateFootSchedule(eesContactFlagStocks[leg]);
   }
 
-  for (size_t j = 0; j < info_.numThreeDofContacts; j++) {
+  for (size_t j = 0; j < numOfFeet_; j++) {
     feetHeightTrajectories_[j].clear();
     feetHeightTrajectories_[j].reserve(modeSequence.size());
     for (int p = 0; p < modeSequence.size(); ++p) {
@@ -143,7 +142,7 @@ feet_array_t<std::vector<bool>> SwingTrajectoryPlanner::extractContactFlags(cons
 
   for (size_t i = 0; i < numPhases; i++) {
     const auto contactFlag = modeNumber2StanceLeg(phaseIDsStock[i]);
-    for (size_t j = 0; j < info_.numThreeDofContacts; j++) {
+    for (size_t j = 0; j < numOfFeet_; j++) {
       contactFlagStock[j][i] = contactFlag[j];
     }
   }

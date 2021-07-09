@@ -45,6 +45,8 @@ catkin_package(
     include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
+    ${PROJECT_NAME}
+  CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     pinocchio

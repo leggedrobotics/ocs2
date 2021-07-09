@@ -5,10 +5,11 @@ Table of Contents
 
 .. toctree::
    overview.rst
-   getting-started.rst
    installation.rst
-   example.rst	
-   frank-wolfe-example.rst
+   getting-started.rst
+   optimal_control_modules.rst
+   robotic_examples.rst
+   from_urdf_to_ocp.rst
    profiling.rst
 
 .. rubric:: Reference and Index:

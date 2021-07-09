@@ -1,10 +1,11 @@
-.. index:: pair: page; How to profile the solver
+.. index:: pair: page; How to Profile the Solvers
 .. _doxid-ocs2_doc_profiling:
 
-How to profile the solver
-=========================
+How to Profile the Solvers
+==========================
 
-This document lists some profiling and benchmarking tools and how to use them with OCS2.
+This document lists some profiling and benchmarking tools and how to use 
+them with OCS2.
 
 
 
@@ -13,7 +14,8 @@ This document lists some profiling and benchmarking tools and how to use them wi
 Test conditions
 ~~~~~~~~~~~~~~~
 
-To improve accuracy and make comparison fair turn off powersave and turbo boost:
+To improve accuracy and make comparison fair turn off powersave and 
+turbo boost:
 
 .. code-block:: bash
 
@@ -23,7 +25,8 @@ To improve accuracy and make comparison fair turn off powersave and turbo boost:
 	cpupower frequency-set --governor powersave
 	echo "0" | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 
-You may also want to build in Release mode and enable architecture specific features:
+You may also want to build in Release mode and enable architecture 
+specific features:
 
 .. code-block:: cpp
 
@@ -38,7 +41,9 @@ You may also want to build in Release mode and enable architecture specific feat
 Use the built-in timers
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-OCS2 keeps internal statistics of the solver timings. If enabled, the solver will print a summary from the destructor. You can enable them in the task.info file:
+OCS2 keeps internal statistics of the solver timings. If enabled, the 
+solver will print a summary from the destructor. You can enable them 
+in the task.info file:
 
 .. code-block:: ini
 
@@ -145,7 +150,9 @@ Installation:
 Massif: A Heap Profiler
 -----------------------
 
-Valgrind Massif profiles memory usage for snapshots, which are taken at regular time intervals. It allows analyzing memory usage down to indivitual functions and lines if debug symbols are available.
+Valgrind Massif profiles memory usage for snapshots, which are taken at 
+regular time intervals. It allows analyzing memory usage down to 
+individual functions and lines if debug symbols are available.
 
 Usage:
 

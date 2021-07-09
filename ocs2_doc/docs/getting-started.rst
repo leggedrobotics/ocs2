@@ -1,254 +1,224 @@
 .. index:: pair: page; Getting Started
+
 .. _doxid-ocs2_doc_getting_started:
 
 Getting Started
 ===============
+We here briefly explain the steps you need to take in order to apply
+OCS2 for you specific problem. We already assume that you have
+successfully installed the library based on the description in the
+:ref:`Installation page <doxid-ocs2_doc_installation>`.
 
 
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_steps:
-
-Main Steps
-~~~~~~~~~~
-
-After setting up you catkin workspace (refer to :ref:`Installation <doxid-ocs2_doc_installation>`), the next step is to define your optimal control problem by providing the following components
-
-* System dynamics and its linearization
-
-* Cost function and its quadratic approximation
-
-* Constraints and their linearization (if the problem is constrained)
-
-* Logic-Rules (if you are dealing with a switched system or mixed logic problem)
-
-* Choosing proper operating trajectories for the initial iteration of optimizer.
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_common:
-
-Commonly-Used Methods
----------------------
-
-Before moving on to the deatils on how each of these components should be implemented, we discuss some of the methods which are repeatedly used
-
-* ``<class_name>::initializeModel``: This method is almost used in all of the interface classes. This method gives the user the possibility to modify and add variables that can effect the subsequent call of the class's methods. This method also has access to a instance of the Logic-Rules. One of the imaginable application of this method is the mixed logic problems (or switched systems). In this particular application, the class can be informed about the current active logic (such as current active subsystem). The optimizer always makes sure that this class is called before any other main methods of the class.
-
-* ``<class_name>::clone``: The clone method is used to copy an object. It is usually implemented as
-  
-  .. code-block:: cpp
-  
-  	class_name* class_name::clone() const override
-  	{
-  	    return new class_name(*this);
-  	}
-  
-  where it uses the copy constructor of the class. User should take care of the deep/shallow copying in this case.
-
-
-
-
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_dynamics:
-
-System Dynamics
+Where to start?
 ~~~~~~~~~~~~~~~
 
-Your system dynamics should be implemented as a derived class of ocs2::ControlledSystemBase where the following method should be implemented
+The first and maybe the most important step is to decide what model
+complexity you want to use for the problem in hand. For example, does a
+kinematic model suffice for tasks you plan to solve with MPC? Some of
+the common models are:
 
-* ocs2::ControlledSystemBase::computeFlowMap: This is the main routine where you define your system dynamics as a function of current time, state, and input
+-  **Kinematic model**: This model is often employed for fixed or mobile
+   base manipulators. The objectives of such problems are end-effector
+   tracking, self-collision avoidance, and collision-free navigation.
+   For an example refer to 
+   :ref:`Mobile Manipulator example <doxid-ocs2_doc_robotic_examples_mobile_manipulator>`.
 
-* ocs2::ControlledSystemBase::computeJumpMap: This feature will let you define a state jump map (currently the optimizer do not considers this).
+-  **Dynamic model**: This is the most complete rigid-body model which
+   takes in to account both the kinematics and the dynamics of the
+   system. For an example refer to 
+   :ref:`Ballbot example <doxid-ocs2_doc_robotic_examples_ballbot>`.
 
-* ocs2::ControlledSystemBase::computeGuardSurfaces: This feature will let you define switching surfaces (currently the optimizer do not considers this).
+-  **Centroidal model**: This is model often used for legged robots
+   since it has the best of two worlds. First it consider the full
+   kinematics of the system. Second, instead of the full dynamics which
+   is computationally expensive, it only considers the part of the
+   dynamics that is affected by the external force. For an example refer
+   to :ref:`Legged Robot example <doxid-ocs2_doc_robotic_examples_legged_robot>`.
 
-* ocs2::ControlledSystemBase::initializeModel: The optimization algorithm will call this method a-prior to call of computeFlowMap and computeJumpMap. For more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
-
-* ocs2::ControlledSystemBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
-
-The derivative of the system dynamics are defined through the interface class ocs2::DerivativesBase. The following method should be implemented in the derived class
-
-* ocs2::DerivativesBase::setCurrentStateAndControl: Before computing the linearized model you need to set the internal state and input. This method also can be used to perform common operations needed later for calculating state or input derivatives check for example ... Also for more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
-
-* ocs2::DerivativesBase::getFlowMapDerivativeState: This method should return the system dynamics derivatives w.r.t. state.
-
-* ocs2::DerivativesBase::getFlowMapDerivativeInput: This method should return the system dynamics derivatives w.r.t. input.
-
-* ocs2::DerivativesBase::initializeModel: The optimization algorithm will call this method a-prior to call of setCurrentStateAndControl, getFlowMapDerivativeState, etc.
-
-* ocs2::DerivativesBase::getFlowMapDerivativeTime: This method should return the system dynamics derivatives w.r.t. time (currently is not used).
-
-* ocs2::DerivativesBase::getJumpMapDerivativeTime: This method should return the system jump map derivatives w.r.t. time (currently is not used).
-
-* ocs2::DerivativesBase::getJumpMapDerivativeState: This method should return the system jump map derivatives w.r.t. state (currently is not used).
-
-* ocs2::DerivativesBase::getJumpMapDerivativeInput: This method should return the system jump map derivatives w.r.t. input (currently is not used).
-
-* ocs2::DerivativesBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
+After choosing your model, instead of starting from scratch, it is often
+more convenient to start from a similar example. The OCS2 library
+already includes a diverse set of robotic examples which covers most of
+the commonly-used models. For more details on these examples read this
+page :ref:`Robotic Examples <doxid-ocs2_doc_robotic_examples>`.
 
 
+.. _doxid-ocs2_doc_getting_started_the_optimal_control_formulation:
 
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_dynamics_ad:
+The optimal control formulation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Automatic-Differentiation of Dynamics
--------------------------------------
+OCS2 is tailored to solve optimal control problems for switched systems.
+A switched system consists of a finite number of dynamical subsystems
+subjected to discrete events which cause transition between these
+subsystems. Switched system models are encountered in many practical
+applications such as automobiles and locomotives with different gears,
+DC-DC converters, manufacturing processes, biological systems, and
+walking robotics. The optimal control for such a system can be
+formulated as
 
-If you plan to use the Automatic-Differentiation for computing the derivatives of the system dynamics, you should use ocs2::SystemDynamicsBaseAD interface instead of both ocs2::ControlledSystemBase and ocs2::DerivativesBase. To this end your derived class only needs to implement two templated methods where the template is over the floating point type.
+.. math::
 
-* ocs2::SystemDynamicsBaseAD::systemFlowMap: This is where you define your system dynamics as a function of current time, state, and input.
+   \label{eq:OCProblem}
+       \begin{cases}
+       \underset{\mathbf u(.)}{\min} \ \ \sum_i \phi_i(\mathbf x(t_{i+1})) + \displaystyle \int_{t_i}^{t_{i+1}} l_i(\mathbf x(t), \mathbf u(t), t) \, dt \\
+       \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11em} \text{initial state} \\ 
+       \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f_i(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{ system flow map} \\
+       \ \ \ \ \ \mathbf x(t_{i+1}^+) = \mathbf j(\mathbf x(t_{i+1})) \hspace{8.5em} \text{system jump map} \\
+       \ \ \ \ \ {\mathbf g_1}_i(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\
+       \ \ \ \ \ {\mathbf g_2}_i(\mathbf x(t), t) = \mathbf{0} \, \hspace{10.5em}  \text{state-only equality constraints} \\
+       \ \ \ \ \ \mathbf h_i(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \hspace{9em}  \text{inequality constraints} \\
+       \ \ \ \ \ \text{for  } t_i < t < t_{i+1} \text{  and  } i \in \{0, 1, \cdots, I-1 \}
+       \end{cases}
 
-* ocs2::SystemDynamicsBaseAD::systemGuardSurfaces: This feature will let you define a state jump map (currently the optimizer do not considers this).
+where :math:`t_i`\ s is the switching times and :math:`t_I` is the final
+time. For each mode, the nonlinear cost function consists of a pre-jump
+cost and an intermediate cost. While at the first glance this equation
+seems a bit intimidating, it actually has a simple interpretation and
+brings a maximum flexibility for defining an MPC problem. One can
+imagine this problem as a sequence of optimal control sub-problems which
+are connected to each other through a system jump map. Each sub-problem
+can even have different state and input dimensions as long as the jump
+map is correctly defined in between them. As mentioned, the switches in
+this formulation are based on time-triggered events. This means that you
+need to define both the sequence of the modes and the event times where
+these switches take place.
 
-* initializeModel: One of the shortcoming of using ocs2::SystemDynamicsBaseAD for getting derivatives is that you cannot use initializeModel scheme.
+For many robotic platforms such as quadrotor, ballbot, and cart-pole,
+the system has only a single mode (i.e., a single domain system). In
+these cases, the above formulation simplifies as
 
-Note that the SystemDynamicsBaseAD is derived from both ocs2::ControlledSystemBase and ocs2::DerivativesBase, therefore you can pass it as an instance of both classes.
+.. math::
+
+   \label{eq:OCProblem_simple}
+       \begin{cases}
+       \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(T)) + \displaystyle \int_{0}^{T} l(\mathbf x(t), \mathbf u(t), t) \, dt \\
+       \text{s.t.} \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{2.7em} \text{system dynamics} \\ 
+       \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \qquad   \qquad \text{state-input equality constraints} \\
+       \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0} \qquad \qquad \qquad  \text{ state-only equality constraints} \\
+       \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \, \qquad  \quad\quad  \text{   inequality constraints}
+       \end{cases}
+
+Which is in the form of a regular optimal control problem.
 
 
+How to setup an optimal control problem?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+In order to define your optimal control, you need to define at least the
+system dynamics and a cost function with a positive definitive Hessian
+matrix w.r.t. input and a positive semi-definite Hessian matrix w.r.t.
+state. Luckily, OCS2 provides a closely matching interface for defining
+an optimal control problem which is called OptimalControlProblem 
+(:ref:`refer to this page <doxid-ocs2_doc_optimal_control_modules>`).
 
+.. code-block:: cpp
 
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_cost:
-
-Cost Function
-~~~~~~~~~~~~~
-
-The cost function and it second order approximation are defined through the interface class ocs2::CostFunctionBase. The following method should be overrided in your derived class
-
-* ocs2::CostFunctionBase::setCurrentStateAndControl: Before computing the cost and its derivatives you need to set the internal state and input. This method also can be used to perform common operations needed later for calculating state or input derivatives check for example ... Also for more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
-
-* ocs2::CostFunctionBase::getIntermediateCost: This method gets the intermediate cost. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getIntermediateCostDerivativeState: This method gets the intermediate cost first order derivative w.r.t. state. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getIntermediateCostSecondDerivativeState: This method gets the intermediate cost second order derivative w.r.t. state. You can Either compute
+  /** Optimal Control Problem definition */
+  struct OptimalControlProblem {
+    /* Cost */
+    /** Intermediate cost */
+    std::unique_ptr<StateInputCostCollection> costPtr;
+    /** Intermediate state-only cost */
+    std::unique_ptr<StateCostCollection> stateCostPtr;
+    /** Pre-jump cost */
+    std::unique_ptr<StateCostCollection> preJumpCostPtr;
+    /** Final cost */
+    std::unique_ptr<StateCostCollection> finalCostPtr;
   
-  this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getIntermediateCostDerivativeInput: This method gets the intermediate cost first order derivative w.r.t. input. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getIntermediateCostSecondDerivativeInput: This method gets the intermediate cost second order derivative w.r.t. input. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getIntermediateCostDerivativeInputState: This method gets the intermediate cost second order derivative w.r.t. input and state. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getTerminalCost: This method gets the terminal cost. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_) and state (ocs2::CostFunctionBase::x\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getTerminalCostDerivativeState: This method gets the terminal cost first order derivative w.r.t. state. You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::getTerminalCostSecondDerivativeState: This method gets the terminal cost. second order derivative w.r.t. state. You can Either compute You can Either compute this value using the internal time (ocs2::CostFunctionBase::t\_), state (ocs2::CostFunctionBase::x\_), and input (ocs2::CostFunctionBase::u\_) or (which is a better practice) compute it during the call to ocs2::CostFunctionBase::setCurrentStateAndControl and store it.
-
-* ocs2::CostFunctionBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_cost_ad:
-
-Automatic-Differentiation of Cost Function
-------------------------------------------
-
-If you plan to use the Automatic-Differentiation for computing the derivatives of the cost function, you should use ocs2::CostFunctionBaseAD interface instead of both ocs2::CostFunctionBase. To this end your derived class only needs to implement two templated methods where the template is over the floating point type.
-
-* ocs2::CostFunctionBaseAD::intermediateCostFunction: This is where you define your intermediate cost as a function of current time, state, and input.
-
-* ocs2::CostFunctionBaseAD::terminalCostFunction: This feature will let you define terminal cost as a function of current time and state.
-
-* initializeModel: One of the shortcoming of using ocs2::CostFunctionBaseAD for getting derivatives is that you cannot use initializeModel scheme.
-
-
-
-
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_constraints:
-
-Constraints
-~~~~~~~~~~~
-
-Your constraints should be implemented as a derived class of ocs2::ConstraintBase where the following method should be implemented
-
-* ocs2::ConstraintBase::setCurrentStateAndControl: : Before computing the constraint and its derivatives you need to set the internal state and input. This method also can be used to perform common operations needed later for calculating state or input derivatives check for example ... Also for more information refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
-
-* ocs2::ConstraintBase::getConstraint1: Gets the state-input equality constraints.
-
-* ocs2::ConstraintBase::numStateInputConstraint: Gets the number of state-input active equality constraints.
-
-* ocs2::ConstraintBase::getConstraint2: Gets the state-only (in)equality constraints.
-
-* ocs2::ConstraintBase::numStateOnlyConstraint: Gets the number of state-only active (in)equality constraints.
-
-* ocs2::ConstraintBase::getFinalConstraint2: Gets the final state-only (in)equality constraints.
-
-* ocs2::ConstraintBase::numStateOnlyFinalConstraint: Gets the number of final state-only active (in)equality constraints.
-
-* ocs2::ConstraintBase::getConstraint1DerivativesState: State derivative of state-input active equality constraints.
-
-* ocs2::ConstraintBase::getConstraint1DerivativesControl: Input derivative of state-input active equality constraints.
-
-* ocs2::ConstraintBase::getConstraint2DerivativesState: State derivative of state-only active (in)equality constraints.
-
-* ocs2::ConstraintBase::getFinalConstraint2DerivativesState: State derivative of final state-only active (in)equality constraints.
-
-* ocs2::ConstraintBase::clone: Refer to the instruction in :ref:`Commonly-Used Methods <doxid-ocs2_doc_getting_started_1getting_started_common>`.
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_constraints_ad:
-
-Automatic-Differentiation of Constraints
-----------------------------------------
-
-If you plan to use the Automatic-Differentiation for computing the derivatives of the system dynamics, you should use ocs2::ConstraintBaseAD interface instead of ocs2::ConstraintBase. To this end your derived class only needs to implement two templated methods where the template is over the floating point type.
-
-* ocs2::ConstraintBaseAD::stateInputConstraint: This is where you define your state-input equality constraints as a function of current time, state, and input.
-
-* ocs2::ConstraintBaseAD::numStateInputConstraint: Gets the number of state-input active equality constraints.
-
-* ocs2::ConstraintBaseAD::stateOnlyConstraint: This is where you define your state-only equality constraints as a function of current time and state.
-
-* ocs2::ConstraintBaseAD::numStateOnlyConstraint: Gets the number of state-only active (in)equality constraints.
-
-* ocs2::ConstraintBaseAD::stateOnlyFinalConstraint: This is where you define your terminal state-only equality constraints as a function of current time and state.
-
-* ocs2::ConstraintBaseAD::numStateOnlyFinalConstraint: Gets the number of final state-only active (in)equality constraints.
-
-* initializeModel: One of the shortcoming of using ocs2::ConstraintBaseAD for getting derivatives is that you cannot use initializeModel scheme.
-
-
-
-
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_logic_rules:
-
-Logic-Rules
-~~~~~~~~~~~
-
-Logic rules structure gives the toolbox lots of flexibility. The interface class for logic rules is ocs2::LogicRulesBase. We have assumes that the logic rules only depend on time. One of the direct applications of the logic rules is for implementing switched systems where the logic is switching to different subsystems. Since this structure is passed to the system dynamics, derivatives, cost, and constraints, we can modify the behavior of these classes based on the logic rules at a given time. User also can modify the logic rules during the run of the optimizer (e.g. during the MPC loop). The optimizer will make sure to update the logic rules while the adjustment of the controller takes place based on a user defined method ocs2::LogicRulesBase::adjustController.
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_null_logic_rules:
-
-No Logic-Rules
---------------
-
-For regular problem where there is no logic, user can simply use ocs2::NullLogicRules.
-
-
-
-
-
-
-
-.. _doxid-ocs2_doc_getting_started_1getting_started_main_operating_pointss:
-
-Operating Points
-~~~~~~~~~~~~~~~~
-
-As a sequential optimal control algorithm, SLQ requires a stable initial controller or equivalently an initial stable rollout. We have unified these two concepts by introducing the concept of the nominal trajectories (ocs2::SystemOperatingTrajectoriesBase). If an initial stable trajectory is already exist (e.g. from another optimization algorithm) user can directly use them as an initial solution. Otherwise, the user can conveniently define a few operation points where an LQR controller will be designed by SLQ automatically (ocs2::SystemOperatingPoint). In fact, ocs::SystemOperatingPoint interface is a derived case of the ocs2::SystemOperatingTrajectoriesBase. Note that using operating points instead of the operating trajectories causes the initial iteration of SLQ to have unrealistic cost and constraint ISE.
-
+    /* Soft constraints */
+    /** Intermediate soft constraint penalty */
+    std::unique_ptr<StateInputCostCollection> softConstraintPtr;
+    /** Intermediate state-only soft constraint penalty */
+    std::unique_ptr<StateCostCollection> stateSoftConstraintPtr;
+    /** Pre-jump soft constraint penalty */
+    std::unique_ptr<StateCostCollection> preJumpSoftConstraintPtr;
+    /** Final soft constraint penalty */
+    std::unique_ptr<StateCostCollection> finalSoftConstraintPtr;
+  
+    /* Constraints */
+    /** Intermediate equality constraints, full row rank w.r.t. inputs */
+    std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
+    /** Intermediate state-only equality constraints */
+    std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
+    /** Intermediate inequality constraints */
+    std::unique_ptr<StateInputConstraintCollection> inequalityConstraintPtr;
+    /** pre-jump constraints */
+    std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
+    /** final constraints */
+    std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
+  
+    /* Dynamics */
+    /** System dynamics pointer */
+    std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
+  
+    /* Misc. */
+    /** The pre-computation module */
+    std::unique_ptr<PreComputation> preComputationPtr;
+    
+    ...
+  }
+
+How to setup an MPC loop?
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+So far you have created an optimal control problem. To setup an MPC, you
+need to solve this problem repeatedly at each control tick with the
+latest state measurement. While for simple systems, solving this problem
+in realtime is possible, for many robotic platforms with limited onboard
+compute power and high control frequency loop this is not possible. To
+this end, you require the followings: (1) To run the MPC as fast as
+possible with the latest state measurement. (2) To use the latest MPC
+output without worrying about any racing issue while reading its output.
+To this end, you require some synchronization mechanism to facilitate
+these requirements. OCS2 provides such functionalities by introducing
+the concept of **MPC** Interface and **MRT** (Model Reference Tracking)
+Interface.
+
+MPC Interface
+-------------
+
+The MPC interface is responsible for safely updating the solver with the
+latest measurement. Thus the user can safely set the latest state to the
+solver and advance it. If the solver is not yet terminated from the
+previous call, the state will be buffered until the solver is ready, the
+buffer size is one so the solver always will get the latest state.
+
+MRT Interface
+-------------
+
+The MRT interface is responsible for the safe access to the outcome of
+the solver. It provides two views to the output: the time-based and the
+state-base view. In the time-based approach, MRT only outputs the
+optimized state-input pair for the enquiry time based on a linear
+interpolation of the optimized state-input trajectory. On the other
+hand, the state-based technique evaluates the optimal input using the
+feedback policy for the given time and state. Note that the feedback
+policy option should be activated in the solver settings (given that the
+solver supports the feedback policy).
+
+ROS and non-ROS versions
+------------------------
+
+MPC and MRT interfaces are working in tandem and you need both to deploy
+MPC on your robot. Depending on that you run both MPC and MRT on a
+single machine or on different machines, you should use either
+MpcMrtInterface or the pair of MpcRosInterface and MrtRosInterface. As
+the naming suggests the latter uses ROS for communicating between MPC
+and MRT nodes.
+
+How to test your MPC output?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The final stage is tuning your cost and other algorithmic
+hyper-parameters. In order to separate the problem of planning from
+tracking controller which transform the MPC outputs to the robot command
+input (such as torques, and desired joint angles and velocities), OCS2
+is equipped with a so-called dummy-simulator. At it simplest form, the
+MRT dummy simulator only interpolates your optimized state-input and
+visualize them in rviz. However, if you set a Rollout instance to the
+dummy simulator, it uses it to simulate the MPC policy. In this case, if
+you use the same dynamics as you used in your optimal control problem,
+you will simulate the MPC output with the exact model that you used for
+planning. More advance simulator such as RaiSim can be also used as the
+rollout instance.

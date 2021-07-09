@@ -6,7 +6,7 @@ Installation
 
 
 
-.. _doxid-ocs2_doc_installation_1ocs2_doc_requirements:
+.. _doxid-ocs2_doc_installation_ocs2_doc_requirements:
 
 Requirements
 ~~~~~~~~~~~~
@@ -15,7 +15,7 @@ The OCS2 library is written in C++11. It is tested under Ubuntu 20.04 with libra
 
 
 
-.. _doxid-ocs2_doc_installation_1ocs2_doc_dep:
+.. _doxid-ocs2_doc_installation_ocs2_doc_dep:
 
 Dependencies
 ------------
@@ -41,7 +41,7 @@ Dependencies
 * Doxygen for documentation. Install with ``sudo apt install doxygen doxygen-latex``
 
 
-.. _doxid-ocs2_doc_installation_1ocs2_doc_dep_optinal:
+.. _doxid-ocs2_doc_installation_ocs2_doc_dep_optinal:
 
 Optional Dependencies
 ---------------------
@@ -82,13 +82,13 @@ Optional Dependencies
 
 
 
-.. _doxid-ocs2_doc_installation_1ocs2_doc_install:
+.. _doxid-ocs2_doc_installation_ocs2_doc_install:
 
 Installation
 ~~~~~~~~~~~~
 
 
-.. _doxid-ocs2_doc_installation_1ocs2_doc_build_lib:
+.. _doxid-ocs2_doc_installation_ocs2_doc_build_lib:
 
 Build the library
 -----------------
@@ -106,7 +106,7 @@ To build and run the unit tests run:
 	catkin run_tests ocs2
 
 
-.. _doxid-ocs2_doc_installation_1ocs2_doc_build_doc:
+.. _doxid-ocs2_doc_installation_ocs2_doc_build_doc:
 
 Build this Documentation
 ------------------------
@@ -117,5 +117,6 @@ Assuming python catkin tools are installed, run the following command:
 
 	catkin build ocs2_doc
 
-This will build the documentation and place it in the ``ocs2_doc/doc/html`` folder.
+This will build the documentation and place it in the 
+``ocs2_doc/doc/html`` folder.
 

@@ -69,60 +69,60 @@ template <typename SCALAR_T>
 void rotateInPlaceZ(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
   const SCALAR_T c = cos(angle);
   const SCALAR_T s = sin(angle);
-  const SCALAR_T vx = v[0];
-  const SCALAR_T vy = v[1];
-  v[0] = c * vx - s * vy;
-  v[1] = s * vx + c * vy;
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vy = v.y();
+  v.x() = c * vx - s * vy;
+  v.y() = s * vx + c * vy;
 }
 
 template <typename SCALAR_T>
 void invRotateInPlaceZ(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
   const SCALAR_T c = cos(angle);
   const SCALAR_T s = sin(angle);
-  const SCALAR_T vx = v[0];
-  const SCALAR_T vy = v[1];
-  v[0] = c * vx + s * vy;
-  v[1] = -s * vx + c * vy;
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vy = v.y();
+  v.x() = c * vx + s * vy;
+  v.y() = -s * vx + c * vy;
 }
 
 template <typename SCALAR_T>
 void rotateInPlaceY(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
   const SCALAR_T c = cos(angle);
   const SCALAR_T s = sin(angle);
-  const SCALAR_T vx = v[0];
-  const SCALAR_T vz = v[2];
-  v[0] = c * vx + s * vz;
-  v[2] = -s * vx + c * vz;
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vz = v.z();
+  v.x() = c * vx + s * vz;
+  v.z() = -s * vx + c * vz;
 }
 
 template <typename SCALAR_T>
 void invRotateInPlaceY(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
   const SCALAR_T c = cos(angle);
   const SCALAR_T s = sin(angle);
-  const SCALAR_T vx = v[0];
-  const SCALAR_T vz = v[2];
-  v[0] = c * vx - s * vz;
-  v[2] = s * vx + c * vz;
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vz = v.z();
+  v.x() = c * vx - s * vz;
+  v.z() = s * vx + c * vz;
 }
 
 template <typename SCALAR_T>
 void rotateInPlaceX(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
   const SCALAR_T c = cos(angle);
   const SCALAR_T s = sin(angle);
-  const SCALAR_T vy = v[1];
-  const SCALAR_T vz = v[2];
-  v[1] = c * vy - s * vz;
-  v[2] = s * vy + c * vz;
+  const SCALAR_T vy = v.y();
+  const SCALAR_T vz = v.z();
+  v.y() = c * vy - s * vz;
+  v.z() = s * vy + c * vz;
 }
 
 template <typename SCALAR_T>
 void invRotateInPlaceX(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
   const SCALAR_T c = cos(angle);
   const SCALAR_T s = sin(angle);
-  const SCALAR_T vy = v[1];
-  const SCALAR_T vz = v[2];
-  v[1] = c * vy + s * vz;
-  v[2] = -s * vy + c * vz;
+  const SCALAR_T vy = v.y();
+  const SCALAR_T vz = v.z();
+  v.y() = c * vy + s * vz;
+  v.z() = -s * vy + c * vz;
 }
 
 /**

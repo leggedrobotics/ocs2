@@ -26,22 +26,22 @@ class TestAnymalLoopshapingModel : public ::testing::Test {
     const ocs2::vector_t systemState = anymalInterface->getInitialState().head(switched_model::STATE_DIM);
     const ocs2::vector_t state = anymalInterface->getInitialState();
     const ocs2::vector_t input = ocs2::vector_t::Zero(switched_model::INPUT_DIM);
-    costDesiredTrajectories = ocs2::CostDesiredTrajectories{{initTime}, {systemState}, {input}};
+    targetTrajectories = ocs2::TargetTrajectories{{initTime}, {systemState}, {input}};
 
     dynamics.reset(anymalInterface->getDynamics().clone());
     cost.reset(anymalInterface->getCost().clone());
     constraints.reset(anymalInterface->getConstraintPtr()->clone());
 
     // Initialize
-    anymalInterface->getModeScheduleManagerPtr()->preSolverRun(initTime, finalTime, state, costDesiredTrajectories);
-    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    anymalInterface->getReferenceManagerPtr()->preSolverRun(initTime, finalTime, state);
+    cost->setTargetTrajectoriesPtr(&targetTrajectories);
   }
 
   std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> anymalInterface;
   std::unique_ptr<ocs2::SystemDynamicsBase> dynamics;
   std::unique_ptr<ocs2::CostFunctionBase> cost;
   std::unique_ptr<ocs2::ConstraintBase> constraints;
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
 };
 
 TEST_F(TestAnymalLoopshapingModel, all) {

@@ -24,7 +24,7 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
   GaitReceiver(ros::NodeHandle nodeHandle, ocs2::Synchronized<GaitSchedule>& gaitSchedule, const std::string& robotName);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
+                    const ocs2::ReferenceManagerInterface& referenceManager) override;
 
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override{};
 
@@ -43,7 +43,7 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
 
   std::mutex receivedGaitMutex_;  // protects the setGaitAction_ variable
   std::function<void(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory)>
+                     const ocs2::TargetTrajectories& targetTrajectories)>
       setGaitAction_;
 };
 

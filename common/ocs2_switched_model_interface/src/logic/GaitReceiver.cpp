@@ -20,11 +20,11 @@ GaitReceiver::GaitReceiver(ros::NodeHandle nodeHandle, ocs2::Synchronized<GaitSc
 }
 
 void GaitReceiver::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+                                const ocs2::ReferenceManagerInterface& referenceManager) {
   if (gaitUpdated_) {
     {
       std::lock_guard<std::mutex> lock(receivedGaitMutex_);
-      setGaitAction_(initTime, finalTime, currentState, costDesiredTrajectory);
+      setGaitAction_(initTime, finalTime, currentState, referenceManager.getTargetTrajectories());
     }
     std::cout << std::endl;
     gaitUpdated_ = false;
@@ -38,7 +38,7 @@ void GaitReceiver::mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::Const
   {
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
     setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+                         const ocs2::TargetTrajectories& targetTrajectories) {
       std::cout << "[GaitReceiver]: Setting new gait after time " << finalTime << "\n[GaitReceiver]: " << gait;
       this->gaitSchedulePtr_->lock()->setGaitAfterTime(gait, finalTime);
     };
@@ -57,7 +57,7 @@ void GaitReceiver::mpcModeScheduledGaitCallback(const ocs2_msgs::mode_schedule::
   {
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
     setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+                         const ocs2::TargetTrajectories& targetTrajectories) {
       std::cout << "[GaitReceiver]: Received new scheduled gait, setting it at time " << scheduledGaitTime << ", current time: " << initTime
                 << "\n[GaitReceiver]: " << gait;
       this->gaitSchedulePtr_->lock()->setGaitAtTime(gait, scheduledGaitTime);
@@ -75,7 +75,7 @@ void GaitReceiver::mpcGaitSequenceCallback(const ocs2_switched_model_msgs::sched
   {
     std::lock_guard<std::mutex> lock(receivedGaitMutex_);
     setGaitAction_ = [=](scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                         const ocs2::CostDesiredTrajectories& costDesiredTrajectory) {
+                         const ocs2::TargetTrajectories& targetTrajectories) {
       this->gaitSchedulePtr_->lock()->setGaitSequenceAtTime(scheduledGaitSequence.second, scheduledGaitSequence.first);
     };
     gaitUpdated_ = true;

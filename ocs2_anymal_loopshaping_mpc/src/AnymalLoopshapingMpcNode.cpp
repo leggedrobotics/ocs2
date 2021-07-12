@@ -6,9 +6,8 @@
 
 #include <ocs2_ddp/DDP_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpc.h>
 #include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpcNode.h>
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSlqMpc.h>
-#include <ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingSqpMpc.h>
 
 #include "ocs2_anymal_loopshaping_mpc/AnymalLoopshapingInterface.h"
 
@@ -32,7 +31,7 @@ int main(int argc, char* argv[]) {
   switch (anymalInterface->modelSettings().algorithm_) {
     case switched_model::Algorithm::DDP: {
       const auto ddpSettings = ocs2::ddp::loadSettings(anymal::getTaskFilePathLoopshaping(configName));
-      auto mpcPtr = getMpc(*anymalInterface, mpcSettings, ddpSettings);
+      auto mpcPtr = getDdpMpc(*anymalInterface, mpcSettings, ddpSettings);
       quadrupedLoopshapingMpcNode(nodeHandle, *anymalInterface, std::move(mpcPtr));
       break;
     }

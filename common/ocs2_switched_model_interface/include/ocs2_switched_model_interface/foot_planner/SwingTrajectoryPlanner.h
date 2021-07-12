@@ -5,7 +5,7 @@
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
@@ -40,7 +40,7 @@ class SwingTrajectoryPlanner {
   void updateTerrain(std::unique_ptr<TerrainModel> terrainModel);
 
   void updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                          const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+                          const ocs2::TargetTrajectories& targetTrajectories,
                           const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg);
 
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
@@ -53,7 +53,7 @@ class SwingTrajectoryPlanner {
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
   scalar_t getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const;
   std::vector<ConvexTerrain> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                          const ocs2::CostDesiredTrajectories& costDesiredTrajectories, scalar_t finalTime,
+                                                          const ocs2::TargetTrajectories& targetTrajectories, scalar_t finalTime,
                                                           const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;

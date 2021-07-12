@@ -69,7 +69,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
 
   void publishObservation(ros::Time timeStamp, const ocs2::SystemObservation& observation);
 
-  void publishDesiredTrajectory(ros::Time timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory) const;
+  void publishDesiredTrajectory(ros::Time timeStamp, const ocs2::TargetTrajectories& targetTrajectories) const;
 
   void publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                        const vector_array_t& mpcStateTrajectory, const ocs2::ModeSchedule& modeSchedule) const;

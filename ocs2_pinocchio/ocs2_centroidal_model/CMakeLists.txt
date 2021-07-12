@@ -64,6 +64,8 @@ add_library(${PROJECT_NAME}
   src/CentroidalModelRbdConversions.cpp
   src/CentroidalModelPinocchioMapping.cpp
   src/CentroidalModelInfo.cpp
+  src/FactoryFunctions.cpp
+  src/ModelHelperFunctions.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -110,8 +112,9 @@ install(
 ## Testing ##
 #############
 catkin_add_gtest(${PROJECT_NAME}_test
-  test/AnymalSingleRigidBodyTest.cpp
-  test/AnymalFullCentroidalTest.cpp
+  # test/testAccessMethods.cpp
+  test/testAnymalSingleRigidBody.cpp
+  test/testAnymalFullCentroidal.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
   gtest_main

@@ -27,17 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include "ocs2_centroidal_model/AccessHelperFunctions.h"
-#include "ocs2_centroidal_model/CentroidalModelInfo.h"
-
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
-
-#include <pinocchio/algorithm/centroidal-derivatives.hpp>
-#include <pinocchio/algorithm/frames.hpp>
 
 namespace ocs2 {
 
@@ -52,93 +44,6 @@ Eigen::Matrix<SCALAR_T, 6, 6> computeFloatingBaseCentroidalMomentumMatrixInverse
   Ab_inv << 1.0 / mass * Eigen::Matrix<SCALAR_T, 3, 3>::Identity(), -1.0 / mass * Ab.template block<3, 3>(0, 3) * Ab_22_inv,
       Eigen::Matrix<SCALAR_T, 3, 3>::Zero(), Ab_22_inv;
   return Ab_inv;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
-                              const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& q) {
-  const auto& model = interface.getModel();
-  auto& data = interface.getData();
-  switch (info.centroidalModelType) {
-    case CentroidalModelType::FullCentroidalDynamics: {
-      pinocchio::computeCentroidalMap(model, data, q);
-      pinocchio::updateFramePlacements(model, data);
-      break;
-    }
-    case CentroidalModelType::SingleRigidBodyDynamics: {
-      const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyx = q.template segment<3>(3);
-      const auto& mappingZyx = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAnglesZyx);
-      const auto& rotationBaseToWorld = getRotationMatrixFromZyxEulerAngles(eulerAnglesZyx);
-      const Eigen::Matrix<SCALAR_T, 3, 1> comToBasePositionInWorld = rotationBaseToWorld * info.comToBasePositionNominal;
-      const auto& skewSymmetricMap = skewSymmetricMatrix(comToBasePositionInWorld);
-      const auto mat1 = rotationBaseToWorld * info.centroidalInertiaNominal;
-      const auto mat2 = rotationBaseToWorld.transpose() * mappingZyx;
-      Eigen::Matrix<SCALAR_T, 6, 6> Ab = Eigen::Matrix<SCALAR_T, 6, 6>::Zero();
-      Ab.template topLeftCorner<3, 3>().diagonal().array() = info.robotMass;
-      Ab.template topRightCorner<3, 3>() = info.robotMass * skewSymmetricMap * mappingZyx;
-      Ab.template bottomRightCorner<3, 3>() = mat1 * mat2;
-      Eigen::Matrix<SCALAR_T, -1, -1> A = Eigen::Matrix<SCALAR_T, -1, -1>::Zero(6, info.generalizedCoordinatesNum);
-      A.template leftCols<6>() = Ab;
-      data.Ag = A;
-      data.com[0] = q.template head<3>() - comToBasePositionInWorld;
-      pinocchio::forwardKinematics(model, data, q);
-      pinocchio::updateFramePlacements(model, data);
-      break;
-    }
-    default: {
-      throw std::runtime_error("The chosen centroidal model type is not supported.");
-      break;
-    }
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
-                                         const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& q,
-                                         const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& v) {
-  const auto& model = interface.getModel();
-  auto& data = interface.getData();
-  Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> a;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdq;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdotdq;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdotdv;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdotda;
-  a.setZero(info.generalizedCoordinatesNum);
-  dhdq.resize(6, info.generalizedCoordinatesNum);
-  dhdotdq.resize(6, info.generalizedCoordinatesNum);
-  dhdotdv.resize(6, info.generalizedCoordinatesNum);
-  dhdotda.resize(6, info.generalizedCoordinatesNum);
-  switch (info.centroidalModelType) {
-    case CentroidalModelType::FullCentroidalDynamics: {
-      pinocchio::computeCentroidalDynamicsDerivatives(model, data, q, v, a, dhdq, dhdotdq, dhdotdv, dhdotda);
-      pinocchio::updateFramePlacements(model, data);
-      break;
-    }
-    case CentroidalModelType::SingleRigidBodyDynamics: {
-      //  auto qSRBD = info.qPinocchioNominal;
-      //  qSRBD.template head<6>() = q.template head<6>();
-      //  Eigen::Matrix<SCALAR_T, -1, 1> vSRBD = Eigen::Matrix<SCALAR_T, -1, 1>::Zero(info.generalizedCoordinatesNum);
-      //  vSRBD.template head<6>() = v.template head<6>();
-      //  pinocchio::computeCentroidalDynamicsDerivatives(model, data, qSRBD, vSRBD, a, dhdq, dhdotdq, dhdotdv, dhdotda);
-      const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyx = q.template segment<3>(3);
-      const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyxDerivatives = v.template segment<3>(3);
-      data.dHdq.setZero();
-      data.dHdq.template block<6, 3>(0, 3) = getCentroidalMomentumZyxGradient(info, eulerAnglesZyx, eulerAnglesZyxDerivatives);
-      pinocchio::computeJointJacobians(model, data, q);
-      pinocchio::updateFramePlacements(model, data);
-      break;
-    }
-    default: {
-      throw std::runtime_error("The chosen centroidal model type is not supported.");
-      break;
-    }
-  }
 }
 
 /******************************************************************************************************/
@@ -238,73 +143,6 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const CentroidalM
   }
 
   return dhdq;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-const Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic>& getCentroidalMomentumMatrix(const PinocchioInterfaceTpl<SCALAR_T>& interface) {
-  return interface.getData().Ag;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 1> getPositionComToContactPointInWorldFrame(const PinocchioInterfaceTpl<SCALAR_T>& interface,
-                                                                       const CentroidalModelInfoTpl<SCALAR_T>& info, size_t contactIndex) {
-  const auto& data = interface.getData();
-  return (data.oMf[info.endEffectorFrameIndices[contactIndex]].translation() - data.com[0]);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, Eigen::Dynamic> getTranslationalJacobianComToContactPointInWorldFrame(
-    const PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info, size_t contactIndex) {
-  const auto& model = interface.getModel();
-  auto data = interface.getData();
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> jacobianWorldToContactPointInWorldFrame;
-  jacobianWorldToContactPointInWorldFrame.setZero(6, info.generalizedCoordinatesNum);
-  pinocchio::getFrameJacobian(model, data, info.endEffectorFrameIndices[contactIndex], pinocchio::LOCAL_WORLD_ALIGNED,
-                              jacobianWorldToContactPointInWorldFrame);
-  Eigen::Matrix<SCALAR_T, 3, Eigen::Dynamic> J_com = getCentroidalMomentumMatrix(interface).template topRows<3>() / info.robotMass;
-  return (jacobianWorldToContactPointInWorldFrame.template topRows<3>() - J_com);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 6, 1> getNormalizedCentroidalMomentumRate(const PinocchioInterfaceTpl<SCALAR_T>& interface,
-                                                                  const CentroidalModelInfoTpl<SCALAR_T>& info,
-                                                                  const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& input) {
-  const Eigen::Matrix<SCALAR_T, 3, 1> gravityVector(SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(-9.81));
-  Eigen::Matrix<SCALAR_T, 6, 1> normalizedCentroidalMomentumRate;
-  normalizedCentroidalMomentumRate << info.robotMass * gravityVector, Eigen::Matrix<SCALAR_T, 3, 1>::Zero();
-
-  for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    const auto contactForceInWorldFrame = centroidal_model::getContactForces(input, i, info);
-    const auto positionComToContactPointInWorldFrame = getPositionComToContactPointInWorldFrame(interface, info, i);
-    normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
-    normalizedCentroidalMomentumRate.template tail<3>().noalias() += positionComToContactPointInWorldFrame.cross(contactForceInWorldFrame);
-  }  // end of i loop
-
-  for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
-    const auto contactForceInWorldFrame = centroidal_model::getContactForces(input, i, info);
-    const auto contactTorqueInWorldFrame = centroidal_model::getContactTorques(input, i, info);
-    const auto positionComToContactPointInWorldFrame = getPositionComToContactPointInWorldFrame(interface, info, i);
-    normalizedCentroidalMomentumRate.template head<3>() += contactForceInWorldFrame;
-    normalizedCentroidalMomentumRate.template tail<3>().noalias() +=
-        positionComToContactPointInWorldFrame.cross(contactForceInWorldFrame) + contactTorqueInWorldFrame;
-  }  // end of i loop
-
-  // normalize by the total mass
-  normalizedCentroidalMomentumRate /= info.robotMass;
-
-  return normalizedCentroidalMomentumRate;
 }
 
 }  // namespace ocs2

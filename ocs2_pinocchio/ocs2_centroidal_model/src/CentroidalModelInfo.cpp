@@ -31,41 +31,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
-CentroidalModelInfoTpl<SCALAR>::CentroidalModelInfoTpl(const PinocchioInterfaceTpl<SCALAR>& interface, const CentroidalModelType& type,
-                                                       const vector_t& qNominal, const std::vector<std::string>& threeDofContactNames,
-                                                       const std::vector<std::string>& sixDofContactNames) {
-  const auto& model = interface.getModel();
-  auto data = interface.getData();
-  centroidalModelType = type;
-  numThreeDofContacts = threeDofContactNames.size();
-  numSixDofContacts = sixDofContactNames.size();
-  generalizedCoordinatesNum = model.nq;
-  actuatedDofNum = generalizedCoordinatesNum - 6;
-  stateDim = generalizedCoordinatesNum + 6;
-  inputDim = actuatedDofNum + 3 * numThreeDofContacts + 6 * numSixDofContacts;
-  robotMass = pinocchio::computeTotalMass(model);
-  for (const auto& name : threeDofContactNames) {
-    endEffectorFrameIndices.push_back(model.getBodyId(name));
-  }
-  for (const auto& name : sixDofContactNames) {
-    endEffectorFrameIndices.push_back(model.getBodyId(name));
-  }
+template <>
+template <>
+CentroidalModelInfoCppAd CentroidalModelInfo::toCppAd() const {
+  CentroidalModelInfoCppAd cppAdInfo;
 
-  // make sure the nominal base frame is aligned with the world frame
-  qPinocchioNominal = qNominal;
-  qPinocchioNominal.template head<6>().setZero();
-  centroidalInertiaNominal.setZero();
-  comToBasePositionNominal.setZero();
-  if (centroidalModelType == CentroidalModelType::SingleRigidBodyDynamics) {
-    const vector_t vPinocchioNominal = vector_t::Zero(generalizedCoordinatesNum);
-    pinocchio::ccrba(model, data, qPinocchioNominal, vPinocchioNominal);
-    centroidalInertiaNominal = data.Ig.inertia().matrix();
-    comToBasePositionNominal = qPinocchioNominal.template head<3>() - data.com[0];
-  }
+  cppAdInfo.centroidalModelType = this->centroidalModelType;
+  cppAdInfo.numThreeDofContacts = this->numThreeDofContacts;
+  cppAdInfo.numSixDofContacts = this->numSixDofContacts;
+  cppAdInfo.endEffectorFrameIndices = this->endEffectorFrameIndices;
+  cppAdInfo.generalizedCoordinatesNum = this->generalizedCoordinatesNum;
+  cppAdInfo.actuatedDofNum = this->actuatedDofNum;
+  cppAdInfo.stateDim = this->stateDim;
+  cppAdInfo.inputDim = this->inputDim;
+  cppAdInfo.robotMass = ad_scalar_t(this->robotMass);
+  cppAdInfo.qPinocchioNominal = this->qPinocchioNominal.cast<ad_scalar_t>();
+  cppAdInfo.centroidalInertiaNominal = this->centroidalInertiaNominal.cast<ad_scalar_t>();
+  cppAdInfo.comToBasePositionNominal = this->comToBasePositionNominal.cast<ad_scalar_t>();
+
+  return cppAdInfo;
 }
 
 // explicit template instantiation

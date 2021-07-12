@@ -48,7 +48,7 @@ enum anymal : size_t {
 static const std::vector<std::string> anymal3DofContactNames = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
 static const std::vector<std::string> anymal6DofContactNames = {};
 static const std::string anymalUrdfPath =
-  ros::package::getPath("ocs2_centroidal_model") + "/test/include/ocs2_centroidal_model/example/anymal/anymal.urdf";
+    ros::package::getPath("ocs2_centroidal_model") + "/test/include/ocs2_centroidal_model/example/anymal/anymal.urdf";
 static const std::string anymalCppAdModelPath = ros::package::getPath("ocs2_centroidal_model") + "/test/cppad_generated";
 
 static const ocs2::vector_t anymalInitialState = []() {
@@ -100,7 +100,7 @@ inline void visualMatrixCompare(const ocs2::matrix_t& A, const ocs2::matrix_t& B
       }
     }
     if (ifAnyPrint) {
-    	std::cerr << '\n';
+      std::cerr << '\n';
     }
   }
 }

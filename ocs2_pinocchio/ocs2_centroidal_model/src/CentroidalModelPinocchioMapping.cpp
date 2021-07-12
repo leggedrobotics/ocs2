@@ -27,10 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+
 #include "ocs2_centroidal_model/CentroidalModelPinocchioMapping.h"
 
 #include <pinocchio/algorithm/centroidal-derivatives.hpp>
 #include <pinocchio/algorithm/frames.hpp>
+
 #include "ocs2_centroidal_model/AccessHelperFunctions.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
@@ -40,29 +43,29 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelInfo& centroidalModelInfo)
-    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(centroidalModelInfo) {}
+CentroidalModelPinocchioMappingTpl<SCALAR>::CentroidalModelPinocchioMappingTpl(CentroidalModelInfoTpl<SCALAR> centroidalModelInfo)
+    : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(std::move(centroidalModelInfo)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-CentroidalModelPinocchioMapping<SCALAR>::CentroidalModelPinocchioMapping(const CentroidalModelPinocchioMapping& rhs)
+CentroidalModelPinocchioMappingTpl<SCALAR>::CentroidalModelPinocchioMappingTpl(const CentroidalModelPinocchioMappingTpl& rhs)
     : pinocchioInterfacePtr_(nullptr), centroidalModelInfo_(rhs.centroidalModelInfo_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-CentroidalModelPinocchioMapping<SCALAR>* CentroidalModelPinocchioMapping<SCALAR>::clone() const {
-  return new CentroidalModelPinocchioMapping<SCALAR>(*this);
+CentroidalModelPinocchioMappingTpl<SCALAR>* CentroidalModelPinocchioMappingTpl<SCALAR>::clone() const {
+  return new CentroidalModelPinocchioMappingTpl<SCALAR>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-void CentroidalModelPinocchioMapping<SCALAR>::setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {
+void CentroidalModelPinocchioMappingTpl<SCALAR>::setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {
   pinocchioInterfacePtr_ = &pinocchioInterface;
 }
 
@@ -70,7 +73,7 @@ void CentroidalModelPinocchioMapping<SCALAR>::setPinocchioInterface(const Pinocc
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
+auto CentroidalModelPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
   return centroidal_model::getGeneralizedCoordinates(state, centroidalModelInfo_);
 }
 
@@ -78,7 +81,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointPosition(const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
+auto CentroidalModelPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
   const auto& model = pinocchioInterfacePtr_->getModel();
   const auto& data = pinocchioInterfacePtr_->getData();
   const auto& info = centroidalModelInfo_;
@@ -107,7 +110,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
+auto CentroidalModelPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
     -> std::pair<matrix_t, matrix_t> {
   const auto& model = pinocchioInterfacePtr_->getModel();
   const auto& data = pinocchioInterfacePtr_->getData();
@@ -164,7 +167,7 @@ auto CentroidalModelPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& st
 }
 
 // explicit template instantiation
-template class ocs2::CentroidalModelPinocchioMapping<ocs2::scalar_t>;
-template class ocs2::CentroidalModelPinocchioMapping<ocs2::ad_scalar_t>;
+template class ocs2::CentroidalModelPinocchioMappingTpl<ocs2::scalar_t>;
+template class ocs2::CentroidalModelPinocchioMappingTpl<ocs2::ad_scalar_t>;
 
 }  // namespace ocs2

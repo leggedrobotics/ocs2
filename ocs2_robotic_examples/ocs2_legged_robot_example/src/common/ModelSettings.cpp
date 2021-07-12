@@ -52,7 +52,6 @@ ModelSettings loadModelSettings(const std::string& filename, const std::string& 
 
   loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime, fieldName + ".phaseTransitionStanceTime", verbose);
 
-  loadData::loadPtreeValue(pt, modelSettings.usePreComputation, fieldName + ".usePreComputation", verbose);
   loadData::loadPtreeValue(pt, modelSettings.verboseCppAd, fieldName + ".verboseCppAd", verbose);
   loadData::loadPtreeValue(pt, modelSettings.recompileLibrariesCppAd, fieldName + ".recompileLibrariesCppAd", verbose);
 

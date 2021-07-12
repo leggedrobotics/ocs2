@@ -43,7 +43,6 @@ struct ModelSettings {
 
   scalar_t phaseTransitionStanceTime = 0.4;
 
-  bool usePreComputation = true;
   bool verboseCppAd = true;
   bool recompileLibrariesCppAd = true;
   std::string modelFolderCppAd = "/tmp/ocs2";

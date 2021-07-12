@@ -12,7 +12,6 @@ model_settings
   positionErrorGain             0.0
   phaseTransitionStanceTime     0.4
 
-  usePreComputation             true
   verboseCppAd                  true
   recompileLibrariesCppAd       true
 }

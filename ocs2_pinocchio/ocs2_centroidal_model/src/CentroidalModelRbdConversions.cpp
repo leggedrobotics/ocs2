@@ -27,7 +27,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+
 #include "ocs2_centroidal_model/CentroidalModelRbdConversions.h"
+
+#include <pinocchio/algorithm/centroidal.hpp>
+
+#include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
+
+#include "ocs2_centroidal_model/AccessHelperFunctions.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
 namespace ocs2 {
@@ -35,10 +43,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CentroidalModelRbdConversions::CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface,
-                                                             CentroidalModelPinocchioMapping<scalar_t>& mapping)
-    : pinocchioInterfacePtr_(&pinocchioInterface), mappingPtr_(&mapping) {
-  mappingPtr_->setPinocchioInterface(pinocchioInterface);
+CentroidalModelRbdConversions::CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info)
+    : pinocchioInterfacePtr_(&pinocchioInterface), mapping_(std::move(info)) {
+  mapping_.setPinocchioInterface(pinocchioInterface);
 }
 
 /******************************************************************************************************/
@@ -49,8 +56,8 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
                                                                              Vector6& baseVelocity, Vector6& baseAcceleration) {
   const auto& model = pinocchioInterfacePtr_->getModel();
   auto& data = pinocchioInterfacePtr_->getData();
-  const auto& info = mappingPtr_->getCentroidalModelInfo();
-  const auto qPinocchio = mappingPtr_->getPinocchioJointPosition(state);
+  const auto& info = mapping_.getCentroidalModelInfo();
+  const auto qPinocchio = mapping_.getPinocchioJointPosition(state);
 
   updateCentroidalDynamics(*pinocchioInterfacePtr_, info, qPinocchio);
 
@@ -65,7 +72,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
   const auto Ab_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   const auto Aj = A.rightCols(info.actuatedDofNum);
 
-  const vector_t vPinocchio = mappingPtr_->getPinocchioJointVelocity(state, input);
+  const vector_t vPinocchio = mapping_.getPinocchioJointVelocity(state, input);
   baseVelocity.head<3>() = vPinocchio.head<3>();
   derivativeEulerAnglesZyx_ = vPinocchio.segment<3>(3);
   baseAngularVelocityInWorld_ = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(baseOrientation, derivativeEulerAnglesZyx_);
@@ -90,7 +97,7 @@ void CentroidalModelRbdConversions::computeBaseKinematicsFromCentroidalModel(con
 void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vector_t& rbdState, vector_t& state) {
   const auto& model = pinocchioInterfacePtr_->getModel();
   auto& data = pinocchioInterfacePtr_->getData();
-  const auto& info = mappingPtr_->getCentroidalModelInfo();
+  const auto& info = mapping_.getCentroidalModelInfo();
 
   vector_t qPinocchio(info.generalizedCoordinatesNum);
   qPinocchio.head<3>() = rbdState.segment<3>(3);
@@ -105,8 +112,8 @@ void CentroidalModelRbdConversions::computeCentroidalStateFromRbdModel(const vec
   vPinocchio.tail(info.actuatedDofNum) = rbdState.segment(info.generalizedCoordinatesNum + 6, info.actuatedDofNum);
 
   centroidalMomentum_ = pinocchio::computeCentroidalMomentum(model, data, qPinocchio, vPinocchio);
-  state.head(6) = centroidalMomentum_ / info.robotMass;
-  state.segment(6, info.generalizedCoordinatesNum) = qPinocchio;
+  centroidal_model::getNormalizedMomentum(state, info) = centroidalMomentum_ / info.robotMass;
+  centroidal_model::getGeneralizedCoordinates(state, info) = qPinocchio;
 }
 
 /******************************************************************************************************/
@@ -116,7 +123,7 @@ void CentroidalModelRbdConversions::computeRbdStateFromCentroidalModel(const vec
                                                                        const vector_t& jointAccelerations, vector_t& rbdState) {
   const auto& model = pinocchioInterfacePtr_->getModel();
   auto& data = pinocchioInterfacePtr_->getData();
-  const auto& info = mappingPtr_->getCentroidalModelInfo();
+  const auto& info = mapping_.getCentroidalModelInfo();
   Vector6 basePose, baseVelocity, baseAcceleration;
   computeBaseKinematicsFromCentroidalModel(state, input, jointAccelerations, basePose, baseVelocity, baseAcceleration);
   rbdState.head<3>() = basePose.tail<3>();

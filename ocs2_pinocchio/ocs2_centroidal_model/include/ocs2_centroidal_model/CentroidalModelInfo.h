@@ -29,17 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
-
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <type_traits>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/Types.h>
 
-#include <pinocchio/algorithm/center-of-mass.hpp>
-#include <pinocchio/algorithm/centroidal.hpp>
-
 namespace ocs2 {
+
+template <typename SCALAR>
+class CentroidalModelInfoTpl;
+
+using CentroidalModelInfo = CentroidalModelInfoTpl<scalar_t>;
+using CentroidalModelInfoCppAd = CentroidalModelInfoTpl<ad_scalar_t>;
 
 enum class CentroidalModelType { FullCentroidalDynamics, SingleRigidBodyDynamics };
 
@@ -52,16 +53,8 @@ struct CentroidalModelInfoTpl {
   using vector3_t = Eigen::Matrix<SCALAR, 3, 1>;
   using matrix3_t = Eigen::Matrix<SCALAR, 3, 3>;
 
-  /** Constructor
-   * @param [in] interface: Pinocchio interface
-   * @param [in] type: Type of template model (SRBD or FRBD)
-   * @param [in] qNominal: nominal robot configuration used in the SRBD model. It is the same as the qPinocchio
-   * i.e. qPinocchio = [ base_position, base_orientation_zyx, joint_positions ])
-   * @param [in] threeDofContactNames: Names of end-effectors with 3 DoF contacts (force)
-   * @param [in] sixDofContactNames: Names of end-effectors with 6 DoF contacts (force + torque)
-   */
-  CentroidalModelInfoTpl(const PinocchioInterfaceTpl<SCALAR>& interface, const CentroidalModelType& type, const vector_t& qNominal,
-                         const std::vector<std::string>& threeDofContactNames, const std::vector<std::string>& sixDofContactNames);
+  template <typename T>  // Template for conditional compilation using SFINAE
+  using EnableIfScalar_t = typename std::enable_if<std::is_same<T, scalar_t>::value, bool>::type;
 
   CentroidalModelType centroidalModelType;      // full centroidal dynamics OR single rigid body dynamics (SRBD)
   size_t numThreeDofContacts;                   // 3DOF contacts, force only
@@ -75,6 +68,10 @@ struct CentroidalModelInfoTpl {
   vector_t qPinocchioNominal;                   // nominal robot configuration used in the SRBD model
   matrix3_t centroidalInertiaNominal;           // nominal robot centroidal inertia used in the SRBD model (expressed in nominal base frame)
   vector3_t comToBasePositionNominal;           // nominal CoM to base position used in the SRBD model (expressed in nominal base frame)
+
+  /** Casts CentroidalModelInfo to CentroidalModelInfoCppAD. */
+  template <typename T = SCALAR, EnableIfScalar_t<T> = true>
+  CentroidalModelInfoCppAd toCppAd() const;
 };
 
 /* Explicit template instantiation for scalar_t and ad_scalar_t */

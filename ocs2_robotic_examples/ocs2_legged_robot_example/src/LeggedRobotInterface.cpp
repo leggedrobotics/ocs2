@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot_example/dynamics/LeggedRobotDynamicsAD.h"
 
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
@@ -143,26 +142,14 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 
   problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
-  // Cost
+  // Cost terms
   problemPtr_->costPtr->add("baseTrackingCost", getBaseTrackingCost(taskFile, centroidalModelInfo_));
 
-  // Friction cone soft constraint settings
-  scalar_t frictionCoefficient = 1.0;
-  scalar_t mu = 1e-2;
-  scalar_t delta = 1e-3;
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile, pt);
-  const std::string prefix = "frictionConeSoftConstraint.";
-  if (display_) {
-    std::cerr << "\n #### Friction Cone Settings: ";
-    std::cerr << "\n #### =============================================================================\n";
-  }
-  loadData::loadPtreeValue(pt, frictionCoefficient, prefix + "frictionCoefficient", display_);
-  loadData::loadPtreeValue(pt, mu, prefix + "mu", display_);
-  loadData::loadPtreeValue(pt, delta, prefix + "delta", display_);
-  if (display_) {
-    std::cerr << " #### =============================================================================" << std::endl;
-  }
+  // Constraint terms
+  // friction cone settings
+  scalar_t frictionCoefficient = 0.7;
+  RelaxedBarrierPenalty::Config barrierPenaltyConfig;
+  std::tie(frictionCoefficient, barrierPenaltyConfig) = loadFrictionConeSettings(taskFile);
 
   bool useAnalyticalGradientsConstraints = false;
   loadData::loadCppDataType(taskFile, "legged_robot_interface.useAnalyticalGradientsConstraints", useAnalyticalGradientsConstraints);
@@ -186,7 +173,8 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
                                                                     modelSettings_.recompileLibrariesCppAd, modelSettings_.verboseCppAd));
     }
 
-    problemPtr_->softConstraintPtr->add(footName + "_frictionCone", getFrictionConeConstraint(i, frictionCoefficient, mu, delta));
+    problemPtr_->softConstraintPtr->add(footName + "_frictionCone",
+                                        getFrictionConeConstraint(i, frictionCoefficient, barrierPenaltyConfig));
     problemPtr_->equalityConstraintPtr->add(footName + "_zeroForce", getZeroForceConstraint(i));
     problemPtr_->equalityConstraintPtr->add(footName + "_zeroVelocity",
                                             getZeroVelocityConstraint(*eeKinematicsPtr, i, useAnalyticalGradientsConstraints));
@@ -266,13 +254,37 @@ std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+std::pair<scalar_t, RelaxedBarrierPenalty::Config> LeggedRobotInterface::loadFrictionConeSettings(const std::string& taskFile) const {
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  const std::string prefix = "frictionConeSoftConstraint.";
+
+  scalar_t frictionCoefficient = 1.0;
+  RelaxedBarrierPenalty::Config barrierPenaltyConfig;
+  if (display_) {
+    std::cerr << "\n #### Friction Cone Settings: ";
+    std::cerr << "\n #### =============================================================================\n";
+  }
+  loadData::loadPtreeValue(pt, frictionCoefficient, prefix + "frictionCoefficient", display_);
+  loadData::loadPtreeValue(pt, barrierPenaltyConfig.mu, prefix + "mu", display_);
+  loadData::loadPtreeValue(pt, barrierPenaltyConfig.delta, prefix + "delta", display_);
+  if (display_) {
+    std::cerr << " #### =============================================================================\n";
+  }
+
+  return {frictionCoefficient, std::move(barrierPenaltyConfig)};
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::unique_ptr<StateInputCost> LeggedRobotInterface::getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
-                                                                                scalar_t mu, scalar_t delta) {
+                                                                                const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
   FrictionConeConstraint::Config frictionConeConConfig(frictionCoefficient);
   std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(
       new FrictionConeConstraint(*referenceManagerPtr_, std::move(frictionConeConConfig), contactPointIndex, centroidalModelInfo_));
 
-  std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
+  std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty(barrierPenaltyConfig));
 
   return std::unique_ptr<StateInputCost>(new StateInputSoftConstraint(std::move(frictionConeConstraintPtr), std::move(penalty)));
 }

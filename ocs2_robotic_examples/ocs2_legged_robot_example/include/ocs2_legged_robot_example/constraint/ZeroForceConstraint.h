@@ -41,10 +41,11 @@ class ZeroForceConstraint final : public StateInputConstraint {
  public:
   /*
    * Constructor
+   * @param [in] referenceManager : Switched model ReferenceManager.
    * @param [in] contactPointIndex : The 3 DoF contact index.
    * @param [in] info : The centroidal model information.
    */
-  explicit ZeroForceConstraint(const SwitchedModelReferenceManager& referenceManager, size_t contactPointIndex, CentroidalModelInfo info);
+  ZeroForceConstraint(const SwitchedModelReferenceManager& referenceManager, size_t contactPointIndex, CentroidalModelInfo info);
 
   ~ZeroForceConstraint() override = default;
   ZeroForceConstraint* clone() const override { return new ZeroForceConstraint(*this); }

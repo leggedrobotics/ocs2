@@ -47,7 +47,7 @@ class NormalVelocityConstraintCppAd final : public StateInputConstraint {
  public:
   /**
    * Constructor
-   * @param [in] modeScheduleManager : SwitchedModelModeScheduleManager
+   * @param [in] referenceManager : Switched model ReferenceManager
    * @param [in] endEffectorKinematics: The kinematic interface to the target end-effector.
    * @param [in] contactPointIndex : The 3 DoF contact index.
    */

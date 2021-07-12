@@ -47,7 +47,8 @@ class TestFrictionConeConstraint : public testing::Test {
   const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
   const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
-  const std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr = createReferenceManager(centroidalModelInfo);
+  const std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr =
+      createReferenceManager(centroidalModelInfo.numThreeDofContacts);
   PreComputation preComputation;
 };
 

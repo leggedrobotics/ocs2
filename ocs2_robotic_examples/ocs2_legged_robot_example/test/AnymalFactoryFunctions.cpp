@@ -65,15 +65,15 @@ CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(const CentroidalModelInfo& centroidalModelInfo) {
+std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(size_t numFeet) {
   const auto initModeSchedule = loadModeSchedule(ROBOT_TASK_FILE_PATH, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(ROBOT_TASK_FILE_PATH, "defaultModeSequenceTemplate", false);
 
   const ModelSettings modelSettings;
   std::shared_ptr<GaitSchedule> gaitSchedule(
       new GaitSchedule(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime));
-  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(new SwingTrajectoryPlanner(
-      loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), centroidalModelInfo.numThreeDofContacts));
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), numFeet));
   return std::make_shared<SwitchedModelReferenceManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
 }
 

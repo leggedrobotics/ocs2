@@ -45,7 +45,7 @@ std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface();
 CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pinocchioInterface, CentroidalModelType centroidalType);
 
 /** Return a Switched model mode schedule manager based on ROBOT_TASK_FILE_PATH */
-std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(const CentroidalModelInfo& centroidalModelInfo);
+std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(size_t numFeet);
 
 }  // namespace legged_robot
 }  // namespace ocs2

@@ -46,7 +46,7 @@ class SwingTrajectoryPlanner {
     scalar_t swingTimeScale = 0.15;  // swing phases shorter than this time will be scaled down in height and velocity
   };
 
-  SwingTrajectoryPlanner(Config config, size_t numOfFeet);
+  SwingTrajectoryPlanner(Config config, size_t numFeet);
 
   void update(const ModeSchedule& modeSchedule, scalar_t terrainHeight);
 
@@ -101,7 +101,7 @@ class SwingTrajectoryPlanner {
   static scalar_t swingTrajectoryScaling(scalar_t startTime, scalar_t finalTime, scalar_t swingTimeScale);
 
   const Config config_;
-  const size_t numOfFeet_;
+  const size_t numFeet_;
 
   feet_array_t<std::vector<SplineCpg>> feetHeightTrajectories_;
   feet_array_t<std::vector<scalar_t>> feetHeightTrajectoriesEvents_;

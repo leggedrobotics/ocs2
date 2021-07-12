@@ -27,33 +27,44 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#pragma once
+
+#include <string>
+#include <vector>
+
+#include <urdf_parser/urdf_parser.h>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
 #include "ocs2_centroidal_model/CentroidalModelInfo.h"
 
 namespace ocs2 {
+namespace centroidal_model {
 
-template <>
-template <>
-CentroidalModelInfoCppAd CentroidalModelInfo::toCppAd() const {
-  CentroidalModelInfoCppAd cppAdInfo;
+/** Create a CentroidalModel PinocchioInterface from a URDF */
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath);
+PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames);
 
-  cppAdInfo.centroidalModelType = this->centroidalModelType;
-  cppAdInfo.numThreeDofContacts = this->numThreeDofContacts;
-  cppAdInfo.numSixDofContacts = this->numSixDofContacts;
-  cppAdInfo.endEffectorFrameIndices = this->endEffectorFrameIndices;
-  cppAdInfo.generalizedCoordinatesNum = this->generalizedCoordinatesNum;
-  cppAdInfo.actuatedDofNum = this->actuatedDofNum;
-  cppAdInfo.stateDim = this->stateDim;
-  cppAdInfo.inputDim = this->inputDim;
-  cppAdInfo.robotMass = ad_scalar_t(this->robotMass);
-  cppAdInfo.qPinocchioNominal = this->qPinocchioNominal.cast<ad_scalar_t>();
-  cppAdInfo.centroidalInertiaNominal = this->centroidalInertiaNominal.cast<ad_scalar_t>();
-  cppAdInfo.comToBasePositionNominal = this->comToBasePositionNominal.cast<ad_scalar_t>();
+/**
+ * Create a scalar-typed CentroidalModelInfo.
+ * @param [in] interface: Pinocchio interface
+ * @param [in] type: Type of template model (SRBD or FRBD)
+ * @param [in] nominalJointAngles: nominal join angles used in the SRBD model.
+ * @param [in] threeDofContactNames: Names of end-effectors with 3 DoF contacts (force)
+ * @param [in] sixDofContactNames: Names of end-effectors with 6 DoF contacts (force + torque)
+ * @return CentroidalModelInfo
+ */
+CentroidalModelInfo createCentroidalModelInfo(const PinocchioInterface& interface, const CentroidalModelType& type,
+                                              const vector_t& nominalJointAngles, const std::vector<std::string>& threeDofContactNames,
+                                              const std::vector<std::string>& sixDofContactNames);
 
-  return cppAdInfo;
-}
+/** Load CentroidalModelType for a config file */
+CentroidalModelType loadCentroidalType(const std::string& configFilePath, const std::string& fieldName = "centroidalModelType");
 
-// explicit template instantiation
-template struct ocs2::CentroidalModelInfoTpl<ocs2::scalar_t>;
-template struct ocs2::CentroidalModelInfoTpl<ocs2::ad_scalar_t>;
+/** Load default joint state for a config file */
+vector_t loadDefaultJointState(size_t numJointState, const std::string& configFilePath, const std::string& fieldName = "defaultJointState");
 
+}  // namespace centroidal_model
 }  // namespace ocs2

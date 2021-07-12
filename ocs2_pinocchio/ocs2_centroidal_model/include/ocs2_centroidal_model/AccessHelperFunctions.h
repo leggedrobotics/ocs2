@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <Eigen/Core>
+
 #include "ocs2_centroidal_model/CentroidalModelInfo.h"
 
 namespace ocs2 {

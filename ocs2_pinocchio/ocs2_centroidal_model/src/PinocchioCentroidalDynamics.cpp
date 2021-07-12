@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 
+#include <ocs2_robotic_tools/common/SkewSymmetricMatrix.h>
+
 #include "ocs2_centroidal_model/AccessHelperFunctions.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 
@@ -37,24 +39,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioCentroidalDynamics::PinocchioCentroidalDynamics(const CentroidalModelPinocchioMapping<scalar_t>& mapping)
-    : pinocchioInterfacePtr_(nullptr), mappingPtr_(mapping.clone()) {}
+PinocchioCentroidalDynamics::PinocchioCentroidalDynamics(CentroidalModelInfo info)
+    : pinocchioInterfacePtr_(nullptr), mapping_(std::move(info)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioCentroidalDynamics::PinocchioCentroidalDynamics(const PinocchioCentroidalDynamics& rhs)
-    : pinocchioInterfacePtr_(nullptr), mappingPtr_(rhs.mappingPtr_->clone()) {}
+    : pinocchioInterfacePtr_(nullptr), mapping_(rhs.mapping_.getCentroidalModelInfo()) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PinocchioCentroidalDynamics::getValue(scalar_t time, const vector_t& state, const vector_t& input) {
   const auto& interface = *pinocchioInterfacePtr_;
-  const auto& info = mappingPtr_->getCentroidalModelInfo();
+  const auto& info = mapping_.getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
   return (vector_t(info.stateDim) << getNormalizedCentroidalMomentumRate(interface, info, input),
-          mappingPtr_->getPinocchioJointVelocity(state, input))
+          mapping_.getPinocchioJointVelocity(state, input))
       .finished();
 }
 
@@ -63,7 +65,7 @@ vector_t PinocchioCentroidalDynamics::getValue(scalar_t time, const vector_t& st
 /******************************************************************************************************/
 VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                       const vector_t& input) {
-  const auto& info = mappingPtr_->getCentroidalModelInfo();
+  const auto& info = mapping_.getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
   assert(info.inputDim == input.rows());
 
@@ -78,7 +80,7 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getLinearApproxim
   dfdq.topRows<6>() << normalizedLinearMomentumRateDerivativeQ_, normalizedAngularMomentumRateDerivativeQ_;
   dfdv.bottomRows(info.generalizedCoordinatesNum).setIdentity();
 
-  std::tie(dynamics.dfdx, dynamics.dfdu) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
+  std::tie(dynamics.dfdx, dynamics.dfdu) = mapping_.getOcs2Jacobian(state, dfdq, dfdv);
 
   // Add partial derivative of f with respect to u since part of f depends explicitly on the inputs (contact forces + torques)
   dynamics.dfdu.topRows<3>() += normalizedLinearMomentumRateDerivativeInput_;
@@ -92,7 +94,7 @@ VectorFunctionLinearApproximation PinocchioCentroidalDynamics::getLinearApproxim
 /******************************************************************************************************/
 void PinocchioCentroidalDynamics::computeNormalizedCentroidalMomentumRateGradients(const vector_t& state, const vector_t& input) {
   const auto& interface = *pinocchioInterfacePtr_;
-  const auto& info = mappingPtr_->getCentroidalModelInfo();
+  const auto& info = mapping_.getCentroidalModelInfo();
   assert(info.stateDim == state.rows());
   assert(info.inputDim == input.rows());
 

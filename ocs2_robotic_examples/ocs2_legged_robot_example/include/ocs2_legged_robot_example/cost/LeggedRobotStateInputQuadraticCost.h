@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,36 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
+
+#include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
+
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 
 namespace ocs2 {
-namespace qp_solver {
+namespace legged_robot {
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-  /** Linear approximation of the constraints */
-  VectorFunctionLinearApproximation constraints;
+class LeggedRobotStateInputQuadraticCost final : public QuadraticStateInputCost {
+ public:
+  LeggedRobotStateInputQuadraticCost(matrix_t Q, matrix_t R, CentroidalModelInfo info,
+                                     const SwitchedModelReferenceManager& referenceManager);
 
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d, VectorFunctionLinearApproximation g)
-      : cost(std::move(c)), dynamics(std::move(d)), constraints(std::move(g)) {}
+  ~LeggedRobotStateInputQuadraticCost() override = default;
+  LeggedRobotStateInputQuadraticCost* clone() const override;
+
+ private:
+  LeggedRobotStateInputQuadraticCost(const LeggedRobotStateInputQuadraticCost& rhs) = default;
+
+  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                       const TargetTrajectories& targetTrajectories) const override;
+
+  const CentroidalModelInfo info_;
+  const SwitchedModelReferenceManager* referenceManagerPtr_;
 };
 
-}  // namespace qp_solver
+}  // namespace legged_robot
 }  // namespace ocs2

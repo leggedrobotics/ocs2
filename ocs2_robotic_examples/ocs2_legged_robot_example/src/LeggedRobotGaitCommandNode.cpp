@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,32 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
-#pragma once
+#include <ocs2_legged_robot_example/command/LeggedRobotModeSequenceKeyboard.h>
 
-#include <ocs2_core/Types.h>
+using namespace ocs2;
+using namespace legged_robot;
 
-namespace ocs2 {
-namespace qp_solver {
+int main(int argc, char* argv[]) {
+  std::vector<std::string> programArgs{};
+  ::ros::removeROSArgs(argc, argv, programArgs);
+  if (programArgs.size() < 3) {
+    throw std::runtime_error("No robot name or target command file specified. Aborting.");
+  }
+  const std::string robotName(programArgs[1]);
+  const std::string gaitFile(programArgs[2]);
+  std::cerr << "Loading gait file: " << gaitFile << std::endl;
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-  /** Linear approximation of the constraints */
-  VectorFunctionLinearApproximation constraints;
+  ros::init(argc, argv, robotName + "_mpc_mode_schedule");
+  ros::NodeHandle nodeHandle;
 
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d, VectorFunctionLinearApproximation g)
-      : cost(std::move(c)), dynamics(std::move(d)), constraints(std::move(g)) {}
-};
+  LeggedRobotModeSequenceKeyboard modeSequenceCommand(nodeHandle, gaitFile, robotName, true);
 
-}  // namespace qp_solver
-}  // namespace ocs2
+  while (ros::ok() && ros::master::check()) {
+    modeSequenceCommand.getKeyboardCommand();
+  }
+
+  // Successful exit
+  return 0;
+}

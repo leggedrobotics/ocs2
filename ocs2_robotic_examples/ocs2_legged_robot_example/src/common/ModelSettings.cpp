@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,43 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
-#pragma once
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
 
-#include <ocs2_core/Types.h>
+#include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
+#include <ocs2_core/misc/LoadData.h>
 
 namespace ocs2 {
-namespace qp_solver {
+namespace legged_robot {
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-  /** Linear approximation of the constraints */
-  VectorFunctionLinearApproximation constraints;
+ModelSettings loadModelSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
+  ModelSettings modelSettings;
 
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d, VectorFunctionLinearApproximation g)
-      : cost(std::move(c)), dynamics(std::move(d)), constraints(std::move(g)) {}
-};
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(filename, pt);
 
-}  // namespace qp_solver
+  if (verbose) {
+    std::cerr << "\n #### Legged Robot Model Settings:";
+    std::cerr << "\n #### =============================================================================\n";
+  }
+
+  loadData::loadPtreeValue(pt, modelSettings.positionErrorGain, fieldName + ".positionErrorGain", verbose);
+  loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient, fieldName + ".frictionCoefficient", verbose);
+
+  loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime, fieldName + ".phaseTransitionStanceTime", verbose);
+
+  loadData::loadPtreeValue(pt, modelSettings.verboseCppAd, fieldName + ".verboseCppAd", verbose);
+  loadData::loadPtreeValue(pt, modelSettings.recompileLibrariesCppAd, fieldName + ".recompileLibrariesCppAd", verbose);
+
+  if (verbose) {
+    std::cerr << " #### =============================================================================" << std::endl;
+  }
+
+  return modelSettings;
+}
+
+}  // namespace legged_robot
 }  // namespace ocs2

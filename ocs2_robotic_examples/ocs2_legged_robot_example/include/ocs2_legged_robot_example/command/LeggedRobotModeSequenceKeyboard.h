@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,38 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
-#include <ocs2_core/Types.h>
+#include <ros/ros.h>
+#include <std_msgs/Bool.h>
+#include <string>
+#include <vector>
+
+#include "ocs2_legged_robot_example/gait/ModeSequenceTemplate.h"
 
 namespace ocs2 {
-namespace qp_solver {
+namespace legged_robot {
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-  /** Linear approximation of the constraints */
-  VectorFunctionLinearApproximation constraints;
+/** This class implements ModeSequence communication using ROS. */
+class LeggedRobotModeSequenceKeyboard {
+ public:
+  LeggedRobotModeSequenceKeyboard(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName,
+                                  bool verbose = false);
 
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d, VectorFunctionLinearApproximation g)
-      : cost(std::move(c)), dynamics(std::move(d)), constraints(std::move(g)) {}
+  /** Prints the command line interface and responds to user input. Function returns after one user input. */
+  void getKeyboardCommand();
+
+ private:
+  /** Prints the list of available gaits. */
+  void printGaitList(const std::vector<std::string>& gaitList) const;
+
+  std::vector<std::string> gaitList_;
+  std::map<std::string, ModeSequenceTemplate> gaitMap_;
+
+  ros::Publisher modeSequenceTemplatePublisher_;
 };
 
-}  // namespace qp_solver
-}  // namespace ocs2
+}  // namespace legged_robot
+}  // end of namespace ocs2

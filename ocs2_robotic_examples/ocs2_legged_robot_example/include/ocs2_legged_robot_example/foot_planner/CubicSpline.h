@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,52 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
-namespace qp_solver {
+namespace legged_robot {
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-  /** Linear approximation of the constraints */
-  VectorFunctionLinearApproximation constraints;
+class CubicSpline {
+ public:
+  struct Node {
+    scalar_t time;
+    scalar_t position;
+    scalar_t velocity;
+  };
 
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d, VectorFunctionLinearApproximation g)
-      : cost(std::move(c)), dynamics(std::move(d)), constraints(std::move(g)) {}
+  CubicSpline(Node start, Node end);
+
+  scalar_t position(scalar_t time) const;
+
+  scalar_t velocity(scalar_t time) const;
+
+  scalar_t acceleration(scalar_t time) const;
+
+  scalar_t startTimeDerivative(scalar_t t) const;
+
+  scalar_t finalTimeDerivative(scalar_t t) const;
+
+ private:
+  scalar_t normalizedTime(scalar_t t) const;
+
+  scalar_t t0_;
+  scalar_t t1_;
+  scalar_t dt_;
+
+  scalar_t c0_;
+  scalar_t c1_;
+  scalar_t c2_;
+  scalar_t c3_;
+
+  scalar_t dc0_;  // derivative w.r.t. dt_
+  scalar_t dc1_;  // derivative w.r.t. dt_
+  scalar_t dc2_;  // derivative w.r.t. dt_
+  scalar_t dc3_;  // derivative w.r.t. dt_
 };
 
-}  // namespace qp_solver
+}  // namespace legged_robot
 }  // namespace ocs2

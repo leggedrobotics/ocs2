@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,42 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+
+#include <ros/ros.h>
+#include <mutex>
+
+#include "ocs2_legged_robot_example/gait/GaitSchedule.h"
+#include "ocs2_legged_robot_example/gait/ModeSequenceTemplate.h"
+#include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
 
 namespace ocs2 {
-namespace qp_solver {
+namespace legged_robot {
+class GaitReceiver : public ocs2::SolverSynchronizedModule {
+ public:
+  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
-/** Defines the quadratic cost and  linear dynamics at a give stage */
-struct LinearQuadraticStage {
-  /** Quadratic approximation of the cost */
-  ScalarFunctionQuadraticApproximation cost;
-  /** Linear approximation of the dynamics */
-  VectorFunctionLinearApproximation dynamics;
-  /** Linear approximation of the constraints */
-  VectorFunctionLinearApproximation constraints;
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
+                    const ReferenceManagerInterface& referenceManager) override;
 
-  LinearQuadraticStage() = default;
-  LinearQuadraticStage(ScalarFunctionQuadraticApproximation c, VectorFunctionLinearApproximation d, VectorFunctionLinearApproximation g)
-      : cost(std::move(c)), dynamics(std::move(d)), constraints(std::move(g)) {}
+  void postSolverRun(const PrimalSolution& primalSolution) override{};
+
+ private:
+  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+
+  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+
+  ros::Subscriber mpcModeSequenceSubscriber_;
+
+  std::mutex receivedGaitMutex_;
+  std::atomic_bool gaitUpdated_;
+  ModeSequenceTemplate receivedGait_;
 };
 
-}  // namespace qp_solver
+}  // namespace legged_robot
 }  // namespace ocs2

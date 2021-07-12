@@ -27,25 +27,66 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h>
 
 namespace ocs2 {
 
-VectorFunctionQuadraticApproximation LoopshapingConstraintOutputPattern::inequalityConstraintQuadraticApproximation(scalar_t t,
-                                                                                                                    const vector_t& x,
-                                                                                                                    const vector_t& u) {
-  const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const size_t FILTER_STATE_DIM = s_filter.getNumStates();
-  const auto h_system = systemConstraint_->inequalityConstraintQuadraticApproximation(t, x_system, u_system);
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation LoopshapingConstraintOutputPattern::getLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                             const vector_t& u,
+                                                                                             const PreComputation& preComp) const {
+  if (this->empty()) {
+    return VectorFunctionLinearApproximation::Zero(0, x.rows(), u.rows());
+  }
+
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+
+  const auto g_system = StateInputConstraintCollection::getLinearApproximation(t, x_system, u_system, preComp_system);
+
+  VectorFunctionLinearApproximation g;
+  g.f = std::move(g_system.f);
+
+  g.dfdx.resize(g.f.rows(), x.rows());
+  g.dfdx.leftCols(x_system.rows()) = g_system.dfdx;
+  g.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
+
+  g.dfdu.resize(g.f.rows(), u.rows());
+  g.dfdu.leftCols(u_system.rows()).noalias() = g_system.dfdu;
+  g.dfdu.rightCols(u.rows() - u_system.rows()).setZero();
+
+  return g;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionQuadraticApproximation LoopshapingConstraintOutputPattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                                   const vector_t& u,
+                                                                                                   const PreComputation& preComp) const {
+  if (this->empty()) {
+    return VectorFunctionQuadraticApproximation::Zero(0, x.rows(), u.rows());
+  }
+
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+
+  const auto h_system = StateInputConstraintCollection::getQuadraticApproximation(t, x_system, u_system, preComp_system);
 
   VectorFunctionQuadraticApproximation h;
-  h.f = h_system.f;
+  h.f = std::move(h_system.f);
 
   h.dfdx.resize(h.f.rows(), x.rows());
   h.dfdx.leftCols(x_system.rows()) = h_system.dfdx;
-  h.dfdx.rightCols(FILTER_STATE_DIM).setZero();
+  h.dfdx.rightCols(x_filter.rows()).setZero();
 
   h.dfdu = h_system.dfdu;
 
@@ -60,37 +101,10 @@ VectorFunctionQuadraticApproximation LoopshapingConstraintOutputPattern::inequal
 
     h.dfdux[i].resize(u.rows(), x.rows());
     h.dfdux[i].leftCols(x_system.rows()) = h_system.dfdux[i];
-    h.dfdux[i].rightCols(FILTER_STATE_DIM).setZero();
+    h.dfdux[i].rightCols(x_filter.rows()).setZero();
   }
 
   return h;
-}
-
-vector_t LoopshapingConstraintOutputPattern::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  return systemConstraint_->stateInputEqualityConstraint(t, x_system, u_system);
-}
-
-VectorFunctionLinearApproximation LoopshapingConstraintOutputPattern::stateInputEqualityConstraintLinearApproximation(scalar_t t,
-                                                                                                                      const vector_t& x,
-                                                                                                                      const vector_t& u) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const auto g_system = systemConstraint_->stateInputEqualityConstraintLinearApproximation(t, x_system, u_system);
-
-  VectorFunctionLinearApproximation g;
-  g.f = g_system.f;
-
-  g.dfdx.resize(g.f.rows(), x.rows());
-  g.dfdx.leftCols(x_system.rows()) = g_system.dfdx;
-  g.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
-
-  g.dfdu.resize(g.f.rows(), u.rows());
-  g.dfdu.leftCols(u_system.rows()).noalias() = g_system.dfdu;
-  g.dfdu.rightCols(u.rows() - u_system.rows()).setZero();
-
-  return g;
 }
 
 }  // namespace ocs2

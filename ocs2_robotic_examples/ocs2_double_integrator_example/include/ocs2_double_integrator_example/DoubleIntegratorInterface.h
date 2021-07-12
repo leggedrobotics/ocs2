@@ -36,18 +36,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/DefaultInitializer.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Double Integrator
-#include "cost/DoubleIntegratorCost.h"
 #include "definitions.h"
-#include "dynamics/DoubleIntegratorDynamics.h"
 
 namespace ocs2 {
 namespace double_integrator {
@@ -74,15 +70,13 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   std::unique_ptr<ocs2::MPC_DDP> getMpc(bool warmStart = true);
 
-  const DoubleIntegratorDynamics& getDynamics() const override { return *linearSystemDynamicsPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
-  const DoubleIntegratorCost& getCost() const override { return *linearSystemCostPtr_; }
-
-  const RolloutBase& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const Initializer& getInitializer() const override { return *linearSystemInitializerPtr_; }
 
- protected:
+ private:
   /**
    * Loads the settings from the path file.
    *
@@ -99,11 +93,8 @@ class DoubleIntegratorInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> ddpLinearSystemRolloutPtr_;
-
-  std::unique_ptr<DoubleIntegratorDynamics> linearSystemDynamicsPtr_;
-  std::unique_ptr<DoubleIntegratorCost> linearSystemCostPtr_;
-  std::unique_ptr<ConstraintBase> linearSystemConstraintPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  OptimalControlProblem problem_;
   std::unique_ptr<Initializer> linearSystemInitializerPtr_;
 
   vector_t initialState_{STATE_DIM};

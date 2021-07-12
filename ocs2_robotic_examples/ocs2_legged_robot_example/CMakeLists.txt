@@ -73,8 +73,8 @@ add_library(ocs2_legged_robot_example
   src/constraint/EndEffectorLinearConstraint.cpp
   src/constraint/FrictionConeConstraint.cpp
   src/constraint/ZeroForceConstraint.cpp
-  src/constraint/LeggedRobotConstraintAD.cpp
-  src/cost/LeggedRobotCost.cpp
+  src/constraint/NormalVelocityConstraintCppAd.cpp
+  src/constraint/ZeroVelocityConstraintCppAd.cpp
   src/cost/LeggedRobotStateInputQuadraticCost.cpp
   src/initialization/LeggedRobotInitializer.cpp
   src/synchronized_module/SwitchedModelReferenceManager.cpp
@@ -86,6 +86,7 @@ add_library(ocs2_legged_robot_example
   src/gait/GaitSchedule.cpp
   src/gait/ModeSequenceTemplate.cpp
   src/LeggedRobotInterface.cpp
+  src/LeggedRobotPreComputation.cpp
   src/visualization/LeggedRobotVisualizer.cpp
 )
 

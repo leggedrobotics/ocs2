@@ -27,10 +27,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-//
-// Created by rgrandia on 25.02.20.
-//
-
 #include "ocs2_qp_solver/Ocs2QpSolver.h"
 
 #include "ocs2_qp_solver/QpDiscreteTranscription.h"
@@ -39,27 +35,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace qp_solver {
 
-ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase& costFunction, SystemDynamicsBase& systemDynamics,
+ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(OptimalControlProblem& optimalControProblem,
                                                                const ContinuousTrajectory& nominalTrajectory,
                                                                const vector_t& initialState) {
   // Approximate
-  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, nullptr, nominalTrajectory);
-
-  // Solve for an update step
-  ContinuousTrajectory deltaSolution;
-  deltaSolution.timeTrajectory = nominalTrajectory.timeTrajectory;
-  std::tie(deltaSolution.stateTrajectory, deltaSolution.inputTrajectory) =
-      solveLinearQuadraticProblem(lqApproximation, initialState - nominalTrajectory.stateTrajectory.front());
-
-  // Take a full step: Add update to nominal trajectory
-  return nominalTrajectory + deltaSolution;
-}
-
-ContinuousTrajectory solveLinearQuadraticOptimalControlProblem(CostFunctionBase& costFunction, SystemDynamicsBase& systemDynamics,
-                                                               ConstraintBase& constraints, const ContinuousTrajectory& nominalTrajectory,
-                                                               const vector_t& initialState) {
-  // Approximate
-  const auto lqApproximation = getLinearQuadraticApproximation(costFunction, systemDynamics, &constraints, nominalTrajectory);
+  const auto lqApproximation = getLinearQuadraticApproximation(optimalControProblem, nominalTrajectory);
 
   // Solve for an update step
   ContinuousTrajectory deltaSolution;

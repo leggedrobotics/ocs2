@@ -52,40 +52,23 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
-                               const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                               const Initializer* initializerPtr, ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr)
-    : SolverBase(),
-      ddpSettings_(std::move(ddpSettings)),
-      threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
+GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+                               const Initializer& initializer)
+    : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
   // Dynamics, Constraints, derivatives, and cost
-  linearQuadraticApproximatorPtrStock_.clear();
-  linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
-  heuristicsFunctionsPtrStock_.clear();
-  heuristicsFunctionsPtrStock_.reserve(ddpSettings_.nThreads_);
-  dynamicsForwardRolloutPtrStock_.clear();
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
-  initializerRolloutPtrStock_.clear();
   initializerRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
+  optimalControlProblemStock_.reserve(ddpSettings_.nThreads_);
 
   // initialize all subsystems, etc.
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
+    optimalControlProblemStock_.push_back(optimalControlProblem);
+
     // initialize rollout
-    dynamicsForwardRolloutPtrStock_.emplace_back(rolloutPtr->clone());
+    dynamicsForwardRolloutPtrStock_.emplace_back(rollout.clone());
 
     // initialize initializerRollout
-    initializerRolloutPtrStock_.emplace_back(new InitializerRollout(*initializerPtr, rolloutPtr->settings()));
-
-    // initialize LQ approximator
-    linearQuadraticApproximatorPtrStock_.emplace_back(new LinearQuadraticApproximator(
-        *systemDynamicsPtr, *systemConstraintsPtr, *costFunctionPtr, ddpSettings_.checkNumericalStability_));
-
-    // initialize heuristics functions
-    if (heuristicsFunctionPtr != nullptr) {
-      heuristicsFunctionsPtrStock_.emplace_back(heuristicsFunctionPtr->clone());
-    } else {  // use the cost function if no heuristics function is defined
-      heuristicsFunctionsPtrStock_.emplace_back(costFunctionPtr->clone());
-    }
+    initializerRolloutPtrStock_.emplace_back(new InitializerRollout(initializer, rollout.settings()));
   }  // end of i loop
 
   // initialize penalty functions
@@ -105,31 +88,24 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
     s.constraintTolerance = ddpSettings_.constraintTolerance_;
     return s;
   }();
+  auto meritFunc = [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); };
   switch (ddpSettings_.strategy_) {
     case search_strategy::Type::LINE_SEARCH: {
       std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock;
-      std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock;
-      std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock;
-      std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock;
+      std::vector<std::reference_wrapper<OptimalControlProblem>> problemRefStock;
       for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
         rolloutRefStock.emplace_back(*dynamicsForwardRolloutPtrStock_[i]);
-        constraintsRefStock.emplace_back(linearQuadraticApproximatorPtrStock_[i]->systemConstraints());
-        costFunctionRefStock.emplace_back(linearQuadraticApproximatorPtrStock_[i]->costFunction());
-        heuristicsFunctionsRefStock.emplace_back(*heuristicsFunctionsPtrStock_[i]);
+        problemRefStock.emplace_back(optimalControlProblemStock_[i]);
       }  // end of i loop
       searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, threadPool_,
-                                                      std::move(rolloutRefStock), std::move(constraintsRefStock),
-                                                      std::move(costFunctionRefStock), std::move(heuristicsFunctionsRefStock), *penaltyPtr_,
-                                                      [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); }));
+                                                      std::move(rolloutRefStock), std::move(problemRefStock), *penaltyPtr_, meritFunc));
       break;
     }
     case search_strategy::Type::LEVENBERG_MARQUARDT: {
       constexpr size_t threadID = 0;
-      searchStrategyPtr_.reset(new LevenbergMarquardtStrategy(
-          basicStrategySettings, ddpSettings_.levenbergMarquardt_, *dynamicsForwardRolloutPtrStock_[threadID],
-          linearQuadraticApproximatorPtrStock_[threadID]->systemConstraints(),
-          linearQuadraticApproximatorPtrStock_[threadID]->costFunction(), *heuristicsFunctionsPtrStock_[threadID], *penaltyPtr_,
-          [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); }));
+      searchStrategyPtr_.reset(new LevenbergMarquardtStrategy(basicStrategySettings, ddpSettings_.levenbergMarquardt_,
+                                                              *dynamicsForwardRolloutPtrStock_[threadID],
+                                                              optimalControlProblemStock_[threadID], *penaltyPtr_, meritFunc));
       break;
     }
   }  // end of switch-case
@@ -979,22 +955,22 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
       nextTaskId_ = 0;
       std::function<void(void)> task = [this, i] {
         int timeIndex;
-        size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+        const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+        LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[taskId], ddpSettings_.checkNumericalStability_);
 
         // get next time index is atomic
         while ((timeIndex = nextTimeIndex_++) < nominalPostEventIndicesStock_[i].size()) {
+          auto& modelData = modelDataEventTimesStock_[i][timeIndex];
+
           // execute approximateLQ for the given partition and event time index
           const size_t k = nominalPostEventIndicesStock_[i][timeIndex] - 1;
-          linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblemAtEventTime(
-              nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], nominalInputTrajectoriesStock_[i][k],
-              modelDataEventTimesStock_[i][timeIndex]);
+          lqapprox.approximateLQProblemAtEventTime(nominalTimeTrajectoriesStock_[i][k], nominalStateTrajectoriesStock_[i][k], modelData);
           // augment cost
-          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff, 0.0,
-                            modelDataEventTimesStock_[i][timeIndex]);
+          augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff, 0.0, modelData);
           // shift Hessian for event times
           if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
-            hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_,
-                                             modelDataEventTimesStock_[i][timeIndex].cost_.dfdxx,
+            hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, modelData.cost_.dfdxx,
                                              ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
           }
         }
@@ -1007,8 +983,11 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
   /*
    * compute the Heuristics function at the final time. Also call shiftHessian on the Heuristics 2nd order derivative.
    */
-  heuristics_ = heuristicsFunctionsPtrStock_[0]->finalCostQuadraticApproximation(
-      nominalTimeTrajectoriesStock_[finalActivePartition_].back(), nominalStateTrajectoriesStock_[finalActivePartition_].back());
+  ModelData heuristicsModelData;
+  LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], ddpSettings_.checkNumericalStability_);
+  lqapprox.approximateLQProblemAtFinalTime(nominalTimeTrajectoriesStock_[finalActivePartition_].back(),
+                                           nominalStateTrajectoriesStock_[finalActivePartition_].back(), heuristicsModelData);
+  heuristics_ = std::move(heuristicsModelData.cost_);
 
   // shift Hessian for final time
   if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
@@ -1214,9 +1193,10 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t expectedCost) {
   std::vector<std::vector<ModelData>> modelDataTrajectoriesStock(numPartitions_);
   std::vector<std::vector<ModelData>> modelDataEventTimesStock(numPartitions_);
 
-  bool success = searchStrategyPtr_->run(expectedCost, this->getReferenceManager().getModeSchedule(), nominalControllersStock_,
-                                         performanceIndex, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                                         inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, avgTimeStepFP_);
+  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
+  bool success = searchStrategyPtr_->run(expectedCost, modeSchedule, nominalControllersStock_, performanceIndex, timeTrajectoriesStock,
+                                         postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock,
+                                         modelDataEventTimesStock, avgTimeStepFP_);
 
   // accept or reject the search
   if (success) {
@@ -1393,8 +1373,7 @@ void GaussNewtonDDP::runInit() {
         nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, taskId);
     scalar_t heuristicsValue = 0.0;
     searchStrategyPtr_->rolloutCostAndConstraints(
-        linearQuadraticApproximatorPtrStock_[taskId]->systemConstraints(), linearQuadraticApproximatorPtrStock_[taskId]->costFunction(),
-        *heuristicsFunctionsPtrStock_[taskId], nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
+        optimalControlProblemStock_[taskId], nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
         nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, heuristicsValue);
 
     // This is necessary for:
@@ -1603,8 +1582,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // set cost desired trajectories
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
-    heuristicsFunctionsPtrStock_[i]->setTargetTrajectoriesPtr(&targetTrajectories);
-    linearQuadraticApproximatorPtrStock_[i]->costFunction().setTargetTrajectoriesPtr(&targetTrajectories);
+    optimalControlProblemStock_[i].targetTrajectoriesPtr = &targetTrajectories;
   }
 
   // display

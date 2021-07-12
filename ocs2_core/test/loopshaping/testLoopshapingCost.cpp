@@ -6,33 +6,42 @@ using namespace ocs2;
 
 TYPED_TEST_CASE(TestFixtureLoopShapingCost, FilterConfigurations);
 
-TYPED_TEST(TestFixtureLoopShapingCost, testIntermediateCostApproximation) {
+TYPED_TEST(TestFixtureLoopShapingCost, testStateInputCostApproximation) {
   // Extract Quadratic approximation
-  const auto L = this->testLoopshapingCost->costQuadraticApproximation(this->t, this->x_, this->u_);
+  this->preComputation->request(Request::Cost + Request::Approximation, this->t, this->x, this->u);
+  const auto L =
+      this->loopshapingCost->getQuadraticApproximation(this->t, this->x, this->u, this->targetTrajectories, *this->preComputation);
 
   // Reevaluate at disturbed state
-  scalar_t L_disturbance = this->testLoopshapingCost->cost(this->t, this->x_ + this->x_disturbance_, this->u_ + this->u_disturbance_);
+  this->preComputation->request(Request::Cost, this->t, this->x + this->x_disturbance, this->u + this->u_disturbance);
+  scalar_t L_disturbance = this->loopshapingCost->getValue(this->t, this->x + this->x_disturbance, this->u + this->u_disturbance,
+                                                           this->targetTrajectories, *this->preComputation);
 
   // Evaluate approximation
-  scalar_t L_quad_approximation = L.f + L.dfdx.transpose() * this->x_disturbance_ + L.dfdu.transpose() * this->u_disturbance_ +
-                                  0.5 * this->x_disturbance_.transpose() * L.dfdxx * this->x_disturbance_ +
-                                  0.5 * this->u_disturbance_.transpose() * L.dfduu * this->u_disturbance_ +
-                                  this->u_disturbance_.transpose() * L.dfdux * this->x_disturbance_;
+  scalar_t L_quad_approximation = L.f + L.dfdx.transpose() * this->x_disturbance + L.dfdu.transpose() * this->u_disturbance +
+                                  0.5 * this->x_disturbance.transpose() * L.dfdxx * this->x_disturbance +
+                                  0.5 * this->u_disturbance.transpose() * L.dfduu * this->u_disturbance +
+                                  this->u_disturbance.transpose() * L.dfdux * this->x_disturbance;
 
   // Difference between new evaluation and approximation should be less than tol
   ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), this->tol);
 };
 
-TYPED_TEST(TestFixtureLoopShapingCost, testFinalCostApproximation) {
+TYPED_TEST(TestFixtureLoopShapingCost, testStateCostApproximation) {
+  this->preComputation->requestFinal(Request::Cost + Request::Approximation, this->t, this->x);
+
   // Extract Quadratic approximation
-  const auto L = this->testLoopshapingCost->finalCostQuadraticApproximation(this->t, this->x_);
+  const auto L =
+      this->loopshapingStateCost->getQuadraticApproximation(this->t, this->x, this->targetTrajectories, *this->preComputation);
 
   // Reevaluate at disturbed state
-  scalar_t L_disturbance = this->testLoopshapingCost->finalCost(this->t, this->x_ + this->x_disturbance_);
+  this->preComputation->requestFinal(Request::Cost, this->t, this->x + this->x_disturbance);
+  scalar_t L_disturbance =
+      this->loopshapingStateCost->getValue(this->t, this->x + this->x_disturbance, this->targetTrajectories, *this->preComputation);
 
   // Evaluate approximation
   scalar_t L_quad_approximation =
-      L.f + L.dfdx.transpose() * this->x_disturbance_ + 0.5 * this->x_disturbance_.transpose() * L.dfdxx * this->x_disturbance_;
+      L.f + L.dfdx.transpose() * this->x_disturbance + 0.5 * this->x_disturbance.transpose() * L.dfdxx * this->x_disturbance;
 
   // Difference between new evaluation and approximation should be less than tol
   ASSERT_LE(std::abs(L_disturbance - L_quad_approximation), this->tol);

@@ -52,7 +52,7 @@ size_t StateInputConstraintCollection::getNumConstraints(scalar_t time) const {
 
   // accumulate number of constraints for each constraintTerm
   for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive()) {
+    if (constraintTerm->isActive(time)) {
       numConstraints += constraintTerm->getNumConstraints(time);
     }
   }
@@ -63,15 +63,16 @@ size_t StateInputConstraintCollection::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateInputConstraintCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
+vector_t StateInputConstraintCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                                  const PreComputation& preComp) const {
   vector_t constraintValues;
   constraintValues.resize(getNumConstraints(time));
 
   // append vectors of constraint values from each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive()) {
-      const auto constraintTermValues = constraintTerm->getValue(time, state, input);
+    if (constraintTerm->isActive(time)) {
+      const auto constraintTermValues = constraintTerm->getValue(time, state, input, preComp);
       constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
       i += constraintTermValues.rows();
     }
@@ -84,14 +85,15 @@ vector_t StateInputConstraintCollection::getValue(scalar_t time, const vector_t&
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation StateInputConstraintCollection::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                         const vector_t& input) const {
+                                                                                         const vector_t& input,
+                                                                                         const PreComputation& preComp) const {
   VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows(), input.rows());
 
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive()) {
-      const auto constraintTermApproximation = constraintTerm->getLinearApproximation(time, state, input);
+    if (constraintTerm->isActive(time)) {
+      const auto constraintTermApproximation = constraintTerm->getLinearApproximation(time, state, input, preComp);
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
@@ -107,7 +109,8 @@ VectorFunctionLinearApproximation StateInputConstraintCollection::getLinearAppro
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                               const vector_t& input) const {
+                                                                                               const vector_t& input,
+                                                                                               const PreComputation& preComp) const {
   const auto numConstraints = getNumConstraints(time);
 
   VectorFunctionQuadraticApproximation quadraticApproximation;
@@ -121,8 +124,8 @@ VectorFunctionQuadraticApproximation StateInputConstraintCollection::getQuadrati
   // append quadraticApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive()) {
-      auto constraintTermApproximation = constraintTerm->getQuadraticApproximation(time, state, input);
+    if (constraintTerm->isActive(time)) {
+      auto constraintTermApproximation = constraintTerm->getQuadraticApproximation(time, state, input, preComp);
       const size_t nc = constraintTermApproximation.f.rows();
       quadraticApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       quadraticApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;

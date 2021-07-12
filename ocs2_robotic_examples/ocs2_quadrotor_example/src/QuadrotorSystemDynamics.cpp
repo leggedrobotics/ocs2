@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace quadrotor {
 
-vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
+vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) {
   // angular velocities to Euler angle Derivatives transformation
   Eigen::Matrix<scalar_t, 3, 1> eulerAngle = state.segment<3>(3);
   Eigen::Matrix<scalar_t, 3, 3> T = AngularVelocitiesToEulerAngleDerivativesMatrix<scalar_t>(eulerAngle);
@@ -107,9 +107,10 @@ vector_t QuadrotorSystemDynamics::computeFlowMap(scalar_t time, const vector_t& 
   return stateDerivative;
 }
 
-VectorFunctionLinearApproximation QuadrotorSystemDynamics::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+VectorFunctionLinearApproximation QuadrotorSystemDynamics::linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                               const PreComputation& preComp) {
   VectorFunctionLinearApproximation dynamics;
-  dynamics.f = computeFlowMap(t, x, u);
+  dynamics.f = computeFlowMap(t, x, u, preComp);
 
   // Jacobian of angular velocity mapping
   Eigen::Matrix<scalar_t, 3, 1> eulerAngle = x.segment<3>(3);

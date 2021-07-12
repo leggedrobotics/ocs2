@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/cost/StateCostCollection.h>
 #include <ocs2_core/cost/StateInputCostCollection.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 namespace ocs2 {
 
@@ -82,6 +83,9 @@ struct OptimalControlProblem {
   /* Misc. */
   /** The pre-computation module */
   std::unique_ptr<PreComputation> preComputationPtr;
+
+  /** The cost desired trajectories (will be substitute by ReferenceManager) */
+  const TargetTrajectories* targetTrajectoriesPtr;
 
   /** Default constructor */
   OptimalControlProblem();

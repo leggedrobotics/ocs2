@@ -51,8 +51,8 @@ class QuadrotorSystemDynamics final : public SystemDynamicsBase {
 
   QuadrotorSystemDynamics* clone() const override { return new QuadrotorSystemDynamics(*this); }
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override;
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override;
 
  private:
   QuadrotorParameters param_;

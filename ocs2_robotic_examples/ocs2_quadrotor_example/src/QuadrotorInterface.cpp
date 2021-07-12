@@ -28,7 +28,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include "ocs2_quadrotor_example/QuadrotorInterface.h"
+#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_core/misc/LoadData.h>
 
 #include <ros/package.h>
@@ -58,6 +62,7 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
    * Default initial condition
    */
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
   /*
    * Solver settings
@@ -73,48 +78,48 @@ void QuadrotorInterface::loadSettings(const std::string& taskFile) {
   /*
    * Dynamics and derivatives
    */
-  quadrotorSystemDynamicsPtr_.reset(new QuadrotorSystemDynamics(quadrotorParameters));
+  std::unique_ptr<QuadrotorSystemDynamics> dynamicsPtr(new QuadrotorSystemDynamics(quadrotorParameters));
 
   /*
    * Rollout
    */
   auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  ddpQuadrotorRolloutPtr_.reset(new TimeTriggeredRollout(*quadrotorSystemDynamicsPtr_, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
+
+  /*
+   * Optimal control problem
+   */
+  problem_.dynamicsPtr = std::move(dynamicsPtr);
 
   /*
    * Cost function
    */
-  loadData::loadEigenMatrix(taskFile, "Q", Q_);
-  loadData::loadEigenMatrix(taskFile, "R", R_);
-  loadData::loadEigenMatrix(taskFile, "Q_final", QFinal_);
+  matrix_t Q(STATE_DIM, STATE_DIM);
+  matrix_t R(INPUT_DIM, INPUT_DIM);
+  matrix_t Qf(STATE_DIM, STATE_DIM);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
+  loadData::loadEigenMatrix(taskFile, "R", R);
+  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << std::endl;
+  std::cerr << "R:  \n" << Q << std::endl;
+  std::cerr << "Q_final:\n" << Qf << std::endl;
 
-  std::cerr << "Q:  \n" << Q_ << std::endl;
-  std::cerr << "R:  \n" << R_ << std::endl;
-  std::cerr << "Q_final:\n" << QFinal_ << std::endl;
-  std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
-
-  quadrotorCostPtr_.reset(new QuadraticCostFunction(Q_, R_, QFinal_));
-
-  /*
-   * Constraints
-   */
-  quadrotorConstraintPtr_.reset(new ConstraintBase());
+  problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
+  problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   /*
    * Initialization
    */
   vector_t initialInput = vector_t::Zero(INPUT_DIM);
   initialInput(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
-  quadrotorOperatingPointPtr_.reset(new OperatingPoints(initialState_, initialInput));
+  operatingPointPtr_.reset(new OperatingPoints(initialState_, initialInput));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> QuadrotorInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpQuadrotorRolloutPtr_.get(), quadrotorSystemDynamicsPtr_.get(),
-                                              quadrotorConstraintPtr_.get(), quadrotorCostPtr_.get(), quadrotorOperatingPointPtr_.get(),
-                                              ddpSettings_, mpcSettings_));
+  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *operatingPointPtr_));
 }
 
 }  // namespace quadrotor

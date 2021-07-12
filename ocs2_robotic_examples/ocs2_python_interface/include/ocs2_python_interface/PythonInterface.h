@@ -29,11 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 namespace ocs2 {
@@ -175,10 +174,8 @@ class PythonInterface {
   std::unique_ptr<MPC_BASE> mpcPtr_;
   std::unique_ptr<MPC_MRT_Interface> mpcMrtInterface_;
 
-  std::unique_ptr<SystemDynamicsBase> dynamics_;
-  std::unique_ptr<ConstraintBase> constraints_;
-  std::unique_ptr<CostFunctionBase> cost_;
   TargetTrajectories targetTrajectories_;
+  OptimalControlProblem problem_;
 };
 
 }  // namespace ocs2

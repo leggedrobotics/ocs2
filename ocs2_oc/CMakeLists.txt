@@ -5,7 +5,7 @@ project(ocs2_oc)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ocs2_core
-  ocs2_qp_solver
+  # ocs2_qp_solver
 )
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -50,6 +50,8 @@ add_library(${PROJECT_NAME}
   src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/oc_data/LoopshapingPrimalSolution.cpp
+  src/oc_problem/OptimalControlProblem.cpp
+  src/oc_problem/LoopshapingOptimalControlProblem.cpp
   src/oc_solver/SolverBase.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/rollout/PerformanceIndicesRollout.cpp

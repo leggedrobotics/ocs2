@@ -1,4 +1,5 @@
 #include <ocs2_core/NumericTraits.h>
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 
 // Automatic Differentation
@@ -7,14 +8,12 @@
 #include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
 // Constraint
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/ConstraintBaseAD.h>
-#include <ocs2_core/constraint/ConstraintCollection.h>
-#include <ocs2_core/constraint/LinearConstraint.h>
 #include <ocs2_core/constraint/LinearStateConstraint.h>
 #include <ocs2_core/constraint/LinearStateInputConstraint.h>
 #include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/constraint/StateConstraintCollection.h>
 #include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
 // Control
 #include <ocs2_core/control/ControllerBase.h>
@@ -25,13 +24,12 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
-#include <ocs2_core/cost/CostCollection.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/StateCostCollection.h>
 #include <ocs2_core/cost/StateInputCost.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>

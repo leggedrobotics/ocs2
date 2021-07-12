@@ -34,10 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/DefaultInitializer.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Ballbot
@@ -76,15 +75,13 @@ class BallbotInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const BallbotSystemDynamics& getDynamics() const override { return *ballbotSystemDynamicsPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
-  const QuadraticCostFunction& getCost() const override { return *ballbotCostPtr_; }
-
-  const RolloutBase& getRollout() const { return *ddpBallbotRolloutPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const Initializer& getInitializer() const override { return *ballbotInitializerPtr_; }
 
- protected:
+ private:
   /**
    * Load the settings from the path file.
    *
@@ -102,17 +99,9 @@ class BallbotInterface final : public RobotInterface {
   mpc::Settings mpcSettings_;
   multiple_shooting::Settings sqpSettings_;
 
-  std::unique_ptr<RolloutBase> ddpBallbotRolloutPtr_;
-
-  std::unique_ptr<BallbotSystemDynamics> ballbotSystemDynamicsPtr_;
-  std::unique_ptr<QuadraticCostFunction> ballbotCostPtr_;
-  std::unique_ptr<ConstraintBase> ballbotConstraintPtr_;
+  OptimalControlProblem problem_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> ballbotInitializerPtr_;
-
-  // cost parameters
-  matrix_t Q_{STATE_DIM, STATE_DIM};
-  matrix_t R_{INPUT_DIM, INPUT_DIM};
-  matrix_t QFinal_{STATE_DIM, STATE_DIM};
 
   vector_t initialState_{STATE_DIM};
 };

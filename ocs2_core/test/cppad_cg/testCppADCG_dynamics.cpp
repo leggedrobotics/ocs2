@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <iostream>
 
-#include "../include/testTools.h"
 #include "LinearSystemDynamicsAD.h"
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
+#include "ocs2_core/test/testTools.h"
 
 using namespace ocs2;
 
@@ -57,7 +57,7 @@ class testCppADCG_dynamicsFixture : public ::testing::Test {
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
     adLinearSystem_.reset(new LinearSystemDynamicsAD(A, B, G));
 
-    adLinearSystem_->initialize("testCppADCG_dynamics", libraryFolder, true, true);
+    adLinearSystem_->initialize(stateDim_, inputDim_, "testCppADCG_dynamics", libraryFolder, true, true);
   }
 
   std::unique_ptr<LinearSystemDynamics> linearSystem_;

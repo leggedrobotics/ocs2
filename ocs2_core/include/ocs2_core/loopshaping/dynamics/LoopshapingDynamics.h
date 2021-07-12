@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 
 namespace ocs2 {
 class LoopshapingDynamics : public SystemDynamicsBase {
@@ -43,11 +44,11 @@ class LoopshapingDynamics : public SystemDynamicsBase {
   static std::unique_ptr<LoopshapingDynamics> create(const SystemDynamicsBase& systemDynamics,
                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) final;
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) final;
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) final;
+  vector_t computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp) final;
   vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x) final;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation& preComp) final;
   VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
   vector_t flowMapDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
@@ -55,11 +56,14 @@ class LoopshapingDynamics : public SystemDynamicsBase {
   vector_t guardSurfacesDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) final;
 
  protected:
-  LoopshapingDynamics(const LoopshapingDynamics& obj)
-      : systemDynamics_(obj.systemDynamics_->clone()), loopshapingDefinition_(obj.loopshapingDefinition_) {}
+  LoopshapingDynamics(const LoopshapingDynamics& other)
+      : SystemDynamicsBase(other), systemDynamics_(other.systemDynamics_->clone()), loopshapingDefinition_(other.loopshapingDefinition_) {}
 
-  LoopshapingDynamics(const SystemDynamicsBase& systemDynamics, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : systemDynamics_(systemDynamics.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)){};
+  LoopshapingDynamics(const SystemDynamicsBase& systemDynamics, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition,
+                      const LoopshapingPreComputation& preComputation)
+      : SystemDynamicsBase(preComputation),
+        systemDynamics_(systemDynamics.clone()),
+        loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
   std::unique_ptr<SystemDynamicsBase> systemDynamics_;
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;

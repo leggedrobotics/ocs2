@@ -46,8 +46,6 @@ namespace legged_robot {
  */
 class EndEffectorLinearConstraint final : public StateInputConstraint {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   /**
    * Coefficients of the linear constraints of the form:
    * g(xee, vee) = Ax * xee + Av * vee + b
@@ -79,8 +77,9 @@ class EndEffectorLinearConstraint final : public StateInputConstraint {
   EndEffectorKinematics<scalar_t>& getEndEffectorKinematics() { return *endEffectorKinematicsPtr_; }
 
   size_t getNumConstraints(scalar_t time) const override { return numConstraints_; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const PreComputation& preComp) const override;
 
  private:
   EndEffectorLinearConstraint(const EndEffectorLinearConstraint& rhs);

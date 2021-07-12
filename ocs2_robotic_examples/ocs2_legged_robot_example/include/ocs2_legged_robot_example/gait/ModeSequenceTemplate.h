@@ -128,7 +128,7 @@ ModeSequenceTemplate loadModeSequenceTemplate(const std::string& filename, const
  *   }
  * }
  */
-ocs2::ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose);
+ModeSchedule loadModeSchedule(const std::string& filename, const std::string& topicName, bool verbose);
 
 }  // namespace legged_robot
 }  // namespace ocs2

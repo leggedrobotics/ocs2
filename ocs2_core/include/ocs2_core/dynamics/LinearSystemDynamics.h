@@ -50,15 +50,17 @@ class LinearSystemDynamics : public SystemDynamicsBase {
 
   LinearSystemDynamics* clone() const override;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override;
 
-  vector_t computeJumpMap(scalar_t t, const vector_t& x) override;
+  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) override;
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x) override;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) override;
 
  protected:
+  LinearSystemDynamics(const LinearSystemDynamics& other);
+
   matrix_t A_;
   matrix_t B_;
   matrix_t G_;

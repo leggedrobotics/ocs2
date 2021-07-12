@@ -49,7 +49,6 @@ ModelSettings loadModelSettings(const std::string& filename, const std::string& 
   }
 
   loadData::loadPtreeValue(pt, modelSettings.positionErrorGain, fieldName + ".positionErrorGain", verbose);
-  loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient, fieldName + ".frictionCoefficient", verbose);
 
   loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime, fieldName + ".phaseTransitionStanceTime", verbose);
 

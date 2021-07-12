@@ -68,7 +68,7 @@ StateInputConstraintCppAd::StateInputConstraintCppAd(const StateInputConstraintC
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StateInputConstraintCppAd::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
+vector_t StateInputConstraintCppAd::getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const {
   vector_t tapedTimeStateInput(1 + state.rows() + input.rows());
   tapedTimeStateInput << time, state, input;
   return adInterfacePtr_->getFunctionValue(tapedTimeStateInput, getParameters(time));
@@ -78,7 +78,7 @@ vector_t StateInputConstraintCppAd::getValue(scalar_t time, const vector_t& stat
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation StateInputConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                    const vector_t& input) const {
+                                                                                    const vector_t& input, const PreComputation&) const {
   VectorFunctionLinearApproximation constraint;
 
   const size_t stateDim = state.rows();
@@ -99,7 +99,8 @@ VectorFunctionLinearApproximation StateInputConstraintCppAd::getLinearApproximat
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionQuadraticApproximation StateInputConstraintCppAd::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                          const vector_t& input) const {
+                                                                                          const vector_t& input,
+                                                                                          const PreComputation&) const {
   if (getOrder() != ConstraintOrder::Quadratic) {
     throw std::runtime_error("[StateInputConstraintCppAd] Quadratic approximation not supported!");
   }

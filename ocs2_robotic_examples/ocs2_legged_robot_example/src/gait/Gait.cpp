@@ -115,8 +115,8 @@ scalar_t timeLeftInMode(scalar_t phase, const Gait& gait) {
 /******************************************************************************************************/
 std::ostream& operator<<(std::ostream& stream, const Gait& gait) {
   stream << "Duration:       " << gait.duration << "\n";
-  stream << "Event phases:  {" << ocs2::toDelimitedString(gait.eventPhases) << "}\n";
-  stream << "Mode sequence: {" << ocs2::toDelimitedString(gait.modeSequence) << "}\n";
+  stream << "Event phases:  {" << toDelimitedString(gait.eventPhases) << "}\n";
+  stream << "Mode sequence: {" << toDelimitedString(gait.modeSequence) << "}\n";
   return stream;
 }
 

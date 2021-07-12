@@ -3,7 +3,7 @@
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
+#include <ocs2_core/loopshaping/constraint/LoopshapingStateInputConstraint.h>
 
 namespace ocs2 {
 
@@ -11,14 +11,11 @@ namespace ocs2 {
  * FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM
  * FULL_INPUT_DIM = FILTER_INPUT_DIM
  */
-class LoopshapingConstraintEliminatePattern final : public LoopshapingConstraint {
+class LoopshapingConstraintEliminatePattern final : public LoopshapingStateInputConstraint {
  public:
-  using BASE = LoopshapingConstraint;
+  using BASE = LoopshapingStateInputConstraint;
 
-  explicit LoopshapingConstraintEliminatePattern(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : BASE(std::move(loopshapingDefinition)){};
-
-  LoopshapingConstraintEliminatePattern(const ConstraintBase& systemConstraint,
+  LoopshapingConstraintEliminatePattern(const StateInputConstraintCollection& systemConstraint,
                                         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemConstraint, std::move(loopshapingDefinition)){};
 
@@ -28,15 +25,14 @@ class LoopshapingConstraintEliminatePattern final : public LoopshapingConstraint
 
   LoopshapingConstraintEliminatePattern* clone() const override { return new LoopshapingConstraintEliminatePattern(*this); };
 
-  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override;
-  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                    const vector_t& u) override;
-  VectorFunctionQuadraticApproximation inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                  const vector_t& u) override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const PreComputation& preComp) const override;
+
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                 const PreComputation& preComp) const override;
 
  protected:
   using BASE::loopshapingDefinition_;
-  using BASE::systemConstraint_;
 };
 
 }  // namespace ocs2

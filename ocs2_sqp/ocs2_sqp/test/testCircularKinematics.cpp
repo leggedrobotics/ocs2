@@ -36,9 +36,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/test/circular_kinematics.h>
 
 TEST(test_circular_kinematics, solve_projected_EqConstraints) {
-  ocs2::CircularKinematicsSystem system;
-  ocs2::CircularKinematicsCost cost;
-  ocs2::CircularKinematicsConstraints constraint;
+  // optimal control problem
+  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/sqp_test_generated");
+
+  // Initializer
+  ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
@@ -56,10 +58,9 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
   const ocs2::scalar_array_t partitioningTimes{0.0};                            // doesn't matter
-  ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solve
-  ocs2::MultipleShootingSolver solver(settings, &system, &cost, &zeroInitializer, &constraint);
+  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime, partitioningTimes);
 
   // Inspect solution
@@ -90,9 +91,11 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
 }
 
 TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
-  ocs2::CircularKinematicsSystem system;
-  ocs2::CircularKinematicsCost cost;
-  ocs2::CircularKinematicsConstraints constraint;
+  // optimal control problem
+  ocs2::OptimalControlProblem problem = ocs2::createCircularKinematicsProblem("/tmp/sqp_test_generated");
+
+  // Initializer
+  ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
@@ -109,10 +112,9 @@ TEST(test_circular_kinematics, solve_EqConstraints_inQPSubproblem) {
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = (ocs2::vector_t(2) << 1.0, 0.0).finished();  // radius 1.0
   const ocs2::scalar_array_t partitioningTimes{0.0};                            // doesn't matter
-  ocs2::DefaultInitializer zeroInitializer(2);
 
   // Solve
-  ocs2::MultipleShootingSolver solver(settings, &system, &cost, &zeroInitializer, &constraint);
+  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
   solver.run(startTime, initState, finalTime, partitioningTimes);
 
   // Inspect solution

@@ -51,11 +51,14 @@ class DoubleIntegratorDynamics final : public SystemDynamicsBase {
 
   DoubleIntegratorDynamics* clone() const override { return new DoubleIntegratorDynamics(*this); }
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) override { return A_ * state + B_ * input; }
+  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) override {
+    return A_ * state + B_ * input;
+  }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t time, const vector_t& state, const vector_t& input) override {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                        const PreComputation& preComp) override {
     VectorFunctionLinearApproximation dynamics;
-    dynamics.f = computeFlowMap(time, state, input);
+    dynamics.f = computeFlowMap(time, state, input, preComp);
     dynamics.dfdx = A_;
     dynamics.dfdu = B_;
     return dynamics;

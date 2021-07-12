@@ -49,9 +49,11 @@ namespace ballbot {
 class BallbotSystemDynamics : public SystemDynamicsBaseAD {
  public:
   /** Constructor */
-  BallbotSystemDynamics() : SystemDynamicsBaseAD(STATE_DIM, INPUT_DIM) {
+  BallbotSystemDynamics(const std::string& libraryFolder, bool recompileLibraries) : SystemDynamicsBaseAD() {
     wheelRadius_ = param_.wheelRadius_;
     ballRadius_ = param_.ballRadius_;
+
+    initialize(STATE_DIM, INPUT_DIM, "ballbot_dynamics", libraryFolder, recompileLibraries, true);
   }
 
   /** Destructor */

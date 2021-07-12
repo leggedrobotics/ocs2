@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 namespace legged_robot {
-class GaitReceiver : public ocs2::SolverSynchronizedModule {
+class GaitReceiver : public SolverSynchronizedModule {
  public:
   GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 

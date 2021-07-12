@@ -42,8 +42,8 @@ TEST(TestLinearConstraint, testLinearStateInputConstraint) {
   const ocs2::vector_t x = ocs2::vector_t::Random(2);
   const ocs2::vector_t u = ocs2::vector_t::Random(1);
 
-  const auto value = constraint.getValue(t, x, u);
-  const auto approx = constraint.getLinearApproximation(t, x, u);
+  const auto value = constraint.getValue(t, x, u, ocs2::PreComputation());
+  const auto approx = constraint.getLinearApproximation(t, x, u, ocs2::PreComputation());
   EXPECT_EQ(constraint.getNumConstraints(t), value.rows());
   EXPECT_TRUE(value.isApprox(C * x + D * u + e));
   EXPECT_TRUE(approx.f.isApprox(value));
@@ -59,8 +59,8 @@ TEST(TestLinearConstraint, testLinearStateConstraint) {
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Random(2);
 
-  const auto value = constraint.getValue(t, x);
-  const auto approx = constraint.getLinearApproximation(t, x);
+  const auto value = constraint.getValue(t, x, ocs2::PreComputation());
+  const auto approx = constraint.getLinearApproximation(t, x, ocs2::PreComputation());
   EXPECT_EQ(constraint.getNumConstraints(t), value.rows());
   EXPECT_TRUE(value.isApprox(C * x + e));
   EXPECT_TRUE(approx.f.isApprox(value));

@@ -31,9 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OCS2
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/Initializer.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
@@ -42,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Quadrotor
 #include "ocs2_quadrotor_example/QuadrotorParameters.h"
 #include "ocs2_quadrotor_example/definitions.h"
-#include "ocs2_quadrotor_example/dynamics/QuadrotorSystemDynamics.h"
 
 namespace ocs2 {
 namespace quadrotor {
@@ -67,15 +65,13 @@ class QuadrotorInterface final : public RobotInterface {
 
   std::unique_ptr<MPC_DDP> getMpc();
 
-  const QuadrotorSystemDynamics& getDynamics() const override { return *quadrotorSystemDynamicsPtr_; }
+  const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
-  const QuadraticCostFunction& getCost() const override { return *quadrotorCostPtr_; }
+  const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const RolloutBase& getRollout() const { return *ddpQuadrotorRolloutPtr_; }
+  const Initializer& getInitializer() const override { return *operatingPointPtr_; }
 
-  const Initializer& getInitializer() const override { return *quadrotorOperatingPointPtr_; }
-
- protected:
+ private:
   /**
    * Load the settings from the path file.
    *
@@ -89,17 +85,10 @@ class QuadrotorInterface final : public RobotInterface {
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> ddpQuadrotorRolloutPtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  OptimalControlProblem problem_;
+  std::unique_ptr<Initializer> operatingPointPtr_;
 
-  std::unique_ptr<QuadrotorSystemDynamics> quadrotorSystemDynamicsPtr_;
-  std::unique_ptr<QuadraticCostFunction> quadrotorCostPtr_;
-  std::unique_ptr<ConstraintBase> quadrotorConstraintPtr_;
-  std::unique_ptr<OperatingPoints> quadrotorOperatingPointPtr_;
-
-  // cost parameters
-  matrix_t Q_{STATE_DIM, STATE_DIM};
-  matrix_t R_{INPUT_DIM, INPUT_DIM};
-  matrix_t QFinal_{STATE_DIM, STATE_DIM};
   vector_t initialState_{STATE_DIM};
 };
 

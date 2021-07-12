@@ -71,7 +71,8 @@ void EndEffectorLinearConstraint::configure(Config&& config) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t EndEffectorLinearConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input) const {
+vector_t EndEffectorLinearConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                               const PreComputation& preComp) const {
   vector_t f = config_.b;
   if (config_.Ax.size() > 0) {
     f.noalias() += config_.Ax * endEffectorKinematicsPtr_->getPosition(state).front();
@@ -86,7 +87,8 @@ vector_t EndEffectorLinearConstraint::getValue(scalar_t time, const vector_t& st
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation EndEffectorLinearConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                      const vector_t& input) const {
+                                                                                      const vector_t& input,
+                                                                                      const PreComputation& preComp) const {
   VectorFunctionLinearApproximation linearApproximation =
       VectorFunctionLinearApproximation::Zero(getNumConstraints(time), state.size(), input.size());
 

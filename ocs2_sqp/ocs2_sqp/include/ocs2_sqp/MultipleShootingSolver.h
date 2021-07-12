@@ -29,14 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
 #include <ocs2_core/misc/Benchmark.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
+
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include <hpipm_catkin/HpipmInterface.h>
@@ -54,15 +52,10 @@ class MultipleShootingSolver : public SolverBase {
    * Constructor
    *
    * @param settings : settings for the multiple shooting solver.
-   * @param systemDynamicsPtr : The system dynamics.
-   * @param costFunctionPtr : The cost function used for the intermediate costs.
-   * @param initializerPtr: This class initializes the state-input for the time steps that no controller is available.
-   * @param constraintPtr : The system constraint function.
-   * @param terminalCostPtr : The cost function used for the terminal (=at the end of the horizon) costs.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr, const CostFunctionBase* costFunctionPtr,
-                         const Initializer* initializerPtr, const ConstraintBase* constraintPtr = nullptr,
-                         const CostFunctionBase* terminalCostFunctionPtr = nullptr);
+  MultipleShootingSolver(Settings settings, const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
   ~MultipleShootingSolver() override;
 
@@ -142,12 +135,8 @@ class MultipleShootingSolver : public SolverBase {
   Settings settings_;
   DynamicsDiscretizer discretizer_;
   DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
-  std::vector<std::unique_ptr<SystemDynamicsBase>> systemDynamicsPtr_;
-  std::vector<std::unique_ptr<CostFunctionBase>> costFunctionPtr_;
-  std::vector<std::unique_ptr<ConstraintBase>> constraintPtr_;
-  std::unique_ptr<CostFunctionBase> terminalCostFunctionPtr_;
+  std::vector<OptimalControlProblem> ocpDefinitions_;
   std::unique_ptr<Initializer> initializerPtr_;
-  std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // Threading
   ThreadPool threadPool_;

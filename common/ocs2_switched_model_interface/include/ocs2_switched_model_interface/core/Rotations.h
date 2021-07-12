@@ -66,6 +66,99 @@ Eigen::Matrix<SCALAR_T, 3, 3> rotationMatrixOriginToBase(const Eigen::Matrix<SCA
 }
 
 template <typename SCALAR_T>
+void rotateInPlaceZ(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vy = v.y();
+  v.x() = c * vx - s * vy;
+  v.y() = s * vx + c * vy;
+}
+
+template <typename SCALAR_T>
+void invRotateInPlaceZ(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vy = v.y();
+  v.x() = c * vx + s * vy;
+  v.y() = -s * vx + c * vy;
+}
+
+template <typename SCALAR_T>
+void rotateInPlaceY(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vz = v.z();
+  v.x() = c * vx + s * vz;
+  v.z() = -s * vx + c * vz;
+}
+
+template <typename SCALAR_T>
+void invRotateInPlaceY(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vx = v.x();
+  const SCALAR_T vz = v.z();
+  v.x() = c * vx - s * vz;
+  v.z() = s * vx + c * vz;
+}
+
+template <typename SCALAR_T>
+void rotateInPlaceX(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vy = v.y();
+  const SCALAR_T vz = v.z();
+  v.y() = c * vy - s * vz;
+  v.z() = s * vy + c * vz;
+}
+
+template <typename SCALAR_T>
+void invRotateInPlaceX(Eigen::Matrix<SCALAR_T, 3, 1>& v, SCALAR_T angle) {
+  const SCALAR_T c = cos(angle);
+  const SCALAR_T s = sin(angle);
+  const SCALAR_T vy = v.y();
+  const SCALAR_T vz = v.z();
+  v.y() = c * vy + s * vz;
+  v.z() = -s * vy + c * vz;
+}
+
+/**
+ * Directly rotates a vector from base to origin.
+ *
+ * Uses 12 (3*4) multiplications, and 6 (3*2) additions.
+ *
+ * Constructing just the rotation matrix already takes 14 multiplication, and 4 additions. Without having rotated the vector.
+ * Multiplication with the rotation matrix takes 9 multiplications and 6 additions.
+ * Constructing the rotation matrix could be cheaper when doing >5 rotations with the same matrix
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotateVectorBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& v,
+                                                       const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesXYZ) {
+  Eigen::Matrix<SCALAR_T, 3, 1> rotatedVector = v;
+  rotateInPlaceZ(rotatedVector, eulerAnglesXYZ[2]);
+  rotateInPlaceY(rotatedVector, eulerAnglesXYZ[1]);
+  rotateInPlaceX(rotatedVector, eulerAnglesXYZ[0]);
+  return rotatedVector;
+}
+
+/**
+ * inverse of rotateVectorBaseToOrigin, use here the invRotate helpers instead of rotate(-angle),
+ * otherwise the sin/cos(angle) and sin/cos(-angle) cannot be merged by CppAd
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotateVectorOriginToBase(const Eigen::Matrix<SCALAR_T, 3, 1>& v,
+                                                       const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesXYZ) {
+  Eigen::Matrix<SCALAR_T, 3, 1> rotatedVector = v;
+  invRotateInPlaceX(rotatedVector, eulerAnglesXYZ[0]);
+  invRotateInPlaceY(rotatedVector, eulerAnglesXYZ[1]);
+  invRotateInPlaceZ(rotatedVector, eulerAnglesXYZ[2]);
+  return rotatedVector;
+}
+
+template <typename SCALAR_T>
 Eigen::Quaternion<SCALAR_T> quaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
   const auto roll = eulerAngles(0);
   const auto pitch = eulerAngles(1);
@@ -116,6 +209,21 @@ Eigen::Matrix<SCALAR_T, 3, 3> angularVelocitiesToEulerAngleDerivativesMatrix(con
   return M;
 }
 
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> angularVelocitiesToEulerAngleDerivatives(const Eigen::Matrix<SCALAR_T, 3, 1>& angularVelocitiesInBase,
+                                                                       const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+  const SCALAR_T sinPsi = sin(eulerAngles(2));
+  const SCALAR_T cosPsi = cos(eulerAngles(2));
+  const SCALAR_T sinTheta = sin(eulerAngles(1));
+  const SCALAR_T cosTheta = cos(eulerAngles(1));
+
+  const SCALAR_T dRoll = (cosPsi * angularVelocitiesInBase(0) - sinPsi * angularVelocitiesInBase(1)) / cosTheta;
+  const SCALAR_T dPitch = sinPsi * angularVelocitiesInBase(0) + cosPsi * angularVelocitiesInBase(1);
+  const SCALAR_T dYaw = angularVelocitiesInBase(2) - sinTheta * dRoll;
+
+  return {dRoll, dPitch, dYaw};
+}
+
 /**
  * Computes the derivative w.r.t eulerXYZ of rotating a vector from base to origin : d/d(euler) (o_R_b(euler) * v_base)
  *
@@ -130,41 +238,36 @@ Eigen::Matrix<SCALAR_T, 3, 3> rotationBaseToOriginJacobian(const Eigen::Matrix<S
   Eigen::Matrix<SCALAR_T, 3, 3> jac;
 
   // auxiliary variables
-  std::array<SCALAR_T, 15> v{};
+  std::array<SCALAR_T, 12> v{};
 
   jac(0) = SCALAR_T(0.0);
-  v[0] = cos(eulerAnglesXYZ[1]);
-  v[1] = -SCALAR_T(1.0) * sin(eulerAnglesXYZ[1]);
+  v[0] = -sin(eulerAnglesXYZ[1]);
+  v[1] = cos(eulerAnglesXYZ[2]);
   v[2] = sin(eulerAnglesXYZ[2]);
-  v[3] = -v[2];
-  v[4] = cos(eulerAnglesXYZ[2]);
-  jac(3) = v[0] * vectorInBase[2] + v[1] * v[3] * vectorInBase[1] + v[1] * v[4] * vectorInBase[0];
-  v[5] = cos(eulerAnglesXYZ[1]);
-  v[6] = cos(eulerAnglesXYZ[2]);
-  v[7] = -v[6];
-  v[8] = -SCALAR_T(1.0) * sin(eulerAnglesXYZ[2]);
-  jac(6) = v[5] * v[7] * vectorInBase[1] + v[5] * v[8] * vectorInBase[0];
-  v[9] = cos(eulerAnglesXYZ[0]);
-  v[10] = -v[9];
-  v[11] = -sin(eulerAnglesXYZ[1]);
-  v[12] = v[10] * v[11];
-  v[13] = -SCALAR_T(1.0) * sin(eulerAnglesXYZ[0]);
-  jac(1) =
-      v[10] * v[5] * vectorInBase[2] + (v[12] * v[3] + v[13] * v[4]) * vectorInBase[1] + (v[12] * v[4] + v[13] * v[2]) * vectorInBase[0];
-  v[12] = sin(eulerAnglesXYZ[0]);
-  v[10] = -v[12];
-  v[0] = -v[0];
-  v[14] = v[10] * v[0];
-  jac(4) = v[10] * v[1] * vectorInBase[2] + v[14] * v[3] * vectorInBase[1] + v[14] * v[4] * vectorInBase[0];
-  v[10] = v[10] * v[11];
-  v[14] = cos(eulerAnglesXYZ[0]);
-  jac(7) = (v[10] * v[7] + v[14] * v[8]) * vectorInBase[1] + (v[10] * v[8] + v[14] * v[6]) * vectorInBase[0];
-  v[10] = v[13] * v[11];
-  jac(2) = v[13] * v[5] * vectorInBase[2] + (v[10] * v[3] + v[9] * v[4]) * vectorInBase[1] + (v[10] * v[4] + v[9] * v[2]) * vectorInBase[0];
-  v[0] = v[14] * v[0];
-  jac(5) = v[14] * v[1] * vectorInBase[2] + v[0] * v[3] * vectorInBase[1] + v[0] * v[4] * vectorInBase[0];
-  v[14] = v[14] * v[11];
-  jac(8) = (v[14] * v[7] + v[12] * v[8]) * vectorInBase[1] + (v[14] * v[8] + v[12] * v[6]) * vectorInBase[0];
+  v[3] = v[1] * vectorInBase[0] - v[2] * vectorInBase[1];
+  v[4] = cos(eulerAnglesXYZ[1]);
+  jac(3) = v[0] * v[3] + v[4] * vectorInBase[2];
+  v[5] = v[4];
+  v[6] = -v[2];
+  v[7] = v[1];
+  v[8] = v[6] * vectorInBase[0] - v[7] * vectorInBase[1];
+  jac(6) = v[5] * v[8];
+  v[9] = -sin(eulerAnglesXYZ[0]);
+  v[2] = v[2] * vectorInBase[0] + v[1] * vectorInBase[1];
+  v[1] = cos(eulerAnglesXYZ[0]);
+  v[10] = v[0];
+  v[5] = v[10] * v[3] + v[5] * vectorInBase[2];
+  jac(1) = v[9] * v[2] - v[1] * v[5];
+  v[11] = -v[9];
+  v[4] = (-v[4]) * v[3] + v[0] * vectorInBase[2];
+  jac(4) = -v[11] * v[4];
+  v[3] = v[1];
+  v[7] = v[7] * vectorInBase[0] + v[6] * vectorInBase[1];
+  v[10] = v[10] * v[8];
+  jac(7) = v[3] * v[7] - v[11] * v[10];
+  jac(2) = v[1] * v[2] + v[9] * v[5];
+  jac(5) = v[3] * v[4];
+  jac(8) = v[11] * v[7] + v[3] * v[10];
   return jac;
 }
 

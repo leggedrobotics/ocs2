@@ -36,15 +36,12 @@ matrix6_s_t<SCALAR_T> ComModelBase<SCALAR_T>::comInertiaInverse() const {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateBasePose(const base_coordinate_s_t<SCALAR_T>& comPose) const {
-  // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(comPose));
-
-  // base to CoM displacement in the CoM frame
-  vector3_s_t<SCALAR_T> com_base2CoM = comPositionBaseFrame();
+  // base to CoM displacement in the Origin frame
+  vector3_s_t<SCALAR_T> o_base2CoM = rotateVectorBaseToOrigin<SCALAR_T>(comPositionBaseFrame(), getOrientation(comPose));
 
   base_coordinate_s_t<SCALAR_T> basePose;
   basePose.template head<3>() = getOrientation(comPose);
-  basePose.template tail<3>() = getPositionInOrigin(comPose) - o_R_b * com_base2CoM;
+  basePose.template tail<3>() = getPositionInOrigin(comPose) - o_base2CoM;
 
   return basePose;
 }
@@ -54,15 +51,12 @@ base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateBasePose(const ba
 /******************************************************************************************************/
 template <typename SCALAR_T>
 base_coordinate_s_t<SCALAR_T> ComModelBase<SCALAR_T>::calculateComPose(const base_coordinate_s_t<SCALAR_T>& basePose) const {
-  // Rotation matrix from Base frame (or the coincided frame world frame) to Origin frame (global world).
-  matrix3_s_t<SCALAR_T> o_R_b = rotationMatrixBaseToOrigin<SCALAR_T>(getOrientation(basePose));
-
-  // base to CoM displacement in the CoM frame
-  vector3_s_t<SCALAR_T> com_base2CoM = comPositionBaseFrame();
+  // base to CoM displacement in the Origin frame
+  vector3_s_t<SCALAR_T> o_base2CoM = rotateVectorBaseToOrigin<SCALAR_T>(comPositionBaseFrame(), getOrientation(basePose));
 
   base_coordinate_s_t<SCALAR_T> comPose;
   comPose.template head<3>() = getOrientation(basePose);
-  comPose.template tail<3>() = getPositionInOrigin(basePose) + o_R_b * com_base2CoM;
+  comPose.template tail<3>() = getPositionInOrigin(basePose) + o_base2CoM;
 
   return comPose;
 }
@@ -159,8 +153,8 @@ comkino_input_t weightCompensatingInputs(const ComModelBase<scalar_t>& comModel,
   comkino_input_t inputs = comkino_input_t::Zero();
   if (numStanceLegs > 0) {
     const scalar_t totalWeight = comModel.totalMass() * 9.81;
-    const matrix3_t b_R_o = rotationMatrixOriginToBase(baseOrientation);
-    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalWeight / numStanceLegs};
+    const vector3_t forceInWorld = vector3_t{0.0, 0.0, totalWeight / numStanceLegs};
+    const vector3_t forceInBase = rotateVectorOriginToBase(forceInWorld, baseOrientation);
 
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       if (contactFlags[i]) {

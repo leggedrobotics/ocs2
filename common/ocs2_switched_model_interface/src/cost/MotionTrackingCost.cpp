@@ -53,15 +53,15 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
   // Extract elements from reference
   const auto comPose = getComPose(x);
   const auto com_comTwist = getComLocalVelocities(x);
-  const auto o_R_b = rotationMatrixBaseToOrigin(getOrientation(comPose));
+  const auto eulerAngles = getOrientation(comPose);
   const auto qJoints = getJointPositions(x);
   const auto dqJoints = getJointVelocities(u);
 
   CostElements<SCALAR_T> motionTarget;
-  motionTarget.eulerXYZ = getOrientation(comPose);
+  motionTarget.eulerXYZ = eulerAngles;
   motionTarget.comPosition = getPositionInOrigin(comPose);
-  motionTarget.comAngularVelocity = o_R_b * getAngularVelocity(com_comTwist);
-  motionTarget.comLinearVelocity = o_R_b * getLinearVelocity(com_comTwist);
+  motionTarget.comAngularVelocity = rotateVectorBaseToOrigin(getAngularVelocity(com_comTwist), eulerAngles);
+  motionTarget.comLinearVelocity = rotateVectorBaseToOrigin(getLinearVelocity(com_comTwist), eulerAngles);
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     motionTarget.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
     motionTarget.footPosition[leg] = kinematics.positionBaseToFootInBaseFrame(leg, qJoints);

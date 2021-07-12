@@ -6,6 +6,10 @@
 
 namespace switched_model {
 
+enum class Algorithm { DDP, SQP };
+std::string toAlgorithmName(Algorithm type);
+Algorithm fromAlgorithmName(std::string name);
+
 struct ModelSettings {
   bool constrainedIntegration_ = true;
   scalar_t gravitationalAcceleration_ = 9.81;
@@ -22,6 +26,7 @@ struct ModelSettings {
   bool enforceTorqueConstraint_ = false;
   scalar_t torqueLimit_ = 40.0;
   bool recompileLibraries_ = true;
+  Algorithm algorithm_ = Algorithm::SQP;
 };
 
 ModelSettings loadModelSettings(const std::string& filename, bool verbose = true);

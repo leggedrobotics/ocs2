@@ -6,6 +6,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
+  ocs2_sqp
   ocs2_ros_interfaces
   ocs2_robotic_tools
   ocs2_switched_model_interface

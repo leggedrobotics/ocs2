@@ -29,6 +29,7 @@ model_settings
   gaitOptimization              false
 
   recompileLibraries            true
+  algorithm                     DDP
 }
 
 terrainPlane

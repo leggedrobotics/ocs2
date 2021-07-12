@@ -45,12 +45,16 @@ const std::string ROBOT_COMMAND_PATH = ros::package::getPath("ocs2_legged_robot_
 namespace ocs2 {
 namespace legged_robot {
 
-/** Returns a Pinocchio interface based on a defined ROBOT_URDF_PATH  */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface() {
   return std::unique_ptr<PinocchioInterface>(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH)));
 }
 
-/** Returns a Pinocchio interface based on a defined ROBOT_COMMAND_PATH  */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pinocchioInterface, CentroidalModelType centroidalType) {
   const ModelSettings modelSettings;  // default constructor just to get contactNames3DoF
   return centroidal_model::createCentroidalModelInfo(pinocchioInterface, centroidalType,
@@ -58,7 +62,9 @@ CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pi
                                                      modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
 }
 
-/** Return a Switched model mode schedule manager based on ROBOT_TASK_FILE_PATH */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(const CentroidalModelInfo& centroidalModelInfo) {
   const auto initModeSchedule = loadModeSchedule(ROBOT_TASK_FILE_PATH, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(ROBOT_TASK_FILE_PATH, "defaultModeSequenceTemplate", false);
@@ -66,8 +72,8 @@ std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(const Cent
   const ModelSettings modelSettings;
   std::shared_ptr<GaitSchedule> gaitSchedule(
       new GaitSchedule(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime));
-  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
-      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), centroidalModelInfo));
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(new SwingTrajectoryPlanner(
+      loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), centroidalModelInfo.numThreeDofContacts));
   return std::make_shared<SwitchedModelReferenceManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
 }
 

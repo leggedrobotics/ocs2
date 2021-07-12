@@ -13,6 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roslib</depend>
+  <depend>cmake_modules</depend>
   <depend>tf</depend>
   <depend>urdf</depend>
   <depend>kdl_parser</depend>

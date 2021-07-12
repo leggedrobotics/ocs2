@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_legged_robot_example/synchronized_module/SwitchedModelReferenceManager.h"
 
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
+
 namespace ocs2 {
 namespace legged_robot {
 

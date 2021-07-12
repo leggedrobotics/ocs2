@@ -66,7 +66,7 @@ inline vector_t weightCompensatingInput(const CentroidalModelInfoTpl<scalar_t>& 
   if (numStanceLegs > 0) {
     const scalar_t totalWeight = info.robotMass * 9.81;
     const vector3_t forceInInertialFrame(0.0, 0.0, totalWeight / numStanceLegs);
-    for (size_t i = 0; i < info.numThreeDofContacts; i++) {
+    for (size_t i = 0; i < contactFlags.size(); i++) {
       if (contactFlags[i]) {
         centroidal_model::getContactForces(input, i, info) = forceInInertialFrame;
       }

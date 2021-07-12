@@ -1,0 +1,414 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Optimal Control Modules &mdash; OCS2 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Robotic Examples" href="robotic_examples.html" />
+    <link rel="prev" title="Getting Started" href="getting-started.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OCS2
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Optimal Control Modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#costs">Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#constraints">Constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dynamics">Dynamics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pre-computation">Pre-computation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changing-parameter-of-optimal-control-problem">Changing parameter of Optimal Control Problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reference-manager">Reference Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#solver-synchronized-modules">Solver Synchronized Modules</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OCS2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Optimal Control Modules</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/optimal_control_modules.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="optimal-control-modules">
+<span id="doxid-ocs2-doc-optimal-control-modules"></span><span id="index-0"></span><h1>Optimal Control Modules<a class="headerlink" href="#optimal-control-modules" title="Permalink to this headline">¶</a></h1>
+<p>On this page, we provide you with some tips on how to define your MPC
+problem. In OCS2, the OptimalControlProblem structure defines the main
+components of the optimization problem, i.e., dynamics, costs, and
+constraints. In addition to this, you may want to provide MPC with some
+reference trajectories, predefined mode schedule (for switched systems),
+and other external information such as an update for the model
+parameters (e.g., in an adaptive control setting), a map of the
+environment (e.g., SDF map for collision avoidance), and so on. All
+these will be possible with the aid of ReferenceManager and
+SolverSynchronizedModule.</p>
+<p>We start with the components of OptimalControlProblem: cost functions,
+soft constraints, (hard) constraints, dynamics, and pre-computation. In
+general, the cost and (soft) constraints are defined at three different
+time instances: (1) during the intermediate time intervals, (2) at the
+switching (prejump) times, and (3) at the final time of the optimization
+horizon. The prejump components are only effective in the
+switched-system problems, and they are evaluated based on state values
+before switches (prejump values).</p>
+<p>The OptimalControlProblem collects a set of cost and constraint terms
+instead of a single cost or constraint. You may imagine these collectors
+as containers in which you can add terms using a unique name and later
+requesting them back by the same name. Each term decides on being active
+or inactive by overriding the isActive method of the terms. This
+facilitates the change of the MPC behavior. For example, you can use an
+externally triggered signal to switch between base tracking or
+end-effector tracking modes for a mobile manipulator. Moreover, these
+collectors introduce a level of modularity in your code and provide a
+convenient tool for extending and modifying your MPC throughout your
+project. For example, if you decide to add a new constraint or cost to
+your problem, you can add the new term to the optimal control problem
+without modifying the other terms.</p>
+<div class="section" id="costs">
+<h2>Costs<a class="headerlink" href="#costs" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned, cost functions are defined for three different time
+instances: intermediate, prejump, and final. The intermediate cost terms
+can be function of either time, state, and input
+(OptimalControlProblem::costPtr) or time and state
+(OptimalControlProblem::stateCostPtr). However, the prejump and the
+final cost terms should only be a function of time and state. The cost
+terms should be either inherited from StateCost or StateInputCost
+classes. The derived class should define the cost value and its
+quadratic approximation. For complex functions, you may use the
+auto-differentiation version of these classes, namely StateCostCppAd or
+StateInputCostCppAd where the user only requires to provide the cost
+value. For implementation details of the these class refer to
+’ocs2_core/cost’ and for simple examples check QuadraticStateCost and
+QuadraticStateInputCost.</p>
+<p>Note: All our optimal control solvers assume that the sum of the Hession
+of the intermediate cost terms w.r.t. input is positive definite at each
+intermediate time. Moreover, except for PISOC, the solvers require that
+the sum of the Hessian of all terms w.r.t. state is also positive
+semi-definite at each time instance (intermediate, prejump, and final).
+Note that although the use of hessian correction in the line-search
+strategy and trust-region globalization strategy, to some extent, can
+handle non-definiteness, the solvers often work more reliably if you
+guarantee this positive definiteness. One way to avoid non-definiteness
+is using a Gauss-Newton approximation technique for cost functions of
+the form <span class="math notranslate nohighlight">\(||f(x, u)||^2\)</span> where the linear approximation of
+<span class="math notranslate nohighlight">\(f(x,u)\)</span> will be used to form a positive definite Hessian. For
+more details refer to StateInputCostGaussNewtonAd.</p>
+</div>
+<div class="section" id="constraints">
+<h2>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h2>
+<p>Similar to costs, constraints are also defined for three different time
+instances: intermediate, prejump, and final, with intermediate
+constraints being a function of either time, state, input or time, state
+and the prejump, and the final constraints being only the function of
+time and state.</p>
+<p>The constraint terms should be either inherited from StateConstraint or
+StateInputConstraint classes. The derived class should define the
+constraint value and its linear or quadratic approximation depending on
+the order of the constraints (ConstraintOrder). For complex functions,
+you may use the auto-differentiation version of these classes, namely
+StateConstraintCppAd or StateInputConstraintCppAd where you only require
+to provide the constraint value. For implementation details of the these
+class refer to ’ocs2_core/constraint’ and for simple examples check
+LinearStateConstraint and LinearStateInputConstraint.</p>
+<p>For handling the constraints in OCS2, you can either use hard or soft
+constraint approaches. The soft constraints are collected separately in
+OptimalControlProblem. The soft constraints handling is based on a
+penalty method where the constraints are wrapped with user-defined
+penalty functions (for the list of these penalty functions, refer to
+ocs2_core/soft_constraint/penalties). To create a soft constraint from
+your constraint term, you can use StateSoftConstraint and
+StateInputSoftConstraint classes. These classes take an instance of your
+constraint term and your opted penalty function and create a cost term
+that the soft constraint collectors can collect. The possibility of
+setting the penalty functions alongside the constraints provides the
+flexibility of using different penalty functions (different types and
+different hyper-parameters) for each constraint. This makes the tuning
+easier.</p>
+<p>Hard constraints (referred to as constraints) are handled with higher
+precision through different techniques depending on their type. The
+state-input equality constraints are handled through a projection
+method. The state-only equality and inequalities are handled either
+through a relaxed-barrier method or an augmented Lagrangian technique
+(this feature is temporarily disabled and will be added in the next
+release).</p>
+<p>Note: Since the state-input equality constraints are handled through a
+projection method, OCS2 assumes that the Jacobin of the constraints
+w.r.t. input is full row rank. If this condition cannot be guaranteed,
+you should use a soft constraint technique.</p>
+</div>
+<div class="section" id="dynamics">
+<h2>Dynamics<a class="headerlink" href="#dynamics" title="Permalink to this headline">¶</a></h2>
+<p>The dynamics are defined by their flow-map, jump-map, and their
+first-order approximation (refer to SystemDynamicsBase). For the regular
+systems, the jump-map is an identity map, but this map can be a
+nonlinear function of the state for a switched system. For complex
+functions, you may use the auto-differentiation version of dynamics
+SystemDynamicsBaseAD.</p>
+</div>
+<div class="section" id="pre-computation">
+<h2>Pre-computation<a class="headerlink" href="#pre-computation" title="Permalink to this headline">¶</a></h2>
+<p>OCS2 is cache-friendly, which means that you can share the computation
+between cost, constraints, system dynamics, and their approximation. To
+achieve this, OCS2 uses PreComputation. Before evaluating cost,
+constraints, and system dynamics, OCS2 solvers call
+PreComputation::request (requestPreJump at a switching time or
+requestFinal at the final time) with a request message indicating which
+operations will be conducted next. Therefore, you can implement the
+overridden request() method based on the input request set. As a general
+rule, you should avoid using caching and only later for a better
+performance implement the version with caching. For an example refer to
+ocs2_robotic_examples/ocs2_mobile_manipulator_example.</p>
+</div>
+<div class="section" id="changing-parameter-of-optimal-control-problem">
+<h2>Changing parameter of Optimal Control Problem<a class="headerlink" href="#changing-parameter-of-optimal-control-problem" title="Permalink to this headline">¶</a></h2>
+<p>Once you have defined and set your OptimalControlProblem to a solver,
+the solver creates a copy (in fact, many copies) of it internally.
+Therefore if you decide to change any parameter in the optimal control
+problem, such as the reference trajectories or a model parameter, you
+cannot achieve this by simply modifying the parameters of the optimal
+control problem you have access to. Moreover, regardless of this
+technical point, you should avoid changing these parameters arbitrarily
+at any time. The reason is that your MPC solver might be in the middle
+of an iteration when you alter a parameter, and this will cause
+undefined behavior in the solver. To circumvent this issue, OCS2
+introduces the concepts of Reference Manager and Solver Synchronized
+Modules. In general, these are synchronization concepts and ensure that
+the parameters update occurs at the correct times (before and/or after
+each iteration of MPC). In other words, they synchronize parameter
+updates with the MPC iterations.</p>
+<p>To access the updated parameters/information in your optimal control
+components such as cost, constraint, dynamics, … you need to take the
+following steps: (1) create a shared pointer of your synchronization
+module. (2) set it to the solver through
+SolverBase::setReferenceManager, SolverBase::addSynchronizedModule, or
+SolverBase::setSynchronizedModules (3) Share the address of this
+instance with your cost, constraint, or dynamics.</p>
+<p>Note: There should be only one instance of each synchronization module
+in your whole MPC problem.</p>
+</div>
+<div class="section" id="reference-manager">
+<h2>Reference Manager<a class="headerlink" href="#reference-manager" title="Permalink to this headline">¶</a></h2>
+<p>ReferenceManagerInterface creates a generic interface for defining the
+target trajectories and mode schedule (used only in switched systems).
+Each solver of OCS2 will call preSolverRun() of the reference manager
+before starting a new iteration of MPC. For an implementation of this
+interface, you can refer to ReferenceManager.</p>
+<p>As the reference manager runs in sequence to the main loop of MPC, for
+efficiency reasons, you should avoid complex operations in preSolverRun.
+To achieve this, you should process these parameters in a different
+thread and save the result in a buffer memory. Then in preSolverRun,
+just update the active parameters through address swapping. OCS2
+provides a helper class for this very reason called as BufferedValue.</p>
+<p>ReferenceManager has two decorator classes: ReferenceManagerRos that add
+ROS communication to the ReferenceManager and
+LoopshapingReferenceManager which extend it to the the loopshaped
+optimal control problem.</p>
+</div>
+<div class="section" id="solver-synchronized-modules">
+<h2>Solver Synchronized Modules<a class="headerlink" href="#solver-synchronized-modules" title="Permalink to this headline">¶</a></h2>
+<p>SolverSynchronizedModules is similar to ReferenceManagerInterface but
+for a general-purpose application. It only has two pure virtual methods
+preSolverRun and postSolverRun, which, as the names suggest, are called
+before and after each MPC iteration. The preSolverRun method also has
+access to a recently updated ReferenceManagerInterface. In contrast, the
+postSolverRun method has access to the MPC solution.</p>
+<p>Similar to the reference managers, the synchronization modules run in
+sequence to the main loop of MPC. Therefore, for efficiency reasons, you
+should avoid complex operations in preSolverRun and postSolverRun. To
+achieve this, you should save/compute these parameters in a different
+thread and save the result in a buffer. Then in preSolverRun or
+postSolverRun, you can update the active parameters through address
+swapping. You can use the BufferedValue class for this.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="robotic_examples.html" class="btn btn-neutral float-right" title="Robotic Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="getting-started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Farbod Farshidian.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

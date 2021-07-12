@@ -1,0 +1,425 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Getting Started &mdash; OCS2 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Optimal Control Modules" href="optimal_control_modules.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OCS2
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#where-to-start">Where to start?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-optimal-control-formulation">The optimal control formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-setup-an-optimal-control-problem">How to setup an optimal control problem?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-setup-an-mpc-loop">How to setup an MPC loop?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mpc-interface">MPC Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mrt-interface">MRT Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ros-and-non-ros-versions">ROS and non-ROS versions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-test-your-mpc-output">How to test your MPC output?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="optimal_control_modules.html">Optimal Control Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OCS2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Getting Started</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/getting-started.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started">
+<span id="doxid-ocs2-doc-getting-started"></span><span id="index-0"></span><h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>We here briefly explain the steps you need to take in order to apply
+OCS2 for you specific problem. We already assume that you have
+successfully installed the library based on the description in the
+<a class="reference internal" href="installation.html#doxid-ocs2-doc-installation"><span class="std std-ref">Installation page</span></a>.</p>
+<div class="section" id="where-to-start">
+<h2>Where to start?<a class="headerlink" href="#where-to-start" title="Permalink to this headline">¶</a></h2>
+<p>The first and maybe the most important step is to decide what model
+complexity you want to use for the problem in hand. For example, does a
+kinematic model suffice for tasks you plan to solve with MPC? Some of
+the common models are:</p>
+<ul class="simple">
+<li><p><strong>Kinematic model</strong>: This model is often employed for fixed or mobile
+base manipulators. The objectives of such problems are end-effector
+tracking, self-collision avoidance, and collision-free navigation.
+For an example refer to
+<a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples-mobile-manipulator"><span class="std std-ref">Mobile Manipulator example</span></a>.</p></li>
+<li><p><strong>Dynamic model</strong>: This is the most complete rigid-body model which
+takes in to account both the kinematics and the dynamics of the
+system. For an example refer to
+<a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples-ballbot"><span class="std std-ref">Ballbot example</span></a>.</p></li>
+<li><p><strong>Centroidal model</strong>: This is model often used for legged robots
+since it has the best of two worlds. First it consider the full
+kinematics of the system. Second, instead of the full dynamics which
+is computationally expensive, it only considers the part of the
+dynamics that is affected by the external force. For an example refer
+to <a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples-legged-robot"><span class="std std-ref">Legged Robot example</span></a>.</p></li>
+</ul>
+<p>After choosing your model, instead of starting from scratch, it is often
+more convenient to start from a similar example. The OCS2 library
+already includes a diverse set of robotic examples which covers most of
+the commonly-used models. For more details on these examples read this
+page <a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples"><span class="std std-ref">Robotic Examples</span></a>.</p>
+</div>
+<div class="section" id="the-optimal-control-formulation">
+<span id="doxid-ocs2-doc-getting-started-the-optimal-control-formulation"></span><h2>The optimal control formulation<a class="headerlink" href="#the-optimal-control-formulation" title="Permalink to this headline">¶</a></h2>
+<p>OCS2 is tailored to solve optimal control problems for switched systems.
+A switched system consists of a finite number of dynamical subsystems
+subjected to discrete events which cause transition between these
+subsystems. Switched system models are encountered in many practical
+applications such as automobiles and locomotives with different gears,
+DC-DC converters, manufacturing processes, biological systems, and
+walking robotics. The optimal control for such a system can be
+formulated as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\label{eq:OCProblem}
+    \begin{cases}
+    \underset{\mathbf u(.)}{\min} \ \ \sum_i \phi_i(\mathbf x(t_{i+1})) + \displaystyle \int_{t_i}^{t_{i+1}} l_i(\mathbf x(t), \mathbf u(t), t) \, dt \\
+    \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11em} \text{initial state} \\
+    \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f_i(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{ system flow map} \\
+    \ \ \ \ \ \mathbf x(t_{i+1}^+) = \mathbf j(\mathbf x(t_{i+1})) \hspace{8.5em} \text{system jump map} \\
+    \ \ \ \ \ {\mathbf g_1}_i(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\
+    \ \ \ \ \ {\mathbf g_2}_i(\mathbf x(t), t) = \mathbf{0} \, \hspace{10.5em}  \text{state-only equality constraints} \\
+    \ \ \ \ \ \mathbf h_i(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \hspace{9em}  \text{inequality constraints} \\
+    \ \ \ \ \ \text{for  } t_i &lt; t &lt; t_{i+1} \text{  and  } i \in \{0, 1, \cdots, I-1 \}
+    \end{cases}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(t_i\)</span>s is the switching times and <span class="math notranslate nohighlight">\(t_I\)</span> is the final
+time. For each mode, the nonlinear cost function consists of a pre-jump
+cost and an intermediate cost. While at the first glance this equation
+seems a bit intimidating, it actually has a simple interpretation and
+brings a maximum flexibility for defining an MPC problem. One can
+imagine this problem as a sequence of optimal control sub-problems which
+are connected to each other through a system jump map. Each sub-problem
+can even have different state and input dimensions as long as the jump
+map is correctly defined in between them. As mentioned, the switches in
+this formulation are based on time-triggered events. This means that you
+need to define both the sequence of the modes and the event times where
+these switches take place.</p>
+<p>For many robotic platforms such as quadrotor, ballbot, and cart-pole,
+the system has only a single mode (i.e., a single domain system). In
+these cases, the above formulation simplifies as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\label{eq:OCProblem_simple}
+    \begin{cases}
+    \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(T)) + \displaystyle \int_{0}^{T} l(\mathbf x(t), \mathbf u(t), t) \, dt \\
+    \text{s.t.} \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{2.7em} \text{system dynamics} \\
+    \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \qquad   \qquad \text{state-input equality constraints} \\
+    \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0} \qquad \qquad \qquad  \text{ state-only equality constraints} \\
+    \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \, \qquad  \quad\quad  \text{   inequality constraints}
+    \end{cases}\end{split}\]</div>
+<p>Which is in the form of a regular optimal control problem.</p>
+</div>
+<div class="section" id="how-to-setup-an-optimal-control-problem">
+<h2>How to setup an optimal control problem?<a class="headerlink" href="#how-to-setup-an-optimal-control-problem" title="Permalink to this headline">¶</a></h2>
+<p>In order to define your optimal control, you need to define at least the
+system dynamics and a cost function with a positive definitive Hessian
+matrix w.r.t. input and a positive semi-definite Hessian matrix w.r.t.
+state. Luckily, OCS2 provides a closely matching interface for defining
+an optimal control problem which is called OptimalControlProblem
+(<a class="reference internal" href="optimal_control_modules.html#doxid-ocs2-doc-optimal-control-modules"><span class="std std-ref">refer to this page</span></a>).</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cm">/** Optimal Control Problem definition */</span>
+<span class="k">struct</span> <span class="nc">OptimalControlProblem</span> <span class="p">{</span>
+  <span class="cm">/* Cost */</span>
+  <span class="cm">/** Intermediate cost */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateInputCostCollection</span><span class="o">&gt;</span> <span class="n">costPtr</span><span class="p">;</span>
+  <span class="cm">/** Intermediate state-only cost */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateCostCollection</span><span class="o">&gt;</span> <span class="n">stateCostPtr</span><span class="p">;</span>
+  <span class="cm">/** Pre-jump cost */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateCostCollection</span><span class="o">&gt;</span> <span class="n">preJumpCostPtr</span><span class="p">;</span>
+  <span class="cm">/** Final cost */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateCostCollection</span><span class="o">&gt;</span> <span class="n">finalCostPtr</span><span class="p">;</span>
+
+  <span class="cm">/* Soft constraints */</span>
+  <span class="cm">/** Intermediate soft constraint penalty */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateInputCostCollection</span><span class="o">&gt;</span> <span class="n">softConstraintPtr</span><span class="p">;</span>
+  <span class="cm">/** Intermediate state-only soft constraint penalty */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateCostCollection</span><span class="o">&gt;</span> <span class="n">stateSoftConstraintPtr</span><span class="p">;</span>
+  <span class="cm">/** Pre-jump soft constraint penalty */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateCostCollection</span><span class="o">&gt;</span> <span class="n">preJumpSoftConstraintPtr</span><span class="p">;</span>
+  <span class="cm">/** Final soft constraint penalty */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateCostCollection</span><span class="o">&gt;</span> <span class="n">finalSoftConstraintPtr</span><span class="p">;</span>
+
+  <span class="cm">/* Constraints */</span>
+  <span class="cm">/** Intermediate equality constraints, full row rank w.r.t. inputs */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateInputConstraintCollection</span><span class="o">&gt;</span> <span class="n">equalityConstraintPtr</span><span class="p">;</span>
+  <span class="cm">/** Intermediate state-only equality constraints */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateConstraintCollection</span><span class="o">&gt;</span> <span class="n">stateEqualityConstraintPtr</span><span class="p">;</span>
+  <span class="cm">/** Intermediate inequality constraints */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateInputConstraintCollection</span><span class="o">&gt;</span> <span class="n">inequalityConstraintPtr</span><span class="p">;</span>
+  <span class="cm">/** pre-jump constraints */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateConstraintCollection</span><span class="o">&gt;</span> <span class="n">preJumpEqualityConstraintPtr</span><span class="p">;</span>
+  <span class="cm">/** final constraints */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">StateConstraintCollection</span><span class="o">&gt;</span> <span class="n">finalEqualityConstraintPtr</span><span class="p">;</span>
+
+  <span class="cm">/* Dynamics */</span>
+  <span class="cm">/** System dynamics pointer */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">SystemDynamicsBase</span><span class="o">&gt;</span> <span class="n">dynamicsPtr</span><span class="p">;</span>
+
+  <span class="cm">/* Misc. */</span>
+  <span class="cm">/** The pre-computation module */</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">PreComputation</span><span class="o">&gt;</span> <span class="n">preComputationPtr</span><span class="p">;</span>
+
+  <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-to-setup-an-mpc-loop">
+<h2>How to setup an MPC loop?<a class="headerlink" href="#how-to-setup-an-mpc-loop" title="Permalink to this headline">¶</a></h2>
+<p>So far you have created an optimal control problem. To setup an MPC, you
+need to solve this problem repeatedly at each control tick with the
+latest state measurement. While for simple systems, solving this problem
+in realtime is possible, for many robotic platforms with limited onboard
+compute power and high control frequency loop this is not possible. To
+this end, you require the followings: (1) To run the MPC as fast as
+possible with the latest state measurement. (2) To use the latest MPC
+output without worrying about any racing issue while reading its output.
+To this end, you require some synchronization mechanism to facilitate
+these requirements. OCS2 provides such functionalities by introducing
+the concept of <strong>MPC</strong> Interface and <strong>MRT</strong> (Model Reference Tracking)
+Interface.</p>
+<div class="section" id="mpc-interface">
+<h3>MPC Interface<a class="headerlink" href="#mpc-interface" title="Permalink to this headline">¶</a></h3>
+<p>The MPC interface is responsible for safely updating the solver with the
+latest measurement. Thus the user can safely set the latest state to the
+solver and advance it. If the solver is not yet terminated from the
+previous call, the state will be buffered until the solver is ready, the
+buffer size is one so the solver always will get the latest state.</p>
+</div>
+<div class="section" id="mrt-interface">
+<h3>MRT Interface<a class="headerlink" href="#mrt-interface" title="Permalink to this headline">¶</a></h3>
+<p>The MRT interface is responsible for the safe access to the outcome of
+the solver. It provides two views to the output: the time-based and the
+state-base view. In the time-based approach, MRT only outputs the
+optimized state-input pair for the enquiry time based on a linear
+interpolation of the optimized state-input trajectory. On the other
+hand, the state-based technique evaluates the optimal input using the
+feedback policy for the given time and state. Note that the feedback
+policy option should be activated in the solver settings (given that the
+solver supports the feedback policy).</p>
+</div>
+<div class="section" id="ros-and-non-ros-versions">
+<h3>ROS and non-ROS versions<a class="headerlink" href="#ros-and-non-ros-versions" title="Permalink to this headline">¶</a></h3>
+<p>MPC and MRT interfaces are working in tandem and you need both to deploy
+MPC on your robot. Depending on that you run both MPC and MRT on a
+single machine or on different machines, you should use either
+MpcMrtInterface or the pair of MpcRosInterface and MrtRosInterface. As
+the naming suggests the latter uses ROS for communicating between MPC
+and MRT nodes.</p>
+</div>
+</div>
+<div class="section" id="how-to-test-your-mpc-output">
+<h2>How to test your MPC output?<a class="headerlink" href="#how-to-test-your-mpc-output" title="Permalink to this headline">¶</a></h2>
+<p>The final stage is tuning your cost and other algorithmic
+hyper-parameters. In order to separate the problem of planning from
+tracking controller which transform the MPC outputs to the robot command
+input (such as torques, and desired joint angles and velocities), OCS2
+is equipped with a so-called dummy-simulator. At it simplest form, the
+MRT dummy simulator only interpolates your optimized state-input and
+visualize them in rviz. However, if you set a Rollout instance to the
+dummy simulator, it uses it to simulate the MPC policy. In this case, if
+you use the same dynamics as you used in your optimal control problem,
+you will simulate the MPC output with the exact model that you used for
+planning. More advance simulator such as RaiSim can be also used as the
+rollout instance.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="optimal_control_modules.html" class="btn btn-neutral float-right" title="Optimal Control Modules" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Farbod Farshidian.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

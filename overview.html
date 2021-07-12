@@ -1,0 +1,297 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Overview &mdash; OCS2 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="Introduction" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OCS2
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-use-the-ocs2-toolbox">How to use the OCS2 toolbox?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#licence">Licence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#credits">Credits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#related-publications">Related publications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimal_control_modules.html">Optimal Control Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OCS2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="overview">
+<span id="doxid-ocs2-doc-overviewpage"></span><span id="index-0"></span><h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p><strong>OCS2</strong> is a C++ toolbox tailored for <strong>O</strong>ptimal <strong>C</strong>ontrol
+for <strong>S</strong>witched <strong>S</strong>ystems (OCS2). The toolbox provides an
+efficient implementation of the following algorithms:</p>
+<ul class="simple">
+<li><p><strong>SLQ</strong>: Continuous-time domin DDP</p></li>
+<li><p><strong>iLQR</strong>: Discrete-time domain DDP</p></li>
+<li><p><strong>SQP</strong>: Multiple-shooting algorithm based on <a class="reference external" href="href=&quot;https://github.com/giaf/hpipm&quot;/">HPIPM</a></p></li>
+<li><p><strong>PISOC</strong>: Path integral stochatic optimal control</p></li>
+</ul>
+<p>OCS2 handles general path constraints through Augmented Lagrangian or
+relaxed barrier methods. To facilitate the application of OCS2 in robotic
+tasks, it provides the user with additional tools to set up the system
+dynamics (such as kinematic or dynamic models) and cost/constraints
+(such as self-collision avoidance and end-effector tracking) from a URDF
+model. The library also provides an automatic differentiation tool to
+calculate derivatives of the system dynamics, constraints, and cost. To
+facilitate its deployment on robotic platforms, the OCS2 provides tools
+for ROS interfaces. The toolbox’s efficient and numerically stable
+implementations in conjunction with its user-friendly interface have
+paved the way for employing it on numerous robotic applications with
+limited onboard computation power.</p>
+<div class="section" id="how-to-use-the-ocs2-toolbox">
+<h2>How to use the OCS2 toolbox?<a class="headerlink" href="#how-to-use-the-ocs2-toolbox" title="Permalink to this headline">¶</a></h2>
+<p>OCS2 can be easily installed on Ubuntu. The <a class="reference external" href="https://github.com/leggedrobotics/ocs2">source code</a> is also publicly available.
+To get started with the control toolbox, please refer to the
+<a class="reference internal" href="installation.html#doxid-ocs2-doc-installation"><span class="std std-ref">Installation started</span></a>, and
+<a class="reference internal" href="getting-started.html#doxid-ocs2-doc-getting-started"><span class="std std-ref">Getting Started</span></a> pages.</p>
+</div>
+<div class="section" id="licence">
+<h2>Licence<a class="headerlink" href="#licence" title="Permalink to this headline">¶</a></h2>
+<p>The OCS2 toolbox is released under the <em>BSD 3-Clause</em> license. Please
+note the license and notice files in the source directory.</p>
+</div>
+<div class="section" id="credits">
+<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
+<p>The following people have been involved in the development of the OCS2:</p>
+<p><strong>Project Manager</strong>:
+Farbod Farshidian (ETHZ).</p>
+<p><strong>Main Developers</strong>:
+Farbod Farshidian (ETHZ),
+Ruben Grandia (ETHZ),
+Michael Spieler (ETHZ),
+Jan Carius (ETHZ),
+Jean-Pierre Sleiman (ETHZ).</p>
+<p><strong>Other Developers</strong>:
+Johannes Pankert,
+Perry Franklin,
+Tom Lankhorst,
+David Hoeller,
+Asutosh Satapathy,
+Markus Giftthaler.</p>
+<p><strong>Acknowledgement</strong>: The OCS2 toolbox development initiated by the ADRL team at ETH Zurich, and the
+project has continued to evolve at RSL, ETH Zurich. The RSL team now actively
+supports the development of OCS2.</p>
+</div>
+<div class="section" id="related-publications">
+<h2>Related publications<a class="headerlink" href="#related-publications" title="Permalink to this headline">¶</a></h2>
+<p>This toolbox has been used in the following publications:</p>
+<p id="id1"><dl class="citation">
+<dt class="label" id="id5"><span class="brackets">FJS+17</span></dt>
+<dd><p>Farbod Farshidian, Edo Jelavic, Asutosh Satapathy, Markus Giftthaler, and Jonas Buchli. Real-time motion planning of legged robots: a model predictive control approach. In <em>IEEE-RAS International Conference on Humanoid Robotics (Humanoids)</em>. 2017. URL: <a class="reference external" href="https://arxiv.org/abs/1710.04029">https://arxiv.org/abs/1710.04029</a>.</p>
+</dd>
+<dt class="label" id="id4"><span class="brackets">FKPB17</span></dt>
+<dd><p>Farbod Farshidian, Maryam Kamgarpour, Diego Pardo, and Jonas Buchli. Sequential linear quadratic optimal control for nonlinear switched systems. In <em>International Federation of Automatic Control (IFAC)</em>. 2017. URL: <a class="reference external" href="https://arxiv.org/abs/1609.02198">https://arxiv.org/abs/1609.02198</a>.</p>
+</dd>
+<dt class="label" id="id3"><span class="brackets">FNW+17</span></dt>
+<dd><p>Farbod Farshidian, Michael Neunert, Alexander W Winkler, Gonzalo Rey, and Jonas Buchli. An efficient optimal planning and control framework for quadrupedal locomotion. In <em>IEEE International Conference on Robotics and Automation (ICRA)</em>. 2017. URL: <a class="reference external" href="https://arxiv.org/abs/1609.09861">https://arxiv.org/abs/1609.09861</a>.</p>
+</dd>
+<dt class="label" id="id6"><span class="brackets">GFS+17</span></dt>
+<dd><p>Markus Giftthaler, Farbod Farshidian, Timothy Sandy, Lukas Stadelmann, and Jonas Buchli. Efficient kinematic planning for mobile manipulators with non-holonomic constraints using optimal control. In <em>IEEE International Conference on Robotics and Automation (ICRA)</em>. 2017. URL: <a class="reference external" href="https://arxiv.org/abs/1701.08051">https://arxiv.org/abs/1701.08051</a>.</p>
+</dd>
+</dl>
+</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Farbod Farshidian.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

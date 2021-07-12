@@ -1,0 +1,269 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>From URDF to OCP &mdash; OCS2 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="How to Profile the Solvers" href="profiling.html" />
+    <link rel="prev" title="Robotic Examples" href="robotic_examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OCS2
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimal_control_modules.html">Optimal Control Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">From URDF to OCP</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#centroidal-model">Centroidal Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#kinematics">Kinematics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#self-collision-avoidance">Self Collision Avoidance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OCS2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>From URDF to OCP</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/from_urdf_to_ocp.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="from-urdf-to-ocp">
+<span id="doxid-ocs2-doc-from-urdf-to-ocp"></span><span id="index-0"></span><h1>From URDF to OCP<a class="headerlink" href="#from-urdf-to-ocp" title="Permalink to this headline">¶</a></h1>
+<p>One of the main challenges that hinders the widespread application of
+MPC for robotic tasks is the burden of setting up the optimal control
+problem. OCS2 provides several helper classes for defining some of the
+commonly-used models, cost, and constraints to mitigate this issue. To
+this end, OCS2 interfaces to several third party packages such as
+<a class="reference external" href="https://robcogenteam.bitbucket.io/">RobCoGen</a>, <a class="reference external" href="https://github.com/joaoleal/CppADCodeGen">CppADCodeGen</a>, <a class="reference external" href="https://github.com/stack-of-tasks/pinocchio">Pinocchio</a>, and <a class="reference external" href="https://github.com/humanoid-path-planner/hpp-fcl">HPP-FCL</a>. We here
+focus on our Pinocchio interfaces. All the discussed packages on this
+page can be found in the meta-package ocs2_pinocchio.</p>
+<div class="section" id="centroidal-model">
+<h2>Centroidal Model<a class="headerlink" href="#centroidal-model" title="Permalink to this headline">¶</a></h2>
+<p>A poly-articulated floating-base system, such as a legged robot, can be
+modeled as an unactuated 3D rigid body to which is attached a set of
+fully actuated limbs. Under the mild assumption that one has sufficient
+control authority in the robot’s joints, it would be justifiable to
+independently consider centroidal dynamics in the MPC formulation as a
+simplified template model. This model’s state space comprises the
+normalized centroidal momentum, the base coordinate, and the joint
+positions. The input space is the concatenation of all contact wrenches
+and the joint velocities. To capture the effect of the generalized
+coordinates’ rate of change on the centroidal momentum, this model uses
+the centroidal momentum matrix and introduces a correct mapping between
+base twist and joint velocities. For more details on the implementation,
+refer to the package ocs2_centroidal_model.</p>
+</div>
+<div class="section" id="kinematics">
+<h2>Kinematics<a class="headerlink" href="#kinematics" title="Permalink to this headline">¶</a></h2>
+<p>OCS2 provides a Kinematics interface for any named frame in the URDF
+model based on the Pinocchio library. This interface provides a
+first-order model of position, orientation error, and velocity for a
+list named frames. OCS2 offers two interfaces:
+PinocchioEndEffectorKinematics, which is based on analytical deviates,
+and PinocchioEndEffectorKinematicsCppAd, which is based on auto
+differentiation. The former is often used when one intends to rely on
+the caching capability of OCS2; Otherwise, the CppAd variant can be
+used.</p>
+</div>
+<div class="section" id="self-collision-avoidance">
+<h2>Self Collision Avoidance<a class="headerlink" href="#self-collision-avoidance" title="Permalink to this headline">¶</a></h2>
+<p>The OCS2 library provides helper classes for defining self-collision
+avoidance constraints. These constraints are conveniently defined
+through the URDF model and a user-defined list of collision bodies. This
+list should be a subset of the collision bodies of the URDF model. It is
+intended to avoiding collision checking in between all the bodies, and
+reducing the computation overhead. The collision constraints computation
+requires the HPP-FCL and the Pinocchio libraries. For more details on
+the implementation, refer to the package ocs2_self_collision.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="profiling.html" class="btn btn-neutral float-right" title="How to Profile the Solvers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="robotic_examples.html" class="btn btn-neutral float-left" title="Robotic Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Farbod Farshidian.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

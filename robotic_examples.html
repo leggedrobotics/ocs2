@@ -1,0 +1,351 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Robotic Examples &mdash; OCS2 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="From URDF to OCP" href="from_urdf_to_ocp.html" />
+    <link rel="prev" title="Optimal Control Modules" href="optimal_control_modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OCS2
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimal_control_modules.html">Optimal Control Modules</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Robotic Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#double-integrator">Double Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cart-pole">Cart Pole</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ballbot">Ballbot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quadrotor">Quadrotor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mobile-manipulator">Mobile Manipulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#legged-robot">Legged Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OCS2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Robotic Examples</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/robotic_examples.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="robotic-examples">
+<span id="doxid-ocs2-doc-robotic-examples"></span><span id="index-0"></span><h1>Robotic Examples<a class="headerlink" href="#robotic-examples" title="Permalink to this headline">¶</a></h1>
+<p>OCS2 includes several robotic examples. We here briefly discuss the main
+features of each example.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 18%" />
+<col style="width: 18%" />
+<col style="width: 19%" />
+<col style="width: 14%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>System</p></th>
+<th class="head"><p>State Dim.</p></th>
+<th class="head"><p>Input Dim.</p></th>
+<th class="head"><p>Constrained</p></th>
+<th class="head"><p>Caching</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Double Integrator</p></td>
+<td><p>2</p></td>
+<td><p>1</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cart Pole</p></td>
+<td><p>4</p></td>
+<td><p>1</p></td>
+<td><p>Yes</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p>Ballbot</p></td>
+<td><p>10</p></td>
+<td><p>3</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p>Quadrotor</p></td>
+<td><p>12</p></td>
+<td><p>4</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p>Mobile Manipulator</p></td>
+<td><p>9</p></td>
+<td><p>8</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes / No</p></td>
+</tr>
+<tr class="row-odd"><td><p>Legged Robot</p></td>
+<td><p>24</p></td>
+<td><p>24</p></td>
+<td><p>Yes</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="double-integrator">
+<span id="doxid-ocs2-doc-robotic-examples-double-integrator"></span><h2>Double Integrator<a class="headerlink" href="#double-integrator" title="Permalink to this headline">¶</a></h2>
+<p>The double integrator example is our simplest problem. It models a 1D
+point mass that moves in the x-direction. The model is linear, and the
+cost function is quadratic. The target point is set to the quadratic
+cost through a reference manager module.</p>
+</div>
+<div class="section" id="cart-pole">
+<span id="doxid-ocs2-doc-robotic-examples-cart-pole"></span><h2>Cart Pole<a class="headerlink" href="#cart-pole" title="Permalink to this headline">¶</a></h2>
+<p>The cart-pole example is a classic control problem where a pole is
+attached through an unactuated joint to a cart. The car moves along a
+frictionless track. The goal is to swing up and balance the pendulum
+starting from the downright position by accelerating a decelerating the
+cart along the track.</p>
+</div>
+<div class="section" id="ballbot">
+<span id="doxid-ocs2-doc-robotic-examples-ballbot"></span><h2>Ballbot<a class="headerlink" href="#ballbot" title="Permalink to this headline">¶</a></h2>
+<p>The Ballbot example is a 5DoF system. The platform is a
+torque-controlled, omnidirectional robot that balances on a ball through
+three omni-wheels. The system has nonlinear dynamics and exhibits
+non-minimum-phase behavior. The system dynamics is based on the
+Ballbot’s forward dynamics, and the linear approximation of the flow-map
+is calculated through auto differentiation. The task objective is to
+control the robot’s XY position and yaw based on user command.</p>
+</div>
+<div class="section" id="quadrotor">
+<span id="doxid-ocs2-doc-robotic-examples-quadrotor"></span><h2>Quadrotor<a class="headerlink" href="#quadrotor" title="Permalink to this headline">¶</a></h2>
+<p>The quadrotor example is a 6DoF system. The platform is modeled as a
+floating-base, rigid-body dynamics with a 3D moment and 1D force control
+in the normal direction to the robot. The system dynamics and its
+derivative are code generated. This example aims to track the user
+command defined as the quadrotor’s 3D position and yaw.</p>
+</div>
+<div class="section" id="mobile-manipulator">
+<span id="doxid-ocs2-doc-robotic-examples-mobile-manipulator"></span><h2>Mobile Manipulator<a class="headerlink" href="#mobile-manipulator" title="Permalink to this headline">¶</a></h2>
+<p>The mobile manipulator example is a fully kinematic problem. The model
+consists of a 6DOF arm plus 2D position and heading of the mobile base.
+The control inputs are the 6 joint velocities of the arm and the forward
+and rotational velocities of the base. The objective of the task is to
+track a 6DoF end-effector pose. The joint position and velocity limits
+are included in the constraint of the optimal control problem.</p>
+<p>Moreover, self-collision avoidance is achieved based on the collision
+bodies of the URDF model and collision avoidance constraints (refer to
+ocs2_self_collision). This example implements both the cache and the
+non-cache variants of the MPC, which can be chosen through the
+usePreComputation flag in the config file.</p>
+</div>
+<div class="section" id="legged-robot">
+<span id="doxid-ocs2-doc-robotic-examples-legged-robot"></span><h2>Legged Robot<a class="headerlink" href="#legged-robot" title="Permalink to this headline">¶</a></h2>
+<p>The legged robot example is a switched system problem. It implements an
+MPC approach for motion control of a quadrupedal robot, Anymal. The
+robot’s gait is defined by the user and can be modified during the
+execution through a solver synchronized module (GaitReceiver). The mode
+sequence and the target trajectories are defined through a reference
+manager module (SwitchedModelReferenceManager). The cost function is a
+quadratic penalty to track the commanded base position and yaw and
+equally distribute the weight of the robot on the stance feet. The
+problem has several mode-depended constraints, such as zero force for
+the swing feet and zero velocity for the stance feet. The friction cone
+is enforced on the contact forces, and to avoid foot scuffing, the swing
+feet track a predefined motion in the z-direction.</p>
+<p>The system dynamics are modeled in two ways which can be chosen from the
+config file: (1) The single rigid body dynamics (SRBD): This model
+assumes that the system has constant inertia regardless of its joint
+position. It also includes the full kinematics of the system (2) The
+full centroidal dynamics (FCD): This model uses the centroidal dynamics,
+which incorporates the motion of the robot’s limbs. Similar to SRBD, it
+considers the full kinematics of the robot.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="from_urdf_to_ocp.html" class="btn btn-neutral float-right" title="From URDF to OCP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="optimal_control_modules.html" class="btn btn-neutral float-left" title="Optimal Control Modules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Farbod Farshidian.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

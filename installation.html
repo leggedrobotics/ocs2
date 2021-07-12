@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Installation &mdash; OCS2 1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="getting-started.html" />
+    <link rel="prev" title="Overview" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OCS2
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optional-dependencies">Optional Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#doxid-ocs2-doc-installation-ocs2-doc-install">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build-the-library">Build the library</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-this-documentation">Build this Documentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimal_control_modules.html">Optimal Control Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="robotic_examples.html">Robotic Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="from_urdf_to_ocp.html">From URDF to OCP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">How to Profile the Solvers</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OCS2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Installation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="installation">
+<span id="doxid-ocs2-doc-installation"></span><span id="index-0"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>The OCS2 library is written in C++11. It is tested under Ubuntu 20.04 with library versions as
+provided in the package sources.</p>
+<div class="section" id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>C++ compiler with C++11 support</p></li>
+<li><p>Eigen (v3.3)</p></li>
+<li><p>Boost C++ (v1.54)</p></li>
+<li><p>GLPK <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">libglpk-dev</span></code></p></li>
+<li><p>catkin <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">catkin</span></code></p></li>
+<li><p>pybind11_catkin, ROS package, installable via <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">ros-noetic-pybind11-catkin</span></code></p></li>
+<li><p>catkin-pkg package for python3. Install with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">python3-catkin-tools</span></code></p></li>
+<li><p>Doxygen for documentation. Install with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">doxygen</span> <span class="pre">doxygen-latex</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="optional-dependencies">
+<h3>Optional Dependencies<a class="headerlink" href="#optional-dependencies" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>For rigid multi-body dynamics library and self collision support clone <a class="reference external" href="https://github.com/stack-of-tasks/pinocchio">Pinocchio</a> and <a class="reference external" href="https://github.com/humanoid-path-planner/hpp-fcl">HPP-FCL</a> into your workspace</p></li>
+</ul>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone pinocchio</span>
+git clone git@github.com:leggedrobotics/pinocchio.git
+<span class="c1"># Clone hpp-fcl</span>
+git clone git@github.com:leggedrobotics/hpp-fcl.git
+<span class="c1"># install dependencies</span>
+sudo apt install liburdfdom-dev liboctomap-dev libassimp-dev
+</pre></div>
+</div>
+</div></blockquote>
+<ul>
+<li><p><a class="reference external" href="https://github.com/raisimTech/raisimLib">RaiSim</a> simulator can be used as a provider for rollouts. The corresponding <code class="docutils literal notranslate"><span class="pre">ocs2_raisim</span></code> package has additional requirements:</p>
+<blockquote>
+<div><p>RaiSim package, which needs to be installed from source by cloning it into your workspace:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone --depth <span class="m">1</span> https://github.com/raisimTech/raisimLib.git
+</pre></div>
+</div>
+<p>For installation, follow the <a class="reference external" href="https://raisim.com/sections/Installation.html">instructions</a>
+of the RaiSim webpage. Alternatively, in order to make the installation easy to find for
+catkin and easy to uninstall in the future, consider using
+<a class="reference external" href="https://help.ubuntu.com/community/CheckInstall">CheckInstall</a> which will install RaiSim
+as a debian package. For this, replace the original commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake .. -DCMAKE_INSTALL_PREFIX<span class="o">=</span><span class="nv">$LOCAL_INSTALL</span> &lt;other options&gt;
+make install -j4
+</pre></div>
+</div>
+<p>with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake .. &lt;other options&gt;     <span class="o">(</span>Without INSTALL_PREFIX<span class="o">)</span>
+make -j4 <span class="o">&amp;&amp;</span> sudo checkinstall
+</pre></div>
+</div>
+<p>This will install RaiSim at the default location of <code class="docutils literal notranslate"><span class="pre">/usr/local/lib</span></code> which will also be automatically detected by catkin. When asked by <code class="docutils literal notranslate"><span class="pre">checkinstall</span></code>, change the package name to something appropriate (e.g. “raisim”) to it find later for package management, such as for uninstallation (<code class="docutils literal notranslate"><span class="pre">dpkg</span> <span class="pre">-r</span> <span class="pre">&lt;package_name&gt;</span></code>).</p>
+</div></blockquote>
+</li>
+<li><p><a class="reference external" href="https://github.com/ANYbotics/grid_map">Grid Map</a> catkin package, which may be installed with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">ros-noetic-grid-map-msgs</span></code>.</p></li>
+<li><p><a class="reference external" href="https://github.com/leggedrobotics/raisimOgre">RaisimOgre</a> Visualizer for Raisim. Can be used for debugging purposes to see if conversions between OCS2 and Raisim are correct.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="doxid-ocs2-doc-installation-ocs2-doc-install">
+<span id="id1"></span><h2>Installation<a class="headerlink" href="#doxid-ocs2-doc-installation-ocs2-doc-install" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="build-the-library">
+<h3>Build the library<a class="headerlink" href="#build-the-library" title="Permalink to this headline">¶</a></h3>
+<p>Create a new catkin workspace:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create the directories</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+mkdir -p &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/src
+<span class="nb">cd</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/
+
+<span class="c1"># Initialize the catkin workspace</span>
+catkin init
+catkin config --extend /opt/ros/noetic
+catkin config -DCMAKE_BUILD_TYPE<span class="o">=</span>RelWithDebInfo
+</pre></div>
+</div>
+<p>Clone the OCS2 library:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Navigate to the directory of src</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">cd</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/src
+git clone git@github.com:leggedrobotics/ocs2.git
+</pre></div>
+</div>
+<p>Build and run the unit tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build it</span>
+catkin build ocs2
+
+<span class="c1"># Source it</span>
+<span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
+
+<span class="c1"># run tests</span>
+catkin run_tests ocs2
+</pre></div>
+</div>
+</div>
+<div class="section" id="build-this-documentation">
+<h3>Build this Documentation<a class="headerlink" href="#build-this-documentation" title="Permalink to this headline">¶</a></h3>
+<p>Assuming python catkin tools are installed, run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Navigate to the directory of ocs2_doc</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">cd</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/src/ocs2/ocs2_doc
+
+<span class="c1"># make build directory</span>
+mkdir -p build
+<span class="c1"># Navigate to the build folder</span>
+<span class="nb">cd</span> build
+
+<span class="c1"># build docs</span>
+cmake ..
+make
+</pre></div>
+</div>
+<p>This will build the documentation and place it in the <code class="docutils literal notranslate"><span class="pre">build/output/sphinx</span></code> folder.
+Open the <code class="docutils literal notranslate"><span class="pre">index.html</span></code> in your web browser.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="getting-started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="overview.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Farbod Farshidian.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

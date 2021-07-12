@@ -73,7 +73,7 @@ ddp
   constraintTolerance             5e-3
 
   displayInfo                     false
-  displayShortSummary             false
+  displayShortSummary             true
   checkNumericalStability         false
   debugPrintRollout               false
   debugCaching                    false

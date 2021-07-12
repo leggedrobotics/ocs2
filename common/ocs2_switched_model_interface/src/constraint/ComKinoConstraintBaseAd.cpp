@@ -1,13 +1,12 @@
-#include <ocs2_switched_model_interface/constraint/AnymalWheelsComKinoConstraintAd.h>
+#include "ocs2_switched_model_interface/constraint/ComKinoConstraintBaseAd.h"
 
 namespace switched_model {
 
-AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinematic_model_t& adKinematicModel,
-                                                                 const ad_com_model_t& adComModel,
-                                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
-                                                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner,
-                                                                 ModelSettings options)
-    : inequalityConstraintsCollectionPtr_(new ocs2::StateInputConstraintCollection),
+ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
+                                                 const SwitchedModelModeScheduleManager& modeScheduleManager,
+                                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings options)
+    : equalityStateInputConstraintCollectionPtr_(new ocs2::StateInputConstraintCollection),
+      inequalityConstraintsCollectionPtr_(new ocs2::StateInputConstraintCollection),
       adKinematicModelPtr_(adKinematicModel.clone()),
       adComModelPtr_(adComModel.clone()),
       options_(std::move(options)),
@@ -20,9 +19,9 @@ AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const ad_kinema
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const AnymalWheelsComKinoConstraintAd& rhs)
+ComKinoConstraintBaseAd::ComKinoConstraintBaseAd(const ComKinoConstraintBaseAd& rhs)
     : ocs2::ConstraintBase(rhs),
-      equalityStateInputConstraintCollection_(rhs.equalityStateInputConstraintCollection_),
+      equalityStateInputConstraintCollectionPtr_(rhs.equalityStateInputConstraintCollectionPtr_->clone()),
       inequalityConstraintsCollectionPtr_(rhs.inequalityConstraintsCollectionPtr_->clone()),
       adKinematicModelPtr_(rhs.adKinematicModelPtr_->clone()),
       adComModelPtr_(rhs.adComModelPtr_->clone()),
@@ -35,16 +34,14 @@ AnymalWheelsComKinoConstraintAd::AnymalWheelsComKinoConstraintAd(const AnymalWhe
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-AnymalWheelsComKinoConstraintAd* AnymalWheelsComKinoConstraintAd::clone() const {
-  return new AnymalWheelsComKinoConstraintAd(*this);
+ComKinoConstraintBaseAd* ComKinoConstraintBaseAd::clone() const {
+  return new ComKinoConstraintBaseAd(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
-  using ConstraintTerm_t = ConstraintTerm<STATE_DIM, INPUT_DIM>;
-
+void ComKinoConstraintBaseAd::initializeConstraintTerms() {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
@@ -53,29 +50,28 @@ void AnymalWheelsComKinoConstraintAd::initializeConstraintTerms() {
     std::unique_ptr<FrictionConeConstraint> frictionCone(new FrictionConeConstraint(std::move(frictionConfig), i));
 
     // EE force
-    auto zeroForceConstraint = std::unique_ptr<ConstraintTerm_t>(new ZeroForceConstraint(i));
+    auto zeroForceConstraint = std::unique_ptr<ocs2::StateInputConstraint>(new ZeroForceConstraint(i));
 
-    // Foot normal Constraint
-    auto footNormalConstraint = std::unique_ptr<ConstraintTerm_t>(
+    // Velocity Constraint
+    auto footNormalConstraint = std::unique_ptr<ocs2::StateInputConstraint>(
         new FootNormalConstraint(i, FootNormalConstraintMatrix(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
-    // EE InFootFrame Velocity Constraint
-    auto endEffectorVelocityInFootFrameConstraint = std::unique_ptr<ConstraintTerm_t>(new EndEffectorVelocityInFootFrameConstraint(
-        i, EndEffectorVelocityInFootFrameConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
+    auto endEffectorVelocityConstraint = std::unique_ptr<ocs2::StateInputConstraint>(new EndEffectorVelocityConstraint(
+        i, EndEffectorVelocityConstraintSettings(), *adComModelPtr_, *adKinematicModelPtr_, options_.recompileLibraries_));
 
     // Inequalities
     inequalityConstraintsCollectionPtr_->add(footName + "_FrictionCone", std::move(frictionCone));
 
     // State input equalities
-    equalityStateInputConstraintCollection_.add(footName + "_ZeroForce", std::move(zeroForceConstraint));
-    equalityStateInputConstraintCollection_.add(footName + "_EENormal", std::move(footNormalConstraint));
-    equalityStateInputConstraintCollection_.add(footName + "_f_EEVel", std::move(endEffectorVelocityInFootFrameConstraint));
+    equalityStateInputConstraintCollectionPtr_->add(footName + "_ZeroForce", std::move(zeroForceConstraint));
+    equalityStateInputConstraintCollectionPtr_->add(footName + "_EENormal", std::move(footNormalConstraint));
+    equalityStateInputConstraintCollectionPtr_->add(footName + "_EEVel", std::move(endEffectorVelocityConstraint));
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void AnymalWheelsComKinoConstraintAd::collectConstraintPointers() {
+void ComKinoConstraintBaseAd::collectConstraintPointers() {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     auto footName = feetNames[i];
 
@@ -83,18 +79,17 @@ void AnymalWheelsComKinoConstraintAd::collectConstraintPointers() {
     frictionConeConstraints_[i] = &inequalityConstraintsCollectionPtr_->get<FrictionConeConstraint>(footName + "_FrictionCone");
 
     // State input equalities
-    zeroForceConstraints_[i] = &equalityStateInputConstraintCollection_.get<ZeroForceConstraint>(footName + "_ZeroForce");
-    eeNormalConstraints_[i] = &equalityStateInputConstraintCollection_.get<FootNormalConstraint>(footName + "_EENormal");
-    eeVelConstraints_[i] = &equalityStateInputConstraintCollection_.get<EndEffectorVelocityInFootFrameConstraint>(footName + "_f_EEVel");
+    zeroForceConstraints_[i] = &equalityStateInputConstraintCollectionPtr_->get<ZeroForceConstraint>(footName + "_ZeroForce");
+    eeNormalConstraints_[i] = &equalityStateInputConstraintCollectionPtr_->get<FootNormalConstraint>(footName + "_EENormal");
+    eeVelConstraints_[i] = &equalityStateInputConstraintCollectionPtr_->get<EndEffectorVelocityConstraint>(footName + "_EEVel");
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar_t t) {
+void ComKinoConstraintBaseAd::updateStateInputEqualityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    const auto& footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
     const bool inContact = footPhase.contactFlag();
 
@@ -106,15 +101,14 @@ void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar
     EENormalConstraint.setActivity(true);
     EENormalConstraint.configure(footPhase.getFootNormalConstraintInWorldFrame(t));
 
-    // Rolling InFootFrame Velocity constraint for stance legs
-    auto& EEVelInFootFrameConstraint = *eeVelConstraints_[i];
-    EEVelInFootFrameConstraint.setActivity(inContact);
+    // Foot tangential constraints only for stanceLegs
+    auto& EEVelConstraint = *eeVelConstraints_[i];
+    EEVelConstraint.setActivity(inContact);
     if (inContact) {
-      // EE velocities in lateral direction (y) in foot frame should be zero.
-      EndEffectorVelocityInFootFrameConstraintSettings eeVelInFootFrameConSettings(1, 3);
-      eeVelInFootFrameConSettings.b << 0;
-      eeVelInFootFrameConSettings.A << 0, 1, 0;
-      EEVelInFootFrameConstraint.configure(eeVelInFootFrameConSettings);
+      EndEffectorVelocityConstraintSettings eeVelConSettings;
+      eeVelConSettings.A = tangentialBasisFromSurfaceNormal(footPhase.normalDirectionInWorldFrame(t));
+      eeVelConSettings.b = Eigen::Vector2d::Zero();
+      EEVelConstraint.configure(eeVelConSettings);
     }
   }
 }
@@ -122,9 +116,8 @@ void AnymalWheelsComKinoConstraintAd::updateStateInputEqualityConstraints(scalar
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void AnymalWheelsComKinoConstraintAd::updateInequalityConstraints(scalar_t t) {
+void ComKinoConstraintBaseAd::updateInequalityConstraints(scalar_t t) {
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    const auto& footName = feetNames[i];
     const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(i, t);
     const bool inContact = footPhase.contactFlag();
 
@@ -140,15 +133,15 @@ void AnymalWheelsComKinoConstraintAd::updateInequalityConstraints(scalar_t t) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t AnymalWheelsComKinoConstraintAd::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+vector_t ComKinoConstraintBaseAd::stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
   updateStateInputEqualityConstraints(t);
-  return equalityStateInputConstraintCollection_.getValueAsVector(t, x, u);
+  return equalityStateInputConstraintCollectionPtr_->getValue(t, x, u);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t AnymalWheelsComKinoConstraintAd::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
+vector_t ComKinoConstraintBaseAd::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
   updateInequalityConstraints(t);
   return inequalityConstraintsCollectionPtr_->getValue(t, x, u);
 }
@@ -156,28 +149,19 @@ vector_t AnymalWheelsComKinoConstraintAd::inequalityConstraint(scalar_t t, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation AnymalWheelsComKinoConstraintAd::stateInputEqualityConstraintLinearApproximation(scalar_t t,
-                                                                                                                   const vector_t& x,
-                                                                                                                   const vector_t& u) {
+VectorFunctionLinearApproximation ComKinoConstraintBaseAd::stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                                           const vector_t& u) {
   updateStateInputEqualityConstraints(t);
-  const size_t numConstraints = equalityStateInputConstraintCollection_.getNumConstraints(t);
-  const auto constraintApproximation = equalityStateInputConstraintCollection_.getLinearApproximationAsMatrices(t, x, u);
-
-  VectorFunctionLinearApproximation g;
-  g.f = constraintApproximation.constraintValues.head(numConstraints);
-  g.dfdx = constraintApproximation.derivativeState.topRows(numConstraints);
-  g.dfdu = constraintApproximation.derivativeInput.topRows(numConstraints);
-  return g;
+  return equalityStateInputConstraintCollectionPtr_->getLinearApproximation(t, x, u);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionQuadraticApproximation AnymalWheelsComKinoConstraintAd::inequalityConstraintQuadraticApproximation(scalar_t t,
-                                                                                                                 const vector_t& x,
-                                                                                                                 const vector_t& u) {
+VectorFunctionQuadraticApproximation ComKinoConstraintBaseAd::inequalityConstraintQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                                         const vector_t& u) {
   updateInequalityConstraints(t);
   return inequalityConstraintsCollectionPtr_->getQuadraticApproximation(t, x, u);
 }
 
-}  // namespace switched_model
+}  // end of namespace switched_model

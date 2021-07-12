@@ -54,7 +54,6 @@ class LeggedRobotPreComputation : public PreComputation {
   LeggedRobotPreComputation* clone() const override;
 
   void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
-  void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
 
   const std::vector<EndEffectorLinearConstraint::Config>& getEeNormalVelocityConstraintConfigs() const { return eeNormalVelConConfigs_; }
 

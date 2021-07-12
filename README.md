@@ -11,4 +11,4 @@ Our proposed method is based on a bi-level optimal control approach which synthe
 feedback control policy for continuous inputs in the bottom-level and optimizes the switching times
 in between two consecutive system modes in the top-level.
 
-For more information refer to the project's [Documentation Page](https://docs.leggedrobotics.com/ocs2_doc/) 
+For more information refer to the project's [Documentation Page](https://leggedrobotics.github.io/ocs2/) 

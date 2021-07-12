@@ -127,9 +127,8 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   // Mode schedule manager
   referenceManagerPtr_ = std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(taskFile), std::move(swingTrajectoryPlanner));
 
-  // Initialization
-  constexpr bool extendNormalizedMomentum = true;
-  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedMomentum));
+  // Optimal control problem
+  problemPtr_.reset(new OptimalControlProblem);
 
   // Dynamics
   bool useAnalyticalGradientsDynamics = false;
@@ -142,8 +141,10 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
     dynamicsPtr.reset(new LeggedRobotDynamicsAD(*pinocchioInterfacePtr_, centroidalModelInfo_, modelName, modelSettings_));
   }
 
-  // Rollout
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings_));
+  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
+
+  // Cost
+  problemPtr_->costPtr->add("baseTrackingCost", getBaseTrackingCost(taskFile, centroidalModelInfo_));
 
   // Friction cone soft constraint settings
   scalar_t frictionCoefficient = 1.0;
@@ -153,7 +154,7 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   boost::property_tree::read_info(taskFile, pt);
   const std::string prefix = "frictionConeSoftConstraint.";
   if (display_) {
-    std::cerr << "\n #### FrictionCone Settings: ";
+    std::cerr << "\n #### Friction Cone Settings: ";
     std::cerr << "\n #### =============================================================================\n";
   }
   loadData::loadPtreeValue(pt, frictionCoefficient, prefix + "frictionCoefficient", display_);
@@ -162,11 +163,6 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   if (display_) {
     std::cerr << " #### =============================================================================" << std::endl;
   }
-
-  // Optimal control problem
-  problemPtr_.reset(new OptimalControlProblem);
-  problemPtr_->costPtr->add("baseTrackingCost", getBaseTrackingCost(taskFile, centroidalModelInfo_));
-  problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   bool useAnalyticalGradientsConstraints = false;
   loadData::loadCppDataType(taskFile, "legged_robot_interface.useAnalyticalGradientsConstraints", useAnalyticalGradientsConstraints);
@@ -199,10 +195,15 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   }
 
   // Pre-computation
-  if (modelSettings_.usePreComputation) {
-    problemPtr_->preComputationPtr.reset(new LeggedRobotPreComputation(*pinocchioInterfacePtr_, centroidalModelInfo_,
-                                                                       *referenceManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_));
-  }
+  problemPtr_->preComputationPtr.reset(new LeggedRobotPreComputation(*pinocchioInterfacePtr_, centroidalModelInfo_,
+                                                                     *referenceManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_));
+
+  // Rollout
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings_));
+
+  // Initialization
+  constexpr bool extendNormalizedMomentum = true;
+  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedMomentum));
 }
 
 /******************************************************************************************************/

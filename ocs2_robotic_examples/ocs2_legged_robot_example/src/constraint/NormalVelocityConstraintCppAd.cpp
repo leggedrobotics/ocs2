@@ -27,7 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
+#include "ocs2_legged_robot_example/constraint/NormalVelocityConstraintCppAd.h"
+#include "ocs2_legged_robot_example/LeggedRobotPreComputation.h"
 
 namespace ocs2 {
 namespace legged_robot {
@@ -35,79 +36,51 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EndEffectorLinearConstraint::EndEffectorLinearConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
-                                                         size_t numConstraints, Config config)
+NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const SwitchedModelReferenceManager& referenceManager,
+                                                             const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
+                                                             size_t contactPointIndex)
     : StateInputConstraint(ConstraintOrder::Linear),
-      endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
-      numConstraints_(numConstraints),
-      config_(std::move(config)) {
-  if (endEffectorKinematicsPtr_->getIds().size() != 1) {
-    throw std::runtime_error("[EndEffectorLinearConstraint] this class only accepts a single end-effector!");
-  }
-}
+      referenceManagerPtr_(&referenceManager),
+      eeLinearConstraintPtr_(new EndEffectorLinearConstraint(endEffectorKinematics, 1)),
+      contactPointIndex_(contactPointIndex) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-EndEffectorLinearConstraint::EndEffectorLinearConstraint(const EndEffectorLinearConstraint& rhs)
+NormalVelocityConstraintCppAd::NormalVelocityConstraintCppAd(const NormalVelocityConstraintCppAd& rhs)
     : StateInputConstraint(rhs),
-      endEffectorKinematicsPtr_(rhs.endEffectorKinematicsPtr_->clone()),
-      numConstraints_(rhs.numConstraints_),
-      config_(rhs.config_) {}
+      referenceManagerPtr_(rhs.referenceManagerPtr_),
+      eeLinearConstraintPtr_(rhs.eeLinearConstraintPtr_->clone()),
+      contactPointIndex_(rhs.contactPointIndex_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void EndEffectorLinearConstraint::configure(Config&& config) {
-  assert(config.b.rows() == numConstraints_);
-  assert(config.Ax.size() > 0 || config.Av.size());
-  assert(config.Ax.size() > 0 && config.Ax.rows() == numConstraints_);
-  assert(config.Ax.size() > 0 && config.Ax.cols() == 3);
-  assert(config.Av.size() > 0 && config.Av.rows() == numConstraints_);
-  assert(config.Av.size() > 0 && config.Av.cols() == 3);
-  config_ = std::move(config);
+bool NormalVelocityConstraintCppAd::isActive(scalar_t time) const {
+  return !referenceManagerPtr_->getContactFlags(time)[contactPointIndex_];
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t EndEffectorLinearConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                               const PreComputation& preComp) const {
-  vector_t f = config_.b;
-  if (config_.Ax.size() > 0) {
-    f.noalias() += config_.Ax * endEffectorKinematicsPtr_->getPosition(state).front();
-  }
-  if (config_.Av.size() > 0) {
-    f.noalias() += config_.Av * endEffectorKinematicsPtr_->getVelocity(state, input).front();
-  }
-  return f;
+vector_t NormalVelocityConstraintCppAd::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                                 const PreComputation& preComp) const {
+  const auto& preCompLegged = cast<LeggedRobotPreComputation>(preComp);
+  eeLinearConstraintPtr_->configure(preCompLegged.getEeNormalVelocityConstraintConfigs()[contactPointIndex_]);
+
+  return eeLinearConstraintPtr_->getValue(time, state, input, preComp);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation EndEffectorLinearConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                      const vector_t& input,
-                                                                                      const PreComputation& preComp) const {
-  VectorFunctionLinearApproximation linearApproximation =
-      VectorFunctionLinearApproximation::Zero(getNumConstraints(time), state.size(), input.size());
+VectorFunctionLinearApproximation NormalVelocityConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                        const vector_t& input,
+                                                                                        const PreComputation& preComp) const {
+  const auto& preCompLegged = cast<LeggedRobotPreComputation>(preComp);
+  eeLinearConstraintPtr_->configure(preCompLegged.getEeNormalVelocityConstraintConfigs()[contactPointIndex_]);
 
-  linearApproximation.f = config_.b;
-
-  if (config_.Ax.size() > 0) {
-    const auto positionApprox = endEffectorKinematicsPtr_->getPositionLinearApproximation(state).front();
-    linearApproximation.f.noalias() += config_.Ax * positionApprox.f;
-    linearApproximation.dfdx.noalias() += config_.Ax * positionApprox.dfdx;
-  }
-
-  if (config_.Av.size() > 0) {
-    const auto velocityApprox = endEffectorKinematicsPtr_->getVelocityLinearApproximation(state, input).front();
-    linearApproximation.f.noalias() += config_.Av * velocityApprox.f;
-    linearApproximation.dfdx.noalias() += config_.Av * velocityApprox.dfdx;
-    linearApproximation.dfdu.noalias() += config_.Av * velocityApprox.dfdu;
-  }
-
-  return linearApproximation;
+  return eeLinearConstraintPtr_->getLinearApproximation(time, state, input, preComp);
 }
 
 }  // namespace legged_robot

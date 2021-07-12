@@ -2,6 +2,7 @@ centroidalModelType             1      // 0: FullCentroidalDynamics, 1: Single R
   
 legged_robot_interface
 {
+  display                               false  // show the loaded parameters
   useAnalyticalGradientsDynamics        false
   useAnalyticalGradientsConstraints     false
 }
@@ -9,7 +10,6 @@ legged_robot_interface
 model_settings
 {
   positionErrorGain             0.0
-  frictionCoefficient           0.7
   phaseTransitionStanceTime     0.4
 
   verboseCppAd                  true
@@ -125,7 +125,7 @@ mpc
 
   solutionTimeWindow              -1  ; [s]
 
-  mpcDesiredFrequency             100 ; [Hz]
+  mpcDesiredFrequency             50  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
 }
 
@@ -142,7 +142,7 @@ initialState
    ;; Base Pose: [position, orientation] ;;
    (6,0)  0.0     ; p_base_x
    (7,0)  0.0     ; p_base_y
-   (8,0)  0.57    ; p_base_z
+   (8,0)  0.5     ; p_base_z
    (9,0)  0.0     ; theta_base_z
    (10,0) 0.0     ; theta_base_y
    (11,0) 0.0     ; theta_base_x
@@ -230,4 +230,13 @@ R
   (21,21) 5000.0    ; RH_HAA
   (22,22) 5000.0    ; RH_HFE
   (23,23) 5000.0    ; RH_KFE
+}
+
+frictionConeSoftConstraint
+{
+  frictionCoefficient    0.7
+  
+  ; relaxed log barrier parameters
+  mu                     1e-2
+  delta                  1e-3
 }

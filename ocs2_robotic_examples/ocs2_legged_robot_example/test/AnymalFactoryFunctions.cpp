@@ -38,23 +38,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace {
 const std::string ROBOT_URDF_PATH = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
+const std::string ROBOT_TASK_FILE_PATH = ros::package::getPath("ocs2_legged_robot_example") + "/config/mpc/" + "task.info";
 const std::string ROBOT_COMMAND_PATH = ros::package::getPath("ocs2_legged_robot_example") + "/config/command/" + "targetTrajectories.info";
 }  // unnamed namespace
 
 namespace ocs2 {
 namespace legged_robot {
 
-/** Returns a Pinocchio interface based on a defined ROBOT_URDF_PATH  */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::unique_ptr<PinocchioInterface> createAnymalPinocchioInterface() {
   return std::unique_ptr<PinocchioInterface>(new PinocchioInterface(centroidal_model::createPinocchioInterface(ROBOT_URDF_PATH)));
 }
 
-/** Returns a Pinocchio interface based on a defined ROBOT_COMMAND_PATH  */
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 CentroidalModelInfo createAnymalCentroidalModelInfo(const PinocchioInterface& pinocchioInterface, CentroidalModelType centroidalType) {
   const ModelSettings modelSettings;  // default constructor just to get contactNames3DoF
   return centroidal_model::createCentroidalModelInfo(pinocchioInterface, centroidalType,
                                                      centroidal_model::loadDefaultJointState(12, ROBOT_COMMAND_PATH),
                                                      modelSettings.contactNames3DoF, modelSettings.contactNames6DoF);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::shared_ptr<SwitchedModelReferenceManager> createReferenceManager(size_t numFeet) {
+  const auto initModeSchedule = loadModeSchedule(ROBOT_TASK_FILE_PATH, "initialModeSchedule", false);
+  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(ROBOT_TASK_FILE_PATH, "defaultModeSequenceTemplate", false);
+
+  const ModelSettings modelSettings;
+  std::shared_ptr<GaitSchedule> gaitSchedule(
+      new GaitSchedule(initModeSchedule, defaultModeSequenceTemplate, modelSettings.phaseTransitionStanceTime));
+  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(ROBOT_TASK_FILE_PATH, "swing_trajectory_config", false), numFeet));
+  return std::make_shared<SwitchedModelReferenceManager>(gaitSchedule, std::move(swingTrajectoryPlanner));
 }
 
 }  // namespace legged_robot

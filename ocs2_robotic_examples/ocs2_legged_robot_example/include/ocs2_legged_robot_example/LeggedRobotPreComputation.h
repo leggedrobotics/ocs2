@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,37 +29,46 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/Types.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include <memory>
+#include <string>
 
-#include <ros/ros.h>
-#include <mutex>
+#include <ocs2_core/PreComputation.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include "ocs2_legged_robot_example/gait/GaitSchedule.h"
-#include "ocs2_legged_robot_example/gait/ModeSequenceTemplate.h"
-#include "ocs2_legged_robot_example/gait/MotionPhaseDefinition.h"
+#include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
+
+#include "ocs2_legged_robot_example/common/ModelSettings.h"
+#include "ocs2_legged_robot_example/constraint/EndEffectorLinearConstraint.h"
+#include "ocs2_legged_robot_example/foot_planner/SwingTrajectoryPlanner.h"
 
 namespace ocs2 {
 namespace legged_robot {
-class GaitReceiver : public SolverSynchronizedModule {
+
+/** Callback for caching and reference update */
+class LeggedRobotPreComputation : public PreComputation {
  public:
-  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
+  LeggedRobotPreComputation(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
+                            const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings settings);
+  ~LeggedRobotPreComputation() override = default;
 
-  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ReferenceManagerInterface& referenceManager) override;
+  LeggedRobotPreComputation* clone() const override;
 
-  void postSolverRun(const PrimalSolution& primalSolution) override{};
+  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
+
+  const std::vector<EndEffectorLinearConstraint::Config>& getEeNormalVelocityConstraintConfigs() const { return eeNormalVelConConfigs_; }
+
+  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
+  const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }
 
  private:
-  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
+  LeggedRobotPreComputation(const LeggedRobotPreComputation& other) = default;
 
-  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+  PinocchioInterface pinocchioInterface_;
+  CentroidalModelInfo info_;
+  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
+  const ModelSettings settings_;
 
-  ros::Subscriber mpcModeSequenceSubscriber_;
-
-  std::mutex receivedGaitMutex_;
-  std::atomic_bool gaitUpdated_;
-  ModeSequenceTemplate receivedGait_;
+  std::vector<EndEffectorLinearConstraint::Config> eeNormalVelConConfigs_;
 };
 
 }  // namespace legged_robot

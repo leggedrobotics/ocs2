@@ -44,7 +44,7 @@ namespace legged_robot {
 LeggedRobotModeSequenceKeyboard::LeggedRobotModeSequenceKeyboard(ros::NodeHandle nodeHandle, const std::string& gaitFile,
                                                                  const std::string& robotName, bool verbose) {
   ROS_INFO_STREAM(robotName + "_mpc_mode_schedule node is setting up ...");
-  ocs2::loadData::loadStdVector(gaitFile, "list", gaitList_, verbose);
+  loadData::loadStdVector(gaitFile, "list", gaitList_, verbose);
 
   modeSequenceTemplatePublisher_ = nodeHandle.advertise<ocs2_msgs::mode_schedule>(robotName + "_mpc_mode_schedule", 1, true);
 

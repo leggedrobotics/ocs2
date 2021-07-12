@@ -43,14 +43,15 @@ LeggedRobotDynamicsAD::LeggedRobotDynamicsAD(const PinocchioInterface& pinocchio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LeggedRobotDynamicsAD::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
+vector_t LeggedRobotDynamicsAD::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) {
   return pinocchioCentroidalDynamicsAd_.getValue(time, state, input);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation LeggedRobotDynamicsAD::linearApproximation(scalar_t time, const vector_t& state, const vector_t& input) {
+VectorFunctionLinearApproximation LeggedRobotDynamicsAD::linearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                             const PreComputation& preComp) {
   return pinocchioCentroidalDynamicsAd_.getLinearApproximation(time, state, input);
 }
 

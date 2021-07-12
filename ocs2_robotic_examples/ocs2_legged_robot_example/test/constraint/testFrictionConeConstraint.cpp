@@ -47,6 +47,9 @@ class TestFrictionConeConstraint : public testing::Test {
   const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
   const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
+  const std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr =
+      createReferenceManager(centroidalModelInfo.numThreeDofContacts);
+  PreComputation preComputation;
 };
 
 TEST_F(TestFrictionConeConstraint, finiteDifference) {
@@ -58,7 +61,7 @@ TEST_F(TestFrictionConeConstraint, finiteDifference) {
   size_t N = 10000;
 
   for (size_t legNumber = 0; legNumber < centroidalModelInfo.numThreeDofContacts; ++legNumber) {
-    FrictionConeConstraint frictionConeConstraint(config, legNumber, centroidalModelInfo);
+    FrictionConeConstraint frictionConeConstraint(*referenceManagerPtr, config, legNumber, centroidalModelInfo);
 
     vector_t u0 = 10.0 * vector_t::Random(centroidalModelInfo.inputDim);
     u0(2) = 100.0;
@@ -66,8 +69,8 @@ TEST_F(TestFrictionConeConstraint, finiteDifference) {
     u0(8) = 100.0;
     u0(11) = 100.0;
     vector_t x0 = 0.1 * vector_t::Random(centroidalModelInfo.stateDim);
-    const auto y0 = frictionConeConstraint.getValue(t, x0, u0)(0);
-    auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x0, u0);
+    const auto y0 = frictionConeConstraint.getValue(t, x0, u0, preComputation)(0);
+    auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x0, u0, preComputation);
 
     vector_t data(N);
     matrix_t regressor(N, 6 + 6 + 6 + 9);
@@ -96,7 +99,7 @@ TEST_F(TestFrictionConeConstraint, finiteDifference) {
 
       // Scale to condition the regressor
       regressor.row(i) << dEuler.transpose() / eps, dF.transpose() / eps, quadTermsVector.transpose() / (eps * eps);
-      data(i) = (frictionConeConstraint.getValue(t, x0 + dx, u0 + du)(0) - y0);
+      data(i) = (frictionConeConstraint.getValue(t, x0 + dx, u0 + du, preComputation)(0) - y0);
     }
 
     vector_t dh_emperical = regressor.colPivHouseholderQr().solve(data);
@@ -140,7 +143,7 @@ TEST_F(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   vector_t u = vector_t::Random(centroidalModelInfo.inputDim);
 
   for (size_t legNumber = 0; legNumber < centroidalModelInfo.numThreeDofContacts; ++legNumber) {
-    FrictionConeConstraint frictionConeConstraint(config, legNumber, centroidalModelInfo);
+    FrictionConeConstraint frictionConeConstraint(*referenceManagerPtr, config, legNumber, centroidalModelInfo);
 
     // Local forces are equal to the body forces.
     const vector_t F = centroidal_model::getContactForces(u, legNumber, centroidalModelInfo);
@@ -148,7 +151,7 @@ TEST_F(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
     const auto Fy = F(1);
     const auto Fz = F(2);
 
-    auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);
+    auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u, preComputation);
 
     ASSERT_DOUBLE_EQ(quadraticApproximation.f(0), Fz * sqrt(mu * mu) - sqrt(Fx * Fx + Fy * Fy + regularization));
 
@@ -192,10 +195,10 @@ TEST_F(TestFrictionConeConstraint, negativeDefinite) {
   u(11) = 100.0;
 
   for (size_t legNumber = 0; legNumber < centroidalModelInfo.numThreeDofContacts; ++legNumber) {
-    FrictionConeConstraint frictionConeConstraint(config, legNumber, centroidalModelInfo);
+    FrictionConeConstraint frictionConeConstraint(*referenceManagerPtr, config, legNumber, centroidalModelInfo);
 
-    const auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);
-    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfdxx.front()).maxCoeff(), 0.0);
-    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfduu.front()).maxCoeff(), 0.0);
+    const auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u, preComputation);
+    ASSERT_LT(LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfdxx.front()).maxCoeff(), 0.0);
+    ASSERT_LT(LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfduu.front()).maxCoeff(), 0.0);
   }
 }

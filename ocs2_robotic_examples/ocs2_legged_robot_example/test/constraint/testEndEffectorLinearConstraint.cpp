@@ -44,7 +44,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot_example/test/AnymalFactoryFunctions.h"
 
 #include <gtest/gtest.h>
-#include <ros/package.h>
 
 using namespace ocs2;
 using namespace legged_robot;
@@ -98,7 +97,6 @@ class testEndEffectorLinearConstraint : public ::testing::Test {
 
     u = vector_t::Random(centroidalModelInfo.inputDim);
 
-    // Zero velocity constraint (without position error gain in z-direction)
     config.b = vector_t::Random(3);
     config.Ax = matrix_t::Random(3, 3);
     config.Av = matrix_t::Random(3, 3);
@@ -107,6 +105,7 @@ class testEndEffectorLinearConstraint : public ::testing::Test {
   const CentroidalModelType centroidalModelType = CentroidalModelType::SingleRigidBodyDynamics;
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr = createAnymalPinocchioInterface();
   const CentroidalModelInfo centroidalModelInfo = createAnymalCentroidalModelInfo(*pinocchioInterfacePtr, centroidalModelType);
+  PreComputation preComputation;
 
   std::unique_ptr<CentroidalModelPinocchioMapping> pinocchioMappingPtr;
   std::unique_ptr<CentroidalModelPinocchioMappingCppAd> pinocchioMappingAdPtr;
@@ -130,15 +129,15 @@ TEST_F(testEndEffectorLinearConstraint, testValue) {
   auto& data = pinocchioInterfacePtr->getData();
 
   const auto q = pinocchioMappingPtr->getPinocchioJointPosition(x);
-  ocs2::updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
   const auto v = pinocchioMappingPtr->getPinocchioJointVelocity(x, u);
 
   // For getPosition() & getVelocity() of PinocchioEndEffectorKinematics
   pinocchio::forwardKinematics(model, data, q, v);
   pinocchio::updateFramePlacements(model, data);
 
-  const auto value = eeVelConstraintPtr->getValue(0.0, x, u);
-  const auto valueAd = eeVelConstraintAdPtr->getValue(0.0, x, u);
+  const auto value = eeVelConstraintPtr->getValue(0.0, x, u, preComputation);
+  const auto valueAd = eeVelConstraintAdPtr->getValue(0.0, x, u, preComputation);
 
   EXPECT_TRUE(value.isApprox(valueAd));
 }
@@ -158,7 +157,7 @@ TEST_F(testEndEffectorLinearConstraint, testLinearApproximation) {
 
   // PinocchioInterface update for the analytical EndEffectorVelocityConstraint
   const auto q = pinocchioMappingPtr->getPinocchioJointPosition(x);
-  ocs2::updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
+  updateCentroidalDynamics(*pinocchioInterfacePtr, centroidalModelInfo, q);
   const auto v = pinocchioMappingPtr->getPinocchioJointVelocity(x, u);
   const auto a = vector_t::Zero(q.size());
 
@@ -169,10 +168,10 @@ TEST_F(testEndEffectorLinearConstraint, testLinearApproximation) {
   // For getVelocityLinearApproximation of PinocchioEndEffectorKinematics
   pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a);
   // For getOcs2Jacobian of CentroidalModelPinocchioMapping
-  ocs2::updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, centroidalModelInfo, q, v);
+  updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, centroidalModelInfo, q, v);
 
-  const auto linApprox = eeVelConstraintPtr->getLinearApproximation(0.0, x, u);
-  const auto linApproxAd = eeVelConstraintAdPtr->getLinearApproximation(0.0, x, u);
+  const auto linApprox = eeVelConstraintPtr->getLinearApproximation(0.0, x, u, preComputation);
+  const auto linApproxAd = eeVelConstraintAdPtr->getLinearApproximation(0.0, x, u, preComputation);
 
   EXPECT_TRUE(linApprox.f.isApprox(linApproxAd.f));
   EXPECT_TRUE(linApprox.dfdx.isApprox(linApproxAd.dfdx, 1e-14));

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ocs2_core/thread_support/Synchronized.h>
-#include <ocs2_oc/synchronized_module/ModeScheduleManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/dynamics/ComKinoDynamicsParameters.h"
@@ -12,9 +12,9 @@
 namespace switched_model {
 
 /**
- * Manages the ModeSchedule for switched model.
+ * Manages the Target Trajectories and ModeSchedule for switched model.
  */
-class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager {
+class SwitchedModelModeScheduleManager : public ocs2::ReferenceManager {
  public:
   SwitchedModelModeScheduleManager(std::unique_ptr<GaitSchedule> gaitSchedule, std::unique_ptr<SwingTrajectoryPlanner> swingTrajectory,
                                    std::unique_ptr<TerrainModel> terrainModel);
@@ -39,8 +39,8 @@ class SwitchedModelModeScheduleManager : public ocs2::ModeScheduleManager {
   const ComKinoSystemDynamicsParameters<scalar_t>& getActiveDynamicsParameters() const { return activeDynamicsParameters_; }
 
  private:
-  void preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                        const ocs2::CostDesiredTrajectories& costDesiredTrajectory, ocs2::ModeSchedule& modeSchedule) override;
+  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, ocs2::TargetTrajectories& targetTrajectories,
+                        ocs2::ModeSchedule& modeSchedule) override;
 
   ocs2::Synchronized<GaitSchedule> gaitSchedule_;
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;

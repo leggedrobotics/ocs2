@@ -71,7 +71,7 @@ void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, con
   if (observation.time - lastTime_ > minPublishTimeDifference_) {
     const auto timeStamp = ros::Time::now();
     publishObservation(timeStamp, observation);
-    publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
+    publishDesiredTrajectory(timeStamp, command.mpcTargetTrajectories_);
     publishOptimizedStateTrajectory(timeStamp, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_,
                                     primalSolution.modeSchedule_);
     lastTime_ = observation.time;
@@ -179,9 +179,9 @@ void QuadrupedVisualizer::publishCenterOfMassPose(ros::Time timeStamp, const bas
   currentPosePublisher_.publish(poseArray);
 }
 
-void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory) const {
-  const auto& stateTrajectory = costDesiredTrajectory.desiredStateTrajectory();
-  const auto& inputTrajectory = costDesiredTrajectory.desiredInputTrajectory();
+void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const ocs2::TargetTrajectories& targetTrajectories) const {
+  const auto& stateTrajectory = targetTrajectories.stateTrajectory;
+  const auto& inputTrajectory = targetTrajectories.inputTrajectory;
 
   // Reserve com messages
   std::vector<geometry_msgs::Point> desiredComPositionMsg;

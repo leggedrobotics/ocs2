@@ -38,7 +38,7 @@ class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronized
   TerrainPlaneVisualizerSynchronizedModule(const ocs2::Synchronized<TerrainModel>& terrainModel, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override{};
+                    const ocs2::ReferenceManagerInterface& referenceManager) override{};
 
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override;
 

@@ -60,9 +60,9 @@ class Ocs2QpSolverTest : public testing::Test {
     srand(0);
     cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
                                         ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
-    costDesiredTrajectories =
-        ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
-    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    targetTrajectories =
+        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    cost->setTargetTrajectoriesPtr(&targetTrajectories);
     system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
     constraint =
         ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
@@ -75,7 +75,7 @@ class Ocs2QpSolverTest : public testing::Test {
   }
 
   std::unique_ptr<ocs2::CostFunctionBase> cost;
-  ocs2::CostDesiredTrajectories costDesiredTrajectories;
+  ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
   std::unique_ptr<ocs2::ConstraintBase> constraint;
   ocs2::qp_solver::ContinuousTrajectory nominalTrajectory;
@@ -131,8 +131,8 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
 
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the solution has only zeros.
-  costDesiredTrajectories = ocs2::CostDesiredTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
-  cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
+  cost->setTargetTrajectoriesPtr(&targetTrajectories);
   const auto zeroX0 = ocs2::vector_t::Zero(STATE_DIM);
 
   // Obtain solution, with non-zero nominalTrajectory

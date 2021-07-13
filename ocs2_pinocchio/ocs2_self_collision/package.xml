@@ -19,6 +19,7 @@
   <depend>ocs2_core</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_pinocchio_interface</depend>
+  <depend>ocs2_ros_interfaces</depend>
   <depend>pinocchio</depend>
 </package>
 

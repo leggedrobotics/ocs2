@@ -18,6 +18,11 @@ TEST_F(CppAdInterfaceNoParameterFixture, testModelGeneration) {
   ASSERT_TRUE(adInterface.getFunctionValue(x).isApprox(testFun(x)));
   ASSERT_TRUE(adInterface.getJacobian(x).isApprox(testJacobian(x)));
   ASSERT_TRUE(adInterface.getHessian(0, x).isApprox(testHessian(x)));
+
+  const auto gnApproximation = adInterface.getGaussNewtonApproximation(x);
+  ASSERT_DOUBLE_EQ(gnApproximation.f, 0.5 * testFun(x).squaredNorm());
+  ASSERT_TRUE(gnApproximation.dfdx.isApprox(testJacobian(x).transpose() * testFun(x)));
+  ASSERT_TRUE(gnApproximation.dfdxx.isApprox(testJacobian(x).transpose() * testJacobian(x)));
 }
 
 TEST_F(CppAdInterfaceParameterizedFixture, testModelGeneration) {
@@ -31,6 +36,11 @@ TEST_F(CppAdInterfaceParameterizedFixture, testModelGeneration) {
   ASSERT_TRUE(adInterface.getJacobian(x, p).isApprox(testJacobian(x, p)));
   ASSERT_TRUE(adInterface.getHessian(0, x, p).isApprox(testHessian(0, x, p)));
   ASSERT_TRUE(adInterface.getHessian(1, x, p).isApprox(testHessian(1, x, p)));
+
+  const auto gnApproximation = adInterface.getGaussNewtonApproximation(x, p);
+  ASSERT_DOUBLE_EQ(gnApproximation.f, 0.5 * testFun(x, p).squaredNorm());
+  ASSERT_TRUE(gnApproximation.dfdx.isApprox(testJacobian(x, p).transpose() * testFun(x, p)));
+  ASSERT_TRUE(gnApproximation.dfdxx.isApprox(testJacobian(x, p).transpose() * testJacobian(x, p)));
 }
 
 TEST_F(CppAdInterfaceParameterizedFixture, loadIfAvailable) {
@@ -44,4 +54,9 @@ TEST_F(CppAdInterfaceParameterizedFixture, loadIfAvailable) {
   ASSERT_TRUE(adInterface.getJacobian(x, p).isApprox(testJacobian(x, p)));
   ASSERT_TRUE(adInterface.getHessian(0, x, p).isApprox(testHessian(0, x, p)));
   ASSERT_TRUE(adInterface.getHessian(1, x, p).isApprox(testHessian(1, x, p)));
+
+  const auto gnApproximation = adInterface.getGaussNewtonApproximation(x, p);
+  ASSERT_DOUBLE_EQ(gnApproximation.f, 0.5 * testFun(x, p).squaredNorm());
+  ASSERT_TRUE(gnApproximation.dfdx.isApprox(testJacobian(x, p).transpose() * testFun(x, p)));
+  ASSERT_TRUE(gnApproximation.dfdxx.isApprox(testJacobian(x, p).transpose() * testJacobian(x, p)));
 }

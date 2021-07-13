@@ -107,7 +107,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  cartPoleOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
+  cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/
@@ -115,7 +115,7 @@ void CartPoleInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> CartPoleInterface::getMpc() {
   return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpCartPoleRolloutPtr_.get(), cartPoleSystemDynamicsPtr_.get(), cartPoleConstraintPtr_.get(),
-                                              cartPoleCostPtr_.get(), cartPoleOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
+                                              cartPoleCostPtr_.get(), cartPoleInitializerPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace cartpole

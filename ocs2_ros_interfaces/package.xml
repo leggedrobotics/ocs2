@@ -24,5 +24,6 @@
   <depend>std_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>interactive_markers</depend>
 
 </package>

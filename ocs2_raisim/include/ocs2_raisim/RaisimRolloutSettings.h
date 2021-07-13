@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
-#include <ocs2_oc/rollout/Rollout_Settings.h>
+#include <ocs2_oc/rollout/RolloutSettings.h>
 
 namespace ocs2 {
 
@@ -49,7 +49,7 @@ class RaisimRolloutSettings {
    * @param[in] rolloutSettings The preconfigured rollout settings for a standard ocs2 rollout
    * @param[in] setSimulatorStateOnRolloutRunAlways  Whether or not to always set the starting state of the rollout to the simulator
    * @param[in] setSimulatorStateOnRolloutRunOnce Whether or not to set the starting state to the simulator at the next rollout call only
-   * @param[in] controlDecimation Frequency decimation of control evaluation w.r.t. minTimeStep
+   * @param[in] controlDecimation Frequency decimation of control evaluation w.r.t. timeStep
    * @param[in] orderedJointNames A specific joint order to be used by Raisim instead of the default from URDF parsing. Parents must be
    * named before children, names must be identical to URDF joints
    * @param[in] controlMode Whether raisim should only apply generalized forces or also use an internal PD controller

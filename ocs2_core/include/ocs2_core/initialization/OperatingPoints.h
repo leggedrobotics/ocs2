@@ -29,59 +29,52 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
+#include <ocs2_core/initialization/Initializer.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2 {
 
 /**
- * This class initializes the DDP-based algorithms based on operating trajectories or single points
- * for state and input.
+ * This is an implementation of Initializer class that uses operating trajectories or single point for state-input initialization.
  */
-class OperatingPoints : public SystemOperatingTrajectoriesBase {
+class OperatingPoints final : public Initializer {
  public:
   /**
    * Constructor
-   *
-   * @param [in] stateOperatingPoint: The state operating point.
-   * @param [in] inputOperatingPoint: The input operating point.
+   * @param [in] stateOperatingPoint: An operating point for state.
+   * @param [in] inputOperatingPoint: An operating point for input.
    */
-  OperatingPoints(const vector_t& stateOperatingPoint, const vector_t& inputOperatingPoint);
+  OperatingPoints(const vector_t& stateOperatingPoint, const vector_t& inputOperatingPoint)
+      : timeTrajectory_(1, 0.0), stateTrajectory_(1, stateOperatingPoint), inputTrajectory_(1, inputOperatingPoint) {}
 
   /**
    * Constructor
-   *
-   * @param [in] timeTrajectory: The time stamp of the operating trajectories.
+   * @param [in] timeTrajectory: The time stamps of the operating trajectories.
    * @param [in] stateTrajectory: The state operating trajectory.
    * @param [in] inputTrajectory: The input operating trajectory.
    */
-  OperatingPoints(scalar_array_t timeTrajectory, vector_array_t stateTrajectory, vector_array_t inputTrajectory);
+  OperatingPoints(scalar_array_t timeTrajectory, vector_array_t stateTrajectory, vector_array_t inputTrajectory)
+      : timeTrajectory_(std::move(timeTrajectory)),
+        stateTrajectory_(std::move(stateTrajectory)),
+        inputTrajectory_(std::move(inputTrajectory)) {}
 
-  /**
-   * Destructor
-   */
+  /** Destructor */
   ~OperatingPoints() override = default;
 
-  OperatingPoints* clone() const override;
+  OperatingPoints* clone() const override { return new OperatingPoints(*this); }
 
-  void getSystemOperatingTrajectories(const vector_t& initialState, scalar_t startTime, scalar_t finalTime, scalar_array_t& timeTrajectory,
-                                      vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, bool concatOutput = false) override;
+  void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override {
+    input = LinearInterpolation::interpolate(time, timeTrajectory_, inputTrajectory_);
+    nextState = LinearInterpolation::interpolate(nextTime, timeTrajectory_, stateTrajectory_);
+  }
 
  private:
-  /**
-   * Gets the Operating Trajectories of the system in time interval [startTime, finalTime] where there is no intermediate switches.
-   *
-   * @param [in] startTime: Initial time.
-   * @param [in] finalTime: Final time.
-   * @param [out] timeTrajectory: Output time stamp trajectory.
-   * @param [out] stateTrajectory: Output state trajectory.
-   * @param [out] inputTrajectory: Output control input trajectory.
-   */
-  void getSystemOperatingTrajectoriesImpl(scalar_t startTime, scalar_t finalTime, scalar_array_t& timeTrajectory,
-                                          vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) const;
+  /** Copy constructor */
+  OperatingPoints(const OperatingPoints& other) = default;
 
-  scalar_array_t timeTrajectory_;
-  vector_array_t stateTrajectory_;
-  vector_array_t inputTrajectory_;
+  const scalar_array_t timeTrajectory_;
+  const vector_array_t stateTrajectory_;
+  const vector_array_t inputTrajectory_;
 };
 
 }  // namespace ocs2

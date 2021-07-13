@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/filesystem.hpp>
 
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
@@ -51,9 +52,10 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     // rollout settings
     const auto rolloutSettings = []() {
       ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE_ = 1e-9;
-      rolloutSettings.relTolODE_ = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond_ = 10000;
+      rolloutSettings.absTolODE = 1e-9;
+      rolloutSettings.relTolODE = 1e-7;
+      rolloutSettings.timeStep = 1e-3;
+      rolloutSettings.maxNumStepsPerSecond = 10000;
       return rolloutSettings;
     }();
 
@@ -70,7 +72,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     constraintPtr.reset(new ocs2::CircularKinematicsConstraints);
 
     // operatingTrajectories
-    operatingPointsPtr.reset(new ocs2::OperatingPoints(initState, ocs2::vector_t::Zero(INPUT_DIM)));
+    initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
@@ -129,7 +131,7 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
   std::unique_ptr<ocs2::CircularKinematicsCost> costPtr;
   std::unique_ptr<ocs2::ConstraintBase> constraintPtr;
-  std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
+  std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
 constexpr size_t CircularKinematicsTest::STATE_DIM;
@@ -145,7 +147,7 @@ TEST_P(CircularKinematicsTest, SLQ) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
@@ -168,7 +170,7 @@ TEST_P(CircularKinematicsTest, ILQR) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
+  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";

@@ -76,10 +76,10 @@ VectorFunctionLinearApproximation LinearSystemDynamics::linearApproximation(scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation LinearSystemDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+VectorFunctionLinearApproximation LinearSystemDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x) {
   VectorFunctionLinearApproximation approximation;
   approximation.dfdx = G_;
-  approximation.dfdu.setZero(A_.rows(), B_.cols());
+  approximation.dfdu.setZero(A_.rows(), 0);
   approximation.f = computeJumpMap(t, x);
   return approximation;
 }

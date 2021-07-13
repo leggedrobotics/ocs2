@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <type_traits>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
 #include <ocs2_core/cost/StateInputCost.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 namespace ocs2 {
 
@@ -45,11 +45,11 @@ class StateCost : public StateInputCost {
   StateCost* clone() const override = 0;
 
   /** Get cost term value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const = 0;
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const = 0;
 
   /** Get cost term quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const CostDesiredTrajectories& desiredTrajectory) const = 0;
+                                                                         const TargetTrajectories& targetTrajectories) const = 0;
 
  protected:
   StateCost(const StateCost& rhs) = default;
@@ -57,10 +57,10 @@ class StateCost : public StateInputCost {
  private:
   /** Get cost term value, implemented for compatibility with StateInputCost */
   scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                    const CostDesiredTrajectories& desiredTrajectory) const final override;
+                    const TargetTrajectories& targetTrajectories) const final override;
   /** Get cost term quadratic approximation, implemented for compatibility with StateInputCost */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const final override;
+                                                                 const TargetTrajectories& targetTrajectories) const final override;
 };
 
 // Template for conditional compilation using SFINAE

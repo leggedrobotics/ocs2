@@ -17,6 +17,7 @@ library versions as provided in the package sources.
   \endcode
 - `catkin-pkg` package for python3. Install with `sudo apt install python3-catkin-tools`
 - `pybind11_catkin` ROS package, installable via `sudo apt install ros-noetic-pybind11-catkin`
+- Doxygen for documentation. Install with `sudo apt install doxygen doxygen-latex`
 
 \subsection ocs2_doc_dep_optinal Optional Dependencies
 - [RaiSim](http://raisim.com) simulator can be used as a provider for rollouts. The corresponding `ocs2_raisim` package has additional requirements:
@@ -38,7 +39,9 @@ library versions as provided in the package sources.
     When asked by `checkinstall`, change the package name to something appropriate (e.g. "raisim") to it find later for package management, such as for uninstallation (`dpkg -r <package_name>`).
   - [`grid_map_msgs`](https://github.com/ANYbotics/grid_map) catkin package, which may be installed with `sudo apt install ros-melodic-grid-map-msgs`.
 - [RaisimOgre](https://github.com/leggedrobotics/raisimOgre) Visualizer for Raisim. Can be used for debugging purposes to see if conversions between OCS2 and Raisim are correct.
-- For pinocchio (Rigid multi-body dynamics library) and self collision support clone [pinocchio](https://github.com/leggedrobotics/pinocchio) and [hpp-fcl](https://github.com/leggedrobotics/hpp-fcl) into your workspace (use master branch).
+- For pinocchio (Rigid multi-body dynamics library) and self collision support:
+  - clone [pinocchio](https://github.com/leggedrobotics/pinocchio) and [hpp-fcl](https://github.com/leggedrobotics/hpp-fcl) into your workspace (use master branch).
+  - `sudo apt install liburdfdom-dev liboctomap-dev libassimp-dev`
 
 \section ocs2_doc_install Installation
 \subsection ocs2_doc_build_lib Build the library

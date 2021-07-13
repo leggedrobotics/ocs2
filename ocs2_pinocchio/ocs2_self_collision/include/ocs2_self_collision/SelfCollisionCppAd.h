@@ -29,10 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
-#include <ocs2_self_collision/PinocchioGeometryInterface.h>
-
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
+#include "ocs2_self_collision/PinocchioGeometryInterface.h"
 
 namespace ocs2 {
 

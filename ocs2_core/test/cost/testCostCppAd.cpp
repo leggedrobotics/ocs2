@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/cost/StateCostCppAd.h>
 #include <ocs2_core/cost/StateInputCostCppAd.h>
+#include <ocs2_core/cost/StateInputGaussNewtonCostAd.h>
 
 class TestStateCost : public ocs2::StateCostCppAd {
  public:
@@ -52,7 +53,7 @@ class TestStateCost : public ocs2::StateCostCppAd {
 
 TEST(TestStateCostCppAd, getValue) {
   TestStateCost cost;
-  const ocs2::CostDesiredTrajectories desiredTrajectory;
+  const ocs2::TargetTrajectories desiredTrajectory;
 
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
@@ -90,7 +91,7 @@ class TestStateInputCost : public ocs2::StateInputCostCppAd {
 
 TEST(TestStateInputCostCppAd, getValue) {
   TestStateInputCost cost;
-  const ocs2::CostDesiredTrajectories desiredTrajectory;
+  const ocs2::TargetTrajectories desiredTrajectory;
 
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
@@ -106,4 +107,55 @@ TEST(TestStateInputCostCppAd, getValue) {
   EXPECT_TRUE(approx.dfdxx.isApprox((ocs2::matrix_t(2, 2) << 1, 0, 0, 2).finished()));
   EXPECT_TRUE(approx.dfduu.isApprox((ocs2::matrix_t(1, 1) << 1).finished()));
   EXPECT_TRUE(approx.dfdux.isApprox((ocs2::matrix_t(1, 2) << 1, 1).finished()));
+}
+
+class TestGNStateInputCost : public ocs2::StateInputCostGaussNewtonAd {
+ public:
+  TestGNStateInputCost() { initialize(2, 1, 0, "TestGNStateInputCost", "/tmp/ocs2", true, false); }
+  ~TestGNStateInputCost() override = default;
+  TestGNStateInputCost* clone() const override { return new TestGNStateInputCost(*this); }
+
+  template <typename SCALAR_T>
+  static Eigen::Matrix<SCALAR_T, -1, 1> costVector(SCALAR_T time, const Eigen::Matrix<SCALAR_T, -1, 1>& state,
+                                                   const Eigen::Matrix<SCALAR_T, -1, 1>& input) {
+    Eigen::Matrix<SCALAR_T, -1, 1> costVector(4);
+    costVector << state(0), state(1), time * input(0), state(0) + input(0);
+    return costVector;
+  }
+
+  ocs2::ad_vector_t costVectorFunction(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state, const ocs2::ad_vector_t& input,
+                                       const ocs2::ad_vector_t& parameters) const override {
+    return costVector(time, state, input);
+  }
+
+ private:
+  TestGNStateInputCost(const TestGNStateInputCost& other) = default;
+};
+
+TEST(TestGNStateInputCostCppAd, getValue) {
+  TestGNStateInputCost cost;
+  const ocs2::TargetTrajectories desiredTrajectory;
+
+  const ocs2::scalar_t t = 0.4;
+  const ocs2::vector_t x = (ocs2::vector_t(2) << 0.1, 0.2).finished();
+  const ocs2::vector_t u = (ocs2::vector_t(1) << 0.3).finished();
+
+  ocs2::vector_t f = TestGNStateInputCost::costVector(t, x, u);
+
+  const auto val = cost.getValue(t, x, u, desiredTrajectory);
+  const auto approx = cost.getQuadraticApproximation(t, x, u, desiredTrajectory);
+
+  // cost = 0.5 * |f|^2 = 0.5*x(0)^2 + 0.5*x(1)^2 + 0.5*(t*u(0))^2 + 0.5*(x(0) + u(0))^2
+  ASSERT_DOUBLE_EQ(val, 0.5 * f.squaredNorm());
+  ASSERT_DOUBLE_EQ(approx.f, val);
+  ASSERT_DOUBLE_EQ(approx.dfdx(0), 2.0 * x(0) + u(0));
+  ASSERT_DOUBLE_EQ(approx.dfdx(1), x(1));
+  ASSERT_DOUBLE_EQ(approx.dfdu(0), (t * t + 1.0) * u(0) + x(0));
+  ASSERT_DOUBLE_EQ(approx.dfdxx(0, 0), 2.0);
+  ASSERT_DOUBLE_EQ(approx.dfdxx(0, 1), 0.0);
+  ASSERT_DOUBLE_EQ(approx.dfdxx(1, 0), approx.dfdxx(0, 1));
+  ASSERT_DOUBLE_EQ(approx.dfdxx(1, 1), 1.0);
+  ASSERT_DOUBLE_EQ(approx.dfdux(0, 0), 1.0);
+  ASSERT_DOUBLE_EQ(approx.dfdux(0, 1), 0.0);
+  ASSERT_DOUBLE_EQ(approx.dfduu(0, 0), (t*t + 1.0));
 }

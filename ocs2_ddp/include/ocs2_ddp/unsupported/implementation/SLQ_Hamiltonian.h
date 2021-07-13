@@ -467,7 +467,7 @@ void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations
     if (beginTime < endTime) {
       riccatiIntegratorPtrStock_[workerIndex]->integrate(
           allSsFinal, beginTime, endTime, allSsTrajectory, BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex],
-          BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
+          BASE::ddpSettings_.timeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
     } else {
       BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex].push_back(endTime);
       allSsTrajectory.push_back(allSsFinal);
@@ -606,7 +606,7 @@ void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveRiccatiEquations
     // solve Riccati equations if interval length is not zero (no event time at final time)
     if (*beginTimeItr < *(endTimeItr - 1)) {
       riccatiIntegratorPtrStock_[workerIndex]->integrate(allSsFinal, beginTimeItr, endTimeItr, allSsTrajectory,
-                                                         BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
+                                                         BASE::ddpSettings_.timeStep_, BASE::ddpSettings_.absTolODE_,
                                                          BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
     } else {
       allSsTrajectory.push_back(allSsFinal);
@@ -759,7 +759,7 @@ void SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveErrorRiccatiEqua
     // solve Riccati equations if interval length is not zero (no event time at final time)
     if (*beginTimeItr < *(endTimeItr - 1)) {
       errorIntegratorPtrStock_[workerIndex]->integrate(SveFinalInternal, beginTimeItr, endTimeItr, SveTrajectory,
-                                                       BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_,
+                                                       BASE::ddpSettings_.timeStep_, BASE::ddpSettings_.absTolODE_,
                                                        BASE::ddpSettings_.relTolODE_, maxNumSteps, true);
     } else {
       SveTrajectory.push_back(SveFinalInternal);
@@ -843,7 +843,7 @@ SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveLTI(
   stateTrajectory.reserve(2);
 
 #if DIM2 == 1
-  firstOrderOdeIntegrator.integrate(x0, timeTrajectory.begin(), timeTrajectory.end(), stateTrajectory, BASE::ddpSettings_.minTimeStep_,
+  firstOrderOdeIntegrator.integrate(x0, timeTrajectory.begin(), timeTrajectory.end(), stateTrajectory, BASE::ddpSettings_.timeStep_,
                                     BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_);
 
   return stateTrajectory.back();
@@ -851,7 +851,7 @@ SLQ_Hamiltonian<STATE_DIM, INPUT_DIM, LOGIC_RULES_T>::solveLTI(
   vectorized_state_t x0Vectorized;
   lti_equation_t::convert2Vector(x0, x0Vectorized);
   firstOrderOdeIntegratorPtr->integrate(x0Vectorized, timeTrajectory.begin(), timeTrajectory.end(), stateTrajectory,
-                                        BASE::ddpSettings_.minTimeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_);
+                                        BASE::ddpSettings_.timeStep_, BASE::ddpSettings_.absTolODE_, BASE::ddpSettings_.relTolODE_);
 
   Eigen::Matrix<scalar_t, DIM1, DIM2> xf;
   lti_equation_t::convert2Matrix(stateTrajectory.back(), xf);

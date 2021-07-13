@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
+#include <ocs2_oc/rollout/InitializerRollout.h>
 
 #include <ocs2_ddp/HessianCorrection.h>
 #include <ocs2_ddp/riccati_equations/RiccatiModificationInterpolation.h>
@@ -53,12 +54,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr,
                                const ConstraintBase* systemConstraintsPtr, const CostFunctionBase* costFunctionPtr,
-                               const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr, ddp::Settings ddpSettings,
-                               const CostFunctionBase* heuristicsFunctionPtr)
-    : SolverBase(), ddpSettings_(std::move(ddpSettings)) {
-  // thread-pool
-  threadPoolPtr_.reset(new ThreadPool(ddpSettings_.nThreads_, ddpSettings_.threadPriority_));
-
+                               const Initializer* initializerPtr, ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr)
+    : SolverBase(),
+      ddpSettings_(std::move(ddpSettings)),
+      threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
   // Dynamics, Constraints, derivatives, and cost
   linearQuadraticApproximatorPtrStock_.clear();
   linearQuadraticApproximatorPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -66,16 +65,16 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
   heuristicsFunctionsPtrStock_.reserve(ddpSettings_.nThreads_);
   dynamicsForwardRolloutPtrStock_.clear();
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
-  operatingTrajectoriesRolloutPtrStock_.clear();
-  operatingTrajectoriesRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
+  initializerRolloutPtrStock_.clear();
+  initializerRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
 
   // initialize all subsystems, etc.
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
     // initialize rollout
     dynamicsForwardRolloutPtrStock_.emplace_back(rolloutPtr->clone());
 
-    // initialize operating points
-    operatingTrajectoriesRolloutPtrStock_.emplace_back(new OperatingTrajectoriesRollout(*operatingTrajectoriesPtr, rolloutPtr->settings()));
+    // initialize initializerRollout
+    initializerRolloutPtrStock_.emplace_back(new InitializerRollout(*initializerPtr, rolloutPtr->settings()));
 
     // initialize LQ approximator
     linearQuadraticApproximatorPtrStock_.emplace_back(new LinearQuadraticApproximator(
@@ -118,7 +117,7 @@ GaussNewtonDDP::GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynami
         costFunctionRefStock.emplace_back(linearQuadraticApproximatorPtrStock_[i]->costFunction());
         heuristicsFunctionsRefStock.emplace_back(*heuristicsFunctionsPtrStock_[i]);
       }  // end of i loop
-      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, *threadPoolPtr_,
+      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, threadPool_,
                                                       std::move(rolloutRefStock), std::move(constraintsRefStock),
                                                       std::move(costFunctionRefStock), std::move(heuristicsFunctionsRefStock), *penaltyPtr_,
                                                       [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); }));
@@ -314,7 +313,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   }
 
   // fill mode schedule
-  primalSolutionPtr->modeSchedule_ = this->getModeSchedule();
+  primalSolutionPtr->modeSchedule_ = this->getReferenceManager().getModeSchedule();
 }
 
 /******************************************************************************************************/
@@ -556,7 +555,7 @@ std::vector<std::pair<int, int>> GaussNewtonDDP::distributeWork(int numWorkers) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
-  threadPoolPtr_->runParallel([&](int) { taskFunction(); }, N);
+  threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
 
 /******************************************************************************************************/
@@ -568,7 +567,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(std::vector<LinearController>&
                                                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
                                                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
                                                   size_t workerIndex /*= 0*/) {
-  const scalar_array_t& eventTimes = this->getModeSchedule().eventTimes;
+  const scalar_array_t& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
 
   if (controllersStock.size() != numPartitions_) {
     throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
@@ -592,37 +591,17 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(std::vector<LinearController>&
 
   // Find until where we have a controller available for the rollout
   scalar_t controllerAvailableTill = initTime_;
-  size_t partitionOfLastController = initActivePartition_;
   for (size_t i = initActivePartition_; i < finalActivePartition_ + 1; i++) {
     if (!controllersStock[i].empty()) {
       controllerAvailableTill = controllersStock[i].timeStamp_.back();
-      partitionOfLastController = i;
     } else {
       break;  // break on the first empty controller (cannot have gaps in the controllers)
     }
   }
 
-  /*
-   * Define till where we use the controller
-   * - If the first controller is empty, don't use a controller at all
-   * - If we have a controller and no events, use the controller till the final time
-   * - Otherwise, use the controller until the first event time after the controller has reached it's end.
-   */
-  scalar_t useControllerTill = initTime_;
-  if (!controllersStock[initActivePartition_].empty()) {
-    useControllerTill = finalTime_;
-    for (const auto eventTime : eventTimes) {
-      if (eventTime >= controllerAvailableTill) {
-        useControllerTill = std::min(eventTime, finalTime_);
-        break;
-      }
-    }
-  }
-
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
-              << "\tcontroller available till t = " << controllerAvailableTill << "\n"
-              << "\twill use controller until t = " << useControllerTill << "\n";
+              << "\tcontroller available till t = " << controllerAvailableTill << "\n";
   }
 
   size_t numSteps = 0;
@@ -633,8 +612,8 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(std::vector<LinearController>&
     const scalar_t tf = (i == finalActivePartition_) ? finalTime_ : partitioningTimes_[i + 1];
 
     // Divide the rollout segment in controller rollout and operating points
-    const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{t0, std::max(t0, std::min(useControllerTill, tf))};
-    std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
+    const std::pair<scalar_t, scalar_t> controllerRolloutFromTo{t0, std::max(t0, std::min(controllerAvailableTill, tf))};
+    const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
 
     if (ddpSettings_.debugPrintRollout_) {
       std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] partition " << i << " for t = [" << t0 << ", " << tf << "]\n";
@@ -649,20 +628,17 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(std::vector<LinearController>&
 
     // Rollout with controller
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
-      auto controllerPtr = &controllersStock[std::min(i, partitionOfLastController)];
       xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(
-          controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, controllerPtr, eventTimes, timeTrajectoriesStock[i],
-          postEventIndicesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+          controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second, &controllersStock[i], eventTimes,
+          timeTrajectoriesStock[i], postEventIndicesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
     }
 
     // Finish rollout with operating points
     if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
-      // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the operating point
+      // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the initializer
       // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
       if (!postEventIndicesStock[i].empty() && postEventIndicesStock[i].back() == (timeTrajectoriesStock[i].size() - 1)) {
-        // Start new integration at the time point after the event to remain consistent with added epsilons in the rollout. The operating
-        // point rollout does not add this epsilon because it does not know about this event.
-        operatingPointsFromTo.first = timeTrajectoriesStock[i].back();
+        // Start new integration at the time point after the event
         timeTrajectoriesStock[i].pop_back();
         stateTrajectoriesStock[i].pop_back();
         inputTrajectoriesStock[i].pop_back();
@@ -673,9 +649,9 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(std::vector<LinearController>&
       size_array_t eventsPastTheEndIndecesTail;
       vector_array_t stateTrajectoryTail;
       vector_array_t inputTrajectoryTail;
-      xCurrent = operatingTrajectoriesRolloutPtrStock_[workerIndex]->run(
-          operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second, nullptr, eventTimes, timeTrajectoryTail,
-          eventsPastTheEndIndecesTail, stateTrajectoryTail, inputTrajectoryTail);
+      xCurrent = initializerRolloutPtrStock_[workerIndex]->run(operatingPointsFromTo.first, xCurrent, operatingPointsFromTo.second, nullptr,
+                                                               eventTimes, timeTrajectoryTail, eventsPastTheEndIndecesTail,
+                                                               stateTrajectoryTail, inputTrajectoryTail);
 
       // Add controller rollout length to event past the indeces
       for (auto& eventIndex : eventsPastTheEndIndecesTail) {
@@ -727,7 +703,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(std::vector<LinearController>&
     }
   }
   // average time step
-  return (finalTime_ - initTime_) / numSteps;
+  return (controllerAvailableTill - initTime_) / numSteps;
 }
 
 /******************************************************************************************************/
@@ -920,6 +896,24 @@ void GaussNewtonDDP::calculateController() {
     runParallel(task, ddpSettings_.nThreads_);
 
   }  // end of i loop
+
+  // if the final time is not an event time change the last control to the second to the last
+  const auto& timeTrajectory = nominalTimeTrajectoriesStock_[finalActivePartition_];
+  const auto& postEventIndices = nominalPostEventIndicesStock_[finalActivePartition_];
+  if (postEventIndices.empty() || postEventIndices.back() != timeTrajectory.size() - 1) {
+    auto& ctrl = nominalControllersStock_[finalActivePartition_];
+    if (ctrl.size() > 1) {
+      const auto secondToLastIndex = ctrl.size() - 2;
+      ctrl.gainArray_.back() = ctrl.gainArray_[secondToLastIndex];
+      ctrl.biasArray_.back() = ctrl.biasArray_[secondToLastIndex];
+      ctrl.deltaBiasArray_.back() = ctrl.deltaBiasArray_[secondToLastIndex];
+    } else if (finalActivePartition_ > initActivePartition_) {
+      const auto secondToLastCtrl = nominalControllersStock_[finalActivePartition_ - 1];
+      ctrl.gainArray_.back() = secondToLastCtrl.gainArray_.back();
+      ctrl.biasArray_.back() = secondToLastCtrl.biasArray_.back();
+      ctrl.deltaBiasArray_.back() = secondToLastCtrl.deltaBiasArray_.back();
+    }
+  }
 }
 
 /******************************************************************************************************/
@@ -1165,7 +1159,7 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
     const vector_t& Ev = modelData.stateInputEqConstr_.f;
     const matrix_t& Cm = modelData.stateInputEqConstr_.dfdx;
     const matrix_t& Dm = modelData.stateInputEqConstr_.dfdu;
-    modelData.cost_.f += 0.5 * stateInputEqConstrPenaltyCoeff * Ev.dot(Ev);
+    modelData.cost_.f += 0.5 * stateInputEqConstrPenaltyCoeff * Ev.squaredNorm();
     modelData.cost_.dfdx.noalias() += stateInputEqConstrPenaltyCoeff * Cm.transpose() * Ev;
     modelData.cost_.dfdu.noalias() += stateInputEqConstrPenaltyCoeff * Dm.transpose() * Ev;
     modelData.cost_.dfdxx.noalias() += stateInputEqConstrPenaltyCoeff * Cm.transpose() * Cm;
@@ -1220,9 +1214,9 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t expectedCost) {
   std::vector<std::vector<ModelData>> modelDataTrajectoriesStock(numPartitions_);
   std::vector<std::vector<ModelData>> modelDataEventTimesStock(numPartitions_);
 
-  bool success = searchStrategyPtr_->run(expectedCost, this->getModeSchedule(), nominalControllersStock_, performanceIndex,
-                                         timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                                         modelDataTrajectoriesStock, modelDataEventTimesStock, avgTimeStepFP_);
+  bool success = searchStrategyPtr_->run(expectedCost, this->getReferenceManager().getModeSchedule(), nominalControllersStock_,
+                                         performanceIndex, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                                         inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, avgTimeStepFP_);
 
   // accept or reject the search
   if (success) {
@@ -1325,7 +1319,7 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
 
     } else if (cachedTimeTrajectoriesStock_[i].back() < nominalTimeTrajectoriesStock_[i].back()) {
       // find the time segment
-      const scalar_t finalTime = cachedTimeTrajectoriesStock_[i].back() + OCS2NumericTraits<scalar_t>::weakEpsilon();
+      const scalar_t finalTime = cachedTimeTrajectoriesStock_[i].back() + numeric_traits::weakEpsilon<scalar_t>();
       const auto timeSegment = LinearInterpolation::timeSegment(finalTime, nominalTimeTrajectoriesStock_[i]);
 
       // post event index
@@ -1587,7 +1581,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\nRewind Counter: " << rewindCounter_ << "\n";
     std::cerr << ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver starts from initial time " << initTime << " to final time "
               << finalTime << ".\n";
-    std::cerr << this->getModeSchedule() << "\n";
+    std::cerr << this->getReferenceManager().getModeSchedule() << "\n";
   }
 
   initState_ = initState;
@@ -1608,8 +1602,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // set cost desired trajectories
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
-    heuristicsFunctionsPtrStock_[i]->setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
-    linearQuadraticApproximatorPtrStock_[i]->costFunction().setCostDesiredTrajectoriesPtr(&this->getCostDesiredTrajectories());
+    const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
+    heuristicsFunctionsPtrStock_[i]->setTargetTrajectoriesPtr(&targetTrajectories);
+    linearQuadraticApproximatorPtrStock_[i]->costFunction().setTargetTrajectoriesPtr(&targetTrajectories);
   }
 
   // display

@@ -43,13 +43,13 @@ LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterf
   if (robotInterfacePtr_->getTerminalCostPtr() != nullptr) {
     terminalCostFunctionPtr_ = ocs2::LoopshapingCost::create(*robotInterfacePtr_->getTerminalCostPtr(), loopshapingDefinitionPtr_);
   }
-  operatingPointsPtr_.reset(new ocs2::LoopshapingOperatingPoint(robotInterfacePtr_->getOperatingPoints(), loopshapingDefinitionPtr_));
+  initializerPtr_.reset(new ocs2::LoopshapingInitializer(robotInterfacePtr_->getInitializer(), loopshapingDefinitionPtr_));
   if (robotInterfacePtr_->getConstraintPtr() != nullptr) {
     constraintsPtr_ = ocs2::LoopshapingConstraint::create(*robotInterfacePtr_->getConstraintPtr(), loopshapingDefinitionPtr_);
   }
-  if (robotInterfacePtr_->getModeScheduleManagerPtr() != nullptr) {
-    loopshapingModeScheduleManager_ =
-        std::make_shared<LoopshapingModeScheduleManager>(robotInterfacePtr_->getModeScheduleManagerPtr(), loopshapingDefinitionPtr_);
+  if (robotInterfacePtr_->getReferenceManagerPtr() != nullptr) {
+    loopshapingReferenceManager_ =
+        std::make_shared<LoopshapingReferenceManager>(robotInterfacePtr_->getReferenceManagerPtr(), loopshapingDefinitionPtr_);
   }
 }
 

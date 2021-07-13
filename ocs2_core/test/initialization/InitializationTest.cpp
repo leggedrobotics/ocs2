@@ -46,9 +46,7 @@ class InitializationTest : public testing::Test {
 
   InitializationTest() = default;
 
-  scalar_array_t timeTrajectory;
-  vector_array_t stateTrajectory;
-  vector_array_t inputTrajectory;
+  vector_t input, nextState;
 };
 
 TEST_F(InitializationTest, SingleOperatingPoint) {
@@ -57,19 +55,10 @@ TEST_F(InitializationTest, SingleOperatingPoint) {
   const vector_array_t xTraj = {vector_t::Random(stateDim_)};
   const vector_array_t uTraj = {vector_t::Random(inputDim_)};
   OperatingPoints operatingPoints({t0}, xTraj, uTraj);
-  operatingPoints.getSystemOperatingTrajectories(xTraj[0], t0, tf, timeTrajectory, stateTrajectory, inputTrajectory);
+  operatingPoints.compute(t0, xTraj[0], tf, input, nextState);
 
-  ASSERT_EQ(timeTrajectory.size(), 2);
-  ASSERT_EQ(stateTrajectory.size(), 2);
-  ASSERT_EQ(inputTrajectory.size(), 2);
-
-  ASSERT_DOUBLE_EQ(timeTrajectory.front(), t0);
-  ASSERT_TRUE(stateTrajectory.front().isApprox(xTraj[0]));
-  ASSERT_TRUE(inputTrajectory.front().isApprox(uTraj[0]));
-
-  ASSERT_DOUBLE_EQ(timeTrajectory.back(), tf);
-  ASSERT_TRUE(stateTrajectory.back().isApprox(xTraj[0]));
-  ASSERT_TRUE(inputTrajectory.back().isApprox(uTraj[0]));
+  ASSERT_TRUE(nextState.isApprox(xTraj[0]));
+  ASSERT_TRUE(input.isApprox(uTraj[0]));
 }
 
 TEST_F(InitializationTest, ZeroTimeInterval) {
@@ -77,44 +66,26 @@ TEST_F(InitializationTest, ZeroTimeInterval) {
   const vector_array_t xTraj{vector_t::Random(stateDim_)};
   const vector_array_t uTraj = {vector_t::Random(inputDim_)};
   OperatingPoints operatingPoints({t0}, xTraj, uTraj);
-  operatingPoints.getSystemOperatingTrajectories(xTraj[0], t0, t0, timeTrajectory, stateTrajectory, inputTrajectory);
+  operatingPoints.compute(t0, xTraj[0], t0, input, nextState);
 
-  ASSERT_EQ(timeTrajectory.size(), 1);
-  ASSERT_EQ(stateTrajectory.size(), 1);
-  ASSERT_EQ(inputTrajectory.size(), 1);
-
-  ASSERT_DOUBLE_EQ(timeTrajectory.front(), t0);
-  ASSERT_TRUE(stateTrajectory.front().isApprox(xTraj[0]));
-  ASSERT_TRUE(inputTrajectory.front().isApprox(uTraj[0]));
+  ASSERT_TRUE(nextState.isApprox(xTraj[0]));
+  ASSERT_TRUE(input.isApprox(uTraj[0]));
 }
 
 TEST_F(InitializationTest, Trajectory) {
-  static constexpr size_t N = 20;
+  constexpr size_t N = 20;
   scalar_array_t tTraj(N);
   scalar_t n = 0;
   std::generate(tTraj.begin(), tTraj.end(), [&n]() mutable { return n++; });
-  const vector_array_t xTraj(N, vector_t::Random(stateDim_));
-  const vector_array_t uTraj(N, vector_t::Random(inputDim_));
+  vector_array_t xTraj(N);
+  std::generate(xTraj.begin(), xTraj.end(), [&]() { return vector_t::Random(stateDim_); });
+  vector_array_t uTraj(N);
+  std::generate(uTraj.begin(), uTraj.end(), [&]() { return vector_t::Random(inputDim_); });
   OperatingPoints operatingPoints(tTraj, xTraj, uTraj);
 
-  const size_t i_0 = 1;
-  const size_t i_f = 10;
-  const size_t length = i_f - i_0 + 1 + 2;
-  const auto t0 = tTraj[i_0] - 0.5;
-  const auto tf = tTraj[i_f] + 0.5;
-  operatingPoints.getSystemOperatingTrajectories(xTraj[0], t0, tf, timeTrajectory, stateTrajectory, inputTrajectory);
-
-  ASSERT_EQ(timeTrajectory.size(), length);
-  ASSERT_EQ(stateTrajectory.size(), length);
-  ASSERT_EQ(inputTrajectory.size(), length);
-
-  ASSERT_EQ(timeTrajectory.front(), t0);
-  ASSERT_EQ(timeTrajectory.back(), tf);
-
-  size_t ind = 1;
-  for (size_t i = i_0; i <= i_f; i++) {
-    ASSERT_TRUE(stateTrajectory[ind].isApprox(xTraj[i]));
-    ASSERT_TRUE(inputTrajectory[ind].isApprox(uTraj[i]));
-    ++ind;
+  for (size_t i = 0; i < N - 1; i++) {
+    operatingPoints.compute(tTraj[i], xTraj[i], tTraj[i + 1], input, nextState);
+    ASSERT_TRUE(input.isApprox(uTraj[i]));
+    ASSERT_TRUE(nextState.isApprox(xTraj[i + 1]));
   }
 }

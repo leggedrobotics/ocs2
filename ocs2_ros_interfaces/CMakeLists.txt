@@ -10,6 +10,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   std_msgs
   visualization_msgs
   geometry_msgs
+  interactive_markers
 )
 
 ## Find catkin macros and libraries
@@ -53,13 +54,18 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/command/TargetTrajectories_ROS_Interface.cpp
+  src/command/TargetTrajectoriesRosPublisher.cpp
+  src/command/TargetTrajectoriesInteractiveMarker.cpp
+  src/command/TargetTrajectoriesKeyboardPublisher.cpp
   src/common/RosMsgConversions.cpp
   src/common/RosMsgHelpers.cpp
   src/mpc/MPC_ROS_Interface.cpp
   src/mrt/LoopshapingDummyObserver.cpp
   src/mrt/MRT_ROS_Dummy_Loop.cpp
   src/mrt/MRT_ROS_Interface.cpp
+  src/synchronized_module/RosReferenceManager.cpp
+  src/visualization/VisualizationHelpers.cpp
+  src/visualization/VisualizationColors.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

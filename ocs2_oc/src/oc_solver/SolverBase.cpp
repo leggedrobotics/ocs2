@@ -34,8 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/Numerics.h>
 
 #include <ocs2_oc/oc_solver/SolverBase.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 namespace ocs2 {
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+SolverBase::SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -77,12 +83,10 @@ void SolverBase::printString(const std::string& text) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  if (modeScheduleManager_) {
-    modeScheduleManager_->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
-    modeSchedule_ = modeScheduleManager_->getModeSchedule();
-  }
+  referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
+
   for (auto& module : synchronizedModules_) {
-    module->preSolverRun(initTime, finalTime, initState, costDesiredTrajectories_);
+    module->preSolverRun(initTime, finalTime, initState, *referenceManagerPtr_);
   }
 }
 
@@ -90,11 +94,8 @@ void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t f
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SolverBase::postRun() {
-  if (modeScheduleManager_ || !synchronizedModules_.empty()) {
+  if (!synchronizedModules_.empty()) {
     const auto solution = primalSolution(getFinalTime());
-    if (modeScheduleManager_) {
-      modeScheduleManager_->postSolverRun(solution);
-    }
     for (auto& module : synchronizedModules_) {
       module->postSolverRun(solution);
     }

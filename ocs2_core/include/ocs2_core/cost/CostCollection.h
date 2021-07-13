@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <type_traits>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 #include "StateCost.h"
 #include "StateInputCost.h"
@@ -84,21 +84,21 @@ class CostCollection final {
 
   /** Get state-input cost value */
   template <typename T = COST, EnableIfStateInputCost_t<T> = true>
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const CostDesiredTrajectories& desiredTrajectory) const;
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& targetTrajectories) const;
 
   /** Get state-input cost quadratic approximation */
   template <typename T = COST, EnableIfStateInputCost_t<T> = true>
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const;
+                                                                 const TargetTrajectories& targetTrajectories) const;
 
   /** Get state-only cost value */
   template <typename T = COST, EnableIfStateCost_t<T> = true>
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const;
 
   /** Get state-only cost quadratic approximation */
   template <typename T = COST, EnableIfStateCost_t<T> = true>
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const;
+                                                                 const TargetTrajectories& targetTrajectories) const;
 
  private:
   std::map<std::string, std::unique_ptr<COST>> costTermMap_;

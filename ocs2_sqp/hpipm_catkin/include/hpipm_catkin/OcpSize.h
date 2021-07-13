@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vector>
 
+#include <ocs2_core/Types.h>
+
 namespace ocs2 {
 namespace hpipm_interface {
 
@@ -73,6 +75,18 @@ struct OcpSize {
 };
 
 bool operator==(const OcpSize& lhs, const OcpSize& rhs) noexcept;
+
+/**
+ * Extract sizes based on the problem data
+ *
+ * @param dynamics : Linearized approximation of the discrete dynamics.
+ * @param cost : Quadratic approximation of the cost.
+ * @param constraints : Linearized approximation of constraints, all constraints are mapped to inequality constraints in HPIPM.
+ * @return Derived sizes
+ */
+OcpSize extractSizesFromProblem(const std::vector<VectorFunctionLinearApproximation>& dynamics,
+                                const std::vector<ScalarFunctionQuadraticApproximation>& cost,
+                                const std::vector<VectorFunctionLinearApproximation>* constraints);
 
 }  // namespace hpipm_interface
 }  // namespace ocs2

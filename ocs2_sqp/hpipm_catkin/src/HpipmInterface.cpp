@@ -331,12 +331,15 @@ class HpipmInterface::Impl {
     // k > 0
     matrix_t Ls;
     for (int k = 1; k < N; ++k) {
-      // RiccatiFeedback[k] = -(Ls * Lr.inverse()).transpose();
-      Lr.resize(ocpSize_.numInputs[k], ocpSize_.numInputs[k]);
-      Ls.resize(ocpSize_.numStates[k], ocpSize_.numInputs[k]);
-      d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, k, Lr.data());  // Lr matrix is lower triangular
-      d_ocp_qp_ipm_get_ric_Ls(&qp_, &arg_, &workspace_, k, Ls.data());
-      RiccatiFeedback[k].noalias() = -Lr.triangularView<Eigen::Lower>().transpose().solve(Ls.transpose());
+      const auto numInput = ocpSize_.numInputs[k];
+      if (numInput > 0) {
+        // RiccatiFeedback[k] = -(Ls * Lr.inverse()).transpose();
+        Lr.resize(numInput, numInput);
+        Ls.resize(ocpSize_.numStates[k], numInput);
+        d_ocp_qp_ipm_get_ric_Lr(&qp_, &arg_, &workspace_, k, Lr.data());  // Lr matrix is lower triangular
+        d_ocp_qp_ipm_get_ric_Ls(&qp_, &arg_, &workspace_, k, Ls.data());
+        RiccatiFeedback[k].noalias() = -Lr.triangularView<Eigen::Lower>().transpose().solve(Ls.transpose());
+      }
     }
 
     return RiccatiFeedback;

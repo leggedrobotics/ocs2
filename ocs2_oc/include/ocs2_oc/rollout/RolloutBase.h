@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 
-#include "Rollout_Settings.h"
+#include "RolloutSettings.h"
 
 namespace ocs2 {
 
@@ -136,12 +136,12 @@ class RolloutBase {
    *
    * @return The final state (state jump is considered if it took place)
    */
-  virtual vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+  virtual vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                            scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
                            vector_array_t& inputTrajectory) = 0;
 
   /**
-   * Checks for the numerical stability if Rollout_Settings::checkNumericalStability_ is true.
+   * Checks for the numerical stability if rollout::Settings::checkNumericalStability is true.
    *
    * @param [in] timeTrajectory: The time trajectory stamp.
    * @param [in] postEventIndicesStock: Indices containing past-the-end index of events trigger.

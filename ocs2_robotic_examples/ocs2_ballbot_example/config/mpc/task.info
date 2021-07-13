@@ -12,6 +12,20 @@ templateSwitchingTimes
 {
 }
 
+; multiple_shooting settings
+multiple_shooting
+{
+  dt                            0.1
+  sqpIteration                  5
+  deltaTol                      1e-3
+  printSolverStatistics         true
+  printSolverStatus             false
+  printLinesearch               false
+  useFeedbackPolicy             true
+  integratorType                RK2
+  nThreads                      4
+}
+
 ; DDP settings
 ddp
 {
@@ -24,12 +38,12 @@ ddp
   constraintTolerance           1e-3
 
   displayInfo                   false
-  displayShortSummary           true
+  displayShortSummary           false
   checkNumericalStability       false
 
   AbsTolODE                     1e-5
   RelTolODE                     1e-3
-  minTimeStep                   1e-3
+  timeStep                      1e-3
   maxNumStepsPerSecond          100000
   backwardPassIntegratorType    ODE45
 
@@ -56,7 +70,7 @@ rollout
 {
   AbsTolODE                     1e-5
   RelTolODE                     1e-3
-  minTimeStep                   1e-3
+  timeStep                      1e-2
   maxNumStepsPerSecond          100000
   checkNumericalStability       false
 }
@@ -110,19 +124,19 @@ initialState
 ; state weight matrix
 Q
 {
-  scaling 1e+0
+  scaling 1e+1
 
-  (0,0) 110.0  ; px
-  (1,1) 110.0  ; py
-  (2,2) 400.0  ; thetaz
-  (3,3) 0.0  ; thetay
-  (4,4) 0.0  ; thetax
+  (0,0) 10.0  ; px
+  (1,1) 10.0  ; py
+  (2,2) 40.0  ; thetaz
+  (3,3) 0.0   ; thetay
+  (4,4) 0.0   ; thetax
 
-  (5,5) 35.0 ; px_dot
-  (6,6) 35.0 ; py_dot
-  (7,7) 30.0 ; thetaz_dot
-  (8,8) 20.0 ; thetay_dot
-  (9,9) 20.0 ; thetax_dot
+  (5,5) 4.0   ; px_dot
+  (6,6) 4.0   ; py_dot
+  (7,7) 4.0   ; thetaz_dot
+  (8,8) 2.0   ; thetay_dot
+  (9,9) 2.0   ; thetax_dot
 }
 
 ; control weight matrix
@@ -146,11 +160,11 @@ Q_final
   (3,3) 0.0  ; thetay
   (4,4) 0.0  ; thetax
 
-  (5,5) 0.0 ; px_dot
-  (6,6) 0.0 ; py_dot
-  (7,7) 0.0 ; thetaz_dot
-  (8,8) 0.0 ; thetay_dot
-  (9,9) 0.0 ; thetax_dot
+  (5,5) 0.0  ; px_dot
+  (6,6) 0.0  ; py_dot
+  (7,7) 0.0  ; thetaz_dot
+  (8,8) 0.0  ; thetay_dot
+  (9,9) 0.0  ; thetax_dot
 }
 
 

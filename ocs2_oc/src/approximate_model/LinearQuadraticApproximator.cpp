@@ -58,7 +58,7 @@ void LinearQuadraticApproximator::approximateLQProblem(const scalar_t& time, con
 void LinearQuadraticApproximator::approximateLQProblemAtEventTime(const scalar_t& time, const vector_t& state, const vector_t& input,
                                                                   ModelData& modelData) const {
   // Jump map
-  modelData.dynamics_ = systemDynamicsPtr_->jumpMapLinearApproximation(time, state, input);
+  modelData.dynamics_ = systemDynamicsPtr_->jumpMapLinearApproximation(time, state);
 
   // Final state-only equality constraint
   modelData.stateEqConstr_ = systemConstraintsPtr_->finalStateEqualityConstraintLinearApproximation(time, state);

@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_ddp/GaussNewtonDDP.h>
 
-#include "MPC_BASE.h"
+#include "ocs2_mpc/MPC_BASE.h"
 
 namespace ocs2 {
 
@@ -48,15 +48,15 @@ class MPC_DDP : public MPC_BASE {
    * @param [in] systemDynamicsPtr: The system dynamics derivatives for subsystems of the system.
    * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
    * @param [in] costFunctionPtr: The cost function (intermediate and terminal costs) and its derivatives for subsystems.
-   * @param [in] operatingTrajectoriesPtr: The operating trajectories of system which will be used for initialization of SLQ.
+   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
    * @param [in] ddpSettings: Structure containing the settings for the DDP algorithm.
    * @param [in] mpcSettings: Structure containing the settings for the MPC algorithm.
    * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation. If it is not
    * defined, we will use the terminal cost function defined in costFunctionPtr.
    */
   MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-          const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-          ddp::Settings ddpSettings, mpc::Settings mpcSettings, const CostFunctionBase* heuristicsFunctionPtr = nullptr);
+          const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings, mpc::Settings mpcSettings,
+          const CostFunctionBase* heuristicsFunctionPtr = nullptr);
 
   /** Default destructor. */
   ~MPC_DDP() override = default;

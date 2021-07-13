@@ -35,11 +35,11 @@ namespace LinearAlgebra {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void makePsdEigenvalue(Eigen::MatrixXd& squareMatrix, double minEigenvalue) {
+void makePsdEigenvalue(matrix_t& squareMatrix, scalar_t minEigenvalue) {
   assert(squareMatrix.rows() == squareMatrix.cols());
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(squareMatrix, Eigen::EigenvaluesOnly);
-  Eigen::VectorXd lambda = eig.eigenvalues();
+  vector_t lambda = eig.eigenvalues();
 
   bool hasNegativeEigenValue = false;
   for (size_t j = 0; j < lambda.size(); j++) {
@@ -60,9 +60,7 @@ void makePsdEigenvalue(Eigen::MatrixXd& squareMatrix, double minEigenvalue) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue) {
-  using scalar_t = typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar;
-  using dense_matrix_t = Eigen::MatrixXd;
+void makePsdCholesky(matrix_t& A, scalar_t minEigenvalue) {
   using sparse_matrix_t = Eigen::SparseMatrix<scalar_t>;
 
   assert(A.rows() == A.cols());
@@ -79,9 +77,8 @@ void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue) {
   sparse_matrix_t M = (incompleteCholesky.scalingS().asDiagonal().inverse() * incompleteCholesky.matrixL());
   // L L' = P M M' P'
   sparse_matrix_t LmTwisted;
-  LmTwisted.template selfadjointView<Eigen::Lower>() =
-      M.template selfadjointView<Eigen::Lower>().twistedBy(incompleteCholesky.permutationP());
-  dense_matrix_t L = dense_matrix_t(LmTwisted);
+  LmTwisted.selfadjointView<Eigen::Lower>() = M.selfadjointView<Eigen::Lower>().twistedBy(incompleteCholesky.permutationP());
+  const matrix_t L(LmTwisted);
   // A = L L'
   A = L * L.transpose();
 
@@ -92,22 +89,22 @@ void makePsdCholesky(Eigen::MatrixXd& A, double minEigenvalue) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void computeConstraintProjection(const Eigen::MatrixXd& Dm, const Eigen::MatrixXd& RmInvUmUmT, Eigen::MatrixXd& DmDagger,
-                                 Eigen::MatrixXd& DmDaggerTRmDmDaggerUUT, Eigen::MatrixXd& RmInvConstrainedUUT) {
+void computeConstraintProjection(const matrix_t& Dm, const matrix_t& RmInvUmUmT, matrix_t& DmDagger, matrix_t& DmDaggerTRmDmDaggerUUT,
+                                 matrix_t& RmInvConstrainedUUT) {
   const auto numConstraints = Dm.rows();
   const auto numInputs = Dm.cols();
 
   // Constraint Projectors are based on the QR decomposition
-  Eigen::HouseholderQR<Eigen::MatrixXd> QRof_RmInvUmUmTT_DmT(RmInvUmUmT.transpose() * Dm.transpose());
+  Eigen::HouseholderQR<matrix_t> QRof_RmInvUmUmTT_DmT(RmInvUmUmT.transpose() * Dm.transpose());
 
-  Eigen::MatrixXd QRof_RmInvUmUmTT_DmT_Rc = QRof_RmInvUmUmTT_DmT.matrixQR().topRows(numConstraints).template triangularView<Eigen::Upper>();
+  matrix_t QRof_RmInvUmUmTT_DmT_Rc = QRof_RmInvUmUmTT_DmT.matrixQR().topRows(numConstraints).triangularView<Eigen::Upper>();
 
   // Computes the inverse of Rc with an efficient in-place forward-backward substitution
   // Turns out that this is equal to the UUT decomposition of DmDagger^T * R * DmDagger after simplification
   DmDaggerTRmDmDaggerUUT.setIdentity(numConstraints, numConstraints);
-  QRof_RmInvUmUmTT_DmT_Rc.template triangularView<Eigen::Upper>().solveInPlace(DmDaggerTRmDmDaggerUUT);
+  QRof_RmInvUmUmTT_DmT_Rc.triangularView<Eigen::Upper>().solveInPlace(DmDaggerTRmDmDaggerUUT);
 
-  Eigen::MatrixXd QRof_RmInvUmUmTT_DmT_Q = QRof_RmInvUmUmTT_DmT.householderQ();
+  matrix_t QRof_RmInvUmUmTT_DmT_Q = QRof_RmInvUmUmTT_DmT.householderQ();
   // Auto take reference to the column view here without making a temporary
   auto QRof_RmInvUmUmTT_DmT_Qc = QRof_RmInvUmUmTT_DmT_Q.leftCols(numConstraints);
   auto QRof_RmInvUmUmTT_DmT_Qu = QRof_RmInvUmUmTT_DmT_Q.rightCols(numInputs - numConstraints);

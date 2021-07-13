@@ -66,7 +66,8 @@ Perry Franklin,
 Tom Lankhorst,
 David Hoeller,
 Asutosh Satapathy,
-Markus Giftthaler.
+Markus Giftthaler,
+Edo Jelavic.
 
 
 **Acknowledgement**: The OCS2 toolbox development initiated by the ADRL team at ETH Zurich, and the 

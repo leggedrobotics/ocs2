@@ -235,6 +235,16 @@ features of each example.</p>
 point mass that moves in the x-direction. The model is linear, and the
 cost function is quadratic. The target point is set to the quadratic
 cost through a reference manager module.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
+catkin build ocs2_double_integrator_example
+<span class="c1"># Source workspace</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
+
+<span class="c1"># Launche the example</span>
+roslaunch ocs2_double_integrator_example double_integrator.launch
+</pre></div>
+</div>
 </div>
 <div class="section" id="cart-pole">
 <span id="doxid-ocs2-doc-robotic-examples-cart-pole"></span><h2>Cart Pole<a class="headerlink" href="#cart-pole" title="Permalink to this headline">¶</a></h2>
@@ -243,6 +253,16 @@ attached through an unactuated joint to a cart. The car moves along a
 frictionless track. The goal is to swing up and balance the pendulum
 starting from the downright position by accelerating a decelerating the
 cart along the track.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
+catkin build ocs2_cart_pole_example
+<span class="c1"># Source workspace</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
+
+<span class="c1"># Launche the example</span>
+roslaunch ocs2_cart_pole_example cartpole.launch
+</pre></div>
+</div>
 </div>
 <div class="section" id="ballbot">
 <span id="doxid-ocs2-doc-robotic-examples-ballbot"></span><h2>Ballbot<a class="headerlink" href="#ballbot" title="Permalink to this headline">¶</a></h2>
@@ -253,6 +273,16 @@ non-minimum-phase behavior. The system dynamics is based on the
 Ballbot’s forward dynamics, and the linear approximation of the flow-map
 is calculated through auto differentiation. The task objective is to
 control the robot’s XY position and yaw based on user command.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
+catkin build ocs2_ballbot_example
+<span class="c1"># Source workspace</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
+
+<span class="c1"># Launche the example</span>
+roslaunch ocs2_ballbot_example ballbot.launch
+</pre></div>
+</div>
 </div>
 <div class="section" id="quadrotor">
 <span id="doxid-ocs2-doc-robotic-examples-quadrotor"></span><h2>Quadrotor<a class="headerlink" href="#quadrotor" title="Permalink to this headline">¶</a></h2>
@@ -261,6 +291,16 @@ floating-base, rigid-body dynamics with a 3D moment and 1D force control
 in the normal direction to the robot. The system dynamics and its
 derivative are code generated. This example aims to track the user
 command defined as the quadrotor’s 3D position and yaw.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
+catkin build ocs2_quadrotor_example
+<span class="c1"># Source workspace</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
+
+<span class="c1"># Launche the example</span>
+roslaunch ocs2_quadrotor_example quadrotor.launch
+</pre></div>
+</div>
 </div>
 <div class="section" id="mobile-manipulator">
 <span id="doxid-ocs2-doc-robotic-examples-mobile-manipulator"></span><h2>Mobile Manipulator<a class="headerlink" href="#mobile-manipulator" title="Permalink to this headline">¶</a></h2>
@@ -275,6 +315,16 @@ bodies of the URDF model and collision avoidance constraints (refer to
 ocs2_self_collision). This example implements both the cache and the
 non-cache variants of the MPC, which can be chosen through the
 usePreComputation flag in the config file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
+catkin build ocs2_mobile_manipulator_example
+<span class="c1"># Source workspace</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
+
+<span class="c1"># Launche the example</span>
+roslaunch ocs2_mobile_manipulator_example mobile_manipulator.launch
+</pre></div>
+</div>
 </div>
 <div class="section" id="legged-robot">
 <span id="doxid-ocs2-doc-robotic-examples-legged-robot"></span><h2>Legged Robot<a class="headerlink" href="#legged-robot" title="Permalink to this headline">¶</a></h2>
@@ -297,6 +347,16 @@ position. It also includes the full kinematics of the system (2) The
 full centroidal dynamics (FCD): This model uses the centroidal dynamics,
 which incorporates the motion of the robot’s limbs. Similar to SRBD, it
 considers the full kinematics of the robot.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
+catkin build ocs2_legged_robot_example
+<span class="c1"># Source workspace</span>
+<span class="c1"># Do not forget to change &lt;...&gt; parts</span>
+<span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
+
+<span class="c1"># Launche the example</span>
+roslaunch ocs2_legged_robot_example legged_robot.launch
+</pre></div>
+</div>
 </div>
 </div>
 

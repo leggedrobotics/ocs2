@@ -16,7 +16,7 @@ Dependencies
 
 * C++ compiler with C++11 support
 * Eigen (v3.3)
-* Boost C++ (v1.54)
+* Boost C++ (v1.71)
 * GLPK ``sudo apt install libglpk-dev``
 * catkin ``sudo apt-get install catkin``
 * pybind11_catkin, ROS package, installable via ``sudo apt install ros-noetic-pybind11-catkin``

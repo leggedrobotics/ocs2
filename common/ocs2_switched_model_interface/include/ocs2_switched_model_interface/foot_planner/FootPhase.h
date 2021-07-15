@@ -56,6 +56,9 @@ class FootPhase {
   /** Returns the unit vector pointing in the normal direction */
   virtual vector3_t normalDirectionInWorldFrame(scalar_t time) const = 0;
 
+  /** Nominal foothold location (upcoming for swinglegs) */
+  virtual vector3_t nominalFootholdLocation() const = 0;
+
   /** Returns the velocity equality constraint formulated in the normal direction */
   virtual FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const = 0;
 
@@ -76,6 +79,7 @@ class StancePhase final : public FootPhase {
 
   bool contactFlag() const override { return true; };
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
+  vector3_t nominalFootholdLocation() const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
 
@@ -103,6 +107,7 @@ class SwingPhase final : public FootPhase {
 
   bool contactFlag() const override { return false; };
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
+  vector3_t nominalFootholdLocation() const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   SignedDistanceConstraint getSignedDistanceConstraint(scalar_t time) const override;
   const QuinticSwing& getMotionInLiftOffFrame() const { return *liftOffMotion_; };

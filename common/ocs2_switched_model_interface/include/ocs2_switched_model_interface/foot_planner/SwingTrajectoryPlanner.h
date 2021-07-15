@@ -28,6 +28,9 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t swingTimeScale = 0.15;    // swing phases shorter than this time will be scaled down in height and velocity
   scalar_t sdfMidswingMargin = 0.0;  // desired sdf based clearance in the middle of the swing phase [m]
   scalar_t terrainMargin = 0.0;      // shrinkage of the convex terrain constrains in [m]
+
+  scalar_t previousFootholdFactor = 0.0;    // factor in [0, 1] with which to take previous foothold into account.
+  scalar_t previousFootholdDeadzone = 0.0;  // previous foothold is taken if the new reference is within this threshold. [m]
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);

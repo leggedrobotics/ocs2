@@ -28,6 +28,8 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   const auto uSystemForWeightCompensation = weightCompensatingInputs(getComModel(), stanceFlags, switched_model::vector3_t::Zero());
   ocs2::TargetTrajectories targetTrajectories({0.0}, {getInitialState()}, {uSystemForWeightCompensation});
   costFunctionPtr_->setTargetTrajectoriesPtr(&targetTrajectories);
+
+  getSwitchedModelModeScheduleManagerPtr()->setTargetTrajectories(targetTrajectories);
   getSwitchedModelModeScheduleManagerPtr()->preSolverRun(0.0, 1.0, getInitialState());
 
   const auto lqrSolution =

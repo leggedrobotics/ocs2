@@ -59,7 +59,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
 
   /** Gets the mode schedule manager */
-  std::shared_ptr<ocs2::ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
+  std::shared_ptr<ocs2::ReferenceManagerInterface> getReferenceManagerPtr() const override { return modeScheduleManagerPtr_; }
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }

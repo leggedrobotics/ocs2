@@ -22,7 +22,7 @@ class TerrainReceiverSynchronizedModule : public ocs2::SolverSynchronizedModule 
   ~TerrainReceiverSynchronizedModule() override = default;
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
+                    const ocs2::ReferenceManagerInterface& referenceManager) override;
 
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override{};
 

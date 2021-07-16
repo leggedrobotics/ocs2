@@ -30,6 +30,8 @@ model_settings
     swingTimeScale              0.15
     sdfMidswingMargin           0.04
     terrainMargin               0.035
+    previousFootholdFactor      0.333
+    previousFootholdDeadzone    0.05
   }
 
   mpcGoalCommandDelay           0.1
@@ -90,7 +92,7 @@ ddp
   minRelCost                      0.1
   constraintTolerance             5e-3
 
-  displayInfo                     true
+  displayInfo                     false
   displayShortSummary             false
   checkNumericalStability         false
   debugPrintRollout               false
@@ -154,7 +156,7 @@ mpc
 
   solutionTimeWindow              -1  ; [s]
 
-  mpcDesiredFrequency             50  ; [Hz]
+  mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
 }
 

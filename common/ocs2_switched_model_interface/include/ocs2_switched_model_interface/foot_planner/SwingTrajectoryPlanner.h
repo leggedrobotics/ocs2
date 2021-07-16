@@ -5,7 +5,7 @@
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
@@ -28,6 +28,9 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t swingTimeScale = 0.15;    // swing phases shorter than this time will be scaled down in height and velocity
   scalar_t sdfMidswingMargin = 0.0;  // desired sdf based clearance in the middle of the swing phase [m]
   scalar_t terrainMargin = 0.0;      // shrinkage of the convex terrain constrains in [m]
+
+  scalar_t previousFootholdFactor = 0.0;    // factor in [0, 1] with which to take previous foothold into account.
+  scalar_t previousFootholdDeadzone = 0.0;  // previous foothold is taken if the new reference is within this threshold. [m]
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
@@ -40,7 +43,7 @@ class SwingTrajectoryPlanner {
   void updateTerrain(std::unique_ptr<TerrainModel> terrainModel);
 
   void updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                          const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+                          const ocs2::TargetTrajectories& targetTrajectories,
                           const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg);
 
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
@@ -53,7 +56,7 @@ class SwingTrajectoryPlanner {
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
   scalar_t getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const;
   std::vector<ConvexTerrain> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                          const ocs2::CostDesiredTrajectories& costDesiredTrajectories, scalar_t finalTime,
+                                                          const ocs2::TargetTrajectories& targetTrajectories, scalar_t finalTime,
                                                           const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;

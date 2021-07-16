@@ -33,23 +33,23 @@ SwitchedModelCostBase* SwitchedModelCostBase::clone() const {
 }
 
 scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  if (targetTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] targetTrajectoriesPtr_ is not set");
   }
 
   update(t, x, u);
 
-  return trackingCostPtr_->getValue(t, x, u, *costDesiredTrajectoriesPtr_) + footPlacementCost_->getCostValue();
+  return trackingCostPtr_->getValue(t, x, u, *targetTrajectoriesPtr_) + footPlacementCost_->getCostValue();
 }
 
 ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
-  if (costDesiredTrajectoriesPtr_ == nullptr) {
-    throw std::runtime_error("[SwitchedModelCostBase] costDesiredTrajectoriesPtr_ is not set");
+  if (targetTrajectoriesPtr_ == nullptr) {
+    throw std::runtime_error("[SwitchedModelCostBase] targetTrajectoriesPtr_ is not set");
   }
 
   update(t, x, u);
 
-  ScalarFunctionQuadraticApproximation L = trackingCostPtr_->getQuadraticApproximation(t, x, u, *costDesiredTrajectoriesPtr_);
+  ScalarFunctionQuadraticApproximation L = trackingCostPtr_->getQuadraticApproximation(t, x, u, *targetTrajectoriesPtr_);
   L.f += footPlacementCost_->getCostValue();
   L.dfdx += footPlacementCost_->getCostDerivativeState();
   L.dfdxx += footPlacementCost_->getCostSecondDerivativeState();

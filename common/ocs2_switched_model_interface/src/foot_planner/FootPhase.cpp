@@ -61,6 +61,10 @@ vector3_t StancePhase::normalDirectionInWorldFrame(scalar_t time) const {
   return surfaceNormalInWorld(stanceTerrain_->plane);
 }
 
+vector3_t StancePhase::nominalFootholdLocation() const {
+  return stanceTerrain_->plane.positionInWorld;
+}
+
 FootNormalConstraintMatrix StancePhase::getFootNormalConstraintInWorldFrame(scalar_t time) const {
   const scalar_t feedForwardVelocity = 0.0;
   const scalar_t desiredTerrainDistance = 0.0;
@@ -178,6 +182,10 @@ vector3_t SwingPhase::normalDirectionInWorldFrame(scalar_t time) const {
   const scalar_t scaling = getScaling(time);
   return ((1.0 - scaling) * surfaceNormalInWorld(*liftOff_.terrainPlane) + scaling * surfaceNormalInWorld(*touchDown_.terrainPlane))
       .normalized();
+}
+
+vector3_t SwingPhase::nominalFootholdLocation() const {
+  return touchDown_.terrainPlane->positionInWorld;
 }
 
 FootNormalConstraintMatrix SwingPhase::getFootNormalConstraintInWorldFrame(scalar_t time) const {

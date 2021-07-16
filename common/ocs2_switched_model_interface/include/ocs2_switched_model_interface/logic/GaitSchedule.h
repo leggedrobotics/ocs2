@@ -7,7 +7,7 @@
 #include <deque>
 #include <vector>
 
-#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/reference/ModeSchedule.h>
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/logic/Gait.h"

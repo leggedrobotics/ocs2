@@ -6,7 +6,7 @@ from ocs2_anymal_mpc import (
     scalar_array,
     vector_array,
     matrix_array,
-    CostDesiredTrajectories,
+    TargetTrajectories,
 )
 
 
@@ -29,7 +29,7 @@ class anymal_mpc_python_tests(unittest.TestCase):
         desiredStateTraj = vector_array()
         desiredStateTraj.push_back(np.zeros(self.STATE_DIM))
 
-        targetTrajectories = CostDesiredTrajectories(
+        targetTrajectories = TargetTrajectories(
             desiredTimeTraj, desiredStateTraj, desiredInputTraj
         )
         self.mpc.reset(targetTrajectories)

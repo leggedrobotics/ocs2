@@ -56,15 +56,15 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
   const auto basePose = comModel.calculateBasePose(comPose);
   const auto com_comTwist = getComLocalVelocities(x);
   const auto base_baseTwist = comModel.calculateBaseLocalVelocities(com_comTwist);
-  const auto o_R_b = rotationMatrixBaseToOrigin(getOrientation(comPose));
+  const auto eulerAngles = getOrientation(comPose);
   const auto qJoints = getJointPositions(x);
   const auto dqJoints = getJointVelocities(u);
 
   CostElements<SCALAR_T> motionTarget;
-  motionTarget.eulerXYZ = getOrientation(comPose);
+  motionTarget.eulerXYZ = eulerAngles;
   motionTarget.comPosition = getPositionInOrigin(comPose);
-  motionTarget.comAngularVelocity = o_R_b * getAngularVelocity(com_comTwist);
-  motionTarget.comLinearVelocity = o_R_b * getLinearVelocity(com_comTwist);
+  motionTarget.comAngularVelocity = rotateVectorBaseToOrigin(getAngularVelocity(com_comTwist), eulerAngles);
+  motionTarget.comLinearVelocity = rotateVectorBaseToOrigin(getLinearVelocity(com_comTwist), eulerAngles);
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     motionTarget.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
     motionTarget.footPosition[leg] = kinematics.footPositionInOriginFrame(leg, basePose, qJoints);
@@ -103,10 +103,10 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedMo
   initialize(STATE_DIM, INPUT_DIM, costVectorLength, "MotionTrackingCost", "/tmp/ocs2", recompile);
 };
 
-ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::CostDesiredTrajectories& desiredTrajectory) const {
+ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2::TargetTrajectories& targetTrajectories) const {
   // Interpolate reference
-  const comkino_state_t xRef = desiredTrajectory.getDesiredState(time);
-  comkino_input_t uRef = desiredTrajectory.getDesiredInput(time);
+  const comkino_state_t xRef = targetTrajectories.getDesiredState(time);
+  comkino_input_t uRef = targetTrajectories.getDesiredInput(time);
 
   // If the input has zero values, overwrite it.
   if (uRef.isZero()) {

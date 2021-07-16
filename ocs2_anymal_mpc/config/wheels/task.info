@@ -30,6 +30,8 @@ model_settings
     swingTimeScale              0.15
     sdfMidswingMargin           0.04
     terrainMargin               0.035
+    previousFootholdFactor      0.0
+    previousFootholdDeadzone    0.0
   }
 
   mpcGoalCommandDelay           0.1
@@ -37,7 +39,7 @@ model_settings
   gaitOptimization              false
 
   recompileLibraries            true
-  algorithm                     SQP
+  algorithm                     DDP
 }
 
 terrainPlane
@@ -81,7 +83,7 @@ ddp
   minRelCost                      0.1
   constraintTolerance             5e-3
 
-  displayInfo                     true
+  displayInfo                     false
   displayShortSummary             false
   checkNumericalStability         false
   debugPrintRollout               false
@@ -145,7 +147,7 @@ mpc
 
   solutionTimeWindow              -1  ; [s]
 
-  mpcDesiredFrequency             50  ; [Hz]
+  mpcDesiredFrequency             20  ; [Hz]
   mrtDesiredFrequency             400 ; [Hz]
 }
 

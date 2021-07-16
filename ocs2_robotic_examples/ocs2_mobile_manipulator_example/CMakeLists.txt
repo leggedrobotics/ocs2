@@ -181,12 +181,11 @@ install(DIRECTORY config launch
 
 # Helper macro for adding target applications
 macro(add_ocs2_test APP_NAME APP_SRC)
-  add_executable(${APP_NAME}
+  catkin_add_gtest(${APP_NAME}
       ${APP_SRC}
-      test/gtest.cpp
   )
   target_link_libraries(${APP_NAME}
-    gtest
+    gtest_main
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}

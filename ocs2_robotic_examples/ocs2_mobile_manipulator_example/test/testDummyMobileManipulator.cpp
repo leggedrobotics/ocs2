@@ -27,18 +27,20 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <chrono>
 #include <cmath>
-#include <pinocchio/fwd.hpp>
+#include <iostream>
+#include <string>
+#include <thread>
 
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/algorithm/kinematics.hpp>
+#include <ros/package.h>
 
 #include <gtest/gtest.h>
 
 #include <ocs2_mobile_manipulator_example/MobileManipulatorInterface.h>
 
 #include <ocs2_mpc/MPC_MRT_Interface.h>
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 #include <ocs2_mobile_manipulator_example/MobileManipulatorPinocchioMapping.h>
 
 using namespace ocs2;
@@ -46,114 +48,66 @@ using namespace mobile_manipulator;
 
 class MobileManipulatorIntegrationTest : public testing::Test {
 protected:
+  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
+  using quaternion_t = Eigen::Quaternion<scalar_t, Eigen::DontAlign>;
+
   MobileManipulatorIntegrationTest() {
     mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface("mpc"));
 
-    // urdf file path
-    const std::string packageDir = "/home/mayank/git_devel/ocs2_dev/ocs2_robotic_examples/ocs2_mobile_manipulator_example";
-    const std::string urdfPath = packageDir + "/urdf/mobile_manipulator.urdf";
-//    const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
-
-    // initialize pinocchio
-    pinocchioInterface.reset(new PinocchioInterface(MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
-    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematics(*pinocchioInterface, pinocchioMapping, {"WRIST_2"}));
-
-    // initial state of robot
-    initState = mobileManipulatorInterfacePtr->getInitialState();
-    // goal end-effector state
-    goalState.setZero(7);
-    goalState << 5.0, 5.0, 0.71, 1.0, 0.0, 0.0, 0.0;
-
-    // current end-effector state
-    const auto& model = pinocchioInterface->getModel();
-    auto& data = pinocchioInterface->getData();
-    const auto q = pinocchioMapping.getPinocchioJointPosition(initState);
-    pinocchio::forwardKinematics(model, data, q);
-    pinocchio::updateFramePlacements(model, data);
-    eeKinematicsPtr->setPinocchioInterface(*pinocchioInterface);
-    const auto& curr_ee_positions = eeKinematicsPtr->getPosition(initState);
-    const auto& curr_ee_orientation = data.oMf[model.getBodyId("WRIST_2")].rotation();
-
     // initialize reference
-//    targetTrajectories.timeTrajectory.push_back(initTime);
-    targetTrajectories.timeTrajectory.push_back(initTime + 2.0);
-//    targetTrajectories.stateTrajectory.push_back(goalState);
-    targetTrajectories.stateTrajectory.push_back(goalState);
-//    targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
-    targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
+    const vector_t goalState = (vector_t(7) << goalPosition, goalOrientation.coeffs()).finished();
+    TargetTrajectories targetTrajectories({initTime}, {goalState}, {vector_t::Zero(INPUT_DIM)});
+    mobileManipulatorInterfacePtr->getReferenceManagerPtr()->setTargetTrajectories(std::move(targetTrajectories));
+
+    // initialize kinematics
+    const std::string modelName = "end_effector_kinematics_dummytest";
+    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMapping;
+    const auto& pinocchioInterface = mobileManipulatorInterfacePtr->getPinocchioInterface();
+    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {"WRIST_2"},
+        STATE_DIM, INPUT_DIM, modelName));
   }
 
-  const scalar_t tolerance = 2e-2;
-  const scalar_t f_mpc = 10.0;
-  const scalar_t mpcIncrement = 1.0 / f_mpc;
-  const scalar_t initTime = 1234.5;  // start from a random time
-  const scalar_t finalTime = initTime + 5.0;
+  void verifyTrackingQuality(const vector_t& state) const {
+    const vector3_t eePositionError = eeKinematicsPtr->getPosition(state).front() - goalPosition;
+    const vector3_t eeOrientationError = eeKinematicsPtr->getOrientationError(state, {goalOrientation}).front();
+    std::cerr << "eePositionError: " << eePositionError.transpose() << '\n';
+    std::cerr << "eeOrientationError: " << eeOrientationError.transpose() << '\n';
+    // check that goal position is reached
+    EXPECT_NEAR(eePositionError.x(), 0.0, tolerance);
+    EXPECT_NEAR(eePositionError.y(), 0.0, tolerance);
+    EXPECT_NEAR(eePositionError.z(), 0.0, tolerance);
+    EXPECT_NEAR(eeOrientationError.x(), 0.0, tolerance);
+    EXPECT_NEAR(eeOrientationError.y(), 0.0, tolerance);
+    EXPECT_NEAR(eeOrientationError.z(), 0.0, tolerance);
+  }
 
-  vector_t initState;
-  vector_t goalState;
+  static constexpr scalar_t tolerance = 1e-2;
+  static constexpr scalar_t f_mpc = 10.0;
+  static constexpr scalar_t mpcIncrement = 1.0 / f_mpc;
+  static constexpr scalar_t initTime = 1234.5;  // start from a random time
+  static constexpr scalar_t finalTime = initTime + 5.0;
+
+  const vector3_t goalPosition = vector3_t(-0.5, -0.8, 0.6);
+  const quaternion_t goalOrientation = quaternion_t(0.33, 0.0, 0.0, 0.95);
+
   std::unique_ptr<MobileManipulatorInterface> mobileManipulatorInterfacePtr;
-  TargetTrajectories targetTrajectories;
-  std::unique_ptr<PinocchioInterface> pinocchioInterface;
-  std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr;
-  MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
+  std::unique_ptr<PinocchioEndEffectorKinematicsCppAd> eeKinematicsPtr;
 };
+
+constexpr scalar_t MobileManipulatorIntegrationTest::tolerance;
+constexpr scalar_t MobileManipulatorIntegrationTest::f_mpc;
+constexpr scalar_t MobileManipulatorIntegrationTest::mpcIncrement;
+constexpr scalar_t MobileManipulatorIntegrationTest::initTime;
+constexpr scalar_t MobileManipulatorIntegrationTest::finalTime;
 
 TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
   auto mpcPtr = mobileManipulatorInterfacePtr->getMpc();
+  mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
   SystemObservation observation;
   observation.time = initTime;
-  observation.state = initState;
-  observation.input.setZero(INPUT_DIM);
-  mpcInterface.setCurrentObservation(observation);
-
-  // run MPC for N iterations
-  auto time = initTime;
-  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-  for (size_t i = 0; i < N; i++) {
-    // run MPC
-    mpcInterface.advanceMpc();
-    time += 1.0 / f_mpc;
-
-    if (mpcInterface.initialPolicyReceived()) {
-      size_t mode;
-      vector_t optimalState, optimalInput;
-
-      mpcInterface.updatePolicy();
-      mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
-
-      // use optimal state for the next observation:
-      observation.time = time;
-      observation.state = optimalState;
-      observation.input.setZero(INPUT_DIM);
-      mpcInterface.setCurrentObservation(observation);
-    }
-  }
-  // resolve current end-effector state
-  const auto& model = pinocchioInterface->getModel();
-  auto& data = pinocchioInterface->getData();
-  const auto q = pinocchioMapping.getPinocchioJointPosition(observation.state);
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
-  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterface);
-  const auto& curr_ee_positions = eeKinematicsPtr->getPosition(observation.state);
-  std::cerr << "Current: " << curr_ee_positions[0].transpose() << '\n';
-  std::cerr << "Goal: " << goalState.transpose() << '\n';
-  // check that goal position is reached
-  ASSERT_NEAR(curr_ee_positions[0](0), goalState(0), tolerance);
-  ASSERT_NEAR(curr_ee_positions[0](1), goalState(1), tolerance);
-}
-
-TEST_F(MobileManipulatorIntegrationTest, coldStartMPC) {
-  auto mpcPtr = mobileManipulatorInterfacePtr->getMpc();
-  MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
-
-  SystemObservation observation;
-  observation.time = initTime;
-  observation.state = initState;
+  observation.state = mobileManipulatorInterfacePtr->getInitialState();
   observation.input.setZero(INPUT_DIM);
   mpcInterface.setCurrentObservation(observation);
 
@@ -180,30 +134,19 @@ TEST_F(MobileManipulatorIntegrationTest, coldStartMPC) {
     }
   }
 
-  // resolve current end-effector state
-  const auto& model = pinocchioInterface->getModel();
-  auto& data = pinocchioInterface->getData();
-  const auto q = pinocchioMapping.getPinocchioJointPosition(observation.state);
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
-  eeKinematicsPtr->setPinocchioInterface(*pinocchioInterface);
-  const auto& curr_ee_positions = eeKinematicsPtr->getPosition(observation.state);
-  // check that goal position is reached
-  ASSERT_NEAR(curr_ee_positions[0](0), goalState(0), tolerance);
-  ASSERT_NEAR(curr_ee_positions[0](1), goalState(1), tolerance);
+  verifyTrackingQuality(observation.state);
 }
 
 TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
   auto mpcPtr = mobileManipulatorInterfacePtr->getMpc();
+  mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
-  const scalar_t f_mrt = 100;
-  const scalar_t mrtTimeIncrement = 1.0 / f_mrt;
+  constexpr int f_mrt = 10;  // Hz
+  const std::chrono::duration<double, std::ratio<1, f_mrt>> mrtHz(1);  // f_mrt Hz clock using fractional ticks
 
   scalar_t time = initTime;
-  size_t mode;
-  vector_t optimalState = initState;
+  vector_t optimalState = mobileManipulatorInterfacePtr->getInitialState();
   vector_t optimalInput;
 
   // run MRT in a thread
@@ -213,16 +156,17 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
     while (trackerRunning) {
       {
         std::lock_guard<std::mutex> lock(timeStateMutex);
-        time += mrtTimeIncrement;
+        time += 1.0 / f_mrt;
         if (mpcInterface.initialPolicyReceived()) {
+          size_t mode;
           mpcInterface.updatePolicy();
           mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
         }
         if (std::abs(time - finalTime) < 0.005) {
-          ASSERT_NEAR(optimalState(0), goalState(0), tolerance);
+          verifyTrackingQuality(optimalState);
         }
       }
-      usleep(uint(mrtTimeIncrement * 1e6));
+      std::this_thread::sleep_for(mrtHz);
     }
   };
   std::thread trackerThread(tracker);
@@ -241,8 +185,6 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
       }
       mpcInterface.setCurrentObservation(observation);
       mpcInterface.advanceMpc();
-
-      usleep(uint(mpcIncrement * 1e6));
     }
   } catch (const std::exception& e) {
     std::cerr << "EXCEPTION " << e.what() << std::endl;

@@ -32,15 +32,15 @@ cost through a reference manager module.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_double_integrator_example
+    catkin build ocs2_double_integrator
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launche the example
-    roslaunch ocs2_double_integrator_example double_integrator.launch
+    roslaunch ocs2_double_integrator double_integrator.launch
 
-.. _doxid-ocs2_doc_robotic_examples_cart_pole:
+.. _doxid-ocs2_doc_robotic_examples_cartpole:
 
 Cart Pole
 ^^^^^^^^^
@@ -54,13 +54,13 @@ cart along the track.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_cart_pole_example
+    catkin build ocs2_cartpole
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launche the example
-    roslaunch ocs2_cart_pole_example cartpole.launch
+    roslaunch ocs2_cartpole cartpole.launch
 
 .. _doxid-ocs2_doc_robotic_examples_ballbot:
 
@@ -78,13 +78,13 @@ control the robot’s XY position and yaw based on user command.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_ballbot_example
+    catkin build ocs2_ballbot
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launche the example
-    roslaunch ocs2_ballbot_example ballbot.launch
+    roslaunch ocs2_ballbot ballbot.launch
 
 .. _doxid-ocs2_doc_robotic_examples_quadrotor:
 
@@ -100,13 +100,13 @@ command defined as the quadrotor’s 3D position and yaw.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_quadrotor_example
+    catkin build ocs2_quadrotor
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launche the example
-    roslaunch ocs2_quadrotor_example quadrotor.launch
+    roslaunch ocs2_quadrotor quadrotor.launch
 
 .. _doxid-ocs2_doc_robotic_examples_mobile_manipulator:
 
@@ -129,13 +129,13 @@ usePreComputation flag in the config file.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_mobile_manipulator_example
+    catkin build ocs2_mobile_manipulator
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launche the example
-    roslaunch ocs2_mobile_manipulator_example mobile_manipulator.launch
+    roslaunch ocs2_mobile_manipulator mobile_manipulator.launch
 
 .. _doxid-ocs2_doc_robotic_examples_legged_robot:
 
@@ -166,10 +166,10 @@ considers the full kinematics of the robot.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_legged_robot_example
+    catkin build ocs2_legged_robot
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launche the example
-    roslaunch ocs2_legged_robot_example legged_robot.launch
+    roslaunch ocs2_legged_robot legged_robot.launch

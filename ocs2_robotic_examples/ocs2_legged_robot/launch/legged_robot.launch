@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <arg name="robot_name"         default="legged_robot"/>
+    <arg name="config_name"        default="mpc"/>
+    <arg name="target_command"     default="$(find ocs2_legged_robot)/config/command/targetTrajectories.info"/>
+    <arg name="gait_command"       default="$(find ocs2_legged_robot)/config/command/gait.info"/>
+    <arg name="rviz"               default="true" />
+    <arg name="multiplot"          default="false"/>
+    <arg name="description_name"   default="legged_robot_description"/>
+    <arg name="description_file"   default="$(find anymal_c_simple_description)/urdf/anymal.urdf"/>
+    
+    <group if="$(arg rviz)">
+      <include file="$(find ocs2_legged_robot)/launch/visualize.launch"/>
+    </group>
+
+    <include file="$(find anymal_c_simple_description)/launch/load.launch" pass_all_args="true">
+        <arg name="description_name"   value="$(arg description_name)"/>
+        <arg name="description_file"   value="$(arg description_file)"/>
+    </include>
+      
+    <group if="$(arg multiplot)">
+      <include file="$(find ocs2_legged_robot)/launch/multiplot.launch"/>
+    </group>
+
+    <node pkg="ocs2_legged_robot" type="legged_robot_mpc" name="legged_robot_mpc"
+          output="screen" args="$(arg robot_name) $(arg config_name) $(arg target_command) $(arg description_name)" launch-prefix=""/>
+
+    <node pkg="ocs2_legged_robot" type="legged_robot_dummy" name="legged_robot_dummy"
+          output="screen" args="$(arg robot_name) $(arg config_name) $(arg target_command) $(arg description_name)" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_legged_robot" type="legged_robot_target" name="legged_robot_target"
+          output="screen" args="$(arg robot_name) $(arg target_command)" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_legged_robot" type="legged_robot_gait_command" name="legged_robot_gait_command"
+          output="screen" args="$(arg robot_name) $(arg gait_command)" launch-prefix="gnome-terminal --"/>
+</launch>

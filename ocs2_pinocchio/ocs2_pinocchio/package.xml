@@ -13,6 +13,7 @@
   <exec_depend>ocs2_centroidal_model</exec_depend>
   <exec_depend>ocs2_pinocchio_interface</exec_depend>
   <exec_depend>ocs2_self_collision</exec_depend>
+  <exec_depend>ocs2_self_collision_visualization</exec_depend>
 
   <export>
     <metapackage />

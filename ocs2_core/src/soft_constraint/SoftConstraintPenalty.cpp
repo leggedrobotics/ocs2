@@ -80,6 +80,7 @@ scalar_t SoftConstraintPenalty::getValue(const vector_t& h) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproximation(const VectorFunctionLinearApproximation& h) const {
+  const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
 
   scalar_t penaltyValue = 0.0;
@@ -87,7 +88,8 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproxim
   std::tie(penaltyValue, penaltyDerivative, penaltySecondDerivative) = getPenaltyValue1stDev2ndDev(h.f);
   const matrix_t penaltySecondDev_dhdx = penaltySecondDerivative.asDiagonal() * h.dfdx;
 
-  ScalarFunctionQuadraticApproximation penaltyApproximation;
+  // to make sure that dfdux in the state-only case has a right size
+  ScalarFunctionQuadraticApproximation penaltyApproximation(stateDim, inputDim);
 
   penaltyApproximation.f = penaltyValue;
   penaltyApproximation.dfdx.noalias() = h.dfdx.transpose() * penaltyDerivative;
@@ -105,6 +107,7 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproxim
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const {
+  const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
   const auto numConstraints = h.f.rows();
 
@@ -113,7 +116,8 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproxim
   std::tie(penaltyValue, penaltyDerivative, penaltySecondDerivative) = getPenaltyValue1stDev2ndDev(h.f);
   const matrix_t penaltySecondDev_dhdx = penaltySecondDerivative.asDiagonal() * h.dfdx;
 
-  ScalarFunctionQuadraticApproximation penaltyApproximation;
+  // to make sure that dfdux in the state-only case has a right size
+  ScalarFunctionQuadraticApproximation penaltyApproximation(stateDim, inputDim);
 
   penaltyApproximation.f = penaltyValue;
   penaltyApproximation.dfdx.noalias() = h.dfdx.transpose() * penaltyDerivative;

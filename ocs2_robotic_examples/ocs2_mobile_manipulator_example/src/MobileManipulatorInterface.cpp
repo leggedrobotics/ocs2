@@ -189,7 +189,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(PinocchioInterface pinocchioInterface,
+std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(const PinocchioInterface& pinocchioInterface,
                                                                                 const std::string& taskFile, const std::string& prefix,
                                                                                 bool usePreComputation, const std::string& libraryFolder,
                                                                                 bool recompileLibraries) {
@@ -227,7 +227,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstraint(PinocchioInterface pinocchioInterface,
+std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface,
                                                                                   const std::string& taskFile, const std::string& urdfPath,
                                                                                   bool usePreComputation, const std::string& libraryFolder,
                                                                                   bool recompileLibraries) {

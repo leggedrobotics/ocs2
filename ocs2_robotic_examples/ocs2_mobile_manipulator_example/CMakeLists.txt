@@ -179,13 +179,19 @@ install(DIRECTORY config launch
 # Testing ##
 ############
 
-catkin_add_gtest(SelfCollisionTests
-  test/testSelfCollision.cpp
-  test/testEndEffectorConstraint.cpp
-)
-target_link_libraries(SelfCollisionTests
-  gtest_main
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+# Helper macro for adding target applications
+macro(add_ocs2_test APP_NAME APP_SRC)
+  catkin_add_gtest(${APP_NAME}
+      ${APP_SRC}
+  )
+  target_link_libraries(${APP_NAME}
+    gtest_main
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
+endmacro()
+
+add_ocs2_test(SelfCollisionTest test/testSelfCollision.cpp)
+add_ocs2_test(EndEffectorConstraintTest test/testEndEffectorConstraint.cpp)
+add_ocs2_test(DummyMobileManipulatorTest test/testDummyMobileManipulator.cpp)

@@ -57,7 +57,10 @@ class SelfCollisionConstraint final : public StateConstraint {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
   /** Caches the pointer to the pinocchio interface. */
-  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) {
+    pinocchioInterfacePtr_ = &pinocchioInterface;
+    mappingPtr_->setPinocchioInterface(pinocchioInterface);
+  }
 
  private:
   SelfCollisionConstraint(const SelfCollisionConstraint& rhs);

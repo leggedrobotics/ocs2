@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_cartpole)
+project(ocs2_cartpole_ros)
 
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -8,7 +8,9 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
+  ocs2_ros_interfaces
   ocs2_robotic_tools
+  ocs2_cartpole
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -23,8 +25,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-find_package(raisim CONFIG QUIET)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -33,8 +33,6 @@ catkin_package(
   INCLUDE_DIRS
     include
     ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES
-    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
@@ -52,19 +50,28 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# cartpole interface library
-add_library(${PROJECT_NAME}
-  src/CartPoleInterface.cpp
+# Mpc node
+add_executable(cartpole_mpc
+  src/CartpoleMpcNode.cpp
 )
-add_dependencies(${PROJECT_NAME}
+add_dependencies(cartpole_mpc
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(cartpole_mpc
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  dl
 )
-target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+# Dummy node
+add_executable(cartpole_dummy_test
+  src/DummyCartpoleNode.cpp
+  src/CartpoleDummyVisualization.cpp
+)
+add_dependencies(cartpole_dummy_test
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(cartpole_dummy_test
+  ${catkin_LIBRARIES}
+)
 
 
 #########################
@@ -75,7 +82,8 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Running clang tooling.")
   add_clang_tooling(
     TARGETS
-        ${PROJECT_NAME}
+        cartpole_mpc
+        cartpole_dummy_test
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
@@ -87,16 +95,12 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-
+install(TARGETS cartpole_mpc cartpole_dummy_test
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 install(DIRECTORY urdf launch config rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

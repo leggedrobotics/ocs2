@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
-#include "ocs2_cartpole/CartPoleInterface.h"
+#include <ocs2_cartpole/CartPoleInterface.h>
 
 int main(int argc, char** argv) {
   const std::string robotName = "cartpole";

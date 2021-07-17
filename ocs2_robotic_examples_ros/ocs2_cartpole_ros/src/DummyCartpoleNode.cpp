@@ -32,9 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include "ocs2_cartpole/CartPoleInterface.h"
-#include "ocs2_cartpole/definitions.h"
-#include "ocs2_cartpole/ros_comm/CartpoleDummyVisualization.h"
+#include <ocs2_cartpole/CartPoleInterface.h>
+#include <ocs2_cartpole/definitions.h>
+
+#include "ocs2_cartpole_ros/CartpoleDummyVisualization.h"
 
 int main(int argc, char** argv) {
   const std::string robotName = "cartpole";

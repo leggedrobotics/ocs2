@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "ocs2_cartpole/ros_comm/CartpoleDummyVisualization.h"
+#include "ocs2_cartpole_ros/CartpoleDummyVisualization.h"
 
 namespace ocs2 {
 namespace cartpole {

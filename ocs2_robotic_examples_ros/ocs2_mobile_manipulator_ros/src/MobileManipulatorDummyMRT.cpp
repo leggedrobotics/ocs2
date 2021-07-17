@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
 #include <ros/init.h>
+#include <ros/package.h>
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -56,7 +57,10 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot Interface
-  mobile_manipulator::MobileManipulatorInterface interface(taskFileFolderName);
+  const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/" + taskFileFolderName + "/task.info";
+  const std::string libFolder = ros::package::getPath("ocs2_mobile_manipulator") + "/auto_generated";
+  const std::string urdfFile = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
+  mobile_manipulator::MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
   // MRT
   MRT_ROS_Interface mrt(robotName);

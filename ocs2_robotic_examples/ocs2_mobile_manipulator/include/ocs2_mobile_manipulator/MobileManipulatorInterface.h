@@ -51,9 +51,15 @@ class MobileManipulatorInterface final : public RobotInterface {
  public:
   /**
    * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
+   *
+   * @note Creates directory for generated library into if it does not exist.
+   * @throw Invalid argument error if input task file or urdf file does not exist.
+   *
+   * @param [in] taskFile: The name of the configuration file for the MPC.
+   * @param [in] libraryFolder: The name of the directory to generate CppAD library into.
+   * @param [in] urdfFile: The name of the URDF file for the robot.
    */
-  explicit MobileManipulatorInterface(const std::string& taskFileFolderName);
+  explicit MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
 
   const vector_t& getInitialState() { return initialState_; }
 
@@ -72,7 +78,7 @@ class MobileManipulatorInterface final : public RobotInterface {
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
   /** MobileManipulator PinocchioInterface factory */
-  static PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
+  static PinocchioInterface buildPinocchioInterface(const std::string& urdfFile);
 
  private:
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
@@ -80,7 +86,7 @@ class MobileManipulatorInterface final : public RobotInterface {
                                                       const std::string& prefix, bool useCaching, const std::string& libraryFolder,
                                                       bool recompileLibraries);
   std::unique_ptr<StateCost> getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,
-                                                        const std::string& urdfPath, bool useCaching, const std::string& libraryFolder,
+                                                        const std::string& urdfFile, bool useCaching, const std::string& libraryFolder,
                                                         bool recompileLibraries);
   std::unique_ptr<StateInputCost> getJointVelocityLimitConstraint(const std::string& taskFile);
 

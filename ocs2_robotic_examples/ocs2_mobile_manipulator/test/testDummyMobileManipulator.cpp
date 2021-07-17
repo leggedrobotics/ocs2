@@ -53,7 +53,10 @@ protected:
   using quaternion_t = Eigen::Quaternion<scalar_t, Eigen::DontAlign>;
 
   MobileManipulatorIntegrationTest() {
-    mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface("mpc"));
+    const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/mpc/task.info";
+    const std::string libFolder = ros::package::getPath("ocs2_mobile_manipulator") + "/auto_generated";
+    const std::string urdfFile = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
+    mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface(taskFile, libFolder, urdfFile));
 
     // initialize reference
     const vector_t goalState = (vector_t(7) << goalPosition, goalOrientation.coeffs()).finished();

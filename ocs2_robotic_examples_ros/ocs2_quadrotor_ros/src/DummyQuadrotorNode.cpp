@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ros/init.h>
+#include <ros/package.h>
 
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
@@ -53,7 +54,9 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  ocs2::quadrotor::QuadrotorInterface quadrotorInterface(taskFileFolderName);
+  const std::string taskFile = ros::package::getPath("ocs2_quadrotor") + "/config/" + taskFileFolderName + "/task.info";
+  const std::string libFolder = ros::package::getPath("ocs2_quadrotor") + "/auto_generated";
+  ocs2::quadrotor::QuadrotorInterface quadrotorInterface(taskFile, libFolder);
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);

@@ -50,9 +50,13 @@ class QuadrotorInterface final : public RobotInterface {
   /**
    * Constructor
    *
-   * @param [in] taskFileFolderName: The name of the folder containing task file
+   * @note Creates directory for generated library into if it does not exist.
+   * @throw Invalid argument error if input task file or urdf file does not exist.
+   *
+   * @param [in] taskFile: The name of the configuration file for the MPC.
+   * @param [in] libraryFolder: The name of the directory to generate CppAD library into.
    */
-  explicit QuadrotorInterface(const std::string& taskFileFolderName);
+  explicit QuadrotorInterface(const std::string& taskFile, const std::string& libraryFolder);
 
   /** Destructor */
   ~QuadrotorInterface() override = default;

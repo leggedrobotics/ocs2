@@ -1,7 +1,7 @@
 <launch>
 
-  <arg name="rvizconfig" default="$(find ocs2_double_integrator)/rviz/double_integrator.rviz" />
-  <arg name="model"      default="$(find ocs2_double_integrator)/urdf/double_integrator.urdf"/>
+  <arg name="rvizconfig" default="$(find ocs2_double_integrator_ros)/rviz/double_integrator.rviz" />
+  <arg name="model"      default="$(find ocs2_double_integrator_ros)/urdf/double_integrator.urdf"/>
 
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
 

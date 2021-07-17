@@ -4,17 +4,17 @@
     <arg name="task_name"  default="mpc"/>
 
     <group if="$(arg rviz)">
-      <include file="$(find ocs2_cartpole)/launch/visualize.launch"/>
+      <include file="$(find ocs2_cartpole_ros)/launch/visualize.launch"/>
     </group>
 
     <group if="$(arg multiplot)">
-      <include file="$(find ocs2_cartpole)/launch/multiplot.launch"/>
+      <include file="$(find ocs2_cartpole_ros)/launch/multiplot.launch" />
     </group>
 
-    <node pkg="ocs2_cartpole" type="cartpole_mpc" name="cartpole_mpc"
-          output="screen" args="$(arg task_name)" launch-prefix=""/>
+    <node pkg="ocs2_cartpole_ros" type="cartpole_mpc" name="cartpole_mpc"
+            output="screen" args="$(arg task_name)" launch-prefix=""/>
 
-    <node pkg="ocs2_cartpole" type="cartpole_dummy_test" name="cartpole_dummy_test"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+    <node pkg="ocs2_cartpole_ros" type="cartpole_dummy_test" name="cartpole_dummy_test"
+            output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
 </launch>
 	

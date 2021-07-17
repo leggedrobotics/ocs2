@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ocs2_quadrotor</name>
+  <name>ocs2_quadrotor_ros</name>
   <version>0.0.0</version>
-  <description>The ocs2_quadrotor package</description>
+  <description>The ocs2_quadrotor_ros package</description>
 
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
@@ -13,10 +13,11 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roslib</depend>
-  <depend>pybind11_catkin</depend>
+  <depend>tf</depend>
 
   <depend>ocs2_mpc</depend>
+  <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_robotic_tools</depend>
-  <depend>ocs2_python_interface</depend>
+  <depend>ocs2_quadrotor</depend>
 
 </package>

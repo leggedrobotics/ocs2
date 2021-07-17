@@ -9,7 +9,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
-  ocs2_ros_interfaces
   ocs2_python_interface
   ocs2_robotic_tools
 )
@@ -39,7 +38,7 @@ catkin_package(
   DEPENDS
     Boost
   LIBRARIES
-    double_integrator_interface
+    ${PROJECT_NAME}
 )
 
 ###########
@@ -54,67 +53,30 @@ include_directories(
 )
 
 # double integrator interface library
-add_library(double_integrator_interface
+add_library(${PROJECT_NAME}
   src/DoubleIntegratorInterface.cpp
 )
-add_dependencies(double_integrator_interface
+add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(double_integrator_interface
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   dl
 )
-target_compile_options(double_integrator_interface PUBLIC ${OCS2_CXX_FLAGS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-# Mpc node
-add_executable(double_integrator_mpc
-  src/DoubleIntegratorMpcNode.cpp
-)
-add_dependencies(double_integrator_mpc
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(double_integrator_mpc
-  double_integrator_interface
-  ${catkin_LIBRARIES}
-)
-
-# Dummy node
-add_executable(double_integrator_dummy_test
-  src/DummyDoubleIntegratorNode.cpp
-  src/DoubleIntegratorDummyVisualization.cpp
-)
-add_dependencies(double_integrator_dummy_test
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(double_integrator_dummy_test
-  double_integrator_interface
-  ${catkin_LIBRARIES}
-)
-
-# Target node
-add_executable(double_integrator_target
-  src/DoubleIntegratorTargetPoseCommand.cpp
-)
-add_dependencies(double_integrator_target
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(double_integrator_target
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-target_compile_options(double_integrator_target PRIVATE ${OCS2_CXX_FLAGS})
 
 # python bindings
 pybind11_add_module(DoubleIntegratorPyBindings SHARED
   src/pyBindModule.cpp
 )
 add_dependencies(DoubleIntegratorPyBindings
-  double_integrator_interface
+  ${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(DoubleIntegratorPyBindings PRIVATE
-  double_integrator_interface
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 set_target_properties(DoubleIntegratorPyBindings
@@ -131,10 +93,7 @@ if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_double_integrator")
   add_clang_tooling(
     TARGETS
-      double_integrator_interface
-      double_integrator_mpc
-      double_integrator_dummy_test
-      double_integrator_target
+      ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -145,7 +104,7 @@ endif(cmake_clang_tools_FOUND)
 ## Install ##
 #############
 
-install(TARGETS double_integrator_interface
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -154,12 +113,7 @@ install(TARGETS double_integrator_interface
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS
-  double_integrator_mpc
-  double_integrator_dummy_test
-  double_integrator_target
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+
 install(DIRECTORY urdf launch config rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
@@ -180,7 +134,7 @@ add_dependencies(ocs2_double_integrator_no_ros_integration_test
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ocs2_double_integrator_no_ros_integration_test
-  double_integrator_interface
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
 )
@@ -189,11 +143,11 @@ catkin_add_gtest(ocs2_double_integrator_pybinding_test
   test/DoubleIntegratorPyBindingTest.cpp
 )
 add_dependencies(ocs2_double_integrator_pybinding_test
-  double_integrator_interface
+  ${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(ocs2_double_integrator_pybinding_test
-  double_integrator_interface
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 

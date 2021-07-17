@@ -94,20 +94,6 @@ target_link_libraries(ballbot_target
 )
 target_compile_options(ballbot_target PRIVATE ${OCS2_CXX_FLAGS})
 
-# Simple example
-add_executable(ballbot_simple_example
-  src/BallbotSimpleExample.cpp
-)
-add_dependencies(ballbot_simple_example
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(ballbot_simple_example
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  dl
-)
-target_compile_options(ballbot_simple_example PRIVATE ${OCS2_CXX_FLAGS})
-
 ## SQP node for ballbot
 add_executable(ballbot_sqp
   src/MultipleShootingBallbotNode.cpp
@@ -148,7 +134,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target ballbot_sqp
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-install(DIRECTORY urdf launch config rviz
+install(DIRECTORY launch rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

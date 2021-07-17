@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
-#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
+#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
 using namespace ocs2;
 using namespace mobile_manipulator;

@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
-#include <ocs2_self_collision/visualization/GeometryInterfaceVisualization.h>
+#include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 

@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ros/init.h>
+#include <ros/package.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
@@ -51,7 +52,9 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/" + taskFileFolderName + "/task.info";
+  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
+  ocs2::ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(

@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ros/init.h>
+#include <ros/package.h>
 
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
@@ -54,7 +55,9 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // ballbotInterface
-  ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/" + taskFileFolderName + "/task.info";
+  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
+  ocs2::ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   // MRT
   ocs2::MRT_ROS_Interface mrt(robotName);

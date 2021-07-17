@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
 import numpy as np
+import os
 
 from ocs2_ballbot import mpc_interface
 from ocs2_ballbot import (
@@ -41,8 +42,11 @@ from ocs2_ballbot import (
 
 class ballbot_python_tests(unittest.TestCase):
     def setUp(self):
+        packageDir = os.path.abspath(os.path.join(__file__, '../../'))
+        taskFile = os.path.join(packageDir, 'config/mpc/task.info')
+        libFolder = os.path.join(packageDir, 'auto_generated')
         print("Instantiating MPC interface")
-        self.mpc = mpc_interface("mpc")
+        self.mpc = mpc_interface(taskFile, libFolder)
         self.stateDim = 10
         self.inputDim = 3
 

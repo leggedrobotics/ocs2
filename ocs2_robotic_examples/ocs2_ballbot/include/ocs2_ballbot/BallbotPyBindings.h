@@ -40,9 +40,19 @@ namespace ballbot {
 
 class BallbotPyBindings final : public PythonInterface {
  public:
-  explicit BallbotPyBindings(const std::string& taskFileFolder) {
+  /**
+   * Constructor
+   *
+   * @note Creates directory for generated library into if it does not exist.
+   * @throw Invalid argument error if input task file does not exist.
+   *
+   * @param [in] taskFile: The path to the configuration file for the MPC.
+   * @param [in] libraryFolder: The path to the directory to generate CppAD library into.
+   * @param [in] urdfFile: The path to the URDF of the robot. This is not used for ballbot.
+   */
+  explicit BallbotPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "") {
     // Robot interface
-    BallbotInterface ballbotInterface(taskFileFolder);
+    BallbotInterface ballbotInterface(taskFile, libraryFolder);
 
     // MPC
     std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(),

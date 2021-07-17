@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ros/package.h>
+
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
@@ -39,8 +41,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 
 TEST(BallbotIntegrationTest, createDummyMRT) {
-  std::string taskFileFolderName = "mpc";
-  ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info ";
+  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "auto_generated";
+  ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   MRT_ROS_Interface mrt("ballbot");
 
@@ -56,8 +59,9 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
 }
 
 TEST(BallbotIntegrationTest, createMPC) {
-  std::string taskFileFolderName = "mpc";
-  ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
+  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info ";
+  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "auto_generated";
+  ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   // MPC
   ocs2::MPC_DDP mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),

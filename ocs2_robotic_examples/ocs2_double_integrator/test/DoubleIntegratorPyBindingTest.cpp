@@ -29,12 +29,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ros/package.h>
+
 #include <ocs2_double_integrator/DoubleIntegratorPyBindings.h>
 
 TEST(DoubleIntegratorTest, pyBindings) {
   using bindings_t = ocs2::double_integrator::DoubleIntegratorPyBindings;
 
-  bindings_t bindings("mpc");
+  const std::string taskFile = ros::package::getPath("ocs2_double_integrator") + "/config/mpc/task.info";
+  const std::string libFolder = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
+  bindings_t bindings(taskFile, libFolder);
 
   const ocs2::vector_t state = ocs2::vector_t::Zero(ocs2::double_integrator::STATE_DIM);
   const ocs2::vector_t zeroInput = ocs2::vector_t::Zero(ocs2::double_integrator::INPUT_DIM);

@@ -92,7 +92,7 @@ target_compile_options(double_integrator_target PRIVATE ${OCS2_CXX_FLAGS})
 #########################
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target ocs2_double_integrator")
+  message(STATUS "Run clang tooling.")
   add_clang_tooling(
     TARGETS
       double_integrator_mpc

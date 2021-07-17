@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ros/package.h>
+
 #include <ocs2_double_integrator/DoubleIntegratorInterface.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 
@@ -41,7 +43,9 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
  protected:
   DoubleIntegratorIntegrationTest() {
     const bool verbose = false;
-    doubleIntegratorInterfacePtr.reset(new DoubleIntegratorInterface("mpc", verbose));
+    const std::string taskFile = ros::package::getPath("ocs2_double_integrator") + "/config/mpc/task.info";
+    const std::string libFolder = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
+    doubleIntegratorInterfacePtr.reset(new DoubleIntegratorInterface(taskFile, libFolder, verbose));
 
     initState = doubleIntegratorInterfacePtr->getInitialState();
     goalState = doubleIntegratorInterfacePtr->getInitialTarget();

@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ros/init.h>
+#include <ros/package.h>
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
@@ -52,7 +53,9 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // Robot interface
-  interface_t doubleIntegratorInterface(taskFileFolderName);
+  const std::string taskFile = ros::package::getPath("ocs2_double_integrator") + "/config/" + taskFileFolderName + "/task.info";
+  const std::string libFolder = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
+  interface_t doubleIntegratorInterface(taskFile, libFolder);
 
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(

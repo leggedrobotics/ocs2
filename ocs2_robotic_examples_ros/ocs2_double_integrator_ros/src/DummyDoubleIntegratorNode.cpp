@@ -32,9 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include "ocs2_double_integrator/DoubleIntegratorInterface.h"
-#include "ocs2_double_integrator/definitions.h"
-#include "ocs2_double_integrator/ros_comm/DoubleIntegratorDummyVisualization.h"
+#include <ocs2_double_integrator/DoubleIntegratorInterface.h>
+#include <ocs2_double_integrator/definitions.h>
+
+#include "ocs2_double_integrator_ros/DoubleIntegratorDummyVisualization.h"
 
 int main(int argc, char** argv) {
   const std::string robotName = "double_integrator";

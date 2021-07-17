@@ -32,9 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
 
-#include "ocs2_quadrotor/QuadrotorInterface.h"
-#include "ocs2_quadrotor/definitions.h"
-#include "ocs2_quadrotor/ros_comm/QuadrotorDummyVisualization.h"
+#include <ocs2_quadrotor/QuadrotorInterface.h>
+#include <ocs2_quadrotor/definitions.h>
+
+#include "ocs2_quadrotor_ros/QuadrotorDummyVisualization.h"
 
 int main(int argc, char** argv) {
   const std::string robotName = "quadrotor";

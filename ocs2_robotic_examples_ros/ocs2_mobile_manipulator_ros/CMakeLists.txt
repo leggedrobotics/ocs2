@@ -141,6 +141,14 @@ endif (cmake_clang_tools_FOUND)
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(DIRECTORY urdf config launch
+install(
+  TARGETS 
+    mobile_manipulator_mpc_node 
+    mobile_manipulator_distance_visualization
+    mobile_manipulator_dummy_mrt_node 
+    mobile_manipulator_target
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+install(DIRECTORY urdf config launch rviz
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

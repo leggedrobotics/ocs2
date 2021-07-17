@@ -109,7 +109,11 @@ endif(cmake_clang_tools_FOUND)
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS quadrotor_mpc quadrotor_dummy_test quadrotor_target
+install(
+  TARGETS 
+    quadrotor_mpc 
+    quadrotor_dummy_test 
+    quadrotor_target
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY urdf launch config rviz

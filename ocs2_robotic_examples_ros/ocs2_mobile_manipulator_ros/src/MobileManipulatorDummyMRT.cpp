@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
-#include <ocs2_mobile_manipulator/MobileManipulatorDummyVisualization.h>
+#include <ocs2_mobile_manipulator_ros/MobileManipulatorDummyVisualization.h>
 
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>

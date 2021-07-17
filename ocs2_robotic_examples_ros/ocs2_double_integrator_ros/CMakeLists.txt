@@ -111,10 +111,11 @@ endif(cmake_clang_tools_FOUND)
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS
-  double_integrator_mpc
-  double_integrator_dummy_test
-  double_integrator_target
+install(
+  TARGETS
+    double_integrator_mpc
+    double_integrator_dummy_test
+    double_integrator_target
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY urdf launch config rviz

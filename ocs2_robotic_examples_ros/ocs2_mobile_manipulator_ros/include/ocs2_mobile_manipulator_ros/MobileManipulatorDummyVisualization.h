@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-#include <ocs2_self_collision/visualization/GeometryInterfaceVisualization.h>
+#include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {

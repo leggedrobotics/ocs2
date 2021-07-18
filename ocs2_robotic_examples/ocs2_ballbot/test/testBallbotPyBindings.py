@@ -31,6 +31,8 @@ import unittest
 import numpy as np
 import os
 
+import rospkg
+
 from ocs2_ballbot import mpc_interface
 from ocs2_ballbot import (
     scalar_array,
@@ -42,7 +44,7 @@ from ocs2_ballbot import (
 
 class ballbot_python_tests(unittest.TestCase):
     def setUp(self):
-        packageDir = os.path.abspath(os.path.join(__file__, '../../'))
+        packageDir = rospkg.RosPack().get_path('ocs2_ballbot')
         taskFile = os.path.join(packageDir, 'config/mpc/task.info')
         libFolder = os.path.join(packageDir, 'auto_generated')
         print("Instantiating MPC interface")

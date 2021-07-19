@@ -39,7 +39,8 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     }
 
     // Nominal footholds / terrain planes
-    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, finalTime, *terrainModel_);
+    nominalFootholdsPerLeg_[leg] =
+        selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, initTime, finalTime, *terrainModel_);
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
@@ -124,7 +125,7 @@ scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, sca
 
 std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
                                                                                 const ocs2::TargetTrajectories& targetTrajectories,
-                                                                                scalar_t finalTime,
+                                                                                scalar_t initTime, scalar_t finalTime,
                                                                                 const TerrainModel& terrainModel) const {
   std::vector<ConvexTerrain> nominalFootholdTerrain;
 
@@ -151,8 +152,27 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
       const base_coordinate_t middleContactDesiredComPose = state.head<BASE_COORDINATE_SIZE>();
       const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
+      vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+
+      // Get previous terrain projected foothold if there was one at this time
+      vector3_t previousFootholdPositionInWorld = referenceFootholdPositionInWorld;
+      if (!feetNormalTrajectories_[leg].empty()) {
+        const auto& footPhase = getFootPhase(leg, middleContactTime);
+        if (footPhase.contactFlag()) {
+          previousFootholdPositionInWorld = footPhase.nominalFootholdLocation();
+        }
+      }
+
+      // Fuse
+      const double timeTillContact = contactPhase.start - initTime;
+      if ((referenceFootholdPositionInWorld - previousFootholdPositionInWorld).norm() < settings_.previousFootholdDeadzone ||
+          timeTillContact < settings_.previousFootholdTimeDeadzone) {
+        referenceFootholdPositionInWorld = previousFootholdPositionInWorld;
+      }
+
+      const double lambda = settings_.previousFootholdFactor;
       const vector3_t nominalFootholdPositionInWorld =
-          kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+          lambda * previousFootholdPositionInWorld + (1.0 - lambda) * referenceFootholdPositionInWorld;
 
       if (contactPhase.start < finalTime) {
         ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld);
@@ -197,6 +217,9 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.sdfMidswingMargin, prefix + "sdfMidswingMargin", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.terrainMargin, prefix + "terrainMargin", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdFactor, prefix + "previousFootholdFactor", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdDeadzone, prefix + "previousFootholdDeadzone", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdTimeDeadzone, prefix + "previousFootholdTimeDeadzone", verbose);
 
   if (verbose) {
     std::cerr << " #### ==================================================" << std::endl;

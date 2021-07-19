@@ -22,16 +22,17 @@ model_settings
 
   swing_trajectory_settings
   {
-    liftOffVelocity             0.2
-    touchDownVelocity          -0.4
-    swingHeight                 0.1
-    touchdownAfterHorizon       0.2
-    errorGain                   20.0
-    swingTimeScale              0.15
-    sdfMidswingMargin           0.04
-    terrainMargin               0.035
-    previousFootholdFactor      0.0
-    previousFootholdDeadzone    0.0
+    liftOffVelocity               0.2
+    touchDownVelocity            -0.4
+    swingHeight                   0.1
+    touchdownAfterHorizon         0.2
+    errorGain                     20.0
+    swingTimeScale                0.15
+    sdfMidswingMargin             0.04
+    terrainMargin                 0.035
+    previousFootholdFactor        0.333
+    previousFootholdDeadzone      0.05
+    previousFootholdTimeDeadzone  0.2
   }
 
   mpcGoalCommandDelay           0.1

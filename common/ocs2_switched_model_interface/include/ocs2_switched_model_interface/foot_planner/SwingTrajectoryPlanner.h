@@ -29,8 +29,9 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t sdfMidswingMargin = 0.0;  // desired sdf based clearance in the middle of the swing phase [m]
   scalar_t terrainMargin = 0.0;      // shrinkage of the convex terrain constrains in [m]
 
-  scalar_t previousFootholdFactor = 0.0;    // factor in [0, 1] with which to take previous foothold into account.
-  scalar_t previousFootholdDeadzone = 0.0;  // previous foothold is taken if the new reference is within this threshold. [m]
+  scalar_t previousFootholdFactor = 0.0;        // factor in [0, 1] with which to take previous foothold into account.
+  scalar_t previousFootholdDeadzone = 0.0;      // previous foothold is taken if the new reference is within this threshold. [m]
+  scalar_t previousFootholdTimeDeadzone = 0.0;  // previous foothold is taken if the contact phase is starting withing this time. [s]
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
@@ -56,8 +57,8 @@ class SwingTrajectoryPlanner {
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
   scalar_t getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const;
   std::vector<ConvexTerrain> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                          const ocs2::TargetTrajectories& targetTrajectories, scalar_t finalTime,
-                                                          const TerrainModel& terrainModel) const;
+                                                          const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
+                                                          scalar_t finalTime, const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<ComModelBase<scalar_t>> comModel_;

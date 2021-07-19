@@ -39,7 +39,8 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     }
 
     // Nominal footholds / terrain planes
-    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, finalTime, *terrainModel_);
+    nominalFootholdsPerLeg_[leg] =
+        selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, initTime, finalTime, *terrainModel_);
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
@@ -124,7 +125,7 @@ scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, sca
 
 std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
                                                                                 const ocs2::TargetTrajectories& targetTrajectories,
-                                                                                scalar_t finalTime,
+                                                                                scalar_t initTime, scalar_t finalTime,
                                                                                 const TerrainModel& terrainModel) const {
   std::vector<ConvexTerrain> nominalFootholdTerrain;
 
@@ -163,7 +164,9 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
       }
 
       // Fuse
-      if ((referenceFootholdPositionInWorld - previousFootholdPositionInWorld).norm() < settings_.previousFootholdDeadzone) {
+      const double timeTillContact = contactPhase.start - initTime;
+      if ((referenceFootholdPositionInWorld - previousFootholdPositionInWorld).norm() < settings_.previousFootholdDeadzone ||
+          timeTillContact < settings_.previousFootholdTimeDeadzone) {
         referenceFootholdPositionInWorld = previousFootholdPositionInWorld;
       }
 
@@ -216,6 +219,7 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.terrainMargin, prefix + "terrainMargin", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdFactor, prefix + "previousFootholdFactor", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdDeadzone, prefix + "previousFootholdDeadzone", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdTimeDeadzone, prefix + "previousFootholdTimeDeadzone", verbose);
 
   if (verbose) {
     std::cerr << " #### ==================================================" << std::endl;

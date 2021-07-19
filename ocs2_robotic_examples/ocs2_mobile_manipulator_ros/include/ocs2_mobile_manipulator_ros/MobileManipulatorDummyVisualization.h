@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
+#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
 namespace ocs2 {
@@ -43,7 +44,7 @@ namespace mobile_manipulator {
 class MobileManipulatorDummyVisualization final : public DummyObserver {
  public:
   MobileManipulatorDummyVisualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
-      : pinocchioInterface_(interface.getPinocchioInterface()) {
+      : pinocchioInterface_(interface.getPinocchioInterface()), modelInfo_(interface.getMobileManipulatorModelInfo()) {
     launchVisualizerNode(nodeHandle);
   }
 
@@ -59,6 +60,7 @@ class MobileManipulatorDummyVisualization final : public DummyObserver {
   void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
   PinocchioInterface pinocchioInterface_;
+  MobileManipulatorModelInfo modelInfo_;
 
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   tf::TransformBroadcaster tfBroadcaster_;
@@ -70,7 +72,7 @@ class MobileManipulatorDummyVisualization final : public DummyObserver {
 };
 
 // TODO(mspieler): move somewhere else
-Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state);
+Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state, const MobileManipulatorModelInfo& info);
 Eigen::Vector3d getBasePosition(Eigen::VectorXd state);
 Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state);
 

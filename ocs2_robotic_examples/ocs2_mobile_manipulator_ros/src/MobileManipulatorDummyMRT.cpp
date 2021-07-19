@@ -44,22 +44,18 @@ using namespace mobile_manipulator;
 int main(int argc, char** argv) {
   const std::string robotName = "mobile_manipulator";
 
-  // task files
-  std::vector<std::string> programArgs{};
-  ::ros::removeROSArgs(argc, argv, programArgs);
-  if (programArgs.size() <= 1) {
-    throw std::runtime_error("No task file specified. Aborting.");
-  }
-  std::string taskFileFolderName = std::string(programArgs[1]);
-
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
   ros::NodeHandle nodeHandle;
-
+  // Get node parameters
+  std::string taskFile, libFolder, urdfFile;
+  nodeHandle.getParam("/taskFile", taskFile);
+  nodeHandle.getParam("/libFolder", libFolder);
+  nodeHandle.getParam("/urdfFile", urdfFile);
+  std::cerr << "Loading task file: " << taskFile << std::endl;
+  std::cerr << "Loading library folder: " << libFolder << std::endl;
+  std::cerr << "Loading urdf file: " << urdfFile << std::endl;
   // Robot Interface
-  const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/" + taskFileFolderName + "/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_mobile_manipulator") + "/auto_generated";
-  const std::string urdfFile = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
   mobile_manipulator::MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
   // MRT

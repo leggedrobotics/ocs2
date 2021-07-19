@@ -1,0 +1,130 @@
+/******************************************************************************
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
+#include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
+
+namespace ocs2 {
+namespace mobile_manipulator {
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+MobileManipulatorPinocchioMapping<SCALAR>::MobileManipulatorPinocchioMapping(MobileManipulatorModelInfoTpl<SCALAR> info)
+    : modelInfo_(info) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+MobileManipulatorPinocchioMapping<SCALAR>* MobileManipulatorPinocchioMapping<SCALAR>::clone() const {
+  return new MobileManipulatorPinocchioMapping<SCALAR>(*this);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
+  return state;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
+  vector_t dxdt = vector_t::Zero(modelInfo_.stateDim);
+  // set velocity model based on model type
+  switch (modelInfo_.manipulatorModelType) {
+    case ManipulatorModelType::DefaultManipulator: {
+      dxdt = input;
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      const auto theta = state(2);
+      const auto v = input(0);  // forward velocity in base frame
+      dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.armDim);
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      dxdt.tail(modelInfo_.armDim) = input;
+      break;
+    }
+    default: {
+      throw std::runtime_error("The chosen manipulator model type is not supported.");
+      break;
+    }
+  }
+  return dxdt;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+auto MobileManipulatorPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
+    -> std::pair<matrix_t, matrix_t> {
+  matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
+  // set jacobian model based on model type
+  switch (modelInfo_.manipulatorModelType) {
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
+      const SCALAR theta = state(2);
+      // clang-format off
+        dvdu_base << cos(theta), 0,
+                     sin(theta), 0,
+                     0, 1.0;
+      // clang-format on
+      dfdu.template leftCols<2>() = Jv.template leftCols<3>() * dvdu_base;
+      dfdu.template rightCols(modelInfo_.armDim) = Jv.template rightCols(modelInfo_.armDim);
+      return {Jq, dfdu};
+      break;
+    }
+    default: {
+      throw std::runtime_error("The chosen manipulator model type is not supported.");
+      break;
+    }
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+const MobileManipulatorModelInfoTpl<SCALAR>& MobileManipulatorPinocchioMapping<SCALAR>::getMobileManipulatorModelInfo() const {
+  return modelInfo_;
+}
+
+// explicit template instantiation
+template class ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping<ocs2::scalar_t>;
+template class ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping<ocs2::ad_scalar_t>;
+
+}  // namespace mobile_manipulator
+}  // namespace ocs2

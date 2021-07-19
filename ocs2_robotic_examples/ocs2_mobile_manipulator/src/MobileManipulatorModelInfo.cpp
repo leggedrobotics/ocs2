@@ -40,6 +40,9 @@ MobileManipulatorModelInfoCppAd MobileManipulatorModelInfo::toCppAd() const {
   cppAdInfo.manipulatorModelType = this->manipulatorModelType;
   cppAdInfo.stateDim = this->stateDim;
   cppAdInfo.inputDim = this->inputDim;
+  cppAdInfo.armDim = this->armDim;
+  cppAdInfo.baseFrame = this->baseFrame;
+  cppAdInfo.jointFrames = this->jointFrames;
 
   return cppAdInfo;
 }

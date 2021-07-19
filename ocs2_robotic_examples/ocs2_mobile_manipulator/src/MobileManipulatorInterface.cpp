@@ -128,9 +128,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Constraints
   problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile,
-                                                                                   usePreComputation, libraryFolder, recompileLibraries));
-  problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
+  // problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile,
+  //                                                                                  usePreComputation, libraryFolder,
+  //                                                                                  recompileLibraries));
+  problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
                                                                                usePreComputation, libraryFolder, recompileLibraries));
   problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
                                                                                     usePreComputation, libraryFolder, recompileLibraries));
@@ -142,7 +143,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
    * Pre-computation
    */
   if (usePreComputation) {
-    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
+    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, mobileManipulatorModelInfo_));
   }
 
   // Rollout
@@ -207,11 +208,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
-    MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
+    MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping(mobileManipulatorModelInfo_);
     PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, pinocchioMapping, {name});
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   } else {
-    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd;
+    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd(mobileManipulatorModelInfo_.toCppAd());
     PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {name},
                                                      mobileManipulatorModelInfo_.stateDim, mobileManipulatorModelInfo_.inputDim,
                                                      "end_effector_kinematics", libraryFolder, recompileLibraries, false);
@@ -258,11 +259,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorSelfCollisionConstraint(
-        MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface), minimumDistance));
+        MobileManipulatorPinocchioMapping<scalar_t>(mobileManipulatorModelInfo_), std::move(geometryInterface), minimumDistance));
   } else {
-    constraint = std::unique_ptr<StateConstraint>(
-        new SelfCollisionConstraintCppAd(pinocchioInterface, MobileManipulatorPinocchioMapping<scalar_t>(), std::move(geometryInterface),
-                                         minimumDistance, "self_collision", libraryFolder, recompileLibraries, false));
+    constraint = std::unique_ptr<StateConstraint>(new SelfCollisionConstraintCppAd(
+        pinocchioInterface, MobileManipulatorPinocchioMapping<scalar_t>(mobileManipulatorModelInfo_), std::move(geometryInterface),
+        minimumDistance, "self_collision", libraryFolder, recompileLibraries, false));
   }
 
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));

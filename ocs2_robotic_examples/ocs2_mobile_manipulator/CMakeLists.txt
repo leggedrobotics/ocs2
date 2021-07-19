@@ -55,6 +55,7 @@ add_library(
   src/MobileManipulatorModelInfo.cpp
   src/FactoryFunctions.cpp
   src/MobileManipulatorPreComputation.cpp
+  src/MobileManipulatorPinocchioMapping.cpp
   src/constraint/EndEffectorConstraint.cpp
   src/constraint/JointVelocityLimits.cpp
   src/dynamics/WheelBasedManipulatorDynamics.cpp

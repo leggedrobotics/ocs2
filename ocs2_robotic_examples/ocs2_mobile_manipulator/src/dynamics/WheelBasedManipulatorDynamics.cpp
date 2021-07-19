@@ -44,7 +44,7 @@ ad_vector_t WheelBasedManipulatorDynamics::systemFlowMap(ad_scalar_t time, const
   ad_vector_t dxdt(info_.stateDim);
   const auto theta = state(2);
   const auto v = input(0);  // forward velocity in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
+  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(info_.armDim);
   return dxdt;
 }
 

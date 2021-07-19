@@ -41,14 +41,15 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorPreComputation::MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface)
-    : pinocchioInterface_(std::move(pinocchioInterface)) {}
+MobileManipulatorPreComputation::MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface,
+                                                                 const MobileManipulatorModelInfo& info)
+    : pinocchioInterface_(std::move(pinocchioInterface)), pinocchioMapping_(info) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const {
-  return new MobileManipulatorPreComputation(pinocchioInterface_);
+  return new MobileManipulatorPreComputation(pinocchioInterface_, pinocchioMapping_.getMobileManipulatorModelInfo());
 }
 
 /******************************************************************************************************/

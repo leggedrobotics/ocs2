@@ -130,11 +130,17 @@ MobileManipulatorModelInfo createMobileManipulatorModelInfo(const PinocchioInter
   info.stateDim = model.nq;
   // resolve for actuated dof based on type of robot
   if (type == ManipulatorModelType::FloatingArmManipulator) {
-    // remove the static 6-DOF base joints.
+    // remove the static 6-DOF base joints that are unactuated.
     info.inputDim = info.stateDim - 6;
+    info.armDim = info.inputDim;
+  } else if (type == ManipulatorModelType::WheelBasedMobileManipulator) {
+    // for wheel-based, the input dimension is (v, omega, dq_j) while state dimension is (x, y, psi, q_j).
+    info.inputDim = info.stateDim - 1;
+    info.armDim = info.inputDim - 2;
   } else {
-    // for default and wheel-based, the state dimension and input dimensions are same.
+    // for default arm, the state dimension and input dimensions are same.
     info.inputDim = info.stateDim;
+    info.armDim = info.inputDim;
   }
 
   return info;

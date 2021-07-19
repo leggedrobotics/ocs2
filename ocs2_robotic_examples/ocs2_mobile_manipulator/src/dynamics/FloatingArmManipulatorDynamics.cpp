@@ -27,33 +27,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
-
-#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class MobileManipulatorDynamics final : public SystemDynamicsBaseAD {
- public:
-  using Base = SystemDynamicsBaseAD;
+FloatingArmManipulatorDynamics::FloatingArmManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& info,
+                                                               const std::string& modelFolder /*= "/tmp/ocs2"*/,
+                                                               bool recompileLibraries /*= true*/, bool verbose /*= true*/)
+    : SystemDynamicsBaseAD(), info_(info) {
+  Base::initialize(info_.stateDim, info_.inputDim, modelName, modelFolder, recompileLibraries, verbose);
+}
 
-  explicit MobileManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& modelInfo,
-                                     const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
-  ~MobileManipulatorDynamics() override = default;
-  MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ad_vector_t& parameters) const override;
-
- private:
-  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) = default;
-
-  MobileManipulatorModelInfo info_;
-};
+ad_vector_t FloatingArmManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                                          const ad_vector_t& parameters) const {
+  ad_vector_t dxdt(info_.stateDim, 0);
+  // only arm joint state
+  dxdt.tail(info_.inputDim) = input;
+  return dxdt;
+}
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

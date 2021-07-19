@@ -79,9 +79,6 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   const MobileManipulatorModelInfo& getMobileManipulatorModelInfo() const { return mobileManipulatorModelInfo_; }
 
-  /** MobileManipulator PinocchioInterface factory */
-  static PinocchioInterface buildPinocchioInterface(const std::string& urdfFile);
-
  private:
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
   std::unique_ptr<StateCost> getEndEffectorConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,

@@ -27,9 +27,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
-
 #include "ocs2_mobile_manipulator/FactoryFunctions.h"
+
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+#include <pinocchio/multibody/joint/joint-composite.hpp>
+#include <pinocchio/multibody/model.hpp>
 
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_pinocchio_interface/urdf.h>
@@ -40,20 +42,43 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath) {
-  // add 6 DoF for the floating base
-  // pinocchio::JointModelComposite jointComposite(2);
-  // jointComposite.addJoint(pinocchio::JointModelTranslation());
-  // jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type) {
+  switch (type) {
+    case ManipulatorModelType::DefaultManipulator: {
+      // return pinocchio interface
+      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath);
 
-  // return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
-  return getPinocchioInterfaceFromUrdfFile(robotUrdfPath);
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      // add 6 DoF for the floating base
+      pinocchio::JointModelComposite jointComposite(2);
+      jointComposite.addJoint(pinocchio::JointModelTranslation());
+      jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+      // return pinocchio interface
+      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      // add XY-yaw joint for the wheel-base
+      pinocchio::JointModelComposite jointComposite(3);
+      jointComposite.addJoint(pinocchio::JointModelPX());
+      jointComposite.addJoint(pinocchio::JointModelPY());
+      jointComposite.addJoint(pinocchio::JointModelRZ());
+      // return pinocchio interface
+      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames) {
+PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames,
+                                            const ManipulatorModelType& type) {
   using joint_pair_t = std::pair<const std::string, std::shared_ptr<::urdf::Joint>>;
 
   // remove extraneous joints from urdf
@@ -63,14 +88,35 @@ PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPt
       jointPair.second->type = urdf::Joint::FIXED;
     }
   }
-
-  // // add 6 DoF for the floating base
-  // pinocchio::JointModelComposite jointComposite(2);
-  // jointComposite.addJoint(pinocchio::JointModelTranslation());
-  // jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-
-  // return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
-  return getPinocchioInterfaceFromUrdfModel(newModel);
+  // resolve for the robot type
+  switch (type) {
+    case ManipulatorModelType::DefaultManipulator: {
+      // return pinocchio interface
+      return getPinocchioInterfaceFromUrdfModel(newModel);
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      // add 6 DoF for the floating base
+      pinocchio::JointModelComposite jointComposite(2);
+      jointComposite.addJoint(pinocchio::JointModelTranslation());
+      jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+      // return pinocchio interface
+      return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      // add XY-yaw joint for the wheel-base
+      pinocchio::JointModelComposite jointComposite(3);
+      jointComposite.addJoint(pinocchio::JointModelPX());
+      jointComposite.addJoint(pinocchio::JointModelPY());
+      jointComposite.addJoint(pinocchio::JointModelRZ());
+      // return pinocchio interface
+      return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
+  }
 }
 
 /******************************************************************************************************/
@@ -81,10 +127,15 @@ MobileManipulatorModelInfo createMobileManipulatorModelInfo(const PinocchioInter
 
   MobileManipulatorModelInfoTpl<scalar_t> info;
   info.manipulatorModelType = type;
-  info.generalizedCoordinatesNum = 9;
-  info.actuatedDofNum = info.generalizedCoordinatesNum;
-  info.stateDim = info.generalizedCoordinatesNum;
-  info.inputDim = info.actuatedDofNum;
+  info.stateDim = model.nq;
+  // resolve for actuated dof based on type of robot
+  if (type == ManipulatorModelType::FloatingArmManipulator) {
+    // remove the static 6-DOF base joints.
+    info.inputDim = info.stateDim - 6;
+  } else {
+    // for default and wheel-based, the state dimension and input dimensions are same.
+    info.inputDim = info.stateDim;
+  }
 
   return info;
 }

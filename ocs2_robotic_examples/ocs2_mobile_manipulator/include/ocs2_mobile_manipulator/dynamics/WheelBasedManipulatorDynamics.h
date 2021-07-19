@@ -27,26 +27,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#pragma once
+
+#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+
+#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-template <>
-template <>
-MobileManipulatorModelInfoCppAd MobileManipulatorModelInfo::toCppAd() const {
-  MobileManipulatorModelInfoCppAd cppAdInfo;
+/**
+ * @brief Implementation of a wheel-based mobile manipulator.
+ *
+ * The wheel-based manipulator is simulated 2D-bicycle model for the base. The state
+ * of the robot is: (base x, base y, base yaw, arm joints).
+ *
+ * The robot is assumed to be velocity controlled with the base commands as the forward
+ * velocity and the angular velocity around z.
+ */
+class WheelBasedManipulatorDynamics final : public SystemDynamicsBaseAD {
+ public:
+  using Base = SystemDynamicsBaseAD;
 
-  cppAdInfo.manipulatorModelType = this->manipulatorModelType;
-  cppAdInfo.stateDim = this->stateDim;
-  cppAdInfo.inputDim = this->inputDim;
+  explicit WheelBasedManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& modelInfo,
+                                         const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
+  ~WheelBasedManipulatorDynamics() override = default;
+  WheelBasedManipulatorDynamics* clone() const override { return new WheelBasedManipulatorDynamics(*this); }
 
-  return cppAdInfo;
-}
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& parameters) const override;
 
-// explicit template instantiation
-template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::scalar_t>;
-template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::ad_scalar_t>;
+ private:
+  WheelBasedManipulatorDynamics(const WheelBasedManipulatorDynamics& rhs) = default;
+
+  MobileManipulatorModelInfo info_;
+};
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

@@ -42,8 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
 
+#include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-
+#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator_ros/MobileManipulatorDummyVisualization.h>
 
 namespace ocs2 {
@@ -114,7 +115,8 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
-  PinocchioInterface pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
+  PinocchioInterface pinocchioInterface =
+      mobile_manipulator::createPinocchioInterface(urdfPath, ManipulatorModelType::WheelBasedMobileManipulator);
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
   PinocchioGeometryInterface geomInterface(pinocchioInterface, {{1, 4}, {1, 6}});
 

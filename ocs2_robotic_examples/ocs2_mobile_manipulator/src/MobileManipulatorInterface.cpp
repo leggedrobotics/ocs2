@@ -51,13 +51,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
-#include "ocs2_mobile_manipulator/MobileManipulatorDynamics.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/JointVelocityLimits.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
+#include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
+#include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
+#include "ocs2_mobile_manipulator/dynamics/WheelBasedManipulatorDynamics.h"
 
 // Boost
 #include <boost/filesystem/operations.hpp>
@@ -91,12 +93,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "[MobileManipulatorInterface] Generated library path: " << libraryFolderPath << std::endl;
 
   // create pinocchio interface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfFile)));
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType)));
   std::cerr << *pinocchioInterfacePtr_;
 
   // MobileManipulatorModelInfo
-  mobileManipulatorModelInfo_ = mobile_manipulator::createMobileManipulatorModelInfo(
-      *pinocchioInterfacePtr_, mobile_manipulator::loadManipulatorType(taskFile, "manipulatorModelType"));
+  mobileManipulatorModelInfo_ = mobile_manipulator::createMobileManipulatorModelInfo(*pinocchioInterfacePtr_, modelType);
 
   bool usePreComputation = true;
   bool recompileLibraries = true;
@@ -195,6 +196,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   boost::property_tree::read_info(taskFile, pt);
   std::cerr << "\n #### " << prefix << " Settings: ";
   std::cerr << "\n #### =============================================================================\n";
+  loadData::loadPtreeValue<std::string>(pt, name, prefix + ".name", true);
   loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", true);
   loadData::loadPtreeValue(pt, muOrientation, prefix + ".muOrientation", true);
   std::cerr << " #### =============================================================================\n";

@@ -27,26 +27,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#pragma once
+
+#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+
+#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-template <>
-template <>
-MobileManipulatorModelInfoCppAd MobileManipulatorModelInfo::toCppAd() const {
-  MobileManipulatorModelInfoCppAd cppAdInfo;
+/**
+ * @brief Implementation of a fixed arm manipulator dynamics.
+ *
+ * The fixed-arm manipulator has the state: (6-DOF base pose, arm joints).
+ * The base orientation is represented using quaternion orientation.
+ * The end-effector targets are assumed to given with respect to the world frame.
+ * The arm is assumed to be velocity controlled.
+ */
+class FloatingArmManipulatorDynamics final : public SystemDynamicsBaseAD {
+ public:
+  using Base = SystemDynamicsBaseAD;
 
-  cppAdInfo.manipulatorModelType = this->manipulatorModelType;
-  cppAdInfo.stateDim = this->stateDim;
-  cppAdInfo.inputDim = this->inputDim;
+  explicit FloatingArmManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& modelInfo,
+                                          const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
+                                          bool verbose = true);
+  ~FloatingArmManipulatorDynamics() override = default;
+  FloatingArmManipulatorDynamics* clone() const override { return new FloatingArmManipulatorDynamics(*this); }
 
-  return cppAdInfo;
-}
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& parameters) const override;
 
-// explicit template instantiation
-template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::scalar_t>;
-template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::ad_scalar_t>;
+ private:
+  FloatingArmManipulatorDynamics(const FloatingArmManipulatorDynamics& rhs) = default;
+
+  MobileManipulatorModelInfo info_;
+};
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

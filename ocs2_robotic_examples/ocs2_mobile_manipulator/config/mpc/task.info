@@ -1,4 +1,8 @@
-manipulatorModelType             1      // 0: Fixed-Arm Dynamics, 1: Wheel-based Mobile Manipulator
+manipulatorModelType             1      // 0: Default-arm, 1: Wheel-based manipulator, 2: Floating-arm manipulator
+
+; motion joints in the URDF to consider fixed
+removeJoints {
+}
 
 model_settings
 {

@@ -45,16 +45,19 @@ namespace mobile_manipulator {
 
 /** Create a MobileManipulatorModel PinocchioInterface from a URDF
  * @param [in] robotUrdfPath: The robot URDF path.
+ * @param [in] type: Type of robot model (fixed-arm or wheel-based)
  * @return PinocchioInterface
  */
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath);
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type);
 
 /** Create a MobileManipulatorModel PinocchioInterface from a URDF
  * @param [in] urdfTree: The parsed URDF tree.
  * @param [in] jointNames: The joint names from URDF to make fixed/unactuated.
+ * @param [in] type: Type of robot model (fixed-arm or wheel-based)
  * @return PinocchioInterface
  */
-PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames);
+PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames,
+                                            const ManipulatorModelType& type);
 
 /**
  * Create a scalar-typed MobileManipulatorModelInfo.

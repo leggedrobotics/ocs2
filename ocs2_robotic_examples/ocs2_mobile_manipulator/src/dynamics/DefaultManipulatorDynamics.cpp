@@ -27,26 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#include <ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-template <>
-template <>
-MobileManipulatorModelInfoCppAd MobileManipulatorModelInfo::toCppAd() const {
-  MobileManipulatorModelInfoCppAd cppAdInfo;
-
-  cppAdInfo.manipulatorModelType = this->manipulatorModelType;
-  cppAdInfo.stateDim = this->stateDim;
-  cppAdInfo.inputDim = this->inputDim;
-
-  return cppAdInfo;
+DefaultManipulatorDynamics::DefaultManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& info,
+                                                       const std::string& modelFolder /*= "/tmp/ocs2"*/, bool recompileLibraries /*= true*/,
+                                                       bool verbose /*= true*/)
+    : SystemDynamicsBaseAD(), info_(info) {
+  Base::initialize(info_.stateDim, info_.inputDim, modelName, modelFolder, recompileLibraries, verbose);
 }
 
-// explicit template instantiation
-template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::scalar_t>;
-template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::ad_scalar_t>;
+ad_vector_t DefaultManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                                      const ad_vector_t& parameters) const {
+  ad_vector_t dxdt(info_.stateDim);
+  dxdt = input;
+  return dxdt;
+}
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

@@ -37,8 +37,8 @@ namespace ocs2 {
  *
  * A linear time invariant system with the following flow and jump maps:
  *
- * - \f$ \dot{x} = A * x + B * u   g(x) > 0, \f$
- * - \f$ x^{+} = G * x^{-}         g(x) = 0. \f$
+ * - \f$ \dot{x} = A * x + B * u   \quad \text{for intermediate times}, \f$
+ * - \f$ x^{+} = G * x^{-}         \quad \text{for switching times}. \f$
  *
  * where \f$ g(x) \f$ is the guard surface defined by OdeBase::computeGuardSurfaces(t, x).
  */
@@ -59,7 +59,7 @@ class LinearSystemDynamics : public SystemDynamicsBase {
   VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) override;
 
  protected:
-  LinearSystemDynamics(const LinearSystemDynamics& other);
+  LinearSystemDynamics(const LinearSystemDynamics& other) = default;
 
   matrix_t A_;
   matrix_t B_;

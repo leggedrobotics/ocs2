@@ -25,5 +25,6 @@
   <depend>visualization_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>interactive_markers</depend>
+  <exec_depend>rqt_multiplot</exec_depend>
 
 </package>

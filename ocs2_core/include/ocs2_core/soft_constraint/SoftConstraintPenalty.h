@@ -71,31 +71,34 @@ class SoftConstraintPenalty {
   /**
    * Get the penalty cost.
    *
-   * @param [in] h: Vector of inequality constraint values
+   * @param [in] t: The time that the constraint is evaluated.
+   * @param [in] h: Vector of inequality constraint values.
    * @return Penalty: The penalty cost.
    */
-  scalar_t getValue(const vector_t& h) const;
+  scalar_t getValue(scalar_t t, const vector_t& h) const;
 
   /**
    * Get the derivative of the penalty cost.
    * Implements the chain rule between the inequality constraint and penalty function.
    *
+   * @param [in] t: The time that the constraint is evaluated.
    * @param [in] h: The constraint linear approximation.
    * @return The penalty cost quadratic approximation.
    */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(const VectorFunctionLinearApproximation& h) const;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const VectorFunctionLinearApproximation& h) const;
 
   /**
    * Get the derivative of the penalty cost.
    * Implements the chain rule between the inequality constraint and penalty function.
    *
+   * @param [in] t: The time that the constraint is evaluated.
    * @param [in] h: The constraint quadratic approximation.
    * @return The penalty cost quadratic approximation.
    */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const VectorFunctionQuadraticApproximation& h) const;
 
  private:
-  std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(const vector_t& h) const;
+  std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(scalar_t t, const vector_t& h) const;
 
   std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray_;
 };

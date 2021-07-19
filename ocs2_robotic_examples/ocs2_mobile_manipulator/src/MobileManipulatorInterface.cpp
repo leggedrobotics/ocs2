@@ -70,27 +70,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   const std::string libraryFolder = "/tmp/ocs2/ocs2_mobile_manipulator";
   std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
-  // load setting from config file
-  loadSettings(taskFile, libraryFolder);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfPath) {
-  // add 3 DOF for wheelbase
-  pinocchio::JointModelComposite rootJoint(3);
-  rootJoint.addJoint(pinocchio::JointModelPX());
-  rootJoint.addJoint(pinocchio::JointModelPY());
-  rootJoint.addJoint(pinocchio::JointModelRZ());
-
-  return getPinocchioInterfaceFromUrdfFile(urdfPath, rootJoint);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const std::string& libraryFolder) {
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
   std::cerr << "Load Pinocchio model from " << urdfPath << '\n';
 
@@ -107,38 +86,24 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
   std::cerr << " #### =============================================================================" << std::endl;
 
-  /*
-   * DDP-MPC settings
-   */
+  // Default initial state
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
+
+  // DDP-MPC settings
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
-  /*
-   * Dynamics
-   */
-  std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr(
-      new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder, recompileLibraries, true));
-
-  /*
-   * Rollout
-   */
-  const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
-
-  /*
-   * Reference manager
-   */
+  // Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
   /*
    * Optimal control problem
    */
-  problem_.dynamicsPtr = std::move(dynamicsPtr);
-
-  /* Cost */
+  // Cost
   problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
 
-  /* Constraints */
+  // Constraints
   problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
   problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath,
                                                                                    usePreComputation, libraryFolder, recompileLibraries));
@@ -147,20 +112,22 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
   problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
                                                                                     usePreComputation, libraryFolder, recompileLibraries));
 
+  // Dynamics
+  problem_.dynamicsPtr.reset(new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder, recompileLibraries, true));
+
   /*
-   * Use pre-computation
+   * Pre-computation
    */
   if (usePreComputation) {
     problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
   }
 
-  /*
-   * Initialization state
-   */
-  initializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
+  // Rollout
+  const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
-  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-  std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
+  // Initialization
+  initializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/
@@ -169,6 +136,19 @@ void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const
 std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
   std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *initializerPtr_));
   return mpc;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfPath) {
+  // add 3 DOF for wheelbase
+  pinocchio::JointModelComposite rootJoint(3);
+  rootJoint.addJoint(pinocchio::JointModelPX());
+  rootJoint.addJoint(pinocchio::JointModelPY());
+  rootJoint.addJoint(pinocchio::JointModelRZ());
+
+  return getPinocchioInterfaceFromUrdfFile(urdfPath, rootJoint);
 }
 
 /******************************************************************************************************/
@@ -195,7 +175,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
                                                                                 bool recompileLibraries) {
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
-  std::string name = "WRIST_2";
+  const std::string name = "WRIST_2";
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
@@ -204,6 +184,10 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", true);
   loadData::loadPtreeValue(pt, muOrientation, prefix + ".muOrientation", true);
   std::cerr << " #### =============================================================================" << std::endl;
+
+  if (referenceManagerPtr_ == nullptr) {
+    throw std::runtime_error("[getEndEffectorConstraint] referenceManagerPtr_ should be set first!");
+  }
 
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {

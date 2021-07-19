@@ -49,60 +49,42 @@ BallbotInterface::BallbotInterface(const std::string& taskFileFolderName) {
   libraryFolder_ = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
   std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
-  // load setting from loading file
-  loadSettings(taskFile_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void BallbotInterface::loadSettings(const std::string& taskFile) {
-  /*
-   * Default initial condition
-   */
-  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  // Default initial condition
+  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
-  /*
-   * DDP SQP MPC settings
-   */
-  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting");
-  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
+  // DDP SQP MPC settings
+  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc");
+  sqpSettings_ = multiple_shooting::loadSettings(taskFile_, "multiple_shooting");
 
   /*
-   * Dynamics
+   * Optimal control problem
    */
-  // load the flag to generate library files from taskFile
-  bool recompileLibraries;
-  ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.recompileLibraries", recompileLibraries);
-  problem_.dynamicsPtr.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
-
-  /*
-   * Rollout
-   */
-  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
-
-  /*
-   * Cost function
-   */
+  // Cost
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile, "Q", Q);
-  loadData::loadEigenMatrix(taskFile, "R", R);
-  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
-  std::cerr << "Q:  \n" << Q << std::endl;
-  std::cerr << "R:  \n" << Q << std::endl;
-  std::cerr << "Q_final:\n" << Qf << std::endl;
+  loadData::loadEigenMatrix(taskFile_, "Q", Q);
+  loadData::loadEigenMatrix(taskFile_, "R", R);
+  loadData::loadEigenMatrix(taskFile_, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << "\n";
+  std::cerr << "R:  \n" << R << "\n";
+  std::cerr << "Q_final:\n" << Qf << "\n";
 
   problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
   problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
-  /*
-   * Initialization
-   */
+  // Dynamics
+  bool recompileLibraries;  // load the flag to generate library files from taskFile
+  ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.recompileLibraries", recompileLibraries);
+  problem_.dynamicsPtr.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
+
+  // Rollout
+  auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout");
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
+
+  // Initialization
   ballbotInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 

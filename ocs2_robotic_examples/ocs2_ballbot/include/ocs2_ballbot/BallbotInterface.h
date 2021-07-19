@@ -82,16 +82,6 @@ class BallbotInterface final : public RobotInterface {
   const Initializer& getInitializer() const override { return *ballbotInitializerPtr_; }
 
  private:
-  /**
-   * Load the settings from the path file.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void loadSettings(const std::string& taskFile);
-
-  /**************
-   * Variables
-   **************/
   std::string taskFile_;
   std::string libraryFolder_;
 

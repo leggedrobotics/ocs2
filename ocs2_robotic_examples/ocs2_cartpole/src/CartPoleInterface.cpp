@@ -50,69 +50,43 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
   libraryFolder_ = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
   std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
-  // load setting from loading file
-  loadSettings(taskFile_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void CartPoleInterface::loadSettings(const std::string& taskFile) {
-  /*
-   * Default initial condition
-   */
-  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-  loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
+  // Default initial condition
+  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
+  loadData::loadEigenMatrix(taskFile_, "x_final", xFinal_);
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  /*
-   * DDP-MPC settings
-   */
-  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
-
-  /*
-   * Cartpole parameters
-   */
-  CartPoleParameters cartPoleParameters;
-  cartPoleParameters.loadSettings(taskFile);
-
-  /*
-   * Dynamics
-   */
-  std::unique_ptr<CartPoleSytemDynamics> dynamicsPtr(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder_));
-
-  /*
-   * Rollout
-   */
-  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
+  // DDP-MPC settings
+  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc");
 
   /*
    * Optimal control problem
    */
-  problem_.dynamicsPtr = std::move(dynamicsPtr);
-
-  /*
-   * Cost function
-   */
+  // Cost
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile, "Q", Q);
-  loadData::loadEigenMatrix(taskFile, "R", R);
-  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
-  std::cerr << "Q:  \n" << Q << std::endl;
-  std::cerr << "R:  \n" << Q << std::endl;
-  std::cerr << "Q_final:\n" << Qf << std::endl;
+  loadData::loadEigenMatrix(taskFile_, "Q", Q);
+  loadData::loadEigenMatrix(taskFile_, "R", R);
+  loadData::loadEigenMatrix(taskFile_, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << "\n";
+  std::cerr << "R:  \n" << R << "\n";
+  std::cerr << "Q_final:\n" << Qf << "\n";
 
   problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
   problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
-  /*
-   * Initialization
-   */
+  // Dynamics
+  CartPoleParameters cartPoleParameters;
+  cartPoleParameters.loadSettings(taskFile_);
+  problem_.dynamicsPtr.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder_));
+
+  // Rollout
+  auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout");
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
+
+  // Initialization
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 

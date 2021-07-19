@@ -85,8 +85,6 @@ class MobileManipulatorInterface final : public RobotInterface {
                                                         bool recompileLibraries);
   std::unique_ptr<StateInputCost> getJointVelocityLimitConstraint(const std::string& taskFile);
 
-  void loadSettings(const std::string& taskFile, const std::string& libraryFolder);
-
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 

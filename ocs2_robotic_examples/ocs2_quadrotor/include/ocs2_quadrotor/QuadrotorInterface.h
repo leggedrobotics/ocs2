@@ -72,21 +72,14 @@ class QuadrotorInterface final : public RobotInterface {
   const Initializer& getInitializer() const override { return *operatingPointPtr_; }
 
  private:
-  /**
-   * Load the settings from the path file.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void loadSettings(const std::string& taskFile);
-
   std::string taskFile_;
   std::string libraryFolder_;
 
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> rolloutPtr_;
   OptimalControlProblem problem_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> operatingPointPtr_;
 
   vector_t initialState_{STATE_DIM};

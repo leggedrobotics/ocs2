@@ -114,12 +114,15 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
   // Get ROS parameter
-  std::string urdfPath;
+  std::string urdfPath, taskFile;
   nodeHandle.getParam("/urdfFile", urdfPath);
+  nodeHandle.getParam("/taskFile", taskFile);
   // PinocchioInterface pinocchioInterface =
   //     mobile_manipulator::createPinocchioInterface(urdfPath, ManipulatorModelType::WheelBasedMobileManipulator);
-  // // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
-  // PinocchioGeometryInterface geomInterface(pinocchioInterface, {{1, 4}, {1, 6}});
+  // std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+  // const std::string prefix = "selfCollision.";
+  // loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
+  // PinocchioGeometryInterface geomInterface(pinocchioInterface, collisionObjectPairs);
 
   // geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
 }
@@ -148,16 +151,17 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   geometry_msgs::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
-  base_tf.child_frame_id = "base_link";
+  base_tf.child_frame_id = modelInfo_.baseFrame;
   base_tf.transform.translation = ros_msg_helpers::getVectorMsg(position);
   base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(orientation);
   tfBroadcaster_.sendTransform(base_tf);
 
   // publish joints transforms
   const auto j_arm = getArmJointPositions(observation.state, modelInfo_);
-  std::map<std::string, scalar_t> jointPositions{{"panda_joint1", j_arm(0)}, {"panda_joint2", j_arm(1)}, {"panda_joint3", j_arm(2)},
-                                                 {"panda_joint4", j_arm(3)}, {"panda_joint5", j_arm(4)}, {"panda_joint6", j_arm(5)},
-                                                 {"panda_joint7", j_arm(6)}};
+  std::map<std::string, scalar_t> jointPositions;
+  for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) {
+    jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
+  }
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
 }
 
@@ -205,7 +209,7 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
     pinocchio::forwardKinematics(model, data, state);
     pinocchio::updateFramePlacements(model, data);
-    const auto eeIndex = model.getBodyId("panka_link7");
+    const auto eeIndex = model.getBodyId(modelInfo_.eeFrame);
     const vector_t eePosition = data.oMf[eeIndex].translation();
     endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
   });

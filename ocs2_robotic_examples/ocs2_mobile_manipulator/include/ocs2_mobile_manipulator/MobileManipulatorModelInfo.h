@@ -66,7 +66,8 @@ struct MobileManipulatorModelInfoTpl {
   size_t inputDim;                            // number of inputs needed to define the system flow map
   size_t armDim;                              // number of DOFs in the robot arm
   std::string baseFrame;                      // name of the root frame of the robot
-  std::vector<std::string> jointFrames;       // name of the actuated DOFs in the robot
+  std::string eeFrame;                        // name of the end-effector frame of the robot
+  std::vector<std::string> dofNames;          // name of the actuated DOFs in the robot
 
   /** Casts MobileManipulatorModelInfo to MobileManipulatorModelInfoCppAD. */
   template <typename T = SCALAR, EnableIfScalar_t<T> = true>

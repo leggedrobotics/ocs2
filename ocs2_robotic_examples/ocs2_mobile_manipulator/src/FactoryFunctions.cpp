@@ -84,7 +84,7 @@ PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPt
   // remove extraneous joints from urdf
   ::urdf::ModelInterfaceSharedPtr newModel = std::make_shared<::urdf::ModelInterface>(*urdfTree);
   for (joint_pair_t& jointPair : newModel->joints_) {
-    if (std::find(jointNames.begin(), jointNames.end(), jointPair.first) == jointNames.end()) {
+    if (std::find(jointNames.begin(), jointNames.end(), jointPair.first) != jointNames.end()) {
       jointPair.second->type = urdf::Joint::FIXED;
     }
   }
@@ -142,6 +142,13 @@ MobileManipulatorModelInfo createMobileManipulatorModelInfo(const PinocchioInter
     info.inputDim = info.stateDim;
     info.armDim = info.inputDim;
   }
+  // get name of the end-effector
+  info.eeFrame = "endeffector";
+  // get name of the root joint
+  info.baseFrame = "base_link";
+  // get name of arm joints
+  const auto& jointNames = model.names;
+  info.dofNames = std::vector<std::string>(jointNames.end() - info.armDim, jointNames.end());
 
   return info;
 }

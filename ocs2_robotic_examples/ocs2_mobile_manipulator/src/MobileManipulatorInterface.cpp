@@ -93,7 +93,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "[MobileManipulatorInterface] Generated library path: " << libraryFolderPath << std::endl;
 
   // create pinocchio interface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType)));
+  if (removeJointNames.empty()) {
+    pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType)));
+  } else {
+    const auto& urdfTree = ::urdf::parseURDFFile(urdfFile);
+    pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfTree, removeJointNames, modelType)));
+  }
   std::cerr << *pinocchioInterfacePtr_;
 
   // MobileManipulatorModelInfo

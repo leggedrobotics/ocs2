@@ -40,22 +40,22 @@ DoubleSidedPenalty::DoubleSidedPenalty(const DoubleSidedPenalty& other)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t DoubleSidedPenalty::getValue(scalar_t h) const {
-  return penaltyPtr_->getValue(h - lowerBound_) + penaltyPtr_->getValue(upperBound_ - h);
+scalar_t DoubleSidedPenalty::getValue(scalar_t t, scalar_t h) const {
+  return penaltyPtr_->getValue(t, h - lowerBound_) + penaltyPtr_->getValue(t, upperBound_ - h);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t DoubleSidedPenalty::getDerivative(scalar_t h) const {
-  return penaltyPtr_->getDerivative(h - lowerBound_) - penaltyPtr_->getDerivative(upperBound_ - h);
+scalar_t DoubleSidedPenalty::getDerivative(scalar_t t, scalar_t h) const {
+  return penaltyPtr_->getDerivative(t, h - lowerBound_) - penaltyPtr_->getDerivative(t, upperBound_ - h);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t DoubleSidedPenalty::getSecondDerivative(scalar_t h) const {
-  return penaltyPtr_->getSecondDerivative(h - lowerBound_) + penaltyPtr_->getSecondDerivative(upperBound_ - h);
+scalar_t DoubleSidedPenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
+  return penaltyPtr_->getSecondDerivative(t, h - lowerBound_) + penaltyPtr_->getSecondDerivative(t, upperBound_ - h);
 }
 
 }  // namespace ocs2

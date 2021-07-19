@@ -51,26 +51,29 @@ class PenaltyBase {
   /**
    * Compute the penalty value at a certain constraint value.
    *
+   * @param [in] t: The time that the constraint is evaluated.
    * @param [in] h: Constraint value.
    * @return penalty cost.
    */
-  virtual scalar_t getValue(scalar_t h) const = 0;
+  virtual scalar_t getValue(scalar_t t, scalar_t h) const = 0;
 
   /**
    * Compute the penalty derivative at a certain constraint value.
    *
+   * @param [in] t: The time that the constraint is evaluated.
    * @param [in] h: Constraint value.
    * @return penalty derivative with respect to constraint value.
    */
-  virtual scalar_t getDerivative(scalar_t h) const = 0;
+  virtual scalar_t getDerivative(scalar_t t, scalar_t h) const = 0;
 
   /**
    * Compute the penalty second derivative at a certain constraint value.
    *
+   * @param [in] t: The time that the constraint is evaluated.
    * @param [in] h: Constraint value.
    * @return penalty second derivative with respect to constraint value.
    */
-  virtual scalar_t getSecondDerivative(scalar_t h) const = 0;
+  virtual scalar_t getSecondDerivative(scalar_t t, scalar_t h) const = 0;
 
  protected:
   PenaltyBase(const PenaltyBase& other) = default;

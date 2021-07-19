@@ -77,24 +77,14 @@ class DoubleIntegratorInterface final : public RobotInterface {
   const Initializer& getInitializer() const override { return *linearSystemInitializerPtr_; }
 
  private:
-  /**
-   * Loads the settings from the path file.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void loadSettings(const std::string& taskFile, bool verbose);
-
-  /**************
-   * Variables
-   **************/
   std::string taskFile_;
   std::string libraryFolder_;
 
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> rolloutPtr_;
   OptimalControlProblem problem_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> linearSystemInitializerPtr_;
 
   vector_t initialState_{STATE_DIM};

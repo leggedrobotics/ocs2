@@ -28,10 +28,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_double_integrator/DoubleIntegratorInterface.h"
-#include "ocs2_double_integrator/dynamics/DoubleIntegratorDynamics.h"
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 
@@ -50,63 +50,41 @@ DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile
   libraryFolder_ = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
   std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
 
-  // load setting from loading file
-  loadSettings(taskFile_, verbose);
-}
+  // Default initial condition and final goal
+  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
+  loadData::loadEigenMatrix(taskFile_, "finalGoal", finalGoal_);
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void DoubleIntegratorInterface::loadSettings(const std::string& taskFile, bool verbose) {
-  /*
-   * Default initial condition and final goal
-   */
-  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-  loadData::loadEigenMatrix(taskFile, "finalGoal", finalGoal_);
-
-  /*
-   * DDP-MPC settings
-   */
-  ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
-  mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
-
-  /*
-   * Dynamics
-   */
-  const matrix_t A = (matrix_t(STATE_DIM, STATE_DIM) << 0.0, 1.0, 0.0, 0.0).finished();
-  const matrix_t B = (matrix_t(STATE_DIM, INPUT_DIM) << 0.0, 1.0).finished();
-  std::unique_ptr<DoubleIntegratorDynamics> dynamicsPtr(new DoubleIntegratorDynamics(A, B));
-
-  /*
-   * Rollout
-   */
-  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout", verbose);
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
+  // DDP-MPC settings
+  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp", verbose);
+  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc", verbose);
 
   /*
    * Optimal control problem
    */
-  problem_.dynamicsPtr = std::move(dynamicsPtr);
-
-  /*
-   * Cost function
-   */
+  // Cost
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile, "Q", Q);
-  loadData::loadEigenMatrix(taskFile, "R", R);
-  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
-  std::cerr << "Q:  \n" << Q << std::endl;
-  std::cerr << "R:  \n" << Q << std::endl;
-  std::cerr << "Q_final:\n" << Qf << std::endl;
+  loadData::loadEigenMatrix(taskFile_, "Q", Q);
+  loadData::loadEigenMatrix(taskFile_, "R", R);
+  loadData::loadEigenMatrix(taskFile_, "Q_final", Qf);
+  std::cerr << "Q:  \n" << Q << "\n";
+  std::cerr << "R:  \n" << R << "\n";
+  std::cerr << "Q_final:\n" << Qf << "\n";
 
   problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
   problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
-  /*
-   * Initialization
-   */
+  // Dynamics
+  const matrix_t A = (matrix_t(STATE_DIM, STATE_DIM) << 0.0, 1.0, 0.0, 0.0).finished();
+  const matrix_t B = (matrix_t(STATE_DIM, INPUT_DIM) << 0.0, 1.0).finished();
+  problem_.dynamicsPtr.reset(new LinearSystemDynamics(A, B));
+
+  // Rollout
+  auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout", verbose);
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
+
+  // Initialization
   linearSystemInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 

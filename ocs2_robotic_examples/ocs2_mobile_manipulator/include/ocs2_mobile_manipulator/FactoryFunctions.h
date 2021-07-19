@@ -27,26 +27,45 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator/MobileManipulatorDynamics.h>
+#pragma once
+
+#include <string>
+#include <vector>
+
+#include <urdf_parser/urdf_parser.h>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
+#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-MobileManipulatorDynamics::MobileManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& info,
-                                                     const std::string& modelFolder /*= "/tmp/ocs2"*/, bool recompileLibraries /*= true*/,
-                                                     bool verbose /*= true*/)
-    : SystemDynamicsBaseAD(), info_(info) {
-  Base::initialize(info_.stateDim, info_.inputDim, modelName, modelFolder, recompileLibraries, verbose);
-}
+/** Create a MobileManipulatorModel PinocchioInterface from a URDF
+ * @param [in] robotUrdfPath: The robot URDF path.
+ * @return PinocchioInterface
+ */
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath);
 
-ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                                     const ad_vector_t& parameters) const {
-  ad_vector_t dxdt(info_.stateDim);
-  const auto theta = state(2);
-  const auto v = input(0);  // forward velocity in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
-  return dxdt;
-}
+/** Create a MobileManipulatorModel PinocchioInterface from a URDF
+ * @param [in] urdfTree: The parsed URDF tree.
+ * @param [in] jointNames: The joint names from URDF to make fixed/unactuated.
+ * @return PinocchioInterface
+ */
+PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames);
+
+/**
+ * Create a scalar-typed MobileManipulatorModelInfo.
+ * @param [in] interface: Pinocchio interface
+ * @param [in] type: Type of template model (fixed-arm or wheel-based)
+ * @return MobileManipulatorModelInfo
+ */
+MobileManipulatorModelInfo createMobileManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type);
+
+/** Load ManipulatorModelType for a config file */
+ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName = "centroidalModelType");
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

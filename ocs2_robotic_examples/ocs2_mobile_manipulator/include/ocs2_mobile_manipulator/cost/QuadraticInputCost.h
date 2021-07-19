@@ -30,14 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
-#include <ocs2_mobile_manipulator/definitions.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
 class QuadraticInputCost final : public QuadraticStateInputCost {
  public:
-  explicit QuadraticInputCost(matrix_t R) : QuadraticStateInputCost(matrix_t::Zero(STATE_DIM, STATE_DIM), std::move(R)) {}
+  explicit QuadraticInputCost(matrix_t R, const size_t& stateDim)
+      : QuadraticStateInputCost(matrix_t::Zero(stateDim, stateDim), std::move(R)), stateDim_(stateDim) {}
+
   ~QuadraticInputCost() override = default;
 
   QuadraticInputCost* clone() const override { return new QuadraticInputCost(*this); }
@@ -45,8 +46,11 @@ class QuadraticInputCost final : public QuadraticStateInputCost {
   std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
                                                        const TargetTrajectories& targetTrajectories) const override {
     const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
-    return {vector_t::Zero(STATE_DIM), inputDeviation};
+    return {vector_t::Zero(stateDim_), inputDeviation};
   }
+
+ private:
+  size_t stateDim_;
 };
 
 }  // namespace mobile_manipulator

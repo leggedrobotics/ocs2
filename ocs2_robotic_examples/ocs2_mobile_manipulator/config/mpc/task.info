@@ -1,3 +1,5 @@
+manipulatorModelType             1      // 0: Fixed-Arm Dynamics, 1: Wheel-based Mobile Manipulator
+
 model_settings
 {
   usePreComputation             true

@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
-#include <ocs2_mobile_manipulator/definitions.h>
+#include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
@@ -77,6 +77,8 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
+  const MobileManipulatorModelInfo& getMobileManipulatorModelInfo() const { return mobileManipulatorModelInfo_; }
+
   /** MobileManipulator PinocchioInterface factory */
   static PinocchioInterface buildPinocchioInterface(const std::string& urdfFile);
 
@@ -100,8 +102,9 @@ class MobileManipulatorInterface final : public RobotInterface {
   std::unique_ptr<Initializer> initializerPtr_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  MobileManipulatorModelInfo mobileManipulatorModelInfo_;
 
-  vector_t initialState_{STATE_DIM};
+  vector_t initialState_;
 };
 
 }  // namespace mobile_manipulator

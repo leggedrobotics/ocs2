@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_mobile_manipulator/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
 namespace ocs2 {
@@ -49,7 +48,7 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
   vector_t getPinocchioJointPosition(const vector_t& state) const override { return state; }
 
   vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override {
-    vector_t dxdt(STATE_DIM);
+    vector_t dxdt(state.size());
     const auto theta = state(2);
     const auto v = input(0);  // forward velocity in base frame
     dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
@@ -57,7 +56,7 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
   }
 
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override {
-    matrix_t dfdu(Jv.rows(), INPUT_DIM);
+    matrix_t dfdu(Jv.rows(), 8);
     Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
     const SCALAR theta = state(2);
     // clang-format off

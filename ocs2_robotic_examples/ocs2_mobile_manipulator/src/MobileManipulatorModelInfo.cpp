@@ -25,17 +25,31 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
-#pragma once
-
-#include <cstddef>
+#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-constexpr size_t STATE_DIM = 6 + 3;  // 6 DOF arm + 2D position + heading
-constexpr size_t INPUT_DIM = 6 + 2;  // 6 DOF arm vel. + forward vel. + rotational vel.
+template <>
+template <>
+MobileManipulatorModelInfoCppAd MobileManipulatorModelInfo::toCppAd() const {
+  MobileManipulatorModelInfoCppAd cppAdInfo;
+
+  cppAdInfo.manipulatorModelType = this->manipulatorModelType;
+  cppAdInfo.endEffectorFrameIndices = this->endEffectorFrameIndices;
+  cppAdInfo.generalizedCoordinatesNum = this->generalizedCoordinatesNum;
+  cppAdInfo.actuatedDofNum = this->actuatedDofNum;
+  cppAdInfo.stateDim = this->stateDim;
+  cppAdInfo.inputDim = this->inputDim;
+
+  return cppAdInfo;
+}
+
+// explicit template instantiation
+template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::scalar_t>;
+template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::ad_scalar_t>;
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

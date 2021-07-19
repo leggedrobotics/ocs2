@@ -11,7 +11,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   visualization_msgs
   geometry_msgs
   interactive_markers
-  rqt_multiplot
 )
 
 ## Find catkin macros and libraries

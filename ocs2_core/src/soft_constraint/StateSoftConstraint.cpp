@@ -48,7 +48,7 @@ StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constr
 /******************************************************************************************************/
 /******************************************************************************************************/
 StateSoftConstraint::StateSoftConstraint(const StateSoftConstraint& other)
-    : BASE(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_) {}
+    : StateCost(other), constraintPtr_(other.constraintPtr_->clone()), penalty_(other.penalty_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -60,20 +60,29 @@ StateSoftConstraint* StateSoftConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const TargetTrajectories&) const {
-  return penalty_.getValue(constraintPtr_->getValue(time, state));
+bool StateSoftConstraint::isActive(scalar_t time) const {
+  return constraintPtr_->isActive(time);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const TargetTrajectories&,
+                                       const PreComputation& preComp) const {
+  return penalty_.getValue(constraintPtr_->getValue(time, state, preComp));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                    const TargetTrajectories&) const {
+                                                                                    const TargetTrajectories&,
+                                                                                    const PreComputation& preComp) const {
   switch (constraintPtr_->getOrder()) {
     case ConstraintOrder::Linear:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));
+      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, preComp));
     case ConstraintOrder::Quadratic:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state));
+      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, preComp));
     default:
       throw std::runtime_error("[StateSoftConstraint] Unknown constraint Order");
   }

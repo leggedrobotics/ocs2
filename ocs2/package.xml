@@ -1,22 +1,31 @@
-<package>
+<?xml version="1.0"?>
+<package format="2">
   <name>ocs2</name>
   <version>1.0.0</version>
-  <description>
-    OCS2
-  </description>
+  <description>Metapackage for OCS2</description>
+
   <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
   <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
   <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
-  <license>BSD</license>
+  <license>BSD3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>ocs2_core</run_depend>
-  <run_depend>ocs2_ddp</run_depend>
-  <run_depend>ocs2_frank_wolfe</run_depend>
-  <run_depend>ocs2_mpc</run_depend>
-  <run_depend>ocs2_ros_interfaces</run_depend>
+  <exec_depend>ocs2_core</exec_depend>
+  <exec_depend>ocs2_ddp</exec_depend>
+  <exec_depend>ocs2_frank_wolfe</exec_depend>
+  <exec_depend>ocs2_mpc</exec_depend>
+  <exec_depend>ocs2_oc</exec_depend>
+  <exec_depend>ocs2_pinocchio</exec_depend>
+  <exec_depend>ocs2_robotic_examples</exec_depend>
+  <exec_depend>ocs2_python_interface</exec_depend>
+  <exec_depend>ocs2_robotic_tools</exec_depend>
+  <exec_depend>ocs2_ros_interfaces</exec_depend>
+  <exec_depend>ocs2_sqp</exec_depend>
+  <exec_depend>ocs2_qp_solver</exec_depend>
+  <exec_depend>ocs2_thirdparty</exec_depend>
 
    <export>
    	  <metapackage />
    </export>
+
 </package>

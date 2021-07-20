@@ -27,27 +27,36 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCostEliminatePattern.h>
 
 namespace ocs2 {
 
-ScalarFunctionQuadraticApproximation LoopshapingCostEliminatePattern::costQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                                 const vector_t& u) {
+ScalarFunctionQuadraticApproximation LoopshapingCostEliminatePattern::getQuadraticApproximation(
+    scalar_t t, const vector_t& x, const vector_t& u, const TargetTrajectories& targetTrajectories, const PreComputation& preComp) const {
+  if (this->empty()) {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
+  }
+
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const scalar_t gamma = loopshapingDefinition_->gamma_;
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const vector_t x_filter = loopshapingDefinition_->getFilterState(x);
-  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(x, u);
-  const auto& L_system = systemCost_->costQuadraticApproximation(t, x_system, u_system);
-  const auto& L_filter = systemCost_->costQuadraticApproximation(t, x_system, u_filter);
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& u_filter = preCompLS.getFilteredInput();
 
-  ScalarFunctionQuadraticApproximation L;
+  const auto L_system =
+      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
+
+  const auto L_filter = StateInputCostCollection::getQuadraticApproximation(t, x_system, u_filter, targetTrajectories,
+                                                                            preCompLS.getFilteredSystemPreComputation());
+
+  ScalarFunctionQuadraticApproximation L(x.rows(), u.rows());
   L.f = gamma * L_filter.f + (1.0 - gamma) * L_system.f;
 
   // dfdx
-  L.dfdx.resize(x_system.rows() + x_filter.rows());
   L.dfdx.head(x_system.rows()).noalias() = gamma * L_filter.dfdx + (1.0 - gamma) * L_system.dfdx;
   if (isDiagonal) {
     L.dfdx.tail(x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getCdiag() * L_system.dfdu;
@@ -56,7 +65,6 @@ ScalarFunctionQuadraticApproximation LoopshapingCostEliminatePattern::costQuadra
   }
 
   // dfdxx
-  L.dfdxx.resize(x_system.rows() + x_filter.rows(), x_system.rows() + x_filter.rows());
   L.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()).noalias() = gamma * L_filter.dfdxx + (1.0 - gamma) * L_system.dfdxx;
   matrix_t dfduu_C;  // temporary variable, reused in other equation.
   if (isDiagonal) {
@@ -82,7 +90,6 @@ ScalarFunctionQuadraticApproximation LoopshapingCostEliminatePattern::costQuadra
   }
 
   // dfdux
-  L.dfdux.resize(u_filter.rows(), x_system.rows() + x_filter.rows());
   L.dfdux.leftCols(x_system.rows()) = gamma * L_filter.dfdux;
   if (isDiagonal) {
     L.dfdux.leftCols(x_system.rows()).noalias() += (1.0 - gamma) * s_filter.getDdiag() * L_system.dfdux;

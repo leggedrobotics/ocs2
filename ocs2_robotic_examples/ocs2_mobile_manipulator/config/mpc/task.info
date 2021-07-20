@@ -1,0 +1,189 @@
+model_settings
+{
+  usePreComputation             true
+  recompileLibraries            true
+}
+
+; DDP settings
+ddp
+{
+  algorithm                     SLQ
+
+  nThreads                      3
+
+  maxNumIterations              10
+  minRelCost                    0.1
+  constraintTolerance           1e-3
+
+  displayInfo                   false
+  displayShortSummary           false
+  checkNumericalStability       false
+
+  AbsTolODE                     1e-5
+  RelTolODE                     1e-3
+  timeStep                      1e-3
+  maxNumStepsPerSecond          100000
+  backwardPassIntegratorType    ODE45
+
+  inequalityConstraintMu        100.0
+  inequalityConstraintDelta     1.1
+
+  preComputeRiccatiTerms        true
+  useNominalTimeForBackwardPass false
+
+  useFeedbackPolicy             false
+
+  strategy                      LINE_SEARCH
+  lineSearch
+  {
+    minStepLength                 1e-2
+    maxStepLength                 1.0
+    hessianCorrectionStrategy     DIAGONAL_SHIFT
+    hessianCorrectionMultiple     1e-3
+  }
+}
+
+; Rollout settings
+rollout
+{
+  AbsTolODE                     1e-5
+  RelTolODE                     1e-3
+  timeStep                      1e-2
+  maxNumStepsPerSecond          100000
+  checkNumericalStability       false
+}
+
+; MPC settings
+mpc
+{
+  timeHorizon                    1.0
+  numPartitions                  4
+
+  runtimeMaxNumIterations        1
+  initMaxNumIterations           10
+
+  runtimeMaxStepLength           1.0
+  runtimeMinStepLength           1e-2
+  initMaxStepLength              1.0
+  initMinStepLength              1e-2
+
+  debugPrint                     false
+  coldStart                      false
+
+  useParallelRiccatiSolver       true  ; use disjoint riccati solver in MP case and recedingHorizon fashion
+
+  solutionTimeWindow             0.2   ; [s]
+
+  mpcDesiredFrequency            100   ; [Hz]
+  mrtDesiredFrequency            400   ; [Hz]
+}
+
+; initial state
+initialState
+{
+  (0,0)  0.0  ; position x
+  (1,0)  0.0  ; position y
+  (2,0)  0.0  ; heading
+  (3,0)  2.5  ; SH_ROT
+  (4,0) -1.0  ; SH_FLE
+  (5,0)  1.5  ; EL_FLE
+  (6,0)  0.0  ; EL_ROT
+  (7,0)  1.0  ; WR_FLE
+  (8,0)  0.0  ; WR_ROT
+}
+
+inputCost
+{
+  ; control weight matrix
+  R
+  {
+    scaling 1e-2
+
+    (0,0)  5.0  ; forward velocity
+    (1,1)  5.0  ; turning velocity
+    (2,2)  1.0  ; SH_ROT velocity
+    (3,3)  1.0  ; SH_FLE velocity
+    (4,4)  1.0  ; EL_FLE velocity
+    (5,5)  1.0  ; EL_ROT velocity
+    (6,6)  1.0  ; WR_FLE velocity
+    (7,7)  1.0  ; WR_ROT velocity
+  }
+}
+
+endEffector
+{
+  name "WRIST_2" ; name defined in the URDF
+
+  ; end effector quadratic penalty scaling
+  muPosition  10.0
+  muOrientation  5.0
+}
+
+finalEndEffector
+{
+  name "WRIST_2"
+  muPosition  10.0
+  muOrientation  5.0
+}
+
+selfCollision
+{
+  ; Self Collision raw object pairs
+  collisionObjectPairs
+  {
+    [0] "1, 4"
+    [1] 1,6
+    [2] " 1  , 9"
+  }
+
+  ; Self Collision pairs
+  collisionLinkPairs
+  {
+    [0] "arm_base, ARM"
+    [1] arm_base,ELBOW
+    [2] "arm_base  , WRIST_1"
+    [3] "link_that_doesnt_exist  , WRIST_1"
+  }
+
+  ; minimum distance allowed between the pairs
+  minimumDistance  0.1
+
+  ; relaxed log barrier mu
+  mu  0.01
+
+  ; relaxed log barrier delta
+  delta  1e-3
+}
+
+jointVelocityLimits
+{
+  lowerBound
+  {
+    (0,0) -0.5  ; forward velocity
+    (1,0) -0.5  ; turning velocity
+    (2,0) -1.0  ; SH_ROT
+    (3,0) -1.0  ; SH_FLE
+    (4,0) -1.0  ; EL_FLE
+    (5,0) -1.0  ; EL_ROT
+    (6,0) -1.0  ; WR_FLE
+    (7,0) -1.0  ; WR_ROT
+  }
+
+  upperBound
+  {
+    (0,0) 0.5  ; forward velocity
+    (1,0) 0.5  ; turning velocity
+    (2,0) 1.0  ; SH_ROT
+    (3,0) 1.0  ; SH_FLE
+    (4,0) 1.0  ; EL_FLE
+    (5,0) 1.0  ; EL_ROT
+    (6,0) 1.0  ; WR_FLE
+    (7,0) 1.0  ; WR_ROT
+  }
+
+  ; relaxed log barrier mu
+  mu  0.01
+
+  ; relaxed log barrier delta
+  delta  1e-3
+}

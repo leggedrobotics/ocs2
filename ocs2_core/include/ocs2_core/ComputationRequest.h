@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <type_traits>
+
 namespace ocs2 {
 
 /** Types of computation that can be simultaneously requested */

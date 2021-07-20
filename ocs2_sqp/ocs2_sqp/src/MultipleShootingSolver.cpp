@@ -41,9 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDynamicsBase* systemDynamicsPtr,
-                                               const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr,
-                                               const ConstraintBase* constraintPtr, const CostFunctionBase* terminalCostFunctionPtr)
+MultipleShootingSolver::MultipleShootingSolver(Settings settings, const OptimalControlProblem& optimalControlProblem,
+                                               const Initializer& initializer)
     : SolverBase(),
       settings_(std::move(settings)),
       hpipmInterface_(hpipm_interface::OcpSize(), settings.hpipmSettings),
@@ -57,30 +56,14 @@ MultipleShootingSolver::MultipleShootingSolver(Settings settings, const SystemDy
 
   // Clone objects to have one for each worker
   for (int w = 0; w < settings.nThreads; w++) {
-    systemDynamicsPtr_.emplace_back(systemDynamicsPtr->clone());
-    costFunctionPtr_.emplace_back(costFunctionPtr->clone());
-    if (constraintPtr != nullptr) {
-      constraintPtr_.emplace_back(constraintPtr->clone());
-    } else {
-      constraintPtr_.emplace_back(nullptr);
-    }
+    ocpDefinitions_.push_back(optimalControlProblem);
   }
 
   // Operating points
-  initializerPtr_.reset(initializerPtr->clone());
+  initializerPtr_.reset(initializer.clone());
 
-  if (constraintPtr == nullptr) {
+  if (optimalControlProblem.equalityConstraintPtr->empty()) {
     settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
-  }
-
-  if (constraintPtr != nullptr && settings_.inequalityConstraintMu > 0) {
-    std::unique_ptr<RelaxedBarrierPenalty> penaltyFunction(
-        new RelaxedBarrierPenalty({settings_.inequalityConstraintMu, settings_.inequalityConstraintDelta}));
-    penaltyPtr_.reset(new SoftConstraintPenalty(std::move(penaltyFunction)));
-  }
-
-  if (terminalCostFunctionPtr != nullptr) {
-    terminalCostFunctionPtr_.reset(terminalCostFunctionPtr->clone());
   }
 }
 
@@ -146,20 +129,17 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
   }
 
   // Determine time discretization, taking into account event times.
-  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
-  const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, modeSchedule.eventTimes);
+  const auto& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
+  const auto timeDiscretization = timeDiscretizationWithEvents(initTime, finalTime, settings_.dt, eventTimes);
 
   // Initialize the state and input
   vector_array_t x, u;
   initializeStateInputTrajectories(initState, timeDiscretization, x, u);
 
-  // Initialize cost
-  const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
-  for (auto& cost : costFunctionPtr_) {
-    cost->setTargetTrajectoriesPtr(&targetTrajectories);
-  }
-  if (terminalCostFunctionPtr_) {
-    terminalCostFunctionPtr_->setTargetTrajectoriesPtr(&targetTrajectories);
+  // Initialize references
+  for (auto& ocpDefinition : ocpDefinitions_) {
+    const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
+    ocpDefinition.targetTrajectoriesPtr = &targetTrajectories;
   }
 
   // Bookkeeping
@@ -251,7 +231,8 @@ MultipleShootingSolver::OcpSubproblemSolution MultipleShootingSolver::getOCPSolu
   auto& deltaXSol = solution.deltaXSol;
   auto& deltaUSol = solution.deltaUSol;
   hpipm_status status;
-  if (constraintPtr_.front() && !settings_.projectStateInputEqualityConstraints) {
+  const bool hasStateInputConstraints = !ocpDefinitions_.front().equalityConstraintPtr->empty();
+  if (hasStateInputConstraints && !settings_.projectStateInputEqualityConstraints) {
     hpipmInterface_.resize(hpipm_interface::extractSizesFromProblem(dynamics_, cost_, &constraints_));
     status = hpipmInterface_.solve(delta_x0, dynamics_, cost_, &constraints_, deltaXSol, deltaUSol, settings_.printSolverStatus);
   } else {  // without constraints, or when using projection, we have an unconstrained QP.
@@ -361,9 +342,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
-    SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_[workerId];
-    CostFunctionBase& costFunction = *costFunctionPtr_[workerId];
-    ConstraintBase* constraintPtr = constraintPtr_[workerId].get();
+    OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
     const bool projection = settings_.projectStateInputEqualityConstraints;
 
@@ -371,7 +350,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
     while (i < N) {
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        auto result = multiple_shooting::setupEventNode(systemDynamics, nullptr, nullptr, time[i].time, x[i], x[i + 1]);
+        auto result = multiple_shooting::setupEventNode(ocpDefinition, time[i].time, x[i], x[i + 1]);
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
@@ -381,8 +360,8 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        auto result = multiple_shooting::setupIntermediateNode(systemDynamics, sensitivityDiscretizer_, costFunction, constraintPtr,
-                                                               penaltyPtr_.get(), projection, ti, dt, x[i], x[i + 1], u[i]);
+        auto result =
+            multiple_shooting::setupIntermediateNode(ocpDefinition, sensitivityDiscretizer_, projection, ti, dt, x[i], x[i + 1], u[i]);
         workerPerformance += result.performance;
         dynamics_[i] = std::move(result.dynamics);
         cost_[i] = std::move(result.cost);
@@ -395,7 +374,7 @@ PerformanceIndex MultipleShootingSolver::setupQuadraticSubproblem(const std::vec
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
-      auto result = multiple_shooting::setupTerminalNode(terminalCostFunctionPtr_.get(), constraintPtr, tN, x[N]);
+      auto result = multiple_shooting::setupTerminalNode(ocpDefinition, tN, x[N]);
       workerPerformance += result.performance;
       cost_[i] = std::move(result.cost);
       constraints_[i] = std::move(result.constraints);
@@ -424,22 +403,19 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
-    SystemDynamicsBase& systemDynamics = *systemDynamicsPtr_[workerId];
-    CostFunctionBase& costFunction = *costFunctionPtr_[workerId];
-    ConstraintBase* constraintPtr = constraintPtr_[workerId].get();
+    OptimalControlProblem& ocpDefinition = ocpDefinitions_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
 
     int i = timeIndex++;
     while (i < N) {
       if (time[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        workerPerformance += multiple_shooting::computeEventPerformance(systemDynamics, nullptr, nullptr, time[i].time, x[i], x[i + 1]);
+        workerPerformance += multiple_shooting::computeEventPerformance(ocpDefinition, time[i].time, x[i], x[i + 1]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(time[i]);
         const scalar_t dt = getIntervalDuration(time[i], time[i + 1]);
-        workerPerformance += multiple_shooting::computeIntermediatePerformance(systemDynamics, discretizer_, costFunction, constraintPtr,
-                                                                               penaltyPtr_.get(), ti, dt, x[i], x[i + 1], u[i]);
+        workerPerformance += multiple_shooting::computeIntermediatePerformance(ocpDefinition, discretizer_, ti, dt, x[i], x[i + 1], u[i]);
       }
 
       i = timeIndex++;
@@ -447,7 +423,7 @@ PerformanceIndex MultipleShootingSolver::computePerformance(const std::vector<An
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(time[N]);
-      workerPerformance += multiple_shooting::computeTerminalPerformance(terminalCostFunctionPtr_.get(), constraintPtr, tN, x[N]);
+      workerPerformance += multiple_shooting::computeTerminalPerformance(ocpDefinition, tN, x[N]);
     }
 
     // Accumulate! Same worker might run multiple tasks

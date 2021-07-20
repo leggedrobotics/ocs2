@@ -31,71 +31,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/loopshaping/cost/LoopshapingCostEliminatePattern.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCostInputPattern.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCostOutputPattern.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingStateCost.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
 
 namespace ocs2 {
+namespace LoopshapingCost {
 
-std::unique_ptr<LoopshapingCost> LoopshapingCost::create(const CostFunctionBase& systemCost,
-                                                         std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateCostCollection> create(const StateCostCollection& systemCost,
+                                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  return std::unique_ptr<StateCostCollection>(new LoopshapingStateCost(systemCost, loopshapingDefinition));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection& systemCost,
+                                                 std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingCost>(new LoopshapingCostOutputPattern(systemCost, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostOutputPattern(systemCost, std::move(loopshapingDefinition)));
     case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingCost>(new LoopshapingCostInputPattern(systemCost, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostInputPattern(systemCost, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<LoopshapingCost>(new LoopshapingCostEliminatePattern(systemCost, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostEliminatePattern(systemCost, std::move(loopshapingDefinition)));
     default:
-      throw std::runtime_error("[LoopshapingCost::create] invalid loopshaping type");
+      throw std::runtime_error("[LoopshapingStateInputCost::create] invalid loopshaping type");
   }
 }
 
-void LoopshapingCost::setTargetTrajectoriesPtr(const TargetTrajectories* targetTrajectoriesPtr) {
-  if (targetTrajectoriesPtr != nullptr) {
-    CostFunctionBase::setTargetTrajectoriesPtr(targetTrajectoriesPtr);
-
-    // For now assume that cost DesiredTrajectory is specified w.r.t original system x, u
-    systemCost_->setTargetTrajectoriesPtr(targetTrajectoriesPtr);
-  }
-}
-
-scalar_t LoopshapingCost::cost(scalar_t t, const vector_t& x, const vector_t& u) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(x, u);
-
-  const scalar_t L_system = systemCost_->cost(t, x_system, u_system);
-  const scalar_t L_filter = systemCost_->cost(t, x_system, u_filter);
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
-
-  return gamma * L_filter + (1.0 - gamma) * L_system;
-}
-
-scalar_t LoopshapingCost::costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) {
-  // TODO(rgrandia)
-  return 0;
-}
-
-scalar_t LoopshapingCost::finalCost(scalar_t t, const vector_t& x) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  return systemCost_->finalCost(t, x_system);
-};
-
-scalar_t LoopshapingCost::finalCostDerivativeTime(scalar_t t, const vector_t& x) {
-  return 0;
-}
-
-ScalarFunctionQuadraticApproximation LoopshapingCost::finalCostQuadraticApproximation(scalar_t t, const vector_t& x) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const auto Phi_system = systemCost_->finalCostQuadraticApproximation(t, x_system);
-  const size_t FILTER_STATE_DIM = loopshapingDefinition_->getInputFilter().getNumStates();
-
-  ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = Phi_system.f;
-  Phi.dfdx.resize(x.rows());
-  Phi.dfdx.head(x_system.rows()) = Phi_system.dfdx;
-  Phi.dfdx.tail(FILTER_STATE_DIM).setZero();
-  Phi.dfdxx.setZero(x.rows(), x.rows());
-  Phi.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = Phi_system.dfdxx;
-  return Phi;
-}
-
+}  // namespace LoopshapingCost
 }  // namespace ocs2

@@ -39,20 +39,21 @@ namespace ocs2 {
 /******************************************************************************************************/
 LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                                        std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
-                                       std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
-                                       std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
-                                       std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
+                                       std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock,
                                        SoftConstraintPenalty& ineqConstrPenaltyRef,
                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
       rolloutRefStock_(std::move(rolloutRefStock)),
-      constraintsRefStock_(std::move(constraintsRefStock)),
-      costFunctionRefStock_(std::move(costFunctionRefStock)),
-      heuristicsFunctionsRefStock_(std::move(heuristicsFunctionsRefStock)),
+      optimalControlProblemRefStock_(std::move(optimalControlProblemRefStock)),
       ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
-      meritFunc_(std::move(meritFunc)) {}
+      meritFunc_(std::move(meritFunc)) {
+  // infeasible learning rate adjustment scheme
+  if (!numerics::almost_ge(settings_.maxStepLength_, settings_.minStepLength_)) {
+    throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
+  }
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -83,9 +84,8 @@ bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSche
         rolloutTrajectory(rolloutRefStock_[taskId], modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock,
                           stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
     scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(constraintsRefStock_[taskId], costFunctionRefStock_[taskId], heuristicsFunctionsRefStock_[taskId],
-                              timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                              modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+    rolloutCostAndConstraints(optimalControlProblemRefStock_[taskId], timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                              inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
 
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
@@ -207,9 +207,9 @@ void LineSearchStrategy::lineSearchTask() {
                                                  timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
                                                  inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
       scalar_t heuristicsValue = 0.0;
-      rolloutCostAndConstraints(constraintsRefStock_[taskId], costFunctionRefStock_[taskId], heuristicsFunctionsRefStock_[taskId],
-                                timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                                modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+      rolloutCostAndConstraints(optimalControlProblemRefStock_[taskId], timeTrajectoriesStock, postEventIndicesStock,
+                                stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock,
+                                heuristicsValue);
 
       // compute average time step of forward rollout
       avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;

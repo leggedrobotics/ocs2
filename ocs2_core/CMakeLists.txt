@@ -38,6 +38,7 @@ message(STATUS "OCS2_CXX_FLAGS: " ${OCS2_CXX_FLAGS})
 catkin_package(
   INCLUDE_DIRS
     include
+    test/include
     ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
@@ -57,6 +58,7 @@ catkin_package(
 
 include_directories(
   include
+  test/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -68,25 +70,18 @@ add_library(${PROJECT_NAME}
   src/automatic_differentation/CppAdInterface.cpp
   src/automatic_differentation/CppAdSparsity.cpp
   src/automatic_differentation/FiniteDifferenceMethods.cpp
-  src/constraint/ConstraintBase.cpp
-  src/constraint/ConstraintBaseAD.cpp
-  src/constraint/ConstraintCollection.cpp
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
   src/constraint/StateConstraintCollection.cpp
   src/constraint/StateInputConstraintCollection.cpp
-  src/constraint/LinearConstraint.cpp
   src/constraint/LinearStateConstraint.cpp
   src/constraint/LinearStateInputConstraint.cpp
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
-  src/cost/CostCollection.cpp
-  src/cost/QuadraticCostFunction.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
-  src/cost/StateCost.cpp
   src/cost/StateCostCollection.cpp
   src/cost/StateCostCppAd.cpp
   src/cost/StateInputCostCollection.cpp
@@ -111,11 +106,22 @@ add_library(${PROJECT_NAME}
   src/reference/TargetTrajectories.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
+  src/loopshaping/LoopshapingPreComputation.cpp
   src/loopshaping/cost/LoopshapingCost.cpp
+  src/loopshaping/cost/LoopshapingStateCost.cpp
+  src/loopshaping/cost/LoopshapingStateInputCost.cpp
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
   src/loopshaping/cost/LoopshapingCostOutputPattern.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraint.cpp
+  src/loopshaping/soft_constraint/LoopshapingStateInputSoftConstraint.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraintEliminatePattern.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraintInputPattern.cpp
+  src/loopshaping/soft_constraint/LoopshapingSoftConstraintOutputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraint.cpp
+  src/loopshaping/constraint/LoopshapingFilterConstraint.cpp
+  src/loopshaping/constraint/LoopshapingStateConstraint.cpp
+  src/loopshaping/constraint/LoopshapingStateInputConstraint.cpp
   src/loopshaping/constraint/LoopshapingConstraintEliminatePattern.cpp
   src/loopshaping/constraint/LoopshapingConstraintInputPattern.cpp
   src/loopshaping/constraint/LoopshapingConstraintOutputPattern.cpp
@@ -182,7 +188,11 @@ install(
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(DIRECTORY test/include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 #############
 ## Testing ##
@@ -237,7 +247,6 @@ target_link_libraries(interpolation_unittest
 )
 
 catkin_add_gtest(${PROJECT_NAME}_cppadcg
-  test/cppad_cg/testCppADCG_constraint.cpp
   test/cppad_cg/testCppADCG_dynamics.cpp
   test/cppad_cg/testSparsityHelpers.cpp
   test/cppad_cg/testCppAdInterface.cpp
@@ -263,9 +272,11 @@ catkin_add_gtest(${PROJECT_NAME}_loopshaping
   test/loopshaping/testLoopshapingConfiguration.cpp
   test/loopshaping/testLoopshapingConstraint.cpp
   test/loopshaping/testLoopshapingCost.cpp
+  test/loopshaping/testLoopshapingSoftConstraint.cpp
   test/loopshaping/testLoopshapingDefinition.cpp
   test/loopshaping/testLoopshapingDynamics.cpp
   test/loopshaping/testLoopshapingFilterDynamics.cpp
+  test/loopshaping/testLoopshapingPreComputation.cpp
 )
 target_link_libraries(${PROJECT_NAME}_loopshaping
   ${PROJECT_NAME}
@@ -289,6 +300,7 @@ target_link_libraries(${PROJECT_NAME}_test_misc
 
 catkin_add_gtest(test_dynamics
   test/dynamics/testSystemDynamicsLinearizer.cpp
+  test/dynamics/testSystemDynamicsPreComputation.cpp
 )
 target_link_libraries(test_dynamics
   ${PROJECT_NAME}

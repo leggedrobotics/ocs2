@@ -60,10 +60,11 @@ class StateInputConstraintCppAd : public StateInputConstraint {
   virtual vector_t getParameters(scalar_t time) const { return vector_t(0); };
 
   /** Constraint evaluation */
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const override;
-  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const vector_t& input) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& /* preComputation */) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const PreComputation& /* preComputation */) const override;
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                 const PreComputation& /* preComputation */) const override;
 
  protected:
   StateInputConstraintCppAd(const StateInputConstraintCppAd& rhs);

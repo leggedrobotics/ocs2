@@ -1,16 +1,15 @@
 
-
 #pragma once
 
-#include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
+#include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
 
 namespace ocs2 {
 
-class LoopshapingCostEliminatePattern final : public LoopshapingCost {
+class LoopshapingCostEliminatePattern final : public LoopshapingStateInputCost {
  public:
-  using BASE = LoopshapingCost;
+  using BASE = LoopshapingStateInputCost;
 
-  LoopshapingCostEliminatePattern(const CostFunctionBase& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
+  LoopshapingCostEliminatePattern(const StateInputCostCollection& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
       : BASE(systemCost, std::move(loopshapingDefinition)) {}
 
   ~LoopshapingCostEliminatePattern() override = default;
@@ -19,7 +18,9 @@ class LoopshapingCostEliminatePattern final : public LoopshapingCost {
 
   LoopshapingCostEliminatePattern* clone() const override { return new LoopshapingCostEliminatePattern(*this); };
 
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                                 const TargetTrajectories& targetTrajectories,
+                                                                 const PreComputation& preComp) const override;
 
  protected:
   using BASE::loopshapingDefinition_;

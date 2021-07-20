@@ -31,10 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_sqp/ConstraintProjection.h"
 
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
+#include <ocs2_oc/test/testProblemsGeneration.h>
 
 TEST(test_projection, testProjectionQR) {
-  const auto constraint = ocs2::qp_solver::getRandomConstraints(30, 20, 10);
+  const auto constraint = ocs2::getRandomConstraints(30, 20, 10);
 
   const auto projection = ocs2::qrConstraintProjection(constraint);
 
@@ -49,7 +49,7 @@ TEST(test_projection, testProjectionQR) {
 }
 
 TEST(test_projection, testProjectionLU) {
-  const auto constraint = ocs2::qp_solver::getRandomConstraints(30, 20, 10);
+  const auto constraint = ocs2::getRandomConstraints(30, 20, 10);
 
   const auto projection = ocs2::luConstraintProjection(constraint);
 

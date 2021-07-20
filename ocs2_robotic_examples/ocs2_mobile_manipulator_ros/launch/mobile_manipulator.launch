@@ -5,9 +5,9 @@
       <arg name="debug" default="false" />
 
       <!-- The URDF model of the robot -->
-      <arg name="urdfFile" default="$(find ocs2_mobile_manipulator)/urdf/franka_mobile/mobile_manipulator.urdf" />
+      <arg name="urdfFile" default="$(find ocs2_mobile_manipulator)/urdf/mobile_manipulator.urdf" />
       <!-- The task file for the mpc. -->
-      <arg name="taskFile" default="$(find ocs2_mobile_manipulator)/config/franka_ridgeback/task.info" />
+      <arg name="taskFile" default="$(find ocs2_mobile_manipulator)/config/mpc/task.info" />
       <!-- The library folder to generate CppAD codegen into -->
       <arg name="libFolder" default="$(find ocs2_mobile_manipulator)/auto_generated" />
 

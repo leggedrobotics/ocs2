@@ -91,10 +91,13 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const 
 template <typename SCALAR>
 auto MobileManipulatorPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
     -> std::pair<matrix_t, matrix_t> {
-  matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
   // set jacobian model based on model type
   switch (modelInfo_.manipulatorModelType) {
+    case ManipulatorModelType::DefaultManipulator: {
+      return {Jq, Jv};
+    }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
+      matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
       Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
       const SCALAR theta = state(2);
       // clang-format off
@@ -104,6 +107,12 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& 
       // clang-format on
       dfdu.template leftCols<2>() = Jv.template leftCols<3>() * dvdu_base;
       dfdu.template rightCols(modelInfo_.armDim) = Jv.template rightCols(modelInfo_.armDim);
+      return {Jq, dfdu};
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
+      dfdu = Jv.template rightCols(modelInfo_.armDim);
       return {Jq, dfdu};
       break;
     }

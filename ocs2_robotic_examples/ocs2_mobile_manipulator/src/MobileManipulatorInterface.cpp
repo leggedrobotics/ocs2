@@ -92,22 +92,42 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   boost::filesystem::create_directories(libraryFolderPath);
   std::cerr << "[MobileManipulatorInterface] Generated library path: " << libraryFolderPath << std::endl;
 
-  // create pinocchio interface
-  if (removeJointNames.empty()) {
-    pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType)));
-  } else {
-    const auto& urdfTree = ::urdf::parseURDFFile(urdfFile);
-    pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfTree, removeJointNames, modelType)));
+  // read the task file
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  // resolve meta-information about the model
+  // read manipulator type
+  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+  // read the joints to make fixed
+  std::vector<std::string> removeJointNames;
+  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+  // read the frame names
+  std::string baseFrame, eeFrame;
+  loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
+  loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
+
+  std::cerr << "\n #### Model Information:";
+  std::cerr << "\n #### =============================================================================\n";
+  std::cerr << "\n #### model_information.manipulatorModelType: " << static_cast<int>(modelType);
+  std::cerr << "\n #### model_information.removeJoints: ";
+  for (const auto& name : removeJointNames) {
+    std::cerr << "\"" << name << "\" ";
   }
+  std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
+  std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"" << std::endl;
+  std::cerr << " #### =============================================================================" << std::endl;
+
+  // create pinocchio interface
+  const auto& urdfTree = ::urdf::parseURDFFile(urdfFile);
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfTree, removeJointNames, modelType)));
   std::cerr << *pinocchioInterfacePtr_;
 
   // MobileManipulatorModelInfo
-  mobileManipulatorModelInfo_ = mobile_manipulator::createMobileManipulatorModelInfo(*pinocchioInterfacePtr_, modelType);
+  mobileManipulatorModelInfo_ =
+      mobile_manipulator::createMobileManipulatorModelInfo(*pinocchioInterfacePtr_, modelType, baseFrame, eeFrame);
 
   bool usePreComputation = true;
   bool recompileLibraries = true;
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile, pt);
   std::cerr << "\n #### Model Settings:";
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, usePreComputation, "model_settings.usePreComputation", true);
@@ -133,16 +153,33 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Constraints
   problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  // problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile,
-  //                                                                                  usePreComputation, libraryFolder,
-  //                                                                                  recompileLibraries));
+  // end-effector state cost
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
                                                                                usePreComputation, libraryFolder, recompileLibraries));
   problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
                                                                                     usePreComputation, libraryFolder, recompileLibraries));
+  // self-collision avoidance cost
+  {
+    bool activate = true;
+    loadData::loadPtreeValue(pt, activate, "selfCollision.activate", true);
+    if (activate) {
+      problem_.stateSoftConstraintPtr->add(
+          "selfCollision",
+          getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile, usePreComputation, libraryFolder, recompileLibraries));
+    }
+  }
 
   // Dynamics
-  problem_.dynamicsPtr.reset(new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder, recompileLibraries, true));
+  if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::WheelBasedMobileManipulator) {
+    problem_.dynamicsPtr.reset.reset(
+        new WheelBasedManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
+  } else if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::FloatingArmManipulator) {
+    problem_.dynamicsPtr.reset.reset(
+        new FloatingArmManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
+  } else {
+    problem_.dynamicsPtr.reset.reset(
+        new DefaultManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
+  }
 
   /*
    * Pre-computation

@@ -1,7 +1,15 @@
-manipulatorModelType             1      // 0: Default-arm, 1: Wheel-based manipulator, 2: Floating-arm manipulator
+; robot model meta-information
+model_information {
+  manipulatorModelType             1      // 0: Default-arm, 1: Wheel-based manipulator, 2: Floating-arm manipulator
+  
+  ; motion joints in the URDF to consider fixed
+  removeJoints {
+  }
 
-; motion joints in the URDF to consider fixed
-removeJoints {
+  ; base frame of the robot
+  baseFrame "base"
+  ; end-effector frame of the robot
+  eeFrame "WRIST_2"
 }
 
 model_settings
@@ -133,7 +141,10 @@ finalEndEffector
 }
 
 selfCollision
-{
+{ 
+  ; activate self-collision constraint
+  activate    1
+
   ; Self Collision raw object pairs
   collisionObjectPairs
   {

@@ -37,7 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator/package_path.h>
+#include <ocs2_mobile_manipulator/FactoryFunctions.h>
 
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_self_collision/SelfCollision.h>
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
 
@@ -47,8 +49,7 @@ using namespace mobile_manipulator;
 class TestSelfCollision : public ::testing::Test {
  public:
   TestSelfCollision()
-      : pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfFile)),
-        geometryInterface(pinocchioInterface, collisionPairs) {}
+      : pinocchioInterface(createMobileManipulatorPinocchioInterface()), geometryInterface(pinocchioInterface, collisionPairs) {}
 
   void computeValue(PinocchioInterface& pinocchioInterface, const vector_t q) {
     const auto& model = pinocchioInterface.getModel();
@@ -68,12 +69,25 @@ class TestSelfCollision : public ::testing::Test {
   const std::vector<std::pair<size_t, size_t>> collisionPairs = {{1, 4}, {1, 6}, {1, 9}};
 
   const std::string libraryFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated";
-  const std::string urdfFile = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
-
   const scalar_t minDistance = 0.1;
 
   PinocchioInterface pinocchioInterface;
   PinocchioGeometryInterface geometryInterface;
+
+ protected:
+  PinocchioInterface createMobileManipulatorPinocchioInterface() {
+    const std::string urdfPath = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
+
+    // read manipulator type
+    ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+    // read the joints to make fixed
+    std::vector<std::string> removeJointNames;
+    loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+    // initialize pinocchio interface
+    const auto& urdfTree = ::urdf::parseURDFFile(urdfPath);
+    return createPinocchioInterface(urdfTree, removeJointNames, modelType);
+  }
 };
 
 TEST_F(TestSelfCollision, AnalyticalVsAutoDiffValue) {

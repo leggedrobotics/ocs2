@@ -27,9 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>
+#include <string>
+
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
+
+#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
@@ -46,14 +51,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
-#include <ocs2_mobile_manipulator/MobileManipulatorDynamics.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorPreComputation.h>
-#include <ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h>
-#include <ocs2_mobile_manipulator/constraint/JointVelocityLimits.h>
-#include <ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h>
-#include <ocs2_mobile_manipulator/cost/QuadraticInputCost.h>
-#include <ocs2_mobile_manipulator/definitions.h>
+#include "ocs2_mobile_manipulator/MobileManipulatorDynamics.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
+#include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
+#include "ocs2_mobile_manipulator/constraint/JointVelocityLimits.h"
+#include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
+#include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
 
 #include <ros/package.h>
 
@@ -84,7 +87,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, usePreComputation, "model_settings.usePreComputation", true);
   loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   // Default initial state
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
@@ -133,14 +136,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
-  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *initializerPtr_));
-  return mpc;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfPath) {
   // add 3 DOF for wheelbase
   pinocchio::JointModelComposite rootJoint(3);
@@ -161,7 +156,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadEigenMatrix(taskFile, "inputCost.R", R);
   std::cerr << "inputCost.R:  \n" << R << '\n';
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R)));
 }
@@ -183,7 +178,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", true);
   loadData::loadPtreeValue(pt, muOrientation, prefix + ".muOrientation", true);
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   if (referenceManagerPtr_ == nullptr) {
     throw std::runtime_error("[getEndEffectorConstraint] referenceManagerPtr_ should be set first!");
@@ -231,7 +226,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
   loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
   loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs, true);
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
 
@@ -273,7 +268,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimi
   std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
   loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
   loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   std::unique_ptr<StateInputConstraint> constraint(new JointVelocityLimits);
 

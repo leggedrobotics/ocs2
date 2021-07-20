@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <iostream>
+#include <string>
+
 #include "ocs2_quadrotor/QuadrotorInterface.h"
 #include "ocs2_quadrotor/dynamics/QuadrotorSystemDynamics.h"
 
@@ -44,19 +47,24 @@ namespace quadrotor {
 /******************************************************************************************************/
 /******************************************************************************************************/
 QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName) {
-  taskFile_ = ros::package::getPath("ocs2_quadrotor") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile_ << std::endl;
+  const std::string taskFile = ros::package::getPath("ocs2_quadrotor") + "/config/" + taskFileFolderName + "/task.info";
+  std::cerr << "Loading task file: " << taskFile << std::endl;
 
-  libraryFolder_ = ros::package::getPath("ocs2_quadrotor") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
+  const std::string libraryFolder = ros::package::getPath("ocs2_quadrotor") + "/auto_generated";
+  std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
   // Default initial condition
-  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
   // Solver settings
-  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc");
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
+
+  /*
+   * ReferenceManager & SolverSynchronizedModule
+   */
+  referenceManagerPtr_.reset(new ReferenceManager);
 
   /*
    * Optimal control problem
@@ -65,9 +73,9 @@ QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName) {
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile_, "Q", Q);
-  loadData::loadEigenMatrix(taskFile_, "R", R);
-  loadData::loadEigenMatrix(taskFile_, "Q_final", Qf);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
+  loadData::loadEigenMatrix(taskFile, "R", R);
+  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
   std::cerr << "Q:  \n" << Q << "\n";
   std::cerr << "R:  \n" << R << "\n";
   std::cerr << "Q_final:\n" << Qf << "\n";
@@ -76,24 +84,17 @@ QuadrotorInterface::QuadrotorInterface(const std::string& taskFileFolderName) {
   problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
   // Dynamics
-  auto quadrotorParameters = quadrotor::loadSettings(taskFile_, "QuadrotorParameters", true);
+  auto quadrotorParameters = quadrotor::loadSettings(taskFile, "QuadrotorParameters", true);
   problem_.dynamicsPtr.reset(new QuadrotorSystemDynamics(quadrotorParameters));
 
   // Rollout
-  auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
   vector_t initialInput = vector_t::Zero(INPUT_DIM);
   initialInput(0) = quadrotorParameters.quadrotorMass_ * quadrotorParameters.gravity_;
   operatingPointPtr_.reset(new OperatingPoints(initialState_, initialInput));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MPC_DDP> QuadrotorInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *operatingPointPtr_));
 }
 
 }  // namespace quadrotor

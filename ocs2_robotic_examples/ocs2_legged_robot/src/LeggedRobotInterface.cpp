@@ -27,9 +27,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
+#include <string>
+
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/jacobian.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+
 #include "ocs2_legged_robot/LeggedRobotInterface.h"
+
+#include <ocs2_centroidal_model/AccessHelperFunctions.h>
+#include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
+#include <ocs2_centroidal_model/ModelHelperFunctions.h>
+#include <ocs2_core/misc/Display.h>
+#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
 #include "ocs2_legged_robot/LeggedRobotPreComputation.h"
 #include "ocs2_legged_robot/constraint/FrictionConeConstraint.h"
@@ -39,16 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot/cost/LeggedRobotStateInputQuadraticCost.h"
 #include "ocs2_legged_robot/dynamics/LeggedRobotDynamicsAD.h"
 
-#include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
-
-#include <ocs2_centroidal_model/AccessHelperFunctions.h>
-#include <ocs2_centroidal_model/ModelHelperFunctions.h>
-
 #include <ros/package.h>
-
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/algorithm/jacobian.hpp>
-#include <pinocchio/algorithm/kinematics.hpp>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -192,14 +198,6 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   // Initialization
   constexpr bool extendNormalizedMomentum = true;
   initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedMomentum));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MPC_DDP> LeggedRobotInterface::getMpcPtr() const {
-  std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, *problemPtr_, *initializerPtr_));
-  return mpcPtr;
 }
 
 /******************************************************************************************************/

@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
+#include <string>
+
 #include "ocs2_double_integrator/DoubleIntegratorInterface.h"
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
@@ -44,19 +47,24 @@ namespace double_integrator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName, bool verbose) {
-  taskFile_ = ros::package::getPath("ocs2_double_integrator") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile_ << std::endl;
+  const std::string taskFile = ros::package::getPath("ocs2_double_integrator") + "/config/" + taskFileFolderName + "/task.info";
+  std::cerr << "Loading task file: " << taskFile << std::endl;
 
-  libraryFolder_ = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
+  const std::string libraryFolder = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
+  std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
   // Default initial condition and final goal
-  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
-  loadData::loadEigenMatrix(taskFile_, "finalGoal", finalGoal_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  loadData::loadEigenMatrix(taskFile, "finalGoal", finalGoal_);
 
   // DDP-MPC settings
-  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp", verbose);
-  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc", verbose);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
+
+  /*
+   * ReferenceManager & SolverSynchronizedModule
+   */
+  referenceManagerPtr_.reset(new ReferenceManager);
 
   /*
    * Optimal control problem
@@ -65,9 +73,9 @@ DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile_, "Q", Q);
-  loadData::loadEigenMatrix(taskFile_, "R", R);
-  loadData::loadEigenMatrix(taskFile_, "Q_final", Qf);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
+  loadData::loadEigenMatrix(taskFile, "R", R);
+  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
   std::cerr << "Q:  \n" << Q << "\n";
   std::cerr << "R:  \n" << R << "\n";
   std::cerr << "Q_final:\n" << Qf << "\n";
@@ -81,28 +89,11 @@ DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile
   problem_.dynamicsPtr.reset(new LinearSystemDynamics(A, B));
 
   // Rollout
-  auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout", verbose);
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout", verbose);
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
   linearSystemInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MPC_DDP> DoubleIntegratorInterface::getMpc(bool warmStart) {
-  if (warmStart) {
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *linearSystemInitializerPtr_));
-
-  } else {
-    auto mpcSettings = mpcSettings_;
-    mpcSettings.coldStart_ = true;
-    mpcSettings.runtimeMaxNumIterations_ = mpcSettings.initMaxNumIterations_;
-    mpcSettings.runtimeMinStepLength_ = mpcSettings.initMinStepLength_;
-    mpcSettings.runtimeMaxStepLength_ = mpcSettings.initMaxStepLength_;
-    return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *linearSystemInitializerPtr_));
-  }
 }
 
 }  // namespace double_integrator

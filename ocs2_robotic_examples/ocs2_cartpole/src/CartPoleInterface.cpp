@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <iostream>
+#include <string>
+
 #include "ocs2_cartpole/CartPoleInterface.h"
 #include "ocs2_cartpole/dynamics/CartPoleSystemDynamics.h"
 
@@ -44,21 +47,21 @@ namespace cartpole {
 /******************************************************************************************************/
 /******************************************************************************************************/
 CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
-  taskFile_ = ros::package::getPath("ocs2_cartpole") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile_ << std::endl;
+  const std::string taskFile = ros::package::getPath("ocs2_cartpole") + "/config/" + taskFileFolderName + "/task.info";
+  std::cerr << "Loading task file: " << taskFile << std::endl;
 
-  libraryFolder_ = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
+  const std::string libraryFolder = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
+  std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
   // Default initial condition
-  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
-  loadData::loadEigenMatrix(taskFile_, "x_final", xFinal_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
   // DDP-MPC settings
-  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc");
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
    * Optimal control problem
@@ -67,9 +70,9 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile_, "Q", Q);
-  loadData::loadEigenMatrix(taskFile_, "R", R);
-  loadData::loadEigenMatrix(taskFile_, "Q_final", Qf);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
+  loadData::loadEigenMatrix(taskFile, "R", R);
+  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
   std::cerr << "Q:  \n" << Q << "\n";
   std::cerr << "R:  \n" << R << "\n";
   std::cerr << "Q_final:\n" << Qf << "\n";
@@ -79,22 +82,15 @@ CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
 
   // Dynamics
   CartPoleParameters cartPoleParameters;
-  cartPoleParameters.loadSettings(taskFile_);
-  problem_.dynamicsPtr.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder_));
+  cartPoleParameters.loadSettings(taskFile);
+  problem_.dynamicsPtr.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder));
 
   // Rollout
-  auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
   cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MPC_DDP> CartPoleInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *cartPoleInitializerPtr_));
 }
 
 }  // namespace cartpole

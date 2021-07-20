@@ -29,19 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// C++
-#include <cstdlib>
-#include <iostream>
-#include <memory>
-#include <string>
-
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/initialization/Initializer.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-
-#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // CartPole
@@ -73,8 +66,6 @@ class CartPoleInterface final : public RobotInterface {
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<MPC_DDP> getMpc();
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
@@ -82,13 +73,11 @@ class CartPoleInterface final : public RobotInterface {
   const Initializer& getInitializer() const override { return *cartPoleInitializerPtr_; }
 
  private:
-  std::string taskFile_;
-  std::string libraryFolder_;
-
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
   OptimalControlProblem problem_;
+
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> cartPoleInitializerPtr_;
 

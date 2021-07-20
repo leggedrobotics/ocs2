@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
+#include <string>
+
 #include "ocs2_ballbot/BallbotInterface.h"
 
 #include <ocs2_core/cost/QuadraticStateCost.h>
@@ -43,20 +46,25 @@ namespace ballbot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 BallbotInterface::BallbotInterface(const std::string& taskFileFolderName) {
-  taskFile_ = ros::package::getPath("ocs2_ballbot") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile_ << std::endl;
+  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/" + taskFileFolderName + "/task.info";
+  std::cerr << "Loading task file: " << taskFile << std::endl;
 
-  libraryFolder_ = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
+  const std::string libraryFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
+  std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
   // Default initial condition
-  loadData::loadEigenMatrix(taskFile_, "initialState", initialState_);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
 
   // DDP SQP MPC settings
-  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc");
-  sqpSettings_ = multiple_shooting::loadSettings(taskFile_, "multiple_shooting");
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
+  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting");
+
+  /*
+   * ReferenceManager & SolverSynchronizedModule
+   */
+  referenceManagerPtr_.reset(new ReferenceManager);
 
   /*
    * Optimal control problem
@@ -65,9 +73,9 @@ BallbotInterface::BallbotInterface(const std::string& taskFileFolderName) {
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
-  loadData::loadEigenMatrix(taskFile_, "Q", Q);
-  loadData::loadEigenMatrix(taskFile_, "R", R);
-  loadData::loadEigenMatrix(taskFile_, "Q_final", Qf);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
+  loadData::loadEigenMatrix(taskFile, "R", R);
+  loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
   std::cerr << "Q:  \n" << Q << "\n";
   std::cerr << "R:  \n" << R << "\n";
   std::cerr << "Q_final:\n" << Qf << "\n";
@@ -77,22 +85,15 @@ BallbotInterface::BallbotInterface(const std::string& taskFileFolderName) {
 
   // Dynamics
   bool recompileLibraries;  // load the flag to generate library files from taskFile
-  ocs2::loadData::loadCppDataType(taskFile_, "ballbot_interface.recompileLibraries", recompileLibraries);
-  problem_.dynamicsPtr.reset(new BallbotSystemDynamics(libraryFolder_, recompileLibraries));
+  ocs2::loadData::loadCppDataType(taskFile, "ballbot_interface.recompileLibraries", recompileLibraries);
+  problem_.dynamicsPtr.reset(new BallbotSystemDynamics(libraryFolder, recompileLibraries));
 
   // Rollout
-  auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout");
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
   ballbotInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MPC_DDP> BallbotInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *ballbotInitializerPtr_));
 }
 
 }  // namespace ballbot

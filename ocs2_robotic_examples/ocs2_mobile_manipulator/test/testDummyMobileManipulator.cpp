@@ -37,11 +37,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h>
+
+#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -65,6 +66,14 @@ protected:
     const auto& pinocchioInterface = mobileManipulatorInterfacePtr->getPinocchioInterface();
     eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {"WRIST_2"},
         STATE_DIM, INPUT_DIM, modelName));
+  }
+
+  std::unique_ptr<MPC_DDP> getMpc() {
+    auto& interface = *mobileManipulatorInterfacePtr;
+    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
+                                                interface.getOptimalControlProblem(), interface.getInitializer()));
+    mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
+    return mpcPtr;
   }
 
   void verifyTrackingQuality(const vector_t& state) const {
@@ -101,8 +110,7 @@ constexpr scalar_t MobileManipulatorIntegrationTest::initTime;
 constexpr scalar_t MobileManipulatorIntegrationTest::finalTime;
 
 TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
-  auto mpcPtr = mobileManipulatorInterfacePtr->getMpc();
-  mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
+  auto mpcPtr = getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
   SystemObservation observation;
@@ -138,8 +146,7 @@ TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
 }
 
 TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
-  auto mpcPtr = mobileManipulatorInterfacePtr->getMpc();
-  mpcPtr->getSolverPtr()->setReferenceManager(mobileManipulatorInterfacePtr->getReferenceManagerPtr());
+  auto mpcPtr = getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
   constexpr int f_mrt = 10;  // Hz

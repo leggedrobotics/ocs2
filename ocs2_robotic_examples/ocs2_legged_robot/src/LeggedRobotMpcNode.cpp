@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/init.h>
 #include <urdf_parser/urdf_parser.h>
 
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
@@ -56,22 +57,25 @@ int main(int argc, char** argv) {
     std::cerr << "Param " << descriptionName << " not found; unable to generate urdf" << std::endl;
   }
 
-  // robot interface
+  // Robot interface
   ocs2::legged_robot::LeggedRobotInterface interface(configName, targetCommandFile, urdf::parseURDF(urdfString));
 
-  // gait receiver
+  // Gait receiver
   auto gaitReceiverPtr = std::make_shared<ocs2::legged_robot::GaitReceiver>(
       nodeHandle, interface.getSwitchedModelReferenceManagerPtr()->getGaitSchedule(), robotName);
 
-  // reference manager
+  // ROS ReferenceManager
   auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, interface.getReferenceManagerPtr());
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
-  // launch MPC nodes
-  auto mpcPtr = interface.getMpcPtr();
-  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
-  mpcPtr->getSolverPtr()->addSynchronizedModule(gaitReceiverPtr);
-  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
+  // MPC
+  ocs2::MPC_DDP mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(), interface.getOptimalControlProblem(),
+                    interface.getInitializer());
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+  mpc.getSolverPtr()->addSynchronizedModule(gaitReceiverPtr);
+
+  // Launch MPC ROS node
+  ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

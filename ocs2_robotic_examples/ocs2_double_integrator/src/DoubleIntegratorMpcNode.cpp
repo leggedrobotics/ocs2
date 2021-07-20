@@ -54,14 +54,19 @@ int main(int argc, char** argv) {
   // Robot interface
   interface_t doubleIntegratorInterface(taskFileFolderName);
 
-  // ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr = ocs2::RosReferenceManager::create<ocs2::ReferenceManager>(robotName);
+  // ROS ReferenceManager
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
+      new ocs2::RosReferenceManager(robotName, doubleIntegratorInterface.getReferenceManagerPtr()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
+  // MPC
+  ocs2::MPC_DDP mpc(doubleIntegratorInterface.mpcSettings(), doubleIntegratorInterface.ddpSettings(),
+                    doubleIntegratorInterface.getRollout(), doubleIntegratorInterface.getOptimalControlProblem(),
+                    doubleIntegratorInterface.getInitializer());
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+
   // Launch MPC ROS node
-  auto mpcPtr = doubleIntegratorInterface.getMpc();
-  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
-  mpc_ros_t mpcNode(*mpcPtr, robotName);
+  mpc_ros_t mpcNode(mpc, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

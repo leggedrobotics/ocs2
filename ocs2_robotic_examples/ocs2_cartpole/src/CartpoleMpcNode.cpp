@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/init.h>
 
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 
 #include "ocs2_cartpole/CartPoleInterface.h"
@@ -51,9 +52,12 @@ int main(int argc, char** argv) {
   // Robot interface
   ocs2::cartpole::CartPoleInterface cartPoleInterface(taskFileFolderName);
 
+  // MPC
+  ocs2::MPC_DDP mpc(cartPoleInterface.mpcSettings(), cartPoleInterface.ddpSettings(), cartPoleInterface.getRollout(),
+                    cartPoleInterface.getOptimalControlProblem(), cartPoleInterface.getInitializer());
+
   // Launch MPC ROS node
-  auto mpcPtr = cartPoleInterface.getMpc();
-  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   return 0;

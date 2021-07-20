@@ -13,7 +13,7 @@ TerrainReceiverSynchronizedModule::TerrainReceiverSynchronizedModule(ocs2::Synch
 void TerrainReceiverSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
                                                      const ocs2::ReferenceManagerInterface& referenceManager) {
   if (auto newTerrain = segmentedPlanesRos_->getTerrainModel()) {
-    terrainModelPtr_->lock().reset(std::move(newTerrain));
+    terrainModelPtr_->reset(std::move(newTerrain));
     segmentedPlanesRos_->publish();
   }
 }

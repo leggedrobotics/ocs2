@@ -48,6 +48,74 @@ MobileManipulatorModelInfoCppAd MobileManipulatorModelInfo::toCppAd() const {
   return cppAdInfo;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state, const MobileManipulatorModelInfo& info) {
+  return state.tail(info.armDim);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::Vector3d getBasePosition(Eigen::VectorXd state, const MobileManipulatorModelInfo& info) {
+  // resolve the position vector based on robot type.
+  switch (info.manipulatorModelType) {
+    case ManipulatorModelType::DefaultManipulator: {
+      // for default arm, we assume robot is at identity pose
+      return Eigen::Vector3d::Zero();
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      // for floating arm, the first three entries correspond to base position
+      Eigen::Vector3d position;
+      position << state(0), state(1), state(2);
+      return position;
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      // for wheel-based, we assume 2D base position
+      Eigen::Vector3d position;
+      position << state(0), state(1), 0.0;
+      return position;
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
+      break;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state, const MobileManipulatorModelInfo& info) {
+  // resolve the position vector based on robot type.
+  switch (info.manipulatorModelType) {
+    case ManipulatorModelType::DefaultManipulator: {
+      // for default arm, we assume robot is at identity pose
+      return Eigen::Quaterniond::Identity();
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      // for floating arm, the base orientation is given by ZYX joints
+      Eigen::Quaterniond orientation;
+      orientation = Eigen::AngleAxisd(state(3), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(state(4), Eigen::Vector3d::UnitY()) *
+                    Eigen::AngleAxisd(state(5), Eigen::Vector3d::UnitX());
+      return orientation;
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      // for wheel-based, we assume only yaw
+      return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
+      break;
+  }
+}
+
 // explicit template instantiation
 template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::scalar_t>;
 template struct ocs2::mobile_manipulator::MobileManipulatorModelInfoTpl<ocs2::ad_scalar_t>;

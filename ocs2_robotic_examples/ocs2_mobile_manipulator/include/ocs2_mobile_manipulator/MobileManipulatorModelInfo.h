@@ -74,6 +74,11 @@ struct MobileManipulatorModelInfoTpl {
   MobileManipulatorModelInfoCppAd toCppAd() const;
 };
 
+/* Methods to extract various state of the robot */
+Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state, const MobileManipulatorModelInfo& info);
+Eigen::Vector3d getBasePosition(Eigen::VectorXd state, const MobileManipulatorModelInfo& info);
+Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state, const MobileManipulatorModelInfo& info);
+
 /* Explicit template instantiation for scalar_t and ad_scalar_t */
 extern template struct MobileManipulatorModelInfoTpl<scalar_t>;
 extern template struct MobileManipulatorModelInfoTpl<ad_scalar_t>;

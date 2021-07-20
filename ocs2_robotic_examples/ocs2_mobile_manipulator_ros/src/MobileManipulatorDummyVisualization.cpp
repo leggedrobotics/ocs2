@@ -40,7 +40,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
+#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
@@ -91,17 +93,30 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
   // Get ROS parameter
-  std::string urdfPath, taskFile;
-  nodeHandle.getParam("/urdfFile", urdfPath);
+  std::string urdfFile, taskFile;
+  nodeHandle.getParam("/urdfFile", urdfFile);
   nodeHandle.getParam("/taskFile", taskFile);
-  // PinocchioInterface pinocchioInterface =
-  //     mobile_manipulator::createPinocchioInterface(urdfPath, ManipulatorModelType::WheelBasedMobileManipulator);
-  // std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
-  // const std::string prefix = "selfCollision.";
-  // loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
-  // PinocchioGeometryInterface geomInterface(pinocchioInterface, collisionObjectPairs);
-
-  // geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
+  // read manipulator type
+  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+  // read the joints to make fixed
+  std::vector<std::string> removeJointNames;
+  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+  // read if self-collision checking active
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  bool activate = true;
+  loadData::loadPtreeValue(pt, activate, "selfCollision.activate", true);
+  // create pinocchio interface
+  const auto& urdfTree = ::urdf::parseURDFFile(urdfFile);
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfTree, removeJointNames, modelType));
+  // activate markers for self-collision visualization
+  if (activate) {
+    std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+    loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", collisionObjectPairs, true);
+    PinocchioGeometryInterface geomInterface(pinocchioInterface, collisionObjectPairs);
+    // set geometry visualization markers
+    geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
+  }
 }
 
 /******************************************************************************************************/
@@ -114,7 +129,9 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
   publishObservation(timeStamp, observation);
   publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
   publishOptimizedTrajectory(timeStamp, policy);
-  // geometryVisualization_->publishDistances(observation.state);
+  if (geometryVisualization_) {
+    geometryVisualization_->publishDistances(observation.state);
+  }
 }
 
 /******************************************************************************************************/
@@ -122,8 +139,8 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) {
   // publish world -> base transform
-  const auto position = getBasePosition(observation.state);
-  const auto orientation = getBaseOrientation(observation.state);
+  const auto position = getBasePosition(observation.state, modelInfo_);
+  const auto orientation = getBaseOrientation(observation.state, modelInfo_);
 
   geometry_msgs::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
@@ -197,8 +214,8 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     geometry_msgs::Pose pose;
-    pose.position = ros_msg_helpers::getPointMsg(getBasePosition(state));
-    pose.orientation = ros_msg_helpers::getOrientationMsg(getBaseOrientation(state));
+    pose.position = ros_msg_helpers::getPointMsg(getBasePosition(state, modelInfo_));
+    pose.orientation = ros_msg_helpers::getOrientationMsg(getBaseOrientation(state, modelInfo_));
     baseTrajectory.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
   });

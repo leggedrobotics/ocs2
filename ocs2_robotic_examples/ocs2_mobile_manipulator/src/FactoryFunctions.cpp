@@ -71,6 +71,7 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
     }
     default:
       throw std::invalid_argument("Invalid manipulator model type provided.");
+      break;
   }
 }
 
@@ -116,37 +117,48 @@ PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPt
     }
     default:
       throw std::invalid_argument("Invalid manipulator model type provided.");
+      break;
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorModelInfo createMobileManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type) {
+MobileManipulatorModelInfo createMobileManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type,
+                                                            const std::string& baseFrame, const std::string& eeFrame) {
   const auto& model = interface.getModel();
 
   MobileManipulatorModelInfoTpl<scalar_t> info;
   info.manipulatorModelType = type;
   info.stateDim = model.nq;
   // resolve for actuated dof based on type of robot
-  if (type == ManipulatorModelType::FloatingArmManipulator) {
-    // remove the static 6-DOF base joints that are unactuated.
-    info.inputDim = info.stateDim - 6;
-    info.armDim = info.inputDim;
-  } else if (type == ManipulatorModelType::WheelBasedMobileManipulator) {
-    // for wheel-based, the input dimension is (v, omega, dq_j) while state dimension is (x, y, psi, q_j).
-    info.inputDim = info.stateDim - 1;
-    info.armDim = info.inputDim - 2;
-  } else {
-    // for default arm, the state dimension and input dimensions are same.
-    info.inputDim = info.stateDim;
-    info.armDim = info.inputDim;
+  switch (type) {
+    case ManipulatorModelType::DefaultManipulator: {
+      // for default arm, the state dimension and input dimensions are same.
+      info.inputDim = info.stateDim;
+      info.armDim = info.inputDim;
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      // remove the static 6-DOF base joints that are unactuated.
+      info.inputDim = info.stateDim - 6;
+      info.armDim = info.inputDim;
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      // for wheel-based, the input dimension is (v, omega, dq_j) while state dimension is (x, y, psi, q_j).
+      info.inputDim = info.stateDim - 1;
+      info.armDim = info.inputDim - 2;
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
+      break;
   }
-  // get name of the end-effector
-  info.eeFrame = "endeffector";
-  // get name of the root joint
-  info.baseFrame = "base_link";
-  // get name of arm joints
+  // store frame names for using later.
+  info.eeFrame = eeFrame;
+  info.baseFrame = baseFrame;
+  // get name of arm joints.
   const auto& jointNames = model.names;
   info.dofNames = std::vector<std::string>(jointNames.end() - info.armDim, jointNames.end());
 

@@ -79,35 +79,34 @@ int main(int argc, char** argv) {
   std::string urdfPath, taskFile;
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/urdfFile", urdfPath);
-  std::cerr << "Loading task file: " << taskFile << std::endl;
-  std::cerr << "Loading urdf file: " << urdfPath << std::endl;
-  // // read manipulator type
-  // ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "manipulatorModelType");
-  // // read the joints to make fixed
-  // std::vector<std::string> removeJointNames;
-  // loadData::loadStdVector<std::string>(taskFile, "removeJoints", removeJointNames, true);
-  // // create pinocchio interface
-  // pInterface.reset(new PinocchioInterface(::ocs2::mobile_manipulator::createPinocchioInterface(urdfPath, modelType)));
 
-  // std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
-  // std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
-  // loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
-  // loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
-  // for (const auto& element : selfCollisionObjectPairs) {
-  //   std::cerr << "[" << element.first << ", " << element.second << "]; ";
-  // }
-  // std::cerr << std::endl;
-  // std::cerr << "Loaded collision link pairs: ";
-  // for (const auto& element : selfCollisionLinkPairs) {
-  //   std::cerr << "[" << element.first << ", " << element.second << "]; ";
-  // }
-  // std::cerr << std::endl;
+  // read manipulator type
+  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "manipulatorModelType");
+  // read the joints to make fixed
+  std::vector<std::string> removeJointNames;
+  loadData::loadStdVector<std::string>(taskFile, "removeJoints", removeJointNames, true);
+  // create pinocchio interface
+  pInterface.reset(new PinocchioInterface(::ocs2::mobile_manipulator::createPinocchioInterface(urdfPath, modelType)));
 
-  // gInterface.reset(new PinocchioGeometryInterface(*pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
+  std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
+  loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionObjectPairs", selfCollisionObjectPairs);
+  loadData::loadStdVectorOfPair(taskFile, "selfCollisionCost.collisionLinkPairs", selfCollisionLinkPairs);
+  for (const auto& element : selfCollisionObjectPairs) {
+    std::cerr << "[" << element.first << ", " << element.second << "]; ";
+  }
+  std::cerr << std::endl;
+  std::cerr << "Loaded collision link pairs: ";
+  for (const auto& element : selfCollisionLinkPairs) {
+    std::cerr << "[" << element.first << ", " << element.second << "]; ";
+  }
+  std::cerr << std::endl;
 
-  // vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base_link"));
+  gInterface.reset(new PinocchioGeometryInterface(*pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
-  // ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);
+  vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base_link"));
+
+  ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);
 
   ros::spin();
 

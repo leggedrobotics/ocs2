@@ -41,7 +41,7 @@ FloatingArmManipulatorDynamics::FloatingArmManipulatorDynamics(const std::string
 
 ad_vector_t FloatingArmManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
                                                           const ad_vector_t& parameters) const {
-  ad_vector_t dxdt(info_.stateDim, 0);
+  ad_vector_t dxdt = ad_vector_t::Zero(info_.stateDim);
   // only arm joint state
   dxdt.tail(info_.armDim) = input;
   return dxdt;

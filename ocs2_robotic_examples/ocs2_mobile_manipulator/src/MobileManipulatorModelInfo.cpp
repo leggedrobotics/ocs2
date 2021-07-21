@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
 
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
+
 namespace ocs2 {
 namespace mobile_manipulator {
 
@@ -99,10 +101,7 @@ Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state, const MobileManipul
     }
     case ManipulatorModelType::FloatingArmManipulator: {
       // for floating arm, the base orientation is given by ZYX joints
-      Eigen::Quaterniond orientation;
-      orientation = Eigen::AngleAxisd(state(3), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(state(4), Eigen::Vector3d::UnitY()) *
-                    Eigen::AngleAxisd(state(5), Eigen::Vector3d::UnitX());
-      return orientation;
+      return ::ocs2::getQuaternionFromEulerAnglesZyx<double>(state.segment<3>(3));
       break;
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {

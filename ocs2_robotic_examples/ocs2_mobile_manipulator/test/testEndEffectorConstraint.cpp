@@ -80,7 +80,7 @@ class testEndEffectorConstraint : public ::testing::Test {
  protected:
   MobileManipulatorModelInfo loadMobileManipulatorModelInfo() {
     // files
-    const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/mpc/task.info";
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
     // read the task file
     boost::property_tree::ptree pt;
     boost::property_tree::read_info(taskFile, pt);
@@ -97,8 +97,8 @@ class testEndEffectorConstraint : public ::testing::Test {
 
   PinocchioInterface createMobileManipulatorPinocchioInterface() {
     // files
-    const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
-    const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/mpc/task.info";
+    const std::string urdfPath = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
     // read manipulator type
     ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
     // read the joints to make fixed

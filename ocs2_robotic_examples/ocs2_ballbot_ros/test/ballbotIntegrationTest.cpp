@@ -42,7 +42,7 @@ using namespace ocs2;
 
 TEST(BallbotIntegrationTest, createDummyMRT) {
   const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "auto_generated";
+  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
   ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   MRT_ROS_Interface mrt("ballbot");
@@ -60,7 +60,7 @@ TEST(BallbotIntegrationTest, createDummyMRT) {
 
 TEST(BallbotIntegrationTest, createMPC) {
   const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "auto_generated";
+  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
   ballbot::BallbotInterface ballbotInterface(taskFile, libFolder);
 
   // MPC

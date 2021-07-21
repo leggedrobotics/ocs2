@@ -51,17 +51,17 @@ set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS_OTHER} -Wno-invalid-partial-speci
 
 # Resolve for the package path at compile time.
 configure_file (
-  "${PROJECT_SOURCE_DIR}/include/ocs2_mobile_manipulator/package_path.h.in"
-  "${PROJECT_SOURCE_DIR}/include/ocs2_mobile_manipulator/package_path.h" @ONLY
+  "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h.in"
+  "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/package_path.h" @ONLY
 )
 
 # Add directories for all targets
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
+  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  ${pinocchio_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
 )
 
 link_directories(

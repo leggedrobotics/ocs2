@@ -47,13 +47,14 @@ catkin_package(
 
 # Resolve for the package path at compile time.
 configure_file (
-  "${PROJECT_SOURCE_DIR}/include/ocs2_ballbot/package_path.h.in"
-  "${PROJECT_SOURCE_DIR}/include/ocs2_ballbot/package_path.h" @ONLY
+  "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h.in"
+  "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/package_path.h" @ONLY
 )
 
 # Add directories for all targets
 include_directories(
   include
+  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}

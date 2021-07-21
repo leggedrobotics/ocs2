@@ -29,14 +29,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ros/package.h>
-
 #include <ocs2_ballbot/BallbotPyBindings.h>
+#include <ocs2_ballbot/package_path.h>
 
 TEST(Ballbot, PyBindings) {
   // create binding interface
-  const std::string taskFile = ros::package::getPath("ocs2_ballbot") + "/config/mpc/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
+  const std::string taskFile = ocs2::ballbot::getPath() + "/config/mpc/task.info";
+  const std::string libFolder = ocs2::ballbot::getPath() + "/auto_generated";
   ocs2::ballbot::BallbotPyBindings bindings(taskFile, libFolder);
 
   ocs2::vector_t initState = ocs2::vector_t::Zero(ocs2::ballbot::STATE_DIM);

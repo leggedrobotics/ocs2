@@ -14,7 +14,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
@@ -50,6 +49,13 @@ catkin_package(
 
 set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS_OTHER} -Wno-invalid-partial-specialization)
 
+# Resolve for the package path at compile time.
+configure_file (
+  "${PROJECT_SOURCE_DIR}/include/ocs2_mobile_manipulator/package_path.h.in"
+  "${PROJECT_SOURCE_DIR}/include/ocs2_mobile_manipulator/package_path.h" @ONLY
+)
+
+# Add directories for all targets
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}

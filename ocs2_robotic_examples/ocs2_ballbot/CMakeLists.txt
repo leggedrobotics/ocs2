@@ -15,7 +15,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
@@ -46,6 +45,13 @@ catkin_package(
 ## Build ##
 ###########
 
+# Resolve for the package path at compile time.
+configure_file (
+  "${PROJECT_SOURCE_DIR}/include/ocs2_ballbot/package_path.h.in"
+  "${PROJECT_SOURCE_DIR}/include/ocs2_ballbot/package_path.h" @ONLY
+)
+
+# Add directories for all targets
 include_directories(
   include
   ${EIGEN3_INCLUDE_DIRS}

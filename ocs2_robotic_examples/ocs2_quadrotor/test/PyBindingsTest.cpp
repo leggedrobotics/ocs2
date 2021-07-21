@@ -1,12 +1,11 @@
 #include <gtest/gtest.h>
 
-#include <ros/package.h>
-
 #include <ocs2_quadrotor/QuadrotorPyBindings.h>
+#include <ocs2_quadrotor/package_path.h>
 
 TEST(QuadrotorTest, PyBindings) {
-  const std::string taskFile = ros::package::getPath("ocs2_quadrotor") + "/config/mpc/task.info";
-  const std::string libFolder = ros::package::getPath("ocs2_quadrotor") + "/auto_generated";
+  const std::string taskFile = ocs2::quadrotor::getPath() + "/config/mpc/task.info";
+  const std::string libFolder = ocs2::quadrotor::getPath() + "/auto_generated";
   ocs2::quadrotor::QuadrotorPyBindings bindings(taskFile, libFolder);
 
   ocs2::vector_t initState = ocs2::vector_t::Zero(ocs2::quadrotor::STATE_DIM);

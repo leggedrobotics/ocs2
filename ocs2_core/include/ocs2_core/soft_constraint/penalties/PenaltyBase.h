@@ -35,7 +35,7 @@ namespace ocs2 {
 
 /**
  * The penalty function interface class is used to penalize constraint violation by adding a penalty term to the cost function.
- * We assume that the penalty function is convex.
+ * We assume that the penalty function is convex. In general, the penalty is a function of time and constraint violation.
  */
 class PenaltyBase {
  public:

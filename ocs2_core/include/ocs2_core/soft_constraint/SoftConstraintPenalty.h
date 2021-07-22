@@ -40,11 +40,11 @@ namespace ocs2 {
  *   A helper class that implements the cost penalty for general constraint
  *   \f$ h_i(x, u) \quad \forall  i \in [1,..,M] \f$
  *
- *   penalty = \f$ \sum_{i=1}^{M} p(h_i(x, u)) \f$
+ *   penalty(t, x, u) = \f$ \sum_{i=1}^{M} p(t, h_i(x, u)) \f$
  *
  *   This class uses the chain rule to compute the second-order approximation of the constraint-penalty. In the case that the
  *   second-order approximation of constraint is not provided, it employs a Gauss-Newton approximation technique which only
- *   relies on the first-order approximation.
+ *   relies on the first-order approximation. In general, the penalty function can be a function of time.
  */
 class SoftConstraintPenalty {
  public:

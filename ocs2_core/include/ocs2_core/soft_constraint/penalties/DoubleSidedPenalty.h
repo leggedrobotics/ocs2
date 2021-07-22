@@ -58,9 +58,9 @@ class DoubleSidedPenalty final : public PenaltyBase {
 
   DoubleSidedPenalty* clone() const override { return new DoubleSidedPenalty(*this); }
 
-  scalar_t getValue(scalar_t h) const override;
-  scalar_t getDerivative(scalar_t h) const override;
-  scalar_t getSecondDerivative(scalar_t h) const override;
+  scalar_t getValue(scalar_t t, scalar_t h) const override;
+  scalar_t getDerivative(scalar_t t, scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
 
  private:
   DoubleSidedPenalty(const DoubleSidedPenalty& other);

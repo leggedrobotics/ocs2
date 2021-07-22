@@ -1148,7 +1148,7 @@ void GaussNewtonDDP::augmentCostWorker(size_t workerIndex, scalar_t stateEqConst
 
   // inequality constraints
   if (modelData.ineqConstr_.f.rows() > 0) {
-    modelData.cost_ += penaltyPtr_->getQuadraticApproximation(modelData.ineqConstr_);
+    modelData.cost_ += penaltyPtr_->getQuadraticApproximation(modelData.time_, modelData.ineqConstr_);
 
     // checking the numerical stability again
     if (ddpSettings_.checkNumericalStability_) {

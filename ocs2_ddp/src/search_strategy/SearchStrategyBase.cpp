@@ -227,7 +227,7 @@ PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const Soft
     // inequality constraints penalty
     scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityPenaltyTrajectory.begin(),
-                   [&](const ModelData& m) { return ineqConstrPenalty.getValue(m.ineqConstr_.f); });
+                   [&](const ModelData& m) { return ineqConstrPenalty.getValue(m.time_, m.ineqConstr_.f); });
 
     performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
 

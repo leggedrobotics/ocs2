@@ -59,6 +59,9 @@ class BallbotPyBindings final : public PythonInterface {
                                                 ballbotInterface.getRollout(), ballbotInterface.getOptimalControlProblem(),
                                                 ballbotInterface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
+    // System dimensions
+    stateDim_ = STATE_DIM;
+    inputDim_ = INPUT_DIM;
 
     // Python interface
     PythonInterface::init(ballbotInterface, std::move(mpcPtr));

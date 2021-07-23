@@ -30,6 +30,9 @@ class DoubleIntegratorPyBindings final : public PythonInterface {
         doubleIntegratorInterface.mpcSettings(), doubleIntegratorInterface.ddpSettings(), doubleIntegratorInterface.getRollout(),
         doubleIntegratorInterface.getOptimalControlProblem(), doubleIntegratorInterface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(doubleIntegratorInterface.getReferenceManagerPtr());
+    // System dimensions
+    stateDim_ = STATE_DIM;
+    inputDim_ = INPUT_DIM;
 
     // Python interface
     PythonInterface::init(doubleIntegratorInterface, std::move(mpcPtr));

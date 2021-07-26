@@ -14,9 +14,9 @@ SwitchedModelCostBase::SwitchedModelCostBase(const MotionTrackingCost::Weights& 
       comModelPtr_(comModel.clone()),
       trackingCostPtr_(new MotionTrackingCost(trackingWeights, modeScheduleManager, kinematicModel, adKinematicModel, comModel, adComModel,
                                               options.recompileLibraries_)),
-      footPlacementCost_(new FootPlacementCost(FootPlacementCostParameters(options.mu_, options.delta_),
-                                               FootPlacementCostParameters(options.muSdf_, options.deltaSdf_), adComModel, adKinematicModel,
-                                               options.recompileLibraries_)),
+      footPlacementCost_(new FootPlacementCost(ocs2::RelaxedBarrierPenalty::Config(options.mu_, options.delta_),
+                                               ocs2::RelaxedBarrierPenalty::Config(options.muSdf_, options.deltaSdf_), adComModel,
+                                               adKinematicModel, options.recompileLibraries_)),
       modeScheduleManagerPtr_(&modeScheduleManager),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner){};
 
@@ -39,7 +39,7 @@ scalar_t SwitchedModelCostBase::cost(scalar_t t, const vector_t& x, const vector
 
   update(t, x, u);
 
-  return trackingCostPtr_->getValue(t, x, u, *targetTrajectoriesPtr_) + footPlacementCost_->getCostValue();
+  return trackingCostPtr_->getValue(t, x, u, *targetTrajectoriesPtr_) + footPlacementCost_->getValue(x);
 }
 
 ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
@@ -49,10 +49,12 @@ ScalarFunctionQuadraticApproximation SwitchedModelCostBase::costQuadraticApproxi
 
   update(t, x, u);
 
-  ScalarFunctionQuadraticApproximation L = trackingCostPtr_->getQuadraticApproximation(t, x, u, *targetTrajectoriesPtr_);
-  L.f += footPlacementCost_->getCostValue();
-  L.dfdx += footPlacementCost_->getCostDerivativeState();
-  L.dfdxx += footPlacementCost_->getCostSecondDerivativeState();
+  auto L = trackingCostPtr_->getQuadraticApproximation(t, x, u, *targetTrajectoriesPtr_);
+  const auto feetCost = footPlacementCost_->getQuadraticApproximation(x);
+
+  L.f += feetCost.f;
+  L.dfdx += feetCost.dfdx;
+  L.dfdxx += feetCost.dfdxx;
   return L;
 }
 
@@ -65,7 +67,7 @@ void SwitchedModelCostBase::update(scalar_t t, const vector_t& x, const vector_t
     constraints[leg] = footPhase.getFootTangentialConstraintInWorldFrame();
     sdfConstraints[leg] = footPhase.getSignedDistanceConstraint(t);
   }
-  footPlacementCost_->setStateAndConstraint(x, constraints, sdfConstraints);
+  footPlacementCost_->setConstraints(constraints, sdfConstraints);
 }
 
 }  // namespace switched_model

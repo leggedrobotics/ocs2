@@ -87,41 +87,41 @@ template <typename SCALAR_T>
 void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interface, const CentroidalModelInfoTpl<SCALAR_T>& info,
                                          const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& q,
                                          const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& v) {
+  using matrix6x_t = Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic>;
+  using vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
   const auto& model = interface.getModel();
   auto& data = interface.getData();
-  Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1> a;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdq;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdotdq;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdotdv;
-  Eigen::Matrix<SCALAR_T, 6, Eigen::Dynamic> dhdotda;
+  vector_t a;
+  matrix6x_t dhdq;
+  matrix6x_t dhdotdq;
+  matrix6x_t dhdotdv;
+  matrix6x_t dhdotda;
   a.setZero(info.generalizedCoordinatesNum);
   dhdq.resize(6, info.generalizedCoordinatesNum);
   dhdotdq.resize(6, info.generalizedCoordinatesNum);
   dhdotdv.resize(6, info.generalizedCoordinatesNum);
   dhdotda.resize(6, info.generalizedCoordinatesNum);
+
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
       pinocchio::computeCentroidalDynamicsDerivatives(model, data, q, v, a, dhdq, dhdotdq, dhdotdv, dhdotda);
+      data.Ag = dhdotda;
+      // Filling in data.dFdq is a hack since data.dhdq is not available
+      data.dFdq.setZero(6, info.generalizedCoordinatesNum);
+      data.dFdq.template middleCols<3>(3) = getCentroidalMomentumZyxGradient(interface, info, q, v);
       pinocchio::updateFramePlacements(model, data);
       break;
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
-      //  auto qSRBD = info.qPinocchioNominal;
-      //  qSRBD.template head<6>() = q.template head<6>();
-      //  Eigen::Matrix<SCALAR_T, -1, 1> vSRBD = Eigen::Matrix<SCALAR_T, -1, 1>::Zero(info.generalizedCoordinatesNum);
-      //  vSRBD.template head<6>() = v.template head<6>();
-      //  pinocchio::computeCentroidalDynamicsDerivatives(model, data, qSRBD, vSRBD, a, dhdq, dhdotdq, dhdotdv, dhdotda);
-      const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyx = q.template segment<3>(3);
-      const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyxDerivatives = v.template segment<3>(3);
-      data.dHdq.setZero();
-      data.dHdq.template block<6, 3>(0, 3) = getCentroidalMomentumZyxGradient(info, eulerAnglesZyx, eulerAnglesZyxDerivatives);
+      // Filling in data.dFdq is a hack since data.dhdq is not available
+      data.dFdq.setZero(6, info.generalizedCoordinatesNum);
+      data.dFdq.template middleCols<3>(3) = getCentroidalMomentumZyxGradient(interface, info, q, v);
       pinocchio::computeJointJacobians(model, data, q);
       pinocchio::updateFramePlacements(model, data);
       break;
     }
     default: {
       throw std::runtime_error("The chosen centroidal model type is not supported.");
-      break;
     }
   }
 }

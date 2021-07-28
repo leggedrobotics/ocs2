@@ -13,6 +13,7 @@
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/cost/FootPlacementCost.h"
+#include "ocs2_switched_model_interface/cost/JointLimitsSoftConstraint.h"
 #include "ocs2_switched_model_interface/cost/MotionTrackingCost.h"
 #include "ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h"
 
@@ -22,7 +23,6 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using ad_interface_t = ocs2::CppAdInterface;
   using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
 
   using com_model_t = ComModelBase<scalar_t>;
@@ -61,6 +61,7 @@ class SwitchedModelCostBase : public ocs2::CostFunctionBase {
   std::unique_ptr<com_model_t> comModelPtr_;
   std::unique_ptr<MotionTrackingCost> trackingCostPtr_;
   std::unique_ptr<FootPlacementCost> footPlacementCost_;
+  JointLimitsSoftConstraint jointLimitsCost_;
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
 };

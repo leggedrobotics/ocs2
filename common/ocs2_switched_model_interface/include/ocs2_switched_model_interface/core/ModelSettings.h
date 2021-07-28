@@ -35,6 +35,12 @@ struct ModelSettings {
   scalar_t muSdf_ = 2.5;
   scalar_t deltaSdf_ = 0.005;
 
+  // Joint Limits
+  joint_coordinate_t lowerJointLimits_ = joint_coordinate_t::Constant(-1e30);
+  joint_coordinate_t upperJointLimits_ = joint_coordinate_t::Constant(1e30);
+  scalar_t muJoints_ = 0.1;
+  scalar_t deltaJoints_ = 0.1;
+
   Algorithm algorithm_ = Algorithm::SQP;
 };
 

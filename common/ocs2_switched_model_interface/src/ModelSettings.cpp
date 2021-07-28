@@ -57,6 +57,15 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.delta_, prefix + "delta", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.muSdf_, prefix + "muSdf", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaSdf_, prefix + "deltaSdf", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.muJoints_, prefix + "muJoints", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaJoints_, prefix + "deltaJoints", verbose);
+  ocs2::loadData::loadEigenMatrix(filename, prefix + "joint_lower_limits", modelSettings.lowerJointLimits_);
+  ocs2::loadData::loadEigenMatrix(filename, prefix + "joint_upper_limits", modelSettings.upperJointLimits_);
+
+  if (verbose) {
+    std::cerr << " joint lower limits: " << modelSettings.lowerJointLimits_.transpose() << "\n";
+    std::cerr << " joint upper limits: " << modelSettings.upperJointLimits_.transpose() << "\n";
+  }
 
   std::string algorithmName = toAlgorithmName(modelSettings.algorithm_);
   ocs2::loadData::loadPtreeValue(pt, algorithmName, prefix + "algorithm", verbose);

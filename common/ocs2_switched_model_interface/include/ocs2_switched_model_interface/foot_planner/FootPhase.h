@@ -38,7 +38,7 @@ struct SignedDistanceConstraint {
   scalar_t minimumDistance;
 };
 
-FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain);
+FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const ConvexTerrain& stanceTerrain, scalar_t margin);
 
 /**
  * Base class for a planned foot phase : Stance or Swing.

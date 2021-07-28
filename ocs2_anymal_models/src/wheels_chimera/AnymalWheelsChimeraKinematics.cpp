@@ -157,6 +157,53 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::f
   return wheelAxisOrientationInBaseFrame(footIndex, jointPositions) * wheelAxis_R_foot;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+std::vector<typename AnymalWheelsChimeraKinematics<SCALAR_T>::CollisionSphere>
+AnymalWheelsChimeraKinematics<SCALAR_T>::collisionSpheresInBaseFrame(
+    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+
+  const auto q = wheels_chimera::getExtendedJointCoordinates(jointPositions);
+
+  const SCALAR_T kneeRadius(0.08);
+  const switched_model::vector3_s_t<SCALAR_T> kneeOffsetInKneeFrame{SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(0.055)};
+
+  std::vector<CollisionSphere> collisionSpheres;
+
+  {
+    typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_KFE fr_base_X_fr_LF_KFE;
+    fr_base_X_fr_LF_KFE.update(q);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_LF_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position -= fr_base_X_fr_LF_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_KFE fr_base_X_fr_RF_KFE;
+    fr_base_X_fr_RF_KFE.update(q);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_RF_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position += fr_base_X_fr_RF_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_KFE fr_base_X_fr_LH_KFE;
+    fr_base_X_fr_LH_KFE.update(q);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_LH_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position -= fr_base_X_fr_LH_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::wheels_chimera::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_KFE fr_base_X_fr_RH_KFE;
+    fr_base_X_fr_RH_KFE.update(q);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_RH_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position += fr_base_X_fr_RH_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  return collisionSpheres;
+}
+
 }  // namespace tpl
 }  // end of namespace anymal
 

@@ -73,6 +73,15 @@ class KinematicsModelBase {
   std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> feetVelocitiesInOriginFrame(
       const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
       const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+
+  struct CollisionSphere {
+    vector3_s_t<SCALAR_T> position;
+    SCALAR_T radius;
+  };
+  std::vector<CollisionSphere> collisionSpheresInOriginFrame(const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame,
+                                                             const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
+  virtual std::vector<CollisionSphere> collisionSpheresInBaseFrame(const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 };
 
 extern template class KinematicsModelBase<scalar_t>;

@@ -141,6 +141,32 @@ std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> KinematicsModelBase<SCALAR
   return feetVelocitiesInOriginFrame;
 }
 
+///******************************************************************************************************/
+///******************************************************************************************************/
+///******************************************************************************************************/
+template <typename SCALAR_T>
+std::vector<typename KinematicsModelBase<SCALAR_T>::CollisionSphere> KinematicsModelBase<SCALAR_T>::collisionSpheresInOriginFrame(
+    const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  const vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePoseInOriginFrame);
+  const vector3_s_t<SCALAR_T> baseOrientation = getOrientation(basePoseInOriginFrame);
+
+  auto collisionSpheres = collisionSpheresInBaseFrame(jointPositions);
+  for (auto& sphere : collisionSpheres) {
+    sphere.position = rotateVectorBaseToOrigin<SCALAR_T>(sphere.position, baseOrientation) + o_basePosition;
+  }
+
+  return collisionSpheres;
+}
+
+///******************************************************************************************************/
+///******************************************************************************************************/
+///******************************************************************************************************/
+template <typename SCALAR_T>
+std::vector<typename KinematicsModelBase<SCALAR_T>::CollisionSphere> KinematicsModelBase<SCALAR_T>::collisionSpheresInBaseFrame(
+    const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  return {};
+}
+
 template class KinematicsModelBase<scalar_t>;
 template class KinematicsModelBase<ocs2::CppAdInterface::ad_scalar_t>;
 

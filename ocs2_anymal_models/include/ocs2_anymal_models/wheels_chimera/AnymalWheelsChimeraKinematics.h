@@ -20,6 +20,7 @@ class AnymalWheelsChimeraKinematics final : public switched_model::KinematicsMod
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   typedef switched_model::KinematicsModelBase<SCALAR_T> BASE;
+  using typename BASE::CollisionSphere;
   using typename BASE::joint_jacobian_block_t;
 
   enum { LF = 0, RF = 1, LH = 2, RH = 3 };
@@ -44,6 +45,9 @@ class AnymalWheelsChimeraKinematics final : public switched_model::KinematicsMod
 
   switched_model::matrix3_s_t<SCALAR_T> footOrientationInBaseFrame(
       size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
+
+  std::vector<CollisionSphere> collisionSpheresInBaseFrame(
+      const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const override;
 };
 
 }  // namespace tpl

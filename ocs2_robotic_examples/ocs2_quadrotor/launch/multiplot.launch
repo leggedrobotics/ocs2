@@ -1,0 +1,6 @@
+<launch>
+  <!-- Launch Performance Indices Multi-plot -->
+  <include file="$(find ocs2_ros_interfaces)/launch/performance_indices.launch">
+    <arg name="mpc_policy_topic_name"      value="quadrotor_mpc_policy"/>
+  </include>
+</launch>

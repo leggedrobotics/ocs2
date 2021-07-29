@@ -1,6 +1,5 @@
 CMakeFiles/
 CMakeCache.txt
-*.cmake
 *.a
 *.o
 *.so
@@ -21,3 +20,8 @@ __pycache__
 *.pydevproject
 ocs2_core/test/cppad_cg/testCppADCG_generated/
 ocs2_ddp/test/ddp_test_generated/
+*.aux
+*.log
+*.out
+*.synctex.gz
+.vscode/

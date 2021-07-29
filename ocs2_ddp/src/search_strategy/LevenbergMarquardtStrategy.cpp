@@ -38,16 +38,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
-                                                       RolloutBase& rolloutRef, ConstraintBase& constraintsRef,
-                                                       CostFunctionBase& costFunctionRef, CostFunctionBase& heuristicsFunctionsRef,
-                                                       PenaltyBase& ineqConstrPenaltyRef,
+                                                       RolloutBase& rolloutRef, OptimalControlProblem& optimalControlProblemRef,
+                                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
                                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       rolloutRef_(rolloutRef),
-      constraintsRef_(constraintsRef),
-      costFunctionRef_(costFunctionRef),
-      heuristicsFunctionsRef_(heuristicsFunctionsRef),
+      optimalControlProblemRef_(optimalControlProblemRef),
       ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
       meritFunc_(std::move(meritFunc)) {}
 
@@ -65,8 +62,8 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
                                      std::vector<LinearController>& controllersStock, PerformanceIndex& performanceIndex,
                                      scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                                      vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                                     std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                     std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+                                     std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                     std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
@@ -87,9 +84,8 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
         rolloutTrajectory(rolloutRef_, modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
                           inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
     scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(constraintsRef_, costFunctionRef_, heuristicsFunctionsRef_, timeTrajectoriesStock, postEventIndicesStock,
-                              stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock,
-                              heuristicsValue);
+    rolloutCostAndConstraints(optimalControlProblemRef_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                              inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
 
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
@@ -244,7 +240,7 @@ std::pair<bool, std::string> LevenbergMarquardtStrategy::checkConvergence(bool u
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
+void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                                             matrix_t& deltaGm) const {
   const auto& HvProjected = projectedModelData.dynamicsBias_;
   const auto& AmProjected = projectedModelData.dynamics_.dfdx;
@@ -259,7 +255,7 @@ void LevenbergMarquardtStrategy::computeRiccatiModification(const ModelDataBase&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t LevenbergMarquardtStrategy::augmentHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Hm) const {
+matrix_t LevenbergMarquardtStrategy::augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const {
   matrix_t HmAug = Hm;
   HmAug.noalias() += levenbergMarquardtModule_.riccatiMultiple * modelData.dynamics_.dfdu.transpose() * modelData.dynamics_.dfdu;
   return HmAug;

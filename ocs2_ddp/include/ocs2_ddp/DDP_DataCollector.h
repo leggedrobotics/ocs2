@@ -93,13 +93,13 @@ class DDP_DataCollector {
   vector_array2_t nominalInputTrajectoriesStock_;
 
   // model data trajectory
-  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelData>> modelDataTrajectoriesStock_;
 
   // event times model data
-  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock_;
+  std::vector<std::vector<ModelData>> modelDataEventTimesStock_;
 
   // projected model data trajectory
-  std::vector<std::vector<ModelDataBase>> projectedModelDataTrajectoriesStock_;
+  std::vector<std::vector<ModelData>> projectedModelDataTrajectoriesStock_;
 
   // Riccati modification
   std::vector<std::vector<riccati_modification::Data>> riccatiModificationTrajectoriesStock_;

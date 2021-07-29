@@ -15,6 +15,7 @@ add_message_files(
         mpc_input.msg
         mode_schedule.msg
         mpc_observation.msg
+        mpc_performance_indices.msg
         mpc_target_trajectories.msg
         controller_data.msg
         mpc_flattened_controller.msg

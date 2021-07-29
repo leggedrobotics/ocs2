@@ -42,6 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
 
+#include <ocs2_msgs/mode_schedule.h>
+#include <ocs2_msgs/mpc_flattened_controller.h>
+#include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_msgs/mpc_target_trajectories.h>
+#include <ocs2_msgs/reset.h>
+
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -49,15 +55,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_BASE.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
-
-// MPC messages
-#include <ocs2_msgs/mode_schedule.h>
-#include <ocs2_msgs/mpc_flattened_controller.h>
-#include <ocs2_msgs/mpc_observation.h>
-#include <ocs2_msgs/mpc_target_trajectories.h>
-#include <ocs2_msgs/reset.h>
-
-#include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 #define PUBLISH_THREAD
 
@@ -72,9 +69,9 @@ class MPC_ROS_Interface {
    * Constructor.
    *
    * @param [in] mpc: The underlying MPC class to be used.
-   * @param [in] robotName: The robot's name.
+   * @param [in] topicPrefix: The robot's name.
    */
-  explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string robotName = "robot");
+  explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
 
   /**
    * Destructor.
@@ -82,16 +79,11 @@ class MPC_ROS_Interface {
   virtual ~MPC_ROS_Interface();
 
   /**
-   * Sets the class as its constructor.
-   */
-  void set();
-
-  /**
    * Resets the class to its instantiation state.
    *
-   * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
+   * @param [in] initTargetTrajectories: The initial desired cost trajectories.
    */
-  virtual void reset(const CostDesiredTrajectories& initCostDesiredTrajectories);
+  void resetMpcNode(TargetTrajectories&& initTargetTrajectories);
 
   /**
    * Shutdowns the ROS node.
@@ -107,9 +99,6 @@ class MPC_ROS_Interface {
    * This is the main routine which launches all the nodes required for MPC to run which includes:
    * (1) The MPC policy publisher (either feedback or feedforward policy).
    * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
-   * (3) The desired trajectories subscriber which gets the goal information from user.
-   * (4) The desired mode sequence which gets the predefined mode switches for time-triggered hybrid systems.
-   * (5) All synchronized ros modules are subscribed with the same node handle
    */
   void launchNodes(ros::NodeHandle& nodeHandle);
 
@@ -127,21 +116,23 @@ class MPC_ROS_Interface {
    *
    * @param [in] primalSolution: The policy data of the MPC.
    * @param [in] commandData: The command data of the MPC.
+   * @param [in] performanceIndices: The performance indices data of the solver.
    * @return MPC policy message.
    */
-  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData);
+  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
+                                                                const PerformanceIndex& performanceIndices);
 
   /**
    * Handles ROS publishing thread.
    */
-  void publisherWorkerThread();
+  void publisherWorker();
 
   /**
-   * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
-   * This method is automatically called by advanceMpc()
+   * Updates the buffer variables from the MPC object. This method is automatically called by advanceMpc()
+   *
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    */
-  void fillMpcOutputBuffers(SystemObservation mpcInitObservation);
+  void copyToBuffer(const SystemObservation& mpcInitObservation);
 
   /**
    * The callback method which receives the current observation, invokes the MPC algorithm,
@@ -151,20 +142,13 @@ class MPC_ROS_Interface {
    */
   void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
-  /**
-   * The callback method which receives the user-defined target trajectories message.
-   *
-   * @param [in] msg: The target trajectories message.
-   */
-  void mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg);
-
  protected:
   /*
    * Variables
    */
   MPC_BASE& mpc_;
 
-  std::string robotName_;
+  std::string topicPrefix_;
 
   std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
@@ -174,16 +158,18 @@ class MPC_ROS_Interface {
   ::ros::Publisher mpcPolicyPublisher_;
   ::ros::ServiceServer mpcResetServiceServer_;
 
-  std::unique_ptr<PrimalSolution> currentPrimalSolution_;
-  std::unique_ptr<PrimalSolution> primalSolutionBuffer_;
-  std::unique_ptr<CommandData> currentCommand_;
-  std::unique_ptr<CommandData> commandBuffer_;
+  std::unique_ptr<CommandData> bufferCommandPtr_;
+  std::unique_ptr<CommandData> publisherCommandPtr_;
+  std::unique_ptr<PrimalSolution> bufferPrimalSolutionPtr_;
+  std::unique_ptr<PrimalSolution> publisherPrimalSolutionPtr_;
+  std::unique_ptr<PerformanceIndex> bufferPerformanceIndicesPtr_;
+  std::unique_ptr<PerformanceIndex> publisherPerformanceIndicesPtr_;
 
-  mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
+  mutable std::mutex bufferMutex_;  // for policy variables with prefix (buffer*)
 
   // multi-threading for publishers
-  std::atomic_bool terminateThread_;
-  std::atomic_bool readyToPublish_;
+  std::atomic_bool terminateThread_{false};
+  std::atomic_bool readyToPublish_{false};
   std::thread publisherWorker_;
   std::mutex publisherMutex_;
   std::condition_variable msgReady_;
@@ -192,11 +178,7 @@ class MPC_ROS_Interface {
 
   // MPC reset
   std::mutex resetMutex_;
-  std::atomic<bool> resetRequestedEver_;
-
-  std::mutex costDesiredTrajectoriesBufferMutex_;
-  std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
-  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
+  std::atomic_bool resetRequestedEver_{false};
 };
 
 }  // namespace ocs2

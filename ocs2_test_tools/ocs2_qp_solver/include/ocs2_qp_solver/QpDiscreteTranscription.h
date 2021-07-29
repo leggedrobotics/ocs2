@@ -27,15 +27,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-//
-// Created by rgrandia on 25.02.20.
-//
-
 #pragma once
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 #include "ocs2_qp_solver/QpSolverTypes.h"
 #include "ocs2_qp_solver/QpTrajectories.h"
@@ -47,55 +42,48 @@ namespace qp_solver {
  * Generates a discrete time control problem with quadratic costs and affine dynamics.
  * The discretization stepsizes are defined by the time trajectory of the provided linearization trajectory.
  *
- * @param cost : continuous cost function
- * @param system : continuous system dynamics
- * @param constraintsPtr : constraints. For unconstrained problems use a null pointer.
+ * @param optimalControProblem: The optimal control problem definition.
  * @param nominalTrajectory : time, state and input trajectory to make the linear quadratic approximation around
  * @return vector of discrete cost and dynamics at each node.
  */
-std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(CostFunctionBase& cost, SystemDynamicsBase& system,
-                                                                  ConstraintBase* constraintsPtr,
+std::vector<LinearQuadraticStage> getLinearQuadraticApproximation(OptimalControlProblem& optimalControProblem,
                                                                   const ContinuousTrajectory& nominalTrajectory);
 
 /**
  * Constructs the discrete quadratic cost and linear dynamics between the given start and end conditions
  *
- * @param cost : continuous cost
- * @param system : continuous system
- * @param constraintsPtr : constraints. For unconstrained problems use a null pointer.
+ * @param optimalControProblem: The optimal control problem definition.
  * @param start : linearization point at the start of the stage
  * @param end : linearization point at the end of the stage
  * @param isInitialTime : Whether start is an initial time points.
  * @return discreted stage
  */
-LinearQuadraticStage approximateStage(CostFunctionBase& cost, SystemDynamicsBase& system, ConstraintBase* constraintsPtr,
-                                      TrajectoryRef start, StateTrajectoryRef end, bool isInitialTime);
+LinearQuadraticStage approximateStage(OptimalControlProblem& optimalControProblem, TrajectoryRef start, StateTrajectoryRef end,
+                                      bool isInitialTime);
 
 /**
  * Computes the cost integral from a start condition over a dt interval
- * @param cost : continuous cost
- * @param start : linearization point at the start of the interval
+ * @param modelData: The continuous time optimal control problem evaluation.
  * @param dt : duration of the interval
  * @return Quadratic approximation of the accumulated costs
  */
-ScalarFunctionQuadraticApproximation approximateCost(CostFunctionBase& cost, TrajectoryRef start, scalar_t dt);
+ScalarFunctionQuadraticApproximation approximateCost(const ModelData& modelData, scalar_t dt);
 
 /**
  * Computes the discrete dynamics from a start condition over a dt interval
- * @param system : continuous system
+ * @param modelData: The continuous time optimal control problem evaluation.
  * @param start : linearization point at the start of the interval
  * @param dt : duration of the interval
  * @return Linear approximation of the discrete dynamcis
  */
-VectorFunctionLinearApproximation approximateDynamics(SystemDynamicsBase& system, TrajectoryRef start, scalar_t dt);
+VectorFunctionLinearApproximation approximateDynamics(const ModelData& modelData, TrajectoryRef start, scalar_t dt);
 
 /**
  * Computes the equality constraints at given trajectory point
- * @param constraints : constraints object
- * @param point : linearization point
+ * @param modelData: The continuous time optimal control problem evaluation.
  * @return Linear approximation of the constraints
  */
-VectorFunctionLinearApproximation approximateConstraints(ConstraintBase& constraints, TrajectoryRef point, bool isInitialTime);
+VectorFunctionLinearApproximation approximateConstraints(const ModelData& modelData, bool isInitialTime);
 
 }  // namespace qp_solver
 }  // namespace ocs2

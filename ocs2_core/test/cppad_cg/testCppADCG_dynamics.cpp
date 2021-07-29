@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <iostream>
 
-#include "../include/testTools.h"
 #include "LinearSystemDynamicsAD.h"
 #include "ocs2_core/dynamics/LinearSystemDynamics.h"
+#include "ocs2_core/test/testTools.h"
 
 using namespace ocs2;
 
@@ -57,7 +57,7 @@ class testCppADCG_dynamicsFixture : public ::testing::Test {
     std::string libraryFolder = filePath.parent_path().generic_string() + "/testCppADCG_generated";
     adLinearSystem_.reset(new LinearSystemDynamicsAD(A, B, G));
 
-    adLinearSystem_->initialize("testCppADCG_dynamics", libraryFolder, true, true);
+    adLinearSystem_->initialize(stateDim_, inputDim_, "testCppADCG_dynamics", libraryFolder, true, true);
   }
 
   std::unique_ptr<LinearSystemDynamics> linearSystem_;
@@ -88,8 +88,8 @@ void checkSystemDynamics(const size_t numTests, SystemDynamicsBase* const linear
       success = false;
     }
 
-    VectorFunctionLinearApproximation g1 = linearSystem1->jumpMapLinearApproximation(t, x, u);
-    VectorFunctionLinearApproximation g2 = linearSystem2->jumpMapLinearApproximation(t, x, u);
+    VectorFunctionLinearApproximation g1 = linearSystem1->jumpMapLinearApproximation(t, x);
+    VectorFunctionLinearApproximation g2 = linearSystem2->jumpMapLinearApproximation(t, x);
     if (!isApprox(g1, g2, precision)) {
       std::cout << "jumpMap1:\n" << g1.dfdx << std::endl;
       std::cout << "jumpMap2:\n" << g2.dfdx << std::endl;

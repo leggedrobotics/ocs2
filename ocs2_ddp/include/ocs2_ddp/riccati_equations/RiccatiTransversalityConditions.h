@@ -33,12 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tuple>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 
 namespace ocs2 {
 
-static inline std::tuple<matrix_t, vector_t, scalar_t> riccatiTransversalityConditions(const ModelDataBase& jumpModelData,
-                                                                                       const matrix_t& Sm, const vector_t& Sv, scalar_t s) {
+static inline std::tuple<matrix_t, vector_t, scalar_t> riccatiTransversalityConditions(const ModelData& jumpModelData, const matrix_t& Sm,
+                                                                                       const vector_t& Sv, scalar_t s) {
   // Sm
   const matrix_t SmTransAm = Sm.transpose() * jumpModelData.dynamics_.dfdx;
   matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;

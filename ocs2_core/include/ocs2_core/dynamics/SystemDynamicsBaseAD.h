@@ -44,7 +44,8 @@ namespace ocs2 {
  */
 class SystemDynamicsBaseAD : public SystemDynamicsBase {
  public:
-  SystemDynamicsBaseAD(size_t stateDim, size_t inputDim);
+  /** Constructor */
+  SystemDynamicsBaseAD();
 
   /** Default destructor */
   ~SystemDynamicsBaseAD() override = default;
@@ -52,24 +53,25 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   /**
    * Initializes model libraries
    *
+   * @param stateDim : state vector dimension.
+   * @param inputDim : input vector dimension.
    * @param modelName : name of the generate model library
    * @param modelFolder : folder to save the model library files to
-   * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
-   * available.
+   * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
    * @param verbose : print information.
    */
-  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                  bool verbose = true);
+  void initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
+                  bool recompileLibraries = true, bool verbose = true);
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) final;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
 
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) final;
+  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) final;
 
-  vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
+  vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) final;
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) final;
 
   VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
@@ -92,18 +94,51 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: time.
    * @param [in] state: state vector.
    * @param [in] input: input vector.
+   * @param [in] parameters: parameter vector.
    * @return state vector time derivative.
    */
-  virtual ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input) const = 0;
+  virtual ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                    const ad_vector_t& parameters) const = 0;
+
+  /**
+   * Gets the parameters of the system flow map
+   *
+   * @param [in] time: Current time.
+   * @return The parameters to be set in the flow map at the start of the horizon
+   */
+  virtual vector_t getFlowMapParameters(scalar_t time) const { return vector_t(0); }
+
+  /**
+   * Number of parameters for system flow map.
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumFlowMapParameters() const { return 0; }
 
   /**
    * Interface method to the state jump map of the hybrid system. This method can be implemented by the derived class.
    *
    * @param [in] time: time.
    * @param [in] state: state vector.
+   * @param [in] parameters: parameter vector.
    * @return jumped state.
    */
-  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state) const;
+  virtual ad_vector_t systemJumpMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
+
+  /**
+   * Gets the parameters of the jump map
+   *
+   * @param [in] time: Current time.
+   * @return The parameters to be set in the jump map
+   */
+  virtual vector_t getJumpMapParameters(scalar_t time) const { return vector_t(0); }
+
+  /**
+   * Number of parameters for jump map.
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumJumpMapParameters() const { return 0; }
 
   /**
    * Interface method to the guard surfaces. This method can be implemented by the derived class.
@@ -111,37 +146,32 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
    * @param [in] time: time.
    * @param [in] state: state.
    * @param [in] input: input vector
+   * @param [in] parameters: parameter vector.
    * @return A vector of guard surfaces values
    */
-  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state) const;
+  virtual ad_vector_t systemGuardSurfaces(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const;
+
+  /**
+   * Gets the parameters of the guard surfaces
+   *
+   * @param [in] time: Current time.
+   * @return The parameters to be set in the guard surfaces
+   */
+  virtual vector_t getGuardSurfacesParameters(scalar_t time) const { return vector_t(0); }
+
+  /**
+   * Number of parameters for guard surfaces.
+   *
+   * @return number of parameters
+   */
+  virtual size_t getNumGuardSurfacesParameters() const { return 0; }
 
  private:
-  /**
-   * Sets all the required CppAdCodeGenInterfaces
-   */
-  void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
-
-  /**
-   * Create the forward model and derivatives.
-   *
-   * @param [in] verbose: display information.
-   */
-  void createModels(bool verbose);
-
-  /**
-   * Loads the forward model and derivatives if available. Constructs them otherwise.
-   *
-   * @param [in] verbose: display information
-   */
-  void loadModelsIfAvailable(bool verbose);
-
-  size_t stateDim_;
-  size_t inputDim_;
-
   std::unique_ptr<CppAdInterface> flowMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> jumpMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> guardSurfacesADInterfacePtr_;
 
+  /** Cached jacobians for time derivative */
   matrix_t flowJacobian_;
   matrix_t jumpJacobian_;
   matrix_t guardJacobian_;

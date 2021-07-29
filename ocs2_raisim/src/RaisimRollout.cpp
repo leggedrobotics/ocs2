@@ -31,6 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                              raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                              input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
@@ -46,12 +49,9 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
       inputToRaisimGeneralizedForce_(std::move(inputToRaisimGeneralizedForce)),
       dataExtractionCallback_(std::move(dataExtractionCallback)),
       inputToRaisimPdTargets_(std::move(inputToRaisimPdTargets)) {
-  world_.setTimeStep(this->settings().minTimeStep_);
+  world_.setTimeStep(this->settings().timeStep);
 
-  // avoid self-collisions
-  constexpr CollisionGroup collisionGroup = 0b10;
-  constexpr CollisionGroup collisionMask = 0b01;
-  system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_, collisionGroup, collisionMask);
+  system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_);
   system_->setControlMode(raisimRolloutSettings_.controlMode_);
   if (raisimRolloutSettings_.controlMode_ != raisim::ControlMode::FORCE_AND_TORQUE) {
     system_->setPdGains(raisimRolloutSettings_.pGains_, raisimRolloutSettings_.dGains_);
@@ -83,6 +83,9 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
 #endif
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 RaisimRollout::RaisimRollout(const RaisimRollout& other)
     : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
                     other.inputToRaisimGeneralizedForce_, other.dataExtractionCallback_, other.raisimRolloutSettings_,
@@ -93,23 +96,29 @@ RaisimRollout::RaisimRollout(const RaisimRollout& other)
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void RaisimRollout::setPdGains(const Eigen::VectorXd& pGain, const Eigen::VectorXd& dGain) {
   raisimRolloutSettings_.pGains_ = pGain;
   raisimRolloutSettings_.dGains_ = dGain;
   system_->setPdGains(pGain, dGain);
 }
 
-vector_t RaisimRollout::runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t RaisimRollout::runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                                 scalar_array_t& timeTrajectory, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectory,
                                 vector_array_t& inputTrajectory) {
   assert(controller != nullptr);
 
-  world_.setTimeStep(this->settings().minTimeStep_);
+  world_.setTimeStep(this->settings().timeStep);
 
   // Prepare arrays
   const int numSubsystems = timeIntervalArray.size();
   const auto maxNumSteps =
-      static_cast<int>(std::round((timeIntervalArray.back().second - timeIntervalArray.front().first) / this->settings().minTimeStep_));
+      static_cast<int>(std::round((timeIntervalArray.back().second - timeIntervalArray.front().first) / this->settings().timeStep));
   timeTrajectory.clear();
   timeTrajectory.reserve(maxNumSteps + numSubsystems);
   stateTrajectory.clear();
@@ -139,6 +148,9 @@ vector_t RaisimRollout::runImpl(time_interval_array_t timeIntervalArray, const v
   return stateTrajectory.back();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 raisim::HeightMap* RaisimRollout::generateTerrain(raisim::TerrainProperties properties) {
   deleteGroundPlane();
 
@@ -146,21 +158,33 @@ raisim::HeightMap* RaisimRollout::generateTerrain(raisim::TerrainProperties prop
   return heightMap_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void RaisimRollout::setTerrain(const raisim::HeightMap& heightMap) {
   deleteGroundPlane();
   heightMap_ = world_.addHeightMap(&heightMap);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void RaisimRollout::setTerrain(const std::string& pngFileName, double centerX, double centerY, double xSize, double ySize,
                                double heightScale, double heightOffset) {
   deleteGroundPlane();
   heightMap_ = world_.addHeightMap(pngFileName, centerX, centerY, xSize, ySize, heightScale, heightOffset);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 const raisim::HeightMap* RaisimRollout::getTerrain() const {
   return heightMap_;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void RaisimRollout::deleteGroundPlane() {
   if (ground_ != nullptr) {
     world_.removeObject(ground_);
@@ -171,12 +195,15 @@ void RaisimRollout::deleteGroundPlane() {
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void RaisimRollout::runSimulation(const time_interval_t& timeInterval, ControllerBase* controller, scalar_array_t& timeTrajectory,
                                   vector_array_t& stateTrajectory, vector_array_t& inputTrajectory) {
-  const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().minTimeStep_));
+  const auto numSteps = static_cast<int>(std::ceil((timeInterval.second - timeInterval.first) / this->settings().timeStep));
 
   for (int i = 0; i < numSteps; i++) {
-    const auto time = timeInterval.first + i * this->settings().minTimeStep_;
+    const auto time = timeInterval.first + i * this->settings().timeStep;
 
     if (i == (numSteps - 1)) {
       // last step uses potentially smaller time step
@@ -186,7 +213,7 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
       }
       world_.setTimeStep(shortened_dt);
     } else {
-      world_.setTimeStep(this->settings().minTimeStep_);
+      world_.setTimeStep(this->settings().timeStep);
     }
 
     world_.integrate1();  // prepares all kinematic and dynamic quantities for the current time step
@@ -228,7 +255,7 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
 #endif
   }
 
-  world_.setTimeStep(this->settings().minTimeStep_);
+  world_.setTimeStep(this->settings().timeStep);
 
   // also push back final state and input
   timeTrajectory.push_back(timeInterval.second);

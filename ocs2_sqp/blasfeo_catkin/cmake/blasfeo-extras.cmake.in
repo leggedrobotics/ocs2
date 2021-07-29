@@ -1,0 +1,2 @@
+# Forward BLASFEO_PATH explicitly
+set(BLASFEO_PATH @BLASFEO_DEVEL_PREFIX@)

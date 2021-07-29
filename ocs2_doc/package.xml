@@ -15,19 +15,16 @@
   <doc_depend>doxygen</doc_depend>
   <doc_depend>texlive-latex-base</doc_depend>
 
-  <depend>ocs2_core</depend>
-  <depend>ocs2_oc</depend>
-  <depend>ocs2_frank_wolfe</depend>
-  <depend>ocs2_ddp</depend>
-  <depend>ocs2_ocs2</depend>
-  <depend>ocs2_raisim</depend>
-  <depend>ocs2_mpc</depend>
-  <depend>ocs2_ros_interfaces</depend>
-  <depend>ocs2_ballbot_example</depend>
-  <depend>ocs2_cart_pole_example</depend>
-  <depend>ocs2_cart_pole_raisim_example</depend>
-  <depend>ocs2_double_integrator_example</depend>
-  <depend>ocs2_quadrotor_example</depend>
-  <depend>ocs2_robotic_tools</depend>
+  <exec_depend>ocs2_core</exec_depend>
+  <exec_depend>ocs2_frank_wolfe</exec_depend>
+  <exec_depend>ocs2_oc</exec_depend>
+  <exec_depend>ocs2_mpc</exec_depend>
+  <exec_depend>ocs2_ddp</exec_depend>
+  <exec_depend>ocs2_sqp</exec_depend>
+  <exec_depend>ocs2_python_interface</exec_depend>
+  <exec_depend>ocs2_ros_interfaces</exec_depend>
+  <exec_depend>ocs2_robotic_tools</exec_depend>
+  <exec_depend>ocs2_robotic_examples</exec_depend>
+  <exec_depend>ocs2_pinocchio</exec_depend>
 
 </package>

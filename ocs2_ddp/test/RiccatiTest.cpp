@@ -40,17 +40,17 @@ class RiccatiInitializer {
   using riccati_t = ocs2::ContinuousTimeRiccatiEquations;
 
   ocs2::scalar_array_t timeStamp;
-  std::vector<ocs2::ModelDataBase> projectedModelDataTrajectory;
+  std::vector<ocs2::ModelData> projectedModelDataTrajectory;
 
   ocs2::size_array_t eventsPastTheEndIndeces;
-  std::vector<ocs2::ModelDataBase> modelDataEventTimesArray;
+  std::vector<ocs2::ModelData> modelDataEventTimesArray;
 
   std::vector<ocs2::riccati_modification::Data> riccatiModificationTrajectory;
 
   RiccatiInitializer(const int stateDim, const int inputDim) {
     timeStamp = ocs2::scalar_array_t{0.0, 1.0};
 
-    ocs2::ModelDataBase projectedModelData;
+    ocs2::ModelData projectedModelData;
     projectedModelData.stateDim_ = stateDim;
     projectedModelData.inputDim_ = inputDim;
     projectedModelData.dynamicsBias_ = ocs2::vector_t::Random(stateDim);
@@ -75,7 +75,7 @@ class RiccatiInitializer {
     projectedModelData.stateInputEqConstr_.dfdx.setZero(inputDim, stateDim);
     projectedModelData.stateInputEqConstr_.dfdu.setZero(inputDim, inputDim);
 
-    projectedModelDataTrajectory = std::vector<ocs2::ModelDataBase>{projectedModelData, projectedModelData};
+    projectedModelDataTrajectory = std::vector<ocs2::ModelData>{projectedModelData, projectedModelData};
 
     ocs2::riccati_modification::Data riccatiModification;
     riccatiModification.deltaQm_ = 0.1 * ocs2::LinearAlgebra::generateSPDmatrix<ocs2::matrix_t>(stateDim);

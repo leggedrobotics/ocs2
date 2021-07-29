@@ -59,9 +59,9 @@ class MRT_ROS_Dummy_Loop {
    * Runs the dummy MRT loop.
    *
    * @param [in] initObservation: The initial observation.
-   * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
+   * @param [in] initTargetTrajectories: The initial TargetTrajectories.
    */
-  void run(const SystemObservation& initObservation, const CostDesiredTrajectories& initCostDesiredTrajectories);
+  void run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
 
   /**
    * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.

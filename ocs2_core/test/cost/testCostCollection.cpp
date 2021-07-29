@@ -29,7 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/cost/CostCollection.h>
+#include <ocs2_core/cost/StateCostCollection.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
 
 class SimpleQuadraticCost final : public ocs2::StateInputCost {
  public:
@@ -38,14 +39,16 @@ class SimpleQuadraticCost final : public ocs2::StateInputCost {
 
   SimpleQuadraticCost* clone() const override { return new SimpleQuadraticCost(*this); }
 
+  bool isActive(ocs2::scalar_t time) const override { return active_; }
+
   ocs2::scalar_t getValue(ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
-                          const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+                          const ocs2::TargetTrajectories& targetTrajectories, const ocs2::PreComputation&) const override {
     return 0.5 * x.dot(Q_ * x) + 0.5 * u.dot(R_ * u);
   }
 
   ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(
       ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::vector_t& u,
-      const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+      const ocs2::TargetTrajectories& targetTrajectories, const ocs2::PreComputation&) const override {
     ocs2::ScalarFunctionQuadraticApproximation quadraticApproximation;
     quadraticApproximation.f = 0.5 * x.dot(Q_ * x) + 0.5 * u.dot(R_ * u);
     quadraticApproximation.dfdx = Q_ * x;
@@ -55,6 +58,8 @@ class SimpleQuadraticCost final : public ocs2::StateInputCost {
     quadraticApproximation.dfdux.setZero(u.rows(), x.rows());
     return quadraticApproximation;
   }
+
+  bool active_ = true;
 
  private:
   ocs2::matrix_t Q_;
@@ -77,15 +82,18 @@ class StateInputCost_TestFixture : public ::testing::Test {
     u = ocs2::vector_t::Random(INPUT_DIM);
     t = 0.0;
 
-    auto cost = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(std::move(Q), std::move(R)));
-    expectedCost = cost->getValue(t, x, u, desiredTrajectory);
-    expectedCostApproximation = cost->getQuadraticApproximation(t, x, u, desiredTrajectory);
+    auto cost1 = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(Q, R));
+    auto cost2 = std::unique_ptr<SimpleQuadraticCost>(new SimpleQuadraticCost(0.5 * Q, 2.0 * R));
+    expectedCost = cost1->getValue(t, x, u, targetTrajectories, {}) + cost2->getValue(t, x, u, targetTrajectories, {});
+    expectedCostApproximation = cost1->getQuadraticApproximation(t, x, u, targetTrajectories, {});
+    expectedCostApproximation += cost2->getQuadraticApproximation(t, x, u, targetTrajectories, {});
 
-    costCollection.add("Simple quadratic cost", std::move(cost));
+    costCollection.add("Simple quadratic cost", std::move(cost1));
+    costCollection.add("Another simple quadratic cost", std::move(cost2));
   }
 
-  ocs2::CostDesiredTrajectories desiredTrajectory;
-  ocs2::CostCollection<ocs2::StateInputCost> costCollection;
+  ocs2::TargetTrajectories targetTrajectories;
+  ocs2::StateInputCostCollection costCollection;
 
   ocs2::vector_t x;
   ocs2::vector_t u;
@@ -95,12 +103,12 @@ class StateInputCost_TestFixture : public ::testing::Test {
 };
 
 TEST_F(StateInputCost_TestFixture, getStateInputCost) {
-  const auto cost = costCollection.getValue(t, x, u, desiredTrajectory);
+  const auto cost = costCollection.getValue(t, x, u, targetTrajectories, {});
   EXPECT_NEAR(cost, expectedCost, 1e-6);
 }
 
 TEST_F(StateInputCost_TestFixture, getStateInputCostApproximation) {
-  const auto cost = costCollection.getQuadraticApproximation(t, x, u, desiredTrajectory);
+  const auto cost = costCollection.getQuadraticApproximation(t, x, u, targetTrajectories, {});
   EXPECT_NEAR(cost.f, expectedCost, 1e-6);
   EXPECT_TRUE(cost.dfdx.isApprox(expectedCostApproximation.dfdx));
   EXPECT_TRUE(cost.dfdu.isApprox(expectedCostApproximation.dfdu));
@@ -133,22 +141,16 @@ TEST_F(StateInputCost_TestFixture, throwsWhenAddExistingCost) {
 }
 
 TEST_F(StateInputCost_TestFixture, canDeactivateCost) {
-  auto& costFunction = costCollection.get("Simple quadratic cost");
-  costFunction.setActivity(false);
-  const auto cost = costCollection.getValue(t, x, u, desiredTrajectory);
-  EXPECT_EQ(cost, 0.0);
+  auto& cost1 = costCollection.get<SimpleQuadraticCost>("Simple quadratic cost");
+  auto& cost2 = costCollection.get<SimpleQuadraticCost>("Another simple quadratic cost");
+  cost1.active_ = false;
+  const auto cost = costCollection.getValue(t, x, u, targetTrajectories, {});
+  EXPECT_DOUBLE_EQ(cost, cost2.getValue(t, x, u, targetTrajectories, {}));
 }
 
-TEST_F(StateInputCost_TestFixture, moveConstrut) {
-  ocs2::CostCollection<ocs2::StateInputCost> newColleciton(std::move(costCollection));
-  const auto cost = newColleciton.getValue(t, x, u, desiredTrajectory);
-  EXPECT_NEAR(cost, expectedCost, 1e-6);
-}
-
-TEST_F(StateInputCost_TestFixture, moveAssign) {
-  ocs2::CostCollection<ocs2::StateInputCost> newColleciton;
-  newColleciton = std::move(costCollection);
-  const auto cost = newColleciton.getValue(t, x, u, desiredTrajectory);
+TEST_F(StateInputCost_TestFixture, canClone) {
+  std::unique_ptr<ocs2::StateInputCostCollection> newCollection(costCollection.clone());
+  const auto cost = newCollection->getValue(t, x, u, targetTrajectories, {});
   EXPECT_NEAR(cost, expectedCost, 1e-6);
 }
 
@@ -160,12 +162,13 @@ class SimpleQuadraticFinalCost final : public ocs2::StateCost {
   SimpleQuadraticFinalCost* clone() const override { return new SimpleQuadraticFinalCost(*this); }
 
   ocs2::scalar_t getValue(ocs2::scalar_t t, const ocs2::vector_t& x,
-                          const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+                          const ocs2::TargetTrajectories& targetTrajectories, const ocs2::PreComputation&) const override {
     return 0.5 * x.dot(Q_ * x);
   }
 
   ocs2::ScalarFunctionQuadraticApproximation getQuadraticApproximation(
-      ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::CostDesiredTrajectories& desiredTrajectory) const override {
+      ocs2::scalar_t t, const ocs2::vector_t& x, const ocs2::TargetTrajectories& targetTrajectories,
+      const ocs2::PreComputation&) const override {
     ocs2::ScalarFunctionQuadraticApproximation quadraticApproximation;
     quadraticApproximation.f = 0.5 * x.dot(Q_ * x);
     quadraticApproximation.dfdx = Q_ * x;
@@ -191,14 +194,14 @@ class StateCost_TestFixture : public ::testing::Test {
     t = 0.0;
 
     auto cost = std::unique_ptr<SimpleQuadraticFinalCost>(new SimpleQuadraticFinalCost(std::move(Q)));
-    expectedCost = cost->getValue(t, x, desiredTrajectory);
-    expectedCostApproximation = cost->getQuadraticApproximation(t, x, desiredTrajectory);
+    expectedCost = cost->getValue(t, x, targetTrajectories, {});
+    expectedCostApproximation = cost->getQuadraticApproximation(t, x, targetTrajectories, {});
 
     costCollection.add("Simple quadratic final cost", std::move(cost));
   }
 
-  ocs2::CostDesiredTrajectories desiredTrajectory;
-  ocs2::CostCollection<ocs2::StateCost> costCollection;
+  ocs2::TargetTrajectories targetTrajectories;
+  ocs2::StateCostCollection costCollection;
 
   ocs2::vector_t x;
   ocs2::scalar_t t;
@@ -207,12 +210,12 @@ class StateCost_TestFixture : public ::testing::Test {
 };
 
 TEST_F(StateCost_TestFixture, testStateCost) {
-  const auto cost = costCollection.getValue(t, x, desiredTrajectory);
+  const auto cost = costCollection.getValue(t, x, targetTrajectories, {});
   EXPECT_NEAR(cost, expectedCost, 1e-6);
 }
 
 TEST_F(StateCost_TestFixture, testStateCostApproximation) {
-  const auto cost = costCollection.getQuadraticApproximation(t, x, desiredTrajectory);
+  const auto cost = costCollection.getQuadraticApproximation(t, x, targetTrajectories, {});
   EXPECT_NEAR(cost.f, expectedCost, 1e-6);
   EXPECT_TRUE(cost.dfdx.isApprox(expectedCostApproximation.dfdx));
   EXPECT_TRUE(cost.dfdxx.isApprox(expectedCostApproximation.dfdxx));

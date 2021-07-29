@@ -95,7 +95,7 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
   /**
    * Sets Data
    */
-  void setData(const scalar_array_t* timeTrajectoryPtr, const ModelDataBase::array_t* modelDataPtr,
+  void setData(const scalar_array_t* timeTrajectoryPtr, const ModelData::array_t* modelDataPtr,
                const scalar_array_t* sensitivityControllerTimePtr, const input_vector_array_t* sensitivityControllerFeedforwardPtr,
                const input_state_matrix_array_t* sensitivityControllerFeedbackPtr) {
     timeTrajectoryPtr_ = timeTrajectoryPtr;
@@ -138,7 +138,7 @@ class RolloutSensitivityEquations final : public ControlledSystemBase<STATE_DIM,
  protected:
   scalar_t multiplier_ = 0.0;
   const scalar_array_t* timeTrajectoryPtr_;
-  const ModelDataBase::array_t* modelDataPtr_;
+  const ModelData::array_t* modelDataPtr_;
   linear_controller_t linearController_;
 
   dynamic_vector_t Fv_;

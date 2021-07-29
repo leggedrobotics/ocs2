@@ -67,7 +67,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @param [out] input: input corresponding to time
    */
-  void getInput(scalar_t time, vector_t& input);
+  void getInput(scalar_t time, vector_t& input) const;
 
   /*
    * Calculate the input at a certain time
@@ -75,7 +75,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @return input corresponding to time
    */
-  vector_t getInput(scalar_t time);
+  vector_t getInput(scalar_t time) const;
 
   /*
    * Calculate the reference state at a certain time
@@ -83,7 +83,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @param [out] state: state corresponding to time
    */
-  void getState(scalar_t time, vector_t& x);
+  void getState(scalar_t time, vector_t& x) const;
 
   /*
    * Calculate the reference state at a certain time
@@ -91,7 +91,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @return state corresponding to time
    */
-  vector_t getState(scalar_t time);
+  vector_t getState(scalar_t time) const;
 
   /*
    * Calculate the reference state at a certain time and mode
@@ -100,7 +100,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @return state corresponding to time and mode
    */
-  vector_t getState(int idx, scalar_t time);
+  vector_t getState(int idx, scalar_t time) const;
 
   /*
    * Calculate the reference state at a certain time and mode
@@ -109,7 +109,7 @@ class OverallReference {
    * @param [in] time: time moment at which the input is calculated
    * @param [out] state: state corresponding to time and mode
    */
-  void getState(int idx, scalar_t time, vector_t& x);
+  void getState(int idx, scalar_t time, vector_t& x) const;
 
   /*
    * Extend the reference past the event times, by integrating the input signal
@@ -134,7 +134,7 @@ class OverallReference {
    *
    * @return currently active index
    */
-  int getIndex(scalar_t time);
+  int getIndex(scalar_t time) const;
 
   /*
    * Jump map of the system
@@ -143,7 +143,7 @@ class OverallReference {
    *
    * @return currently active index
    */
-  void jumpMap(vector_t& x);
+  void jumpMap(vector_t& x) const;
 
   std::vector<Reference> References_;
   std::vector<scalar_t> switchtimes_;

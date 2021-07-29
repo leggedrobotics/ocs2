@@ -54,7 +54,24 @@ struct PerformanceIndex {
   scalar_t inequalityConstraintISE = 0.0;
   /** The total penalty of the intermediate inequality constraints violation. */
   scalar_t inequalityConstraintPenalty = 0.0;
+
+  /** Add performance indices */
+  PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
+    this->merit += rhs.merit;
+    this->totalCost += rhs.totalCost;
+    this->stateEqConstraintISE += rhs.stateEqConstraintISE;
+    this->stateEqFinalConstraintSSE += rhs.stateEqFinalConstraintSSE;
+    this->stateInputEqConstraintISE += rhs.stateInputEqConstraintISE;
+    this->inequalityConstraintISE += rhs.inequalityConstraintISE;
+    this->inequalityConstraintPenalty += rhs.inequalityConstraintPenalty;
+    return *this;
+  }
 };
+
+inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
+  lhs += rhs;  // Copied lhs, add rhs to it.
+  return lhs;
+}
 
 inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& performanceIndex) {
   const size_t tabSpace = 12;

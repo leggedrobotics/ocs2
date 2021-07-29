@@ -32,9 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/Types.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/control/FeedforwardController.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP0.h>
 
@@ -52,8 +51,8 @@ class Exp0 : public testing::Test {
   Exp0() {
     // event times
     const ocs2::scalar_array_t eventTimes{0.1897};
-    const std::vector<size_t> subsystemsSequence{0, 1};
-    modeScheduleManagerPtr.reset(new ocs2::ModeScheduleManager({eventTimes, subsystemsSequence}));
+    const std::vector<size_t> modeSequence{0, 1};
+    referenceManagerPtr = ocs2::getExp0ReferenceManager(eventTimes, modeSequence);
 
     // partitioning times
     partitioningTimes = ocs2::scalar_array_t{startTime, eventTimes[0], finalTime};
@@ -61,26 +60,26 @@ class Exp0 : public testing::Test {
     // rollout settings
     const auto rolloutSettings = []() {
       ocs2::rollout::Settings rolloutSettings;
-      rolloutSettings.absTolODE_ = 1e-10;
-      rolloutSettings.relTolODE_ = 1e-7;
-      rolloutSettings.maxNumStepsPerSecond_ = 10000;
+      rolloutSettings.absTolODE = 1e-10;
+      rolloutSettings.relTolODE = 1e-7;
+      rolloutSettings.maxNumStepsPerSecond = 10000;
       return rolloutSettings;
     }();
 
     // dynamics and rollout
-    systemPtr.reset(new ocs2::EXP0_System(modeScheduleManagerPtr));
-    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(*systemPtr, rolloutSettings));
+    ocs2::EXP0_System system(referenceManagerPtr);
+    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(system, rolloutSettings));
+
+    // optimal control problem
+    problemPtr.reset(new ocs2::OptimalControlProblem);
+    problemPtr->dynamicsPtr.reset(system.clone());
 
     // cost function
-    costPtr.reset(new ocs2::EXP0_CostFunction(modeScheduleManagerPtr));
-
-    // constraint
-    constraintPtr.reset(new ocs2::ConstraintBase);
+    problemPtr->costPtr->add("cost", std::unique_ptr<ocs2::StateInputCost>(new ocs2::EXP0_Cost()));
+    problemPtr->finalCostPtr->add("finalCost", std::unique_ptr<ocs2::StateCost>(new ocs2::EXP0_FinalCost()));
 
     // operatingTrajectories
-    const auto stateOperatingPoint = ocs2::vector_t::Zero(STATE_DIM);
-    const auto inputOperatingPoint = ocs2::vector_t::Zero(INPUT_DIM);
-    operatingPointsPtr.reset(new ocs2::OperatingPoints(stateOperatingPoint, inputOperatingPoint));
+    initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
   ocs2::ddp::Settings getSettings(ocs2::ddp::Algorithm algorithmType, size_t numThreads, ocs2::search_strategy::Type strategy,
@@ -128,13 +127,11 @@ class Exp0 : public testing::Test {
   const ocs2::scalar_t finalTime = 2.0;
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 0.0, 2.0).finished();
   ocs2::scalar_array_t partitioningTimes;
-  std::shared_ptr<ocs2::ModeScheduleManager> modeScheduleManagerPtr;
+  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr;
 
-  std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
-  std::unique_ptr<ocs2::CostFunctionBase> costPtr;
-  std::unique_ptr<ocs2::ConstraintBase> constraintPtr;
-  std::unique_ptr<ocs2::OperatingPoints> operatingPointsPtr;
+  std::unique_ptr<ocs2::OptimalControlProblem> problemPtr;
+  std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
 constexpr size_t Exp0::STATE_DIM;
@@ -152,8 +149,8 @@ TEST_F(Exp0, ddp_feedback_policy) {
   ddpSettings.useFeedbackPolicy_ = true;
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
   ddp.run(startTime, initState, finalTime, partitioningTimes);
@@ -175,8 +172,8 @@ TEST_F(Exp0, ddp_feedforward_policy) {
   ddpSettings.useFeedbackPolicy_ = false;
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
   // run ddp
   ddp.run(startTime, initState, finalTime, partitioningTimes);
@@ -199,12 +196,12 @@ TEST_F(Exp0, ddp_caching) {
 
   // event times
   const ocs2::scalar_array_t eventTimes{1.0};
-  const std::vector<size_t> subsystemsSequence{0, 1};
-  modeScheduleManagerPtr.reset(new ocs2::ModeScheduleManager({eventTimes, subsystemsSequence}));
+  const std::vector<size_t> modeSequence{0, 1};
+  referenceManagerPtr = ocs2::getExp0ReferenceManager(eventTimes, modeSequence);
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
   // run single core SLQ (no active event)
   ocs2::scalar_t startTime = 0.2;
@@ -235,7 +232,7 @@ TEST_F(Exp0, ddp_caching) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/* Add parametrized test suite */
+/* Add parameterized test suite */
 class Exp0Param : public Exp0, public testing::WithParamInterface<std::tuple<ocs2::search_strategy::Type, size_t>> {
  protected:
   ocs2::search_strategy::Type getSearchStrategy() { return std::get<0>(GetParam()); }
@@ -251,8 +248,8 @@ TEST_P(Exp0Param, SLQ) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
@@ -275,8 +272,8 @@ TEST_P(Exp0Param, ILQR) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), operatingPointsPtr.get(), ddpSettings);
-  ddp.setModeScheduleManager(modeScheduleManagerPtr);
+  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";

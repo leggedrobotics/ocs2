@@ -1,12 +1,44 @@
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include <gtest/gtest.h>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
 
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_oc/test/dynamics_hybrid_slq_test.h>
 
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
 
 #include <ocs2_ddp/SLQ.h>
 
@@ -44,7 +76,7 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.maxNumIterations_ = 30;
   ddpSettings.nThreads_ = 1;
   ddpSettings.inequalityConstraintMu_ = 0.1;
-  ddpSettings.inequalityConstraintDelta_ = 1e-6;
+  ddpSettings.inequalityConstraintDelta_ = 1e-4;
   ddpSettings.checkNumericalStability_ = false;
   ddpSettings.absTolODE_ = 1e-10;
   ddpSettings.relTolODE_ = 1e-7;
@@ -55,9 +87,10 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;
 
   rollout::Settings rolloutSettings;
-  rolloutSettings.absTolODE_ = 1e-10;
-  rolloutSettings.relTolODE_ = 1e-7;
-  rolloutSettings.maxNumStepsPerSecond_ = 10000;
+  rolloutSettings.absTolODE = 1e-10;
+  rolloutSettings.relTolODE = 1e-7;
+  rolloutSettings.timeStep = 1e-3;
+  rolloutSettings.maxNumStepsPerSecond = 10000;
 
   scalar_t startTime = 0.0;
   scalar_t finalTime = 5.0;
@@ -70,23 +103,34 @@ TEST(HybridSlqTest, state_rollout_slq) {
   initState << 0, 1, 1;
 
   // rollout
-  hybridSysDynamics systemDynamics;
+  HybridSysDynamics systemDynamics;
   StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);
 
   // constraints
-  hybridSysConstraints systemConstraints;
+  std::unique_ptr<StateInputConstraint> systemConstraints(new HybridSysBounds);
+
   // cost function
   matrix_t Q(stateDim, stateDim);
   Q << 50, 0, 0, 0, 50, 0, 0, 0, 0;
-  matrix_t Qf(stateDim, stateDim);
-  Qf << 50, 0, 0, 0, 50, 0, 0, 0, 0;
   matrix_t R(inputDim, inputDim);
   R << 1;
+  std::unique_ptr<ocs2::StateInputCost> cost(new QuadraticStateInputCost(Q, R));
+  matrix_t Qf(stateDim, stateDim);
+  Qf << 50, 0, 0, 0, 50, 0, 0, 0, 0;
+  std::unique_ptr<ocs2::StateCost> preJumpCost(new QuadraticStateCost(Qf));
+  std::unique_ptr<ocs2::StateCost> finalCost(new QuadraticStateCost(Qf));
+
+  ocs2::OptimalControlProblem problem;
+  problem.dynamicsPtr.reset(systemDynamics.clone());
+  problem.inequalityConstraintPtr->add("bounds", std::move(systemConstraints));
+  problem.costPtr->add("cost", std::move(cost));
+  problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
+  problem.finalCostPtr->add("finalCost", std::move(finalCost));
+
   vector_t xNominal = vector_t::Zero(stateDim);
   vector_t uNominal = vector_t::Zero(inputDim);
-  CostDesiredTrajectories costDesiredTrajectories({startTime}, {xNominal}, {uNominal});
-
-  QuadraticCostFunction systemCost(Q, R, Qf);
+  TargetTrajectories targetTrajectories({startTime}, {xNominal}, {uNominal});
+  auto referenceManager = std::make_shared<ReferenceManager>(std::move(targetTrajectories));
 
   // operatingTrajectories
   vector_t stateOperatingPoint = vector_t::Zero(stateDim);
@@ -94,9 +138,10 @@ TEST(HybridSlqTest, state_rollout_slq) {
   OperatingPoints operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   std::cout << "Starting SLQ Procedure" << std::endl;
+
   // SLQ
-  SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, ddpSettings);
-  slq.setCostDesiredTrajectories(costDesiredTrajectories);
+  SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);
+  slq.setReferenceManager(referenceManager);
   slq.run(startTime, initState, finalTime, partitioningTimes);
   auto solution = slq.primalSolution(finalTime);
   std::cout << "SLQ Procedure Done" << std::endl;
@@ -109,7 +154,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
     }
   }
 
-  scalar_t cost;
   for (int i = 0; i < solution.stateTrajectory_.size(); i++) {
     // Test 1 : Constraint Compliance
     scalar_t constraint0 = -solution.inputTrajectory_[i][0] + 2;

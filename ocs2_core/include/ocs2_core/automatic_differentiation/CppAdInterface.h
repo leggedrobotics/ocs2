@@ -51,7 +51,6 @@ class CppAdInterface {
 
   using ad_base_t = ocs2::ad_base_t;
   using ad_scalar_t = ocs2::ad_scalar_t;
-  using rowMajor_matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using ad_vector_t = ocs2::ad_vector_t;
   using ad_function_t = std::function<void(const ad_vector_t&, ad_vector_t&)>;
   using ad_parameterized_function_t = std::function<void(const ad_vector_t&, const ad_vector_t&, ad_vector_t&)>;
@@ -69,7 +68,7 @@ class CppAdInterface {
    */
   CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
                  std::string folderName = "/tmp/ocs2",
-                 std::vector<std::string> compileFlags = {"-O3", "-march=native", "-mtune=native", "-ffast-math"});
+                 std::vector<std::string> compileFlags = {"-O3", "-g", "-march=native", "-mtune=native", "-ffast-math"});
 
   /**
    * Constructor for functions without parameters
@@ -81,7 +80,7 @@ class CppAdInterface {
    * @param compileFlags : Compilation flags for the model library.
    */
   CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName = "/tmp/ocs2",
-                 std::vector<std::string> compileFlags = {"-O3", "-march=native", "-mtune=native", "-ffast-math"});
+                 std::vector<std::string> compileFlags = {"-O3", "-g", "-march=native", "-mtune=native", "-ffast-math"});
 
   ~CppAdInterface() = default;
 
@@ -131,6 +130,20 @@ class CppAdInterface {
    * @return d/dx( f(x,p) )
    */
   matrix_t getJacobian(const vector_t& x, const vector_t& p = vector_t(0)) const;
+
+  /**
+   * Returns the full Gauss-Newton approximation of the function.
+   * With auto differentiated function y = f(x,p), the following approximation is made:
+   *
+   * value (scalar) : 0.5 * |y|^2
+   * first derivative : dy/dx' * y
+   * second derivative : dy/dx' * dy/dx
+   *
+   * @param x : input vector of size variableDim
+   * @param p : parameter vector of size parameterDim
+   * @return Quadratic approximation with the values stored in f, dfdx, dfdxx.
+   */
+  ScalarFunctionQuadraticApproximation getGaussNewtonApproximation(const vector_t& x, const vector_t& p = vector_t(0)) const;
 
   /**
    * Hessian, available per output.

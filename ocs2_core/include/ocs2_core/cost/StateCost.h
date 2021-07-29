@@ -31,8 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <type_traits>
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 namespace ocs2 {
 
@@ -43,24 +44,20 @@ class StateCost {
   virtual ~StateCost() = default;
   virtual StateCost* clone() const = 0;
 
-  /** Set cost term activity */
-  void setActivity(bool activity) { active_ = activity; }
-
   /** Check if cost term is active */
-  bool isActive() const { return active_; }
+  virtual bool isActive(scalar_t time) const { return true; }
 
   /** Get cost term value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const = 0;
+  virtual scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
+                            const PreComputation& preComp) const = 0;
 
   /** Get cost term quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const CostDesiredTrajectories& desiredTrajectory) const = 0;
+                                                                         const TargetTrajectories& targetTrajectories,
+                                                                         const PreComputation& preComp) const = 0;
 
  protected:
   StateCost(const StateCost& rhs) = default;
-
- private:
-  bool active_ = true;
 };
 
 // Template for conditional compilation using SFINAE

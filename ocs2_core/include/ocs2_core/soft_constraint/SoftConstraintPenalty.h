@@ -32,73 +32,75 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
 
 namespace ocs2 {
-
-enum class ConstraintOrder { Linear, Quadratic };
 
 /**
  *   A helper class that implements the cost penalty for general constraint
  *   \f$ h_i(x, u) \quad \forall  i \in [1,..,M] \f$
  *
- *   penalty = \f$ \sum_{i=1}^{M} p(h_i(x, u)) \f$
+ *   penalty(t, x, u) = \f$ \sum_{i=1}^{M} p(t, h_i(x, u)) \f$
  *
  *   This class uses the chain rule to compute the second-order approximation of the constraint-penalty. In the case that the
  *   second-order approximation of constraint is not provided, it employs a Gauss-Newton approximation technique which only
- *   relies on the first-order approximation.
+ *   relies on the first-order approximation. In general, the penalty function can be a function of time.
  */
 class SoftConstraintPenalty {
  public:
   /**
    * Constructor
-   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
+   * @note This imposes a fixed number of constraints, where the corresponding penalty function in the array is applied.
+   * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
-  SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray);
+  SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
   /**
-   * Constructor
-   * @param [in] numConstraints: The number of constraints.
+   * Constructor with s single penalty function
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
-  SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyFunctionBase> penaltyFunctionPtr);
+  SoftConstraintPenalty(std::unique_ptr<PenaltyBase> penaltyFunctionPtr);
 
   /** Default destructor */
   ~SoftConstraintPenalty() = default;
 
-  /** copy constructor */
+  /** Copy constructor */
   SoftConstraintPenalty(const SoftConstraintPenalty& other);
 
   /**
    * Get the penalty cost.
    *
-   * @param [in] h: Vector of inequality constraint values
+   * @param [in] t: The time that the constraint is evaluated.
+   * @param [in] h: Vector of inequality constraint values.
    * @return Penalty: The penalty cost.
    */
-  scalar_t getValue(const vector_t& h) const;
+  scalar_t getValue(scalar_t t, const vector_t& h) const;
 
   /**
    * Get the derivative of the penalty cost.
    * Implements the chain rule between the inequality constraint and penalty function.
    *
+   * @param [in] t: The time that the constraint is evaluated.
    * @param [in] h: The constraint linear approximation.
    * @return The penalty cost quadratic approximation.
    */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(const VectorFunctionLinearApproximation& h) const;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const VectorFunctionLinearApproximation& h) const;
 
   /**
    * Get the derivative of the penalty cost.
    * Implements the chain rule between the inequality constraint and penalty function.
    *
+   * @param [in] t: The time that the constraint is evaluated.
    * @param [in] h: The constraint quadratic approximation.
    * @return The penalty cost quadratic approximation.
    */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(const VectorFunctionQuadraticApproximation& h) const;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const VectorFunctionQuadraticApproximation& h) const;
 
  private:
-  std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(const vector_t& h) const;
+  std::tuple<scalar_t, vector_t, vector_t> getPenaltyValue1stDev2ndDev(scalar_t t, const vector_t& h) const;
 
-  std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray_;
+  std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray_;
 };
 
 }  // namespace ocs2

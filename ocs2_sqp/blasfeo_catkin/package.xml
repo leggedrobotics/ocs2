@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>blasfeo_catkin</name>
+  <version>0.0.0</version>
+  <description>Catkin wrapper for Blasfeo.</description>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>See package</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

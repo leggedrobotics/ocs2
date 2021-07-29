@@ -1,4 +1,5 @@
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 
 // Automatic Differentation
@@ -7,12 +8,12 @@
 #include <ocs2_core/automatic_differentiation/FiniteDifferenceMethods.h>
 
 // Constraint
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/ConstraintBaseAD.h>
-#include <ocs2_core/constraint/ConstraintCollection.h>
-#include <ocs2_core/constraint/LinearConstraint.h>
-#include <ocs2_core/constraint/PenaltyBase.h>
-#include <ocs2_core/constraint/RelaxedBarrierPenalty.h>
+#include <ocs2_core/constraint/LinearStateConstraint.h>
+#include <ocs2_core/constraint/LinearStateInputConstraint.h>
+#include <ocs2_core/constraint/StateConstraint.h>
+#include <ocs2_core/constraint/StateConstraintCollection.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
 // Control
 #include <ocs2_core/control/ControllerBase.h>
@@ -23,14 +24,12 @@
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
 
 // Cost
-#include <ocs2_core/cost/CostCollection.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/cost/CostFunctionBaseAD.h>
-#include <ocs2_core/cost/CostFunctionLinearCombination.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/cost/QuadraticGaussNewtonCostBaseAD.h>
-#include <ocs2_core/cost/RelaxedBarrierCost.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/cost/StateCost.h>
+#include <ocs2_core/cost/StateCostCollection.h>
+#include <ocs2_core/cost/StateInputCost.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
 
 // Dynamics
 #include <ocs2_core/dynamics/ControlledSystemBase.h>
@@ -41,8 +40,9 @@
 #include <ocs2_core/dynamics/TransferFunctionBase.h>
 
 // Initialization
+#include <ocs2_core/initialization/DefaultInitializer.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/initialization/OperatingPoints.h>
-#include <ocs2_core/initialization/SystemOperatingTrajectoriesBase.h>
 
 // Integration
 #include <ocs2_core/integration/Integrator.h>
@@ -55,34 +55,41 @@
 #include <ocs2_core/integration/steppers.h>
 
 // Logic
-#include <ocs2_core/logic/ModeSchedule.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 
 // Loopshaping
 #include <ocs2_core/loopshaping/Loopshaping.h>
 
 // Misc
 #include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_core/misc/CommandLine.h>
 // #include <ocs2_core/misc/LTI_Equations.h>
 // #include <ocs2_core/misc/LinearFunction.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/Lookup.h>
-#include <ocs2_core/misc/SetThreadPriority.h>
 #include <ocs2_core/misc/randomMatrices.h>
 
+// thread_support
+#include <ocs2_core/thread_support/BufferedValue.h>
+#include <ocs2_core/thread_support/SetThreadPriority.h>
+#include <ocs2_core/thread_support/Synchronized.h>
+#include <ocs2_core/thread_support/ThreadPool.h>
+
 // model_data
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 // soft_constraint
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyFunctionBase.h>
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenaltyFunction.h>
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenaltyFunction.h>
+#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenalty.h>
+#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
 
 // dummy target for clang toolchain
 int main() {

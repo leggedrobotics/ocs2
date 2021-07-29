@@ -34,15 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/constraint/PenaltyBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/logic/ModeSchedule.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 
-#include "ocs2_oc/oc_solver/PerformanceIndex.h"
-#include "ocs2_oc/rollout/RolloutBase.h"
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_oc/oc_solver/PerformanceIndex.h>
+#include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "StrategySettings.h"
 
@@ -104,8 +103,8 @@ class SearchStrategyBase {
   virtual bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                    PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                    vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                   std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                   std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) = 0;
+                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -128,7 +127,7 @@ class SearchStrategyBase {
    * @param [out] deltaGv: The Riccati modifier to cost derivative w.r.t. input.
    * @param [out] deltaGm: The Riccati modifier to cost input-state derivative.
    */
-  virtual void computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
+  virtual void computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                           matrix_t& deltaGm) const = 0;
 
   /**
@@ -138,29 +137,25 @@ class SearchStrategyBase {
    * @param [in] Hm: The Hessian of Hamiltonian that should be augmented.
    * @return The augmented Hamiltonian's Hessian.
    */
-  virtual matrix_t augmentHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Hm) const = 0;
+  virtual matrix_t augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const = 0;
 
   /**
    * Evaluates cost and constraints along the given time trajectories.
    *
-   * @param [in] constraints: A reference to the constraint.
-   * @param [in] costFunction: A reference to the cost function.
-   * @param [in] heuristicsFunction: A reference to the heuristics function.
+   * @param [in] problem: A reference to the optimal control problem.
    * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
    * @param [in] postEventIndicesStock: Array of the post-event indices.
    * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
    * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [in] constraints: A reference to the constraint class.
-   * @param [in] costFunction: A reference to the cost class.
    * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] heuristicsValue: The Heuristics function value.
    */
-  void rolloutCostAndConstraints(ConstraintBase& constraints, CostFunctionBase& costFunction, CostFunctionBase& heuristicsFunction,
-                                 const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock,
-                                 const vector_array2_t& stateTrajectoriesStock, const vector_array2_t& inputTrajectoriesStock,
-                                 std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                 std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const;
+  void rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array2_t& timeTrajectoriesStock,
+                                 const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
+                                 const vector_array2_t& inputTrajectoriesStock,
+                                 std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                 std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const;
 
   /**
    * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
@@ -173,9 +168,10 @@ class SearchStrategyBase {
    *
    * @return The cost, merit function and ISEs of constraints for the trajectory.
    */
-  PerformanceIndex calculateRolloutPerformanceIndex(const PenaltyBase& ineqConstrPenalty, const scalar_array2_t& timeTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock,
+  PerformanceIndex calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
+                                                    const scalar_array2_t& timeTrajectoriesStock,
+                                                    const std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                                    const std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
                                                     scalar_t heuristicsValue) const;
 
  protected:
@@ -198,8 +194,8 @@ class SearchStrategyBase {
   scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                              scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
                              vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                             std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock) const;
+                             std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                             std::vector<std::vector<ModelData>>& modelDataEventTimesStock) const;
 
   /**
    * Calculates the integral of the squared (IS) norm of the controller update.

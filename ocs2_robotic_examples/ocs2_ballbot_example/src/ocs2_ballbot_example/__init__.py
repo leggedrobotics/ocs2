@@ -1,2 +1,0 @@
-from BallbotPyBindings import mpc_interface
-from BallbotPyBindings import scalar_array, vector_array, matrix_array, CostDesiredTrajectories

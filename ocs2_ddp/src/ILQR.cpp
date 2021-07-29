@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_ddp/ILQR.h>
-
+#include "ocs2_ddp/ILQR.h"
 #include <ocs2_ddp/riccati_equations/RiccatiTransversalityConditions.h>
 
 namespace ocs2 {
@@ -36,12 +35,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-           const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-           ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
-
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
-           heuristicsFunctionPtr) {
+ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+           const Initializer& initializer)
+    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::ILQR) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");
@@ -66,21 +62,24 @@ ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynami
 /******************************************************************************************************/
 void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
                                      const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                     std::vector<ModelDataBase>& modelDataTrajectory) {
+                                     std::vector<ModelData>& modelDataTrajectory) {
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {
     size_t timeIndex;
     size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
 
-    ModelDataBase continuousTimeModelData;
+    ModelData continuousTimeModelData;
 
     // get next time index is atomic
     while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
       // execute continuous time LQ approximation for the given partition and time index
       continuousTimeModelData = modelDataTrajectory[timeIndex];
-      BASE::linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                                                               inputTrajectory[timeIndex], continuousTimeModelData);
+
+      LinearQuadraticApproximator lqapprox(BASE::optimalControlProblemStock_[taskId], BASE::settings().checkNumericalStability_);
+      lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
+                                    continuousTimeModelData);
+      continuousTimeModelData.checkSizes(stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
 
       // discretize LQ problem
       scalar_t timeStep = 0.0;
@@ -102,13 +101,14 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDataBase& continuousTimeModelData, ModelDataBase& modelData) {
+void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData) {
   /*
    * linearize system dynamics
    */
   modelData.dynamics_.dfdx = matrix_t::Identity(continuousTimeModelData.stateDim_, continuousTimeModelData.stateDim_) +
                              continuousTimeModelData.dynamics_.dfdx * timeStep;
   modelData.dynamics_.dfdu = continuousTimeModelData.dynamics_.dfdu * timeStep;
+  modelData.dynamics_.f.setZero(continuousTimeModelData.stateDim_);
 
   /*
    * quadratic approximation to the cost function
@@ -197,7 +197,7 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t ILQR::computeHamiltonianHessian(const ModelDataBase& modelData, const matrix_t& Sm) const {
+matrix_t ILQR::computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const {
   const matrix_t BmTransSm = modelData.dynamics_.dfdu.transpose() * Sm;
   matrix_t Hm = modelData.cost_.dfduu;
   Hm.noalias() += BmTransSm * modelData.dynamics_.dfdu;

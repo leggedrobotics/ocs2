@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_map>
 
 #include <ocs2_core/integration/Integrator.h>
+#include <ocs2_core/integration/RungeKuttaDormandPrince5.h>
 #include <ocs2_core/integration/implementation/Integrator.h>
 
 namespace ocs2 {
@@ -42,6 +43,7 @@ std::string toString(IntegratorType integratorType) {
   static const std::unordered_map<IntegratorType, std::string> integratorMap = {
       {IntegratorType::EULER, "EULER"},
       {IntegratorType::ODE45, "ODE45"},
+      {IntegratorType::ODE45_OCS2, "ODE45_OCS2"},
       {IntegratorType::ADAMS_BASHFORTH, "ADAMS_BASHFORTH"},
       {IntegratorType::BULIRSCH_STOER, "BULIRSCH_STOER"},
       {IntegratorType::MODIFIED_MIDPOINT, "MODIFIED_MIDPOINT"},
@@ -59,6 +61,7 @@ IntegratorType fromString(const std::string& name) {
   static const std::unordered_map<std::string, IntegratorType> integratorMap = {
       {"EULER", IntegratorType::EULER},
       {"ODE45", IntegratorType::ODE45},
+      {"ODE45_OCS2", IntegratorType::ODE45_OCS2},
       {"ADAMS_BASHFORTH", IntegratorType::ADAMS_BASHFORTH},
       {"BULIRSCH_STOER", IntegratorType::BULIRSCH_STOER},
       {"MODIFIED_MIDPOINT", IntegratorType::MODIFIED_MIDPOINT},
@@ -80,6 +83,8 @@ std::unique_ptr<IntegratorBase> newIntegrator(IntegratorType integratorType, con
       return std::unique_ptr<IntegratorBase>(new IntegratorEuler(eventHandlerPtr));
     case (IntegratorType::ODE45):
       return std::unique_ptr<IntegratorBase>(new ODE45(eventHandlerPtr));
+    case (IntegratorType::ODE45_OCS2):
+      return std::unique_ptr<IntegratorBase>(new RungeKuttaDormandPrince5(eventHandlerPtr));
     case (IntegratorType::ADAMS_BASHFORTH):
       return std::unique_ptr<IntegratorBase>(new IntegratorAdamsBashforth<1>(eventHandlerPtr));
     case (IntegratorType::BULIRSCH_STOER):

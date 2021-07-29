@@ -29,10 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBaseAD.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_core/cost/StateInputCostCppAd.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
 
 namespace ocs2 {
 
@@ -49,11 +48,11 @@ class CircularKinematicsSystem final : public SystemDynamicsBase {
   CircularKinematicsSystem() = default;
   ~CircularKinematicsSystem() override = default;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override { return u; }
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override { return u; }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) {
     VectorFunctionLinearApproximation dynamics;
-    dynamics.f = computeFlowMap(t, x, u);
+    dynamics.f = computeFlowMap(t, x, u, preComp);
     dynamics.dfdx.setZero(2, 2);
     dynamics.dfdu.setIdentity(2, 2);
     return dynamics;
@@ -70,21 +69,17 @@ class CircularKinematicsSystem final : public SystemDynamicsBase {
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsCost final : public CostFunctionBaseAD {
+class CircularKinematicsCost : public StateInputCostCppAd {
  public:
-  CircularKinematicsCost() : CostFunctionBaseAD(2, 2) {}
-  ~CircularKinematicsCost() override = default;
+  CircularKinematicsCost(const std::string& libraryPath = "/tmp/ocs2") {
+    initialize(2, 2, 0, "circular_kinematics_cost", libraryPath, true, false);
+  }
 
   CircularKinematicsCost* clone() const override { return new CircularKinematicsCost(*this); }
 
- protected:
-  ad_scalar_t intermediateCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                       const ad_vector_t& parameters) const override {
+  ad_scalar_t costFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                           const ad_vector_t& parameters) const override {
     return 0.5 * pow(state(0) * input(1) - state(1) * input(0) - 1.0, 2) + 0.005 * input.dot(input);
-  }
-
-  ad_scalar_t finalCostFunction(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& parameters) const override {
-    return ad_scalar_t(0.0);
   }
 };
 
@@ -96,27 +91,48 @@ class CircularKinematicsCost final : public CostFunctionBaseAD {
  * supposed to orbit a unite circle (defined as a constraint) with velocity of 1[m/s]
  * (defined as a cost).
  */
-class CircularKinematicsConstraints final : public ConstraintBase {
+class CircularKinematicsConstraints final : public StateInputConstraint {
  public:
-  CircularKinematicsConstraints() = default;
+  CircularKinematicsConstraints() : StateInputConstraint(ConstraintOrder::Linear) {}
   ~CircularKinematicsConstraints() override = default;
 
   CircularKinematicsConstraints* clone() const override { return new CircularKinematicsConstraints(*this); }
 
-  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override {
+  size_t getNumConstraints(scalar_t time) const override { return 1; }
+
+  vector_t getValue(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) const override {
     vector_t e(1);
     e << x.dot(u);
     return e;
   }
 
-  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                    const vector_t& u) override {
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                           const PreComputation& preComp) const override {
     VectorFunctionLinearApproximation e;
-    e.f = stateInputEqualityConstraint(t, x, u);
+    e.f = getValue(t, x, u, preComp);
     e.dfdx = u.transpose();
     e.dfdu = x.transpose();
     return e;
   }
 };
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline OptimalControlProblem createCircularKinematicsProblem(const std::string& libraryFolder) {
+  // optimal control problem
+  OptimalControlProblem problem;
+  problem.dynamicsPtr.reset(new CircularKinematicsSystem());
+
+  // cost function
+  std::unique_ptr<StateInputCost> cost(new CircularKinematicsCost(libraryFolder));
+  problem.costPtr->add("cost", std::move(cost));
+
+  // constraint
+  std::unique_ptr<StateInputConstraint> constraint(new CircularKinematicsConstraints());
+  problem.equalityConstraintPtr->add("constraint", std::move(constraint));
+
+  return problem;
+}
 
 }  // namespace ocs2

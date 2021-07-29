@@ -42,12 +42,12 @@ namespace ocs2 {
  *   Implements the cost penalty for state-input constraint terms
  *   \f$ h_i(x, u) \quad \forall  i \in [1,..,M] \f$
  *
- *   penalty = \f$ \sum_{i=1}^{M} p(h_i(x, u)) \f$
+ *   penalty(t, x, u) = \f$ \sum_{i=1}^{M} p(t, h_i(x, u)) \f$
  *
  *   The scalar penalty function \f$ p() \f$ and its derivatives are provided by the user.
  *   This class uses the chain rule to compute the second-order approximation of the constraint-penalty. In the case that the
  *   second-order approximation of constraint is not provided, it employs a Gauss-Newton approximation technique which only
- *   relies on the first-order approximation.
+ *   relies on the first-order approximation. In general, the penalty function can be a function of time.
  *
  *   A few commonly-used penalty functions have been provided by the toolbox such as Relaxed-Barrier and Squared-Hinge
  *   penalty functions.
@@ -57,22 +57,17 @@ class StateInputSoftConstraint final : public StateInputCost {
   /**
    * Constructor.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyFunctionPtrArray: An array of pointers to the penalty function on the constraint.
-   * @param [in] constraintOrder: The order of constraint's approximation.
+   * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr,
-                           std::vector<std::unique_ptr<PenaltyFunctionBase>> penaltyFunctionPtrArray,
-                           ConstraintOrder constraintOrder = ConstraintOrder::Quadratic);
+  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
   /**
    * Constructor.
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
-   * @param [in] constraintOrder: The order of constraint's approximation.
    */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, size_t numConstraints,
-                           std::unique_ptr<PenaltyFunctionBase> penaltyFunction,
-                           ConstraintOrder constraintOrder = ConstraintOrder::Quadratic);
+  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
 
   ~StateInputSoftConstraint() override = default;
 
@@ -85,18 +80,20 @@ class StateInputSoftConstraint final : public StateInputCost {
 
   StateInputSoftConstraint* clone() const override;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                    const CostDesiredTrajectories& /* desiredTrajectory */) const override;
+  bool isActive(scalar_t time) const override;
+
+  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& /* targetTrajectories */,
+                    const PreComputation& preComp) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const CostDesiredTrajectories& /* desiredTrajectory */) const override;
+                                                                 const TargetTrajectories& /* targetTrajectories */,
+                                                                 const PreComputation& preComp) const override;
 
  private:
   StateInputSoftConstraint(const StateInputSoftConstraint& other);
 
   std::unique_ptr<StateInputConstraint> constraintPtr_;
   SoftConstraintPenalty penalty_;
-  ConstraintOrder constraintOrder_;
 };
 
 }  // namespace ocs2

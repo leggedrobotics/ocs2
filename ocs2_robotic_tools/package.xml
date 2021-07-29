@@ -1,0 +1,21 @@
+<?xml version="2.0"?>
+<package>
+  <name>ocs2_robotic_tools</name>
+  <version>0.0.0</version>
+  <description>The ocs2_robotic_tools package</description>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cmake_clang_tools</build_depend>
+  <build_depend>ocs2_core</build_depend>
+  <build_depend>ocs2_oc</build_depend>
+  <run_depend>ocs2_core</run_depend>
+  <run_depend>ocs2_oc</run_depend>
+
+</package>

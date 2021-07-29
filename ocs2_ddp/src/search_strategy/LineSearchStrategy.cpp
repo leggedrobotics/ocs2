@@ -39,19 +39,21 @@ namespace ocs2 {
 /******************************************************************************************************/
 LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                                        std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
-                                       std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
-                                       std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
-                                       std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
-                                       PenaltyBase& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc)
+                                       std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock,
+                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
+                                       std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
       rolloutRefStock_(std::move(rolloutRefStock)),
-      constraintsRefStock_(std::move(constraintsRefStock)),
-      costFunctionRefStock_(std::move(costFunctionRefStock)),
-      heuristicsFunctionsRefStock_(std::move(heuristicsFunctionsRefStock)),
+      optimalControlProblemRefStock_(std::move(optimalControlProblemRefStock)),
       ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
-      meritFunc_(std::move(meritFunc)) {}
+      meritFunc_(std::move(meritFunc)) {
+  // infeasible learning rate adjustment scheme
+  if (!numerics::almost_ge(settings_.maxStepLength_, settings_.minStepLength_)) {
+    throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
+  }
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -59,8 +61,8 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
 bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
                              PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock,
                              size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                             vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelDataBase>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelDataBase>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+                             vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                             std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(settings_.minStepLength_, settings_.maxStepLength_)) {
@@ -70,7 +72,7 @@ bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSche
   } else {
     const auto ratio = settings_.minStepLength_ / settings_.maxStepLength_;
     maxNumOfLineSearches =
-        static_cast<size_t>(std::log(ratio + OCS2NumericTraits<scalar_t>::limitEpsilon()) / std::log(settings_.contractionRate_) + 1);
+        static_cast<size_t>(std::log(ratio + numeric_traits::limitEpsilon<scalar_t>()) / std::log(settings_.contractionRate_) + 1);
   }
 
   // perform a rollout with steplength zero.
@@ -82,9 +84,8 @@ bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSche
         rolloutTrajectory(rolloutRefStock_[taskId], modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock,
                           stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
     scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(constraintsRefStock_[taskId], costFunctionRefStock_[taskId], heuristicsFunctionsRefStock_[taskId],
-                              timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                              modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+    rolloutCostAndConstraints(optimalControlProblemRefStock_[taskId], timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
+                              inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
 
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
@@ -164,8 +165,8 @@ void LineSearchStrategy::lineSearchTask() {
   size_array2_t postEventIndicesStock(numPartitions_);
   vector_array2_t stateTrajectoriesStock(numPartitions_);
   vector_array2_t inputTrajectoriesStock(numPartitions_);
-  std::vector<std::vector<ModelDataBase>> modelDataTrajectoriesStock(numPartitions_);
-  std::vector<std::vector<ModelDataBase>> modelDataEventTimesStock(numPartitions_);
+  std::vector<std::vector<ModelData>> modelDataTrajectoriesStock(numPartitions_);
+  std::vector<std::vector<ModelData>> modelDataEventTimesStock(numPartitions_);
 
   while (true) {
     size_t alphaExp = lineSearchModule_.alphaExpNext++;
@@ -206,9 +207,9 @@ void LineSearchStrategy::lineSearchTask() {
                                                  timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
                                                  inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
       scalar_t heuristicsValue = 0.0;
-      rolloutCostAndConstraints(constraintsRefStock_[taskId], costFunctionRefStock_[taskId], heuristicsFunctionsRefStock_[taskId],
-                                timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                                modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+      rolloutCostAndConstraints(optimalControlProblemRefStock_[taskId], timeTrajectoriesStock, postEventIndicesStock,
+                                stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock,
+                                heuristicsValue);
 
       // compute average time step of forward rollout
       avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
@@ -330,7 +331,7 @@ std::pair<bool, std::string> LineSearchStrategy::checkConvergence(bool unreliabl
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LineSearchStrategy::computeRiccatiModification(const ModelDataBase& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
+void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                                     matrix_t& deltaGm) const {
   const auto& QmProjected = projectedModelData.cost_.dfdxx;
   const auto& PmProjected = projectedModelData.cost_.dfdux;

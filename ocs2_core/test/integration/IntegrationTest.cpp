@@ -37,67 +37,72 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 
-void testSecondOrderSystem(IntegratorType integrator_type) {
-  const size_t stateDim = 2;
-  const size_t inputDim = 1;
-
+std::unique_ptr<OdeBase> getSystem() {
   matrix_t A(2, 2);
   A << -2, -1,  // clang-format off
         1,  0;  // clang-format on
   matrix_t B(2, 1);
   B << 1, 0;
+  auto sys = std::unique_ptr<ControlledSystemBase>(new LinearSystemDynamics(A, B));
 
-  auto sys = std::shared_ptr<ControlledSystemBase>(new LinearSystemDynamics(A, B));
-
-  const scalar_t t0 = 0.0;
-  const scalar_t t1 = 10.0;
-  const scalar_t dt = 0.05;
-  vector_t x0 = vector_t::Zero(2);
   scalar_array_t cntTimeStamp{0, 10};
   vector_array_t uff(2, vector_t::Ones(1));
   matrix_array_t k(2, matrix_t::Zero(1, 2));
-
-  auto controller = std::unique_ptr<LinearController>(new LinearController(cntTimeStamp, uff, k));
-
+  static std::shared_ptr<LinearController> controller = std::make_shared<LinearController>(cntTimeStamp, uff, k);
   sys->setController(controller.get());
 
-  std::shared_ptr<ControlledSystemBase> sysClone1(sys->clone());
-  ASSERT_TRUE(sysClone1.unique());
+  return std::move(sys);
+}
 
-  scalar_array_t timeTrajectory1, timeTrajectory2;
-  vector_array_t stateTrajectory1, stateTrajectory2, stateTrajectory3;
+void testSecondOrderSystem(IntegratorType integrator_type) {
+  const scalar_t t0 = 0.0;
+  const scalar_t t1 = 10.0;
+  const scalar_t dt = 0.05;
+  const vector_t x0 = vector_t::Zero(2);
+
+  auto sys = getSystem();
 
   std::unique_ptr<IntegratorBase> integrator = newIntegrator(integrator_type);
 
   // Adaptive time integrator
-  Observer observer1(&stateTrajectory1, &timeTrajectory1);
-  integrator->integrateAdaptive(*sys, observer1, x0, t0, t1);
+  ocs2::scalar_array_t timeTrajectory;
+  ocs2::vector_array_t stateTrajectory;
+  auto observer = ocs2::Observer(&stateTrajectory, &timeTrajectory);
+  integrator->integrateAdaptive(*sys, observer, x0, t0, t1);
 
-  EXPECT_NEAR(timeTrajectory1.front(), t0, 1e-6);
-  EXPECT_NEAR(timeTrajectory1.back(), t1, 1e-6);
-  EXPECT_TRUE(stateTrajectory1.front().isApprox(x0, 1e-6));
-  EXPECT_NEAR(stateTrajectory1.back()(1), 1.0, 1e-3);
+  EXPECT_NEAR(timeTrajectory.front(), t0, 1e-6);
+  EXPECT_NEAR(timeTrajectory.back(), t1, 1e-6);
+  EXPECT_TRUE(stateTrajectory.front().isApprox(x0, 1e-6));
+  EXPECT_NEAR(stateTrajectory.back()(0), 0.0, 1e-3);
+  EXPECT_NEAR(stateTrajectory.back()(1), 1.0, 1e-3);
 
   // Equidistant time integrator
-  Observer observer2(&stateTrajectory2, &timeTrajectory2);
-  integrator->integrateConst(*sys, observer2, x0, t0, t1, dt);
+  stateTrajectory.clear();
+  timeTrajectory.clear();
+  observer = ocs2::Observer(&stateTrajectory, &timeTrajectory);
+  integrator->integrateConst(*sys, observer, x0, t0, t1, dt);
 
-  EXPECT_NEAR(timeTrajectory2.front(), t0, 1e-6);
-  EXPECT_NEAR(timeTrajectory2.back(), t1, 1e-6);
-  EXPECT_TRUE(stateTrajectory2.front().isApprox(x0, 1e-6));
-  EXPECT_NEAR(stateTrajectory2.back()(1), 1.0, 1e-3);
+  EXPECT_NEAR(timeTrajectory.front(), t0, 1e-6);
+  EXPECT_NEAR(timeTrajectory.back(), t1, 1e-6);
+  EXPECT_TRUE(stateTrajectory.front().isApprox(x0, 1e-6));
+  EXPECT_NEAR(stateTrajectory.back()(0), 0.0, 1e-3);
+  EXPECT_NEAR(stateTrajectory.back()(1), 1.0, 1e-3);
 
   // Integrator with given time trajectory
-  Observer observer3(&stateTrajectory3);
+  stateTrajectory.clear();
+  observer = ocs2::Observer(&stateTrajectory);
+  integrator->integrateTimes(*sys, observer, x0, timeTrajectory.begin(), timeTrajectory.end());
 
-  // integrate with given time trajectory
-  integrator->integrateTimes(*sys, observer3, x0, timeTrajectory1.begin(), timeTrajectory1.end());
-
-  EXPECT_NEAR(stateTrajectory3.back()(1), 1.0, 1e-3);
+  EXPECT_NEAR(stateTrajectory.back()(0), 0.0, 1e-3);
+  EXPECT_NEAR(stateTrajectory.back()(1), 1.0, 1e-3);
 }
 
 TEST(IntegrationTest, SecondOrderSystem_ODE45) {
   testSecondOrderSystem(IntegratorType::ODE45);
+}
+
+TEST(IntegrationTest, SecondOrderSystem_ODE45_OCS2) {
+  testSecondOrderSystem(IntegratorType::ODE45_OCS2);
 }
 
 TEST(IntegrationTest, SecondOrderSystem_AdamsBashfort) {

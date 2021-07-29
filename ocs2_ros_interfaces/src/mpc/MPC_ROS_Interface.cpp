@@ -27,21 +27,28 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include "ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h"
+
+#include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 namespace ocs2 {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string robotName /*= "robot"*/)
+MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
     : mpc_(mpc),
-      robotName_(std::move(robotName)),
-      currentPrimalSolution_(new PrimalSolution()),
-      primalSolutionBuffer_(new PrimalSolution()),
-      currentCommand_(new CommandData()),
-      commandBuffer_(new CommandData()) {
-  set();
+      topicPrefix_(std::move(topicPrefix)),
+      bufferPrimalSolutionPtr_(new PrimalSolution()),
+      publisherPrimalSolutionPtr_(new PrimalSolution()),
+      bufferCommandPtr_(new CommandData()),
+      publisherCommandPtr_(new CommandData()),
+      bufferPerformanceIndicesPtr_(new PerformanceIndex),
+      publisherPerformanceIndicesPtr_(new PerformanceIndex) {
+  // start thread for publishing
+#ifdef PUBLISH_THREAD
+  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
+#endif
 }
 
 /******************************************************************************************************/
@@ -54,34 +61,12 @@ MPC_ROS_Interface::~MPC_ROS_Interface() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::set() {
-  terminateThread_ = false;
-  readyToPublish_ = false;
-
-  resetRequestedEver_ = false;
-  mpcTimer_.reset();
-
-  // Start thread for publishing
-#ifdef PUBLISH_THREAD
-  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorkerThread, this);
-#endif
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_ROS_Interface::reset(const CostDesiredTrajectories& initCostDesiredTrajectories) {
+void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
-
   mpc_.reset();
-
-  resetRequestedEver_ = true;
-
-  mpc_.getSolverPtr()->setCostDesiredTrajectories(initCostDesiredTrajectories);
-  costDesiredTrajectoriesBufferUpdated_ = false;
-
+  mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
   mpcTimer_.reset();
-
+  resetRequestedEver_ = true;
   terminateThread_ = false;
   readyToPublish_ = false;
 }
@@ -91,10 +76,8 @@ void MPC_ROS_Interface::reset(const CostDesiredTrajectories& initCostDesiredTraj
 /******************************************************************************************************/
 bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
   if (static_cast<bool>(req.reset)) {
-    CostDesiredTrajectories initCostDesiredTrajectories;
-    ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories, initCostDesiredTrajectories);
-    reset(initCostDesiredTrajectories);
-
+    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
+    resetMpcNode(std::move(targetTrajectories));
     res.done = static_cast<uint8_t>(true);
 
     std::cerr << "\n#####################################################"
@@ -102,24 +85,27 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
               << "\n#################  MPC is reset.  ###################"
               << "\n#####################################################"
               << "\n#####################################################\n";
+    return true;
 
   } else {
-    ROS_WARN_STREAM("Ineffective reset request.");
+    ROS_WARN_STREAM("[MPC_ROS_Interface] Reset request failed!");
+    return false;
   }
-
-  return true;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const PrimalSolution& primalSolution,
-                                                                          const CommandData& commandData) {
+                                                                          const CommandData& commandData,
+                                                                          const PerformanceIndex& performanceIndices) {
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
 
-  ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_, mpcPolicyMsg.initObservation);
-  ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcCostDesiredTrajectories_, mpcPolicyMsg.planTargetTrajectories);
-  ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_, mpcPolicyMsg.modeSchedule);
+  mpcPolicyMsg.initObservation = ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_);
+  mpcPolicyMsg.planTargetTrajectories = ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcTargetTrajectories_);
+  mpcPolicyMsg.modeSchedule = ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_);
+  mpcPolicyMsg.performanceIndices =
+      ros_msg_conversions::createPerformanceIndicesMsg(commandData.mpcInitObservation_.time, performanceIndices);
 
   switch (primalSolution.controllerPtr_->getType()) {
     case ControllerType::FEEDFORWARD:
@@ -187,7 +173,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::publisherWorkerThread() {
+void MPC_ROS_Interface::publisherWorker() {
   while (!terminateThread_) {
     std::unique_lock<std::mutex> lk(publisherMutex_);
 
@@ -198,12 +184,14 @@ void MPC_ROS_Interface::publisherWorkerThread() {
     }
 
     {
-      std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
-      currentPrimalSolution_.swap(primalSolutionBuffer_);
-      currentCommand_.swap(commandBuffer_);
+      std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
+      publisherCommandPtr_.swap(bufferCommandPtr_);
+      publisherPrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);
+      publisherPerformanceIndicesPtr_.swap(bufferPerformanceIndicesPtr_);
     }
 
-    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*currentPrimalSolution_, *currentCommand_);
+    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg =
+        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_);
 
     // publish the message
     mpcPolicyPublisher_.publish(mpcPolicyMsg);
@@ -217,20 +205,23 @@ void MPC_ROS_Interface::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::fillMpcOutputBuffers(SystemObservation mpcInitObservation) {
+void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) {
   // buffer policy mutex
-  std::lock_guard<std::mutex> policyBufferLock(policyBufferMutex_);
+  std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
 
   // get solution
   scalar_t finalTime = mpcInitObservation.time + mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) {
     finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
-  mpc_.getSolverPtr()->getPrimalSolution(finalTime, primalSolutionBuffer_.get());
+  mpc_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
 
   // command
-  commandBuffer_->mpcInitObservation_ = std::move(mpcInitObservation);
-  commandBuffer_->mpcCostDesiredTrajectories_ = mpc_.getSolverPtr()->getCostDesiredTrajectories();
+  bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
+  bufferCommandPtr_->mpcTargetTrajectories_ = mpc_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
+
+  // performance indices
+  *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
 }
 
 /******************************************************************************************************/
@@ -245,30 +236,17 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   }
 
   // current time, state, input, and subsystem
-  SystemObservation currentObservation;
-  ros_msg_conversions::readObservationMsg(*msg, currentObservation);
+  const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();
-
-  // Set latest cost desired trajectories
-  if (costDesiredTrajectoriesBufferUpdated_) {
-    std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-    mpc_.getSolverPtr()->swapCostDesiredTrajectories(costDesiredTrajectoriesBuffer_);
-    costDesiredTrajectoriesBufferUpdated_ = false;
-
-    if (mpc_.settings().debugPrint_) {
-      std::cerr << "### The target position is updated to \n";
-      mpc_.getSolverPtr()->getCostDesiredTrajectories().display();
-    }
-  }
 
   // run MPC
   bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
   if (!controllerIsUpdated) {
     return;
   }
-  fillMpcOutputBuffers(currentObservation);
+  copyToBuffer(currentObservation);
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -298,18 +276,10 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   msgReady_.notify_one();
 
 #else
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*primalSolutionBuffer_, *commandBuffer_);
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg =
+      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_ROS_Interface::mpcTargetTrajectoriesCallback(const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) {
-  std::lock_guard<std::mutex> lock(costDesiredTrajectoriesBufferMutex_);
-  ros_msg_conversions::readTargetTrajectoriesMsg(*msg, costDesiredTrajectoriesBuffer_);
-  costDesiredTrajectoriesBufferUpdated_ = true;
 }
 
 /******************************************************************************************************/
@@ -354,18 +324,14 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   ROS_INFO_STREAM("MPC node is setting up ...");
 
   // Observation subscriber
-  mpcObservationSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this,
-                                                   ::ros::TransportHints().udp());
-
-  // Goal subscriber
-  mpcTargetTrajectoriesSubscriber_ = nodeHandle.subscribe(robotName_ + "_mpc_target", 1, &MPC_ROS_Interface::mpcTargetTrajectoriesCallback,
-                                                          this, ::ros::TransportHints().tcpNoDelay());
+  mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this,
+                                                   ::ros::TransportHints().tcpNoDelay());
 
   // MPC publisher
-  mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(robotName_ + "_mpc_policy", 1, true);
+  mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);
 
   // MPC reset service server
-  mpcResetServiceServer_ = nodeHandle.advertiseService(robotName_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
+  mpcResetServiceServer_ = nodeHandle.advertiseService(topicPrefix_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
   // display
 #ifdef PUBLISH_THREAD

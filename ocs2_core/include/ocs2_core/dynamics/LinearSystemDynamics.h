@@ -37,8 +37,8 @@ namespace ocs2 {
  *
  * A linear time invariant system with the following flow and jump maps:
  *
- * - \f$ \dot{x} = A * x + B * u   g(x) > 0, \f$
- * - \f$ x^{+} = G * x^{-}         g(x) = 0. \f$
+ * - \f$ \dot{x} = A * x + B * u   \quad \text{for intermediate times}, \f$
+ * - \f$ x^{+} = G * x^{-}         \quad \text{for switching times}. \f$
  *
  * where \f$ g(x) \f$ is the guard surface defined by OdeBase::computeGuardSurfaces(t, x).
  */
@@ -50,15 +50,17 @@ class LinearSystemDynamics : public SystemDynamicsBase {
 
   LinearSystemDynamics* clone() const override;
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) override;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override;
 
-  vector_t computeJumpMap(scalar_t t, const vector_t& x) override;
+  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) override;
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) override;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) override;
 
  protected:
+  LinearSystemDynamics(const LinearSystemDynamics& other) = default;
+
   matrix_t A_;
   matrix_t B_;
   matrix_t G_;

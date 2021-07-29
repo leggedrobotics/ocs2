@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_pinocchio</name>
+  <version>1.0.0</version>
+  <description>Metapackage for OCS2 tools using the pinocchio rigid body dynamics library</description>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="jcarius@ethz.ch">Jan Carius</maintainer>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>ocs2_centroidal_model</exec_depend>
+  <exec_depend>ocs2_pinocchio_interface</exec_depend>
+  <exec_depend>ocs2_self_collision</exec_depend>
+
+  <export>
+    <metapackage />
+  </export>
+
+</package>

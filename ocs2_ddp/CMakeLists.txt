@@ -56,7 +56,7 @@ add_library(${PROJECT_NAME}
   src/search_strategy/LineSearchStrategy.cpp
   src/search_strategy/SearchStrategyBase.cpp
   src/search_strategy/StrategySettings.cpp
-  src/DDP_DataCollector.cpp
+  src/ContinuousTimeLqr.cpp
   src/GaussNewtonDDP.cpp
   src/HessianCorrection.cpp
   src/ILQR.cpp
@@ -177,5 +177,15 @@ target_link_libraries(bouncing_mass_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(testContinuousTimeLqr
+  test/testContinuousTimeLqr.cpp
+)
+target_link_libraries(testContinuousTimeLqr
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
   gtest_main
 )

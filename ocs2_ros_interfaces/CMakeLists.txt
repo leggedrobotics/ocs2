@@ -7,6 +7,10 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
+  std_msgs
+  visualization_msgs
+  geometry_msgs
+  interactive_markers
 )
 
 ## Find catkin macros and libraries
@@ -50,13 +54,19 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/command/TargetTrajectories_ROS_Interface.cpp
+  src/command/TargetTrajectoriesRosPublisher.cpp
+  src/command/TargetTrajectoriesInteractiveMarker.cpp
+  src/command/TargetTrajectoriesKeyboardPublisher.cpp
   src/common/RosMsgConversions.cpp
+  src/common/RosMsgHelpers.cpp
   src/mpc/MPC_ROS_Interface.cpp
   src/mrt/LoopshapingDummyObserver.cpp
   src/mrt/MRT_ROS_Dummy_Loop.cpp
   src/mrt/MRT_ROS_Interface.cpp
-  )
+  src/synchronized_module/RosReferenceManager.cpp
+  src/visualization/VisualizationHelpers.cpp
+  src/visualization/VisualizationColors.cpp
+)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
@@ -72,6 +82,19 @@ target_link_libraries(test_custom_callback_queue
   ${catkin_LIBRARIES}
 )
 target_compile_options(test_custom_callback_queue PRIVATE ${OCS2_CXX_FLAGS})
+
+# multiplot remap node
+add_executable(multiplot_remap
+  src/multiplot/MultiplotRemap.cpp
+)
+add_dependencies(multiplot_remap
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(multiplot_remap
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(multiplot_remap PRIVATE ${OCS2_CXX_FLAGS})
 
 add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
@@ -102,13 +125,20 @@ endif(cmake_clang_tools_FOUND)
 #############
 
 install(TARGETS ${PROJECT_NAME}
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+install(TARGETS multiplot_remap
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+install(DIRECTORY launch multiplot
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##

@@ -30,35 +30,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/misc/LinearInterpolation.h>
-#include <ocs2_core/model_data/ModelDataBase.h>
+#include <ocs2_core/model_data/ModelData.h>
 
 /*
  * @file
  * The linear interpolation of cost inpute-state derivative, Pm, at index-alpha pair given modelDataTrajectory can
  * be computed as:
  *
- * ModelData::interpolate(indexAlpha, Pm, &modelDataTrajectory, ModelData::cost_dfdux);
+ * LinearInterpolation::interpolate(indexAlpha, Pm, &modelDataTrajectory, model_data::cost_dfdux);
  */
 
 /*
  * Declares an access function of name FIELD such as time, dynamics, dynamicsBias, ...
  * For example the signature of function for dynamics is:
- * const vector_t& dynamics(const std::vector<ocs2::ModelDataBase>& vec, size_t n) {
+ * const vector_t& dynamics(const std::vector<ocs2::ModelData>& vec, size_t n) {
  *   return vec[n].dynamic_;
  * }
  */
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD)                                                                \
-  inline auto FIELD(const std::vector<ocs2::ModelDataBase>& vec, size_t ind)->const decltype(vec[ind].FIELD##_)& { \
-    return vec[ind].FIELD##_;                                                                                      \
-  }
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION(FIELD) \
+  inline auto FIELD(const std::vector<ocs2::ModelData>& vec, size_t ind)->const decltype(vec[ind].FIELD##_)& { return vec[ind].FIELD##_; }
 
-#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                                                                   \
-  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelDataBase>& vec, size_t ind)->const decltype(vec[ind].FIELD##_.SUBFIELD)& { \
-    return vec[ind].FIELD##_.SUBFIELD;                                                                                                   \
+#define CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(FIELD, SUBFIELD)                                                               \
+  inline auto FIELD##_##SUBFIELD(const std::vector<ocs2::ModelData>& vec, size_t ind)->const decltype(vec[ind].FIELD##_.SUBFIELD)& { \
+    return vec[ind].FIELD##_.SUBFIELD;                                                                                               \
   }
 
 namespace ocs2 {
-namespace ModelData {
+namespace model_data {
 
 /**
  * Access method for different subfields of the ModelData.
@@ -91,7 +89,7 @@ CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, f)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdx)
 CREATE_INTERPOLATION_ACCESS_FUNCTION_SUBFIELD(stateInputEqConstr, dfdu)
 
-}  // namespace ModelData
+}  // namespace model_data
 }  // namespace ocs2
 
 #undef CREATE_INTERPOLATION_ACCESS_FUNCTION

@@ -59,16 +59,15 @@ class MPC_MRT_Interface final : public MRT_BASE {
    */
   ~MPC_MRT_Interface() override = default;
 
-  void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override;
+  void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
   void setCurrentObservation(const SystemObservation& currentObservation) override;
 
-  /**
-   * Set new target trajectories to be tracked.
-   * It is safe to set a new value while the MPC optimization is running
-   * @param targetTrajectories
+  /*
+   * Gets the ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
-  void setTargetTrajectories(const CostDesiredTrajectories& targetTrajectories);
+  ReferenceManagerInterface& getReferenceManager();
+  const ReferenceManagerInterface& getReferenceManager() const;
 
   /**
    * Advance the mpc module for one iteration.
@@ -78,21 +77,6 @@ class MPC_MRT_Interface final : public MRT_BASE {
   void advanceMpc();
 
   /**
-   * @brief Access the solver's internal value function
-   * @param time query time
-   * @param state query state
-   * @return value of the given state at the given time
-   */
-  scalar_t getValueFunction(scalar_t time, const vector_t& state);
-
-  /**
-   * @brief Calculates the state derivative of the value function
-   * @param [in] time the query time
-   * @param [out] Vx partial derivative of the value function at requested time at nominal state
-   */
-  void getValueFunctionStateDerivative(scalar_t time, const vector_t& state, vector_t& Vx);
-
-  /**
    * @brief getLinearFeedbackGain retrieves K matrix from solver
    * @param [in] time
    * @param [out] K
@@ -100,20 +84,28 @@ class MPC_MRT_Interface final : public MRT_BASE {
   void getLinearFeedbackGain(scalar_t time, matrix_t& K);
 
   /**
+   * @brief Access the solver's internal value function
+   * @param time: query time
+   * @param state: query state
+   * @return The quadratic approximation of the value function at the requested time and state.
+   */
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const;
+
+  /**
    * @brief Computes the Lagrange multiplier related to the state-input constraints
    * @param [in] time: query time
    * @param [in] state: query state
-   * @param [out] nu: the Lagrange multiplier
+   * @return The Lagrange multiplier at the requested time and state
    */
-  void getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state, vector_t& nu) const;
+  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const;
 
  protected:
   /**
-   * @brief fillMpcOutputBuffers updates the *Buffer variables from the MPC object.
-   * This method is automatically called by advanceMpc()
+   * Updates the buffer variables from the MPC object. This method is automatically called by advanceMpc()
+   *
    * @param [in] mpcInitObservation: The observation used to run the MPC.
    */
-  void fillMpcOutputBuffers(SystemObservation mpcInitObservation);
+  void copyToBuffer(const SystemObservation& mpcInitObservation);
 
  protected:
   MPC_BASE& mpc_;
@@ -123,9 +115,6 @@ class MPC_MRT_Interface final : public MRT_BASE {
   // MPC inputs
   SystemObservation currentObservation_;
   std::mutex observationMutex_;
-  std::mutex costDesiredTrajectoriesBufferMutex_;
-  std::atomic_bool costDesiredTrajectoriesBufferUpdated_;
-  CostDesiredTrajectories costDesiredTrajectoriesBuffer_;
 };
 
 }  // namespace ocs2

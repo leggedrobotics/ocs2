@@ -46,8 +46,9 @@ QuadraticStateCost* QuadraticStateCost::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const {
-  const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
+scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
+                                      const PreComputation&) const {
+  const vector_t xDeviation = getStateDeviation(time, state, targetTrajectories);
   return 0.5 * xDeviation.dot(Q_ * xDeviation);
 }
 
@@ -55,23 +56,22 @@ scalar_t QuadraticStateCost::getValue(scalar_t time, const vector_t& state, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                   const CostDesiredTrajectories& desiredTrajectory) const {
-  const vector_t xDeviation = getStateDeviation(time, state, desiredTrajectory);
-  const vector_t qDeviation = Q_ * xDeviation;
+                                                                                   const TargetTrajectories& targetTrajectories,
+                                                                                   const PreComputation&) const {
+  const vector_t xDeviation = getStateDeviation(time, state, targetTrajectories);
 
   ScalarFunctionQuadraticApproximation Phi;
-  Phi.f = 0.5 * xDeviation.dot(qDeviation);
-  Phi.dfdx = qDeviation;
   Phi.dfdxx = Q_;
+  Phi.dfdx.noalias() = Q_ * xDeviation;
+  Phi.f = 0.5 * xDeviation.dot(Phi.dfdx);
   return Phi;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t QuadraticStateCost::getStateDeviation(scalar_t time, const vector_t& state,
-                                               const CostDesiredTrajectories& desiredTrajectory) const {
-  return state - desiredTrajectory.getDesiredState(time);
+vector_t QuadraticStateCost::getStateDeviation(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const {
+  return state - targetTrajectories.getDesiredState(time);
 }
 
 }  // namespace ocs2

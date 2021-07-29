@@ -46,18 +46,19 @@ class QuadraticStateCost : public StateCost {
   QuadraticStateCost* clone() const override;
 
   /** Get cost term value */
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const final;
+  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories, const PreComputation&) const final;
 
   /** Get cost term quadratic approximation */
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const final;
+                                                                 const TargetTrajectories& targetTrajectories,
+                                                                 const PreComputation&) const final;
 
  protected:
   QuadraticStateCost(const QuadraticStateCost& rhs) = default;
 
   /** Computes the state deviation for the nominal state.
    * This method can be overwritten if desiredTrajectory has a different dimensions. */
-  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const;
+  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const;
 
  private:
   matrix_t Q_;

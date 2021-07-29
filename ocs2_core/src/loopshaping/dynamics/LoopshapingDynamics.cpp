@@ -34,24 +34,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(state);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(state, input);
-  const vector_t x_filter = loopshapingDefinition_->getFilterState(state);
-  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(state, input);
+vector_t LoopshapingDynamics::computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) {
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& u_filter = preCompLS.getFilteredInput();
 
-  const vector_t dynamics_system = systemDynamics_->computeFlowMap(time, x_system, u_system);
+  const vector_t dynamics_system = systemDynamics_->computeFlowMap(time, x_system, u_system, preComp_system);
   const vector_t dynamics_filter = filterFlowmap(x_filter, u_filter, u_system);
 
   return loopshapingDefinition_->concatenateSystemAndFilterState(dynamics_system, dynamics_filter);
 }
 
-vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(state);
-  const vector_t jumpMap_system = systemDynamics_->computeJumpMap(time, x_system);
+vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& state, const PreComputation& preComp) {
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto& x_system = preCompLS.getSystemState();
+
+  const vector_t jumpMap_system = systemDynamics_->computeJumpMap(time, x_system, preComp_system);
 
   // Filter doesn't Jump
-  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(state);
+  const auto& jumMap_filter = preCompLS.getFilterState();
 
   return loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system, jumMap_filter);
 }
@@ -59,6 +64,32 @@ vector_t LoopshapingDynamics::computeJumpMap(scalar_t time, const vector_t& stat
 vector_t LoopshapingDynamics::computeGuardSurfaces(scalar_t time, const vector_t& state) {
   const vector_t x_system = loopshapingDefinition_->getSystemState(state);
   return systemDynamics_->computeGuardSurfaces(time, x_system);
+}
+
+VectorFunctionLinearApproximation LoopshapingDynamics::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
+                                                                                  const PreComputation& preComp) {
+  const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
+
+  // System jump
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, preComp_system);
+
+  // Filter doesn't Jump
+  const auto& jumMap_filter = preCompLS.getFilterState();
+
+  VectorFunctionLinearApproximation jumpMap;
+  jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
+
+  jumpMap.dfdx.resize(jumpMap.f.size(), jumpMap.f.size());
+  jumpMap.dfdx.topLeftCorner(jumpMap_system.f.size(), x_system.size()) = jumpMap_system.dfdx;
+  jumpMap.dfdx.topRightCorner(jumpMap_system.f.size(), jumMap_filter.size()).setZero();
+  jumpMap.dfdx.bottomLeftCorner(jumMap_filter.size(), x_system.size()).setZero();
+  jumpMap.dfdx.bottomRightCorner(jumMap_filter.size(), jumMap_filter.size()).setIdentity();
+
+  jumpMap.dfdu.resize(jumpMap.f.size(), 0);
+
+  return jumpMap;
 }
 
 VectorFunctionLinearApproximation LoopshapingDynamics::guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) {
@@ -83,14 +114,19 @@ vector_t LoopshapingDynamics::guardSurfacesDerivativeTime(scalar_t t, const vect
 
 std::unique_ptr<LoopshapingDynamics> LoopshapingDynamics::create(const SystemDynamicsBase& systemDynamics,
                                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  // wrap the system pre-computation
+  LoopshapingPreComputation preComputation(systemDynamics.getPreComputation(), loopshapingDefinition);
+
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingDynamics>(
+          new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
     case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingDynamics>(new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition)));
+      return std::unique_ptr<LoopshapingDynamics>(
+          new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<LoopshapingDynamics>(
-          new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition)));
+          new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
     default:
       throw std::runtime_error("[LoopshapingDynamics::create] invalid loopshaping type");
   }

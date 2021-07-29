@@ -38,10 +38,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
-#include <ocs2_core/cost/CostDesiredTrajectories.h>
-#include <ocs2_core/logic/ModeSchedule.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/reference/TargetTrajectories.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
 #include "ocs2_mpc/CommandData.h"
@@ -56,14 +57,10 @@ namespace ocs2 {
  */
 class MRT_BASE {
  public:
-  /**
-   * Constructor
-   */
+  /** Constructor */
   MRT_BASE();
 
-  /**
-   * @brief Default destructor
-   */
+  /** Default destructor */
   virtual ~MRT_BASE() = default;
 
   /**
@@ -74,9 +71,9 @@ class MRT_BASE {
   /**
    * Request the MPC node to reset. This method is a blocking method.
    *
-   * @param [in] initCostDesiredTrajectories: The initial desired cost trajectories.
+   * @param [in] initTargetTrajectories: The initial desired cost trajectories.
    */
-  virtual void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) = 0;
+  virtual void resetMpcNode(const TargetTrajectories& initTargetTrajectories) = 0;
 
   /**
    * Whether the initial MPC policy has been already received.
@@ -95,10 +92,20 @@ class MRT_BASE {
    *
    * @return a constant reference to command data.
    */
-  const CommandData& getCommand() const { return *currentCommand_; };
+  const CommandData& getCommand() const;
+
+  /**
+   * Gets a reference to the performance indices data corresponding to the current policy.
+   * @warning access to the returned reference is not threadsafe. Read access and calls to updatePolicy() must be synced by the user.
+   *
+   * @return a constant reference to performance indices data.
+   */
+  const PerformanceIndex& getPerformanceIndices() const;
 
   /**
    * Gets a reference to current optimized policy.
+   * @warning access to the returned reference is not threadsafe. Read access and calls to updatePolicy() must be synced by the user.
+   *
    * @return constant reference to the policy data.
    */
   const PrimalSolution& getPolicy() const;
@@ -154,7 +161,8 @@ class MRT_BASE {
   void addMrtObserver(std::shared_ptr<MrtObserver> mrtObserver) { observerPtrArray_.push_back(std::move(mrtObserver)); };
 
  protected:
-  void fillSolutionBuffer(std::unique_ptr<CommandData> newCommandData, std::unique_ptr<PrimalSolution> newPrimalSolution);
+  void moveToBuffer(std::unique_ptr<CommandData> commandDataPtr, std::unique_ptr<PrimalSolution> primalSolutionPtr,
+                    std::unique_ptr<PerformanceIndex> performanceIndicesPtr);
 
  private:
   /** Calls modifyActiveSolution on all mrt observers. This function is called while holding a policyBufferMutex lock */
@@ -165,17 +173,18 @@ class MRT_BASE {
 
   // flags on state of the class
   std::atomic_bool policyReceivedEver_;
-  bool newPolicyInBuffer_;          // whether a new policy is waiting to be swapped in
-  std::atomic_bool policyUpdated_;  // whether the policy was updated by MPC (i.e., MPC succeeded)
+  bool newPolicyInBuffer_;  // whether a new policy is waiting to be swapped in
 
   // variables related to the MPC output
-  std::unique_ptr<PrimalSolution> currentPrimalSolution_;
-  std::unique_ptr<PrimalSolution> primalSolutionBuffer_;
-  std::unique_ptr<CommandData> currentCommand_;
-  std::unique_ptr<CommandData> commandBuffer_;
+  std::unique_ptr<CommandData> activeCommandPtr_;
+  std::unique_ptr<CommandData> bufferCommandPtr_;
+  std::unique_ptr<PrimalSolution> activePrimalSolutionPtr_;
+  std::unique_ptr<PrimalSolution> bufferPrimalSolutionPtr_;
+  std::unique_ptr<PerformanceIndex> activePerformanceIndicesPtr_;
+  std::unique_ptr<PerformanceIndex> bufferPerformanceIndicesPtr_;
 
   // thread safety
-  mutable std::mutex policyBufferMutex_;  // for policy variables WITH suffix (*Buffer_)
+  mutable std::mutex bufferMutex_;  // for policy variables with the prefix (buffer*)
   const size_t mrtTrylockWarningThreshold_ = 5;
   size_t mrtTrylockWarningCount_;
 

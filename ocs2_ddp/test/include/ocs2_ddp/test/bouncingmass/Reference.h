@@ -69,7 +69,7 @@ class Reference {
    * @param [in] time: current time
    * @param [out] input: current reference input
    */
-  void getInput(const scalar_t time, vector_t& input);
+  void getInput(const scalar_t time, vector_t& input) const;
 
   /*
    * Obtain reference input at the current time
@@ -77,7 +77,7 @@ class Reference {
    * @param [in] time: current time
    * @return current reference input
    */
-  vector_t getInput(const scalar_t time);
+  vector_t getInput(const scalar_t time) const;
 
   /*
    * Obtain reference state at current time
@@ -85,7 +85,7 @@ class Reference {
    * @param [in] time: current time
    * @param [out] x: current reference state
    */
-  void getState(const scalar_t time, vector_t& x);
+  void getState(const scalar_t time, vector_t& x) const;
 
   /*
    * Extend the reference by integrating the input signal of the next
@@ -133,7 +133,7 @@ class Reference {
    * 	@param [in]	time:	current time
    * 	@param [out] x: current state
    */
-  void interpolate_ext(scalar_t time, vector_t& x);
+  void interpolate_ext(scalar_t time, vector_t& x) const;
 
   Eigen::Matrix<scalar_t, 6, 1> polU_;
   Eigen::Matrix<scalar_t, 6, 1> polX_;

@@ -10,6 +10,8 @@ namespace ocs2 {
 
 class Filter {
  public:
+  using diag_matrix_t = Eigen::DiagonalMatrix<ocs2::scalar_t, Eigen::Dynamic>;
+
   Filter();
 
   Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D);
@@ -23,6 +25,12 @@ class Filter {
   const matrix_t& getC() const { return C_; };
   const matrix_t& getD() const { return D_; };
 
+  /// Get the diagonal of the filter matrices
+  const diag_matrix_t& getAdiag() const { return a_; };
+  const diag_matrix_t& getBdiag() const { return b_; };
+  const diag_matrix_t& getCdiag() const { return c_; };
+  const diag_matrix_t& getDdiag() const { return d_; };
+
   void print() const;
 
   void findEquilibriumForOutput(const vector_t& y, vector_t& x, vector_t& u) const;
@@ -32,6 +40,7 @@ class Filter {
   void checkSize() const;
 
   matrix_t A_, B_, C_, D_;
+  diag_matrix_t a_, b_, c_, d_;
   size_t numStates_ = 0;
   size_t numInputs_ = 0;
   size_t numOutputs_ = 0;

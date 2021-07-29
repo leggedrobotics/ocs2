@@ -97,10 +97,10 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
   /**
    * Sets Data
    */
-  void setData(const scalar_array_t* timeStampPtr, const ModelDataBase::array_t* modelDataPtr,
-               const ModelDataBase::array_t* projectedModelDataPtr, const state_vector_array_t* costatePtr,
-               const dynamic_vector_array_t* lagrangianPtr, const scalar_array_t* controllerTimeStampPtr,
-               const input_state_matrix_array_t* KmConstrainedPtr, const state_matrix_array_t* SmPtr) {
+  void setData(const scalar_array_t* timeStampPtr, const ModelData::array_t* modelDataPtr, const ModelData::array_t* projectedModelDataPtr,
+               const state_vector_array_t* costatePtr, const dynamic_vector_array_t* lagrangianPtr,
+               const scalar_array_t* controllerTimeStampPtr, const input_state_matrix_array_t* KmConstrainedPtr,
+               const state_matrix_array_t* SmPtr) {
     timeStampPtr_ = timeStampPtr;
     modelDataPtr_ = modelDataPtr;
     projectedModelDataPtr_ = projectedModelDataPtr;
@@ -156,8 +156,8 @@ class BvpSensitivityEquations final : public OdeBase<STATE_DIM> {
   scalar_t multiplier_ = 0.0;
 
   const scalar_array_t* timeStampPtr_;
-  const ModelDataBase::array_t* modelDataPtr_;
-  const ModelDataBase::array_t* projectedModelDataPtr_;
+  const ModelData::array_t* modelDataPtr_;
+  const ModelData::array_t* projectedModelDataPtr_;
   const state_vector_array_t* costatePtr_;
   const dynamic_vector_array_t* lagrangianPtr_;
   const scalar_array_t* controllerTimeStampPtr_;

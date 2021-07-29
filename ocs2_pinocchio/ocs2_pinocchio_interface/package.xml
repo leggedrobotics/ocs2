@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_pinocchio_interface</name>
+  <version>0.0.0</version>
+  <description>The ocs2_pinocchio_interface package</description>
+
+  <maintainer email="mspieler@ethz.ch">Michael Spieler</maintainer>
+  <maintainer email="fperry@ethz.ch">Perry Franklin</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>ocs2_core</depend>
+  <depend>ocs2_robotic_tools</depend>
+  <depend>pinocchio</depend>
+
+</package>

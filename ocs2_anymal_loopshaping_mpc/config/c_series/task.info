@@ -33,7 +33,7 @@ model_settings
 
   gaitOptimization              false
 
-  recompileLibraries            false
+  recompileLibraries            true
 
   ; FootPlacementCostParameters
   mu                            0.1   ; magnitude scaling

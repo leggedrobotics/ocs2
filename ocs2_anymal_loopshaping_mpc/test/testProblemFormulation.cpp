@@ -52,7 +52,7 @@ TEST_F(TestAnymalLoopshapingModel, all) {
   int N = 100000;
 
   timer.startTimer();
-  for (int i = 0; i < 4*N; i++) {
+  for (int i = 0; i < N; i++) {
     dynamics->linearApproximation(t, x, u);
   }
   timer.endTimer();
@@ -88,7 +88,7 @@ TEST_F(TestAnymalLoopshapingModel, dynamics) {
   int N = 100000;
 
   timer.startTimer();
-  for (int i = 0; i < 4*N; i++) {
+  for (int i = 0; i < N; i++) {
     dynamics->linearApproximation(t, x, u);
   }
   timer.endTimer();

@@ -20,6 +20,14 @@ void SwingTrajectoryPlanner::updateTerrain(std::unique_ptr<TerrainModel> terrain
   terrainModel_ = std::move(terrainModel);
 }
 
+const SignedDistanceField* SwingTrajectoryPlanner::getSignedDistanceField() const {
+  if (terrainModel_) {
+    return terrainModel_->getSignedDistanceField();
+  } else {
+    return nullptr;
+  }
+}
+
 void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
                                                 const ocs2::TargetTrajectories& targetTrajectories,
                                                 const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg) {

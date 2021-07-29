@@ -112,6 +112,50 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalCrocKinematics<SCALAR_T>::footOrient
   }
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+std::vector<typename AnymalCrocKinematics<SCALAR_T>::CollisionSphere> AnymalCrocKinematics<SCALAR_T>::collisionSpheresInBaseFrame(
+    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+
+  const SCALAR_T kneeRadius(0.08);
+  const switched_model::vector3_s_t<SCALAR_T> kneeOffsetInKneeFrame{SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(0.055)};
+
+  std::vector<CollisionSphere> collisionSpheres;
+
+  {
+    typename iit::croc::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_KFE fr_base_X_fr_LF_KFE;
+    fr_base_X_fr_LF_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_LF_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position -= fr_base_X_fr_LF_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::croc::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_KFE fr_base_X_fr_RF_KFE;
+    fr_base_X_fr_RF_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_RF_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position += fr_base_X_fr_RF_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::croc::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_KFE fr_base_X_fr_LH_KFE;
+    fr_base_X_fr_LH_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_LH_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position -= fr_base_X_fr_LH_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::croc::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_KFE fr_base_X_fr_RH_KFE;
+    fr_base_X_fr_RH_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_RH_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position += fr_base_X_fr_RH_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  return collisionSpheres;
+}
+
 }  // namespace tpl
 }  // end of namespace anymal
 

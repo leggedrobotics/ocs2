@@ -52,6 +52,7 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentState", 1);
   currentPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentPose", 1);
   currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPoses", 1);
+  currentCollisionSpheresPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentCollisionSpheres", 1);
 
   // Load URDF model
   urdf::Model urdfModel;
@@ -101,6 +102,7 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::Sy
   publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode), feetPosition, feetForce);
   publishCenterOfMassPose(timeStamp, comPose);
   publishEndEffectorPoses(timeStamp, feetPosition, feetOrientations);
+  publishCollisionSpheres(timeStamp, basePose, qJoints);
 }
 
 void QuadrupedVisualizer::publishJointTransforms(ros::Time timeStamp, const joint_coordinate_t& jointAngles) const {
@@ -392,6 +394,24 @@ void QuadrupedVisualizer::publishEndEffectorPoses(ros::Time timeStamp, const fee
   }
 
   currentFeetPosesPublisher_.publish(poseArray);
+}
+
+void QuadrupedVisualizer::publishCollisionSpheres(ros::Time timeStamp, const base_coordinate_t& basePose,
+                                                  const joint_coordinate_t& jointAngles) const {
+  const auto collisionSpheres = kinematicModelPtr_->collisionSpheresInOriginFrame(basePose, jointAngles);
+
+  visualization_msgs::MarkerArray markerArray;
+  markerArray.markers.reserve(collisionSpheres.size());
+
+  for (const auto& sphere : collisionSpheres) {
+    markerArray.markers.emplace_back(ocs2::getSphereMsg(sphere.position, ocs2::Color::red, 2.0 * sphere.radius));
+  }
+
+  // Give markers an id and a frame
+  ocs2::assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
+  ocs2::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
+
+  currentCollisionSpheresPublisher_.publish(markerArray);
 }
 
 }  // namespace switched_model

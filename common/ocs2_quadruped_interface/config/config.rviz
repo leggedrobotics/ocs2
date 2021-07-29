@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Grid1/Offset1
       Splitter Ratio: 0.7034631967544556
-    Tree Height: 763
+    Tree Height: 727
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -63,7 +63,7 @@ Visualization Manager:
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        LF_ADAPTER:
+        LF_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -87,11 +87,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        LF_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LF_SHANK:
           Alpha: 1
           Show Axes: false
@@ -100,11 +95,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        LF_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LF_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -120,7 +110,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        LH_ADAPTER:
+        LH_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -144,11 +134,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        LH_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LH_SHANK:
           Alpha: 1
           Show Axes: false
@@ -157,11 +142,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        LH_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         LH_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -178,7 +158,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
         Link Tree Style: Links in Alphabetic Order
-        RF_ADAPTER:
+        RF_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -202,11 +182,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        RF_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RF_SHANK:
           Alpha: 1
           Show Axes: false
@@ -215,11 +190,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        RF_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RF_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -235,7 +205,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        RH_ADAPTER:
+        RH_FOOT:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -259,11 +229,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        RH_MOUNT:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RH_SHANK:
           Alpha: 1
           Show Axes: false
@@ -272,11 +237,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        RH_WHEEL_L:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         RH_hip_fixed:
           Alpha: 1
           Show Axes: false
@@ -306,12 +266,28 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        body_top:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         depth_camera_front_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         depth_camera_front_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_front_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_front_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_front_depth_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -324,6 +300,18 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        depth_camera_left_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_left_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_left_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         depth_camera_rear_camera:
           Alpha: 1
           Show Axes: false
@@ -333,12 +321,36 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        depth_camera_rear_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_rear_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_rear_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         depth_camera_right_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         depth_camera_right_camera_parent:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_right_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_right_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        depth_camera_right_depth_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -356,6 +368,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        front_handle:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         hatch:
           Alpha: 1
           Show Axes: false
@@ -365,7 +382,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         lidar:
           Alpha: 1
           Show Axes: false
@@ -433,7 +449,7 @@ Visualization Manager:
           Marker Topic: /ocs2_anymal/desiredBaseTrajectory
           Name: Base Position Trajectory
           Namespaces:
-            "": true
+            {}
           Queue Size: 1
           Value: true
         - Class: rviz/MarkerArray
@@ -462,6 +478,7 @@ Visualization Manager:
           Head Length: 0.07000000029802322
           Head Radius: 0.029999999329447746
           Name: CoM Pose Trajectory
+          Queue Size: 10
           Shaft Length: 0.23000000417232513
           Shaft Radius: 0.009999999776482582
           Shape: Axes
@@ -552,6 +569,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: LF
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -568,6 +586,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: LH
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -584,6 +603,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: RF
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -600,6 +620,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: RH
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -622,6 +643,7 @@ Visualization Manager:
           Head Length: 0.07000000029802322
           Head Radius: 0.029999999329447746
           Name: CoM Pose Trajectory
+          Queue Size: 10
           Shaft Length: 0.23000000417232513
           Shaft Radius: 0.009999999776482582
           Shape: Axes
@@ -635,7 +657,6 @@ Visualization Manager:
           Namespaces:
             CoM Trajectory: true
             EE Trajectories: true
-            Future footholds: true
           Queue Size: 1
           Value: true
         - Class: rviz/Group
@@ -650,6 +671,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: LF
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -666,6 +688,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: LH
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -682,6 +705,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: RF
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -698,6 +722,7 @@ Visualization Manager:
               Head Length: 0.07000000029802322
               Head Radius: 0.029999999329447746
               Name: RH
+              Queue Size: 10
               Shaft Length: 0.23000000417232513
               Shaft Radius: 0.009999999776482582
               Shape: Axes
@@ -720,6 +745,7 @@ Visualization Manager:
           Head Length: 0.07000000029802322
           Head Radius: 0.029999999329447746
           Name: CoM Pose
+          Queue Size: 10
           Shaft Length: 0.23000000417232513
           Shaft Radius: 0.009999999776482582
           Shape: Axes
@@ -747,6 +773,7 @@ Visualization Manager:
           Head Length: 0.07000000029802322
           Head Radius: 0.029999999329447746
           Name: Feet Poses
+          Queue Size: 10
           Shaft Length: 0.23000000417232513
           Shaft Radius: 0.009999999776482582
           Shape: Axes
@@ -761,6 +788,14 @@ Visualization Manager:
             "": true
           Queue Size: 100
           Value: true
+        - Class: rviz/MarkerArray
+          Enabled: true
+          Marker Topic: /ocs2_anymal/currentCollisionSpheres
+          Name: Collisions
+          Namespaces:
+            "": true
+          Queue Size: 100
+          Value: true
       Enabled: true
       Name: Current
     - Class: rviz/Group
@@ -770,6 +805,7 @@ Visualization Manager:
           Color: 25; 255; 0
           Enabled: true
           Name: Insets
+          Queue Size: 10
           Topic: /convex_plane_decomposition_ros/boundaries
           Unreliable: false
           Value: true
@@ -783,6 +819,7 @@ Visualization Manager:
           Color: 25; 255; 0
           Enabled: true
           Name: Boundaries
+          Queue Size: 10
           Topic: /convex_plane_decomposition_ros/boundaries
           Unreliable: false
           Value: true
@@ -806,9 +843,7 @@ Visualization Manager:
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: -6.845311872893944e-9
           Min Color: 0; 0; 0
-          Min Intensity: -0.04000000283122063
           Name: Signed distance
           Position Transformer: XYZ
           Queue Size: 10
@@ -872,25 +907,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 2.141564130783081
+      Distance: 1.6110084056854248
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
+      Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.417638897895813
-        Y: 0.23163104057312012
-        Z: -1.1920928955078125e-7
+        X: 0.06949496269226074
+        Y: 0.3232351541519165
+        Z: 0
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2952028214931488
+      Pitch: 0.3252030909061432
       Target Frame: <Fixed Frame>
-      Value: ThirdPersonFollower (rviz)
-      Yaw: 2.0029025077819824
+      Yaw: 0.857906699180603
     Saved:
       - Angle: 3.140000104904175
         Class: rviz/TopDownOrtho
@@ -904,7 +939,6 @@ Visualization Manager:
         Near Clip Distance: 0.009999999776482582
         Scale: 582.8400268554688
         Target Frame: <Fixed Frame>
-        Value: TopDownOrtho (rviz)
         X: 0.16045600175857544
         Y: 0.09311659634113312
       - Angle: 6.260000228881836
@@ -919,7 +953,6 @@ Visualization Manager:
         Near Clip Distance: 0.009999999776482582
         Scale: 266.7760009765625
         Target Frame: <Fixed Frame>
-        Value: TopDownOrtho (rviz)
         X: 2.279409885406494
         Y: -0.7245129942893982
       - Class: rviz/Orbit
@@ -929,6 +962,7 @@ Visualization Manager:
           Stereo Focal Distance: 1
           Swap Stereo Eyes: false
           Value: false
+        Field of View: 0.7853981852531433
         Focal Point:
           X: 4.226150035858154
           Y: -1.1256200075149536
@@ -940,7 +974,6 @@ Visualization Manager:
         Near Clip Distance: 0.009999999776482582
         Pitch: 0.434798002243042
         Target Frame: <Fixed Frame>
-        Value: Orbit (rviz)
         Yaw: 5.150000095367432
       - Class: rviz/Orbit
         Distance: 1.7256799936294556
@@ -949,6 +982,7 @@ Visualization Manager:
           Stereo Focal Distance: 1
           Swap Stereo Eyes: false
           Value: false
+        Field of View: 0.7853981852531433
         Focal Point:
           X: 0.09568200260400772
           Y: -0.16040100157260895
@@ -960,15 +994,14 @@ Visualization Manager:
         Near Clip Distance: 0.009999999776482582
         Pitch: 0.3497979938983917
         Target Frame: base_link
-        Value: Orbit (rviz)
         Yaw: 5.114999771118164
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1052
+  Height: 1016
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001d0000003c6fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000003c6000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004300000432000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf0000024400fffffffb0000000800540069006d0065010000000000000450000000000000000000000567000003c600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d00000039efc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000039e000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000012f00000432fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004300000432000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003bf0000003efc0100000002fb0000000800540069006d00650000000000000003bf000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000005620000039e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -977,6 +1010,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1853
-  X: 1987
-  Y: 49
+  Width: 1848
+  X: 1992
+  Y: 27

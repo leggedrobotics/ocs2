@@ -55,6 +55,8 @@ add_library(${PROJECT_NAME}
 	src/dynamics/ComKinoSystemDynamicsAd.cpp
 	src/dynamics/ComKinoDynamicsParameters.cpp
 	src/cost/FootPlacementCost.cpp
+	src/cost/JointLimitsSoftConstraint.cpp
+	src/cost/LinearStateInequalitySoftConstraint.cpp
 	src/cost/MotionTrackingCost.cpp
 	src/cost/SwitchedModelCostBase.cpp
 	src/foot_planner/CubicSpline.cpp
@@ -141,6 +143,7 @@ target_link_libraries(test_${PROJECT_NAME}_core
 catkin_add_gtest(test_${PROJECT_NAME}_footplanner
 	test/foot_planner/testSwingPhase.cpp
 	test/cost/testFootplacementCost.cpp
+	test/cost/testJointLimitsSoftConstraint.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}_footplanner
 	${PROJECT_NAME}

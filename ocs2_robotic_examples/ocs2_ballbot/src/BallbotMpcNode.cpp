@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/init.h>
 
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
@@ -52,14 +53,18 @@ int main(int argc, char** argv) {
   // Robot interface
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-  // ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr = ocs2::RosReferenceManager::create<ocs2::ReferenceManager>(robotName);
+  // ROS ReferenceManager
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
+      new ocs2::RosReferenceManager(robotName, ballbotInterface.getReferenceManagerPtr()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
+  // MPC
+  ocs2::MPC_DDP mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
+                    ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+
   // Launch MPC ROS node
-  auto mpcPtr = ballbotInterface.getMpc();
-  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
-  ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
+  ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

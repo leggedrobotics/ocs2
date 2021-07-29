@@ -30,16 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 // ocs2
-#include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/FactoryFunctions.h>
-#include <ocs2_core/misc/Display.h>
+#include <ocs2_core/Types.h>
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
-#include <ocs2_mpc/MPC_DDP.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
+#include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
 
 #include "ocs2_legged_robot/common/ModelSettings.h"
 #include "ocs2_legged_robot/initialization/LeggedRobotInitializer.h"
@@ -66,8 +65,6 @@ class LeggedRobotInterface final : public RobotInterface {
   ~LeggedRobotInterface() override = default;
 
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
-
-  std::unique_ptr<MPC_DDP> getMpcPtr() const;
 
   const ModelSettings& modelSettings() const { return modelSettings_; }
   const ddp::Settings& ddpSettings() const { return ddpSettings_; }
@@ -104,15 +101,14 @@ class LeggedRobotInterface final : public RobotInterface {
   ModelSettings modelSettings_;
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
-  rollout::Settings rolloutSettings_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;
 
+  std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr_;
 
-  std::unique_ptr<OptimalControlProblem> problemPtr_;
-
+  rollout::Settings rolloutSettings_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<LeggedRobotInitializer> initializerPtr_;
 

@@ -27,9 +27,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <pinocchio/fwd.hpp>
+#include <string>
+
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
+
+#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
@@ -46,14 +51,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
-#include <ocs2_mobile_manipulator/MobileManipulatorDynamics.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorPreComputation.h>
-#include <ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h>
-#include <ocs2_mobile_manipulator/constraint/JointVelocityLimits.h>
-#include <ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h>
-#include <ocs2_mobile_manipulator/cost/QuadraticInputCost.h>
-#include <ocs2_mobile_manipulator/definitions.h>
+#include "ocs2_mobile_manipulator/MobileManipulatorDynamics.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
+#include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
+#include "ocs2_mobile_manipulator/constraint/JointVelocityLimits.h"
+#include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
+#include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
 
 #include <ros/package.h>
 
@@ -70,8 +73,64 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   const std::string libraryFolder = "/tmp/ocs2/ocs2_mobile_manipulator";
   std::cerr << "Generated library path: " << libraryFolder << std::endl;
 
-  // load setting from config file
-  loadSettings(taskFile, libraryFolder);
+  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
+  std::cerr << "Load Pinocchio model from " << urdfPath << '\n';
+
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfPath)));
+  std::cerr << *pinocchioInterfacePtr_;
+
+  bool usePreComputation = true;
+  bool recompileLibraries = true;
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  std::cerr << "\n #### Model Settings:";
+  std::cerr << "\n #### =============================================================================\n";
+  loadData::loadPtreeValue(pt, usePreComputation, "model_settings.usePreComputation", true);
+  loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
+  std::cerr << " #### =============================================================================\n";
+
+  // Default initial state
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+  std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
+
+  // DDP-MPC settings
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
+
+  // Reference Manager
+  referenceManagerPtr_.reset(new ReferenceManager);
+
+  /*
+   * Optimal control problem
+   */
+  // Cost
+  problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
+
+  // Constraints
+  problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
+  problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath,
+                                                                                   usePreComputation, libraryFolder, recompileLibraries));
+  problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
+                                                                               usePreComputation, libraryFolder, recompileLibraries));
+  problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
+                                                                                    usePreComputation, libraryFolder, recompileLibraries));
+
+  // Dynamics
+  problem_.dynamicsPtr.reset(new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder, recompileLibraries, true));
+
+  /*
+   * Pre-computation
+   */
+  if (usePreComputation) {
+    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
+  }
+
+  // Rollout
+  const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
+
+  // Initialization
+  initializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/
@@ -90,90 +149,6 @@ PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorInterface::loadSettings(const std::string& taskFile, const std::string& libraryFolder) {
-  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
-  std::cerr << "Load Pinocchio model from " << urdfPath << '\n';
-
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfPath)));
-  std::cerr << *pinocchioInterfacePtr_;
-
-  bool usePreComputation = true;
-  bool recompileLibraries = true;
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile, pt);
-  std::cerr << "\n #### Model Settings:";
-  std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue(pt, usePreComputation, "model_settings.usePreComputation", true);
-  loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
-  std::cerr << " #### =============================================================================" << std::endl;
-
-  /*
-   * DDP-MPC settings
-   */
-  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
-
-  /*
-   * Dynamics
-   */
-  std::unique_ptr<MobileManipulatorDynamics> dynamicsPtr(
-      new MobileManipulatorDynamics("mobile_manipulator_dynamics", libraryFolder, recompileLibraries, true));
-
-  /*
-   * Rollout
-   */
-  const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
-
-  /*
-   * Reference manager
-   */
-  referenceManagerPtr_.reset(new ReferenceManager);
-
-  /*
-   * Optimal control problem
-   */
-  problem_.dynamicsPtr = std::move(dynamicsPtr);
-
-  /* Cost */
-  problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
-
-  /* Constraints */
-  problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath,
-                                                                                   usePreComputation, libraryFolder, recompileLibraries));
-  problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
-                                                                               usePreComputation, libraryFolder, recompileLibraries));
-  problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
-                                                                                    usePreComputation, libraryFolder, recompileLibraries));
-
-  /*
-   * Use pre-computation
-   */
-  if (usePreComputation) {
-    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_));
-  }
-
-  /*
-   * Initialization state
-   */
-  initializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
-
-  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
-  std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MPC_DDP> MobileManipulatorInterface::getMpc() {
-  std::unique_ptr<MPC_DDP> mpc(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *initializerPtr_));
-  return mpc;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost(const std::string& taskFile) {
   matrix_t R(INPUT_DIM, INPUT_DIM);
 
@@ -181,7 +156,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadEigenMatrix(taskFile, "inputCost.R", R);
   std::cerr << "inputCost.R:  \n" << R << '\n';
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R)));
 }
@@ -195,7 +170,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
                                                                                 bool recompileLibraries) {
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
-  std::string name = "WRIST_2";
+  const std::string name = "WRIST_2";
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
@@ -203,7 +178,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", true);
   loadData::loadPtreeValue(pt, muOrientation, prefix + ".muOrientation", true);
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
+
+  if (referenceManagerPtr_ == nullptr) {
+    throw std::runtime_error("[getEndEffectorConstraint] referenceManagerPtr_ should be set first!");
+  }
 
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
@@ -247,7 +226,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   loadData::loadPtreeValue(pt, minimumDistance, prefix + "minimumDistance", true);
   loadData::loadStdVectorOfPair(taskFile, prefix + "collisionObjectPairs", collisionObjectPairs, true);
   loadData::loadStdVectorOfPair(taskFile, prefix + "collisionLinkPairs", collisionLinkPairs, true);
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
 
@@ -289,7 +268,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimi
   std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
   loadData::loadPtreeValue(pt, mu, prefix + "mu", true);
   loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
-  std::cerr << " #### =============================================================================" << std::endl;
+  std::cerr << " #### =============================================================================\n";
 
   std::unique_ptr<StateInputConstraint> constraint(new JointVelocityLimits);
 

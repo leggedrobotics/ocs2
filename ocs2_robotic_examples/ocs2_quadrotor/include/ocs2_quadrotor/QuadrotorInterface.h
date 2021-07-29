@@ -32,10 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/initialization/Initializer.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
-
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
 // Quadrotor
@@ -63,30 +63,22 @@ class QuadrotorInterface final : public RobotInterface {
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<MPC_DDP> getMpc();
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
+
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const Initializer& getInitializer() const override { return *operatingPointPtr_; }
 
  private:
-  /**
-   * Load the settings from the path file.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void loadSettings(const std::string& taskFile);
-
-  std::string taskFile_;
-  std::string libraryFolder_;
-
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> rolloutPtr_;
   OptimalControlProblem problem_;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+
+  std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> operatingPointPtr_;
 
   vector_t initialState_{STATE_DIM};

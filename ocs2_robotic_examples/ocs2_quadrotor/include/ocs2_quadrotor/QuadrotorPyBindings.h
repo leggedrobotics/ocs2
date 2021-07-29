@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_python_interface/PythonInterface.h>
-#include <ocs2_quadrotor/QuadrotorInterface.h>
-#include <ocs2_quadrotor/definitions.h>
+
+#include "ocs2_quadrotor/QuadrotorInterface.h"
+#include "ocs2_quadrotor/definitions.h"
 
 namespace ocs2 {
 namespace quadrotor {
@@ -39,8 +41,17 @@ namespace quadrotor {
 class QuadrotorPyBindings final : public PythonInterface {
  public:
   explicit QuadrotorPyBindings(const std::string& taskFileFolder) {
+    // Robot interface
     QuadrotorInterface quadrotorInterface(taskFileFolder);
-    init(quadrotorInterface, quadrotorInterface.getMpc());
+
+    // MPC
+    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(quadrotorInterface.mpcSettings(), quadrotorInterface.ddpSettings(),
+                                                quadrotorInterface.getRollout(), quadrotorInterface.getOptimalControlProblem(),
+                                                quadrotorInterface.getInitializer()));
+    mpcPtr->getSolverPtr()->setReferenceManager(quadrotorInterface.getReferenceManagerPtr());
+
+    // Python interface
+    PythonInterface::init(quadrotorInterface, std::move(mpcPtr));
   }
 };
 

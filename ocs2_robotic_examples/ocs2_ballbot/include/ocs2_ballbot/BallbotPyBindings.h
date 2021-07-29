@@ -29,9 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_ballbot/BallbotInterface.h>
-#include <ocs2_ballbot/definitions.h>
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_python_interface/PythonInterface.h>
+
+#include "ocs2_ballbot/BallbotInterface.h"
+#include "ocs2_ballbot/definitions.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -39,8 +41,17 @@ namespace ballbot {
 class BallbotPyBindings final : public PythonInterface {
  public:
   explicit BallbotPyBindings(const std::string& taskFileFolder) {
-    BallbotInterface robot(taskFileFolder);
-    PythonInterface::init(robot, robot.getMpc());
+    // Robot interface
+    BallbotInterface ballbotInterface(taskFileFolder);
+
+    // MPC
+    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(),
+                                                ballbotInterface.getRollout(), ballbotInterface.getOptimalControlProblem(),
+                                                ballbotInterface.getInitializer()));
+    mpcPtr->getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
+
+    // Python interface
+    PythonInterface::init(ballbotInterface, std::move(mpcPtr));
   }
 };
 

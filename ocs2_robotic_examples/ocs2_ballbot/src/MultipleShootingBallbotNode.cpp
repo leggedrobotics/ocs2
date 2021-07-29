@@ -30,11 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/init.h>
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
-#include "ocs2_ballbot/BallbotInterface.h"
-
-#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_sqp/MultipleShootingMpc.h>
-#include <ocs2_sqp/MultipleShootingSolver.h>
+
+#include "ocs2_ballbot/BallbotInterface.h"
 
 int main(int argc, char** argv) {
   const std::string robotName = "ballbot";
@@ -54,11 +53,17 @@ int main(int argc, char** argv) {
   // Robot interface
   ocs2::ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
-  ocs2::multiple_shooting::Settings settings = ballbotInterface.sqpSettings();
+  // ROS ReferenceManager
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
+      new ocs2::RosReferenceManager(robotName, ballbotInterface.getReferenceManagerPtr()));
+  rosReferenceManagerPtr->subscribe(nodeHandle);
 
-  ocs2::mpc::Settings mpcSettings = ballbotInterface.mpcSettings();
-  ocs2::MultipleShootingMpc mpc(mpcSettings, settings, ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
+  // MPC
+  ocs2::MultipleShootingMpc mpc(ballbotInterface.mpcSettings(), ballbotInterface.sqpSettings(), ballbotInterface.getOptimalControlProblem(),
+                                ballbotInterface.getInitializer());
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
+  // Launch MPC ROS node
   ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);
   mpcNode.launchNodes(nodeHandle);
 

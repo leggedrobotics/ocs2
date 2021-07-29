@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Dummy_Loop.h>
 
@@ -58,9 +59,13 @@ TEST(BallbotIntegrationTest, createMPC) {
   std::string taskFileFolderName = "mpc";
   ballbot::BallbotInterface ballbotInterface(taskFileFolderName);
 
+  // MPC
+  ocs2::MPC_DDP mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
+                    ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
+  mpc.getSolverPtr()->setReferenceManager(ballbotInterface.getReferenceManagerPtr());
+
   // Create MPC ROS node
-  auto mpcPtr = ballbotInterface.getMpc();
-  MPC_ROS_Interface mpcNode(*mpcPtr, "ballbot");
+  MPC_ROS_Interface mpcNode(mpc, "ballbot");
 }
 
 int main(int argc, char** argv) {

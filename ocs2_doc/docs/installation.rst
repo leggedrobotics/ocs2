@@ -35,9 +35,9 @@ Optional Dependencies
     .. code-block:: bash
     
         # Clone pinocchio
-        git clone git@github.com:leggedrobotics/pinocchio.git
+        git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git
         # Clone hpp-fcl
-        git clone git@github.com:leggedrobotics/hpp-fcl.git
+        git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git
         # install dependencies 
         sudo apt install liburdfdom-dev liboctomap-dev libassimp-dev
         

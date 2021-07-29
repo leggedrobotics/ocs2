@@ -198,9 +198,10 @@ void MRT_BASE::moveToBuffer(std::unique_ptr<CommandData> commandDataPtr, std::un
   }
 
   std::lock_guard<std::mutex> lk(bufferMutex_);
-  bufferCommandPtr_ = std::move(commandDataPtr);
-  bufferPrimalSolutionPtr_ = std::move(primalSolutionPtr);
-  bufferPerformanceIndicesPtr_ = std::move(performanceIndicesPtr);
+  // use swap such that the old objects are destroyed after releasing the lock.
+  bufferCommandPtr_.swap(commandDataPtr);
+  bufferPrimalSolutionPtr_.swap(primalSolutionPtr);
+  bufferPerformanceIndicesPtr_.swap(performanceIndicesPtr);
 
   // allow user to modify the buffer
   modifyBufferedSolution(*bufferCommandPtr_, *bufferPrimalSolutionPtr_);

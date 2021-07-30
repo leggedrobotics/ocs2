@@ -43,7 +43,7 @@ cost through a reference manager module.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launche the example
+    # Launch the example
     roslaunch ocs2_double_integrator_ros double_integrator.launch
 
 .. _doxid-ocs2_doc_robotic_examples_cartpole:
@@ -65,7 +65,7 @@ cart along the track.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launche the example
+    # Launch the example
     roslaunch ocs2_cartpole_ros cartpole.launch
 
 .. _doxid-ocs2_doc_robotic_examples_ballbot:
@@ -89,7 +89,7 @@ control the robot’s XY position and yaw based on user command.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launche the example
+    # Launch the example
     roslaunch ocs2_ballbot_ros ballbot.launch
 
 .. _doxid-ocs2_doc_robotic_examples_quadrotor:
@@ -111,7 +111,7 @@ command defined as the quadrotor’s 3D position and yaw.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launche the example
+    # Launch the example
     roslaunch ocs2_quadrotor_ros quadrotor.launch
 
 .. _doxid-ocs2_doc_robotic_examples_mobile_manipulator:
@@ -140,7 +140,7 @@ usePreComputation flag in the config file.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launche the example
+    # Launch the example
     roslaunch ocs2_mobile_manipulator_ros mobile_manipulator.launch
 
 .. _doxid-ocs2_doc_robotic_examples_legged_robot:
@@ -177,5 +177,5 @@ considers the full kinematics of the robot.
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
-    # Launche the example
+    # Launch the example
     roslaunch ocs2_legged_robot legged_robot.launch

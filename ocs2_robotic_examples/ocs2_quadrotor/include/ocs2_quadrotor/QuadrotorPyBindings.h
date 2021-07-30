@@ -46,9 +46,9 @@ class QuadrotorPyBindings final : public PythonInterface {
    * @note Creates directory for generated library into if it does not exist.
    * @throw Invalid argument error if input task file does not exist.
    *
-   * @param [in] taskFile: The path to the configuration file for the MPC.
-   * @param [in] libraryFolder: The path to the directory to generate CppAD library into.
-   * @param [in] urdfFile: The path to the URDF of the robot. This is not used for quadrotor.
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
+   * @param [in] urdfFile: The absolute path to the URDF of the robot. This is not used for quadrotor.
    */
   explicit QuadrotorPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "") {
     // Robot interface

@@ -33,12 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/kinematics.hpp>
 
 #include <gtest/gtest.h>
-#include <ros/package.h>
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorPreComputation.h>
 #include <ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h>
+#include <ocs2_mobile_manipulator/package_path.h>
 
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
@@ -51,7 +51,7 @@ class testEndEffectorConstraint : public ::testing::Test {
   using vector3_t = EndEffectorConstraint::vector3_t;
 
   testEndEffectorConstraint() {
-    const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
+    const std::string urdfPath = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
 
     const vector_t positionOrientation = (vector_t(7) << vector3_t::Zero(), quaternion_t(1, 0, 0, 0).coeffs()).finished();
     referenceManagerPtr.reset(new ReferenceManager(TargetTrajectories({0.0}, {positionOrientation})));

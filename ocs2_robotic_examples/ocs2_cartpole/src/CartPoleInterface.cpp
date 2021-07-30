@@ -38,7 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ros/package.h>
+// Boost
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace ocs2 {
 namespace cartpole {
@@ -46,12 +48,18 @@ namespace cartpole {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
-  const std::string taskFile = ros::package::getPath("ocs2_cartpole") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile << std::endl;
-
-  const std::string libraryFolder = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder << std::endl;
+CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder) {
+  // check that task file exists
+  boost::filesystem::path taskFilePath(taskFile);
+  if (boost::filesystem::exists(taskFilePath)) {
+    std::cerr << "[CartPoleInterface] Loading task file: " << taskFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[CartPoleInterface] Task file not found: " + taskFilePath.string());
+  }
+  // create library folder if it does not exist
+  boost::filesystem::path libraryFolderPath(libraryFolder);
+  boost::filesystem::create_directories(libraryFolderPath);
+  std::cerr << "[CartPoleInterface] Generated library path: " << libraryFolderPath << std::endl;
 
   // Default initial condition
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);

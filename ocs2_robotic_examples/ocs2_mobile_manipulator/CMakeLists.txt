@@ -5,13 +5,6 @@ project(ocs2_mobile_manipulator)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-  tf
-  urdf
-  kdl_parser
-  robot_state_publisher
-  visualization_msgs
-  geometry_msgs
-  ocs2_ros_interfaces
   ocs2_core
   ocs2_ddp
   ocs2_mpc
@@ -21,7 +14,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
@@ -57,12 +49,18 @@ catkin_package(
 
 set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS_OTHER} -Wno-invalid-partial-specialization)
 
+# Resolve for the package path at compile time.
+configure_file (
+  "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/package_path.h.in"
+  "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/package_path.h" @ONLY
+)
+
+# Add directories for all targets
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  ${pinocchio_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -74,7 +72,7 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorPreComputation.cpp
   src/constraint/EndEffectorConstraint.cpp
   src/constraint/JointVelocityLimits.cpp
-  src/MobileManipulatorDynamics.cpp
+  src/dynamics/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -87,63 +85,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
-# MPC node
-add_executable(mobile_manipulator_mpc_node
-  src/MobileManipulatorMpcNode.cpp
-)
-add_dependencies(mobile_manipulator_mpc_node
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(mobile_manipulator_mpc_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
-
-# DistanceVisualization node
-add_executable(mobile_manipulator_distance_visualization
-  src/MobileManipulatorDistanceVisualization.cpp
-)
-add_dependencies(mobile_manipulator_distance_visualization
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(mobile_manipulator_distance_visualization
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS})
-
-# Dummy node
-add_executable(mobile_manipulator_dummy_mrt_node
-  src/MobileManipulatorDummyMRT.cpp
-  src/MobileManipulatorDummyVisualization.cpp
-)
-add_dependencies(mobile_manipulator_dummy_mrt_node
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(mobile_manipulator_dummy_mrt_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-target_compile_options(mobile_manipulator_dummy_mrt_node PUBLIC ${FLAGS})
-
-# Target node
-add_executable(mobile_manipulator_target
-  src/MobileManipulatorTarget.cpp
-)
-add_dependencies(mobile_manipulator_target
-  ${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(mobile_manipulator_target
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-target_compile_options(mobile_manipulator_target PUBLIC ${FLAGS})
-
 ####################
 ## Clang tooling ###
 ####################
@@ -152,7 +93,7 @@ find_package(cmake_clang_tools QUIET)
 if (cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling")
   add_clang_tooling(
-    TARGETS ${PROJECT_NAME} mobile_manipulator_mpc_node mobile_manipulator_dummy_mrt_node
+    TARGETS ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CF_WERROR
@@ -171,7 +112,7 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(DIRECTORY config launch
+install(DIRECTORY config urdf
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -183,6 +124,9 @@ install(DIRECTORY config launch
 macro(add_ocs2_test APP_NAME APP_SRC)
   catkin_add_gtest(${APP_NAME}
       ${APP_SRC}
+  )
+  target_include_directories(${APP_NAME}
+    PRIVATE ${PROJECT_BINARY_DIR}/include
   )
   target_link_libraries(${APP_NAME}
     gtest_main

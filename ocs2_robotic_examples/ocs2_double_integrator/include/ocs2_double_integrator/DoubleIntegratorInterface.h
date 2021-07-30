@@ -51,10 +51,11 @@ class DoubleIntegratorInterface final : public RobotInterface {
  public:
   /**
    * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
-   * @param [in] verbose: Load the settings verbose.
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
+   * @param [in] verbose: Load the settings in verbose.
    */
-  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName, bool verbose = true);
+  explicit DoubleIntegratorInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose = true);
 
   /** Destructor */
   ~DoubleIntegratorInterface() override = default;

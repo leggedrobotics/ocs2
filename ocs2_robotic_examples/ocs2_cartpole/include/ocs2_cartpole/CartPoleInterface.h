@@ -49,9 +49,13 @@ class CartPoleInterface final : public RobotInterface {
   /**
    * Constructor
    *
-   * @param [in] taskFileFolderName: The name of the folder containing task file
+   * @note Creates directory for generated library into if it does not exist.
+   * @throw Invalid argument error if input task file does not exist.
+   *
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    */
-  explicit CartPoleInterface(const std::string& taskFileFolderName);
+  explicit CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder);
 
   /**
    * Destructor

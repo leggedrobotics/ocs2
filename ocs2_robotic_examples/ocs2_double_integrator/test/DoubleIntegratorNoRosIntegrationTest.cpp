@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include <ocs2_double_integrator/DoubleIntegratorInterface.h>
+#include <ocs2_double_integrator/package_path.h>
+
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 
 using namespace ocs2;
@@ -41,7 +43,9 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
  protected:
   DoubleIntegratorIntegrationTest() {
     const bool verbose = false;
-    doubleIntegratorInterfacePtr.reset(new DoubleIntegratorInterface("mpc", verbose));
+    const std::string taskFile = ocs2::double_integrator::getPath() + "/config/mpc/task.info";
+    const std::string libFolder = ocs2::double_integrator::getPath() + "/auto_generated";
+    doubleIntegratorInterfacePtr.reset(new DoubleIntegratorInterface(taskFile, libFolder, verbose));
 
     initState = doubleIntegratorInterfacePtr->getInitialState();
     goalState = doubleIntegratorInterfacePtr->getInitialTarget();

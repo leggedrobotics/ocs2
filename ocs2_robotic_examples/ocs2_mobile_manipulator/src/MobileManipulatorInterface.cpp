@@ -58,7 +58,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
 
-#include <ros/package.h>
+// Boost
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -66,17 +68,29 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFileFolderName) {
-  const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile << std::endl;
+MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder,
+                                                       const std::string& urdfFile) {
+  // check that task file exists
+  boost::filesystem::path taskFilePath(taskFile);
+  if (boost::filesystem::exists(taskFilePath)) {
+    std::cerr << "[MobileManipulatorInterface] Loading task file: " << taskFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[MobileManipulatorInterface] Task file not found: " + taskFilePath.string());
+  }
+  // check that urdf file exists
+  boost::filesystem::path urdfFilePath(urdfFile);
+  if (boost::filesystem::exists(urdfFilePath)) {
+    std::cerr << "[MobileManipulatorInterface] Loading Pinocchio model from: " << urdfFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[MobileManipulatorInterface] URDF file not found: " + urdfFilePath.string());
+  }
+  // create library folder if it does not exist
+  boost::filesystem::path libraryFolderPath(libraryFolder);
+  boost::filesystem::create_directories(libraryFolderPath);
+  std::cerr << "[MobileManipulatorInterface] Generated library path: " << libraryFolderPath << std::endl;
 
-  const std::string libraryFolder = "/tmp/ocs2/ocs2_mobile_manipulator";
-  std::cerr << "Generated library path: " << libraryFolder << std::endl;
-
-  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
-  std::cerr << "Load Pinocchio model from " << urdfPath << '\n';
-
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfPath)));
+  // create pinocchio interface
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(buildPinocchioInterface(urdfFile)));
   std::cerr << *pinocchioInterfacePtr_;
 
   bool usePreComputation = true;
@@ -108,7 +122,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Constraints
   problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfPath,
+  problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile,
                                                                                    usePreComputation, libraryFolder, recompileLibraries));
   problem_.stateSoftConstraintPtr->add("enfEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
                                                                                usePreComputation, libraryFolder, recompileLibraries));
@@ -136,14 +150,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfPath) {
+PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfFile) {
   // add 3 DOF for wheelbase
   pinocchio::JointModelComposite rootJoint(3);
   rootJoint.addJoint(pinocchio::JointModelPX());
   rootJoint.addJoint(pinocchio::JointModelPY());
   rootJoint.addJoint(pinocchio::JointModelRZ());
 
-  return getPinocchioInterfaceFromUrdfFile(urdfPath, rootJoint);
+  return getPinocchioInterfaceFromUrdfFile(urdfFile, rootJoint);
 }
 
 /******************************************************************************************************/
@@ -207,7 +221,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface,
-                                                                                  const std::string& taskFile, const std::string& urdfPath,
+                                                                                  const std::string& taskFile, const std::string& urdfFile,
                                                                                   bool usePreComputation, const std::string& libraryFolder,
                                                                                   bool recompileLibraries) {
   std::vector<std::pair<size_t, size_t>> collisionObjectPairs;

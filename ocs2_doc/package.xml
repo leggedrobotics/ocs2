@@ -25,6 +25,7 @@
   <exec_depend>ocs2_ros_interfaces</exec_depend>
   <exec_depend>ocs2_robotic_tools</exec_depend>
   <exec_depend>ocs2_robotic_examples</exec_depend>
+  <exec_depend>ocs2_robotic_examples_ros</exec_depend>
   <exec_depend>ocs2_pinocchio</exec_depend>
 
 </package>

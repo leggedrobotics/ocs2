@@ -38,7 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ros/package.h>
+// Boost
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace ocs2 {
 namespace double_integrator {
@@ -46,12 +48,18 @@ namespace double_integrator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFileFolderName, bool verbose) {
-  const std::string taskFile = ros::package::getPath("ocs2_double_integrator") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile << std::endl;
-
-  const std::string libraryFolder = ros::package::getPath("ocs2_double_integrator") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder << std::endl;
+DoubleIntegratorInterface::DoubleIntegratorInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose) {
+  // check that task file exists
+  boost::filesystem::path taskFilePath(taskFile);
+  if (boost::filesystem::exists(taskFilePath)) {
+    std::cerr << "[DoubleIntegratorInterface] Loading task file: " << taskFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[DoubleIntegratorInterface] Task file not found: " + taskFilePath.string());
+  }
+  // create library folder if it does not exist
+  boost::filesystem::path libraryFolderPath(libraryFolder);
+  boost::filesystem::create_directories(libraryFolderPath);
+  std::cerr << "[DoubleIntegratorInterface] Generated library path: " << libraryFolderPath << std::endl;
 
   // Default initial condition and final goal
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);

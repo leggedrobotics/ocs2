@@ -13,10 +13,15 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>ocs2_ballbot</run_depend>
+  <run_depend>ocs2_ballbot_ros</run_depend>
   <run_depend>ocs2_cartpole</run_depend>
+  <run_depend>ocs2_cartpole_ros</run_depend>
   <run_depend>ocs2_double_integrator</run_depend>
+  <run_depend>ocs2_double_integrator_ros</run_depend>
   <run_depend>ocs2_quadrotor</run_depend>
+  <run_depend>ocs2_quadrotor_ros</run_depend>
   <run_depend>ocs2_mobile_manipulator</run_depend>
+  <run_depend>ocs2_mobile_manipulator_ros</run_depend>
   <run_depend>ocs2_legged_robot</run_depend>
   <run_depend>xacro</run_depend>
 

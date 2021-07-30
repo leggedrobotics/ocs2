@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <thread>
 
-#include <ros/package.h>
-
 #include <gtest/gtest.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
@@ -43,17 +41,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
+#include "ocs2_mobile_manipulator/package_path.h"
 
 using namespace ocs2;
 using namespace mobile_manipulator;
 
 class MobileManipulatorIntegrationTest : public testing::Test {
-protected:
+ protected:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
   using quaternion_t = Eigen::Quaternion<scalar_t, Eigen::DontAlign>;
 
   MobileManipulatorIntegrationTest() {
-    mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface("mpc"));
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
+    const std::string libFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated";
+    const std::string urdfFile = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
+    mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface(taskFile, libFolder, urdfFile));
 
     // initialize reference
     const vector_t goalState = (vector_t(7) << goalPosition, goalOrientation.coeffs()).finished();
@@ -64,8 +66,8 @@ protected:
     const std::string modelName = "end_effector_kinematics_dummytest";
     MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMapping;
     const auto& pinocchioInterface = mobileManipulatorInterfacePtr->getPinocchioInterface();
-    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {"WRIST_2"},
-        STATE_DIM, INPUT_DIM, modelName));
+    eeKinematicsPtr.reset(
+        new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {"WRIST_2"}, STATE_DIM, INPUT_DIM, modelName));
   }
 
   std::unique_ptr<MPC_DDP> getMpc() {
@@ -149,7 +151,7 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
   auto mpcPtr = getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
-  constexpr int f_mrt = 10;  // Hz
+  constexpr int f_mrt = 10;                                            // Hz
   const std::chrono::duration<double, std::ratio<1, f_mrt>> mrtHz(1);  // f_mrt Hz clock using fractional ticks
 
   scalar_t time = initTime;

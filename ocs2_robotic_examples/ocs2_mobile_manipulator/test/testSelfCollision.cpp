@@ -34,9 +34,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/geometry.hpp>
 
 #include <gtest/gtest.h>
-#include <ros/package.h>
 
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
+#include <ocs2_mobile_manipulator/package_path.h>
+
 #include <ocs2_self_collision/SelfCollision.h>
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
 
@@ -46,7 +47,7 @@ using namespace mobile_manipulator;
 class TestSelfCollision : public ::testing::Test {
  public:
   TestSelfCollision()
-      : pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)),
+      : pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfFile)),
         geometryInterface(pinocchioInterface, collisionPairs) {}
 
   void computeValue(PinocchioInterface& pinocchioInterface, const vector_t q) {
@@ -66,8 +67,9 @@ class TestSelfCollision : public ::testing::Test {
   const vector_t jointPositon = (vector_t(9) << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0).finished();
   const std::vector<std::pair<size_t, size_t>> collisionPairs = {{1, 4}, {1, 6}, {1, 9}};
 
-  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
-  const std::string libraryFolder = ros::package::getPath("ocs2_mobile_manipulator") + "/auto_generated";
+  const std::string libraryFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated";
+  const std::string urdfFile = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
+
   const scalar_t minDistance = 0.1;
 
   PinocchioInterface pinocchioInterface;

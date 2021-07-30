@@ -27,26 +27,43 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator/dynamics/WheelBasedManipulatorDynamics.h>
+#pragma once
+
+#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+
+#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-WheelBasedManipulatorDynamics::WheelBasedManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& info,
-                                                             const std::string& modelFolder /*= "/tmp/ocs2"*/,
-                                                             bool recompileLibraries /*= true*/, bool verbose /*= true*/)
-    : SystemDynamicsBaseAD(), info_(info) {
-  Base::initialize(info_.stateDim, info_.inputDim, modelName, modelFolder, recompileLibraries, verbose);
-}
+/**
+ * @brief Implementation of a wheel-based mobile manipulator.
+ *
+ * The wheel-based manipulator is simulated 2D-bicycle model for the base. The state
+ * of the robot is: (base x, base y, base yaw, arm joints).
+ *
+ * The robot is assumed to be velocity controlled with the base commands as the forward
+ * velocity and the angular velocity around z.
+ */
+class WheelBasedMobileManipulatorDynamics final : public SystemDynamicsBaseAD {
+ public:
+  using Base = SystemDynamicsBaseAD;
 
-ad_vector_t WheelBasedManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                                         const ad_vector_t& parameters) const {
-  ad_vector_t dxdt(info_.stateDim);
-  const auto theta = state(2);
-  const auto v = input(0);  // forward velocity in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(info_.armDim);
-  return dxdt;
-}
+  explicit WheelBasedMobileManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& modelInfo,
+                                               const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
+                                               bool verbose = true);
+  ~WheelBasedMobileManipulatorDynamics() override = default;
+  WheelBasedMobileManipulatorDynamics* clone() const override { return new WheelBasedMobileManipulatorDynamics(*this); }
+
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& parameters) const override;
+
+ private:
+  WheelBasedMobileManipulatorDynamics(const WheelBasedMobileManipulatorDynamics& rhs) = default;
+
+  MobileManipulatorModelInfo info_;
+};
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

@@ -58,7 +58,7 @@ add_library(
   src/MobileManipulatorPinocchioMapping.cpp
   src/constraint/EndEffectorConstraint.cpp
   src/constraint/JointVelocityLimits.cpp
-  src/dynamics/WheelBasedManipulatorDynamics.cpp
+  src/dynamics/WheelBasedMobileManipulatorDynamics.cpp
   src/dynamics/DefaultManipulatorDynamics.cpp
   src/dynamics/FloatingArmManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp)

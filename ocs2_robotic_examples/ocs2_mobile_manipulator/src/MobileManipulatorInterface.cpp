@@ -59,7 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
 #include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator/dynamics/WheelBasedManipulatorDynamics.h"
+#include "ocs2_mobile_manipulator/dynamics/WheelBasedMobileManipulatorDynamics.h"
 
 // Boost
 #include <boost/filesystem/operations.hpp>
@@ -174,7 +174,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // Dynamics
   if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::WheelBasedMobileManipulator) {
     problem_.dynamicsPtr.reset(
-        new WheelBasedManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
+        new WheelBasedMobileManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
   } else if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::FloatingArmManipulator) {
     problem_.dynamicsPtr.reset(
         new FloatingArmManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));

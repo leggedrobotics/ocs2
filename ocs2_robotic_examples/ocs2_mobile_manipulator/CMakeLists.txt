@@ -16,9 +16,9 @@ pkg_check_modules(pinocchio REQUIRED pinocchio)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# ##############################################################################
-# catkin specific configuration ##
-# ##############################################################################
+###################################
+## catkin specific configuration ##
+###################################
 
 catkin_package(
   INCLUDE_DIRS
@@ -31,9 +31,9 @@ catkin_package(
   Boost
   pinocchio)
 
-# ##############################################################################
-# Build ##
-# ##############################################################################
+###########
+## Build ##
+###########
 
 set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS_OTHER}
           -Wno-invalid-partial-specialization)
@@ -67,9 +67,9 @@ target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES}
                       ${pinocchio_LIBRARIES})
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
-# ##############################################################################
-# Clang tooling ###
-# ##############################################################################
+###################
+## Clang tooling ##
+###################
 
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
@@ -85,9 +85,9 @@ if(cmake_clang_tools_FOUND)
     CF_WERROR)
 endif(cmake_clang_tools_FOUND)
 
-# ##############################################################################
-# Install ##
-# ##############################################################################
+#############
+## Install ##
+#############
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -98,9 +98,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 install(DIRECTORY config urdf DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-# ##############################################################################
-# Testing ##
-# ##############################################################################
+#############
+## Testing ##
+#############
 
 # Helper macro for adding target applications
 macro(add_ocs2_test APP_NAME APP_SRC)

@@ -59,6 +59,7 @@ size_t SelfCollisionConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const {
   const auto& pinocchioInterface = getPinocchioInterface(preComputation);
+  mappingPtr_->setPinocchioInterface(pinocchioInterface);
 
   return selfCollision_.getValue(pinocchioInterface);
 }
@@ -69,6 +70,7 @@ vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state,
 VectorFunctionLinearApproximation SelfCollisionConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                   const PreComputation& preComputation) const {
   const auto& pinocchioInterface = getPinocchioInterface(preComputation);
+  mappingPtr_->setPinocchioInterface(pinocchioInterface);
 
   VectorFunctionLinearApproximation constraint;
   matrix_t dfdq, dfdv;

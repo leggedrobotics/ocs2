@@ -35,7 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <visualization_msgs/MarkerArray.h>
 
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
-#include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
+
+#include "ocs2_self_collision_visualization/GeometryInterfaceVisualization.h"
 
 namespace ocs2 {
 

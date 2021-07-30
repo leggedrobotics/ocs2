@@ -73,7 +73,7 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorPreComputation.cpp
   src/constraint/EndEffectorConstraint.cpp
   src/constraint/JointVelocityLimits.cpp
-  src/MobileManipulatorDynamics.cpp
+  src/dynamics/MobileManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}

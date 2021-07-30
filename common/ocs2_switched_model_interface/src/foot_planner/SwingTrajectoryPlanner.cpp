@@ -156,7 +156,7 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
       }();
 
       // Compute foot position from cost desired trajectory
-      vector_t state = costDesiredTrajectories.getDesiredState(middleContactTime);
+      vector_t state = targetTrajectories.getDesiredState(middleContactTime);
       const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);

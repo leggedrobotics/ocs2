@@ -49,14 +49,10 @@ ocs2::ad_vector_t FootNormalConstraint::constraintFunction(ad_scalar_t time, con
   const ad_scalar_t constant = parameters(6);
 
   // Extract elements from state
-  const base_coordinate_ad_t comPose = getComPose(x);
-  const base_coordinate_ad_t com_comTwist = getComLocalVelocities(x);
+  const base_coordinate_ad_t basePose = getComPose(x);
+  const base_coordinate_ad_t com_baseTwist = getComLocalVelocities(x);
   const joint_coordinate_ad_t qJoints = getJointPositions(x);
   const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
-
-  // Get base state from com state
-  const base_coordinate_ad_t basePose = adComModelPtr_->calculateBasePose(comPose);
-  const base_coordinate_ad_t com_baseTwist = adComModelPtr_->calculateBaseLocalVelocities(com_comTwist);
 
   const auto o_footPosition = adKinematicsModelPtr_->footPositionInOriginFrame(legNumber_, basePose, qJoints);
   const auto o_footVelocity = adKinematicsModelPtr_->footVelocityInOriginFrame(legNumber_, basePose, com_baseTwist, qJoints, dqJoints);

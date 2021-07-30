@@ -24,13 +24,11 @@ void EndEffectorVelocityInFootFrameConstraint::adfunc(ad_com_model_t& adComModel
   comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
 
   // Extract elements from state
-  const base_coordinate_ad_t comPose = getComPose(x);
-  const base_coordinate_ad_t com_comTwist = getComLocalVelocities(x);
+  const base_coordinate_ad_t com_baseTwist = getComLocalVelocities(x);
   const joint_coordinate_ad_t qJoints = getJointPositions(x);
   const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
 
-  // Get base state from com state
-  const base_coordinate_ad_t com_baseTwist = adComModel.calculateBaseLocalVelocities(com_comTwist);
+  // Get base state from com state;
   f_footVelocityInFootFrame = adKinematicsModel.footVelocityInFootFrame(legNumber, com_baseTwist, qJoints, dqJoints);
 };
 

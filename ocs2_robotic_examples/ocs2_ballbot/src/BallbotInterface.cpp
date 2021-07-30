@@ -60,9 +60,6 @@ BallbotInterface::BallbotInterface(const std::string& taskFile, const std::strin
   boost::filesystem::create_directories(libraryFolderPath);
   std::cerr << "[BallbotInterface] Generated library path: " << libraryFolderPath << std::endl;
 
-  const std::string libraryFolder = ros::package::getPath("ocs2_ballbot") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder << std::endl;
-
   // Default initial condition
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;

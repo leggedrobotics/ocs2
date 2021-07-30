@@ -33,7 +33,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 catkin_package(
   INCLUDE_DIRS
     include
-    ${EIGEN_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
@@ -47,7 +47,7 @@ catkin_package(
 
 include_directories(
   include
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -56,10 +56,9 @@ add_library(${PROJECT_NAME}
   src/QuadrupedDummyNode.cpp
   src/QuadrupedInterface.cpp
   src/QuadrupedLogger.cpp
+  src/QuadrupedMpc.cpp
   src/QuadrupedMpcNode.cpp
   src/QuadrupedPointfootInterface.cpp
-  src/QuadrupedSlqMpc.cpp
-  src/QuadrupedSqpMpc.cpp
   src/QuadrupedVisualizer.cpp
   src/QuadrupedWheeledInterface.cpp
   src/SwingPlanningVisualizer.cpp
@@ -70,10 +69,9 @@ add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-target_include_directories(${PROJECT_NAME} INTERFACE
-  ${catkin_INCLUDE_DIRS}
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 #########################

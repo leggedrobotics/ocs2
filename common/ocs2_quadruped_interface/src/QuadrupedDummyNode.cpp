@@ -45,10 +45,10 @@ void quadrupedDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedInterface& q
   initObservation.mode = switched_model::ModeNumber::STANCE;
 
   // initial command
-  ocs2::CostDesiredTrajectories initCostDesiredTrajectories({0.0}, {initObservation.state}, {initObservation.input});
+  const ocs2::TargetTrajectories initTargetTrajectories({0.0}, {initObservation.state}, {initObservation.input});
 
   // run dummy
-  dummySimulator.run(initObservation, initCostDesiredTrajectories);
+  dummySimulator.run(initObservation, initTargetTrajectories);
 }
 
 }  // namespace switched_model

@@ -12,7 +12,7 @@
 #include <ocs2_switched_model_interface/constraint/AnymalWheelsComKinoConstraintAd.h>
 #include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
 #include <ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h>
-#include <ocs2_switched_model_interface/initialization/ComKinoOperatingPointsBase.h>
+#include <ocs2_switched_model_interface/initialization/ComKinoInitializer.h>
 
 #include "ocs2_quadruped_interface/QuadrupedInterface.h"
 
@@ -26,7 +26,7 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
   using system_dynamics_derivative_t = switched_model::ComKinoSystemDynamicsAd;
   using constraint_t = switched_model::AnymalWheelsComKinoConstraintAd;
   using cost_function_t = switched_model::SwitchedModelCostBase;
-  using operating_point_t = switched_model::ComKinoOperatingPointsBase;
+  using initializer_t = switched_model::ComKinoInitializer;
   using time_triggered_rollout_t = ocs2::TimeTriggeredRollout;
 
   QuadrupedWheeledInterface(const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
@@ -46,14 +46,14 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
 
   const constraint_t* getConstraintPtr() const override { return constraintsPtr_.get(); }
 
-  const operating_point_t& getOperatingPoints() const override { return *operatingPointsPtr_; }
+  const initializer_t& getInitializer() const override { return *initializerPtr_; }
 
  private:
   std::unique_ptr<system_dynamics_t> dynamicsPtr_;
   std::unique_ptr<constraint_t> constraintsPtr_;
   std::unique_ptr<cost_function_t> costFunctionPtr_;
   std::unique_ptr<ocs2::QuadraticCostFunction> terminalCostFunctionPtr_;
-  std::unique_ptr<operating_point_t> operatingPointsPtr_;
+  std::unique_ptr<initializer_t> initializerPtr_;
   std::unique_ptr<time_triggered_rollout_t> timeTriggeredRolloutPtr_;
   synchronized_module_ptr_array_t solverModules_;
 };

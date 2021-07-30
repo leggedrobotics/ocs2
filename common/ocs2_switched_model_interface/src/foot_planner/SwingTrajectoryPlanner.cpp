@@ -20,8 +20,16 @@ void SwingTrajectoryPlanner::updateTerrain(std::unique_ptr<TerrainModel> terrain
   terrainModel_ = std::move(terrainModel);
 }
 
+const SignedDistanceField* SwingTrajectoryPlanner::getSignedDistanceField() const {
+  if (terrainModel_) {
+    return terrainModel_->getSignedDistanceField();
+  } else {
+    return nullptr;
+  }
+}
+
 void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
-                                                const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
+                                                const ocs2::TargetTrajectories& targetTrajectories,
                                                 const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg) {
   if (!terrainModel_) {
     throw std::runtime_error("[SwingTrajectoryPlanner] terrain cannot be null. Update the terrain before planning swing motions");
@@ -39,7 +47,8 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     }
 
     // Nominal footholds / terrain planes
-    nominalFootholdsPerLeg_[leg] = selectNominalFootholdTerrain(leg, contactTimings, costDesiredTrajectories, finalTime, *terrainModel_);
+    nominalFootholdsPerLeg_[leg] =
+        selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, initTime, finalTime, *terrainModel_);
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
@@ -70,8 +79,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
-    footPhases.emplace_back(
-        new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(), settings_.errorGain));
+    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(),
+                                           settings_.errorGain, scaling * settings_.sdfMidswingMargin));
   }
 
   // Loop through contact phases
@@ -88,7 +97,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     if (hasStartTime(currentContactTiming)) {
       eventTimes.push_back(currentContactTiming.start);
     }
-    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain));
+    footPhases.emplace_back(new StancePhase(nominalFoothold, settings_.errorGain, settings_.terrainMargin));
 
     // generate swing phase afterwards if the current contact is finite and ends before the horizon
     if (hasEndTime(currentContactTiming) && currentContactTiming.end < finalTime) {
@@ -107,7 +116,7 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       touchDown.velocity *= scaling;
       eventTimes.push_back(currentContactTiming.end);
       footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(),
-                                             settings_.errorGain));
+                                             settings_.errorGain, scaling * settings_.sdfMidswingMargin));
     }
   }
 
@@ -122,9 +131,10 @@ scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, sca
   }
 }
 
-std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
-    int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::CostDesiredTrajectories& costDesiredTrajectories,
-    scalar_t finalTime, const TerrainModel& terrainModel) const {
+std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
+                                                                                const ocs2::TargetTrajectories& targetTrajectories,
+                                                                                scalar_t initTime, scalar_t finalTime,
+                                                                                const TerrainModel& terrainModel) const {
   std::vector<ConvexTerrain> nominalFootholdTerrain;
 
   // Nominal foothold is equal to current foothold for legs in contact
@@ -134,7 +144,7 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
     nominalFootholdTerrain.push_back(convexTerrain);
   }
 
-  // For future contact phases, use costDesiredTrajectories at halve the contact phase
+  // For future contact phases, use TargetTrajectories at halve the contact phase
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase)) {
       const auto middleContactTime = [&] {
@@ -149,8 +159,27 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
       vector_t state = costDesiredTrajectories.getDesiredState(middleContactTime);
       const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
+      vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+
+      // Get previous terrain projected foothold if there was one at this time
+      vector3_t previousFootholdPositionInWorld = referenceFootholdPositionInWorld;
+      if (!feetNormalTrajectories_[leg].empty()) {
+        const auto& footPhase = getFootPhase(leg, middleContactTime);
+        if (footPhase.contactFlag()) {
+          previousFootholdPositionInWorld = footPhase.nominalFootholdLocation();
+        }
+      }
+
+      // Fuse
+      const double timeTillContact = contactPhase.start - initTime;
+      if ((referenceFootholdPositionInWorld - previousFootholdPositionInWorld).norm() < settings_.previousFootholdDeadzone ||
+          timeTillContact < settings_.previousFootholdTimeDeadzone) {
+        referenceFootholdPositionInWorld = previousFootholdPositionInWorld;
+      }
+
+      const double lambda = settings_.previousFootholdFactor;
       const vector3_t nominalFootholdPositionInWorld =
-          kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+          lambda * previousFootholdPositionInWorld + (1.0 - lambda) * referenceFootholdPositionInWorld;
 
       if (contactPhase.start < finalTime) {
         ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld);
@@ -193,6 +222,11 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.touchdownAfterHorizon, prefix + "touchdownAfterHorizon", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.errorGain, prefix + "errorGain", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.swingTimeScale, prefix + "swingTimeScale", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.sdfMidswingMargin, prefix + "sdfMidswingMargin", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.terrainMargin, prefix + "terrainMargin", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdFactor, prefix + "previousFootholdFactor", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdDeadzone, prefix + "previousFootholdDeadzone", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdTimeDeadzone, prefix + "previousFootholdTimeDeadzone", verbose);
 
   if (verbose) {
     std::cerr << " #### ==================================================" << std::endl;

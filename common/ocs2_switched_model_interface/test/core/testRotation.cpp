@@ -33,9 +33,23 @@ TEST(testRotations, rotationMatrix) {
 
     const auto o_R_b_check = rotationMatrixBaseToOrigin_check(eulerAngles);
     const auto o_R_b = switched_model::rotationMatrixBaseToOrigin(eulerAngles);
-    Eigen::Quaterniond qRef = Eigen::Quaterniond::UnitRandom();
 
     ASSERT_NEAR((o_R_b_check - o_R_b).norm(), 0, 1e-12);
+  }
+}
+
+TEST(testRotations, rotateVector) {
+  for (int i = 0; i < 1000; i++) {
+    const switched_model::vector3_t eulerAngles = switched_model::vector3_t::Random();
+    const switched_model::vector3_t vector = switched_model::vector3_t::Random();
+
+    const switched_model::vector3_t o_b_check = rotationMatrixBaseToOrigin_check(eulerAngles) * vector;
+    const switched_model::vector3_t o_b_vector = switched_model::rotateVectorBaseToOrigin(vector, eulerAngles);
+    ASSERT_NEAR((o_b_check - o_b_vector).norm(), 0, 1e-12);
+
+    const switched_model::vector3_t b_o_check = rotationMatrixBaseToOrigin_check(eulerAngles).transpose() * vector;
+    const switched_model::vector3_t b_o_vector = switched_model::rotateVectorOriginToBase(vector, eulerAngles);
+    ASSERT_NEAR((b_o_check - b_o_vector).norm(), 0, 1e-12);
   }
 }
 
@@ -46,8 +60,7 @@ TEST(testRotations, rotationDerivative) {
   auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     switched_model::vector3_ad_t eulerAngles = x.head<3>();
     switched_model::vector3_ad_t v_base = p.head<3>();
-    switched_model::matrix3_ad_t R_WB = switched_model::rotationMatrixBaseToOrigin(eulerAngles);
-    y = R_WB * v_base;
+    y = switched_model::rotateVectorBaseToOrigin(v_base, eulerAngles);
   };
 
   ocs2::CppAdInterface adInterface(adFunction, 3, 3, "rotationDerivativeTest");
@@ -63,4 +76,15 @@ TEST(testRotations, rotationDerivative) {
   }
 
   ASSERT_TRUE(true);
+}
+
+TEST(testRotations, eulerRates) {
+  for (int i = 0; i < 1000; i++) {
+    const switched_model::vector3_t eulerAngles = switched_model::vector3_t::Random();
+    const switched_model::vector3_t angularVelocityInBase = switched_model::vector3_t::Random();
+
+    const switched_model::vector3_t eulerRate_check = switched_model::angularVelocitiesToEulerAngleDerivativesMatrix(eulerAngles) * angularVelocityInBase;
+    const switched_model::vector3_t eulerRate = switched_model::angularVelocitiesToEulerAngleDerivatives(angularVelocityInBase, eulerAngles);
+    ASSERT_NEAR((eulerRate_check - eulerRate).norm(), 0, 1e-12);
+  }
 }

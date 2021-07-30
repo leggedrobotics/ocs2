@@ -86,40 +86,75 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalCerberusKinematics<SCALAR_T>::footOr
 /******************************************************************************************************/
 
 template <typename SCALAR_T>
-typename AnymalCerberusKinematics<SCALAR_T>::joint_jacobian_t AnymalCerberusKinematics<SCALAR_T>::baseToFootJacobianInBaseFrame(
+typename AnymalCerberusKinematics<SCALAR_T>::joint_jacobian_block_t AnymalCerberusKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-
-  joint_jacobian_t footJacobian;
-  footJacobian.setZero();
 
   switch (footIndex) {
     case LF: {
       typename iit::cerberus::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LF_FOOT fr_trunk_J_fr_LF_foot_;
-      footJacobian.template block<6, 3>(0, 0) = fr_trunk_J_fr_LF_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_LF_foot_(jointPositions);
     }
     case RF: {
       typename iit::cerberus::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RF_FOOT fr_trunk_J_fr_RF_foot_;
-      footJacobian.template block<6, 3>(0, 3) = fr_trunk_J_fr_RF_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_RF_foot_(jointPositions);
     }
     case LH: {
       typename iit::cerberus::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_LH_FOOT fr_trunk_J_fr_LH_foot_;
-      footJacobian.template block<6, 3>(0, 6) = fr_trunk_J_fr_LH_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_LH_foot_(jointPositions);
     }
     case RH: {
       typename iit::cerberus::tpl::Jacobians<trait_t>::Type_fr_base_J_fr_RH_FOOT fr_trunk_J_fr_RH_foot_;
-      footJacobian.template block<6, 3>(0, 9) = fr_trunk_J_fr_RH_foot_(jointPositions);
-      break;
+      return fr_trunk_J_fr_RH_foot_(jointPositions);
     }
     default: {
       throw std::runtime_error("Not defined foot index.");
     }
   }
+}
 
-  return footJacobian;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR_T>
+std::vector<typename AnymalCerberusKinematics<SCALAR_T>::CollisionSphere> AnymalCerberusKinematics<SCALAR_T>::collisionSpheresInBaseFrame(
+    const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+
+  const SCALAR_T kneeRadius(0.08);
+  const switched_model::vector3_s_t<SCALAR_T> kneeOffsetInKneeFrame{SCALAR_T(0.0), SCALAR_T(0.0), SCALAR_T(0.055)};
+
+  std::vector<CollisionSphere> collisionSpheres;
+
+  {
+    typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_KFE fr_base_X_fr_LF_KFE;
+    fr_base_X_fr_LF_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_LF_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position -= fr_base_X_fr_LF_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_KFE fr_base_X_fr_RF_KFE;
+    fr_base_X_fr_RF_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_RF_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position += fr_base_X_fr_RF_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_KFE fr_base_X_fr_LH_KFE;
+    fr_base_X_fr_LH_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_LH_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position -= fr_base_X_fr_LH_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  {
+    typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_KFE fr_base_X_fr_RH_KFE;
+    fr_base_X_fr_RH_KFE.update(jointPositions);
+    collisionSpheres.push_back(CollisionSphere{fr_base_X_fr_RH_KFE.template topRightCorner<3, 1>(), kneeRadius});
+    collisionSpheres.back().position += fr_base_X_fr_RH_KFE.template topLeftCorner<3, 3>() * kneeOffsetInKneeFrame;
+  }
+
+  return collisionSpheres;
 }
 
 }  // namespace tpl

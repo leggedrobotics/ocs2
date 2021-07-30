@@ -8,10 +8,8 @@
 
 #include <ros/ros.h>
 
+#include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_msgs/mode_schedule.h>
-
-#include <ocs2_core/misc/Synchronized.h>
-
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ocs2_switched_model_msgs/scheduled_gait_sequence.h>
@@ -26,7 +24,7 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
   GaitReceiver(ros::NodeHandle nodeHandle, ocs2::Synchronized<GaitSchedule>& gaitSchedule, const std::string& robotName);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override;
+                    const ocs2::ReferenceManagerInterface& referenceManager) override;
 
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override{};
 
@@ -44,8 +42,8 @@ class GaitReceiver : public ocs2::SolverSynchronizedModule {
   std::atomic_bool gaitUpdated_;
 
   std::mutex receivedGaitMutex_;  // protects the setGaitAction_ variable
-  std::function<void(scalar_t initTime, scalar_t finalTime, const state_vector_t& currentState,
-                     const ocs2::CostDesiredTrajectories& costDesiredTrajectory)>
+  std::function<void(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
+                     const ocs2::TargetTrajectories& targetTrajectories)>
       setGaitAction_;
 };
 

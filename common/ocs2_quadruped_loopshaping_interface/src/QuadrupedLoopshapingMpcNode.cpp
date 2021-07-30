@@ -5,6 +5,8 @@
 #include "ocs2_quadruped_loopshaping_interface/QuadrupedLoopshapingMpcNode.h"
 
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
+
 #include <ocs2_switched_model_interface/logic/GaitReceiver.h>
 
 #include <ocs2_quadruped_interface/SwingPlanningVisualizer.h>
@@ -39,8 +41,15 @@ void quadrupedLoopshapingMpcNode(ros::NodeHandle& nodeHandle, const QuadrupedLoo
       quadrupedInterface.getQuadrupedInterface().getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), nodeHandle);
   loopshapingSolverModule->add(swingPlanningVisualizer);
 
-  // launch MPC nodes
+  // reference manager
+  auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, quadrupedInterface.getReferenceManagerPtr());
+  rosReferenceManagerPtr->subscribe(nodeHandle);
+  mpcPtr->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+
+  // MPC
   mpcPtr->getSolverPtr()->setSynchronizedModules({loopshapingSolverModule});
+
+  // launch MPC nodes
   ocs2::MPC_ROS_Interface mpcNode(*mpcPtr, robotName);
   mpcNode.launchNodes(nodeHandle);
 }

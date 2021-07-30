@@ -7,7 +7,7 @@
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
 
-#include <ocs2_core/misc/Synchronized.h>
+#include <ocs2_core/thread_support/Synchronized.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
@@ -39,7 +39,7 @@ class TerrainPlaneVisualizerSynchronizedModule : public ocs2::SolverSynchronized
   TerrainPlaneVisualizerSynchronizedModule(const SwingTrajectoryPlanner& swingTrajectoryPlanner, ros::NodeHandle& nodeHandle);
 
   void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                    const ocs2::CostDesiredTrajectories& costDesiredTrajectory) override{};
+                    const ocs2::ReferenceManagerInterface& referenceManager) override{};
 
   void postSolverRun(const ocs2::PrimalSolution& primalSolution) override;
 

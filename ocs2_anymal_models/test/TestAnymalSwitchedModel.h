@@ -10,11 +10,9 @@
 #include <random>
 
 #include <ocs2_switched_model_interface/Dimensions.h>
-#include <ocs2_switched_model_interface/constraint/EndEffectorPositionConstraint.h>
-#include <ocs2_switched_model_interface/constraint/EndEffectorPositionInBaseConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
-#include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInBaseConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
+#include <ocs2_switched_model_interface/constraint/FootNormalConstraint.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
@@ -60,9 +58,9 @@ class TestAnymalSwitchedModel : public ::testing::Test {
     x.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE) << -0.25, 0.60, -0.85, 0.25, 0.60, -0.85, -0.25, -0.60, 0.85, 0.25, -0.60,
         0.85;
     comkino_input_t u = weightCompensatingInputs(*comModel_, constantFeetArray(true), x.head(3));
-    ocs2::CostDesiredTrajectories costDesiredTrajectories({t}, {x}, {u});
+    ocs2::TargetTrajectories targetTrajectories({t}, {x}, {u});
 
-    const auto approx = motionTrackingCost.getQuadraticApproximation(t, x, u, costDesiredTrajectories);
+    const auto approx = motionTrackingCost.getQuadraticApproximation(t, x, u, targetTrajectories);
 
     // Reference equals current state input, should have zero cost and zero gradient.
     ASSERT_LT(approx.f, 1e-9);
@@ -74,11 +72,18 @@ class TestAnymalSwitchedModel : public ::testing::Test {
   }
 
   void testConstraints() {
-    EXPECT_NO_THROW((evaluateConstraint<EndEffectorPositionConstraint>(*comModelAd_, *kinematicsAd_)));
-    EXPECT_NO_THROW((evaluateConstraint<EndEffectorPositionInBaseConstraint>(*comModelAd_, *kinematicsAd_)));
-    EXPECT_NO_THROW((evaluateConstraint<EndEffectorVelocityConstraint>(*comModelAd_, *kinematicsAd_)));
-    EXPECT_NO_THROW((evaluateConstraint<EndEffectorVelocityInBaseConstraint>(*comModelAd_, *kinematicsAd_)));
-    EXPECT_NO_THROW((evaluateConstraint<EndEffectorVelocityInFootFrameConstraint>(*comModelAd_, *kinematicsAd_)));
+    EndEffectorConstraintSettings endEffectorConstraintSettings(2, 3);
+    endEffectorConstraintSettings.A << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0;
+    endEffectorConstraintSettings.b << 2.0, 3.0;
+    EXPECT_NO_THROW(evaluateConstraint<EndEffectorVelocityConstraint>(*comModelAd_, *kinematicsAd_, endEffectorConstraintSettings));
+    EXPECT_NO_THROW(
+        evaluateConstraint<EndEffectorVelocityInFootFrameConstraint>(*comModelAd_, *kinematicsAd_, endEffectorConstraintSettings));
+
+    FootNormalConstraintMatrix footNormalConstraintMatrix;
+    footNormalConstraintMatrix.positionMatrix << 0.1, 0.2, 0.3;
+    footNormalConstraintMatrix.velocityMatrix << 0.4, 0.5, 0.6;
+    footNormalConstraintMatrix.constant = 2.0;
+    EXPECT_NO_THROW(evaluateConstraint<FootNormalConstraint>(*comModelAd_, *kinematicsAd_, footNormalConstraintMatrix));
   }
 
   void testBaseDynamics() {

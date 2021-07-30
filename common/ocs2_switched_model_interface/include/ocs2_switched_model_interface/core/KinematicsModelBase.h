@@ -24,6 +24,7 @@ class KinematicsModelBase {
 
   using geometric_jacobian_t = Eigen::Matrix<SCALAR_T, 6, GENERALIZED_COORDINATE_SIZE>;
   using joint_jacobian_t = Eigen::Matrix<SCALAR_T, 6, JOINT_COORDINATE_SIZE>;
+  using joint_jacobian_block_t = Eigen::Matrix<SCALAR_T, 6, 3>;
 
   KinematicsModelBase() = default;
 
@@ -42,7 +43,10 @@ class KinematicsModelBase {
   feet_array_t<vector3_s_t<SCALAR_T>> feetPositionsInOriginFrame(const base_coordinate_s_t<SCALAR_T>& basePose,
                                                                  const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 
-  virtual joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
+  joint_jacobian_t baseToFootJacobianInBaseFrame(size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
+  virtual joint_jacobian_block_t baseToFootJacobianBlockInBaseFrame(size_t footIndex,
+                                                                    const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 
   virtual matrix3_s_t<SCALAR_T> footOrientationInBaseFrame(size_t footIndex,
                                                            const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
@@ -69,6 +73,15 @@ class KinematicsModelBase {
   std::array<vector3_s_t<SCALAR_T>, NUM_CONTACT_POINTS> feetVelocitiesInOriginFrame(
       const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const base_coordinate_s_t<SCALAR_T>& baseTwistInBaseFrame,
       const joint_coordinate_s_t<SCALAR_T>& jointPositions, const joint_coordinate_s_t<SCALAR_T>& jointVelocities) const;
+
+  struct CollisionSphere {
+    vector3_s_t<SCALAR_T> position;
+    SCALAR_T radius;
+  };
+  std::vector<CollisionSphere> collisionSpheresInOriginFrame(const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame,
+                                                             const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
+
+  virtual std::vector<CollisionSphere> collisionSpheresInBaseFrame(const joint_coordinate_s_t<SCALAR_T>& jointPositions) const;
 };
 
 extern template class KinematicsModelBase<scalar_t>;

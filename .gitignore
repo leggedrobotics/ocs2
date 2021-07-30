@@ -19,3 +19,4 @@ Doxyfile
 *.swp
 *.bag
 *.pyc
+ocs2_anymal_docker/.etc/

@@ -30,7 +30,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   using com_model_t = ComModelBase<scalar_t>;
   using kinematic_model_t = KinematicsModelBase<scalar_t>;
 
-  using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
@@ -60,7 +59,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   std::shared_ptr<SwitchedModelModeScheduleManager> getSwitchedModelModeScheduleManagerPtr() const { return modeScheduleManagerPtr_; }
 
   /** Gets the mode schedule manager */
-  std::shared_ptr<ocs2::ModeScheduleManager> getModeScheduleManagerPtr() const override { return modeScheduleManagerPtr_; }
+  std::shared_ptr<ocs2::ReferenceManagerInterface> getReferenceManagerPtr() const override { return modeScheduleManagerPtr_; }
 
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }

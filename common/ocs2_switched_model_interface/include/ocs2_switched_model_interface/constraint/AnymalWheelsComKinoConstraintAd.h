@@ -2,8 +2,8 @@
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 
-#include "ocs2_switched_model_interface/constraint/ConstraintCollection.h"
 #include "ocs2_switched_model_interface/core/ModelSettings.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h"
@@ -55,9 +55,8 @@ class AnymalWheelsComKinoConstraintAd : public ocs2::ConstraintBase {
   /** Sets up the inequality constraints for a query at time t */
   void updateInequalityConstraints(scalar_t t);
 
-  using ConstraintCollection_t = ConstraintCollection<STATE_DIM, INPUT_DIM>;
-  ConstraintCollection_t equalityStateInputConstraintCollection_;  // state input equality constraints
-  ConstraintCollection_t inequalityConstraintCollection_;          // inequality constraints
+  std::unique_ptr<ocs2::StateInputConstraintCollection> equalityStateInputConstraintCollectionPtr_;
+  std::unique_ptr<ocs2::StateInputConstraintCollection> inequalityConstraintsCollectionPtr_;
 
   // Individual constraint access (non-owning)
   feet_array_t<FootNormalConstraint*> eeNormalConstraints_;

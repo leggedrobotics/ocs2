@@ -21,7 +21,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 catkin_package(
   INCLUDE_DIRS
     include
-    ${EIGEN_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
@@ -35,7 +35,7 @@ catkin_package(
 
 include_directories(
   include
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -43,9 +43,8 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/QuadrupedLoopshapingDummyNode.cpp
   src/QuadrupedLoopshapingInterface.cpp
+  src/QuadrupedLoopshapingMpc.cpp
   src/QuadrupedLoopshapingMpcNode.cpp
-  src/QuadrupedLoopshapingSlqMpc.cpp
-  src/QuadrupedLoopshapingSqpMpc.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

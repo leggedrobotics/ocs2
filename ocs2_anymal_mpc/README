@@ -1,8 +1,0 @@
-To build the SQP MPC node, make sure that you are on branch feature/sqp_trail_mpcnode in ocs2_dev/ & ocs2_anymal/
-then run the command 
-
-catkin build ocs2_anymal_mpc
-
-To run SQP MPC node, use the command: 
-
-roslaunch ocs2_anymal_mpc sqpmpc.launch

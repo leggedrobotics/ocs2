@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
-#include <ocs2_switched_model_interface/constraint/ConstraintTerm.h>
+#include <ocs2_core/constraint/StateInputConstraintCppAd.h>
 
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
@@ -22,40 +21,34 @@ namespace switched_model {
  *
  * The derivative of the end-effector velocity and position w.r.t the joint space is generated with auto-differentation.
  */
-class FootNormalConstraint : public ConstraintTerm<STATE_DIM, INPUT_DIM> {
-  static constexpr size_t domain_dim_ = 1 + STATE_DIM + INPUT_DIM;
-
+class FootNormalConstraint : public ocs2::StateInputConstraintCppAd {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using Base_t = ConstraintTerm<STATE_DIM, INPUT_DIM>;
-  using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
-  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
 
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
+  using settings_t = FootNormalConstraintMatrix;
 
-  static constexpr ocs2::CppAdInterface::ApproximationOrder order_ = ocs2::CppAdInterface::ApproximationOrder::First;
-  static constexpr ConstraintOrder constraintOrder_ = ConstraintOrder::Linear;
-
-  FootNormalConstraint(int legNumber, FootNormalConstraintMatrix settings, const ad_com_model_t& adComModel,
-                       const ad_kinematic_model_t& adKinematicsModel, bool generateModel);
+  FootNormalConstraint(int legNumber, settings_t settings, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
+                       bool generateModel);
 
   FootNormalConstraint* clone() const override;
 
-  void configure(const FootNormalConstraintMatrix& settings) { settings_ = settings; };
+  void configure(const settings_t& settings) { settings_ = settings; };
 
+  vector_t getParameters(scalar_t time) const override;
   size_t getNumConstraints(scalar_t time) const override { return 1; }
-  scalar_array_t getValue(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override;
-  LinearApproximation_t getLinearApproximation(scalar_t time, const state_vector_t& state, const input_vector_t& input) const override;
 
  private:
   FootNormalConstraint(const FootNormalConstraint& rhs);
 
-  static void adfunc(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                     const ad_vector_t& tapedInput, ad_vector_t& o_footPositionVelocity);
+  ocs2::ad_vector_t constraintFunction(ad_scalar_t time, const ocs2::ad_vector_t& state, const ocs2::ad_vector_t& input,
+                                       const ocs2::ad_vector_t& parameters) const override;
 
-  std::unique_ptr<ocs2::CppAdInterface> adInterface_;
-  FootNormalConstraintMatrix settings_;
+  settings_t settings_;
+  std::unique_ptr<ad_com_model_t> adComModelPtr_;
+  std::unique_ptr<ad_kinematic_model_t> adKinematicsModelPtr_;
+  const int legNumber_;
 };
 
 }  // namespace switched_model

@@ -12,9 +12,7 @@
 
 TEST(TestFrictionConeConstraint, finiteDifference) {
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const switched_model::scalar_t mu = 0.7;
-  const switched_model::scalar_t regularization = 25;
-  TestedConstraint frictionConeConstraint(mu, regularization, 0);
+  const switched_model::FrictionConeConstraint::Config config;
 
   switched_model::scalar_t t = 0.0;
   switched_model::scalar_t eps = 1e-4;
@@ -22,24 +20,24 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
   int N = 10000;
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint(mu, regularization, legNumber, 0.0, 0.0);
+    TestedConstraint frictionConeConstraint(config, legNumber);
     switched_model::vector3_t surfaceNormal = switched_model::vector3_t{0.0, 0.0, 1.0} + 0.1 * switched_model::vector3_t::Random();
     surfaceNormal.normalize();
     frictionConeConstraint.setSurfaceNormalInWorld(surfaceNormal);
 
-    TestedConstraint::input_vector_t u0 = 10.0 * TestedConstraint::input_vector_t::Random();
+    switched_model::vector_t u0 = 10.0 * switched_model::vector_t::Random(switched_model::INPUT_DIM);
     u0(2) = 100.0;
     u0(5) = 100.0;
     u0(8) = 100.0;
     u0(11) = 100.0;
-    TestedConstraint::state_vector_t x0 = 0.1 * TestedConstraint::input_vector_t::Random();
-    const auto y0 = frictionConeConstraint.getValue(t, x0, u0).front();
+    switched_model::vector_t x0 = 0.1 * switched_model::vector_t::Random(switched_model::STATE_DIM);
+    const auto y0 = frictionConeConstraint.getValue(t, x0, u0)(0);
     auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x0, u0);
 
     switched_model::vector_t data(N);
     switched_model::matrix_t regressor(N, 6 + 6 + 6 + 9);
-    TestedConstraint::state_vector_t dx = TestedConstraint::state_vector_t::Zero();
-    TestedConstraint::input_vector_t du = TestedConstraint::input_vector_t::Zero();
+    switched_model::vector_t dx = switched_model::vector_t::Zero(switched_model::STATE_DIM);
+    switched_model::vector_t du = switched_model::vector_t::Zero(switched_model::INPUT_DIM);
     for (int i = 0; i < N; i++) {
       // evaluation point
       switched_model::vector3_t dEuler = eps * switched_model::vector3_t::Random();
@@ -63,7 +61,7 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
 
       // Scale to condition the regressor
       regressor.row(i) << dEuler.transpose() / eps, dF.transpose() / eps, quadTermsVector.transpose() / (eps * eps);
-      data(i) = (frictionConeConstraint.getValue(t, x0 + dx, u0 + du).front() - y0);
+      data(i) = (frictionConeConstraint.getValue(t, x0 + dx, u0 + du)(0) - y0);
     }
 
     switched_model::vector_t dh_emperical = regressor.colPivHouseholderQr().solve(data);
@@ -86,10 +84,10 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
     switched_model::matrix3_t ddhdudx_emperical = quadTerms.block<3, 3>(3, 0);
     switched_model::matrix3_t ddhdudu_emperical = quadTerms.block<3, 3>(3, 3);
 
-    switched_model::matrix3_t ddhdudu = quadraticApproximation.secondDerivativesInput.front().block<3, 3>(3 * legNumber, 3 * legNumber);
-    switched_model::matrix3_t ddhdxdx = quadraticApproximation.secondDerivativesState.front().block<3, 3>(0, 0);
-    ASSERT_LT((dhdx_emperical - quadraticApproximation.derivativeState.front().segment<3>(0)).array().abs().maxCoeff(), tol);
-    ASSERT_LT((dhdu_emperical - quadraticApproximation.derivativeInput.front().segment<3>(3 * legNumber)).array().abs().maxCoeff(), tol);
+    switched_model::matrix3_t ddhdudu = quadraticApproximation.dfduu.front().block<3, 3>(3 * legNumber, 3 * legNumber);
+    switched_model::matrix3_t ddhdxdx = quadraticApproximation.dfdxx.front().block<3, 3>(0, 0);
+    ASSERT_LT((dhdx_emperical - quadraticApproximation.dfdx.block<1, 3>(0, 0).transpose()).array().abs().maxCoeff(), tol);
+    ASSERT_LT((dhdu_emperical - quadraticApproximation.dfdu.block<1, 3>(0, 3 * legNumber).transpose()).array().abs().maxCoeff(), tol);
     ASSERT_LT((ddhdudu_emperical - ddhdudu).array().abs().maxCoeff(), tol);
     // ddhdxdx and ddhdudx are off because of the negative definite hessian approximation
   }
@@ -97,24 +95,23 @@ TEST(TestFrictionConeConstraint, finiteDifference) {
 
 TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   // Check friction cone for the case where the body is aligned with the terrain
-
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const switched_model::scalar_t mu = 0.7;
-  const switched_model::scalar_t regularization = 25;
+  const switched_model::FrictionConeConstraint::Config config(0.7, 25.0, 0.0, 0.0);
+  const auto mu = config.frictionCoefficient;
+  const auto regularization = config.regularization;
 
   // evaluation point
   switched_model::scalar_t t = 0.0;
-  TestedConstraint::input_vector_t u;
-  TestedConstraint::state_vector_t x;
-  u.setRandom();
-  x.setRandom();
+  switched_model::comkino_state_t x = switched_model::comkino_state_t::Random();
+  switched_model::comkino_input_t u = switched_model::comkino_input_t::Random();
 
+  // Set terrain parallel to the body
   const switched_model::vector3_t eulerXYZ = switched_model::getOrientation(switched_model::getComPose(x));
   switched_model::TerrainPlane terrainPlane;
-  terrainPlane.orientationWorldToTerrain = switched_model::rotationMatrixBaseToOrigin(eulerXYZ).transpose();
+  terrainPlane.orientationWorldToTerrain = switched_model::rotationMatrixOriginToBase(eulerXYZ);
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint(mu, regularization, legNumber, 0.0, 0.0);
+    TestedConstraint frictionConeConstraint(config, legNumber);
     frictionConeConstraint.setSurfaceNormalInWorld(switched_model::surfaceNormalInWorld(terrainPlane));
 
     // Local forces are equal to the body forces.
@@ -124,21 +121,19 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
 
     auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);
 
-    ASSERT_DOUBLE_EQ(quadraticApproximation.constraintValues.front(), Fz * sqrt(mu * mu) - sqrt(Fx * Fx + Fy * Fy + regularization));
+    ASSERT_DOUBLE_EQ(quadraticApproximation.f(0), Fz * sqrt(mu * mu) - sqrt(Fx * Fx + Fy * Fy + regularization));
 
     // First derivative inputs
-    switched_model::FrictionConeConstraint::input_vector_t dhdu;
-    dhdu.setZero();
+    switched_model::vector_t dhdu = switched_model::vector_t::Zero(switched_model::INPUT_DIM);
     const auto F_norm = sqrt(Fx * Fx + Fy * Fy + regularization);
     dhdu(3 * legNumber + 0) = -Fx / F_norm;
     dhdu(3 * legNumber + 1) = -Fy / F_norm;
     dhdu(3 * legNumber + 2) = sqrt(mu * mu);
 
-    ASSERT_LT((quadraticApproximation.derivativeInput.front() - dhdu).norm(), 1e-12);
+    ASSERT_LT((quadraticApproximation.dfdu.row(0).transpose() - dhdu).norm(), 1e-12);
 
     // Second derivative inputs
-    switched_model::FrictionConeConstraint::input_matrix_t ddhdudu;
-    ddhdudu.setZero();
+    switched_model::matrix_t ddhdudu = switched_model::matrix_t::Zero(switched_model::INPUT_DIM, switched_model::INPUT_DIM);
     const auto F_norm2 = Fx * Fx + Fy * Fy + regularization;
     const auto F_norm32 = pow(F_norm2, 1.5);
     ddhdudu(3 * legNumber + 0, 3 * legNumber + 0) = -(Fy * Fy + regularization) / F_norm32;
@@ -151,22 +146,18 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
     ddhdudu(3 * legNumber + 2, 3 * legNumber + 1) = 0.0;
     ddhdudu(3 * legNumber + 2, 3 * legNumber + 2) = 0.0;
 
-    ASSERT_LT((quadraticApproximation.secondDerivativesInput.front() - ddhdudu).norm(), 1e-12);
+    ASSERT_LT((quadraticApproximation.dfduu.front() - ddhdudu).norm(), 1e-12);
   }
 }
 
 TEST(TestFrictionConeConstraint, negativeDefinite) {
   using TestedConstraint = switched_model::FrictionConeConstraint;
-  const switched_model::scalar_t mu = 0.7;
-  const switched_model::scalar_t regularization = 25;
-  const switched_model::scalar_t hessianShift = 1e-6;
+  const switched_model::FrictionConeConstraint::Config config;
 
   // evaluation point
   switched_model::scalar_t t = 0.0;
-  TestedConstraint::input_vector_t u;
-  TestedConstraint::state_vector_t x;
-  x.setRandom();
-  u.setRandom();
+  switched_model::comkino_state_t x = switched_model::comkino_state_t::Random();
+  switched_model::comkino_input_t u = switched_model::comkino_input_t::Random();
   u(2) = 100.0;
   u(5) = 100.0;
   u(8) = 100.0;
@@ -176,16 +167,11 @@ TEST(TestFrictionConeConstraint, negativeDefinite) {
   switched_model::TerrainPlane terrainPlane;
 
   for (int legNumber = 0; legNumber < switched_model::NUM_CONTACT_POINTS; ++legNumber) {
-    TestedConstraint frictionConeConstraint(mu, regularization, legNumber, 0.0, hessianShift);
+    TestedConstraint frictionConeConstraint(config, legNumber);
     frictionConeConstraint.setSurfaceNormalInWorld(switched_model::surfaceNormalInWorld(terrainPlane));
 
-    auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);
-    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.secondDerivativesState.front()).maxCoeff(), 0.0);
-    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.secondDerivativesInput.front()).maxCoeff(), 0.0);
+    const auto quadraticApproximation = frictionConeConstraint.getQuadraticApproximation(t, x, u);
+    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfdxx.front()).maxCoeff(), 0.0);
+    ASSERT_LT(ocs2::LinearAlgebra::symmetricEigenvalues(quadraticApproximation.dfduu.front()).maxCoeff(), 0.0);
   }
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

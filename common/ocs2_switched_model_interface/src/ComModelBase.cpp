@@ -18,8 +18,8 @@ comkino_input_t weightCompensatingInputs(const ComModelBase<scalar_t>& comModel,
   comkino_input_t inputs = comkino_input_t::Zero();
   if (numStanceLegs > 0) {
     const scalar_t totalWeight = comModel.totalMass() * 9.81;
-    const matrix3_t b_R_o = rotationMatrixOriginToBase(baseOrientation);
-    const vector3_t forceInBase = b_R_o * vector3_t{0.0, 0.0, totalWeight / numStanceLegs};
+    const vector3_t forceInWorld = vector3_t{0.0, 0.0, totalWeight / numStanceLegs};
+    const vector3_t forceInBase = rotateVectorOriginToBase(forceInWorld, baseOrientation);
 
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
       if (contactFlags[i]) {

@@ -15,19 +15,22 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   costFunctionPtr_.reset(new SwitchedModelCostBase(costSettings(), *getSwitchedModelModeScheduleManagerPtr(),
                                                    getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), kinematicModel,
                                                    adKinematicModel, comModel, adComModel, modelSettings()));
-  dynamicsPtr_.reset(new ComKinoSystemDynamicsAd(adKinematicModel, adComModel, modelSettings().recompileLibraries_));
+  dynamicsPtr_.reset(new ComKinoSystemDynamicsAd(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
+                                                 modelSettings().recompileLibraries_));
   constraintsPtr_.reset(new ComKinoConstraintBaseAd(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
                                                     getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(),
                                                     modelSettings()));
-  operatingPointsPtr_.reset(new ComKinoOperatingPointsBase(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
+  initializerPtr_.reset(new ComKinoInitializer(getComModel(), *getSwitchedModelModeScheduleManagerPtr()));
   timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*dynamicsPtr_, rolloutSettings()));
 
   // Initialize cost to be able to query it
   const auto stanceFlags = switched_model::constantFeetArray(true);
   const auto uSystemForWeightCompensation = weightCompensatingInputs(getComModel(), stanceFlags, switched_model::vector3_t::Zero());
-  ocs2::CostDesiredTrajectories costDesiredTrajectories({0.0}, {getInitialState()}, {uSystemForWeightCompensation});
-  costFunctionPtr_->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
-  getSwitchedModelModeScheduleManagerPtr()->preSolverRun(0.0, 1.0, getInitialState(), costDesiredTrajectories);
+  ocs2::TargetTrajectories targetTrajectories({0.0}, {getInitialState()}, {uSystemForWeightCompensation});
+  costFunctionPtr_->setTargetTrajectoriesPtr(&targetTrajectories);
+
+  getSwitchedModelModeScheduleManagerPtr()->setTargetTrajectories(targetTrajectories);
+  getSwitchedModelModeScheduleManagerPtr()->preSolverRun(0.0, 1.0, getInitialState());
 
   const auto lqrSolution =
       ocs2::continuous_time_lqr::solve(*dynamicsPtr_, *costFunctionPtr_, 0.0, getInitialState(), uSystemForWeightCompensation);

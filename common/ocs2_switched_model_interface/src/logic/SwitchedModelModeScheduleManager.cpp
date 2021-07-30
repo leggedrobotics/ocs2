@@ -11,18 +11,19 @@ namespace switched_model {
 SwitchedModelModeScheduleManager::SwitchedModelModeScheduleManager(std::unique_ptr<GaitSchedule> gaitSchedule,
                                                                    std::unique_ptr<SwingTrajectoryPlanner> swingTrajectory,
                                                                    std::unique_ptr<TerrainModel> terrainModel)
-    : ocs2::ModeScheduleManager(ocs2::ModeSchedule()),
-      gaitSchedule_(std::move(gaitSchedule)),
+    : gaitSchedule_(std::move(gaitSchedule)),
       swingTrajectoryPtr_(std::move(swingTrajectory)),
-      terrainModel_(std::move(terrainModel)) {}
+      terrainModel_(std::move(terrainModel)),
+      activeDynamicsParameters_(),
+      newDynamicsParameters_(std::unique_ptr<ComKinoSystemDynamicsParameters<scalar_t>>(
+          new ComKinoSystemDynamicsParameters<scalar_t>(activeDynamicsParameters_))) {}
 
 contact_flag_t SwitchedModelModeScheduleManager::getContactFlags(scalar_t time) const {
   return modeNumber2StanceLeg(this->getModeSchedule().modeAtTime(time));
 }
 
-void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
-                                                        const ocs2::CostDesiredTrajectories& costDesiredTrajectory,
-                                                        ocs2::ModeSchedule& modeSchedule) {
+void SwitchedModelModeScheduleManager::modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
+                                                        ocs2::TargetTrajectories& targetTrajectories, ocs2::ModeSchedule& modeSchedule) {
   const auto timeHorizon = finalTime - initTime;
   {
     auto lockedGaitSchedulePtr = gaitSchedule_.lock();
@@ -38,8 +39,12 @@ void SwitchedModelModeScheduleManager::preSolverRunImpl(scalar_t initTime, scala
   }
 
   // Prepare swing motions
-  swingTrajectoryPtr_->updateSwingMotions(initTime, finalTime, currentState, costDesiredTrajectory,
-                                          extractContactTimingsPerLeg(modeSchedule));
+  swingTrajectoryPtr_->updateSwingMotions(initTime, finalTime, initState, targetTrajectories, extractContactTimingsPerLeg(modeSchedule));
+
+  {
+    auto lockedDynamicsParameterPtr = newDynamicsParameters_.lock();
+    activeDynamicsParameters_ = *lockedDynamicsParameterPtr;  // Copy external parameters to the active parameter set
+  }
 }
 
 }  // namespace switched_model

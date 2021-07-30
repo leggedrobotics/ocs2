@@ -1,7 +1,0 @@
-The current SQP MPC uses the c_series/task.info
-
-mpcDesiredFrequency = 50 HZ works 
-mpcDesiredFrequency = 20 HZ does not work
-
-
-In certain gait patterns, the SQP MPC solver might diverge. 

@@ -6,16 +6,13 @@
 
 #include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
+#include "ocs2_switched_model_interface/cost/LinearStateInequalitySoftconstraint.h"
 #include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
 #include "ocs2_switched_model_interface/terrain/ConvexTerrain.h"
 
-namespace switched_model {
+#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 
-struct FootPlacementCostParameters {
-  FootPlacementCostParameters(scalar_t mu_, scalar_t delta_) : mu(mu_), delta(delta_) {}
-  scalar_t mu;     // magnitude scaling
-  scalar_t delta;  // [m] distance from constraint boundary where the barrier becomes quadratic.
-};
+namespace switched_model {
 
 class FootPlacementCost {
  public:
@@ -23,47 +20,43 @@ class FootPlacementCost {
   using ad_interface_t = ocs2::CppAdInterface;
   using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
   using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
+  using com_model_t = ComModelBase<scalar_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
+  using kinematic_model_t = KinematicsModelBase<scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
 
-  using analytic_jacobian_t = typename Eigen::Matrix<scalar_t, 3, STATE_DIM>;
-
-  FootPlacementCost(FootPlacementCostParameters settings, FootPlacementCostParameters sdfSettings, const ad_com_model_t& adComModel,
-                    const ad_kinematic_model_t& adKinematicsModel, bool generateModels);
+  FootPlacementCost(ocs2::RelaxedBarrierPenalty::Config settings, ocs2::RelaxedBarrierPenalty::Config sdfSettings,
+                    const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
+                    const ad_com_model_t& adComModel, bool generateModels);
 
   FootPlacementCost* clone() const;
 
-  void setStateAndConstraint(const vector_t& x, const feet_array_t<const FootTangentialConstraintMatrix*>& constraints,
-                             const feet_array_t<SignedDistanceConstraint>& sdfConstraints);
+  void setConstraints(const feet_array_t<const FootTangentialConstraintMatrix*>& constraints,
+                      const feet_array_t<SignedDistanceConstraint>& sdfConstraints, const SignedDistanceField* sdfPtr);
 
-  scalar_t getCostValue();
-  vector_t getCostDerivativeState();
-  matrix_t getCostSecondDerivativeState();
+  scalar_t getValue(const vector_t& x);
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(const vector_t& x);
 
  private:
   FootPlacementCost(const FootPlacementCost& rhs);
-  void initAdModels(bool generateModels, bool verbose = true);
   static void adfunc(const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel, const ad_vector_t& state,
-                     ad_vector_t& o_feetPositions);
-  void updateJacobians();
-  void updateConstraintValues();
+                     ad_vector_t& targetsInOriginFrame);
 
-  static scalar_t getPenaltyFunctionValue(scalar_t h, const FootPlacementCostParameters& config);
-  static scalar_t getPenaltyFunctionDerivative(scalar_t h, const FootPlacementCostParameters& config);
-  static scalar_t getPenaltyFunctionSecondDerivative(scalar_t h, const FootPlacementCostParameters& config);
+  void updatePositions(const vector_t& x);
+  void updateJacobians(const vector_t& x);
+  void updateConstraintValues(const vector_t& x);
 
-  FootPlacementCostParameters settings_;
-  FootPlacementCostParameters sdfsettings_;
-  state_vector_t x_;
+  std::unique_ptr<ocs2::RelaxedBarrierPenalty> polygonPenalty_;
+  std::unique_ptr<ocs2::RelaxedBarrierPenalty> sdfPenalty_;
+
+  std::vector<vector_t> targetPositions_;
+  std::vector<matrix_t> targetJacobians_;
+  std::vector<std::vector<LinearStateInequalitySoftConstraint>> constraintsPerTarget_;
+  std::vector<scalar_t> targetRadii_;
+
   feet_array_t<const FootTangentialConstraintMatrix*> constraints_;
   feet_array_t<SignedDistanceConstraint> sdfConstraints_;
-
-  bool constraintValuesUpdated_;
-  feet_array_t<vector_t> constraintValues_;
-  feet_array_t<std::pair<scalar_t, vector3_t>> sdfValues_;
-
-  bool feetJacobiansUpdated_;
-  feet_array_t<analytic_jacobian_t> feetJacobiansInOrigin_;
+  const SignedDistanceField* sdfPtr_;
 
   std::unique_ptr<ad_interface_t> adInterface_;
 };

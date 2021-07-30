@@ -13,8 +13,7 @@
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
-
-#include "ocs2_switched_model_interface/visualization/Colors.h"
+#include <ocs2_ros_interfaces/visualization/VisualizationColors.h>
 
 namespace switched_model {
 
@@ -40,7 +39,8 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   scalar_t copMarkerDiameter_ = 0.03;         // Size of the sphere at the center of pressure
   scalar_t supportPolygonLineWidth_ = 0.005;  // LineThickness for the support polygon
   scalar_t trajectoryLineWidth_ = 0.01;       // LineThickness for trajectories
-  feet_array_t<Color> feetColorMap_ = {Color::blue, Color::orange, Color::yellow, Color::purple};  // Colors for markers per feet
+  feet_array_t<ocs2::Color> feetColorMap_ = {ocs2::Color::blue, ocs2::Color::orange, ocs2::Color::yellow,
+                                             ocs2::Color::purple};  // Colors for markers per feet
 
   /**
    *
@@ -69,7 +69,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
 
   void publishObservation(ros::Time timeStamp, const ocs2::SystemObservation& observation);
 
-  void publishDesiredTrajectory(ros::Time timeStamp, const ocs2::CostDesiredTrajectories& costDesiredTrajectory) const;
+  void publishDesiredTrajectory(ros::Time timeStamp, const ocs2::TargetTrajectories& targetTrajectories) const;
 
   void publishOptimizedStateTrajectory(ros::Time timeStamp, const scalar_array_t& mpcTimeTrajectory,
                                        const vector_array_t& mpcStateTrajectory, const ocs2::ModeSchedule& modeSchedule) const;
@@ -82,6 +82,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   void publishCenterOfMassPose(ros::Time timeStamp, const base_coordinate_t& comPose) const;
   void publishEndEffectorPoses(ros::Time timeStamp, const feet_array_t<vector3_t>& feetPositions,
                                const feet_array_t<Eigen::Quaternion<scalar_t>>& feetOrientations) const;
+  void publishCollisionSpheres(ros::Time timeStamp, const base_coordinate_t& basePose, const joint_coordinate_t& jointAngles) const;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
@@ -107,6 +108,7 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   ros::Publisher currentStatePublisher_;
   ros::Publisher currentPosePublisher_;
   ros::Publisher currentFeetPosesPublisher_;
+  ros::Publisher currentCollisionSpheresPublisher_;
 
   scalar_t lastTime_;
   scalar_t minPublishTimeDifference_;

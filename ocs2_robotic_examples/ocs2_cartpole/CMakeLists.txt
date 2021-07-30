@@ -53,7 +53,6 @@ configure_file (
 # Add directories for all targets
 include_directories(
   include
-  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}

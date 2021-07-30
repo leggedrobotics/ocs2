@@ -51,7 +51,6 @@ configure_file (
 # Add directories for all targets
 include_directories(
   include
-  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -134,6 +133,9 @@ install(TARGETS QuadrotorPyBindings
 
 catkin_add_gtest(${PROJECT_NAME}_PyBindingsTest
   test/PyBindingsTest.cpp
+)
+target_include_directories(${PROJECT_NAME}_PyBindingsTest
+  PRIVATE ${PROJECT_BINARY_DIR}/include
 )
 target_link_libraries(${PROJECT_NAME}_PyBindingsTest
   ${PROJECT_NAME}

@@ -54,7 +54,6 @@ configure_file (
 # Add directories for all targets
 include_directories(
   include
-  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -140,6 +139,9 @@ install(TARGETS BallbotPyBindings
 
 catkin_add_gtest(test_BallbotPyBindings
   test/testBallbotPyBindings.cpp
+)
+target_include_directories(test_BallbotPyBindings 
+  PRIVATE ${PROJECT_BINARY_DIR}/include
 )
 target_link_libraries(test_BallbotPyBindings
   ${PROJECT_NAME}

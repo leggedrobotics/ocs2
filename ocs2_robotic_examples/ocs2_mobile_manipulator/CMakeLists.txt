@@ -58,7 +58,6 @@ configure_file (
 # Add directories for all targets
 include_directories(
   include
-  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -125,6 +124,9 @@ install(DIRECTORY config urdf
 macro(add_ocs2_test APP_NAME APP_SRC)
   catkin_add_gtest(${APP_NAME}
       ${APP_SRC}
+  )
+  target_include_directories(${APP_NAME}
+    PRIVATE ${PROJECT_BINARY_DIR}/include
   )
   target_link_libraries(${APP_NAME}
     gtest_main

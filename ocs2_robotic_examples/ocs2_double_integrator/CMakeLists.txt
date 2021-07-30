@@ -54,7 +54,6 @@ configure_file (
 # Add directories for all targets
 include_directories(
   include
-  ${PROJECT_BINARY_DIR}/include
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -141,6 +140,9 @@ catkin_add_gtest(ocs2_double_integrator_no_ros_integration_test
 add_dependencies(ocs2_double_integrator_no_ros_integration_test
   ${catkin_EXPORTED_TARGETS}
 )
+target_include_directories(ocs2_double_integrator_no_ros_integration_test
+  PRIVATE ${PROJECT_BINARY_DIR}/include
+)
 target_link_libraries(ocs2_double_integrator_no_ros_integration_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -153,6 +155,9 @@ catkin_add_gtest(ocs2_double_integrator_pybinding_test
 add_dependencies(ocs2_double_integrator_pybinding_test
   ${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
+)
+target_include_directories(ocs2_double_integrator_pybinding_test
+  PRIVATE ${PROJECT_BINARY_DIR}/include
 )
 target_link_libraries(ocs2_double_integrator_pybinding_test
   ${PROJECT_NAME}

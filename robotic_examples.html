@@ -229,6 +229,11 @@ features of each example.</p>
 </tr>
 </tbody>
 </table>
+<p>For all these robotic examples, there are two separate packages:</p>
+<ol class="arabic simple">
+<li><p><strong>ocs2_&lt;robot&gt;</strong>- Provides the library with the robot-specfic MPC implementation.</p></li>
+<li><p><strong>ocs2_&lt;robot&gt;_ros</strong>:  Wraps around the MPC implementation with ROS to define ROS nodes.</p></li>
+</ol>
 <div class="section" id="double-integrator">
 <span id="doxid-ocs2-doc-robotic-examples-double-integrator"></span><h2>Double Integrator<a class="headerlink" href="#double-integrator" title="Permalink to this headline">¶</a></h2>
 <p>The double integrator example is our simplest problem. It models a 1D
@@ -236,13 +241,13 @@ point mass that moves in the x-direction. The model is linear, and the
 cost function is quadratic. The target point is set to the quadratic
 cost through a reference manager module.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
-catkin build ocs2_double_integrator
+catkin build ocs2_double_integrator ocs2_double_integrator_ros
 <span class="c1"># Source workspace</span>
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
 
-<span class="c1"># Launche the example</span>
-roslaunch ocs2_double_integrator double_integrator.launch
+<span class="c1"># Launch the example</span>
+roslaunch ocs2_double_integrator_ros double_integrator.launch
 </pre></div>
 </div>
 </div>
@@ -254,13 +259,13 @@ frictionless track. The goal is to swing up and balance the pendulum
 starting from the downright position by accelerating a decelerating the
 cart along the track.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
-catkin build ocs2_cartpole
+catkin build ocs2_cartpole ocs2_cartpole_ros
 <span class="c1"># Source workspace</span>
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
 
-<span class="c1"># Launche the example</span>
-roslaunch ocs2_cartpole cartpole.launch
+<span class="c1"># Launch the example</span>
+roslaunch ocs2_cartpole_ros cartpole.launch
 </pre></div>
 </div>
 </div>
@@ -274,13 +279,13 @@ Ballbot’s forward dynamics, and the linear approximation of the flow-map
 is calculated through auto differentiation. The task objective is to
 control the robot’s XY position and yaw based on user command.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
-catkin build ocs2_ballbot
+catkin build ocs2_ballbot ocs2_ballbot_ros
 <span class="c1"># Source workspace</span>
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
 
-<span class="c1"># Launche the example</span>
-roslaunch ocs2_ballbot ballbot.launch
+<span class="c1"># Launch the example</span>
+roslaunch ocs2_ballbot_ros ballbot.launch
 </pre></div>
 </div>
 </div>
@@ -292,13 +297,13 @@ in the normal direction to the robot. The system dynamics and its
 derivative are code generated. This example aims to track the user
 command defined as the quadrotor’s 3D position and yaw.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
-catkin build ocs2_quadrotor
+catkin build ocs2_quadrotor ocs2_quadrotor_ros
 <span class="c1"># Source workspace</span>
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
 
-<span class="c1"># Launche the example</span>
-roslaunch ocs2_quadrotor quadrotor.launch
+<span class="c1"># Launch the example</span>
+roslaunch ocs2_quadrotor_ros quadrotor.launch
 </pre></div>
 </div>
 </div>
@@ -316,13 +321,13 @@ ocs2_self_collision). This example implements both the cache and the
 non-cache variants of the MPC, which can be chosen through the
 usePreComputation flag in the config file.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
-catkin build ocs2_mobile_manipulator
+catkin build ocs2_mobile_manipulator ocs2_mobile_manipulator_ros
 <span class="c1"># Source workspace</span>
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
 
-<span class="c1"># Launche the example</span>
-roslaunch ocs2_mobile_manipulator mobile_manipulator.launch
+<span class="c1"># Launch the example</span>
+roslaunch ocs2_mobile_manipulator_ros mobile_manipulator.launch
 </pre></div>
 </div>
 </div>
@@ -353,7 +358,7 @@ catkin build ocs2_legged_robot
 <span class="c1"># Do not forget to change &lt;...&gt; parts</span>
 <span class="nb">source</span> &lt;directory_to_ws&gt;/&lt;catkin_ws_name&gt;/devel/setup.bash
 
-<span class="c1"># Launche the example</span>
+<span class="c1"># Launch the example</span>
 roslaunch ocs2_legged_robot legged_robot.launch
 </pre></div>
 </div>

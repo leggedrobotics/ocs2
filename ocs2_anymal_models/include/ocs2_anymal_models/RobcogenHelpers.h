@@ -37,10 +37,11 @@ BaseDynamicsTerms<SCALAR_T, NUM_JOINTS_IMPL> getBaseDynamicsTermsImpl(INVDYN& in
   {  // Get gravitational vector
     // gravity vector in the base frame
     switched_model::vector6_s_t<SCALAR_T> gravity;
-    const auto b_R_o = switched_model::rotationMatrixOriginToBase<SCALAR_T>(switched_model::getOrientation(qBase));
     const SCALAR_T gravitationalAcceleration = SCALAR_T(9.81);
     gravity << switched_model::vector3_s_t<SCALAR_T>::Zero(),
-        b_R_o * switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration);
+        switched_model::rotateVectorOriginToBase(
+            switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration),
+            switched_model::getOrientation(qBase));
 
     switched_model::vector6_s_t<SCALAR_T> baseWrench;
     Eigen::Matrix<SCALAR_T, NUM_JOINTS_IMPL, 1> jForces;
@@ -72,11 +73,12 @@ typename switched_model::WholebodyDynamics<SCALAR_T>::DynamicsTerms getDynamicsT
   {  // Get gravitational vector
     // gravity vector in the base frame
     switched_model::vector6_s_t<SCALAR_T> gravity;
-    const auto b_R_o = switched_model::rotationMatrixOriginToBase<SCALAR_T>(switched_model::getOrientation(qBase));
     //! @todo(jcarius) Gravity hardcoded
     const SCALAR_T gravitationalAcceleration = SCALAR_T(9.81);
     gravity << switched_model::vector3_s_t<SCALAR_T>::Zero(),
-        b_R_o * switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration);
+        switched_model::rotateVectorOriginToBase(
+            switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration),
+            switched_model::getOrientation(qBase));
 
     switched_model::vector6_s_t<SCALAR_T> baseWrench;
     switched_model::joint_coordinate_s_t<SCALAR_T> jForces;

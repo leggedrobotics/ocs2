@@ -50,8 +50,8 @@ class QuadrotorPyBindings final : public PythonInterface {
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    * @param [in] urdfFile: The absolute path to the URDF of the robot. This is not used for quadrotor.
    */
-  explicit QuadrotorPyBindings(const std::string& taskFile, const std::string& libraryFolder,
-                               const std::string urdfFile = "") {  // Robot interface
+  explicit QuadrotorPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "") {
+    // Robot interface
     QuadrotorInterface quadrotorInterface(taskFile, libraryFolder);
 
     // MPC

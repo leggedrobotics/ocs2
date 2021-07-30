@@ -34,16 +34,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_mobile_manipulator/FactoryFunctions.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorPreComputation.h>
-#include <ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h>
-#include <ocs2_mobile_manipulator/package_path.h>
-
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
+
+#include "ocs2_mobile_manipulator/FactoryFunctions.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
+#include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
+#include "ocs2_mobile_manipulator/package_path.h"
 
 using namespace ocs2;
 using namespace mobile_manipulator;

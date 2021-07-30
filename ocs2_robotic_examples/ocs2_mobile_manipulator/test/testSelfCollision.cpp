@@ -35,13 +35,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_mobile_manipulator/FactoryFunctions.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-#include <ocs2_mobile_manipulator/package_path.h>
-
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_self_collision/SelfCollision.h>
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
+
+#include "ocs2_mobile_manipulator/FactoryFunctions.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
+#include "ocs2_mobile_manipulator/package_path.h"
 
 using namespace ocs2;
 using namespace mobile_manipulator;

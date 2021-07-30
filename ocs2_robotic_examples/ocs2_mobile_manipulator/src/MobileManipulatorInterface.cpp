@@ -135,6 +135,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << " #### =============================================================================\n";
 
   // Default initial state
+  initialState_ = vector_t::Zero(mobileManipulatorModelInfo_.stateDim);
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
 
@@ -152,6 +153,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
 
   // Constraints
+  // input limits cost
   problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
   // end-effector state cost
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
@@ -171,13 +173,13 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Dynamics
   if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::WheelBasedMobileManipulator) {
-    problem_.dynamicsPtr.reset.reset(
+    problem_.dynamicsPtr.reset(
         new WheelBasedManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
   } else if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::FloatingArmManipulator) {
-    problem_.dynamicsPtr.reset.reset(
+    problem_.dynamicsPtr.reset(
         new FloatingArmManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
   } else {
-    problem_.dynamicsPtr.reset.reset(
+    problem_.dynamicsPtr.reset(
         new DefaultManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
   }
 
@@ -190,23 +192,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Rollout
   const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
   initializerPtr_.reset(new DefaultInitializer(mobileManipulatorModelInfo_.inputDim));
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-PinocchioInterface MobileManipulatorInterface::buildPinocchioInterface(const std::string& urdfFile) {
-  // add 3 DOF for wheelbase
-  pinocchio::JointModelComposite rootJoint(3);
-  rootJoint.addJoint(pinocchio::JointModelPX());
-  rootJoint.addJoint(pinocchio::JointModelPY());
-  rootJoint.addJoint(pinocchio::JointModelRZ());
-
-  return getPinocchioInterfaceFromUrdfFile(urdfFile, rootJoint);
 }
 
 /******************************************************************************************************/
@@ -239,7 +228,6 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   boost::property_tree::read_info(taskFile, pt);
   std::cerr << "\n #### " << prefix << " Settings: ";
   std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue<std::string>(pt, name, prefix + ".name", true);
   loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", true);
   loadData::loadPtreeValue(pt, muOrientation, prefix + ".muOrientation", true);
   std::cerr << " #### =============================================================================\n";
@@ -251,11 +239,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
     MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping(mobileManipulatorModelInfo_);
-    PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, pinocchioMapping, {name});
+    PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, pinocchioMapping, {mobileManipulatorModelInfo_.eeFrame});
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   } else {
     MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd(mobileManipulatorModelInfo_.toCppAd());
-    PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {name},
+    PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {mobileManipulatorModelInfo_.eeFrame},
                                                      mobileManipulatorModelInfo_.stateDim, mobileManipulatorModelInfo_.inputDim,
                                                      "end_effector_kinematics", libraryFolder, recompileLibraries, false);
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));

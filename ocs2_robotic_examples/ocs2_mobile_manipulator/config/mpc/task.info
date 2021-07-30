@@ -6,9 +6,9 @@ model_information {
   removeJoints {
   }
 
-  ; base frame of the robot
+  ; base frame of the robot (from URDF)
   baseFrame "base"
-  ; end-effector frame of the robot
+  ; end-effector frame of the robot (from URDF)
   eeFrame "WRIST_2"
 }
 
@@ -126,8 +126,6 @@ inputCost
 
 endEffector
 {
-  name "WRIST_2" ; name defined in the URDF
-
   ; end effector quadratic penalty scaling
   muPosition  10.0
   muOrientation  5.0
@@ -135,7 +133,6 @@ endEffector
 
 finalEndEffector
 {
-  name "WRIST_2"
   muPosition  10.0
   muOrientation  5.0
 }

@@ -29,16 +29,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <string>
 #include <cstddef>
 
 namespace ocs2 {
 namespace ballbot {
 
-/**
- * @brief Get the path to the package source directory.
- *
- * @return std::string
- */
+/** Gets the path to the package source directory. */
 inline std::string getPath() {
   return "@PROJECT_SOURCE_DIR@";
 }

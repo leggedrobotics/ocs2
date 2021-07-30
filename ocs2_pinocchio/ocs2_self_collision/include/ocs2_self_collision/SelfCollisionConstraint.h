@@ -39,6 +39,13 @@ namespace ocs2 {
 
 class SelfCollisionConstraint final : public StateConstraint {
  public:
+  /**
+   * Constructor
+   *
+   * @param [in] mapping: pinocchio mapping from pinocchio states to ocs2 states
+   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
+   * @param [in] minimumDistance: minimum allowed distance between collision pairs
+   */
   SelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping, PinocchioGeometryInterface pinocchioGeometryInterface,
                           scalar_t minimumDistance);
   ~SelfCollisionConstraint() override = default;

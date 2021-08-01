@@ -82,6 +82,8 @@ Related publications
 This toolbox has been used in the following publications:
 
 .. bibliography::
+   :list: enumerated
+   :all:
 
    farshidian2017slq
    farshidian2017ocs2

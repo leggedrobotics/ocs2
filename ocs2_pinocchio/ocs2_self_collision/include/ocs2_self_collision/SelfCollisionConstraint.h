@@ -37,28 +37,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/**
+ *  This class provides a variant of the Self-collision constraints, which allows for caching. Therefore It is the user's
+ *  responsibility to call the required updates on the PinocchioInterface in pre-computation requests.
+ */
 class SelfCollisionConstraint : public StateConstraint {
  public:
   /**
    * Constructor
    *
-   * @param [in] mapping: pinocchio mapping from pinocchio states to ocs2 states
-   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
-   * @param [in] minimumDistance: minimum allowed distance between collision pairs
+   * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
+   * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+   * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
    */
   SelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping, PinocchioGeometryInterface pinocchioGeometryInterface,
                           scalar_t minimumDistance);
+
   ~SelfCollisionConstraint() override = default;
 
   size_t getNumConstraints(scalar_t time) const final;
 
   /** Get the self collision distance values
+   *
    * @note Requires pinocchio::forwardKinematics().
    */
   vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const final;
 
   /** Get the self collision distance approximation
-   * @note Requires pinocchio::forwardKinematics(), pinocchio::updateGlobalPlacements() and pinocchio::computeJointJacobians().
+   *
+   * @note Requires pinocchio::forwardKinematics(),
+   *                pinocchio::updateGlobalPlacements(),
+   *                pinocchio::computeJointJacobians().
+   * @note In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
+   * you should also call tham as well.
    */
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
                                                            const PreComputation& preComputation) const final;

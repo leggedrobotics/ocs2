@@ -66,7 +66,7 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pi
       selfCollision_(pinocchioInterface_, std::move(pinocchioGeometryInterface), minimumDistance, modelName, modelFolder,
                      recompileLibraries, verbose),
       mappingPtr_(mapping.clone()),
-      updateCallback_(updateCallback) {
+      updateCallback_(std::move(updateCallback)) {
   mappingPtr_->setPinocchioInterface(pinocchioInterface_);
 }
 

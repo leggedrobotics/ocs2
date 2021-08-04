@@ -178,7 +178,7 @@
   <div class="section" id="getting-started">
 <span id="doxid-ocs2-doc-getting-started"></span><span id="index-0"></span><h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
 <p>We here briefly explain the steps you need to take in order to apply
-OCS2 for you specific problem. We already assume that you have
+OCS2 for your specific problem. We already assume that you have
 successfully installed the library based on the description in the
 <a class="reference internal" href="installation.html#doxid-ocs2-doc-installation"><span class="std std-ref">Installation page</span></a>.</p>
 <div class="section" id="where-to-start">
@@ -201,7 +201,7 @@ system. For an example refer to
 since it has the best of two worlds. First it consider the full
 kinematics of the system. Second, instead of the full dynamics which
 is computationally expensive, it only considers the part of the
-dynamics that is affected by the external force. For an example refer
+dynamics that is affected by the external forces. For an example refer
 to <a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples-legged-robot"><span class="std std-ref">Legged Robot example</span></a>.</p></li>
 </ul>
 <p>After choosing your model, instead of starting from scratch, it is often
@@ -219,7 +219,7 @@ subsystems. Switched system models are encountered in many practical
 applications such as automobiles and locomotives with different gears,
 DC-DC converters, manufacturing processes, biological systems, and
 walking robotics. The optimal control for such a system can be
-formulated as</p>
+formulated as:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\label{eq:OCProblem}
     \begin{cases}
@@ -244,9 +244,9 @@ map is correctly defined in between them. As mentioned, the switches in
 this formulation are based on time-triggered events. This means that you
 need to define both the sequence of the modes and the event times where
 these switches take place.</p>
-<p>For many robotic platforms such as quadrotor, ballbot, and cart-pole,
-the system has only a single mode (i.e., a single domain system). In
-these cases, the above formulation simplifies as</p>
+<p>For many robotic platforms such as quadrotor, ballbot, and cartpole,
+the system has only a single mode (i.e., they are single domain systems).
+In these cases, the above formulation simplifies as:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\label{eq:OCProblem_simple}
     \begin{cases}
@@ -254,7 +254,7 @@ these cases, the above formulation simplifies as</p>
     \text{s.t.} \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{2.7em} \text{system dynamics} \\
     \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \qquad   \qquad \text{state-input equality constraints} \\
     \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0} \qquad \qquad \qquad  \text{ state-only equality constraints} \\
-    \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \, \qquad  \quad\quad  \text{   inequality constraints}
+    \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \qquad  \quad\quad  \text{   inequality constraints}
     \end{cases}\end{split}\]</div>
 <p>Which is in the form of a regular optimal control problem.</p>
 </div>
@@ -329,7 +329,7 @@ the concept of <strong>MPC</strong> Interface and <strong>MRT</strong> (Model Re
 Interface.</p>
 <div class="section" id="mpc-interface">
 <h3>MPC Interface<a class="headerlink" href="#mpc-interface" title="Permalink to this headline">¶</a></h3>
-<p>The MPC interface is responsible for safely updating the solver with the
+<p>MPC interface is responsible for safely updating the solver with the
 latest measurement. Thus the user can safely set the latest state to the
 solver and advance it. If the solver is not yet terminated from the
 previous call, the state will be buffered until the solver is ready, the
@@ -337,7 +337,7 @@ buffer size is one so the solver always will get the latest state.</p>
 </div>
 <div class="section" id="mrt-interface">
 <h3>MRT Interface<a class="headerlink" href="#mrt-interface" title="Permalink to this headline">¶</a></h3>
-<p>The MRT interface is responsible for the safe access to the outcome of
+<p>MRT interface is responsible for the safe access to the outcome of
 the solver. It provides two views to the output: the time-based and the
 state-base view. In the time-based approach, MRT only outputs the
 optimized state-input pair for the enquiry time based on a linear

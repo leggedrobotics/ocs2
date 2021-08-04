@@ -18,7 +18,7 @@ SolverSynchronizedModule.
 
 We start with the components of OptimalControlProblem: cost functions,
 soft constraints, (hard) constraints, dynamics, and pre-computation. In
-general, the cost and (soft) constraints are defined at three different
+general, the cost and (hard / soft) constraints are defined at three different
 time instances: (1) during the intermediate time intervals, (2) at the
 switching (prejump) times, and (3) at the final time of the optimization
 horizon. The prejump components are only effective in the
@@ -54,7 +54,7 @@ quadratic approximation. For complex functions, you may use the
 auto-differentiation version of these classes, namely StateCostCppAd or
 StateInputCostCppAd where the user only requires to provide the cost
 value. For implementation details of the these class refer to
-’ocs2_core/cost’ and for simple examples check QuadraticStateCost and
+"ocs2_core/cost" and for simple examples check QuadraticStateCost and
 QuadraticStateInputCost.
 
 Note: All our optimal control solvers assume that the sum of the Hession
@@ -87,7 +87,7 @@ the order of the constraints (ConstraintOrder). For complex functions,
 you may use the auto-differentiation version of these classes, namely
 StateConstraintCppAd or StateInputConstraintCppAd where you only require
 to provide the constraint value. For implementation details of the these
-class refer to ’ocs2_core/constraint’ and for simple examples check
+class refer to "ocs2_core/constraint" and for simple examples check
 LinearStateConstraint and LinearStateInputConstraint.
 
 For handling the constraints in OCS2, you can either use hard or soft
@@ -95,7 +95,7 @@ constraint approaches. The soft constraints are collected separately in
 OptimalControlProblem. The soft constraints handling is based on a
 penalty method where the constraints are wrapped with user-defined
 penalty functions (for the list of these penalty functions, refer to
-ocs2_core/soft_constraint/penalties). To create a soft constraint from
+"ocs2_core/soft_constraint/penalties"). To create a soft constraint from
 your constraint term, you can use StateSoftConstraint and
 StateInputSoftConstraint classes. These classes take an instance of your
 constraint term and your opted penalty function and create a cost term
@@ -141,7 +141,7 @@ operations will be conducted next. Therefore, you can implement the
 overridden request() method based on the input request set. As a general
 rule, you should avoid using caching and only later for a better
 performance implement the version with caching. For an example refer to
-ocs2_robotic_examples/ocs2_mobile_manipulator_example.
+"ocs2_robotic_examples/ocs2_mobile_manipulator".
 
 Changing parameters of the Optimal Control Problem
 --------------------------------------------------

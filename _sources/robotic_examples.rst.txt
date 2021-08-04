@@ -21,7 +21,7 @@ Legged Robot       24         24         Yes         No
 
 For all these robotic examples, there are two separate packages:
 
-1. **ocs2_<robot>**- Provides the library with the robot-specfic MPC implementation.
+1. **ocs2_<robot>**: Provides the library with the robot-specific MPC implementation.
 2. **ocs2_<robot>_ros**:  Wraps around the MPC implementation with ROS to define ROS nodes.
 
 

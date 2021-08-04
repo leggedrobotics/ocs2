@@ -5,7 +5,7 @@
 Getting Started
 ===============
 We here briefly explain the steps you need to take in order to apply
-OCS2 for you specific problem. We already assume that you have
+OCS2 for your specific problem. We already assume that you have
 successfully installed the library based on the description in the
 :ref:`Installation page <doxid-ocs2_doc_installation>`.
 
@@ -33,7 +33,7 @@ the common models are:
    since it has the best of two worlds. First it consider the full
    kinematics of the system. Second, instead of the full dynamics which
    is computationally expensive, it only considers the part of the
-   dynamics that is affected by the external force. For an example refer
+   dynamics that is affected by the external forces. For an example refer
    to :ref:`Legged Robot example <doxid-ocs2_doc_robotic_examples_legged_robot>`.
 
 After choosing your model, instead of starting from scratch, it is often
@@ -55,7 +55,7 @@ subsystems. Switched system models are encountered in many practical
 applications such as automobiles and locomotives with different gears,
 DC-DC converters, manufacturing processes, biological systems, and
 walking robotics. The optimal control for such a system can be
-formulated as
+formulated as:
 
 .. math::
 
@@ -84,9 +84,9 @@ this formulation are based on time-triggered events. This means that you
 need to define both the sequence of the modes and the event times where
 these switches take place.
 
-For many robotic platforms such as quadrotor, ballbot, and cart-pole,
-the system has only a single mode (i.e., a single domain system). In
-these cases, the above formulation simplifies as
+For many robotic platforms such as quadrotor, ballbot, and cartpole,
+the system has only a single mode (i.e., they are single domain systems).
+In these cases, the above formulation simplifies as:
 
 .. math::
 
@@ -96,7 +96,7 @@ these cases, the above formulation simplifies as
        \text{s.t.} \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{2.7em} \text{system dynamics} \\ 
        \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \qquad   \qquad \text{state-input equality constraints} \\
        \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0} \qquad \qquad \qquad  \text{ state-only equality constraints} \\
-       \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \, \qquad  \quad\quad  \text{   inequality constraints}
+       \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \qquad  \quad\quad  \text{   inequality constraints}
        \end{cases}
 
 Which is in the form of a regular optimal control problem.
@@ -178,7 +178,7 @@ Interface.
 MPC Interface
 -------------
 
-The MPC interface is responsible for safely updating the solver with the
+MPC interface is responsible for safely updating the solver with the
 latest measurement. Thus the user can safely set the latest state to the
 solver and advance it. If the solver is not yet terminated from the
 previous call, the state will be buffered until the solver is ready, the
@@ -187,7 +187,7 @@ buffer size is one so the solver always will get the latest state.
 MRT Interface
 -------------
 
-The MRT interface is responsible for the safe access to the outcome of
+MRT interface is responsible for the safe access to the outcome of
 the solver. It provides two views to the output: the time-based and the
 state-base view. In the time-based approach, MRT only outputs the
 optimized state-input pair for the enquiry time based on a linear

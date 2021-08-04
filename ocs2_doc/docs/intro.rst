@@ -1,6 +1,6 @@
 .. index:: pair: page; Introduction
 
-`Source code on GitHub: leggedrobotics/ocs2 <https://github.com/leggedrobotics/ocs2>`_
+Source code on GitHub: `leggedrobotics/ocs2 <https://github.com/leggedrobotics/ocs2>`_
 
 Introduction
 ============

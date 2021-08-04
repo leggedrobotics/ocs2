@@ -12,7 +12,7 @@ provided in the package sources.
 
 Source code
 ------------
-The source code is hosted on GitHub: _`leggedrobotics/ocs2 <https://github.com/leggedrobotics/ocs2>`_. 
+The source code is hosted on GitHub: `leggedrobotics/ocs2 <https://github.com/leggedrobotics/ocs2>`_. 
 
     .. code-block:: bash
     

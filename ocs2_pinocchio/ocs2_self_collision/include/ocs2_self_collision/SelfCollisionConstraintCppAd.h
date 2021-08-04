@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This class provides the CppAD variant of the Self-collision constraints. Therefore no pre-computation is required. The class has two
- * constructors. The constructor with an additional argument, "updateCallback", is meant for cases where PinocchioStateInputMapping
- * requires some extra update calls on PinocchioInterface, such as the centroidal mode mapping (refer to CentroidalModelPinocchioMapping).
+ * This class provides the CppAD variant of the Self-collision constraints. Therefore no pre-computation is required. The class has
+ * two constructors. The constructor with an additional argument, "updateCallback", is meant for cases that PinocchioStateInputMapping
+ * requires extra update calls on PinocchioInterface, such as the centroidal model mapping (refer to CentroidalModelPinocchioMapping).
  *
  * See also SelfCollisionConstraint, which uses analytical computation and caching.
  */

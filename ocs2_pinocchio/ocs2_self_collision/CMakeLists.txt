@@ -8,13 +8,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
-  ocs2_ros_interfaces
-
-  # visualization deps
-  roscpp
-  std_msgs
-  geometry_msgs
-  visualization_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -71,7 +64,6 @@ link_directories(
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
   src/PinocchioGeometryInterface.cpp
-  src/visualization/GeometryInterfaceVisualization.cpp
   src/loadStdVectorOfPair.cpp
   src/SelfCollision.cpp
   src/SelfCollisionCppAd.cpp

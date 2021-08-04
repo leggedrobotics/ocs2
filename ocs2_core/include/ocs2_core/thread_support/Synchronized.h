@@ -139,14 +139,13 @@ class Synchronized {
     std::unique_lock<std::mutex> lkThis(m_, std::defer_lock);
     std::unique_lock<std::mutex> lkOther(other.m_, std::defer_lock);
     std::lock(lkOther, lkThis);
-    p_ = std::move(other.p_);
+    p_.swap(other.p_);
     return *this;
   }
 
   /// Reset the wrapped object. The object is reseated while holding the lock.
   void reset(std::unique_ptr<T> p) noexcept {
-    std::lock_guard<std::mutex> lk(m_);
-    p_ = std::move(p);
+    swap(p);  // by using swap, the old object is destroyed after the lock is released
   }
 
   /// Swaps the wrapped object. The object is swapped while holding the lock.

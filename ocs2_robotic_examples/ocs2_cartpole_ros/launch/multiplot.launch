@@ -1,0 +1,13 @@
+<launch>
+  <arg name="multiplot_config" default="$(find ocs2_cartpole)/config/multiplot/mpc_observation.xml" />
+
+  <!-- Launch RQT Multi-plot -->
+  <node name="mpc_observation" pkg="rqt_multiplot" type="rqt_multiplot" 
+    args="--multiplot-run-all --multiplot-config $(arg multiplot_config)"
+    output="screen"/>
+
+  <!-- Launch Performance Indices Multi-plot -->
+  <include file="$(find ocs2_ros_interfaces)/launch/performance_indices.launch">
+    <arg name="mpc_policy_topic_name"      value="cartpole_mpc_policy"/>
+  </include>
+</launch>

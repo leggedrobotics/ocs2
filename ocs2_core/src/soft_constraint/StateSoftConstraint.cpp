@@ -69,7 +69,7 @@ bool StateSoftConstraint::isActive(scalar_t time) const {
 /******************************************************************************************************/
 scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const TargetTrajectories&,
                                        const PreComputation& preComp) const {
-  return penalty_.getValue(constraintPtr_->getValue(time, state, preComp));
+  return penalty_.getValue(time, constraintPtr_->getValue(time, state, preComp));
 }
 
 /******************************************************************************************************/
@@ -80,9 +80,9 @@ ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximat
                                                                                     const PreComputation& preComp) const {
   switch (constraintPtr_->getOrder()) {
     case ConstraintOrder::Linear:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state, preComp));
+      return penalty_.getQuadraticApproximation(time, constraintPtr_->getLinearApproximation(time, state, preComp));
     case ConstraintOrder::Quadratic:
-      return penalty_.getQuadraticApproximation(constraintPtr_->getQuadraticApproximation(time, state, preComp));
+      return penalty_.getQuadraticApproximation(time, constraintPtr_->getQuadraticApproximation(time, state, preComp));
     default:
       throw std::runtime_error("[StateSoftConstraint] Unknown constraint Order");
   }

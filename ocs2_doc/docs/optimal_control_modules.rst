@@ -143,8 +143,8 @@ rule, you should avoid using caching and only later for a better
 performance implement the version with caching. For an example refer to
 ocs2_robotic_examples/ocs2_mobile_manipulator_example.
 
-Changing parameter of Optimal Control Problem
----------------------------------------------
+Changing parameters of the Optimal Control Problem
+--------------------------------------------------
 
 Once you have defined and set your OptimalControlProblem to a solver,
 the solver creates a copy (in fact, many copies) of it internally.

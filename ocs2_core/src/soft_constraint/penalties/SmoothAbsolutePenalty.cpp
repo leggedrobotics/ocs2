@@ -36,21 +36,21 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SmoothAbsolutePenalty::getValue(scalar_t h) const {
+scalar_t SmoothAbsolutePenalty::getValue(scalar_t t, scalar_t h) const {
   return config_.mu * sqrt(h * h + config_.delta * config_.delta);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SmoothAbsolutePenalty::getDerivative(scalar_t h) const {
+scalar_t SmoothAbsolutePenalty::getDerivative(scalar_t t, scalar_t h) const {
   return config_.mu * h / sqrt(h * h + config_.delta * config_.delta);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SmoothAbsolutePenalty::getSecondDerivative(scalar_t h) const {
+scalar_t SmoothAbsolutePenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
   const scalar_t deltaSquare = config_.delta * config_.delta;
   return config_.mu * deltaSquare / pow(h * h + deltaSquare, 1.5);
 }

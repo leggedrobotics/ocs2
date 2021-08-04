@@ -61,6 +61,7 @@ Jan Carius (ETHZ),
 Jean-Pierre Sleiman (ETHZ).
 
 **Other Developers**: 
+Mayank Mittal,
 Johannes Pankert,
 Perry Franklin,
 Tom Lankhorst,
@@ -81,8 +82,23 @@ Related publications
 This toolbox has been used in the following publications:
 
 .. bibliography::
+   :list: enumerated
+   :all:
 
-   farshidian17d
-   farshidian17a
-   farshidian17b
-   giftthaler17
+   farshidian2017slq
+   farshidian2017ocs2
+   farshidian2017slqmpc
+   giftthaler2017kinematic
+   minniti2019ballbot
+   grandia2019frequency
+   grandia2019feedback
+   gawel2019construction
+   farshidian2020deepmpc
+   carius2020mpcnet
+   grandia2020cbf
+   sleiman2021locopulation
+   gaertner2021collision
+   sleiman2021constraint
+   reske2021imitation
+   minniti2021adaptive
+   mittal2021articulated

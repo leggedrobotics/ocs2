@@ -40,7 +40,11 @@ namespace ocs2 {
 class ReferenceManagerDecorator : public ReferenceManagerInterface {
  public:
   explicit ReferenceManagerDecorator(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr)
-      : referenceManagerPtr_(std::move(referenceManagerPtr)) {}
+      : referenceManagerPtr_(std::move(referenceManagerPtr)) {
+    if (referenceManagerPtr_ == nullptr) {
+      throw std::runtime_error("[ReferenceManagerDecorator] ReferenceManager pointer is nullptr!");
+    }
+  }
 
   ~ReferenceManagerDecorator() override = default;
 

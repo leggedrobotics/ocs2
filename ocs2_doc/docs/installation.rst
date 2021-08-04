@@ -16,7 +16,7 @@ Dependencies
 
 * C++ compiler with C++11 support
 * Eigen (v3.3)
-* Boost C++ (v1.54)
+* Boost C++ (v1.71)
 * GLPK ``sudo apt install libglpk-dev``
 * catkin ``sudo apt-get install catkin``
 * pybind11_catkin, ROS package, installable via ``sudo apt install ros-noetic-pybind11-catkin``
@@ -35,11 +35,19 @@ Optional Dependencies
     .. code-block:: bash
     
         # Clone pinocchio
-        git clone git@github.com:leggedrobotics/pinocchio.git
+        git clone --recurse-submodules https://github.com/leggedrobotics/pinocchio.git
         # Clone hpp-fcl
-        git clone git@github.com:leggedrobotics/hpp-fcl.git
+        git clone --recurse-submodules https://github.com/leggedrobotics/hpp-fcl.git
         # install dependencies 
         sudo apt install liburdfdom-dev liboctomap-dev libassimp-dev
+        
+* `rqt_multiplot`_ package can be used for visualizing the solver's performance indices and other optimization outputs
+
+.. _`rqt_multiplot`: http://wiki.ros.org/rqt_multiplot
+
+    .. code-block:: bash
+    
+        sudo apt-get install ros-noetic-rqt-multiplot
 
 * `RaiSim <https://github.com/raisimTech/raisimLib>`__ simulator can be used as a provider for rollouts. The corresponding ``ocs2_raisim`` package has additional requirements:
   

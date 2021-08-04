@@ -1,7 +1,5 @@
 .. index:: pair: page; Introduction
 
-Source code on GitHub: `leggedrobotics/ocs2 <https://github.com/leggedrobotics/ocs2>`_
-
 Introduction
 ============
 
@@ -26,3 +24,10 @@ provides tools for ROS interfaces. The toolbox’s efficient and
 numerically stable implementations in conjunction with its user-friendly 
 interface have paved the way for employing it on numerous robotic 
 applications with limited onboard computation power. 
+
+|GitHub| Source code on GitHub: `leggedrobotics/ocs2 <https://github.com/leggedrobotics/ocs2>`_
+
+  .. |GitHub| image:: ../tools/sphinx/_static/img/GitHub-Mark-120px-plus.png
+     :scale: 25
+     :alt: double_integrator.gif cannot be displayed!
+     :target: _static/img/GitHub-Mark-120px-plus.png

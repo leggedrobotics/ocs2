@@ -131,7 +131,7 @@ SystemDynamicsBaseAD.
 Pre-computation
 ---------------
 
-OCS2 is cache-friendly, which means that you can share the computation
+OCS2 is cache-friendly, which means that you can share computation
 between cost, constraints, system dynamics, and their approximation. To
 achieve this, OCS2 uses PreComputation. Before evaluating cost,
 constraints, and system dynamics, OCS2 solvers call

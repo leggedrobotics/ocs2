@@ -46,6 +46,10 @@ cost through a reference manager module.
     # Launch the example
     roslaunch ocs2_double_integrator_ros double_integrator.launch
 
+.. image:: ../tools/sphinx/_static/gif/double_integrator.gif
+   :alt: double_integrator.gif cannot be displayed!
+   :target: _static/gif/double_integrator.gif
+
 .. _doxid-ocs2_doc_robotic_examples_cartpole:
 
 Cart Pole
@@ -67,6 +71,10 @@ cart along the track.
 
     # Launch the example
     roslaunch ocs2_cartpole_ros cartpole.launch
+
+.. image:: ../tools/sphinx/_static/gif/cartpole.gif
+   :alt: cartpole.gif cannot be displayed!
+   :target: _static/gif/cartpole.gif
 
 .. _doxid-ocs2_doc_robotic_examples_ballbot:
 
@@ -92,6 +100,10 @@ control the robot’s XY position and yaw based on user command.
     # Launch the example
     roslaunch ocs2_ballbot_ros ballbot.launch
 
+.. image:: ../tools/sphinx/_static/gif/ballbot.gif
+   :alt: ballbot.gif cannot be displayed!
+   :target: _static/gif/ballbot.gif
+
 .. _doxid-ocs2_doc_robotic_examples_quadrotor:
 
 Quadrotor
@@ -113,6 +125,10 @@ command defined as the quadrotor’s 3D position and yaw.
 
     # Launch the example
     roslaunch ocs2_quadrotor_ros quadrotor.launch
+
+.. image:: ../tools/sphinx/_static/gif/quadrotor.gif
+   :alt: quadrotor.gif cannot be displayed!
+   :target: _static/gif/quadrotor.gif
 
 .. _doxid-ocs2_doc_robotic_examples_mobile_manipulator:
 
@@ -142,6 +158,10 @@ usePreComputation flag in the config file.
 
     # Launch the example
     roslaunch ocs2_mobile_manipulator_ros mobile_manipulator.launch
+
+.. image:: ../tools/sphinx/_static/gif/mobile_manipulator.gif
+   :alt: mobile_manipulator.gif cannot be displayed!
+   :target: _static/gif/mobile_manipulator.gif
 
 .. _doxid-ocs2_doc_robotic_examples_legged_robot:
 
@@ -179,3 +199,7 @@ considers the full kinematics of the robot.
 
     # Launch the example
     roslaunch ocs2_legged_robot legged_robot.launch
+
+.. image:: ../tools/sphinx/_static/gif/legged_robot.gif
+   :alt: legged_robot.gif cannot be displayed!
+   :target: _static/gif/legged_robot.gif

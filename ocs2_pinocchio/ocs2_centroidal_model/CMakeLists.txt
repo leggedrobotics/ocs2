@@ -5,8 +5,6 @@ project(ocs2_centroidal_model)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-  roscpp
-  roslib
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
@@ -21,10 +19,10 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
-
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 ###################################
 ## catkin specific configuration ##
@@ -47,7 +45,6 @@ catkin_package(
 
 include_directories(
   include
-  test/include
   ${pinocchio_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -111,10 +108,21 @@ install(
 #############
 ## Testing ##
 #############
+
+# Resolve for the package path at compile time.
+configure_file (
+  "${PROJECT_SOURCE_DIR}/test/include/${PROJECT_NAME}/test/package_path.h.in"
+  "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/test/package_path.h" @ONLY
+)
+
 catkin_add_gtest(${PROJECT_NAME}_test
   # test/testAccessMethods.cpp
   test/testAnymalSingleRigidBody.cpp
   test/testAnymalFullCentroidal.cpp
+)
+target_include_directories(${PROJECT_NAME}_test PRIVATE
+  test/include
+  ${PROJECT_BINARY_DIR}/include
 )
 target_link_libraries(${PROJECT_NAME}_test
   gtest_main

@@ -13,8 +13,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_clang_tools</build_depend>
 
-  <depend>roscpp</depend>
-  <depend>roslib</depend>
   <depend>ocs2_core</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_pinocchio_interface</depend>

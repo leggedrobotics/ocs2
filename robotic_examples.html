@@ -94,7 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="optimal_control_modules.html">Optimal Control Modules</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Robotic Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#double-integrator">Double Integrator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cart-pole">Cart Pole</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cartpole">Cartpole</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ballbot">Ballbot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#quadrotor">Quadrotor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mobile-manipulator">Mobile Manipulator</a></li>
@@ -197,7 +197,7 @@ features of each example.</p>
 <td><p>No</p></td>
 <td><p>No</p></td>
 </tr>
-<tr class="row-odd"><td><p>Cart Pole</p></td>
+<tr class="row-odd"><td><p>Cartpole</p></td>
 <td><p>4</p></td>
 <td><p>1</p></td>
 <td><p>Yes</p></td>
@@ -252,9 +252,9 @@ roslaunch ocs2_double_integrator_ros double_integrator.launch
 </div>
 <a class="reference external image-reference" href="_static/gif/double_integrator.gif"><img alt="double_integrator.gif cannot be displayed!" src="_images/double_integrator.gif" /></a>
 </div>
-<div class="section" id="cart-pole">
-<span id="doxid-ocs2-doc-robotic-examples-cartpole"></span><h2>Cart Pole<a class="headerlink" href="#cart-pole" title="Permalink to this headline">¶</a></h2>
-<p>The cart-pole example is a classic control problem where a pole is
+<div class="section" id="cartpole">
+<span id="doxid-ocs2-doc-robotic-examples-cartpole"></span><h2>Cartpole<a class="headerlink" href="#cartpole" title="Permalink to this headline">¶</a></h2>
+<p>The cartpole example is a classic control problem where a pole is
 attached through an unactuated joint to a cart. The car moves along a
 frictionless track. The goal is to swing up and balance the pendulum
 starting from the downright position by accelerating a decelerating the
@@ -318,10 +318,11 @@ consists of a 6DOF arm plus 2D position and heading of the mobile base.
 The control inputs are the 6 joint velocities of the arm and the forward
 and rotational velocities of the base. The objective of the task is to
 track a 6DoF end-effector pose. The joint position and velocity limits
-are included in the constraint of the optimal control problem.</p>
-<p>Moreover, self-collision avoidance is achieved based on the collision
-bodies of the URDF model and collision avoidance constraints (refer to
-ocs2_self_collision). This example implements both the cache and the
+are included in the constraint of the optimal control problem.
+Self-collision avoidance is achieved based on the collision
+bodies in the URDF model and collision avoidance constraints (refer to
+ocs2_self_collision).</p>
+<p>Note: This example implements both the cache and the
 non-cache variants of the MPC, which can be chosen through the
 usePreComputation flag in the config file.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the example</span>
@@ -353,7 +354,7 @@ feet track a predefined motion in the z-direction.</p>
 <p>The system dynamics are modeled in two ways which can be chosen from the
 config file: (1) The single rigid body dynamics (SRBD): This model
 assumes that the system has constant inertia regardless of its joint
-position. It also includes the full kinematics of the system (2) The
+positions. It also includes the full kinematics of the system (2) The
 full centroidal dynamics (FCD): This model uses the centroidal dynamics,
 which incorporates the motion of the robot’s limbs. Similar to SRBD, it
 considers the full kinematics of the robot.</p>

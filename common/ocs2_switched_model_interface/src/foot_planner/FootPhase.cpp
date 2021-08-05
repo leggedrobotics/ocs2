@@ -38,17 +38,17 @@ FootTangentialConstraintMatrix tangentialConstraintsFromConvexTerrain(const Conv
   return constraints;
 }
 
-FootNormalConstraintMatrix computeFootNormalConstraint(scalar_t feedforwardVelocityInNormalDirection, scalar_t desiredTerrainDistance,
-                                                       const TerrainPlane& terrainPlane, scalar_t positionGain) {
+FootNormalConstraintMatrix computeFootNormalConstraint(const vector3_t& feedforwardVelocityInWorld,
+                                                       const vector3_t& feedforwardPositionInWorld, const TerrainPlane& terrainPlane,
+                                                       scalar_t positionGain) {
   // in surface normal direction : v_foot = v_ff - kp * (p_foot - p_des)
-  // ==> (n')* v_foot + (kp* n')* p_foot - (v_ff + kp* p_des) = 0
+  // ==> (n')* v_foot + (kp* n')* p_foot - (n') * (v_ff + kp* p_des) = 0
   const vector3_t surfaceNormal = surfaceNormalInWorld(terrainPlane);
 
   FootNormalConstraintMatrix footNormalConstraint;
   footNormalConstraint.velocityMatrix = surfaceNormal.transpose();
   footNormalConstraint.positionMatrix = positionGain * surfaceNormal.transpose();
-  footNormalConstraint.constant =
-      -feedforwardVelocityInNormalDirection - positionGain * (surfaceNormal.dot(terrainPlane.positionInWorld) + desiredTerrainDistance);
+  footNormalConstraint.constant = -surfaceNormal.dot(feedforwardVelocityInWorld + positionGain * feedforwardPositionInWorld);
   return footNormalConstraint;
 }
 
@@ -65,10 +65,20 @@ vector3_t StancePhase::nominalFootholdLocation() const {
   return stanceTerrain_->plane.positionInWorld;
 }
 
+vector3_t StancePhase::getPositionInWorld(scalar_t time) const {
+  return nominalFootholdLocation();
+}
+
+vector3_t StancePhase::getVelocityInWorld(scalar_t time) const {
+  return vector3_t::Zero();
+}
+
+vector3_t StancePhase::getAccelerationInWorld(scalar_t time) const {
+  return vector3_t::Zero();
+}
+
 FootNormalConstraintMatrix StancePhase::getFootNormalConstraintInWorldFrame(scalar_t time) const {
-  const scalar_t feedForwardVelocity = 0.0;
-  const scalar_t desiredTerrainDistance = 0.0;
-  return computeFootNormalConstraint(feedForwardVelocity, desiredTerrainDistance, stanceTerrain_->plane, positionGain_);
+  return computeFootNormalConstraint(vector3_t::Zero(), stanceTerrain_->plane.positionInWorld, stanceTerrain_->plane, positionGain_);
 }
 
 const FootTangentialConstraintMatrix* StancePhase::getFootTangentialConstraintInWorldFrame() const {
@@ -79,11 +89,11 @@ const FootTangentialConstraintMatrix* StancePhase::getFootTangentialConstraintIn
   }
 }
 
-SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const SignedDistanceField* signedDistanceField,
+SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const TerrainModel* terrainModel,
                        scalar_t positionGain, scalar_t sdfMidswingMargin)
     : liftOff_(liftOff),
       touchDown_(touchDown),
-      signedDistanceField_(signedDistanceField),
+      terrainModel_(terrainModel),
       positionGain_(positionGain),
       sdfMidswingMargin_(sdfMidswingMargin) {
   if (touchDown_.terrainPlane == nullptr) {
@@ -95,61 +105,50 @@ SwingPhase::SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touc
 
 void SwingPhase::setFullSwing(scalar_t swingHeight) {
   const scalar_t swingDuration = (touchDown_.time - liftOff_.time);
-  const auto& liftOffPositionInWorld = liftOff_.terrainPlane->positionInWorld;
-  const vector3_t liftOffVelocityInWorld{0.0, 0.0, liftOff_.velocity};
-  const auto& touchDownPositionInWorld = touchDown_.terrainPlane->positionInWorld;
-  const vector3_t touchDownVelocityInWorld{0.0, 0.0, touchDown_.velocity};
 
-  vector3_t apexPositionInWorld{0.5 * (liftOffPositionInWorld.x() + touchDownPositionInWorld.x()),
-                                0.5 * (liftOffPositionInWorld.y() + touchDownPositionInWorld.y()),
-                                swingHeight + std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z())};
-  // Correct apex position if signed distance is available
-  if (signedDistanceField_ != nullptr) {
-    const auto apexSdf = signedDistanceField_->valueAndDerivative(apexPositionInWorld);
-    if (apexSdf.first < swingHeight) {
-      apexPositionInWorld += (swingHeight - apexSdf.first) * apexSdf.second.normalized();
-    }
+  // liftoff conditions
+  const auto& liftOffPositionInWorld = liftOff_.terrainPlane->positionInWorld;
+  const vector3_t liftOffVelocityInWorld = {0.0, 0.0, liftOff_.velocity};
+  const SwingNode3d start{liftOff_.time, liftOffPositionInWorld, liftOffVelocityInWorld};
+
+  // toucdown conditions
+  const auto& touchDownPositionInWorld = touchDown_.terrainPlane->positionInWorld;
+  const vector3_t touchDownVelocityInWorld = touchDown_.velocity * surfaceNormalInWorld(*touchDown_.terrainPlane);
+  const SwingNode3d end{touchDown_.time, touchDownPositionInWorld, touchDownVelocityInWorld};
+
+  // Apex
+  scalar_t apexHeight = swingHeight + std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z());
+  if (terrainModel_ != nullptr) {
+    const auto highestObstacle = terrainModel_->getHighestObstacleAlongLine(liftOffPositionInWorld, touchDownPositionInWorld);
+    apexHeight = std::max(apexHeight, highestObstacle.z() + swingHeight);
+    // limit adaptation to 3 times swing height
+    apexHeight = std::min(apexHeight, 3.0 * swingHeight + std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z()));
   }
 
-  const vector3_t apexVelocityInWorld{(touchDownPositionInWorld.x() - liftOffPositionInWorld.x()) / swingDuration,
-                                      (touchDownPositionInWorld.y() - liftOffPositionInWorld.y()) / swingDuration, 0.0};
+  vector3_t apexPositionInWorld{0.5 * (liftOffPositionInWorld.x() + touchDownPositionInWorld.x()),
+                                0.5 * (liftOffPositionInWorld.y() + touchDownPositionInWorld.y()), apexHeight};
 
   const scalar_t distanceLiftoffToApex = (apexPositionInWorld - liftOffPositionInWorld).norm();
   const scalar_t distancetouchDownToApex = (apexPositionInWorld - touchDownPositionInWorld).norm();
   const scalar_t apexTime = liftOff_.time + distanceLiftoffToApex / (distanceLiftoffToApex + distancetouchDownToApex) * swingDuration;
 
-  // LiftOff Motion
-  const vector3_t liftoffNormal = surfaceNormalInWorld(*liftOff_.terrainPlane);
-  const SwingNode liftOffInLiftOffFrame{liftOff_.time, 0.0, liftoffNormal.dot(liftOffVelocityInWorld)};
-  const SwingNode apexInLiftOffFrame{apexTime, terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *liftOff_.terrainPlane),
-                                     liftoffNormal.dot(apexVelocityInWorld)};
-  const SwingNode touchDownInLiftOffFrame{touchDown_.time,
-                                          terrainSignedDistanceFromPositionInWorld(touchDownPositionInWorld, *liftOff_.terrainPlane),
-                                          liftoffNormal.dot(touchDownVelocityInWorld)};
+  const scalar_t velocityFactor = 2.0;  // TODO: check what velocity creates the right XY profile
+  const vector3_t apexVelocityInWorld{velocityFactor * (touchDownPositionInWorld.x() - liftOffPositionInWorld.x()) / swingDuration,
+                                      velocityFactor * (touchDownPositionInWorld.y() - liftOffPositionInWorld.y()) / swingDuration, 0.0};
 
-  // Create spline in liftOffFrame
-  liftOffMotion_.reset(new QuinticSwing(liftOffInLiftOffFrame, apexInLiftOffFrame, touchDownInLiftOffFrame));
+  const SwingNode3d apex{apexTime, apexPositionInWorld, apexVelocityInWorld};
 
-  // Touchdown Motion
-  const vector3_t touchDownNormal = surfaceNormalInWorld(*touchDown_.terrainPlane);
-  const SwingNode liftOffInTouchDownFrame{liftOff_.time,
-                                          terrainSignedDistanceFromPositionInWorld(liftOffPositionInWorld, *touchDown_.terrainPlane),
-                                          touchDownNormal.dot(liftOffVelocityInWorld)};
-  const SwingNode apexInTouchDownFrame{apexTime, terrainSignedDistanceFromPositionInWorld(apexPositionInWorld, *touchDown_.terrainPlane),
-                                       touchDownNormal.dot(apexVelocityInWorld)};
-  SwingNode touchDownInTouchDownFrame{touchDown_.time, 0.0, touchDownNormal.dot(touchDownVelocityInWorld)};
-
-  // Create spline in touchDownFrame
-  touchdownMotion_.reset(new QuinticSwing(liftOffInTouchDownFrame, apexInTouchDownFrame, touchDownInTouchDownFrame));
+  motion_.reset(new SwingSpline3d(start, apex, end));
 
   // Terrain clearance
-  if (signedDistanceField_ != nullptr) {
-    const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOffPositionInWorld), 0.0);
-    const scalar_t sdfEndClearance_ = std::min(signedDistanceField_->value(touchDownPositionInWorld), 0.0);
+  if (terrainModel_ != nullptr && terrainModel_->getSignedDistanceField() != nullptr) {
+    const auto* signedDistanceField = terrainModel_->getSignedDistanceField();
+    const scalar_t sdfStartClearance = std::min(signedDistanceField->value(liftOffPositionInWorld), 0.0);
+    const scalar_t sdfEndClearance = std::min(signedDistanceField->value(touchDownPositionInWorld), 0.0);
     const scalar_t midSwingTime = 0.5 * (liftOff_.time + touchDown_.time);
-    SwingNode startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
+    SwingNode startNode{liftOff_.time, sdfStartClearance - startEndMargin_, liftOff_.velocity};
     SwingNode apexNode{midSwingTime, sdfMidswingMargin_, 0.0};
-    SwingNode endNode{touchDown_.time, sdfEndClearance_ - startEndMargin_, touchDownInTouchDownFrame.velocity};
+    SwingNode endNode{touchDown_.time, sdfEndClearance - startEndMargin_, touchDown_.velocity};
     terrainClearanceMotion_.reset(new QuinticSwing(startNode, apexNode, endNode));
   } else {
     terrainClearanceMotion_.reset();
@@ -157,18 +156,27 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
 }
 
 void SwingPhase::setHalveSwing(scalar_t swingHeight) {
-  const SwingNode liftOffInLiftOffFrame{liftOff_.time, 0.0, liftOff_.velocity};
-  const SwingNode touchDownInLiftOffFrame{touchDown_.time, swingHeight, 0.0};
+  // liftoff conditions
+  const auto& liftOffPositionInWorld = liftOff_.terrainPlane->positionInWorld;
+  const vector3_t liftOffVelocityInWorld = liftOff_.velocity * surfaceNormalInWorld(*liftOff_.terrainPlane);
+  const SwingNode3d start{liftOff_.time, liftOffPositionInWorld, liftOffVelocityInWorld};
+
+  // touchdown conditions
+  touchDown_.terrainPlane = liftOff_.terrainPlane;
+  const vector3_t touchDownPositionInWorld = liftOffPositionInWorld + vector3_t(0.0, 0.0, swingHeight);
+  const vector3_t touchDownVelocityInWorld = vector3_t::Zero();
+  const SwingNode3d end{touchDown_.time, touchDownPositionInWorld, touchDownVelocityInWorld};
+
+  const SwingNode3d apex{0.5 * (liftOff_.time + touchDown_.time), touchDownPositionInWorld, touchDownVelocityInWorld};
 
   // The two motions are equal and defined in the liftoff plane
-  liftOffMotion_.reset(new QuinticSwing(liftOffInLiftOffFrame, swingHeight, touchDownInLiftOffFrame));
-  touchdownMotion_.reset(new QuinticSwing(*liftOffMotion_));
-  touchDown_.terrainPlane = liftOff_.terrainPlane;
+  motion_.reset(new SwingSpline3d(start, apex, end));
 
   {  // Terrain clearance
-    if (signedDistanceField_ != nullptr) {
-      const scalar_t sdfStartClearance_ = std::min(signedDistanceField_->value(liftOff_.terrainPlane->positionInWorld), 0.0);
-      SwingNode startNode{liftOff_.time, sdfStartClearance_ - startEndMargin_, liftOffInLiftOffFrame.velocity};
+    if (terrainModel_ != nullptr && terrainModel_->getSignedDistanceField() != nullptr) {
+      const auto* signedDistanceField = terrainModel_->getSignedDistanceField();
+      const scalar_t sdfStartClearance = std::min(signedDistanceField->value(liftOff_.terrainPlane->positionInWorld), 0.0);
+      SwingNode startNode{liftOff_.time, sdfStartClearance - startEndMargin_, liftOff_.velocity};
       SwingNode endNode{touchDown_.time, sdfMidswingMargin_, 0.0};
       terrainClearanceMotion_.reset(new QuinticSwing(startNode, sdfMidswingMargin_, endNode));
     } else {
@@ -188,11 +196,23 @@ vector3_t SwingPhase::nominalFootholdLocation() const {
   return touchDown_.terrainPlane->positionInWorld;
 }
 
+vector3_t SwingPhase::getPositionInWorld(scalar_t time) const {
+  return motion_->position(time);
+}
+
+vector3_t SwingPhase::getVelocityInWorld(scalar_t time) const {
+  return motion_->velocity(time);
+}
+
+vector3_t SwingPhase::getAccelerationInWorld(scalar_t time) const {
+  return motion_->acceleration(time);
+}
+
 FootNormalConstraintMatrix SwingPhase::getFootNormalConstraintInWorldFrame(scalar_t time) const {
   const auto liftOffConstraint =
-      computeFootNormalConstraint(liftOffMotion_->velocity(time), liftOffMotion_->position(time), *liftOff_.terrainPlane, positionGain_);
-  const auto touchDownConstraint = computeFootNormalConstraint(touchdownMotion_->velocity(time), touchdownMotion_->position(time),
-                                                               *touchDown_.terrainPlane, positionGain_);
+      computeFootNormalConstraint(motion_->velocity(time), motion_->position(time), *liftOff_.terrainPlane, positionGain_);
+  const auto touchDownConstraint =
+      computeFootNormalConstraint(motion_->velocity(time), motion_->position(time), *touchDown_.terrainPlane, positionGain_);
   const scalar_t scaling = getScaling(time);
 
   FootNormalConstraintMatrix footNormalConstraint;
@@ -203,8 +223,8 @@ FootNormalConstraintMatrix SwingPhase::getFootNormalConstraintInWorldFrame(scala
 }
 
 SignedDistanceConstraint SwingPhase::getSignedDistanceConstraint(scalar_t time) const {
-  if (signedDistanceField_ != nullptr) {
-    return {signedDistanceField_, terrainClearanceMotion_->position(time)};
+  if (terrainModel_ != nullptr && terrainModel_->getSignedDistanceField() != nullptr) {
+    return {terrainModel_->getSignedDistanceField(), terrainClearanceMotion_->position(time)};
   } else {
     return {nullptr, 0.0};
   }

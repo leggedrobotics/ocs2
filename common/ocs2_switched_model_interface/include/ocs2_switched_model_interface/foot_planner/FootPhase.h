@@ -5,9 +5,9 @@
 #pragma once
 
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-#include "ocs2_switched_model_interface/foot_planner/QuinticSplineSwing.h"
+#include "ocs2_switched_model_interface/foot_planner/SwingSpline3d.h"
 #include "ocs2_switched_model_interface/terrain/ConvexTerrain.h"
-#include "ocs2_switched_model_interface/terrain/SignedDistanceField.h"
+#include "ocs2_switched_model_interface/terrain/TerrainModel.h"
 #include "ocs2_switched_model_interface/terrain/TerrainPlane.h"
 
 namespace switched_model {
@@ -59,6 +59,10 @@ class FootPhase {
   /** Nominal foothold location (upcoming for swinglegs) */
   virtual vector3_t nominalFootholdLocation() const = 0;
 
+  virtual vector3_t getPositionInWorld(scalar_t time) const = 0;
+  virtual vector3_t getVelocityInWorld(scalar_t time) const = 0;
+  virtual vector3_t getAccelerationInWorld(scalar_t time) const = 0;
+
   /** Returns the velocity equality constraint formulated in the normal direction */
   virtual FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const = 0;
 
@@ -80,6 +84,9 @@ class StancePhase final : public FootPhase {
   bool contactFlag() const override { return true; };
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
   vector3_t nominalFootholdLocation() const override;
+  vector3_t getPositionInWorld(scalar_t time) const override;
+  vector3_t getVelocityInWorld(scalar_t time) const override;
+  vector3_t getAccelerationInWorld(scalar_t time) const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   const FootTangentialConstraintMatrix* getFootTangentialConstraintInWorldFrame() const override;
 
@@ -101,18 +108,19 @@ class SwingPhase final : public FootPhase {
     const TerrainPlane* terrainPlane;
   };
 
-  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const SignedDistanceField* signedDistanceField = nullptr,
+  SwingPhase(SwingEvent liftOff, scalar_t swingHeight, SwingEvent touchDown, const TerrainModel* terrainModel = nullptr,
              scalar_t positionGain = 0.0, scalar_t sdfMidswingMargin = 0.0);
   ~SwingPhase() override = default;
 
   bool contactFlag() const override { return false; };
   vector3_t normalDirectionInWorldFrame(scalar_t time) const override;
   vector3_t nominalFootholdLocation() const override;
+  vector3_t getPositionInWorld(scalar_t time) const override;
+  vector3_t getVelocityInWorld(scalar_t time) const override;
+  vector3_t getAccelerationInWorld(scalar_t time) const override;
   FootNormalConstraintMatrix getFootNormalConstraintInWorldFrame(scalar_t time) const override;
   SignedDistanceConstraint getSignedDistanceConstraint(scalar_t time) const override;
-  const QuinticSwing& getMotionInLiftOffFrame() const { return *liftOffMotion_; };
   const TerrainPlane& getLiftOffFrame() const { return *liftOff_.terrainPlane; };
-  const QuinticSwing& getMotionInTouchDownFrame() const { return *touchdownMotion_; };
   const TerrainPlane& getTouchDownFrame() const { return *touchDown_.terrainPlane; };
 
  private:
@@ -123,10 +131,9 @@ class SwingPhase final : public FootPhase {
 
   SwingEvent liftOff_;
   SwingEvent touchDown_;
-  std::unique_ptr<QuinticSwing> liftOffMotion_;
-  std::unique_ptr<QuinticSwing> touchdownMotion_;
+  std::unique_ptr<SwingSpline3d> motion_;
   scalar_t positionGain_;
-  const SignedDistanceField* signedDistanceField_;
+  const TerrainModel* terrainModel_;
 
   std::unique_ptr<QuinticSwing> terrainClearanceMotion_;
   const scalar_t sdfMidswingMargin_;

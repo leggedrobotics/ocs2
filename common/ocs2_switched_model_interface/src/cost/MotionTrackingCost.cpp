@@ -78,9 +78,11 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
 }  // namespace
 
 MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                                       const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                                       const com_model_t& comModel, const ad_com_model_t& adComModel, bool recompile)
+                                       const SwingTrajectoryPlanner& swingTrajectoryPlanner, const kinematic_model_t& kinematicModel,
+                                       const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
+                                       const ad_com_model_t& adComModel, bool recompile)
     : modeScheduleManagerPtr_(&modeScheduleManager),
+      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       kinematicModelPtr_(kinematicModel.clone()),
       adKinematicModelPtr_(adKinematicModel.clone()),
       comModelPtr_(comModel.clone()),
@@ -116,13 +118,38 @@ ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2
   }
 
   // The target references are the parameters
-  return computeMotionTargets<ocs2::scalar_t>(xRef, uRef, *kinematicModelPtr_, *comModelPtr_);
+
+  // Extract elements from reference
+  const auto comPose = getComPose(xRef);
+  const auto basePose = comModelPtr_->calculateBasePose(comPose);
+  const auto com_comTwist = getComLocalVelocities(xRef);
+  const auto base_baseTwist = comModelPtr_->calculateBaseLocalVelocities(com_comTwist);
+  const auto eulerAngles = getOrientation(comPose);
+  const auto qJoints = getJointPositions(xRef);
+  const auto dqJoints = getJointVelocities(uRef);
+
+  CostElements<scalar_t> motionTarget;
+  motionTarget.eulerXYZ = eulerAngles;
+  motionTarget.comPosition = getPositionInOrigin(comPose);
+  motionTarget.comAngularVelocity = rotateVectorBaseToOrigin(getAngularVelocity(com_comTwist), eulerAngles);
+  motionTarget.comLinearVelocity = rotateVectorBaseToOrigin(getLinearVelocity(com_comTwist), eulerAngles);
+  for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    const auto& footPhase = swingTrajectoryPlannerPtr_->getFootPhase(leg, time);
+    motionTarget.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
+    motionTarget.footPosition[leg] = footPhase.getPositionInWorld(time);
+    motionTarget.jointVelocity[leg] = dqJoints.template segment<3>(3 * leg);
+    motionTarget.footVelocity[leg] = footPhase.getVelocityInWorld(time);
+    motionTarget.contactForce[leg] = uRef.template segment<3>(3 * leg);
+  }
+
+  return costElementsToVector(motionTarget);
 }
 
 MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
     : ocs2::StateInputCostGaussNewtonAd(other),
       sqrtWeights_(other.sqrtWeights_),
       modeScheduleManagerPtr_(other.modeScheduleManagerPtr_),
+      swingTrajectoryPlannerPtr_(other.swingTrajectoryPlannerPtr_),
       kinematicModelPtr_(other.kinematicModelPtr_->clone()),
       adKinematicModelPtr_(other.adKinematicModelPtr_->clone()),
       comModelPtr_(other.comModelPtr_->clone()),

@@ -36,6 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/model.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
+#include <urdf_parser/urdf_parser.h>
+
 #include <ocs2_sphere_approximation/PinocchioSphereInterface.h>
 
 namespace ocs2 {
@@ -43,10 +45,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioSphereInterface::PinocchioSphereInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                                                   std::vector<std::string> collisionLinks, std::vector<scalar_t> maxExcesses)
+PinocchioSphereInterface::PinocchioSphereInterface(const PinocchioInterface& pinocchioInterface, std::vector<std::string> collisionLinks,
+                                                   const std::vector<scalar_t>& maxExcesses)
     : geometryModelPtr_(new pinocchio::GeometryModel), collisionLinks_(std::move(collisionLinks)) {
-  pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfPath, pinocchio::COLLISION, *geometryModelPtr_);
+  buildGeomFromPinocchioInterface(pinocchioInterface, *geometryModelPtr_);
 
   for (size_t i = 0; i < collisionLinks_.size(); i++) {
     const auto& link = collisionLinks_[i];
@@ -72,6 +74,25 @@ PinocchioSphereInterface::PinocchioSphereInterface(const std::string& urdfPath, 
       sphereRadii_.push_back(sphereApprox.getSphereRadius());
     }
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PinocchioSphereInterface::buildGeomFromPinocchioInterface(const PinocchioInterface& pinocchioInterface,
+                                                               pinocchio::GeometryModel& geomModel) {
+  if (!pinocchioInterface.getUrdfModelPtr()) {
+    throw std::runtime_error("The PinocchioInterface passed to PinocchioGeometryInterface(...) does not contain a urdf model!");
+  }
+
+  // TODO: Replace with pinocchio function that uses the ModelInterface directly
+  // As of 19-04-21 there is no buildGeom that takes a ModelInterface, so we deconstruct the modelInterface into a std::stringstream first
+  const std::unique_ptr<const TiXmlDocument> urdfAsXml(urdf::exportURDF(*pinocchioInterface.getUrdfModelPtr()));
+  TiXmlPrinter printer;
+  urdfAsXml->Accept(&printer);
+  const std::stringstream urdfAsStringStream(printer.Str());
+
+  pinocchio::urdf::buildGeom(pinocchioInterface.getModel(), urdfAsStringStream, pinocchio::COLLISION, geomModel);
 }
 
 /******************************************************************************************************/

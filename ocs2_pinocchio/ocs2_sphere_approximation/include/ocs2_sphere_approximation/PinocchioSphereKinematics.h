@@ -72,7 +72,10 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
    * @note The pinocchio interface must be set before calling the getters.
    * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
    */
-  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) {
+    pinocchioInterfacePtr_ = &pinocchioInterface;
+    mappingPtr_->setPinocchioInterface(pinocchioInterface);
+  }
 
   /** Get the pinocchio sphere interface **/
   const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };

@@ -49,13 +49,12 @@ class PinocchioSphereInterface final {
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
   /** Constructor
-   * @param [in] urdfPath : path to the urdf file
    * @param [in] pinocchioInterface : pinocchio interface
    * @param [in] collisionLinks : vector of the names of links to be approximated with spheres
    * @param [in] maxExcess : vector of the maximum allowed excess for the sphere approximation of each link
    */
-  PinocchioSphereInterface(const std::string& urdfPath, const PinocchioInterface& pinocchioInterface,
-                           std::vector<std::string> collisionLinks, std::vector<scalar_t> maxExcesses);
+  PinocchioSphereInterface(const PinocchioInterface& pinocchioInterface, std::vector<std::string> collisionLinks,
+                           const std::vector<scalar_t>& maxExcesses);
 
   /** Compute the sphere center positions in world frame
    *
@@ -97,6 +96,9 @@ class PinocchioSphereInterface final {
   const pinocchio::GeometryModel& getGeometryModel() const { return *geometryModelPtr_; }
 
  private:
+  // Construction helpers
+  void buildGeomFromPinocchioInterface(const PinocchioInterface& pinocchioInterface, pinocchio::GeometryModel& geomModel);
+
   std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 
   // Sphere approximation for environment collision

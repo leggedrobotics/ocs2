@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <vector>
 
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/misc/Numerics.h>
 
 namespace ocs2 {
@@ -48,7 +48,7 @@ namespace lookup {
  * @return: index
  */
 template <typename SCALAR = double>
-size_t findFirstIndexWithinTol(const std::vector<SCALAR>& dataArray, SCALAR value, SCALAR eps = OCS2NumericTraits<SCALAR>::weakEpsilon()) {
+size_t findFirstIndexWithinTol(const std::vector<SCALAR>& dataArray, SCALAR value, SCALAR eps = numeric_traits::weakEpsilon<SCALAR>()) {
   // Search for a match by linearly traversing the data, returning first match
   for (size_t i = 0; i < dataArray.size(); i++) {
     if (std::abs(dataArray[i] - value) < eps) {

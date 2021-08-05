@@ -204,6 +204,56 @@ TEST(test_hpiphm_interface, with_constraints) {
   }
 }
 
+TEST(test_hpiphm_interface, noInputs) {
+  // Initialize without size
+  ocs2::HpipmInterface hpipmInterface;
+
+  int nx = 3;
+  int nu; // timeVarying
+  int N = 5;
+
+  // Problem setup.
+  std::vector<ocs2::vector_t> xSolGiven;
+  std::vector<ocs2::vector_t> uSolGiven;
+  xSolGiven.emplace_back(ocs2::vector_t::Random(nx));
+  std::vector<ocs2::VectorFunctionLinearApproximation> system;
+  std::vector<ocs2::ScalarFunctionQuadraticApproximation> cost;
+  for (int k = 0; k < N; k++) {
+    if (k == 1) {
+      nu = 0;
+    } else {
+      nu = 2;
+    }
+
+    // Pick optimal u
+    uSolGiven.emplace_back(ocs2::vector_t::Random(nu));
+
+    // Set optimal next x consistent with dynamics
+    system.emplace_back(ocs2::qp_solver::getRandomDynamics(nx, nu));
+    xSolGiven.emplace_back(system[k].f + system[k].dfdx * xSolGiven[k] + system[k].dfdu * uSolGiven[k]);
+
+    // Pick cost that minimizes at the given trajectory
+    cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, nu));
+    cost[k].dfdx = -(cost[k].dfdxx * xSolGiven[k] + cost[k].dfdux.transpose() * uSolGiven[k]);
+    cost[k].dfdu = -(cost[k].dfduu * uSolGiven[k] + cost[k].dfdux * xSolGiven[k]);
+  }
+  cost.emplace_back(ocs2::qp_solver::getRandomCost(nx, 0));
+  cost[N].dfdx = -cost[N].dfdxx * xSolGiven[N];
+
+  const auto ocpSize = ocs2::hpipm_interface::extractSizesFromProblem(system, cost, nullptr);
+  hpipmInterface.resize(ocpSize);
+
+  // Solve!
+  std::vector<ocs2::vector_t> xSol;
+  std::vector<ocs2::vector_t> uSol;
+  const auto status = hpipmInterface.solve(xSolGiven.front(), system, cost, nullptr, xSol, uSol, true);
+  ASSERT_EQ(status, hpipm_status::SUCCESS);
+
+  // Check!
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(xSolGiven, xSol, 1e-9));
+  ASSERT_TRUE(ocs2::qp_solver::isEqual(uSolGiven, uSol, 1e-9));
+}
+
 TEST(test_hpiphm_interface, retrieveRiccati) {
   int nx = 3;
   int nu = 2;

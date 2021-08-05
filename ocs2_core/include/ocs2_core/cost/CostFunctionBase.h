@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/reference/TargetTrajectories.h>
 #include "ocs2_core/Types.h"
-#include "ocs2_core/cost/CostDesiredTrajectories.h"
 
 namespace ocs2 {
 
@@ -49,11 +49,10 @@ class CostFunctionBase {
   virtual ~CostFunctionBase() = default;
 
   /**
-   * Sets the desired state and input trajectories used in the cost function.
-   *
-   * @param [in] CostDesiredTrajectoriesPtr: A cost pointer to desired trajectories.
+   * Sets the TargetTrajectories in the cost function.
+   * @param [in] targetTrajectoriesPtr: A cost pointer to TargetTrajectories.
    */
-  virtual void setCostDesiredTrajectoriesPtr(const CostDesiredTrajectories* costDesiredTrajectoriesPtr);
+  virtual void setTargetTrajectoriesPtr(const TargetTrajectories* targetTrajectoriesPtr) { targetTrajectoriesPtr_ = targetTrajectoriesPtr; }
 
   /** Clone */
   virtual CostFunctionBase* clone() const = 0;
@@ -77,7 +76,7 @@ class CostFunctionBase {
   virtual scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) { return 0; }
 
  protected:
-  const CostDesiredTrajectories* costDesiredTrajectoriesPtr_ = nullptr;
+  const TargetTrajectories* targetTrajectoriesPtr_ = nullptr;
 };
 
 }  // namespace ocs2

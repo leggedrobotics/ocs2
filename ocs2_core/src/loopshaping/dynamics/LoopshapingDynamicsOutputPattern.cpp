@@ -37,31 +37,5 @@ VectorFunctionLinearApproximation LoopshapingDynamicsOutputPattern::linearApprox
 
   return dynamics;
 }
-VectorFunctionLinearApproximation LoopshapingDynamicsOutputPattern::jumpMapLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                               const vector_t& u) {
-  const auto& r_filter = loopshapingDefinition_->getInputFilter();
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const size_t FILTER_STATE_DIM = r_filter.getNumStates();
-  const auto jumpMap_system = systemDynamics_->jumpMapLinearApproximation(t, x_system, u_system);
-
-  // Filter doesn't Jump
-  const vector_t jumMap_filter = loopshapingDefinition_->getFilterState(x);
-
-  VectorFunctionLinearApproximation jumpMap;
-  jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
-
-  jumpMap.dfdx.resize(x.rows(), x.rows());
-  jumpMap.dfdx.topLeftCorner(x_system.rows(), x_system.rows()) = jumpMap_system.dfdx;
-  jumpMap.dfdx.topRightCorner(x_system.rows(), FILTER_STATE_DIM).setZero();
-  jumpMap.dfdx.bottomLeftCorner(FILTER_STATE_DIM, x_system.rows()).setZero();
-  jumpMap.dfdx.bottomRightCorner(FILTER_STATE_DIM, FILTER_STATE_DIM).setIdentity();
-
-  jumpMap.dfdu.resize(x.rows(), u.rows());
-  jumpMap.dfdu.topRows(x_system.rows()) = jumpMap_system.dfdu;
-  jumpMap.dfdu.bottomRows(FILTER_STATE_DIM).setZero();
-
-  return jumpMap;
-}
 
 }  // namespace ocs2

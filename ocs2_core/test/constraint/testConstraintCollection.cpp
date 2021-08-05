@@ -29,11 +29,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/constraint/ConstraintCollection.h>
+#include <ocs2_core/constraint/StateConstraintCollection.h>
+#include <ocs2_core/constraint/StateInputConstraintCollection.h>
 #include "testConstraints.h"
 
 TEST(TestConstraintCollection, add) {
-  ocs2::ConstraintCollection<ocs2::StateInputConstraint> constraintCollection;
+  ocs2::StateInputConstraintCollection constraintCollection;
 
   // Add after construction
   std::unique_ptr<TestEmptyConstraint> constraintTerm(new TestEmptyConstraint());
@@ -41,7 +42,7 @@ TEST(TestConstraintCollection, add) {
 }
 
 TEST(TestConstraintCollection, numberOfConstraints) {
-  ocs2::ConstraintCollection<ocs2::StateInputConstraint> constraintCollection;
+  ocs2::StateInputConstraintCollection constraintCollection;
 
   // Initially we have zero constraints for all types
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);
@@ -56,7 +57,7 @@ TEST(TestConstraintCollection, numberOfConstraints) {
 }
 
 TEST(TestConstraintCollection, activatingConstraints) {
-  ocs2::ConstraintCollection<ocs2::StateInputConstraint> constraintCollection;
+  ocs2::StateInputConstraintCollection constraintCollection;
 
   // Initially we have zero constraints for all types
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);
@@ -75,31 +76,19 @@ TEST(TestConstraintCollection, activatingConstraints) {
   EXPECT_EQ(constraintCollection.getNumConstraints(0.0), 0);
 }
 
-TEST(TestConstraintCollection, moveConstrut) {
-  ocs2::ConstraintCollection<ocs2::StateInputConstraint> constraintCollection;
+TEST(TestConstraintCollection, clone) {
+  ocs2::StateInputConstraintCollection constraintCollection;
   std::unique_ptr<TestLinearConstraint> constraintTerm(new TestLinearConstraint());
   const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
   constraintCollection.add("Constraint1", std::move(constraintTerm));
 
   // move construct
-  ocs2::ConstraintCollection<ocs2::StateInputConstraint> newColleciton(std::move(constraintCollection));
-  EXPECT_EQ(newColleciton.getNumConstraints(0.0), addedConstraints);
-}
-
-TEST(TestConstraintCollection, moveAssign) {
-  ocs2::ConstraintCollection<ocs2::StateInputConstraint> constraintCollection;
-  std::unique_ptr<TestLinearConstraint> constraintTerm(new TestLinearConstraint());
-  const size_t addedConstraints = constraintTerm->getNumConstraints(0.0);
-  constraintCollection.add("Constraint1", std::move(constraintTerm));
-
-  ocs2::ConstraintCollection<ocs2::StateInputConstraint> newColleciton;
-  // move assign
-  newColleciton = std::move(constraintCollection);
-  EXPECT_EQ(newColleciton.getNumConstraints(0.0), addedConstraints);
+  std::unique_ptr<ocs2::StateInputConstraintCollection> newCollection(constraintCollection.clone());
+  EXPECT_EQ(newCollection->getNumConstraints(0.0), addedConstraints);
 }
 
 TEST(TestConstraintCollection, getValue) {
-  using collection_t = ocs2::ConstraintCollection<ocs2::StateInputConstraint>;
+  using collection_t = ocs2::StateInputConstraintCollection;
   collection_t constraintCollection;
 
   // evaluation point
@@ -128,7 +117,7 @@ TEST(TestConstraintCollection, getValue) {
 }
 
 TEST(TestConstraintCollection, getLinearApproximation) {
-  using collection_t = ocs2::ConstraintCollection<ocs2::StateInputConstraint>;
+  using collection_t = ocs2::StateInputConstraintCollection;
   collection_t constraintCollection;
 
   // evaluation point
@@ -161,7 +150,7 @@ TEST(TestConstraintCollection, getLinearApproximation) {
 }
 
 TEST(TestConstraintCollection, getQuadraticApproximation) {
-  using collection_t = ocs2::ConstraintCollection<ocs2::StateInputConstraint>;
+  using collection_t = ocs2::StateInputConstraintCollection;
   collection_t constraintCollection;
 
   // evaluation point

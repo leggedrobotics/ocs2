@@ -37,7 +37,7 @@ include_directories(
 
 # Dummy node with raisim rollout
 add_executable(cartpole_dummy_raisim
-  src/Dummy_Cartpole_Raisim_Node.cpp
+  src/DummyCartpoleRaisimNode.cpp
 )
 target_link_libraries(cartpole_dummy_raisim
   ${catkin_LIBRARIES}

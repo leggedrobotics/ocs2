@@ -56,7 +56,7 @@ class LinearSystemDynamics : public SystemDynamicsBase {
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x) override;
 
  protected:
   matrix_t A_;

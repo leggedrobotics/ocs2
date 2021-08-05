@@ -56,12 +56,12 @@ class StateCostCppAd : public StateCost {
                   bool recompileLibraries = true, bool verbose = true);
 
   /* Get the parameter vector */
-  virtual vector_t getParameters(scalar_t time, const CostDesiredTrajectories& desiredTrajectory) const { return vector_t(0); };
+  virtual vector_t getParameters(scalar_t time, const TargetTrajectories& targetTrajectories) const { return vector_t(0); };
 
   /* Cost evaluation */
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& desiredTrajectory) const override;
+  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const override;
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& desiredTrajectory) const override;
+                                                                 const TargetTrajectories& targetTrajectories) const override;
 
  protected:
   StateCostCppAd(const StateCostCppAd& rhs);

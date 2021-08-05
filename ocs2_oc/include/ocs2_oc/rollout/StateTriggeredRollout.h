@@ -59,9 +59,9 @@ class StateTriggeredRollout : public RolloutBase {
   explicit StateTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings = rollout::Settings())
       : RolloutBase(std::move(rolloutSettings)),
         systemDynamicsPtr_(systemDynamics.clone()),
-        systemEventHandlersPtr_(new StateTriggeredEventHandler(this->settings().minTimeStep_)) {
+        systemEventHandlersPtr_(new StateTriggeredEventHandler(this->settings().timeStep)) {
     // construct dynamicsIntegratorsPtr
-    dynamicsIntegratorPtr_ = std::move(newIntegrator(this->settings().integratorType_, systemEventHandlersPtr_));
+    dynamicsIntegratorPtr_ = std::move(newIntegrator(this->settings().integratorType, systemEventHandlersPtr_));
   }
 
   /**
@@ -85,7 +85,7 @@ class StateTriggeredRollout : public RolloutBase {
   void reactivateRollout() override { systemEventHandlersPtr_->killIntegration_ = false; }
 
  protected:
-  vector_t runImpl(time_interval_array_t timeIntervalArray, const vector_t& initState, ControllerBase* controller,
+  vector_t runImpl(const time_interval_array_t& timeIntervalArray, const vector_t& initState, ControllerBase* controller,
                    scalar_array_t& timeTrajectory, size_array_t& eventsPastTheEndIndeces, vector_array_t& stateTrajectory,
                    vector_array_t& inputTrajectory) override;
 

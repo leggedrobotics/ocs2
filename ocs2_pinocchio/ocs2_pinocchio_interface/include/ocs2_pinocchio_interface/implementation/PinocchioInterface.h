@@ -39,9 +39,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-PinocchioInterfaceTpl<SCALAR>::PinocchioInterfaceTpl(const Model& model) {
+PinocchioInterfaceTpl<SCALAR>::PinocchioInterfaceTpl(const Model& model, const std::shared_ptr<const ::urdf::ModelInterface> urdfModelPtr) {
   robotModelPtr_ = std::make_shared<const Model>(model);
   robotDataPtr_ = std::unique_ptr<Data>(new Data(*robotModelPtr_));
+  if (urdfModelPtr) {
+    // This makes a copy of the urdfModelPtr, which guarantees constness of the urdf
+    urdfModelPtr_ = std::make_shared<const ::urdf::ModelInterface>(*urdfModelPtr);
+  }
 }
 
 /******************************************************************************************************/
@@ -55,14 +59,16 @@ PinocchioInterfaceTpl<SCALAR>::~PinocchioInterfaceTpl() = default;
 /******************************************************************************************************/
 template <typename SCALAR>
 PinocchioInterfaceTpl<SCALAR>::PinocchioInterfaceTpl(const PinocchioInterfaceTpl<SCALAR>& rhs)
-    : robotModelPtr_(rhs.robotModelPtr_), robotDataPtr_(new Data(*rhs.robotDataPtr_)) {}
+    : robotModelPtr_(rhs.robotModelPtr_), robotDataPtr_(new Data(*rhs.robotDataPtr_)), urdfModelPtr_(rhs.urdfModelPtr_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
 PinocchioInterfaceTpl<SCALAR>::PinocchioInterfaceTpl(PinocchioInterfaceTpl<SCALAR>&& rhs)
-    : robotModelPtr_(std::move(rhs.robotModelPtr_)), robotDataPtr_(std::move(rhs.robotDataPtr_)) {}
+    : robotModelPtr_(std::move(rhs.robotModelPtr_)),
+      robotDataPtr_(std::move(rhs.robotDataPtr_)),
+      urdfModelPtr_(std::move(rhs.urdfModelPtr_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -71,6 +77,7 @@ template <typename SCALAR>
 PinocchioInterfaceTpl<SCALAR>& PinocchioInterfaceTpl<SCALAR>::operator=(const PinocchioInterfaceTpl<SCALAR>& rhs) {
   robotModelPtr_ = rhs.robotModelPtr_;
   robotDataPtr_.reset(new Data(*rhs.robotDataPtr_));
+  urdfModelPtr_ = rhs.urdfModelPtr_;
   return *this;
 }
 
@@ -81,6 +88,7 @@ template <typename SCALAR>
 PinocchioInterfaceTpl<SCALAR>& PinocchioInterfaceTpl<SCALAR>::operator=(PinocchioInterfaceTpl<SCALAR>&& rhs) {
   std::swap(robotModelPtr_, rhs.robotModelPtr_);
   std::swap(robotDataPtr_, rhs.robotDataPtr_);
+  std::swap(urdfModelPtr_, rhs.urdfModelPtr_);
   return *this;
 }
 

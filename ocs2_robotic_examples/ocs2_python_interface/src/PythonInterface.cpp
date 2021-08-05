@@ -59,10 +59,10 @@ void PythonInterface::init(const RobotInterface& robot, std::unique_ptr<MPC_BASE
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PythonInterface::reset(CostDesiredTrajectories targetTrajectories) {
+void PythonInterface::reset(TargetTrajectories targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
   mpcMrtInterface_->resetMpcNode(targetTrajectories_);
-  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
+  cost_->setTargetTrajectoriesPtr(&targetTrajectories_);
 }
 
 /******************************************************************************************************/
@@ -79,10 +79,10 @@ void PythonInterface::setObservation(scalar_t t, Eigen::Ref<const vector_t> x, E
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PythonInterface::setTargetTrajectories(CostDesiredTrajectories targetTrajectories) {
+void PythonInterface::setTargetTrajectories(TargetTrajectories targetTrajectories) {
   targetTrajectories_ = std::move(targetTrajectories);
-  cost_->setCostDesiredTrajectoriesPtr(&targetTrajectories_);
-  mpcMrtInterface_->setTargetTrajectories(targetTrajectories_);
+  cost_->setTargetTrajectoriesPtr(&targetTrajectories_);
+  mpcMrtInterface_->getReferenceManager().setTargetTrajectories(targetTrajectories_);
 }
 
 /******************************************************************************************************/
@@ -134,7 +134,7 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 
   if (constraints_ != nullptr && penalty_ != nullptr) {
     const auto h = constraints_->inequalityConstraint(t, x, u);
-    SoftConstraintPenalty softConstraintPenalty(h.rows(), std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getValue(h);
   }
 
@@ -150,7 +150,7 @@ ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation
 
   if (constraints_ != nullptr && penalty_ != nullptr) {
     const auto h = constraints_->inequalityConstraintQuadraticApproximation(t, x, u);
-    SoftConstraintPenalty softConstraintPenalty(h.f.rows(), std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getQuadraticApproximation(h);
   }
 

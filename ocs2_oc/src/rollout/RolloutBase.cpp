@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <iostream>
 
-#include <ocs2_core/OCS2NumericTraits.h>
+#include <ocs2_core/NumericTraits.h>
 #include <ocs2_core/misc/Numerics.h>
 
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -64,7 +64,7 @@ vector_t RolloutBase::run(scalar_t initTime, const vector_t& initState, scalar_t
     timeIntervalArray.emplace_back(beginTime, endTime);
 
     // adjusting the start time for correcting the subsystem recognition
-    const scalar_t eps = OCS2NumericTraits<scalar_t>::weakEpsilon();
+    constexpr scalar_t eps = numeric_traits::weakEpsilon<scalar_t>();
     if (endTime - beginTime > eps) {
       timeIntervalArray.back().first += eps;
     } else {
@@ -118,7 +118,7 @@ void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array
 void RolloutBase::checkNumericalStability(ControllerBase* controller, const scalar_array_t& timeTrajectory,
                                           const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectory,
                                           const vector_array_t& inputTrajectory) const {
-  if (!rolloutSettings_.checkNumericalStability_) {
+  if (!rolloutSettings_.checkNumericalStability) {
     return;
   }
 
@@ -127,7 +127,7 @@ void RolloutBase::checkNumericalStability(ControllerBase* controller, const scal
       if (!stateTrajectory[i].allFinite()) {
         throw std::runtime_error("Rollout: state is not finite");
       }
-      if (rolloutSettings_.reconstructInputTrajectory_ && !inputTrajectory[i].allFinite()) {
+      if (rolloutSettings_.reconstructInputTrajectory && !inputTrajectory[i].allFinite()) {
         throw std::runtime_error("Rollout: input is not finite");
       }
     } catch (const std::exception& error) {
@@ -140,13 +140,13 @@ void RolloutBase::checkNumericalStability(ControllerBase* controller, const scal
       for (size_t j = 0; j <= i; j++) {
         timeTrajectoryTemp.push_back(timeTrajectory[j]);
         stateTrajectoryTemp.push_back(stateTrajectory[j]);
-        if (rolloutSettings_.reconstructInputTrajectory_) {
+        if (rolloutSettings_.reconstructInputTrajectory) {
           inputTrajectoryTemp.push_back(inputTrajectory[j]);
         }
       }
 
       // display
-      const vector_array_t* const inputTrajectoryTempPtr = rolloutSettings_.reconstructInputTrajectory_ ? &inputTrajectoryTemp : nullptr;
+      const vector_array_t* const inputTrajectoryTempPtr = rolloutSettings_.reconstructInputTrajectory ? &inputTrajectoryTemp : nullptr;
       display(timeTrajectoryTemp, postEventIndicesStock, stateTrajectoryTemp, inputTrajectoryTempPtr);
 
       controller->display();

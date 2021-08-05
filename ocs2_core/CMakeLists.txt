@@ -73,27 +73,31 @@ add_library(${PROJECT_NAME}
   src/constraint/ConstraintCollection.cpp
   src/constraint/StateConstraintCppAd.cpp
   src/constraint/StateInputConstraintCppAd.cpp
+  src/constraint/StateConstraintCollection.cpp
+  src/constraint/StateInputConstraintCollection.cpp
   src/constraint/LinearConstraint.cpp
+  src/constraint/LinearStateConstraint.cpp
+  src/constraint/LinearStateInputConstraint.cpp
   src/control/FeedforwardController.cpp
   src/control/LinearController.cpp
   src/control/StateBasedLinearController.cpp
   src/control/TrajectorySpreadingControllerAdjustment.cpp
   src/cost/CostCollection.cpp
-  src/cost/CostFunctionBase.cpp
-  src/cost/CostDesiredTrajectories.cpp
   src/cost/QuadraticCostFunction.cpp
   src/cost/QuadraticStateCost.cpp
   src/cost/QuadraticStateInputCost.cpp
   src/cost/StateCost.cpp
+  src/cost/StateCostCollection.cpp
   src/cost/StateCostCppAd.cpp
+  src/cost/StateInputCostCollection.cpp
   src/cost/StateInputCostCppAd.cpp
+  src/cost/StateInputGaussNewtonCostAd.cpp
   src/dynamics/ControlledSystemBase.cpp
   src/dynamics/LinearSystemDynamics.cpp
   src/dynamics/SystemDynamicsBase.cpp
   src/dynamics/SystemDynamicsBaseAD.cpp
   src/dynamics/SystemDynamicsLinearizer.cpp
   src/dynamics/TransferFunctionBase.cpp
-  src/initialization/OperatingPoints.cpp
   src/integration/SensitivityIntegrator.cpp
   src/integration/SensitivityIntegratorImpl.cpp
   src/integration/Integrator.cpp
@@ -103,10 +107,10 @@ add_library(${PROJECT_NAME}
   src/integration/Observer.cpp
   src/integration/StateTriggeredEventHandler.cpp
   src/integration/SystemEventHandler.cpp
-  src/logic/ModeSchedule.cpp
+  src/reference/ModeSchedule.cpp
+  src/reference/TargetTrajectories.cpp
   src/loopshaping/LoopshapingPropertyTree.cpp
   src/loopshaping/LoopshapingFilter.cpp
-  src/loopshaping/LoopshapingOperatingPoint.cpp
   src/loopshaping/cost/LoopshapingCost.cpp
   src/loopshaping/cost/LoopshapingCostEliminatePattern.cpp
   src/loopshaping/cost/LoopshapingCostInputPattern.cpp
@@ -120,9 +124,9 @@ add_library(${PROJECT_NAME}
   src/loopshaping/dynamics/LoopshapingDynamicsInputPattern.cpp
   src/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.cpp
   src/loopshaping/dynamics/LoopshapingFilterDynamics.cpp
+  src/loopshaping/initialization/LoopshapingInitializer.cpp
   src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
-  src/misc/ThreadPool.cpp
   src/misc/Log.cpp
   src/soft_constraint/SoftConstraintPenalty.cpp
   src/soft_constraint/StateSoftConstraint.cpp
@@ -132,6 +136,7 @@ add_library(${PROJECT_NAME}
   src/soft_constraint/penalties/SmoothAbsolutePenalty.cpp
   src/soft_constraint/penalties/RelaxedBarrierPenalty.cpp
   src/soft_constraint/penalties/SquaredHingePenalty.cpp
+  src/thread_support/ThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -273,9 +278,7 @@ target_link_libraries(${PROJECT_NAME}_loopshaping
 catkin_add_gtest(${PROJECT_NAME}_test_misc
   test/misc/testInterpolation.cpp
   test/misc/testLinearAlgebra.cpp
-  test/misc/testSynchronized.cpp
   test/misc/testLookup.cpp
-  test/misc/testThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test_misc
   ${PROJECT_NAME}
@@ -308,6 +311,7 @@ target_link_libraries(test_cost
 catkin_add_gtest(test_constraint
   test/constraint/testConstraintCollection.cpp
   test/constraint/testConstraintCppAd.cpp
+  test/constraint/testLinearConstraint.cpp
 )
 target_link_libraries(test_constraint
   ${PROJECT_NAME}
@@ -340,6 +344,28 @@ catkin_add_gtest(test_softConstraint
   test/soft_constraint/testDoubleSidedPenalty.cpp
 )
 target_link_libraries(test_softConstraint
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(${PROJECT_NAME}_test_thread_support
+  test/thread_support/testBufferedValue.cpp
+  test/thread_support/testSynchronized.cpp
+  test/thread_support/testThreadPool.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test_thread_support
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
+
+catkin_add_gtest(${PROJECT_NAME}_test_precomputation
+  test/testPrecomputation.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test_precomputation
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}

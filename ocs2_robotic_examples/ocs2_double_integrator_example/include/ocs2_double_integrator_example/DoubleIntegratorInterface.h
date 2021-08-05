@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_core/initialization/OperatingPoints.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
@@ -80,7 +80,7 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   const RolloutBase& getRollout() const { return *ddpLinearSystemRolloutPtr_; }
 
-  const OperatingPoints& getOperatingPoints() const override { return *linearSystemOperatingPointPtr_; }
+  const Initializer& getInitializer() const override { return *linearSystemInitializerPtr_; }
 
  protected:
   /**
@@ -104,7 +104,7 @@ class DoubleIntegratorInterface final : public RobotInterface {
   std::unique_ptr<DoubleIntegratorDynamics> linearSystemDynamicsPtr_;
   std::unique_ptr<DoubleIntegratorCost> linearSystemCostPtr_;
   std::unique_ptr<ConstraintBase> linearSystemConstraintPtr_;
-  std::unique_ptr<OperatingPoints> linearSystemOperatingPointPtr_;
+  std::unique_ptr<Initializer> linearSystemInitializerPtr_;
 
   vector_t initialState_{STATE_DIM};
   vector_t finalGoal_{STATE_DIM};

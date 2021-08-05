@@ -53,8 +53,8 @@ TEST(testContinousTimeLqr, compareWithMatlab) {
   const scalar_t time = 0.0;
   const vector_t state = vector_t::Zero(2);
   const vector_t input = vector_t::Zero(1);
-  const CostDesiredTrajectories costDesiredTrajectories({time}, {state}, {input});
-  cost.setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+  const TargetTrajectories targetTrajectories({time}, {state}, {input});
+  cost.setTargetTrajectoriesPtr(&targetTrajectories);
 
   // Solve LQR
   const auto lqrSolution = continuous_time_lqr::solve(dynamics, cost, time, state, input);
@@ -85,8 +85,8 @@ TEST(testContinousTimeLqr, evaluateCAREresidual) {
     const scalar_t time = 0.0;
     const vector_t state = vector_t::Random(n);
     const vector_t input = vector_t::Random(m);
-    const CostDesiredTrajectories costDesiredTrajectories({time}, {state}, {input});
-    cost->setCostDesiredTrajectoriesPtr(&costDesiredTrajectories);
+    const TargetTrajectories targetTrajectories({time}, {state}, {input});
+    cost->setTargetTrajectoriesPtr(&targetTrajectories);
 
     // Solve LQR
     const scalar_t timeLinearization = 0.0;

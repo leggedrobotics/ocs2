@@ -50,21 +50,22 @@ class SoftConstraintPenalty {
  public:
   /**
    * Constructor
+   * @note This imposes a fixed number of constraints, where the corresponding penalty function in the array is applied.
    * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
    */
   SoftConstraintPenalty(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
   /**
-   * Constructor
-   * @param [in] numConstraints: The number of constraints.
+   * Constructor with s single penalty function
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
-  SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyBase> penaltyFunctionPtr);
+  SoftConstraintPenalty(std::unique_ptr<PenaltyBase> penaltyFunctionPtr);
 
   /** Default destructor */
   ~SoftConstraintPenalty() = default;
 
-  /** copy constructor */
+  /** Copy constructor */
   SoftConstraintPenalty(const SoftConstraintPenalty& other);
 
   /**

@@ -47,7 +47,7 @@ class TestSelfCollision : public ::testing::Test {
  public:
   TestSelfCollision()
       : pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)),
-        geometryInterface(urdfPath, pinocchioInterface, collisionPairs) {}
+        geometryInterface(pinocchioInterface, collisionPairs) {}
 
   void computeValue(PinocchioInterface& pinocchioInterface, const vector_t q) {
     const auto& model = pinocchioInterface.getModel();

@@ -14,6 +14,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
+  ocs2_sqp
   ocs2_ros_interfaces
   ocs2_robotic_tools
   ocs2_python_interface
@@ -76,7 +77,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 # Mpc node
 add_executable(ballbot_mpc
-  src/MPC_Ballbot_Node.cpp
+  src/BallbotMpcNode.cpp
 )
 add_dependencies(ballbot_mpc
   ${catkin_EXPORTED_TARGETS}
@@ -89,7 +90,7 @@ target_compile_options(ballbot_mpc PRIVATE ${OCS2_CXX_FLAGS})
 
 # Dummy node
 add_executable(ballbot_dummy_test
-  src/Dummy_Ballbot_Node.cpp
+  src/DummyBallbotNode.cpp
 )
 add_dependencies(ballbot_dummy_test
   ${catkin_EXPORTED_TARGETS}
@@ -127,6 +128,19 @@ target_link_libraries(ballbot_simple_example
   dl
 )
 target_compile_options(ballbot_simple_example PRIVATE ${OCS2_CXX_FLAGS})
+
+## SQP node for ballbot
+add_executable(${PROJECT_NAME}_sqp
+  src/MultipleShootingBallbotNode.cpp
+)
+add_dependencies(${PROJECT_NAME}_sqp
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(${PROJECT_NAME}_sqp
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(${PROJECT_NAME}_sqp  PRIVATE ${OCS2_CXX_FLAGS})
 
 # python bindings
 pybind11_add_module(BallbotPyBindings SHARED
@@ -179,7 +193,7 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target
+install(TARGETS ballbot_mpc ballbot_dummy_test ballbot_target ${PROJECT_NAME}_sqp
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY urdf launch config rviz

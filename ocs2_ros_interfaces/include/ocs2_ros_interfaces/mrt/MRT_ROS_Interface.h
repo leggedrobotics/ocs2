@@ -61,10 +61,11 @@ class MRT_ROS_Interface : public MRT_BASE {
   /**
    * Constructor
    *
-   * @param [in] robotName: The robot's name.
+   * @param [in] topicPrefix: The prefix defines the names for: observation's publishing topic "topicPrefix_mpc_observation",
+   * policy's receiving topic "topicPrefix_mpc_policy", and MPC reset service "topicPrefix_mpc_reset".
    * @param [in] mrtTransportHints: ROS transmission protocol.
    */
-  explicit MRT_ROS_Interface(std::string robotName = "robot",
+  explicit MRT_ROS_Interface(std::string topicPrefix = "anonymousRobot",
                              ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
   /**
@@ -72,7 +73,7 @@ class MRT_ROS_Interface : public MRT_BASE {
    */
   ~MRT_ROS_Interface() override;
 
-  void resetMpcNode(const CostDesiredTrajectories& initCostDesiredTrajectories) override;
+  void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
   /**
    * Shut down the ROS nodes.
@@ -123,7 +124,7 @@ class MRT_ROS_Interface : public MRT_BASE {
   void publisherWorkerThread();
 
  private:
-  std::string robotName_;
+  std::string topicPrefix_;
 
   // Publishers and subscribers
   ::ros::Publisher mpcObservationPublisher_;

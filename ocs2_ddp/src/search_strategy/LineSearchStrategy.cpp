@@ -42,7 +42,8 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
                                        std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
                                        std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
                                        std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
-                                       PenaltyBase& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc)
+                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
+                                       std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
@@ -70,7 +71,7 @@ bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSche
   } else {
     const auto ratio = settings_.minStepLength_ / settings_.maxStepLength_;
     maxNumOfLineSearches =
-        static_cast<size_t>(std::log(ratio + OCS2NumericTraits<scalar_t>::limitEpsilon()) / std::log(settings_.contractionRate_) + 1);
+        static_cast<size_t>(std::log(ratio + numeric_traits::limitEpsilon<scalar_t>()) / std::log(settings_.contractionRate_) + 1);
   }
 
   // perform a rollout with steplength zero.

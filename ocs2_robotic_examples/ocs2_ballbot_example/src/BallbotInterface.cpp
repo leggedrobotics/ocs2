@@ -60,8 +60,9 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   /*
-   * DDP-MPC settings
+   * DDP SQP MPC settings
    */
+  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting");
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
@@ -103,7 +104,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
   /*
    * Initialization
    */
-  ballbotOperatingPointPtr_.reset(new OperatingPoints(initialState_, vector_t::Zero(INPUT_DIM)));
+  ballbotInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 /******************************************************************************************************/
@@ -111,7 +112,7 @@ void BallbotInterface::loadSettings(const std::string& taskFile) {
 /******************************************************************************************************/
 std::unique_ptr<MPC_DDP> BallbotInterface::getMpc() {
   return std::unique_ptr<MPC_DDP>(new MPC_DDP(ddpBallbotRolloutPtr_.get(), ballbotSystemDynamicsPtr_.get(), ballbotConstraintPtr_.get(),
-                                              ballbotCostPtr_.get(), ballbotOperatingPointPtr_.get(), ddpSettings_, mpcSettings_));
+                                              ballbotCostPtr_.get(), ballbotInitializerPtr_.get(), ddpSettings_, mpcSettings_));
 }
 
 }  // namespace ballbot

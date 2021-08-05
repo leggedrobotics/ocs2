@@ -116,7 +116,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator_example") + "/urdf/mobile_manipulator.urdf";
   PinocchioInterface pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
   // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
-  PinocchioGeometryInterface geomInterface(urdfPath, pinocchioInterface, {{1, 4}, {1, 6}});
+  PinocchioGeometryInterface geomInterface(pinocchioInterface, {{1, 4}, {1, 6}});
 
   geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
 }
@@ -129,7 +129,7 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
   const ros::Time timeStamp = ros::Time::now();
 
   publishObservation(timeStamp, observation);
-  publishDesiredTrajectory(timeStamp, command.mpcCostDesiredTrajectories_);
+  publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
   publishOptimizedTrajectory(timeStamp, policy);
   geometryVisualization_->publishDistances(observation.state);
 }
@@ -160,12 +160,12 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorDummyVisualization::publishDesiredTrajectory(const ros::Time& timeStamp,
-                                                                   const CostDesiredTrajectories& costDesiredTrajectory) {
+void MobileManipulatorDummyVisualization::publishTargetTrajectories(const ros::Time& timeStamp,
+                                                                    const TargetTrajectories& targetTrajectories) {
   // publish command transform
-  const Eigen::Vector3d eeDesiredPosition = costDesiredTrajectory.desiredStateTrajectory().back().head(3);
+  const Eigen::Vector3d eeDesiredPosition = targetTrajectories.stateTrajectory.back().head(3);
   Eigen::Quaterniond eeDesiredOrientation;
-  eeDesiredOrientation.coeffs() = costDesiredTrajectory.desiredStateTrajectory().back().tail(4);
+  eeDesiredOrientation.coeffs() = targetTrajectories.stateTrajectory.back().tail(4);
   geometry_msgs::TransformStamped command_tf;
   command_tf.header.stamp = timeStamp;
   command_tf.header.frame_id = "world";

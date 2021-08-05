@@ -65,11 +65,11 @@ class StateSoftConstraint final : public StateCost {
 
   /**
    * Constructor.
+   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] numConstraints: The number of constraints.
    * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
    */
-  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints, std::unique_ptr<PenaltyBase> penaltyFunction);
+  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
 
   ~StateSoftConstraint() override = default;
 
@@ -82,10 +82,10 @@ class StateSoftConstraint final : public StateCost {
 
   StateSoftConstraint* clone() const override;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories& /* desiredTrajectory */) const override;
+  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& /* targetTrajectories */) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const CostDesiredTrajectories& /* desiredTrajectory */) const override;
+                                                                 const TargetTrajectories& /* targetTrajectories */) const override;
 
  private:
   StateSoftConstraint(const StateSoftConstraint& other);

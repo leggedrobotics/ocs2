@@ -20,7 +20,6 @@ class LoopshapingDynamicsEliminatePattern final : public LoopshapingDynamics {
   LoopshapingDynamicsEliminatePattern* clone() const override { return new LoopshapingDynamicsEliminatePattern(*this); };
 
   VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) override;
 
  protected:
   using BASE::loopshapingDefinition_;

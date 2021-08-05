@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-         const CostFunctionBase* costFunctionPtr, const SystemOperatingTrajectoriesBase* operatingTrajectoriesPtr,
-         ddp::Settings ddpSettings, const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
+         const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
+         const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
 
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, operatingTrajectoriesPtr, std::move(ddpSettings),
+    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
            heuristicsFunctionPtr) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
@@ -54,7 +54,7 @@ SLQ::SLQ(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamics
 
   const auto integratorType = settings().backwardPassIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER &&
-      integratorType != IntegratorType::ODE45_OCS2) {
+      integratorType != IntegratorType::ODE45_OCS2 && integratorType != IntegratorType::RK4) {
     throw(std::runtime_error("Unsupported Riccati equation integrator type: " +
                              integrator_type::toString(settings().backwardPassIntegratorType_)));
   }
@@ -300,24 +300,25 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   BASE::computeNormalizedTime(nominalTimeTrajectory, nominalEventsPastTheEndIndices, SsNormalizedTime, SsNormalizedPostEventIndices);
 
   // Normalized switching time indices, start and end of the partition are added at the beginning and end
-  std::vector<int> SsNormalizedSwitchingTimesIndices;
-  SsNormalizedSwitchingTimesIndices.reserve(numEvents + 2);
-  SsNormalizedSwitchingTimesIndices.push_back(0);
-  for (int k = numEvents - 1; k >= 0; k--) {
-    int index = static_cast<int>(nominalEventsPastTheEndIndices[k]);
-    SsNormalizedSwitchingTimesIndices.push_back(nominalTimeSize - index);
+  using iterator_t = scalar_array_t::const_iterator;
+  std::vector<std::pair<iterator_t, iterator_t>> SsNormalizedSwitchingTimesIndices;
+  SsNormalizedSwitchingTimesIndices.reserve(numEvents + 1);
+  SsNormalizedSwitchingTimesIndices.emplace_back(SsNormalizedTime.cbegin(), SsNormalizedTime.cbegin());
+  for (const auto& index : SsNormalizedPostEventIndices) {
+    SsNormalizedSwitchingTimesIndices.back().second = SsNormalizedTime.cbegin() + index;
+    SsNormalizedSwitchingTimesIndices.emplace_back(SsNormalizedTime.cbegin() + index, SsNormalizedTime.cbegin() + index);
   }
-  SsNormalizedSwitchingTimesIndices.push_back(nominalTimeSize);
+  SsNormalizedSwitchingTimesIndices.back().second = SsNormalizedTime.cend();
 
   // integrating the Riccati equations
   allSsTrajectory.reserve(maxNumSteps);
   for (int i = 0; i <= numEvents; i++) {
-    scalar_array_t::const_iterator beginTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i];
-    scalar_array_t::const_iterator endTimeItr = SsNormalizedTime.begin() + SsNormalizedSwitchingTimesIndices[i + 1];
+    iterator_t beginTimeItr = SsNormalizedSwitchingTimesIndices[i].first;
+    iterator_t endTimeItr = SsNormalizedSwitchingTimesIndices[i].second;
 
     Observer observer(&allSsTrajectory);
     // solve Riccati equations
-    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().minTimeStep_,
+    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().timeStep_,
                                      settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     if (i < numEvents) {
@@ -346,26 +347,26 @@ void SLQ::integrateRiccatiEquationAdaptiveTime(IntegratorBase& riccatiIntegrator
   const auto maxNumSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // Extract switching times from eventIndices and normalize them
-  scalar_array_t SsNormalizedSwitchingTimes;
-  SsNormalizedSwitchingTimes.reserve(numEvents + 2);
-  SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory.back());
-  for (int k = numEvents - 1; k >= 0; k--) {
-    size_t index = nominalEventsPastTheEndIndices[k];
-    SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory[index]);
+  std::vector<std::pair<scalar_t, scalar_t>> SsNormalizedSwitchingTimes;
+  SsNormalizedSwitchingTimes.reserve(numEvents + 1);
+  SsNormalizedSwitchingTimes.emplace_back(-nominalTimeTrajectory.back(), 0.0);
+  for (auto itr = nominalEventsPastTheEndIndices.rbegin(); itr != nominalEventsPastTheEndIndices.rend(); ++itr) {
+    SsNormalizedSwitchingTimes.back().second = -nominalTimeTrajectory[*itr];
+    SsNormalizedSwitchingTimes.emplace_back(-nominalTimeTrajectory[(*itr) - 1], 0.0);
   }
-  SsNormalizedSwitchingTimes.push_back(-nominalTimeTrajectory.front());
+  SsNormalizedSwitchingTimes.back().second = -nominalTimeTrajectory.front();
 
   // integrating the Riccati equations
   SsNormalizedTime.reserve(maxNumSteps);
   SsNormalizedPostEventIndices.reserve(numEvents);
   allSsTrajectory.reserve(maxNumSteps);
   for (int i = 0; i <= numEvents; i++) {
-    scalar_t beginTime = SsNormalizedSwitchingTimes[i];
-    scalar_t endTime = SsNormalizedSwitchingTimes[i + 1];
+    const scalar_t beginTime = SsNormalizedSwitchingTimes[i].first;
+    const scalar_t endTime = SsNormalizedSwitchingTimes[i].second;
 
     Observer observer(&allSsTrajectory, &SsNormalizedTime);
     // solve Riccati equations
-    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().minTimeStep_,
+    riccatiIntegrator.integrateAdaptive(riccatiEquation, observer, allSsFinal, beginTime, endTime, settings().timeStep_,
                                         settings().absTolODE_, settings().relTolODE_, maxNumSteps);
 
     // if not the last interval which definitely does not have any event at

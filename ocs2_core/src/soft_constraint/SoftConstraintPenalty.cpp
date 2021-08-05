@@ -42,10 +42,8 @@ SoftConstraintPenalty::SoftConstraintPenalty(std::vector<std::unique_ptr<Penalty
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SoftConstraintPenalty::SoftConstraintPenalty(size_t numConstraints, std::unique_ptr<PenaltyBase> penaltyFunctionPtr) {
-  for (size_t i = 0; i < numConstraints; i++) {
-    penaltyPtrArray_.emplace_back(penaltyFunctionPtr->clone());
-  }  // end of i loop
+SoftConstraintPenalty::SoftConstraintPenalty(std::unique_ptr<PenaltyBase> penaltyFunctionPtr) {
+  penaltyPtrArray_.emplace_back(std::move(penaltyFunctionPtr));
 }
 
 /******************************************************************************************************/
@@ -62,10 +60,17 @@ SoftConstraintPenalty::SoftConstraintPenalty(const SoftConstraintPenalty& other)
 /******************************************************************************************************/
 scalar_t SoftConstraintPenalty::getValue(const vector_t& h) const {
   const auto numInequalityConstraints = h.rows();
-  assert(penaltyPtrArray_.size() == numInequalityConstraints);
   scalar_t penalty = 0;
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penalty += penaltyPtrArray_[i]->getValue(h(i));
+  if (penaltyPtrArray_.size() == 1) {
+    for (size_t i = 0; i < numInequalityConstraints; i++) {
+      penalty += penaltyPtrArray_[0]->getValue(h(i));
+    }
+
+  } else {
+    assert(penaltyPtrArray_.size() == numInequalityConstraints);
+    for (size_t i = 0; i < numInequalityConstraints; i++) {
+      penalty += penaltyPtrArray_[i]->getValue(h(i));
+    }
   }
   return penalty;
 }
@@ -132,16 +137,24 @@ ScalarFunctionQuadraticApproximation SoftConstraintPenalty::getQuadraticApproxim
 /******************************************************************************************************/
 std::tuple<scalar_t, vector_t, vector_t> SoftConstraintPenalty::getPenaltyValue1stDev2ndDev(const vector_t& h) const {
   const auto numInequalityConstraints = h.rows();
-  assert(penaltyPtrArray_.size() == numInequalityConstraints);
-
   scalar_t penaltyValue = 0.0;
   vector_t penaltyDerivative(numInequalityConstraints);
   vector_t penaltySecondDerivative(numInequalityConstraints);
-  for (size_t i = 0; i < numInequalityConstraints; i++) {
-    penaltyValue += penaltyPtrArray_[i]->getValue(h(i));
-    penaltyDerivative(i) = penaltyPtrArray_[i]->getDerivative(h(i));
-    penaltySecondDerivative(i) = penaltyPtrArray_[i]->getSecondDerivative(h(i));
-  }  // end of i loop
+
+  if (penaltyPtrArray_.size() == 1) {
+    for (size_t i = 0; i < numInequalityConstraints; i++) {
+      penaltyValue += penaltyPtrArray_[0]->getValue(h(i));
+      penaltyDerivative(i) = penaltyPtrArray_[0]->getDerivative(h(i));
+      penaltySecondDerivative(i) = penaltyPtrArray_[0]->getSecondDerivative(h(i));
+    }  // end of i loop
+  } else {
+    assert(penaltyPtrArray_.size() == numInequalityConstraints);
+    for (size_t i = 0; i < numInequalityConstraints; i++) {
+      penaltyValue += penaltyPtrArray_[i]->getValue(h(i));
+      penaltyDerivative(i) = penaltyPtrArray_[i]->getDerivative(h(i));
+      penaltySecondDerivative(i) = penaltyPtrArray_[i]->getSecondDerivative(h(i));
+    }  // end of i loop
+  }
 
   return {penaltyValue, penaltyDerivative, penaltySecondDerivative};
 }

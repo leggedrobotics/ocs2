@@ -38,10 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/logic/ModeSchedule.h>
-#include <ocs2_core/misc/ThreadPool.h>
 #include <ocs2_core/model_data/ModelData.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_core/thread_support/ThreadPool.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
@@ -72,8 +71,8 @@ class LineSearchStrategy final : public SearchStrategyBase {
                      std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                      std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
                      std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
-                     std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock, PenaltyBase& ineqConstrPenaltyRef,
-                     std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+                     std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
+                     SoftConstraintPenalty& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
@@ -141,7 +140,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
   std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock_;
   std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock_;
   std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock_;
-  PenaltyBase& ineqConstrPenaltyRef_;
+  SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
   std::atomic<scalar_t> avgTimeStepFP_{0.0};

@@ -41,9 +41,8 @@ StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, size_t numConstraints,
-                                         std::unique_ptr<PenaltyBase> penaltyFunction)
-    : constraintPtr_(std::move(constraintPtr)), penalty_(numConstraints, std::move(penaltyFunction)) {}
+StateSoftConstraint::StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction)
+    : constraintPtr_(std::move(constraintPtr)), penalty_(std::move(penaltyFunction)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -61,7 +60,7 @@ StateSoftConstraint* StateSoftConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const CostDesiredTrajectories&) const {
+scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, const TargetTrajectories&) const {
   return penalty_.getValue(constraintPtr_->getValue(time, state));
 }
 
@@ -69,7 +68,7 @@ scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                                    const CostDesiredTrajectories&) const {
+                                                                                    const TargetTrajectories&) const {
   switch (constraintPtr_->getOrder()) {
     case ConstraintOrder::Linear:
       return penalty_.getQuadraticApproximation(constraintPtr_->getLinearApproximation(time, state));

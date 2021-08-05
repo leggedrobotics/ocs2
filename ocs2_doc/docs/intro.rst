@@ -29,5 +29,6 @@ applications with limited onboard computation power.
 
   .. |GitHub| image:: ../tools/sphinx/_static/img/GitHub-Mark-120px-plus.png
      :scale: 25
-     :alt: double_integrator.gif cannot be displayed!
+     :alt: GitHub logo cannot be displayed!
      :target: _static/img/GitHub-Mark-120px-plus.png
+     :class: no-scaled-link

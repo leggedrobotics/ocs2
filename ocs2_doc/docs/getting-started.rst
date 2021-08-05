@@ -92,7 +92,7 @@ In these cases, the above formulation simplifies as:
 
    \label{eq:OCProblem_simple}
        \begin{cases}
-       \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(T)) + \displaystyle \int_{0}^{T} l(\mathbf x(t), \mathbf u(t), t) \, dt \\
+       \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(t_I)) + \displaystyle \int_{t_0}^{t_I} l(\mathbf x(t), \mathbf u(t), t) \, dt \\
        \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11.5em} \text{initial state} \\ 
        \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f_i(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{system flow map} \\
        \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\

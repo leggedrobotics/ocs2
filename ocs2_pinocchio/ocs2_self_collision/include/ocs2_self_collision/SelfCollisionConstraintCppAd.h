@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <functional>
 #include <memory>
 
 #include <ocs2_core/constraint/StateConstraint.h>
@@ -39,10 +40,47 @@ namespace ocs2 {
 
 class SelfCollisionConstraintCppAd final : public StateConstraint {
  public:
+  using update_pinocchio_interface_callback =
+      std::function<void(const vector_t& state, PinocchioInterfaceTpl<scalar_t>& pinocchioInterface)>;
+
+  /**
+   * Constructor
+   *
+   * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
+   * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
+   * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+   * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
+   * @param [in] modelName: Name of the generated model library.
+   * @param [in] modelFolder: Folder to save the model library files to.
+   * @param [in] recompileLibraries: If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   *                                 available.
+   * @param [in] verbose: If true, print information. Otherwise, no information is printed.
+   */
   SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
                                PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
                                const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
                                bool verbose = true);
+
+  /**
+   * Constructor
+   *
+   * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
+   * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
+   * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+   * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
+   * @param [in] updateCallback: In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
+   *                             use this callback (no need to call pinocchio::forwardKinematics).
+   * @param [in] modelName: Name of the generated model library.
+   * @param [in] modelFolder: Folder to save the model library files to.
+   * @param [in] recompileLibraries: If true, the model library will be newly compiled. If false, an existing library will be loaded if
+   *                                 available.
+   * @param [in] verbose: If true, print information. Otherwise, no information is printed.
+   */
+  SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
+                               PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
+                               update_pinocchio_interface_callback updateCallback, const std::string& modelName,
+                               const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
+
   ~SelfCollisionConstraintCppAd() override = default;
   SelfCollisionConstraintCppAd* clone() const override { return new SelfCollisionConstraintCppAd(*this); }
 
@@ -59,7 +97,10 @@ class SelfCollisionConstraintCppAd final : public StateConstraint {
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
 
   /** Caches the pointer to the pinocchio interface with pre-computed kinematics. (optional) */
-  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) { pinocchioInterfaceCachePtr_ = &pinocchioInterface; }
+  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) {
+    pinocchioInterfaceCachePtr_ = &pinocchioInterface;
+    mappingPtr_->setPinocchioInterface(pinocchioInterface);
+  }
 
  private:
   SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs);
@@ -68,6 +109,7 @@ class SelfCollisionConstraintCppAd final : public StateConstraint {
   PinocchioInterface* pinocchioInterfaceCachePtr_ = nullptr;
   SelfCollisionCppAd selfCollision_;
   std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+  update_pinocchio_interface_callback updateCallback_;
 };
 
 }  // namespace ocs2

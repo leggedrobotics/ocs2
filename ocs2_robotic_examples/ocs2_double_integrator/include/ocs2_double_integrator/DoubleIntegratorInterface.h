@@ -55,7 +55,7 @@ class DoubleIntegratorInterface final : public RobotInterface {
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    * @param [in] verbose: Load the settings in verbose.
    */
-  explicit DoubleIntegratorInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose = true);
+  DoubleIntegratorInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose = true);
 
   /** Destructor */
   ~DoubleIntegratorInterface() override = default;

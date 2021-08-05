@@ -189,7 +189,7 @@ kinematic model suffice for tasks you plan to solve with MPC? Some of
 the common models are:</p>
 <ul class="simple">
 <li><p><strong>Kinematic model</strong>: This model is often employed for fixed or mobile
-base manipulators. The objectives of such problems are end-effector
+base manipulators. The objectives of this problem are: end-effector
 tracking, self-collision avoidance, and collision-free navigation.
 For an example refer to
 <a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples-mobile-manipulator"><span class="std std-ref">Mobile Manipulator example</span></a>.</p></li>
@@ -197,11 +197,11 @@ For an example refer to
 takes in to account both the kinematics and the dynamics of the
 system. For an example refer to
 <a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples-ballbot"><span class="std std-ref">Ballbot example</span></a>.</p></li>
-<li><p><strong>Centroidal model</strong>: This is model often used for legged robots
+<li><p><strong>Centroidal model</strong>: This is a model often used for legged robots
 since it has the best of two worlds. First it consider the full
 kinematics of the system. Second, instead of the full dynamics which
-is computationally expensive, it only considers the part of the
-dynamics that is affected by the external forces. For an example refer
+is computationally expensive, it only considers part of the
+dynamics that is affected by external forces. For an example refer
 to <a class="reference internal" href="robotic_examples.html#doxid-ocs2-doc-robotic-examples-legged-robot"><span class="std std-ref">Legged Robot example</span></a>.</p></li>
 </ul>
 <p>After choosing your model, instead of starting from scratch, it is often
@@ -224,9 +224,9 @@ formulated as:</p>
 \[\begin{split}\label{eq:OCProblem}
     \begin{cases}
     \underset{\mathbf u(.)}{\min} \ \ \sum_i \phi_i(\mathbf x(t_{i+1})) + \displaystyle \int_{t_i}^{t_{i+1}} l_i(\mathbf x(t), \mathbf u(t), t) \, dt \\
-    \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11em} \text{initial state} \\
-    \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f_i(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{ system flow map} \\
-    \ \ \ \ \ \mathbf x(t_{i+1}^+) = \mathbf j(\mathbf x(t_{i+1})) \hspace{8.5em} \text{system jump map} \\
+    \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{12em} \text{initial state} \\
+    \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f_i(\mathbf x(t), \mathbf u(t), t) \hspace{8em} \text{system flow map} \\
+    \ \ \ \ \ \mathbf x(t_{i+1}^+) = \mathbf j(\mathbf x(t_{i+1})) \hspace{9em} \text{system jump map} \\
     \ \ \ \ \ {\mathbf g_1}_i(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\
     \ \ \ \ \ {\mathbf g_2}_i(\mathbf x(t), t) = \mathbf{0} \, \hspace{10.5em}  \text{state-only equality constraints} \\
     \ \ \ \ \ \mathbf h_i(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \hspace{9em}  \text{inequality constraints} \\
@@ -234,7 +234,7 @@ formulated as:</p>
     \end{cases}\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(t_i\)</span>s is the switching times and <span class="math notranslate nohighlight">\(t_I\)</span> is the final
 time. For each mode, the nonlinear cost function consists of a pre-jump
-cost and an intermediate cost. While at the first glance this equation
+cost and an intermediate cost. While at the first glance this formulation
 seems a bit intimidating, it actually has a simple interpretation and
 brings a maximum flexibility for defining an MPC problem. One can
 imagine this problem as a sequence of optimal control sub-problems which
@@ -243,7 +243,7 @@ can even have different state and input dimensions as long as the jump
 map is correctly defined in between them. As mentioned, the switches in
 this formulation are based on time-triggered events. This means that you
 need to define both the sequence of the modes and the event times where
-these switches take place.</p>
+the switches take place.</p>
 <p>For many robotic platforms such as quadrotor, ballbot, and cartpole,
 the system has only a single mode (i.e., they are single domain systems).
 In these cases, the above formulation simplifies as:</p>
@@ -251,12 +251,13 @@ In these cases, the above formulation simplifies as:</p>
 \[\begin{split}\label{eq:OCProblem_simple}
     \begin{cases}
     \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(T)) + \displaystyle \int_{0}^{T} l(\mathbf x(t), \mathbf u(t), t) \, dt \\
-    \text{s.t.} \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{2.7em} \text{system dynamics} \\
-    \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \qquad   \qquad \text{state-input equality constraints} \\
-    \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0} \qquad \qquad \qquad  \text{ state-only equality constraints} \\
-    \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \qquad  \quad\quad  \text{   inequality constraints}
+    \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11.5em} \text{initial state} \\
+    \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f_i(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{system flow map} \\
+    \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\
+    \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0}  \hspace{10.5em}  \text{state-only equality constraints}  \\
+    \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \hspace{8.5em}  \text{inequality constraints}
     \end{cases}\end{split}\]</div>
-<p>Which is in the form of a regular optimal control problem.</p>
+<p>which is in the form of a regular optimal control problem.</p>
 </div>
 <div class="section" id="how-to-setup-an-optimal-control-problem">
 <h2>How to setup an optimal control problem?<a class="headerlink" href="#how-to-setup-an-optimal-control-problem" title="Permalink to this headline">¶</a></h2>
@@ -264,7 +265,7 @@ In these cases, the above formulation simplifies as:</p>
 system dynamics and a cost function with a positive definitive Hessian
 matrix w.r.t. input and a positive semi-definite Hessian matrix w.r.t.
 state. Luckily, OCS2 provides a closely matching interface for defining
-an optimal control problem which is called OptimalControlProblem
+the optimal control problem which is called OptimalControlProblem
 (<a class="reference internal" href="optimal_control_modules.html#doxid-ocs2-doc-optimal-control-modules"><span class="std std-ref">refer to this page</span></a>).</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cm">/** Optimal Control Problem definition */</span>
 <span class="k">struct</span> <span class="nc">OptimalControlProblem</span> <span class="p">{</span>
@@ -319,11 +320,11 @@ an optimal control problem which is called OptimalControlProblem
 need to solve this problem repeatedly at each control tick with the
 latest state measurement. While for simple systems, solving this problem
 in realtime is possible, for many robotic platforms with limited onboard
-compute power and high control frequency loop this is not possible. To
+compute power and high control frequency loop, this is not possible. To
 this end, you require the followings: (1) To run the MPC as fast as
 possible with the latest state measurement. (2) To use the latest MPC
 output without worrying about any racing issue while reading its output.
-To this end, you require some synchronization mechanism to facilitate
+To this end, you require some synchronization mechanisms to facilitate
 these requirements. OCS2 provides such functionalities by introducing
 the concept of <strong>MPC</strong> Interface and <strong>MRT</strong> (Model Reference Tracking)
 Interface.</p>
@@ -340,7 +341,7 @@ buffer size is one so the solver always will get the latest state.</p>
 <p>MRT interface is responsible for the safe access to the outcome of
 the solver. It provides two views to the output: the time-based and the
 state-base view. In the time-based approach, MRT only outputs the
-optimized state-input pair for the enquiry time based on a linear
+optimized state-input pair for the inquiry time based on a linear
 interpolation of the optimized state-input trajectory. On the other
 hand, the state-based technique evaluates the optimal input using the
 feedback policy for the given time and state. Note that the feedback
@@ -363,14 +364,13 @@ and MRT nodes.</p>
 hyper-parameters. In order to separate the problem of planning from
 tracking controller which transform the MPC outputs to the robot command
 input (such as torques, and desired joint angles and velocities), OCS2
-is equipped with a so-called dummy-simulator. At it simplest form, the
+is equipped with a so-called dummy-simulator. At its simplest form, the
 MRT dummy simulator only interpolates your optimized state-input and
 visualize them in rviz. However, if you set a Rollout instance to the
 dummy simulator, it uses it to simulate the MPC policy. In this case, if
-you use the same dynamics as you used in your optimal control problem,
-you will simulate the MPC output with the exact model that you used for
-planning. More advance simulator such as RaiSim can be also used as the
-rollout instance.</p>
+you employ the same dynamics as you used in your optimal control problem,
+you will simulate the MPC output with the exact model used for planning.
+More advance simulator such as RaiSim can be also used as the rollout instance.</p>
 </div>
 </div>
 

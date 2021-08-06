@@ -47,8 +47,8 @@ enum anymal : size_t {
 
 static const std::vector<std::string> anymal3DofContactNames = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
 static const std::vector<std::string> anymal6DofContactNames = {};
-static const std::string anymalUrdfPath = getPath() + "/test/include/ocs2_centroidal_model/test/anymal/anymal.urdf";
-static const std::string anymalCppAdModelPath = getPath() + "/test/cppad_generated";
+static const std::string anymalUrdfFile = getPath() + "/test/include/ocs2_centroidal_model/test/anymal/anymal.urdf";
+static const std::string anymalLibraryFolder = getPath() + "/test/cppad_generated";
 
 static const ocs2::vector_t anymalInitialState = []() {
   ocs2::vector_t x0 = ocs2::vector_t(size_t(anymal::STATE_DIM));

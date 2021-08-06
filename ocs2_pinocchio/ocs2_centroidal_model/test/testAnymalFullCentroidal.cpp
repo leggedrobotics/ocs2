@@ -43,7 +43,7 @@ using namespace ocs2;
 using namespace centroidal_model;
 
 TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdf) {
-  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfPath);
+  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfFile);
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t numJoints = model.nq - 6;
@@ -62,7 +62,7 @@ TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdf) {
 }
 
 TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdfAD) {
-  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfPath);
+  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfFile);
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
@@ -85,7 +85,7 @@ class TestAnymalFullCentroidalModel : public testing::Test {
  public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
   TestAnymalFullCentroidalModel() {
-    pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfPath)));
+    pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfFile)));
 
     size_t nq = pinocchioInterfacePtr->getModel().nq;
     const size_t numJoints = nq - 6;
@@ -98,7 +98,7 @@ class TestAnymalFullCentroidalModel : public testing::Test {
     anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
     anymalKinoCentroidalDynamicsAdPtr = std::make_shared<PinocchioCentroidalDynamicsAD>(
-        *pinocchioInterfacePtr, info, "AnymalFullCentroidalTestAD", anymalCppAdModelPath, true, false);
+        *pinocchioInterfacePtr, info, "AnymalFullCentroidalTestAD", anymalLibraryFolder, true, false);
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);

@@ -43,20 +43,25 @@ namespace centroidal_model {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath) {
+PinocchioInterface createPinocchioInterface(const std::string& urdfFile) {
   // add 6 DoF for the floating base
   pinocchio::JointModelComposite jointComposite(2);
   jointComposite.addJoint(pinocchio::JointModelTranslation());
   jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
 
-  return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
+  return getPinocchioInterfaceFromUrdfFile(urdfFile, jointComposite);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames) {
+PinocchioInterface createPinocchioInterface(const std::string& urdfFile, const std::vector<std::string>& jointNames) {
   using joint_pair_t = std::pair<const std::string, std::shared_ptr<::urdf::Joint>>;
+
+  ::urdf::ModelInterfaceSharedPtr urdfTree = ::urdf::parseURDFFile(urdfFile);
+  if (urdfTree == nullptr) {
+    throw std::invalid_argument("The file " + urdfFile + " does not contain a valid URDF model.");
+  }
 
   // remove extraneous joints from urdf
   ::urdf::ModelInterfaceSharedPtr newModel = std::make_shared<::urdf::ModelInterface>(*urdfTree);

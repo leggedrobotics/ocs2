@@ -44,8 +44,8 @@ namespace ocs2 {
 namespace centroidal_model {
 
 /** Create a CentroidalModel PinocchioInterface from a URDF */
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath);
-PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPtr& urdfTree, const std::vector<std::string>& jointNames);
+PinocchioInterface createPinocchioInterface(const std::string& urdfFile);
+PinocchioInterface createPinocchioInterface(const std::string& urdfFile, const std::vector<std::string>& jointNames);
 
 /**
  * Create a scalar-typed CentroidalModelInfo.

@@ -199,12 +199,7 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
 void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::TargetTrajectories& targetTrajectories,
                                                                           const inverse_kinematics_function_t& inverseKinematicsFunction,
                                                                           scalar_t finalTime) const {
-  bool hasDonePointBeyondHorizon = false;
   for (int k = 0; k < targetTrajectories.timeTrajectory.size(); ++k) {
-    if (hasDonePointBeyondHorizon) {
-      break;
-    }
-
     const scalar_t t = targetTrajectories.timeTrajectory[k];
 
     const base_coordinate_t basePose = comModel_->calculateBasePose(getComPose(comkino_state_t(targetTrajectories.stateTrajectory[k])));
@@ -220,7 +215,10 @@ void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::
       targetTrajectories.stateTrajectory[k].segment(offset, 3) = inverseKinematicsFunction(leg, PositionBaseToFootInBaseFrame);
     }
 
-    hasDonePointBeyondHorizon = t > finalTime;
+    // Can stop adaptation as soon as we have processed a point beyond the horizon.
+    if (t > finalTime) {
+      break;
+    }
   }
 }
 

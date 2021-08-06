@@ -1,4 +1,5 @@
-#include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
+#include "../../../ocs2_raisim/ocs2_raisim_ros/include/ocs2_raisim_ros/RaisimHeightmapRosConverter.h"
+
 #include <ros/topic.h>
 
 namespace ocs2 {

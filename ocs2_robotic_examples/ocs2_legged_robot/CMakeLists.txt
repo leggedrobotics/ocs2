@@ -67,7 +67,7 @@ include_directories(
 link_directories(${pinocchio_LIBRARY_DIRS})
 
 # Legged robot interface library
-add_library(ocs2_legged_robot
+add_library(${PROJECT_NAME}
   src/common/ModelSettings.cpp
   src/dynamics/LeggedRobotDynamicsAD.cpp
   src/constraint/EndEffectorLinearConstraint.cpp
@@ -90,16 +90,16 @@ add_library(ocs2_legged_robot
   src/visualization/LeggedRobotVisualizer.cpp
 )
 
-add_dependencies(ocs2_legged_robot
+add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(ocs2_legged_robot
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${pinocchio_LIBRARIES}
   dl
 )
-target_compile_options(ocs2_legged_robot PUBLIC ${pinocchio_CFLAGS_OTHER} -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR)
+target_compile_options(${PROJECT_NAME} PUBLIC ${pinocchio_CFLAGS_OTHER} -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR)
 
 # Mpc node
 add_executable(legged_robot_mpc
@@ -180,7 +180,7 @@ endif(cmake_clang_tools_FOUND)
 #############
 ## Install ##
 #############
-install(TARGETS ocs2_legged_robot
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

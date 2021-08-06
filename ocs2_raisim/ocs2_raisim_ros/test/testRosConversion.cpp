@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
+
+#include "../../../ocs2_raisim/ocs2_raisim_ros/include/ocs2_raisim_ros/RaisimHeightmapRosConverter.h"
 
 TEST(ocs2_raisim_ros, HeightmapRosConversion) {
   const raisim::TerrainProperties terrainProperties;

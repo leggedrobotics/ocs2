@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,55 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include "ocs2_raisim/RaisimRollout.h"
+#include "ocs2_raisim/RaisimRolloutSettings.h"
 
-#include <atomic>
-#include <chrono>
-#include <iostream>
-#include <iterator>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <vector>
-
-namespace ocs2 {
-
-/**
- * Gets a command line string.
- * @praram [in] shouldTerminate: A function signals termination of the line reading thread. For example, one
- * can use this to terminate if the rosmaster is stopped.
- */
-inline std::string getCommandLineString(bool (*shouldTerminate)() = []() { return false; }) {
-  // Set up a thread to read user inputs
-  std::string line{""};
-  std::atomic_bool lineRead(false);
-  std::thread thr([&line, &lineRead]() {
-    lineRead = false;
-    getline(std::cin, line);
-    lineRead = true;
-  });
-
-  // wait till line is read or terminate if ROS is gone.
-  const std::chrono::duration<double, std::ratio<1, 30>> hz30(1);  // 30Hz clock using fractional ticks
-  while (!lineRead) {
-    if (shouldTerminate()) {
-      std::terminate();  // need to terminate thread that is still waiting for input
-    }
-    std::this_thread::sleep_for(hz30);
-  }
-  if (thr.joinable()) {
-    thr.join();
-  }
-  return line;
+int main() {
+  return 0;
 }
-
-/**
- * Transforms a line of words to a vector of words.
- */
-inline std::vector<std::string> stringToWords(const std::string& str) {
-  std::istringstream iss(str);
-  std::vector<std::string> words{std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
-  return words;
-}
-
-}  // namespace ocs2

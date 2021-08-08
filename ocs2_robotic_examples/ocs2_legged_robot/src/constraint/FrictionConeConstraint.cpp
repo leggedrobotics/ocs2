@@ -86,7 +86,7 @@ VectorFunctionLinearApproximation FrictionConeConstraint::getLinearApproximation
   VectorFunctionLinearApproximation linearApproximation;
   linearApproximation.f = coneConstraint(localForce);
   linearApproximation.dfdx = matrix_t::Zero(1, state.size());
-  linearApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
+  linearApproximation.dfdu = frictionConeInputDerivative(input.size(), coneDerivatives);
   return linearApproximation;
 }
 
@@ -106,9 +106,9 @@ VectorFunctionQuadraticApproximation FrictionConeConstraint::getQuadraticApproxi
   VectorFunctionQuadraticApproximation quadraticApproximation;
   quadraticApproximation.f = coneConstraint(localForce);
   quadraticApproximation.dfdx = matrix_t::Zero(1, state.size());
-  quadraticApproximation.dfdu = frictionConeInputDerivative(coneDerivatives);
-  quadraticApproximation.dfdxx.emplace_back(frictionConeSecondDerivativeState(coneDerivatives));
-  quadraticApproximation.dfduu.emplace_back(frictionConeSecondDerivativeInput(coneDerivatives));
+  quadraticApproximation.dfdu = frictionConeInputDerivative(input.size(), coneDerivatives);
+  quadraticApproximation.dfdxx.emplace_back(frictionConeSecondDerivativeState(state.size(), coneDerivatives));
+  quadraticApproximation.dfduu.emplace_back(frictionConeSecondDerivativeInput(input.size(), coneDerivatives));
   quadraticApproximation.dfdux.emplace_back(matrix_t::Zero(input.size(), state.size()));
   return quadraticApproximation;
 }
@@ -180,8 +180,8 @@ FrictionConeConstraint::ConeDerivatives FrictionConeConstraint::computeConeConst
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const {
-  matrix_t dhdu = matrix_t::Zero(1, info_.inputDim);
+matrix_t FrictionConeConstraint::frictionConeInputDerivative(size_t inputDim, const ConeDerivatives& coneDerivatives) const {
+  matrix_t dhdu = matrix_t::Zero(1, inputDim);
   dhdu.block<1, 3>(0, 3 * contactPointIndex_) = coneDerivatives.dCone_du;
   return dhdu;
 }
@@ -189,8 +189,8 @@ matrix_t FrictionConeConstraint::frictionConeInputDerivative(const ConeDerivativ
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const {
-  matrix_t ddhdudu = matrix_t::Zero(info_.inputDim, info_.inputDim);
+matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(size_t inputDim, const ConeDerivatives& coneDerivatives) const {
+  matrix_t ddhdudu = matrix_t::Zero(inputDim, inputDim);
   ddhdudu.block<3, 3>(3 * contactPointIndex_, 3 * contactPointIndex_) = coneDerivatives.d2Cone_du2;
   ddhdudu.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdudu;
@@ -199,8 +199,8 @@ matrix_t FrictionConeConstraint::frictionConeSecondDerivativeInput(const ConeDer
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t FrictionConeConstraint::frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const {
-  matrix_t ddhdxdx = matrix_t::Zero(info_.stateDim, info_.stateDim);
+matrix_t FrictionConeConstraint::frictionConeSecondDerivativeState(size_t stateDim, const ConeDerivatives& coneDerivatives) const {
+  matrix_t ddhdxdx = matrix_t::Zero(stateDim, stateDim);
   ddhdxdx.diagonal().array() -= config_.hessianDiagonalShift;
   return ddhdxdx;
 }

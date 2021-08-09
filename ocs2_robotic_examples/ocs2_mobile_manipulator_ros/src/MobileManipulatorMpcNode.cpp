@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
   // Robot interface
   const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/" + taskFileFolderName + "/task.info";
   const std::string libFolder = ros::package::getPath("ocs2_mobile_manipulator") + "/auto_generated";
-  const std::string urdfFile = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
+  const std::string urdfFile = ros::package::getPath("ocs2_robotic_assets") + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
   // ROS ReferenceManager

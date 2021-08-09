@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "distance_visualization");
   ros::NodeHandle nodeHandle;
 
-  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
+  const std::string urdfPath = ros::package::getPath("ocs2_robotic_assets") + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
   const std::string taskFileFolder = "mpc";
   const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/" + taskFileFolder + "/task.info";
 

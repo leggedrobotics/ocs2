@@ -27,5 +27,6 @@
   <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_ballbot</depend>
   <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_robotic_assets</depend>
 
 </package>

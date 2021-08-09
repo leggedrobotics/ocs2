@@ -12,7 +12,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find ocs2_quadrotor)/urdf/quadrotor.obj" scale=".4 .4 .4"/>
+        <mesh filename="file://$(find ocs2_robotic_assets)/resources/quadrotor/meshes/quadrotor.obj" scale=".4 .4 .4"/>
       </geometry>
     </visual>
     <collision>

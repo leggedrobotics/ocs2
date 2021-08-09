@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
+  ocs2_robotic_assets
   ocs2_pinocchio_interface
 )
 
@@ -30,6 +31,7 @@ pkg_check_modules(pinocchio REQUIRED pinocchio)
 catkin_package(
   INCLUDE_DIRS
     include
+    ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
@@ -42,6 +44,15 @@ catkin_package(
 ###########
 ## Build ##
 ###########
+
+set(FLAGS
+  ${OCS2_CXX_FLAGS}
+  ${pinocchio_CFLAGS_OTHER}
+  -Wno-ignored-attributes
+  -Wno-invalid-partial-specialization   # to silence warning with unsupported Eigen Tensor
+  -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR
+  -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
+)
 
 include_directories(
   include
@@ -69,11 +80,7 @@ target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${pinocchio_LIBRARIES}
 )
-target_compile_options(${PROJECT_NAME} PUBLIC
-  ${OCS2_CXX_FLAGS}
-  ${pinocchio_CFLAGS_OTHER}
-  -Wno-invalid-partial-specialization # to silence warning with unsupported Eigen Tensor
-)
+target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###
@@ -82,11 +89,10 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
   add_clang_tooling(
-          TARGETS
-          ${PROJECT_NAME}
-          SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-          CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-          CF_WERROR
+    TARGETS ${PROJECT_NAME}
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include  ${CMAKE_CURRENT_SOURCE_DIR}/test
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
   )
 endif(cmake_clang_tools_FOUND)
 
@@ -109,12 +115,6 @@ install(
 ## Testing ##
 #############
 
-# Resolve for the package path at compile time.
-configure_file (
-  "${PROJECT_SOURCE_DIR}/test/include/${PROJECT_NAME}/test/package_path.h.in"
-  "${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/test/package_path.h" @ONLY
-)
-
 catkin_add_gtest(${PROJECT_NAME}_test
   # test/testAccessMethods.cpp
   test/testAnymalSingleRigidBody.cpp
@@ -122,7 +122,6 @@ catkin_add_gtest(${PROJECT_NAME}_test
 )
 target_include_directories(${PROJECT_NAME}_test PRIVATE
   test/include
-  ${PROJECT_BINARY_DIR}/include
 )
 target_link_libraries(${PROJECT_NAME}_test
   gtest_main
@@ -131,7 +130,4 @@ target_link_libraries(${PROJECT_NAME}_test
   ${Boost_LIBRARIES}
   ${pinocchio_LIBRARIES}
 )
-target_compile_options(${PROJECT_NAME}_test PUBLIC
-  ${OCS2_CXX_FLAGS}
-  ${pinocchio_CFLAGS_OTHER}
-)
+target_compile_options(${PROJECT_NAME}_test PRIVATE ${FLAGS})

@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
 
-#include "ocs2_centroidal_model/test/anymal/definitions.h"
+#include "ocs2_centroidal_model/test/definitions.h"
 
 using namespace ocs2;
 using namespace centroidal_model;
@@ -97,8 +97,8 @@ class TestAnymalFullCentroidalModel : public testing::Test {
     anymalKinoCentroidalDynamicsPtr = std::make_shared<PinocchioCentroidalDynamics>(info);
     anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-    anymalKinoCentroidalDynamicsAdPtr = std::make_shared<PinocchioCentroidalDynamicsAD>(
-        *pinocchioInterfacePtr, info, "AnymalFullCentroidalTestAD", anymalLibraryFolder, true, false);
+    anymalKinoCentroidalDynamicsAdPtr =
+        std::make_shared<PinocchioCentroidalDynamicsAD>(*pinocchioInterfacePtr, info, "AnymalFullCentroidalTestAD");
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);

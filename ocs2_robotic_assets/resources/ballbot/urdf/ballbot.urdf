@@ -67,7 +67,7 @@
         <visual>
           <origin rpy="0 0 0.275" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://ocs2_ballbot/urdf/meshes/base.dae" scale="1.0 1.0 1.0"/>
+          <mesh filename="package://ocs2_robotic_assets/resources/ballbot/meshes/base.dae" scale="1.0 1.0 1.0"/>
         </geometry>
         <material name="grey"/>
         </visual>

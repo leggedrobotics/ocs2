@@ -37,18 +37,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
 
-#include "ocs2_centroidal_model/test/anymal/definitions.h"
+#include "ocs2_centroidal_model/test/definitions.h"
 
 using namespace ocs2;
 using namespace centroidal_model;
 
 TEST(AnymalSingleRigidBodyModelTestInit, InitModelFromUrdf) {
-  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfPath);
+  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfFile);
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t numJoints = model.nq - 6;
   CentroidalModelInfo info = createCentroidalModelInfo(pinocchioInterface, CentroidalModelType::SingleRigidBodyDynamics,
-                                                       anymalInitialState.tail(numJoints), anymal3DofContactNames, anymal6DofContactNames);
+                                                       getInitialState().tail(numJoints), anymal3DofContactNames, anymal6DofContactNames);
   CentroidalModelPinocchioMapping mapping(info);
   mapping.setPinocchioInterface(pinocchioInterface);
 
@@ -62,13 +62,13 @@ TEST(AnymalSingleRigidBodyModelTestInit, InitModelFromUrdf) {
 }
 
 TEST(AnymalSingleRigidBodyModelTestInit, InitModelFromUrdfAD) {
-  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfPath);
+  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfFile);
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
   const size_t numJoints = nq - 6;
   CentroidalModelInfo info = createCentroidalModelInfo(pinocchioInterface, CentroidalModelType::SingleRigidBodyDynamics,
-                                                       anymalInitialState.tail(numJoints), anymal3DofContactNames, anymal6DofContactNames);
+                                                       getInitialState().tail(numJoints), anymal3DofContactNames, anymal6DofContactNames);
   CentroidalModelPinocchioMappingCppAd mappingAD(info.toCppAd());
   mappingAD.setPinocchioInterface(pinocchioInterface.toCppAd());
   const auto& centroidalModelInfo = mappingAD.getCentroidalModelInfo();
@@ -86,21 +86,20 @@ class TestAnymalSingleRigidBodyModel : public testing::Test {
  public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
   TestAnymalSingleRigidBodyModel() {
-    pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfPath)));
+    pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfFile)));
 
     size_t nq = pinocchioInterfacePtr->getModel().nq;
     const size_t numJoints = nq - 6;
-    CentroidalModelInfo info =
-        createCentroidalModelInfo(*pinocchioInterfacePtr, CentroidalModelType::SingleRigidBodyDynamics, anymalInitialState.tail(numJoints),
-                                  anymal3DofContactNames, anymal6DofContactNames);
+    CentroidalModelInfo info = createCentroidalModelInfo(*pinocchioInterfacePtr, CentroidalModelType::SingleRigidBodyDynamics,
+                                                         getInitialState().tail(numJoints), anymal3DofContactNames, anymal6DofContactNames);
     mappingPtr.reset(new CentroidalModelPinocchioMapping(info));
     mappingPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
     anymalKinoCentroidalDynamicsPtr = std::make_shared<PinocchioCentroidalDynamics>(info);
     anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-    anymalKinoCentroidalDynamicsAdPtr = std::make_shared<PinocchioCentroidalDynamicsAD>(
-        *pinocchioInterfacePtr, info, "AnymalSingleRigidBodyTestAD", anymalCppAdModelPath, true, false);
+    anymalKinoCentroidalDynamicsAdPtr =
+        std::make_shared<PinocchioCentroidalDynamicsAD>(*pinocchioInterfacePtr, info, "AnymalSingleRigidBodyTestAD");
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);

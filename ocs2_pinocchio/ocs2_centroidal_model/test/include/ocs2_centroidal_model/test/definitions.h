@@ -34,8 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-
-#include "ocs2_centroidal_model/test/package_path.h"
+#include <ocs2_robotic_assets/package_path.h>
 
 namespace ocs2 {
 namespace centroidal_model {
@@ -47,11 +46,10 @@ enum anymal : size_t {
 
 static const std::vector<std::string> anymal3DofContactNames = {"LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"};
 static const std::vector<std::string> anymal6DofContactNames = {};
-static const std::string anymalUrdfPath = getPath() + "/test/include/ocs2_centroidal_model/test/anymal/anymal.urdf";
-static const std::string anymalCppAdModelPath = getPath() + "/test/cppad_generated";
+static const std::string anymalUrdfFile = ocs2::robotic_assets::getPath() + "/resources/anymal_c/urdf/anymal.urdf";
 
-static const ocs2::vector_t anymalInitialState = []() {
-  ocs2::vector_t x0 = ocs2::vector_t(size_t(anymal::STATE_DIM));
+inline ocs2::vector_t getInitialState() {
+  ocs2::vector_t x0 = ocs2::vector_t::Zero(anymal::STATE_DIM);
 
   x0(0) = 0.0;  // vcom_x
   x0(1) = 0.0;  // vcom_y
@@ -61,12 +59,12 @@ static const ocs2::vector_t anymalInitialState = []() {
   x0(5) = 0.0;  // L_z / mass
 
   // Base Pose: [position, orientation]
-  x0(6) = 0.0;    // p_base_x
-  x0(7) = 0.0;    // p_base_y
-  x0(8) = 0.527;  // p_base_z
-  x0(9) = 0.0;    // theta_base_z
-  x0(10) = 0.0;   // theta_base_y
-  x0(11) = 0.0;   // theta_base_x
+  x0(6) = 0.0;   // p_base_x
+  x0(7) = 0.0;   // p_base_y
+  x0(8) = 0.53;  // p_base_z
+  x0(9) = 0.0;   // theta_base_z
+  x0(10) = 0.0;  // theta_base_y
+  x0(11) = 0.0;  // theta_base_x
 
   // Leg Joint Positions: [LF, LH, RF, RH]
   x0(12) = -0.10;  // LF_HAA
@@ -83,7 +81,7 @@ static const ocs2::vector_t anymalInitialState = []() {
   x0(23) = 1.0;    // RH_KFE
 
   return x0;
-}();
+}
 
 inline void visualMatrixCompare(const ocs2::matrix_t& A, const ocs2::matrix_t& B, double tol = 1e-6) {
   if (A.rows() != B.rows() || A.cols() != B.cols()) {

@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator/package_path.h>
 
+#include <ocs2_robotic_assets/package_path.h>
 #include <ocs2_self_collision/SelfCollision.h>
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
 
@@ -68,7 +69,7 @@ class TestSelfCollision : public ::testing::Test {
   const std::vector<std::pair<size_t, size_t>> collisionPairs = {{1, 4}, {1, 6}, {1, 9}};
 
   const std::string libraryFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated";
-  const std::string urdfFile = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
+  const std::string urdfFile = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
 
   const scalar_t minDistance = 0.1;
 

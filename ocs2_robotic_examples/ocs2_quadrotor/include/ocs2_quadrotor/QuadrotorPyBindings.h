@@ -50,7 +50,11 @@ class QuadrotorPyBindings final : public PythonInterface {
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    * @param [in] urdfFile: The absolute path to the URDF of the robot. This is not used for quadrotor.
    */
-  explicit QuadrotorPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "") {
+  QuadrotorPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "") {
+    // System dimensions
+    stateDim_ = static_cast<int>(STATE_DIM);
+    inputDim_ = static_cast<int>(INPUT_DIM);
+
     // Robot interface
     QuadrotorInterface quadrotorInterface(taskFile, libraryFolder);
 
@@ -59,9 +63,6 @@ class QuadrotorPyBindings final : public PythonInterface {
                                                 quadrotorInterface.getRollout(), quadrotorInterface.getOptimalControlProblem(),
                                                 quadrotorInterface.getInitializer()));
     mpcPtr->getSolverPtr()->setReferenceManager(quadrotorInterface.getReferenceManagerPtr());
-    // System dimensions
-    stateDim_ = STATE_DIM;
-    inputDim_ = INPUT_DIM;
 
     // Python interface
     PythonInterface::init(quadrotorInterface, std::move(mpcPtr));

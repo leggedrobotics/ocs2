@@ -184,8 +184,8 @@ class PythonInterface {
  protected:
   std::unique_ptr<PenaltyBase> penalty_;
 
-  int stateDim_ = -1;  // -1 indicates that they are not initialized
-  int inputDim_ = -1;  // -1 indicates that they are not initialized
+  int stateDim_ = -1;  // -1 indicates that it is not initialized
+  int inputDim_ = -1;  // -1 indicates that it is not initialized
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;

@@ -63,14 +63,14 @@ class PythonInterface {
    *
    * @return The number of states in the system.
    */
-  size_t getStateDim() const { return stateDim_; }
+  int getStateDim() const { return stateDim_; }
 
   /**
    * @brief Get the input dimension of the dynamics system.
    *
    * @return The number of inputs in the system.
    */
-  size_t getInputDim() const { return inputDim_; }
+  int getInputDim() const { return inputDim_; }
 
   /**
    * @brief resets MPC to its original state
@@ -184,8 +184,8 @@ class PythonInterface {
  protected:
   std::unique_ptr<PenaltyBase> penalty_;
 
-  size_t stateDim_;
-  size_t inputDim_;
+  int stateDim_ = -1;  // -1 indicates that they are not initialized
+  int inputDim_ = -1;  // -1 indicates that they are not initialized
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;

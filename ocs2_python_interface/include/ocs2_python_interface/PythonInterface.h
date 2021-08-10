@@ -63,14 +63,14 @@ class PythonInterface {
    *
    * @return The number of states in the system.
    */
-  size_t getStateDim();
+  size_t getStateDim() const { return stateDim_; }
 
   /**
    * @brief Get the input dimension of the dynamics system.
    *
    * @return The number of inputs in the system.
    */
-  size_t getInputDim();
+  size_t getInputDim() const { return inputDim_; }
 
   /**
    * @brief resets MPC to its original state

@@ -101,7 +101,7 @@ using namespace pybind11::literals;
         .def(pybind11::init<const std::string&, const std::string&, const std::string&>(),                                              \
              "taskFile"_a, "libFolder"_a, "urdfFile"_a = "")                                                                            \
         .def("getStateDim", &PY_INTERFACE::getStateDim)                                                                                 \
-        .def("getInputDim", &PY_INTERFACE::getInputDim)                                                                                  \
+        .def("getInputDim", &PY_INTERFACE::getInputDim)                                                                                 \
         .def("setObservation", &PY_INTERFACE::setObservation, "t"_a, "x"_a.noconvert(), "u"_a.noconvert())                              \
         .def("setTargetTrajectories", &PY_INTERFACE::setTargetTrajectories, "targetTrajectories"_a)                                     \
         .def("reset", &PY_INTERFACE::reset, "targetTrajectories"_a)                                                                     \

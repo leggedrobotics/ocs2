@@ -53,7 +53,7 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
   MobileManipulatorPinocchioMapping<SCALAR>* clone() const override;
 
   /**
-   * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state variables
+   * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state.
    *
    * @param [in] state: system state vector
    * @return pinocchio joint positions, which are also the robot's generalized positions with a ZYX-Euler angle
@@ -62,34 +62,32 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
   vector_t getPinocchioJointPosition(const vector_t& state) const override;
 
   /**
-   * Computes the vector of generalized velocities (vPinocchio) used by pinocchio functions from the robot state and input variables
+   * Computes the vector of generalized velocities (vPinocchio) used by pinocchio functions from the robot state and input.
+   *
    * @param [in] state: system state vector
    * @param [in] input: system input vector
    * @return pinocchio joint velocities, which are also the time derivatives of the pinocchio joint positions
-   *
-   * @note requires pinocchioInterface to be updated with:
-   *       ocs2::updateCentroidalDynamics(interface, info, q)
    */
   vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override;
 
   /**
    * Maps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu.
+   *
    * @param [in] state: system state vector
    * @param [in] Jq: jacobian with respect to pinocchio joint positions
    * @param [in] Jv: jacobian with respect to pinocchio joint velocities
    * @return a pair {dfdx, dfdu} containing the jacobians with respect to the system state and input
-   *
    */
   std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
   /**
    * Returns the mobile manipulator model info.
-   * @return MobileManipulatorModelInfoTpl<SCALAR>
-   *
    */
-  const MobileManipulatorModelInfoTpl<SCALAR>& getMobileManipulatorModelInfo() const;
+  const MobileManipulatorModelInfoTpl<SCALAR>& getMobileManipulatorModelInfo() const { return modelInfo_; }
 
  private:
+  MobileManipulatorPinocchioMapping(const MobileManipulatorPinocchioMapping& rhs) = default;
+
   const MobileManipulatorModelInfoTpl<SCALAR> modelInfo_;
 };
 

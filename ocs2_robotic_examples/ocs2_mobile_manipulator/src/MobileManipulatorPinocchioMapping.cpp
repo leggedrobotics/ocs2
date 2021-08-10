@@ -37,7 +37,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 template <typename SCALAR>
 MobileManipulatorPinocchioMapping<SCALAR>::MobileManipulatorPinocchioMapping(MobileManipulatorModelInfoTpl<SCALAR> info)
-    : modelInfo_(info) {}
+    : modelInfo_(std::move(info)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -60,29 +60,27 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointPosition(const 
 /******************************************************************************************************/
 template <typename SCALAR>
 auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
-  vector_t dxdt = vector_t::Zero(modelInfo_.stateDim);
+  vector_t vPinocchio = vector_t::Zero(modelInfo_.stateDim);
   // set velocity model based on model type
   switch (modelInfo_.manipulatorModelType) {
     case ManipulatorModelType::DefaultManipulator: {
-      dxdt = input;
+      vPinocchio = input;
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      vPinocchio.tail(modelInfo_.armDim) = input;
       break;
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
-      dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.armDim);
+      vPinocchio << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.armDim);
       break;
     }
-    case ManipulatorModelType::FloatingArmManipulator: {
-      dxdt.tail(modelInfo_.armDim) = input;
-      break;
-    }
-    default: {
-      throw std::runtime_error("The chosen manipulator model type is not supported.");
-      break;
-    }
-  }
-  return dxdt;
+    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
+  }  // end of switch-case
+
+  return vPinocchio;
 }
 
 /******************************************************************************************************/
@@ -96,6 +94,11 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& 
     case ManipulatorModelType::DefaultManipulator: {
       return {Jq, Jv};
     }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
+      dfdu = Jv.template rightCols(modelInfo_.armDim);
+      return {Jq, dfdu};
+    }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
       Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
@@ -108,27 +111,9 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& 
       dfdu.template leftCols<2>() = Jv.template leftCols<3>() * dvdu_base;
       dfdu.template rightCols(modelInfo_.armDim) = Jv.template rightCols(modelInfo_.armDim);
       return {Jq, dfdu};
-      break;
     }
-    case ManipulatorModelType::FloatingArmManipulator: {
-      matrix_t dfdu(Jv.rows(), modelInfo_.inputDim);
-      dfdu = Jv.template rightCols(modelInfo_.armDim);
-      return {Jq, dfdu};
-      break;
-    }
-    default: {
-      throw std::runtime_error("The chosen manipulator model type is not supported.");
-      break;
-    }
-  }
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR>
-const MobileManipulatorModelInfoTpl<SCALAR>& MobileManipulatorPinocchioMapping<SCALAR>::getMobileManipulatorModelInfo() const {
-  return modelInfo_;
+    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
+  }  // end of switch-case
 }
 
 // explicit template instantiation

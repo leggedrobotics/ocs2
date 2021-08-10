@@ -29,34 +29,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
-#include <string>
-#include <vector>
+#include <mutex>
 
-#include "ocs2_legged_robot/gait/ModeSequenceTemplate.h"
+#include <ros/ros.h>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
+
+#include <ocs2_legged_robot/gait/GaitSchedule.h>
+#include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
+#include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 
 namespace ocs2 {
 namespace legged_robot {
-
-/** This class implements ModeSequence communication using ROS. */
-class LeggedRobotModeSequenceKeyboard {
+class GaitReceiver : public SolverSynchronizedModule {
  public:
-  LeggedRobotModeSequenceKeyboard(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName,
-                                  bool verbose = false);
+  GaitReceiver(ros::NodeHandle nodeHandle, std::shared_ptr<GaitSchedule> gaitSchedulePtr, const std::string& robotName);
 
-  /** Prints the command line interface and responds to user input. Function returns after one user input. */
-  void getKeyboardCommand();
+  void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& currentState,
+                    const ReferenceManagerInterface& referenceManager) override;
+
+  void postSolverRun(const PrimalSolution& primalSolution) override{};
 
  private:
-  /** Prints the list of available gaits. */
-  void printGaitList(const std::vector<std::string>& gaitList) const;
+  void mpcModeSequenceCallback(const ocs2_msgs::mode_schedule::ConstPtr& msg);
 
-  std::vector<std::string> gaitList_;
-  std::map<std::string, ModeSequenceTemplate> gaitMap_;
+  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
 
-  ros::Publisher modeSequenceTemplatePublisher_;
+  ros::Subscriber mpcModeSequenceSubscriber_;
+
+  std::mutex receivedGaitMutex_;
+  std::atomic_bool gaitUpdated_;
+  ModeSequenceTemplate receivedGait_;
 };
 
 }  // namespace legged_robot
-}  // end of namespace ocs2
+}  // namespace ocs2

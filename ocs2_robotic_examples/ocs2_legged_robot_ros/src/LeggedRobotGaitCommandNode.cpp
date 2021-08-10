@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_legged_robot/command/LeggedRobotModeSequenceKeyboard.h>
+#include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
 
 using namespace ocs2;
 using namespace legged_robot;
@@ -45,10 +45,10 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, robotName + "_mpc_mode_schedule");
   ros::NodeHandle nodeHandle;
 
-  LeggedRobotModeSequenceKeyboard modeSequenceCommand(nodeHandle, gaitFile, robotName, true);
+  GaitKeyboardPublisher gaitCommand(nodeHandle, gaitFile, robotName, true);
 
   while (ros::ok() && ros::master::check()) {
-    modeSequenceCommand.getKeyboardCommand();
+    gaitCommand.getKeyboardCommand();
   }
 
   // Successful exit

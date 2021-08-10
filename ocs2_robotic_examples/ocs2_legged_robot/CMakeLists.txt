@@ -6,6 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
+  ocs2_oc
   ocs2_ddp
   ocs2_mpc
   ocs2_robotic_tools

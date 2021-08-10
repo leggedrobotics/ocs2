@@ -28,14 +28,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
 #include <ros/init.h>
-#include <urdf_parser/urdf_parser.h>
 
+#include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
-#include "ocs2_legged_robot/LeggedRobotInterface.h"
-#include "ocs2_legged_robot/gait/GaitReceiver.h"
+#include "ocs2_legged_robot_ros/gait/GaitReceiver.h"
+
+using namespace ocs2;
+using namespace legged_robot;
 
 int main(int argc, char** argv) {
   std::vector<std::string> programArgs{};
@@ -44,38 +46,33 @@ int main(int argc, char** argv) {
     throw std::runtime_error("No robot name, config folder, target command file, or description name specified. Aborting.");
   }
   const std::string robotName(programArgs[1]);
-  const std::string configName(programArgs[2]);
-  const std::string targetCommandFile(programArgs[3]);
-  const std::string descriptionName("/" + programArgs[4]);
+  const std::string taskFile(programArgs[2]);
+  const std::string urdfFile(programArgs[3]);
+  const std::string referenceFile(programArgs[4]);
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
 
-  std::string urdfString;
-  if (!ros::param::get(descriptionName, urdfString)) {
-    std::cerr << "Param " << descriptionName << " not found; unable to generate urdf" << std::endl;
-  }
-
   // Robot interface
-  ocs2::legged_robot::LeggedRobotInterface interface(configName, targetCommandFile, urdf::parseURDF(urdfString));
+  LeggedRobotInterface interface(taskFile, urdfFile, referenceFile);
 
   // Gait receiver
-  auto gaitReceiverPtr = std::make_shared<ocs2::legged_robot::GaitReceiver>(
-      nodeHandle, interface.getSwitchedModelReferenceManagerPtr()->getGaitSchedule(), robotName);
+  auto gaitReceiverPtr =
+      std::make_shared<GaitReceiver>(nodeHandle, interface.getSwitchedModelReferenceManagerPtr()->getGaitSchedule(), robotName);
 
   // ROS ReferenceManager
-  auto rosReferenceManagerPtr = std::make_shared<ocs2::RosReferenceManager>(robotName, interface.getReferenceManagerPtr());
+  auto rosReferenceManagerPtr = std::make_shared<RosReferenceManager>(robotName, interface.getReferenceManagerPtr());
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC
-  ocs2::MPC_DDP mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(), interface.getOptimalControlProblem(),
-                    interface.getInitializer());
+  MPC_DDP mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(), interface.getOptimalControlProblem(),
+              interface.getInitializer());
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
   mpc.getSolverPtr()->addSynchronizedModule(gaitReceiverPtr);
 
   // Launch MPC ROS node
-  ocs2::MPC_ROS_Interface mpcNode(mpc, robotName);
+  MPC_ROS_Interface mpcNode(mpc, robotName);
   mpcNode.launchNodes(nodeHandle);
 
   // Successful exit

@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
-
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesKeyboardPublisher.h>
 
 using namespace ocs2;

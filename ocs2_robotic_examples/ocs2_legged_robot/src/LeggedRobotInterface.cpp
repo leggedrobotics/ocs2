@@ -54,7 +54,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_legged_robot/cost/LeggedRobotStateInputQuadraticCost.h"
 #include "ocs2_legged_robot/dynamics/LeggedRobotDynamicsAD.h"
 
-#include <ros/package.h>
+// Boost
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -62,12 +64,28 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName, const std::string& targetCommandFile,
-                                           const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
-  // Load the task file
-  const std::string taskFolder = ros::package::getPath("ocs2_legged_robot") + "/config/" + taskFileFolderName;
-  const std::string taskFile = taskFolder + "/task.info";
-  std::cerr << "Loading task file: " << taskFile << std::endl;
+LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile) {
+  // check that task file exists
+  boost::filesystem::path taskFilePath(taskFile);
+  if (boost::filesystem::exists(taskFilePath)) {
+    std::cerr << "[LeggedRobotInterface] Loading task file: " << taskFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[LeggedRobotInterface] Task file not found: " + taskFilePath.string());
+  }
+  // check that urdf file exists
+  boost::filesystem::path urdfFilePath(urdfFile);
+  if (boost::filesystem::exists(urdfFilePath)) {
+    std::cerr << "[LeggedRobotInterface] Loading Pinocchio model from: " << urdfFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[LeggedRobotInterface] URDF file not found: " + urdfFilePath.string());
+  }
+  // check that targetCommand file exists
+  boost::filesystem::path referenceFilePath(referenceFile);
+  if (boost::filesystem::exists(referenceFilePath)) {
+    std::cerr << "[LeggedRobotInterface] Loading target command settings from: " << referenceFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[LeggedRobotInterface] targetCommand file not found: " + referenceFilePath.string());
+  }
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
@@ -80,7 +98,7 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName
   rolloutSettings_ = rollout::loadSettings(taskFile, "rollout");
 
   // OptimalConrolProblem
-  setupOptimalConrolProblem(taskFile, targetCommandFile, urdfTree);
+  setupOptimalConrolProblem(taskFile, urdfFile, referenceFile);
 
   // initial state
   initialState_.setZero(centroidalModelInfo_.stateDim);
@@ -90,47 +108,23 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFileFolderName
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::string& taskFile) {
-  const auto initModeSchedule = loadModeSchedule(taskFile, "initialModeSchedule", false);
-  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(taskFile, "defaultModeSequenceTemplate", false);
-
-  const auto defaultGait = [&] {
-    Gait gait{};
-    gait.duration = defaultModeSequenceTemplate.switchingTimes.back();
-    // Events: from time -> phase
-    std::for_each(defaultModeSequenceTemplate.switchingTimes.begin() + 1, defaultModeSequenceTemplate.switchingTimes.end() - 1,
-                  [&](double eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
-    // Modes:
-    gait.modeSequence = defaultModeSequenceTemplate.modeSequence;
-    return gait;
-  }();
-
-  // display
-  std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
-  std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
-
-  return std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings_.phaseTransitionStanceTime);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile, const std::string& targetCommandFile,
-                                                     const ::urdf::ModelInterfaceSharedPtr& urdfTree) {
+void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile, const std::string& urdfFile,
+                                                     const std::string& referenceFile) {
   // PinocchioInterface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(urdfTree, modelSettings_.jointNames)));
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(urdfFile, modelSettings_.jointNames)));
 
   // CentroidalModelInfo
   centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
-      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
-      centroidal_model::loadDefaultJointState(12, targetCommandFile), modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
+      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile), centroidal_model::loadDefaultJointState(12, referenceFile),
+      modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
 
   // Swing trajectory planner
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
       new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config"), 4));
 
   // Mode schedule manager
-  referenceManagerPtr_ = std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(taskFile), std::move(swingTrajectoryPlanner));
+  referenceManagerPtr_ =
+      std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile), std::move(swingTrajectoryPlanner));
 
   // Optimal control problem
   problemPtr_.reset(new OptimalControlProblem);
@@ -140,7 +134,7 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   loadData::loadCppDataType(taskFile, "legged_robot_interface.useAnalyticalGradientsDynamics", useAnalyticalGradientsDynamics);
   std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
   if (useAnalyticalGradientsDynamics) {
-    throw std::runtime_error("[LeggedRobotInterface::setupOptimalConrolProblem] The analytical dynamics class is not yet implemented.");
+    throw std::runtime_error("[LeggedRobotInterface::setupOptimalConrolProblem] The analytical dynamics class is not yet implemented!");
   } else {
     const std::string modelName = "dynamics";
     dynamicsPtr.reset(new LeggedRobotDynamicsAD(*pinocchioInterfacePtr_, centroidalModelInfo_, modelName, modelSettings_));
@@ -198,6 +192,31 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   // Initialization
   constexpr bool extendNormalizedMomentum = true;
   initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedMomentum));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::string& file) {
+  const auto initModeSchedule = loadModeSchedule(file, "initialModeSchedule", false);
+  const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(file, "defaultModeSequenceTemplate", false);
+
+  const auto defaultGait = [&] {
+    Gait gait{};
+    gait.duration = defaultModeSequenceTemplate.switchingTimes.back();
+    // Events: from time -> phase
+    std::for_each(defaultModeSequenceTemplate.switchingTimes.begin() + 1, defaultModeSequenceTemplate.switchingTimes.end() - 1,
+                  [&](double eventTime) { gait.eventPhases.push_back(eventTime / gait.duration); });
+    // Modes:
+    gait.modeSequence = defaultModeSequenceTemplate.modeSequence;
+    return gait;
+  }();
+
+  // display
+  std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
+  std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
+
+  return std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings_.phaseTransitionStanceTime);
 }
 
 /******************************************************************************************************/

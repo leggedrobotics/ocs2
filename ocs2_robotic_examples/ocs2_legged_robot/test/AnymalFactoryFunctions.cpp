@@ -29,17 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
-#include <ros/package.h>
-
 #include "ocs2_legged_robot/test/AnymalFactoryFunctions.h"
 
 #include <ocs2_centroidal_model/FactoryFunctions.h>
-#include <ocs2_legged_robot/common/ModelSettings.h>
+#include <ocs2_robotic_assets/package_path.h>
+
+#include "ocs2_legged_robot/common/ModelSettings.h"
+#include "ocs2_legged_robot/package_path.h"
 
 namespace {
-const std::string ROBOT_URDF_PATH = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
-const std::string ROBOT_TASK_FILE_PATH = ros::package::getPath("ocs2_legged_robot") + "/config/mpc/" + "task.info";
-const std::string ROBOT_COMMAND_PATH = ros::package::getPath("ocs2_legged_robot") + "/config/command/" + "targetTrajectories.info";
+const std::string ROBOT_URDF_PATH = ocs2::robotic_assets::getPath() + "/resources/anymal_c/urdf/anymal.urdf";
+const std::string ROBOT_TASK_FILE_PATH = ocs2::legged_robot::getPath() + "/config/mpc/" + "task.info";
+const std::string ROBOT_COMMAND_PATH = ocs2::legged_robot::getPath() + "/config/command/" + "targetTrajectories.info";
 }  // unnamed namespace
 
 namespace ocs2 {

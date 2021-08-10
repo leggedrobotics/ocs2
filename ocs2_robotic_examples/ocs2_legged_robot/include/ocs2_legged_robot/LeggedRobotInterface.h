@@ -55,12 +55,14 @@ class LeggedRobotInterface final : public RobotInterface {
  public:
   /**
    * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
-   * @param [in] targetCommandFile: The path of the target command file
-   * @param [in] urdfTree: Pointer to a URDF model tree
+   *
+   * @throw Invalid argument error if input task file or urdf file does not exist.
+   *
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] urdfFile: The absolute path to the URDF file for the robot.
+   * @param [in] referenceFile: The absolute path to the reference configuration file.
    */
-  LeggedRobotInterface(const std::string& taskFileFolderName, const std::string& targetCommandFile,
-                       const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+  LeggedRobotInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile);
 
   ~LeggedRobotInterface() override = default;
 
@@ -81,9 +83,9 @@ class LeggedRobotInterface final : public RobotInterface {
   std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
  private:
-  std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& taskFile);
-  void setupOptimalConrolProblem(const std::string& taskFile, const std::string& targetCommandFile,
-                                 const ::urdf::ModelInterfaceSharedPtr& urdfTree);
+  void setupOptimalConrolProblem(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile);
+
+  std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& file);
 
   std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info);
   void initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info, matrix_t& R);

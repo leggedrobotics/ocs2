@@ -37,7 +37,7 @@ namespace robotic_assets {
 
 /** Gets the path to the package source directory. */
 inline std::string getPath() {
-  return "/home/farbod/Programs/ocs2_ws/src/ocs2_dev/ocs2_robotic_assets";
+  return "@PROJECT_SOURCE_DIR@";
 }
 
 }  // namespace robotic_assets

@@ -38,7 +38,7 @@ namespace ocs2 {
 namespace mobile_manipulator {
 
 /**
- * @brief Implementation of a wheel-based mobile manipulator.
+ * Implementation of a wheel-based mobile manipulator.
  *
  * The wheel-based manipulator is simulated 2D-bicycle model for the base. The state
  * of the robot is: (base x, base y, base yaw, arm joints).
@@ -48,21 +48,28 @@ namespace mobile_manipulator {
  */
 class WheelBasedMobileManipulatorDynamics final : public SystemDynamicsBaseAD {
  public:
-  using Base = SystemDynamicsBaseAD;
+  /**
+   * Constructor
+   *
+   * @param [in] modelInfo : The manipulator information.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
+   * @param [in] verbose : Display information.
+   */
+  WheelBasedMobileManipulatorDynamics(MobileManipulatorModelInfo modelInfo, const std::string& modelName,
+                                      const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
-  explicit WheelBasedMobileManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& modelInfo,
-                                               const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                                               bool verbose = true);
   ~WheelBasedMobileManipulatorDynamics() override = default;
   WheelBasedMobileManipulatorDynamics* clone() const override { return new WheelBasedMobileManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ad_vector_t& parameters) const override;
 
  private:
   WheelBasedMobileManipulatorDynamics(const WheelBasedMobileManipulatorDynamics& rhs) = default;
 
-  MobileManipulatorModelInfo info_;
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& /*parameters*/) const override;
+
+  const MobileManipulatorModelInfo info_;
 };
 
 }  // namespace mobile_manipulator

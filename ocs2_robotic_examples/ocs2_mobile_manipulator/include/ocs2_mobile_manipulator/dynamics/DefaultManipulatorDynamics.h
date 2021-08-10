@@ -38,7 +38,7 @@ namespace ocs2 {
 namespace mobile_manipulator {
 
 /**
- * @brief Implementation of a fixed arm manipulator dynamics.
+ * Implementation of a fixed arm manipulator dynamics.
  *
  * The fixed-arm manipulator has the state: (arm joints).
  * The end-effector targets are assumed to given with respect to the base frame.
@@ -46,20 +46,26 @@ namespace mobile_manipulator {
  */
 class DefaultManipulatorDynamics final : public SystemDynamicsBaseAD {
  public:
-  using Base = SystemDynamicsBaseAD;
+  /**
+   * Constructor
+   *
+   * @param [in] modelInfo : The manipulator information.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
+   * @param [in] verbose : Display information.
+   */
+  DefaultManipulatorDynamics(const MobileManipulatorModelInfo& modelInfo, const std::string& modelName,
+                             const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
-  explicit DefaultManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& modelInfo,
-                                      const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
   ~DefaultManipulatorDynamics() override = default;
   DefaultManipulatorDynamics* clone() const override { return new DefaultManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ad_vector_t& parameters) const override;
 
  private:
   DefaultManipulatorDynamics(const DefaultManipulatorDynamics& rhs) = default;
 
-  MobileManipulatorModelInfo info_;
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& /*parameters*/) const override;
 };
 
 }  // namespace mobile_manipulator

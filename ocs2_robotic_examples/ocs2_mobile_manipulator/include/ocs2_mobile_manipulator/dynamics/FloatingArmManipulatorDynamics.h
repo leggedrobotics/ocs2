@@ -38,7 +38,7 @@ namespace ocs2 {
 namespace mobile_manipulator {
 
 /**
- * @brief Implementation of a fixed arm manipulator dynamics.
+ * Implementation of a fixed arm manipulator dynamics.
  *
  * The fixed-arm manipulator has the state: (6-DOF base pose, arm joints).
  * The base orientation is represented using quaternion orientation.
@@ -47,21 +47,26 @@ namespace mobile_manipulator {
  */
 class FloatingArmManipulatorDynamics final : public SystemDynamicsBaseAD {
  public:
-  using Base = SystemDynamicsBaseAD;
+  /**
+   * Constructor
+   *
+   * @param [in] modelInfo : The manipulator information.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
+   * @param [in] verbose : Display information.
+   */
+  FloatingArmManipulatorDynamics(const MobileManipulatorModelInfo& modelInfo, const std::string& modelName,
+                                 const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
-  explicit FloatingArmManipulatorDynamics(const std::string& modelName, const MobileManipulatorModelInfo& modelInfo,
-                                          const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                                          bool verbose = true);
   ~FloatingArmManipulatorDynamics() override = default;
   FloatingArmManipulatorDynamics* clone() const override { return new FloatingArmManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ad_vector_t& parameters) const override;
 
  private:
   FloatingArmManipulatorDynamics(const FloatingArmManipulatorDynamics& rhs) = default;
 
-  MobileManipulatorModelInfo info_;
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& /*parameters*/) const override;
 };
 
 }  // namespace mobile_manipulator

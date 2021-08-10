@@ -172,15 +172,24 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   }
 
   // Dynamics
-  if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::WheelBasedMobileManipulator) {
-    problem_.dynamicsPtr.reset(
-        new WheelBasedMobileManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
-  } else if (mobileManipulatorModelInfo_.manipulatorModelType == ManipulatorModelType::FloatingArmManipulator) {
-    problem_.dynamicsPtr.reset(
-        new FloatingArmManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
-  } else {
-    problem_.dynamicsPtr.reset(
-        new DefaultManipulatorDynamics("dynamics", mobileManipulatorModelInfo_, libraryFolder, recompileLibraries, true));
+  switch (mobileManipulatorModelInfo_.manipulatorModelType) {
+    case ManipulatorModelType::DefaultManipulator: {
+      problem_.dynamicsPtr.reset(
+          new DefaultManipulatorDynamics(mobileManipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
+      break;
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      problem_.dynamicsPtr.reset(
+          new FloatingArmManipulatorDynamics(mobileManipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
+      break;
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      problem_.dynamicsPtr.reset(
+          new WheelBasedMobileManipulatorDynamics(mobileManipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
   }
 
   /*

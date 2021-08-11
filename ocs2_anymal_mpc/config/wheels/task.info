@@ -32,7 +32,7 @@ model_settings
     terrainMargin                 0.035
     previousFootholdFactor        0.333
     previousFootholdDeadzone      0.05
-    previousFootholdTimeDeadzone  0.2
+    previousFootholdTimeDeadzone  0.25
   }
 
   mpcGoalCommandDelay           0.1

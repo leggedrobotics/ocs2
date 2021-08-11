@@ -41,8 +41,9 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
   using ad_com_model_t = ComModelBase<ocs2::ad_scalar_t>;
 
   MotionTrackingCost(const Weights& settings, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                     const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
-                     const ad_com_model_t& adComModel, bool recompile);
+                     const SwingTrajectoryPlanner& swingTrajectoryPlanner, const kinematic_model_t& kinematicModel,
+                     const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel, const ad_com_model_t& adComModel,
+                     bool recompile);
 
   ~MotionTrackingCost() override = default;
   MotionTrackingCost* clone() const { return new MotionTrackingCost(*this); }
@@ -57,6 +58,7 @@ class MotionTrackingCost : public ocs2::StateInputCostGaussNewtonAd {
 
  private:
   const SwitchedModelModeScheduleManager* modeScheduleManagerPtr_;
+  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;

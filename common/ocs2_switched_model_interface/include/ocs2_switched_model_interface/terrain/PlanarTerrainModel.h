@@ -20,6 +20,8 @@ class PlanarTerrainModel : public TerrainModel {
 
   TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const override;
 
+  vector3_t getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
+
  private:
   TerrainPlane terrainPlane_;
 };

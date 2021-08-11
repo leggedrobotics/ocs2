@@ -63,6 +63,7 @@ add_library(${PROJECT_NAME}
 	src/foot_planner/FootPhase.cpp
 	src/foot_planner/QuinticSplineSwing.cpp
 	src/foot_planner/SplineCpg.cpp
+	src/foot_planner/SwingSpline3d.cpp
 	src/foot_planner/SwingTrajectoryPlanner.cpp
 	src/initialization/ComKinoInitializer.cpp
 	src/logic/Gait.cpp

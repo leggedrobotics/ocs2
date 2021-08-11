@@ -12,8 +12,8 @@ SwitchedModelCostBase::SwitchedModelCostBase(const MotionTrackingCost::Weights& 
                                              const ad_com_model_t& adComModel, ModelSettings options)
     : ocs2::CostFunctionBase(),
       comModelPtr_(comModel.clone()),
-      trackingCostPtr_(new MotionTrackingCost(trackingWeights, modeScheduleManager, kinematicModel, adKinematicModel, comModel, adComModel,
-                                              options.recompileLibraries_)),
+      trackingCostPtr_(new MotionTrackingCost(trackingWeights, modeScheduleManager, swingTrajectoryPlanner, kinematicModel,
+                                              adKinematicModel, comModel, adComModel, options.recompileLibraries_)),
       footPlacementCost_(new FootPlacementCost(ocs2::RelaxedBarrierPenalty::Config(options.mu_, options.delta_),
                                                ocs2::RelaxedBarrierPenalty::Config(options.muSdf_, options.deltaSdf_), kinematicModel,
                                                adKinematicModel, comModel, adComModel, options.recompileLibraries_)),

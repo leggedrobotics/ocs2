@@ -47,8 +47,6 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
     case ManipulatorModelType::DefaultManipulator: {
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath);
-
-      break;
     }
     case ManipulatorModelType::FloatingArmManipulator: {
       // add 6 DoF for the floating base
@@ -57,7 +55,6 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
       jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
-      break;
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       // add XY-yaw joint for the wheel-base
@@ -67,11 +64,9 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
       jointComposite.addJoint(pinocchio::JointModelRZ());
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
-      break;
     }
     default:
       throw std::invalid_argument("Invalid manipulator model type provided.");
-      break;
   }
 }
 
@@ -94,7 +89,6 @@ PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPt
     case ManipulatorModelType::DefaultManipulator: {
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel);
-      break;
     }
     case ManipulatorModelType::FloatingArmManipulator: {
       // add 6 DoF for the floating base
@@ -103,7 +97,6 @@ PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPt
       jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
-      break;
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       // add XY-yaw joint for the wheel-base
@@ -113,11 +106,9 @@ PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPt
       jointComposite.addJoint(pinocchio::JointModelRZ());
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
-      break;
     }
     default:
       throw std::invalid_argument("Invalid manipulator model type provided.");
-      break;
   }
 }
 

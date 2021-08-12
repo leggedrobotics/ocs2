@@ -43,8 +43,8 @@ model_settings
   muSdf                         2.5
   deltaSdf                      0.005
 
-  muJoints                      1.0
-  deltaJoints                   0.05
+  muJoints                      0.1
+  deltaJoints                   0.01
 
   joint_lower_limits
   {

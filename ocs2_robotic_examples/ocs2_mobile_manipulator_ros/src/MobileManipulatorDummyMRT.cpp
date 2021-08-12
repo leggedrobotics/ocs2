@@ -74,14 +74,14 @@ int main(int argc, char** argv) {
   // initial state
   SystemObservation initObservation;
   initObservation.state = interface.getInitialState();
-  initObservation.input.setZero(interface.getMobileManipulatorModelInfo().inputDim);
+  initObservation.input.setZero(interface.getManipulatorModelInfo().inputDim);
   initObservation.time = 0.0;
 
   // initial command
   vector_t initTarget(7);
   initTarget.head(3) << 0, 1, 1;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
-  const vector_t zeroInput = vector_t::Zero(interface.getMobileManipulatorModelInfo().inputDim);
+  const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
   const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 
   // Run dummy (loops while ros is ok)

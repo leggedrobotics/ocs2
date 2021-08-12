@@ -29,38 +29,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-#include <string>
+#include <Eigen/Core>
 
-#include <ocs2_core/PreComputation.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
-#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h>
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-/** Callback for caching and reference update */
-class MobileManipulatorPreComputation : public PreComputation {
- public:
-  explicit MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info);
+/**
+ * Provides read/write access to the base pose.
+ */
+template <typename Derived>
+Eigen::Block<Derived, 6, 1> getBasePose(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
-  ~MobileManipulatorPreComputation() override = default;
+/**
+ * Provides read access to the base pose.
+ */
+template <typename Derived>
+const Eigen::Block<const Derived, 6, 1> getBasePose(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
-  MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
-  MobileManipulatorPreComputation* clone() const override;
+/**
+ * Provides read/write access to the arm joint angles.
+ */
+template <typename Derived>
+Eigen::Block<Derived, -1, 1> getJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
-  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
-  void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
-
-  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
-  const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }
-
- private:
-  PinocchioInterface pinocchioInterface_;
-  MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping_;
-};
+/**
+ * Provides read access to the arm joint angles.
+ */
+template <typename Derived>
+const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state,
+                                                        const ManipulatorModelInfo& info);
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2
+
+#include "implementation/AccessHelperFunctionsImpl.h"

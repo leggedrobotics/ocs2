@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
 #include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 #include "ocs2_mobile_manipulator/package_path.h"
 
@@ -58,7 +58,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
     const std::string urdfFile = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
     mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface(taskFile, libFolder, urdfFile));
     // obtain robot model info
-    modelInfo = mobileManipulatorInterfacePtr->getMobileManipulatorModelInfo();
+    modelInfo = mobileManipulatorInterfacePtr->getManipulatorModelInfo();
 
     // initialize reference
     const vector_t goalState = (vector_t(7) << goalPosition, goalOrientation.coeffs()).finished();
@@ -104,7 +104,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
   const vector3_t goalPosition = vector3_t(-0.5, -0.8, 0.6);
   const quaternion_t goalOrientation = quaternion_t(0.33, 0.0, 0.0, 0.95);
 
-  MobileManipulatorModelInfo modelInfo;
+  ManipulatorModelInfo modelInfo;
   std::unique_ptr<MobileManipulatorInterface> mobileManipulatorInterfacePtr;
   std::unique_ptr<PinocchioEndEffectorKinematicsCppAd> eeKinematicsPtr;
 };

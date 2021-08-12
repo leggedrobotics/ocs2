@@ -35,7 +35,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-WheelBasedMobileManipulatorDynamics::WheelBasedMobileManipulatorDynamics(MobileManipulatorModelInfo info, const std::string& modelName,
+WheelBasedMobileManipulatorDynamics::WheelBasedMobileManipulatorDynamics(ManipulatorModelInfo info, const std::string& modelName,
                                                                          const std::string& modelFolder /*= "/tmp/ocs2"*/,
                                                                          bool recompileLibraries /*= true*/, bool verbose /*= true*/)
     : info_(std::move(info)) {

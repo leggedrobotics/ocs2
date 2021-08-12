@@ -29,38 +29,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <type_traits>
-
-#include <ocs2_core/Types.h>
-#include <ocs2_core/automatic_differentiation/Types.h>
-
 namespace ocs2 {
 namespace mobile_manipulator {
 
-template <typename SCALAR>
-class MobileManipulatorModelInfoTpl;
-
-using MobileManipulatorModelInfo = MobileManipulatorModelInfoTpl<scalar_t>;
-using MobileManipulatorModelInfoCppAd = MobileManipulatorModelInfoTpl<ad_scalar_t>;
-
+/**
+ * @brief Defines various manipulator models.
+ */
 enum class ManipulatorModelType {
-  DefaultManipulator = 0,           // default model from the parsed URDF
+  DefaultManipulator = 0,           // default model from the parsed URDF directly
   WheelBasedMobileManipulator = 1,  // adds dummy XY-Y joints to the model parsed from URDF
   FloatingArmManipulator = 2,       // adds dummy XYZ-RPY joints to the model parsed from URDF
 };
 
-template <typename SCALAR>
-struct MobileManipulatorModelInfoTpl {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using scalar_t = SCALAR;
-  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
-  using vector3_t = Eigen::Matrix<SCALAR, 3, 1>;
-  using matrix3_t = Eigen::Matrix<SCALAR, 3, 3>;
-
-  template <typename T>  // Template for conditional compilation using SFINAE
-  using EnableIfScalar_t = typename std::enable_if<std::is_same<T, scalar_t>::value, bool>::type;
-
+/**
+ * @brief A data structure to store manipulator information. 
+ * 
+ * The attributes are filled by resolving the URDF model parsed.
+ */
+struct ManipulatorModelInfo {
+  
   ManipulatorModelType manipulatorModelType;  // type of manipulator: floating-base, wheel-base, default
   size_t stateDim;                            // number of states needed to define the system flow map
   size_t inputDim;                            // number of inputs needed to define the system flow map
@@ -68,22 +55,7 @@ struct MobileManipulatorModelInfoTpl {
   std::string baseFrame;                      // name of the root frame of the robot
   std::string eeFrame;                        // name of the end-effector frame of the robot
   std::vector<std::string> dofNames;          // name of the actuated DOFs in the robot
-
-  /** Casts MobileManipulatorModelInfo to MobileManipulatorModelInfoCppAD. */
-  template <typename T = SCALAR, EnableIfScalar_t<T> = true>
-  MobileManipulatorModelInfoCppAd toCppAd() const;
 };
-
-/* Methods to extract various state of the robot */
-Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state, const MobileManipulatorModelInfo& info);
-Eigen::Vector3d getBasePosition(Eigen::VectorXd state, const MobileManipulatorModelInfo& info);
-Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state, const MobileManipulatorModelInfo& info);
-
-/* Explicit template instantiation for scalar_t and ad_scalar_t */
-extern template struct MobileManipulatorModelInfoTpl<scalar_t>;
-extern template struct MobileManipulatorModelInfoTpl<ad_scalar_t>;
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2
-
-// EOF

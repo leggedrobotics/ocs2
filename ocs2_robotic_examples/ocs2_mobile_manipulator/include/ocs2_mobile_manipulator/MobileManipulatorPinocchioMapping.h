@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -47,7 +47,7 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
    * Constructor
    * @param [in] info : mobile manipulator model information.
    */
-  explicit MobileManipulatorPinocchioMapping(MobileManipulatorModelInfoTpl<SCALAR> info);
+  explicit MobileManipulatorPinocchioMapping(ManipulatorModelInfoTpl<SCALAR> info);
 
   ~MobileManipulatorPinocchioMapping() override = default;
   MobileManipulatorPinocchioMapping<SCALAR>* clone() const override;
@@ -83,12 +83,12 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
   /**
    * Returns the mobile manipulator model info.
    */
-  const MobileManipulatorModelInfoTpl<SCALAR>& getMobileManipulatorModelInfo() const { return modelInfo_; }
+  const ManipulatorModelInfoTpl<SCALAR>& getManipulatorModelInfo() const { return modelInfo_; }
 
  private:
   MobileManipulatorPinocchioMapping(const MobileManipulatorPinocchioMapping& rhs) = default;
 
-  const MobileManipulatorModelInfoTpl<SCALAR> modelInfo_;
+  const ManipulatorModelInfoTpl<SCALAR> modelInfo_;
 };
 
 }  // namespace mobile_manipulator

@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 
-#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
+#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
@@ -55,7 +55,7 @@ class DefaultManipulatorDynamics final : public SystemDynamicsBaseAD {
    * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
    * @param [in] verbose : Display information.
    */
-  DefaultManipulatorDynamics(const MobileManipulatorModelInfo& modelInfo, const std::string& modelName,
+  DefaultManipulatorDynamics(const ManipulatorModelInfo& modelInfo, const std::string& modelName,
                              const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
   ~DefaultManipulatorDynamics() override = default;

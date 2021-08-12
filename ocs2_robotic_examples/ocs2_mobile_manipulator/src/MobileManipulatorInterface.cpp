@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/JointVelocityLimits.h"
@@ -122,9 +122,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfTree, removeJointNames, modelType)));
   std::cerr << *pinocchioInterfacePtr_;
 
-  // MobileManipulatorModelInfo
-  mobileManipulatorModelInfo_ =
-      mobile_manipulator::createMobileManipulatorModelInfo(*pinocchioInterfacePtr_, modelType, baseFrame, eeFrame);
+  // ManipulatorModelInfo
+  manipulatorModelInfo_ =
+      mobile_manipulator::createManipulatorModelInfo(*pinocchioInterfacePtr_, modelType, baseFrame, eeFrame);
 
   bool usePreComputation = true;
   bool recompileLibraries = true;
@@ -135,7 +135,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << " #### =============================================================================\n";
 
   // Default initial state
-  initialState_ = vector_t::Zero(mobileManipulatorModelInfo_.stateDim);
+  initialState_ = vector_t::Zero(manipulatorModelInfo_.stateDim);
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
 
@@ -172,20 +172,20 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   }
 
   // Dynamics
-  switch (mobileManipulatorModelInfo_.manipulatorModelType) {
+  switch (manipulatorModelInfo_.manipulatorModelType) {
     case ManipulatorModelType::DefaultManipulator: {
       problem_.dynamicsPtr.reset(
-          new DefaultManipulatorDynamics(mobileManipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
+          new DefaultManipulatorDynamics(manipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
       break;
     }
     case ManipulatorModelType::FloatingArmManipulator: {
       problem_.dynamicsPtr.reset(
-          new FloatingArmManipulatorDynamics(mobileManipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
+          new FloatingArmManipulatorDynamics(manipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
       break;
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       problem_.dynamicsPtr.reset(
-          new WheelBasedMobileManipulatorDynamics(mobileManipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
+          new WheelBasedMobileManipulatorDynamics(manipulatorModelInfo_, "dynamics", libraryFolder, recompileLibraries, true));
       break;
     }
     default:
@@ -196,7 +196,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
    * Pre-computation
    */
   if (usePreComputation) {
-    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, mobileManipulatorModelInfo_));
+    problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, manipulatorModelInfo_));
   }
 
   // Rollout
@@ -204,14 +204,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
-  initializerPtr_.reset(new DefaultInitializer(mobileManipulatorModelInfo_.inputDim));
+  initializerPtr_.reset(new DefaultInitializer(manipulatorModelInfo_.inputDim));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost(const std::string& taskFile) {
-  matrix_t R(mobileManipulatorModelInfo_.inputDim, mobileManipulatorModelInfo_.inputDim);
+  matrix_t R(manipulatorModelInfo_.inputDim, manipulatorModelInfo_.inputDim);
 
   std::cerr << "\n #### Input Cost Settings: ";
   std::cerr << "\n #### =============================================================================\n";
@@ -219,7 +219,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   std::cerr << "inputCost.R:  \n" << R << '\n';
   std::cerr << " #### =============================================================================\n";
 
-  return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R), mobileManipulatorModelInfo_.stateDim));
+  return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R), manipulatorModelInfo_.stateDim));
 }
 
 /******************************************************************************************************/
@@ -247,13 +247,13 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
-    MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping(mobileManipulatorModelInfo_);
-    PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, pinocchioMapping, {mobileManipulatorModelInfo_.eeFrame});
+    MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping(manipulatorModelInfo_);
+    PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, pinocchioMapping, {manipulatorModelInfo_.eeFrame});
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   } else {
-    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd(mobileManipulatorModelInfo_.toCppAd());
-    PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {mobileManipulatorModelInfo_.eeFrame},
-                                                     mobileManipulatorModelInfo_.stateDim, mobileManipulatorModelInfo_.inputDim,
+    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd(manipulatorModelInfo_.toCppAd());
+    PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {manipulatorModelInfo_.eeFrame},
+                                                     manipulatorModelInfo_.stateDim, manipulatorModelInfo_.inputDim,
                                                      "end_effector_kinematics", libraryFolder, recompileLibraries, false);
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   }
@@ -298,10 +298,10 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorSelfCollisionConstraint(
-        MobileManipulatorPinocchioMapping<scalar_t>(mobileManipulatorModelInfo_), std::move(geometryInterface), minimumDistance));
+        MobileManipulatorPinocchioMapping<scalar_t>(manipulatorModelInfo_), std::move(geometryInterface), minimumDistance));
   } else {
     constraint = std::unique_ptr<StateConstraint>(new SelfCollisionConstraintCppAd(
-        pinocchioInterface, MobileManipulatorPinocchioMapping<scalar_t>(mobileManipulatorModelInfo_), std::move(geometryInterface),
+        pinocchioInterface, MobileManipulatorPinocchioMapping<scalar_t>(manipulatorModelInfo_), std::move(geometryInterface),
         minimumDistance, "self_collision", libraryFolder, recompileLibraries, false));
   }
 
@@ -314,8 +314,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimitConstraint(const std::string& taskFile) {
-  vector_t lowerBound(mobileManipulatorModelInfo_.inputDim);
-  vector_t upperBound(mobileManipulatorModelInfo_.inputDim);
+  vector_t lowerBound(manipulatorModelInfo_.inputDim);
+  vector_t upperBound(manipulatorModelInfo_.inputDim);
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
 
@@ -332,11 +332,11 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointVelocityLimi
   loadData::loadPtreeValue(pt, delta, prefix + "delta", true);
   std::cerr << " #### =============================================================================\n";
 
-  std::unique_ptr<StateInputConstraint> constraint(new JointVelocityLimits(mobileManipulatorModelInfo_.inputDim));
+  std::unique_ptr<StateInputConstraint> constraint(new JointVelocityLimits(manipulatorModelInfo_.inputDim));
 
   std::unique_ptr<PenaltyBase> barrierFunction;
-  std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(mobileManipulatorModelInfo_.inputDim);
-  for (int i = 0; i < mobileManipulatorModelInfo_.inputDim; i++) {
+  std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(manipulatorModelInfo_.inputDim);
+  for (int i = 0; i < manipulatorModelInfo_.inputDim; i++) {
     barrierFunction.reset(new RelaxedBarrierPenalty({mu, delta}));
     penaltyArray[i].reset(new DoubleSidedPenalty(lowerBound(i), upperBound(i), std::move(barrierFunction)));
   }

@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorModelInfo.h>
+#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 
 #include <ros/package.h>
 #include <ros/ros.h>

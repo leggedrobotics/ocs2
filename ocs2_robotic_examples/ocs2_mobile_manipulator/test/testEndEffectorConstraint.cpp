@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
 #include "ocs2_mobile_manipulator/FactoryFunctions.h"
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
@@ -55,7 +55,7 @@ class testEndEffectorConstraint : public ::testing::Test {
 
   testEndEffectorConstraint()
       : pinocchioInterface(createMobileManipulatorPinocchioInterface()),
-        modelInfo(loadMobileManipulatorModelInfo()),
+        modelInfo(loadManipulatorModelInfo()),
         pinocchioMapping(modelInfo) {
     // initialize reference manager
     const vector_t positionOrientation = (vector_t(7) << vector3_t::Zero(), quaternion_t(1, 0, 0, 0).coeffs()).finished();
@@ -75,10 +75,10 @@ class testEndEffectorConstraint : public ::testing::Test {
   std::unique_ptr<MobileManipulatorPreComputation> preComputationPtr;
   std::shared_ptr<ReferenceManager> referenceManagerPtr;
   MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
-  MobileManipulatorModelInfo modelInfo;
+  ManipulatorModelInfo modelInfo;
 
  protected:
-  MobileManipulatorModelInfo loadMobileManipulatorModelInfo() {
+  ManipulatorModelInfo loadManipulatorModelInfo() {
     // files
     const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
     // read the task file
@@ -92,7 +92,7 @@ class testEndEffectorConstraint : public ::testing::Test {
     loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
     loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
     // return model
-    return mobile_manipulator::createMobileManipulatorModelInfo(pinocchioInterface, modelType, baseFrame, eeFrame);
+    return mobile_manipulator::createManipulatorModelInfo(pinocchioInterface, modelType, baseFrame, eeFrame);
   }
 
   PinocchioInterface createMobileManipulatorPinocchioInterface() {

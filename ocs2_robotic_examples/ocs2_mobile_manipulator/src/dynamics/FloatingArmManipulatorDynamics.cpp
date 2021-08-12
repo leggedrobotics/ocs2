@@ -35,7 +35,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-FloatingArmManipulatorDynamics::FloatingArmManipulatorDynamics(const MobileManipulatorModelInfo& info, const std::string& modelName,
+FloatingArmManipulatorDynamics::FloatingArmManipulatorDynamics(const ManipulatorModelInfo& info, const std::string& modelName,
                                                                const std::string& modelFolder /*= "/tmp/ocs2"*/,
                                                                bool recompileLibraries /*= true*/, bool verbose /*= true*/) {
   this->initialize(info.stateDim, info.inputDim, modelName, modelFolder, recompileLibraries, verbose);

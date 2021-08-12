@@ -77,7 +77,7 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
-  const MobileManipulatorModelInfo& getMobileManipulatorModelInfo() const { return mobileManipulatorModelInfo_; }
+  const ManipulatorModelInfo& getManipulatorModelInfo() const { return manipulatorModelInfo_; }
 
  private:
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
@@ -99,7 +99,7 @@ class MobileManipulatorInterface final : public RobotInterface {
   std::unique_ptr<Initializer> initializerPtr_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
-  MobileManipulatorModelInfo mobileManipulatorModelInfo_;
+  ManipulatorModelInfo manipulatorModelInfo_;
 
   vector_t initialState_;
 };

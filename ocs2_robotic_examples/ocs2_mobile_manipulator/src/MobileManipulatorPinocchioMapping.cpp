@@ -36,7 +36,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-MobileManipulatorPinocchioMapping<SCALAR>::MobileManipulatorPinocchioMapping(MobileManipulatorModelInfoTpl<SCALAR> info)
+MobileManipulatorPinocchioMapping<SCALAR>::MobileManipulatorPinocchioMapping(ManipulatorModelInfoTpl<SCALAR> info)
     : modelInfo_(std::move(info)) {}
 
 /******************************************************************************************************/

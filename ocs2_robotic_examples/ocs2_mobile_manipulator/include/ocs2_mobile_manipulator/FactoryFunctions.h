@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include "ocs2_mobile_manipulator/MobileManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -60,18 +60,18 @@ PinocchioInterface createPinocchioInterface(const ::urdf::ModelInterfaceSharedPt
                                             const ManipulatorModelType& type);
 
 /**
- * Create a scalar-typed MobileManipulatorModelInfo.
+ * Create a scalar-typed ManipulatorModelInfo.
  * @param [in] interface: Pinocchio interface
  * @param [in] type: Type of template model (default-arm or wheel-based or floating-arm)
  * @param [in] baseFrame: Name of the root frame.
  * @param [in] eeFrame: Name of the end-effector frame.
- * @return MobileManipulatorModelInfo
+ * @return ManipulatorModelInfo
  */
-MobileManipulatorModelInfo createMobileManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type,
+ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type,
                                                             const std::string& baseFrame, const std::string& eeFrame);
 
 /** Load ManipulatorModelType for a config file */
-ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName = "centroidalModelType");
+ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName = "manipulatorModelType");
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

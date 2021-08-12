@@ -35,7 +35,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-DefaultManipulatorDynamics::DefaultManipulatorDynamics(const MobileManipulatorModelInfo& info, const std::string& modelName,
+DefaultManipulatorDynamics::DefaultManipulatorDynamics(const ManipulatorModelInfo& info, const std::string& modelName,
                                                        const std::string& modelFolder, bool recompileLibraries /*= true*/,
                                                        bool verbose /*= true*/) {
   this->initialize(info.stateDim, info.inputDim, modelName, modelFolder, recompileLibraries, verbose);

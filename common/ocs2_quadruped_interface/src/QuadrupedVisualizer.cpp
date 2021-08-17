@@ -185,70 +185,75 @@ void QuadrupedVisualizer::publishCenterOfMassPose(ros::Time timeStamp, const bas
 void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const ocs2::TargetTrajectories& targetTrajectories) const {
   const auto& stateTrajectory = targetTrajectories.stateTrajectory;
   const auto& inputTrajectory = targetTrajectories.inputTrajectory;
+  const size_t stateTrajSize = stateTrajectory.size();
+  const size_t inputTrajSize = inputTrajectory.size();
 
   // Reserve com messages
   std::vector<geometry_msgs::Point> desiredComPositionMsg;
-  desiredComPositionMsg.reserve(stateTrajectory.size());
+  desiredComPositionMsg.reserve(stateTrajSize);
   geometry_msgs::PoseArray poseArray;
-  poseArray.poses.reserve(stateTrajectory.size());
+  poseArray.poses.reserve(stateTrajSize);
   visualization_msgs::MarkerArray velArray;
-  velArray.markers.reserve(stateTrajectory.size());
+  velArray.markers.reserve(stateTrajSize);
   visualization_msgs::MarkerArray angVelArray;
-  angVelArray.markers.reserve(stateTrajectory.size());
+  angVelArray.markers.reserve(stateTrajSize);
 
   // Reserve feet messages
   feet_array_t<std::vector<geometry_msgs::Point>> desiredFeetPositionMsgs;
   feet_array_t<visualization_msgs::MarkerArray> feetVelArray;
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-    desiredFeetPositionMsgs[i].reserve(stateTrajectory.size());
-    feetVelArray[i].markers.reserve(stateTrajectory.size());
+    desiredFeetPositionMsgs[i].reserve(stateTrajSize);
+    feetVelArray[i].markers.reserve(stateTrajSize);
   }
   feet_array_t<geometry_msgs::PoseArray> feetPoseArrays;
-  std::for_each(feetPoseArrays.begin(), feetPoseArrays.end(),
-                [&](geometry_msgs::PoseArray& p) { p.poses.reserve(stateTrajectory.size()); });
+  std::for_each(feetPoseArrays.begin(), feetPoseArrays.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(stateTrajSize); });
 
-  for (size_t j = 0; j < stateTrajectory.size(); j++) {
-    const auto state = stateTrajectory.at(j);
+  for (size_t k = 0; k < stateTrajSize; ++k) {
+    const state_vector_t state = stateTrajectory[k];
     input_vector_t input;
-    if (j < inputTrajectory.size()) {
-      input = inputTrajectory.at(j);
+    if (k < inputTrajSize) {
+      input = inputTrajectory[k];
     } else {
       input.setZero();
     }
 
+    // Extract elements from state
+    const auto comPose = getComPose(state);
+    const auto comTwist = getComLocalVelocities(state);
+    const auto comPositionInOrigin = getPositionInOrigin(comPose);
+    const auto eulerXYZ = getOrientation(comPose);
+    const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(eulerXYZ);
+    const auto basePose = comModelPtr_->calculateBasePose(comPose);
+    const auto baseTwist = comModelPtr_->calculateBaseLocalVelocities(comTwist);
+    const auto qJoints = getJointPositions(state);
+    const auto qVelJoints = getJointVelocities(input);
+
     // Construct pose msg
-    const base_coordinate_t comPose = state.head<6>();
     geometry_msgs::Pose pose;
-    pose.position = ocs2::getPointMsg(getPositionInOrigin(comPose));
-    pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(comPose)));
+    pose.position = ocs2::getPointMsg(comPositionInOrigin);
+    pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(eulerXYZ));
 
     // Construct vel msg
-    const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(comPose));
-    const base_coordinate_t comTwist = state.segment<6>(6);
     const vector3_t o_comVel = o_R_b * getLinearVelocity(comTwist);
     const vector3_t o_comAngVel = o_R_b * getAngularVelocity(comTwist);
 
     // Fill message containers
     desiredComPositionMsg.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
-    velArray.markers.emplace_back(getArrowAtPointMsg(o_comVel / velScale_, getPositionInOrigin(comPose), ocs2::Color::blue));
-    angVelArray.markers.emplace_back(getArrowAtPointMsg(o_comAngVel / velScale_, getPositionInOrigin(comPose), ocs2::Color::green));
+    velArray.markers.emplace_back(getArrowAtPointMsg(o_comVel / velScale_, comPositionInOrigin, ocs2::Color::blue));
+    angVelArray.markers.emplace_back(getArrowAtPointMsg(o_comAngVel / velScale_, comPositionInOrigin, ocs2::Color::green));
 
     // Fill feet msgs
-    const auto basePose = comModelPtr_->calculateBasePose(comPose);
-    const auto baseTwist = comModelPtr_->calculateBaseLocalVelocities(comTwist);
-    const auto qJoints = state.tail<12>();
-    const auto qVelJoints = input.tail<12>();
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-      const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
-      const auto o_feetVelocity = kinematicModelPtr_->footVelocityInOriginFrame(i, basePose, baseTwist, qJoints, qVelJoints);
+      const auto o_footPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
+      const auto o_footVelocity = kinematicModelPtr_->footVelocityInOriginFrame(i, basePose, baseTwist, qJoints, qVelJoints);
       geometry_msgs::Pose footPose;
-      footPose.position = ocs2::getPointMsg(o_feetPosition);
+      footPose.position = ocs2::getPointMsg(o_footPosition);
       footPose.orientation =
           ocs2::getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
-      feetPoseArrays[i].poses.push_back(std::move(footPose));
       desiredFeetPositionMsgs[i].push_back(footPose.position);
-      feetVelArray[i].markers.emplace_back(getArrowAtPointMsg(o_feetVelocity / velScale_, o_feetPosition, feetColorMap_[i]));
+      feetPoseArrays[i].poses.push_back(std::move(footPose));
+      feetVelArray[i].markers.emplace_back(getArrowAtPointMsg(o_footVelocity / velScale_, o_footPosition, feetColorMap_[i]));
     }
   }
 

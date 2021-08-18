@@ -1,5 +1,5 @@
 library 'continuous_integration_pipeline'
-ciPipeline("--ros-distro noetic --publish-doxygen --recipes raisimlib \
+ciPipeline("--ros-distro noetic --publish-doxygen --recipes onnxruntime raisimlib \
             --dependencies 'git@github.com:leggedrobotics/hpp-fcl.git;master;git'\
                            'git@github.com:leggedrobotics/pinocchio.git;master;git'\
                            'git@github.com:ANYbotics/anymal_c_simple_description.git;master;git'\

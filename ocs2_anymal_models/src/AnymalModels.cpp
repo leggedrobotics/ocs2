@@ -15,9 +15,9 @@
 #include <ocs2_anymal_models/chimera/AnymalChimeraCom.h>
 #include <ocs2_anymal_models/chimera/AnymalChimeraKinematics.h>
 #include <ocs2_anymal_models/chimera/WholebodyDynamicsChimera.h>
-#include <ocs2_anymal_models/croc/AnymalCrocCom.h>
-#include <ocs2_anymal_models/croc/AnymalCrocKinematics.h>
-#include <ocs2_anymal_models/croc/WholebodyDynamicsCroc.h>
+#include <ocs2_anymal_models/chip/AnymalChipCom.h>
+#include <ocs2_anymal_models/chip/AnymalChipKinematics.h>
+#include <ocs2_anymal_models/chip/WholebodyDynamicsChip.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsCom.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
 #include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraCom.h>
@@ -29,7 +29,7 @@ std::string toString(AnymalModel model) {
   static const std::unordered_map<AnymalModel, std::string> map{{AnymalModel::Bear, "bear"},
                                                                 {AnymalModel::Cerberus, "cerberus"},
                                                                 {AnymalModel::Chimera, "chimera"},
-                                                                {AnymalModel::Croc, "croc"},
+                                                                {AnymalModel::Chip, "chip"},
                                                                 {AnymalModel::Wheels, "wheels"},
                                                                 {AnymalModel::WheelsChimera, "wheels_chimera"}};
   return map.at(model);
@@ -39,7 +39,7 @@ AnymalModel stringToAnymalModel(const std::string& name) {
   static const std::unordered_map<std::string, AnymalModel> map{{"bear", AnymalModel::Bear},
                                                                 {"cerberus", AnymalModel::Cerberus},
                                                                 {"chimera", AnymalModel::Chimera},
-                                                                {"croc", AnymalModel::Croc},
+                                                                {"chip", AnymalModel::Chip},
                                                                 {"wheels", AnymalModel::Wheels},
                                                                 {"wheels_chimera", AnymalModel::WheelsChimera}};
   return map.at(name);
@@ -53,8 +53,8 @@ std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKi
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalCerberusKinematics());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalChimeraKinematics());
-    case AnymalModel::Croc:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalCrocKinematics());
+    case AnymalModel::Chip:
+      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalChipKinematics());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalWheelsKinematics());
     case AnymalModel::WheelsChimera:
@@ -72,8 +72,8 @@ std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnyma
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalCerberusKinematicsAd());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalChimeraKinematicsAd());
-    case AnymalModel::Croc:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalCrocKinematicsAd());
+    case AnymalModel::Chip:
+      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalChipKinematicsAd());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsKinematicsAd());
     case AnymalModel::WheelsChimera:
@@ -91,8 +91,8 @@ std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalCerberusCom());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalChimeraCom());
-    case AnymalModel::Croc:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalCrocCom());
+    case AnymalModel::Chip:
+      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalChipCom());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalWheelsCom());
     case AnymalModel::WheelsChimera:
@@ -110,8 +110,8 @@ std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComMod
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalCerberusComAd());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalChimeraComAd());
-    case AnymalModel::Croc:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalCrocComAd());
+    case AnymalModel::Chip:
+      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalChipComAd());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsComAd());
     case AnymalModel::WheelsChimera:
@@ -129,8 +129,8 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>> getWholebodyD
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCerberus());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsChimera());
-    case AnymalModel::Croc:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCroc());
+    case AnymalModel::Chip:
+      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsChip());
     case AnymalModel::Wheels:
       throw std::runtime_error("[getWholebodyDynamics] not implemented for wheels");
     case AnymalModel::WheelsChimera:
@@ -148,8 +148,8 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>> getWholebo
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsCerberusAd());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsChimeraAd());
-    case AnymalModel::Croc:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsCrocAd());
+    case AnymalModel::Chip:
+      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsChipAd());
     case AnymalModel::Wheels:
       throw std::runtime_error("[getWholebodyDynamicsAd] not implemented for wheels");
     case AnymalModel::WheelsChimera:

@@ -3,7 +3,7 @@
 Generate kindsl files from a urdf by running urdf2robcogen
 
 ```commandline
-roslaunch ocs2_anymal_models urdf2rocogen.launch robot_name:=croc
+roslaunch ocs2_anymal_models urdf2rocogen.launch robot_name:=chip
 ```
 
 The kindsl files are placed in ocs2_anymal_models/kindsl/<robot_name>

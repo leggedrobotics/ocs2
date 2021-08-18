@@ -46,9 +46,9 @@ add_library(${PROJECT_NAME}
   src/chimera/AnymalChimeraCom.cpp
   src/chimera/AnymalChimeraKinematics.cpp
   src/chimera/WholebodyDynamicsChimera.cpp
-  src/croc/AnymalCrocCom.cpp
-  src/croc/AnymalCrocKinematics.cpp
-  src/croc/WholebodyDynamicsCroc.cpp
+  src/chip/AnymalChipCom.cpp
+  src/chip/AnymalChipKinematics.cpp
+  src/chip/WholebodyDynamicsChip.cpp
   src/wheels/AnymalWheelsCom.cpp
   src/wheels/AnymalWheelsKinematics.cpp
   src/wheels_chimera/AnymalWheelsChimeraCom.cpp
@@ -89,7 +89,7 @@ catkin_add_gtest(${PROJECT_NAME}_switched_model_test
   test/TestAnymalBear.cpp
   test/TestAnymalCerberus.cpp
   test/TestAnymalChimera.cpp
-  test/TestAnymalCroc.cpp
+  test/TestAnymalChip.cpp
   test/TestAnymalWheels.cpp
   test/TestAnymalWheelsChimera.cpp
   test/TestRobcogenHelpers.cpp

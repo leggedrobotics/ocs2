@@ -5,7 +5,7 @@
 #include <ocs2_anymal_models/AnymalModels.h>
 
 TEST(AnymalRaisim, Conversions) {
-  for (auto model : {anymal::AnymalModel::Bear, anymal::AnymalModel::Croc}) {
+  for (auto model : {anymal::AnymalModel::Bear, anymal::AnymalModel::Chip}) {
     auto anymalCom = anymal::getAnymalComModel(model);
     auto anymalKinematics = anymal::getAnymalKinematics(model);
     auto anymalWbd = anymal::getWholebodyDynamics(model);

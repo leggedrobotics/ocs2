@@ -1,7 +1,7 @@
 <launch>
 
-  <arg name="robot_name"            default="croc"/>
-  <arg name="description_name"      default="ocs2_anymal_croc_description"/>
+  <arg name="robot_name"            default="chip"/>
+  <arg name="description_name"      default="ocs2_anymal_chip_description"/>
   <arg name="output_folder"         default="$(find ocs2_anymal_models)/kindsl/$(arg robot_name)/"/>
   <arg name="verbose"               default="true"/>
 

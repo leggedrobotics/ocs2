@@ -113,19 +113,19 @@ MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedMo
       comModelPtr_(comModel.clone()),
       adComModelPtr_(adComModel.clone()) {
   // Weights are sqrt of settings
-  CostElements<ocs2::ad_scalar_t> weightStruct;
-  weightStruct.eulerXYZ = settings.eulerXYZ.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-  weightStruct.comPosition = settings.comPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-  weightStruct.comAngularVelocity = settings.comAngularVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-  weightStruct.comLinearVelocity = settings.comLinearVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
+  CostElements<ocs2::scalar_t> weightStruct;
+  weightStruct.eulerXYZ = settings.eulerXYZ.cwiseSqrt();
+  weightStruct.comPosition = settings.comPosition.cwiseSqrt();
+  weightStruct.comAngularVelocity = settings.comAngularVelocity.cwiseSqrt();
+  weightStruct.comLinearVelocity = settings.comLinearVelocity.cwiseSqrt();
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    weightStruct.jointPosition[leg] = settings.jointPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.footPosition[leg] = settings.footPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.jointVelocity[leg] = settings.jointVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.footVelocity[leg] = settings.footVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.contactForce[leg] = settings.contactForce.cwiseSqrt().cast<ocs2::ad_scalar_t>();
+    weightStruct.jointPosition[leg] = settings.jointPosition.cwiseSqrt();
+    weightStruct.footPosition[leg] = settings.footPosition.cwiseSqrt();
+    weightStruct.jointVelocity[leg] = settings.jointVelocity.cwiseSqrt();
+    weightStruct.footVelocity[leg] = settings.footVelocity.cwiseSqrt();
+    weightStruct.contactForce[leg] = settings.contactForce.cwiseSqrt();
   }
-  sqrtWeights_ = costElementsToVector(weightStruct);
+  sqrtWeights_ = costElementsToVector(weightStruct).cast<ocs2::ad_scalar_t>();
 
   initialize(STATE_DIM, INPUT_DIM, costVectorLength, "MotionTrackingCost", "/tmp/ocs2", recompile);
 };

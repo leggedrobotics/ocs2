@@ -220,7 +220,16 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   // Determine till when to use the previous solution
   const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
 
-  stateTrajectory.push_back(initState);
+  // Initial state
+  const scalar_t initTime = getIntervalStart(timeDiscretization[0]);
+  if (initTime < interpolateTill) {
+    assert(timeDiscretization[0].event != AnnotatedTime::Event::PreEvent);  // first discretization is never PreEvent.
+    stateTrajectory.push_back(
+        LinearInterpolation::interpolate(initTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
+  } else {
+    stateTrajectory.push_back(initState);
+  }
+
   for (int i = 0; i < N; i++) {
     if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
       // Event Node
@@ -231,8 +240,8 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
       const scalar_t time = getIntervalStart(timeDiscretization[i]);
       const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
       vector_t input, nextState;
-      if (time < interpolateTill) {  // Using previous solution
-        const bool useController = (i == 0);
+      if (time < interpolateTill) {
+        const bool useController = false;
         std::tie(input, nextState) =
             multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back(), useController);
       } else {  // Using initializer

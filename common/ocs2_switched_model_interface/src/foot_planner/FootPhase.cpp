@@ -131,7 +131,7 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
   const scalar_t distancetouchDownToApex = (apexPositionInWorld - touchDownPositionInWorld).norm();
   const scalar_t apexTime = liftOff_.time + distanceLiftoffToApex / (distanceLiftoffToApex + distancetouchDownToApex) * swingDuration;
 
-  const scalar_t velocityFactor = 2.0;  // TODO: check what velocity creates the right XY profile
+  const scalar_t velocityFactor = 3.0;  // TODO: check what velocity creates the right XY profile
   const vector3_t apexVelocityInWorld{velocityFactor * (touchDownPositionInWorld.x() - liftOffPositionInWorld.x()) / swingDuration,
                                       velocityFactor * (touchDownPositionInWorld.y() - liftOffPositionInWorld.y()) / swingDuration, 0.0};
 

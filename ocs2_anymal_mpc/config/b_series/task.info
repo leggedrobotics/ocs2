@@ -18,11 +18,11 @@ model_settings
   {
     liftOffVelocity               0.2
     touchDownVelocity            -0.4
-    swingHeight                   0.075
+    swingHeight                   0.08
     touchdownAfterHorizon         0.2
     errorGain                     20.0
     swingTimeScale                0.15
-    sdfMidswingMargin             0.03
+    sdfMidswingMargin             0.04
     terrainMargin                 0.035
     previousFootholdFactor        0.333
     previousFootholdDeadzone      0.05

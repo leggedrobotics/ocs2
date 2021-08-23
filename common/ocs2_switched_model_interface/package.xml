@@ -19,6 +19,7 @@
   <depend>ocs2_oc</depend>
   <depend>ocs2_msgs</depend>
   <depend>ocs2_ros_interfaces</depend>
+  <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_switched_model_msgs</depend>
 
 </package>

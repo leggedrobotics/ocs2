@@ -8,6 +8,8 @@
 #include <Eigen/Geometry>
 #include <cmath>
 
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
+
 namespace switched_model {
 
 /**
@@ -170,6 +172,54 @@ Eigen::Quaternion<SCALAR_T> quaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T,
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesFromQuaternionBaseToOrigin(const Eigen::Quaternion<SCALAR_T>& q_origin_base) {
   return q_origin_base.toRotationMatrix().eulerAngles(0, 1, 2);
+}
+
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToAngleAxis(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrix) {
+  // Helper function to select a 3d vector compatible with CppAd
+  auto selectSolutionGt = [](SCALAR_T left, SCALAR_T right, const Eigen::Matrix<SCALAR_T, 3, 1>& if_true,
+                             const Eigen::Matrix<SCALAR_T, 3, 1>& if_false) -> Eigen::Matrix<SCALAR_T, 3, 1> {
+    return {CppAD::CondExpGt(left, right, if_true[0], if_false[0]), CppAD::CondExpGt(left, right, if_true[1], if_false[1]),
+            CppAD::CondExpGt(left, right, if_true[2], if_false[2])};
+  };
+
+  const auto& R = rotationMatrix;
+
+  const SCALAR_T t = R(0, 0) + R(1, 1) + R(2, 2);
+  const Eigen::Matrix<SCALAR_T, 3, 1> r(R(2, 1) - R(1, 2), R(0, 2) - R(2, 0), R(1, 0) - R(0, 1));
+
+  // Tolerance to select alternative solution near singularity
+  const SCALAR_T epsNearZero(1e-8);
+  const SCALAR_T epsNearPi(1e-4);
+
+  // Rotation close to zero -> use taylor expansion, use when t > 3.0 - eps
+  const Eigen::Matrix<SCALAR_T, 3, 1> smallAngleSol = (SCALAR_T(0.5) - (t - SCALAR_T(3.0)) / SCALAR_T(12.0)) * r;
+
+  // Normal rotation, use normal logarithmic map
+  const SCALAR_T tmp = SCALAR_T(0.5) * (t - SCALAR_T(1.0));
+  const SCALAR_T theta = acos(tmp);
+  const Eigen::Matrix<SCALAR_T, 3, 1> normalSol = (SCALAR_T(0.5) * theta / sqrt(1.0 - tmp * tmp)) * r;
+
+  // Quaternion solution, when close to pi, use when t < -1.0 + eps
+  auto q = ocs2::matrixToQuaternion(R);
+  // Correct sign to make qw positive
+  q.vec() = selectSolutionGt(q.w(), SCALAR_T(0.0), q.vec(), -q.vec());
+  q.w() = CppAD::CondExpGt(q.w(), SCALAR_T(0.0), q.w(), -q.w());
+
+  const auto qVecNorm = sqrt(SCALAR_T(1.0) - q.w() * q.w());
+  Eigen::Matrix<SCALAR_T, 3, 1> quatSol = SCALAR_T(4.0) * atan(qVecNorm / (q.w() + SCALAR_T(1.0))) * q.vec() / qVecNorm;
+
+  // Select solution
+  const SCALAR_T smallAngleThreshold = SCALAR_T(3.0) - epsNearZero;  // select smallAngleSol if t > 3 - eps
+  const SCALAR_T largeAngleThreshold = -SCALAR_T(1.0) + epsNearPi;   // select quatSol if t < -1.0 + eps
+  return selectSolutionGt(t, largeAngleThreshold, selectSolutionGt(t, smallAngleThreshold, smallAngleSol, normalSol), quatSol);
+}
+
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotationError(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixToCurrent,
+                                            const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixToReference) {
+  const Eigen::Matrix<SCALAR_T, 3, 3> rotationCurrentToReference = rotationMatrixToCurrent.transpose() * rotationMatrixToReference;
+  return rotationMatrixToAngleAxis(rotationCurrentToReference);
 }
 
 /**

@@ -83,8 +83,74 @@ TEST(testRotations, eulerRates) {
     const switched_model::vector3_t eulerAngles = switched_model::vector3_t::Random();
     const switched_model::vector3_t angularVelocityInBase = switched_model::vector3_t::Random();
 
-    const switched_model::vector3_t eulerRate_check = switched_model::angularVelocitiesToEulerAngleDerivativesMatrix(eulerAngles) * angularVelocityInBase;
-    const switched_model::vector3_t eulerRate = switched_model::angularVelocitiesToEulerAngleDerivatives(angularVelocityInBase, eulerAngles);
+    const switched_model::vector3_t eulerRate_check =
+        switched_model::angularVelocitiesToEulerAngleDerivativesMatrix(eulerAngles) * angularVelocityInBase;
+    const switched_model::vector3_t eulerRate =
+        switched_model::angularVelocitiesToEulerAngleDerivatives(angularVelocityInBase, eulerAngles);
     ASSERT_NEAR((eulerRate_check - eulerRate).norm(), 0, 1e-12);
+  }
+}
+
+TEST(testRotations, rotationMatrixToAngleAxis) {
+  const ocs2::scalar_t angletol = 1e-6;
+  const ocs2::scalar_t vectol = 1e-6;
+
+  // small angle case
+  {
+    auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(switched_model::matrix3_t::Identity());
+    ASSERT_NEAR(computedAngleAxis.norm(), 0.0, angletol);
+
+    const ocs2::scalar_t smallAngle = 1e-12;
+    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(smallAngle, switched_model::vector3_t::Random().normalized());
+    computedAngleAxis = switched_model::rotationMatrixToAngleAxis(angleAxis.toRotationMatrix());
+    ASSERT_NEAR(computedAngleAxis.norm(), smallAngle, angletol);
+    ASSERT_NEAR((computedAngleAxis - smallAngle * angleAxis.axis()).norm(), 0.0, vectol);
+  }
+
+  // halve rotation case
+  {
+    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(M_PI, switched_model::vector3_t::Random().normalized());
+    auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
+    ASSERT_NEAR(computedAngleAxis.norm(), M_PI, angletol);
+    ocs2::scalar_t dotCheck = computedAngleAxis.dot(angleAxis.axis()) / M_PI;  // We should either find the axis itself or the negative axis
+    if (dotCheck > 0.0) {
+      ASSERT_NEAR(dotCheck, 1.0, vectol);
+    } else {
+      ASSERT_NEAR(dotCheck, -1.0, vectol);
+    }
+  }
+
+  // close before halve rotation case
+  {
+    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(M_PI + 1e-8, switched_model::vector3_t::Random().normalized());
+    auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
+    ASSERT_NEAR(computedAngleAxis.norm(), 2.0 * M_PI - angleAxis.angle(), angletol);
+    ASSERT_NEAR((computedAngleAxis + (2.0 * M_PI - angleAxis.angle()) * angleAxis.axis()).norm(), 0.0, vectol);
+  }
+
+  // close after halve rotation case
+  {
+    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(M_PI - 1e-8, switched_model::vector3_t::Random().normalized());
+    auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
+    ASSERT_NEAR(computedAngleAxis.norm(), angleAxis.angle(), angletol);
+    ASSERT_NEAR((computedAngleAxis - angleAxis.angle() * angleAxis.axis()).norm(), 0.0, vectol);
+  }
+
+  // All in between mixed
+  ocs2::scalar_t dAngle = 1e-4;
+  for (ocs2::scalar_t angle = 0.0; angle < 2.0 * M_PI; angle += dAngle) {
+    const switched_model::vector3_t axis = switched_model::vector3_t::Random().normalized();  // random axis
+    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(angle, axis);
+    const switched_model::matrix3_t R = angleAxis.toRotationMatrix();
+
+    const auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis(R);
+
+    if (angle > M_PI) {
+      ASSERT_NEAR(computedAngleAxis.norm(), 2.0 * M_PI - angle, angletol);
+      ASSERT_NEAR((computedAngleAxis + (2.0 * M_PI - angle) * angleAxis.axis()).norm(), 0.0, vectol);
+    } else {
+      ASSERT_NEAR(computedAngleAxis.norm(), angle, angletol);
+      ASSERT_NEAR((computedAngleAxis - angle * angleAxis.axis()).norm(), 0.0, vectol);
+    }
   }
 }

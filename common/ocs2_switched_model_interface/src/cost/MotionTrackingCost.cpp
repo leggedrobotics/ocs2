@@ -158,7 +158,11 @@ MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
 ocs2::ad_vector_t MotionTrackingCost::costVectorFunction(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state,
                                                          const ocs2::ad_vector_t& input, const ocs2::ad_vector_t& parameters) const {
   const auto currentTargets = computeMotionTargets<ocs2::ad_scalar_t>(state, input, *adKinematicModelPtr_, *adComModelPtr_);
-  return (currentTargets - parameters).cwiseProduct(sqrtWeights_);
+  ocs2::ad_vector_t errors = (currentTargets - parameters).cwiseProduct(sqrtWeights_);
+  errors.head<3>() = rotationError(rotationMatrixOriginToBase<ocs2::ad_scalar_t>(state.head<3>()),
+                                   rotationMatrixOriginToBase<ocs2::ad_scalar_t>(parameters.head<3>()))
+                         .cwiseProduct(sqrtWeights_.head<3>());
+  return errors;
 }
 
 MotionTrackingCost::Weights loadWeightsFromFile(const std::string& filename, const std::string& fieldname, bool verbose) {

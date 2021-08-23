@@ -119,7 +119,7 @@ void SwingPhase::setFullSwing(scalar_t swingHeight) {
   scalar_t apexHeight = swingHeight + std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z());
   if (terrainModel_ != nullptr) {
     const auto highestObstacle = terrainModel_->getHighestObstacleAlongLine(liftOffPositionInWorld, touchDownPositionInWorld);
-    apexHeight = std::max(apexHeight, highestObstacle.z() + swingHeight);
+    apexHeight = std::max(apexHeight, highestObstacle.z() + 1.5 * sdfMidswingMargin_);
     // limit adaptation to 3 times swing height
     apexHeight = std::min(apexHeight, 3.0 * swingHeight + std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z()));
   }

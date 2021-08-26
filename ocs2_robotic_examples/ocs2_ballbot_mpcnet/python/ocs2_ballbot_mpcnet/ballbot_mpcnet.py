@@ -10,9 +10,8 @@ from ocs2_mpcnet.loss import BehavioralCloning as Loss
 from ocs2_mpcnet.memory import ReplayMemory as Memory
 from ocs2_mpcnet.policy import LinearPolicy as Policy
 
-import ballbot_config as config
-from ballbot_helper import get_system_observation_array, get_mode_schedule_array, get_target_trajectories_array, get_random_initial_state, get_random_target_state
-
+from ocs2_ballbot_mpcnet import ballbot_config as config
+from ocs2_ballbot_mpcnet import ballbot_helper as helper
 from ocs2_ballbot_mpcnet import MpcnetInterface
 
 # settings for data generation by applying behavioral policy
@@ -22,8 +21,8 @@ data_generation_data_decimation = 1
 data_generation_n_threads = 2
 data_generation_n_tasks = 10
 data_generation_n_samples = 2
-data_generation_sampling_covariance = np.zeros((10, 10), order='F')
-for i in range(10):
+data_generation_sampling_covariance = np.zeros((config.STATE_DIM, config.STATE_DIM), order='F')
+for i in range(config.STATE_DIM):
     data_generation_sampling_covariance[i, i] = 0.01
 
 # settings for computing metrics by applying learned policy
@@ -61,47 +60,27 @@ torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
 torch.save(obj=policy, f=save_path + ".pt")
 
 # optimizer
-learning_rate = 1e-2
-learning_iterations = 100000
-optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
 batch_size = 2 ** 5
+learning_rate = 1e-2
+learning_iterations = 10000
+optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
 
 
 def start_data_generation(alpha, policy):
     policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
     torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
-    initial_times = 0.0 * np.ones(data_generation_n_tasks)
-    initial_states = np.zeros((data_generation_n_tasks, config.STATE_DIM))
-    for i in range(data_generation_n_tasks):
-        initial_states[i, :] = get_random_initial_state()
-    target_times = data_generation_duration * np.ones(data_generation_n_tasks)
-    target_states = np.zeros((data_generation_n_tasks, config.STATE_DIM))
-    target_inputs = np.zeros((data_generation_n_tasks, config.INPUT_DIM))
-    for i in range(data_generation_n_tasks):
-        target_states[i, :] = get_random_target_state()
+    initial_observations, mode_schedules, target_trajectories = helper.get_tasks(data_generation_n_tasks, data_generation_duration)
     mpcnet_interface.startDataGeneration(alpha, policy_file_path, data_generation_time_step, data_generation_data_decimation,
                                          data_generation_n_samples, data_generation_sampling_covariance,
-                                         get_system_observation_array(initial_times, initial_states),
-                                         get_mode_schedule_array(data_generation_n_tasks),
-                                         get_target_trajectories_array(target_times, target_states, target_inputs))
+                                         initial_observations, mode_schedules, target_trajectories)
 
 
 def start_policy_evaluation(policy):
     policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
     torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
-    initial_times = 0.0 * np.ones(policy_evaluation_n_tasks)
-    initial_states = np.zeros((policy_evaluation_n_tasks, config.STATE_DIM))
-    for i in range(policy_evaluation_n_tasks):
-        initial_states[i, :] = get_random_initial_state()
-    target_times = policy_evaluation_duration * np.ones(policy_evaluation_n_tasks)
-    target_states = np.zeros((policy_evaluation_n_tasks, config.STATE_DIM))
-    target_inputs = np.zeros((policy_evaluation_n_tasks, config.INPUT_DIM))
-    for i in range(policy_evaluation_n_tasks):
-        target_states[i, :] = get_random_target_state()
+    initial_observations, mode_schedules, target_trajectories = helper.get_tasks(policy_evaluation_n_tasks, policy_evaluation_duration)
     mpcnet_interface.startPolicyEvaluation(policy_file_path, policy_evaluation_time_step,
-                                          get_system_observation_array(initial_times, initial_states),
-                                          get_mode_schedule_array(policy_evaluation_n_tasks),
-                                          get_target_trajectories_array(target_times, target_states, target_inputs))
+                                           initial_observations, mode_schedules, target_trajectories)
 
 
 try:
@@ -120,8 +99,8 @@ try:
             # get generated data
             data = mpcnet_interface.getGeneratedData()
             for i in range(len(data)):
-                # push t, x, u, generalized time, relative state, Hamiltonian into memeory
-                memory.push(data[i].t, data[i].x, data[i].u, data[i].generalized_time, data[i].relative_state, data[i].hamiltonian)
+                # push t, x, u, mode, generalized time, relative state, Hamiltonian into memory
+                memory.push(data[i].t, data[i].x, data[i].u, data[i].mode, data[i].generalized_time, data[i].relative_state, data[i].hamiltonian)
             # logging
             writer.add_scalar('data/new_data_points', len(data), iteration)
             writer.add_scalar('data/total_data_points', memory.size, iteration)
@@ -157,24 +136,22 @@ try:
             # clear the gradients
             optimizer.zero_grad()
             # compute the empirical loss
-            empiricial_loss = torch.zeros(1, dtype=config.dtype, device=config.device)
+            empirical_loss = torch.zeros(1, dtype=config.dtype, device=config.device)
             for sample in samples:
-                # torch
-                t = torch.tensor([sample.t], dtype=config.dtype, device=config.device)
+                t = torch.tensor(sample.t, dtype=config.dtype, device=config.device)
                 x = torch.tensor(sample.x, dtype=config.dtype, device=config.device)
                 u_target = torch.tensor(sample.u, dtype=config.dtype, device=config.device)
                 generalized_time = torch.tensor(sample.generalized_time, dtype=config.dtype, device=config.device)
                 relative_state = torch.tensor(sample.relative_state, dtype=config.dtype, device=config.device)
                 p, U = policy(generalized_time, relative_state)
                 u_predicted = torch.matmul(p, U)
-                # empirical loss
-                empiricial_loss = empiricial_loss + loss.compute_torch(u_predicted, u_target)
+                empirical_loss = empirical_loss + loss.compute_torch(u_predicted, u_target)
             # compute the gradients
-            empiricial_loss.backward()
-            # log metrics
-            writer.add_scalar('objective/empirical_loss', empiricial_loss.item() / batch_size, iteration)
-            # return empiricial loss
-            return empiricial_loss
+            empirical_loss.backward()
+            # logging
+            writer.add_scalar('objective/empirical_loss', empirical_loss.item() / batch_size, iteration)
+            # return empirical loss
+            return empirical_loss
         optimizer.step(closure)
 
         # let data generation and policy evaluation finish in last iteration (to avoid a segmentation fault)

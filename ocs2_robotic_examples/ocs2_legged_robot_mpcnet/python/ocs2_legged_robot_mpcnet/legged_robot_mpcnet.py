@@ -1,0 +1,212 @@
+import os
+import time
+import datetime
+import random
+import torch
+import numpy as np
+
+from torch.utils.tensorboard import SummaryWriter
+
+from ocs2_mpcnet.loss import BehavioralCloning as ExpertsLoss
+from ocs2_mpcnet.loss import CrossEntropy as GatingLoss
+from ocs2_mpcnet.memory import ReplayMemory as Memory
+
+from ocs2_legged_robot_mpcnet.legged_robot_policy import LeggedRobotMixtureOfNonlinearExpertsPolicy as Policy
+from ocs2_legged_robot_mpcnet import legged_robot_config as config
+from ocs2_legged_robot_mpcnet import legged_robot_helper as helper
+from ocs2_legged_robot_mpcnet import MpcnetInterface
+
+# settings for data generation by applying behavioral policy
+data_generation_time_step = 0.0025
+data_generation_duration = 4.0
+data_generation_data_decimation = 4
+data_generation_n_threads = 5
+data_generation_n_tasks = 10
+data_generation_n_samples = 1
+data_generation_sampling_covariance = np.zeros((config.STATE_DIM, config.STATE_DIM), order='F')
+for i in range(0, 3):
+    data_generation_sampling_covariance[i, i] = 0.05 ** 2  # normalized linear momentum
+for i in range(3, 6):
+    data_generation_sampling_covariance[i, i] = (config.normalized_inertia[i - 3] * 2.5 * np.pi / 180.0) ** 2  # normalized angular momentum
+for i in range(6, 9):
+    data_generation_sampling_covariance[i, i] = 0.01 ** 2  # position
+for i in range(9, 12):
+    data_generation_sampling_covariance[i, i] = (0.5 * np.pi / 180.0) ** 2  # orientation
+for i in range(12, 24):
+    data_generation_sampling_covariance[i, i] = (0.5 * np.pi / 180.0) ** 2  # joint positions
+
+# settings for computing metrics by applying learned policy
+policy_evaluation_time_step = 0.0025
+policy_evaluation_duration = 4.0
+policy_evaluation_n_threads = 1
+policy_evaluation_n_tasks = 5
+
+# mpcnet interface
+mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_n_threads)
+
+# logging
+description = "description"
+folder = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + config.name + "_" + description
+writer = SummaryWriter("runs/" + folder)
+os.makedirs(name="policies/" + folder)
+
+# loss
+epsilon = 1e-8  # epsilon to improve numerical stability of logs and denominators
+my_lambda = 1.0  # parameter to control the relative importance of both loss types
+experts_loss = ExpertsLoss(torch.tensor(config.R, device=config.device, dtype=config.dtype).diag(), np.diag(config.R))
+gating_loss = GatingLoss(torch.tensor(epsilon, device=config.device, dtype=config.dtype), np.array(epsilon))
+
+# memory
+memory_capacity = 1000000
+memory = Memory(memory_capacity)
+
+# policy
+policy = Policy(config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM, config.EXPERT_NUM)
+policy.to(config.device)
+print("Initial policy parameters:")
+print(list(policy.named_parameters()))
+dummy_input = (torch.randn(config.TIME_DIM, device=config.device, dtype=config.dtype),
+               torch.randn(config.STATE_DIM, device=config.device, dtype=config.dtype))
+print("Saving initial policy.")
+save_path = "policies/" + folder + "/initial_policy"
+torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
+torch.save(obj=policy, f=save_path + ".pt")
+
+# optimizer
+batch_size = 2 ** 5
+learning_iterations = 100000
+learning_rate_default = 1e-3
+learning_rate_gating_net = learning_rate_default
+learning_rate_expert_nets = learning_rate_default
+optimizer = torch.optim.Adam([{'params': policy.gating_net.parameters(), 'lr': learning_rate_gating_net},
+                              {'params': policy.expert_nets.parameters(), 'lr': learning_rate_expert_nets}],
+                             lr=learning_rate_default, amsgrad=True)
+
+# weights for ["stance", "trot_1", "trot_2", "dynamic_diagonal_walk_1", "dynamic_diagonal_walk_2",
+#              "static_walk_1", "static_walk_2", "static_walk_3", "static_walk_4"]
+weights = [1, 2, 2, 2, 2, 1, 1, 1, 1]
+
+
+def start_data_generation(alpha, policy):
+    policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
+    torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
+    choices = random.choices(["stance", "trot_1", "trot_2", "dynamic_diagonal_walk_1", "dynamic_diagonal_walk_2",
+                              "static_walk_1", "static_walk_2", "static_walk_3", "static_walk_4"], k=data_generation_n_tasks, weights=weights)
+    initial_observations, mode_schedules, target_trajectories = helper.get_tasks(data_generation_n_tasks, data_generation_duration, choices)
+    mpcnet_interface.startDataGeneration(alpha, policy_file_path, data_generation_time_step, data_generation_data_decimation,
+                                         data_generation_n_samples, data_generation_sampling_covariance,
+                                         initial_observations, mode_schedules, target_trajectories)
+
+
+def start_policy_evaluation(policy):
+    policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
+    torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
+    choices = random.choices(["stance", "trot_1", "trot_2", "dynamic_diagonal_walk_1", "dynamic_diagonal_walk_2",
+                              "static_walk_1", "static_walk_2", "static_walk_3", "static_walk_4"], k=policy_evaluation_n_tasks, weights=weights)
+    initial_observations, mode_schedules, target_trajectories = helper.get_tasks(policy_evaluation_n_tasks, policy_evaluation_duration, choices)
+    mpcnet_interface.startPolicyEvaluation(policy_file_path, policy_evaluation_time_step,
+                                           initial_observations, mode_schedules, target_trajectories)
+
+
+try:
+    print("==============\nWaiting for first data.\n==============")
+    start_data_generation(alpha=1.0, policy=policy)
+    start_policy_evaluation(policy=policy)
+    while not mpcnet_interface.isDataGenerationDone():
+        time.sleep(1.0)
+
+    print("==============\nStarting training.\n==============")
+    for iteration in range(learning_iterations):
+        alpha = 1.0 - 1.0 * iteration / learning_iterations
+
+        # data generation
+        if mpcnet_interface.isDataGenerationDone():
+            # get generated data
+            data = mpcnet_interface.getGeneratedData()
+            for i in range(len(data)):
+                # push t, x, u, mode, generalized time, relative state, Hamiltonian into memory
+                memory.push(data[i].t, data[i].x, data[i].u, data[i].mode, data[i].generalized_time, data[i].relative_state, data[i].hamiltonian)
+            # logging
+            writer.add_scalar('data/new_data_points', len(data), iteration)
+            writer.add_scalar('data/total_data_points', memory.size, iteration)
+            print("iteration", iteration, "received data points", len(data), "requesting with alpha", alpha)
+            # start new data generation
+            start_data_generation(alpha=alpha, policy=policy)
+
+        # policy evaluation
+        if mpcnet_interface.isPolicyEvaluationDone():
+            # get computed metrics
+            metrics = mpcnet_interface.getComputedMetrics()
+            survival_time = np.mean([metrics[i].survival_time for i in range(len(metrics))])
+            incurred_hamiltonian = np.mean([metrics[i].incurred_hamiltonian for i in range(len(metrics))])
+            # logging
+            writer.add_scalar('metric/survival_time', survival_time, iteration)
+            writer.add_scalar('metric/incurred_hamiltonian', incurred_hamiltonian, iteration)
+            print("iteration", iteration, "received metrics:", "incurred_hamiltonian", incurred_hamiltonian, "survival_time", survival_time)
+            # start new policy evaluation
+            start_policy_evaluation(policy=policy)
+
+        # intermediate policies
+        if (iteration % 10000 == 0) and (iteration > 0):
+            print("Saving intermediate policy for iteration", iteration)
+            save_path = "policies/" + folder + "/intermediate_policy_" + str(iteration)
+            torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
+            torch.save(obj=policy, f=save_path + ".pt")
+
+        # extract batch of samples from replay memory
+        samples = memory.sample(batch_size)
+
+        # take an optimization step
+        def closure():
+            # clear the gradients
+            optimizer.zero_grad()
+            # compute the empirical loss
+            empirical_experts_loss = torch.zeros(1, dtype=config.dtype, device=config.device)
+            empirical_gating_loss = torch.zeros(1, dtype=config.dtype, device=config.device)
+            for sample in samples:
+                t = torch.tensor(sample.t, dtype=config.dtype, device=config.device)
+                x = torch.tensor(sample.x, dtype=config.dtype, device=config.device)
+                u_target = torch.tensor(sample.u, dtype=config.dtype, device=config.device)
+                p_target = torch.tensor(helper.get_one_hot(sample.mode), dtype=config.dtype, device=config.device)
+                generalized_time = torch.tensor(sample.generalized_time, dtype=config.dtype, device=config.device)
+                relative_state = torch.tensor(sample.relative_state, dtype=config.dtype, device=config.device)
+                p, U = policy(generalized_time, relative_state)
+                u_predicted = torch.matmul(p, U)
+                empirical_experts_loss = empirical_experts_loss + experts_loss.compute_torch(u_predicted, u_target)
+                empirical_gating_loss = empirical_gating_loss + gating_loss.compute_torch(p_target, p)
+            empirical_loss = empirical_experts_loss + my_lambda * empirical_gating_loss
+            # compute the gradients
+            empirical_loss.backward()
+            # logging
+            writer.add_scalar('objective/empirical_experts_loss', empirical_experts_loss.item() / batch_size, iteration)
+            writer.add_scalar('objective/empirical_gating_loss', empirical_gating_loss.item() / batch_size, iteration)
+            writer.add_scalar('objective/empirical_loss', empirical_loss.item() / batch_size, iteration)
+            # return empirical loss
+            return empirical_loss
+        optimizer.step(closure)
+
+        # let data generation and policy evaluation finish in last iteration (to avoid a segmentation fault)
+        if iteration == learning_iterations - 1:
+            while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
+                time.sleep(1.0)
+
+    print("==============\nTraining completed.\n==============")
+
+except KeyboardInterrupt:
+    # let data generation and policy evaluation finish (to avoid a segmentation fault)
+    while (not mpcnet_interface.isDataGenerationDone()) or (not mpcnet_interface.isPolicyEvaluationDone()):
+        time.sleep(1.0)
+    print("==============\nTraining interrupted.\n==============")
+    pass
+
+print("Final policy parameters:")
+print(list(policy.named_parameters()))
+
+print("Saving final policy.")
+save_path = "policies/" + folder + "/final_policy"
+torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
+torch.save(obj=policy, f=save_path + ".pt")
+
+writer.close()
+
+print("Done. Exiting now.")

@@ -20,15 +20,15 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
   scalar_t time = initialObservation.time;
   vector_t state = initialObservation.state;
 
-  // update the reference manager
-  referenceManagerPtr_->setModeSchedule(modeSchedule);
-  referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
-
   // reset mpc
   mpcPtr_->reset();
 
   // prepare learned controller
   mpcnetPtr_->loadPolicyModel(policyFilePath);
+
+  // update the reference manager
+  referenceManagerPtr_->setModeSchedule(modeSchedule);
+  referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
 
   // set up behavioral controller with mixture parameter alpha and learned controller
   MpcnetBehavioralController behavioralController;

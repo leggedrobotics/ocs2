@@ -64,7 +64,7 @@ class MixtureOfLinearExpertsPolicy(Policy):
 
 class MixtureOfNonlinearExpertsPolicy(Policy):
 
-    def __init__(self, dim_t, dim_x, num_experts, dim_u):
+    def __init__(self, dim_t, dim_x, dim_u, num_experts):
         super().__init__(dim_t + dim_x, dim_u)
         self.name = 'MixtureOfNonlinearExpertsPolicy'
         self.num_experts = num_experts

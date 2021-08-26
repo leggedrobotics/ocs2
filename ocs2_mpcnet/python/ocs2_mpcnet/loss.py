@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 
-class Hamiltonian():
+class Hamiltonian:
 
     # Uses the quadratic approximation of the Hamiltonian as loss
     # H(x,u) = 1/2 dx' dHdxx dx + du' dHdux dx + 1/2 du' dHduu du + dHdx' dx + dHdu' du + H
@@ -16,7 +16,7 @@ class Hamiltonian():
         return
 
 
-class BehavioralCloning():
+class BehavioralCloning:
 
     # Uses a simple quadratic function as loss
     # BC(u) = du' R du

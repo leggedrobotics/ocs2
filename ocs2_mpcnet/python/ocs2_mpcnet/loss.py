@@ -32,3 +32,19 @@ class BehavioralCloning:
     def compute_numpy(self, u_predicted, u_target):
         du = np.subtract(u_predicted, u_target)
         return np.dot(du, np.matmul(self.R_numpy, du))
+
+
+class CrossEntropy:
+
+    # Uses the cross entropy between two probability distributions as loss
+    # CE(p_target, p_predicted) = - sum(p_target * log(p_predicted))
+
+    def __init__(self, epsilon_torch, epsilon_numpy):
+        self.epsilon_torch = epsilon_torch
+        self.epsilon_numpy = epsilon_numpy
+
+    def compute_torch(self, p_target, p_predicted):
+        return - torch.dot(p_target, torch.log(torch.add(p_predicted, self.epsilon_torch)))
+
+    def compute_numpy(self, p_target, p_predicted):
+        return - np.dot(p_target, np.log(np.add(p_predicted, self.epsilon_numpy)))

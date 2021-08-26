@@ -57,6 +57,22 @@ target_link_libraries(${PROJECT_NAME}
   onnxruntime
 )
 
+# python bindings
+pybind11_add_module(MpcnetPybindings SHARED
+  src/MpcnetPybindings.cpp
+)
+add_dependencies(MpcnetPybindings
+  ${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(MpcnetPybindings PRIVATE
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+set_target_properties(MpcnetPybindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
+
 catkin_python_setup()
 
 #########################
@@ -85,6 +101,11 @@ install(TARGETS ${PROJECT_NAME}
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(TARGETS MpcnetPybindings
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
 
 #############
 ## Testing ##

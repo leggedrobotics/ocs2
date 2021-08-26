@@ -2,4 +2,4 @@
 
 #include "ocs2_legged_robot_mpcnet/LeggedRobotMpcnetInterface.h"
 
-CREATE_MPCNET_PYTHON_BINDINGS(ocs2::legged_robot::LeggedRobotMpcnetInterface, LeggedRobotMpcnetPybindings)
+CREATE_ROBOT_MPCNET_PYTHON_BINDINGS(ocs2::legged_robot::LeggedRobotMpcnetInterface, LeggedRobotMpcnetPybindings)

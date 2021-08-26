@@ -16,15 +16,15 @@ MpcnetPolicyEvaluation::MetricsPtr MpcnetPolicyEvaluation::run(const std::string
   scalar_t time = initialObservation.time;
   vector_t state = initialObservation.state;
 
-  // update the reference manager
-  referenceManagerPtr_->setModeSchedule(modeSchedule);
-  referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
-
   // reset mpc
   mpcPtr_->reset();
 
   // prepare learned controller
   mpcnetPtr_->loadPolicyModel(policyFilePath);
+
+  // update the reference manager
+  referenceManagerPtr_->setModeSchedule(modeSchedule);
+  referenceManagerPtr_->setTargetTrajectories(targetTrajectories);
 
   // run policy evaluation
   int iteration = 0;

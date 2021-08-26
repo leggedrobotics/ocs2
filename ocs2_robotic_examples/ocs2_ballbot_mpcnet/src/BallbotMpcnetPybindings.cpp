@@ -2,4 +2,4 @@
 
 #include "ocs2_ballbot_mpcnet/BallbotMpcnetInterface.h"
 
-CREATE_MPCNET_PYTHON_BINDINGS(ocs2::ballbot::BallbotMpcnetInterface, BallbotMpcnetPybindings)
+CREATE_ROBOT_MPCNET_PYTHON_BINDINGS(ocs2::ballbot::BallbotMpcnetInterface, BallbotMpcnetPybindings)

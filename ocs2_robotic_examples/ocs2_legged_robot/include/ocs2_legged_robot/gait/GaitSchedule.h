@@ -44,6 +44,11 @@ class GaitSchedule {
   GaitSchedule(ModeSchedule initModeSchedule, ModeSequenceTemplate initModeSequenceTemplate, scalar_t phaseTransitionStanceTime);
 
   /**
+   * @param [in] modeSchedule: The mode schedule to be used.
+   */
+  void setModeSchedule(const ModeSchedule& modeSchedule) { modeSchedule_ = modeSchedule; }
+
+  /**
    * @param [in] lowerBoundTime: The smallest time for which the ModeSchedule should be defined.
    * @param [in] upperBoundTime: The greatest time for which the ModeSchedule should be defined.
    */

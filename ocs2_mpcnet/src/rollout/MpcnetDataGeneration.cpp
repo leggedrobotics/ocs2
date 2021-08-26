@@ -63,6 +63,7 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
           dataPoint.t = primalSolution.timeTrajectory_[0];
           dataPoint.x = primalSolution.stateTrajectory_[0];
           dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
+          dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
           dataPoint.generalizedTime = mpcnetPtr_->getGeneralizedTime(dataPoint.t);
           dataPoint.relativeState = mpcnetPtr_->getRelativeState(dataPoint.t, dataPoint.x);
           // TODO(areske): add once approximation of Hamiltonian is available
@@ -77,6 +78,7 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
           dataPoint.x = primalSolution.stateTrajectory_[0] +
                         L * vector_t::NullaryExpr(primalSolution.stateTrajectory_[0].size(), standardNormalNullaryOp);
           dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
+          dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
           dataPoint.generalizedTime = mpcnetPtr_->getGeneralizedTime(dataPoint.t);
           dataPoint.relativeState = mpcnetPtr_->getRelativeState(dataPoint.t, dataPoint.x);
           // TODO(areske): add once approximation of Hamiltonian is available

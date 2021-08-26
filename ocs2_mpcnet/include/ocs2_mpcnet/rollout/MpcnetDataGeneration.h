@@ -28,6 +28,7 @@ class MpcnetDataGeneration {
     scalar_t t;
     vector_t x;
     vector_t u;
+    size_t mode;
     vector_t generalizedTime;
     vector_t relativeState;
     ScalarFunctionQuadraticApproximation hamiltonian;

@@ -2,7 +2,7 @@ import random
 import numpy as np
 from collections import namedtuple
 
-Sample = namedtuple('sample', ('t', 'x', 'u', 'generalized_time', 'relative_state', 'hamiltonian'))
+Sample = namedtuple('sample', ('t', 'x', 'u', 'mode', 'generalized_time', 'relative_state', 'hamiltonian'))
 
 
 class ReplayMemory:

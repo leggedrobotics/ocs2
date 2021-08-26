@@ -67,6 +67,7 @@ using namespace pybind11::literals;
         .def_readwrite("t", &MPCNET_INTERFACE::data_point_t::t)                                                                            \
         .def_readwrite("x", &MPCNET_INTERFACE::data_point_t::x)                                                                            \
         .def_readwrite("u", &MPCNET_INTERFACE::data_point_t::u)                                                                            \
+        .def_readwrite("mode", &MPCNET_INTERFACE::data_point_t::mode)                                                                      \
         .def_readwrite("generalized_time", &MPCNET_INTERFACE::data_point_t::generalizedTime)                                               \
         .def_readwrite("relative_state", &MPCNET_INTERFACE::data_point_t::relativeState)                                                   \
         .def_readwrite("hamiltonian", &MPCNET_INTERFACE::data_point_t::hamiltonian);                                                       \

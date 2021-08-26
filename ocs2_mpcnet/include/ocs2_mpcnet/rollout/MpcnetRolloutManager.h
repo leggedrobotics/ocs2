@@ -8,7 +8,7 @@
 namespace ocs2 {
 
 /**
- *  TODO
+ *  A class to manage the data generation and policy evaluation rollouts for MPC-Net.
  */
 class MpcnetRolloutManager {
  public:

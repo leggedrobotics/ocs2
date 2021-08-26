@@ -37,8 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace legged_robot {
 
+constexpr size_t NUM_CONTACT_POINTS = 4;
+
 template <typename T>
-using feet_array_t = std::array<T, 4>;
+using feet_array_t = std::array<T, NUM_CONTACT_POINTS>;
 using contact_flag_t = feet_array_t<bool>;
 
 using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;

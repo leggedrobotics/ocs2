@@ -24,8 +24,8 @@ class MpcnetPolicyEvaluation {
   using reference_manager_t = ReferenceManagerInterface;
 
   struct Metrics {
-    scalar_t survivalTime;
-    scalar_t incurredHamiltonian;
+    scalar_t survivalTime = 0.0;
+    scalar_t incurredHamiltonian = 0.0;
   };
   using MetricsArray = std::vector<Metrics>;
   using MetricsPtr = std::unique_ptr<Metrics>;

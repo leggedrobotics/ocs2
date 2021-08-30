@@ -30,15 +30,14 @@ MpcnetPolicyEvaluation::MetricsPtr MpcnetPolicyEvaluation::run(const std::string
   int iteration = 0;
   try {
     while (time <= targetTrajectories.timeTrajectory.back()) {
-      // run mpc and get solution
+      // run mpc
       if (!mpcPtr_->run(time, state)) {
         throw std::runtime_error("MpcnetPolicyEvaluation::run Main routine of MPC returned false.");
       }
-      PrimalSolution primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
 
-      // TODO(areske): add once approximation of Hamiltonian is available
-      // vector_t input = primalSolution.controllerPtr_->computeInput(time, state);
-      // metricsPtr->incurredHamiltonian += mpcPtr_->getSolverPtr()->getHamiltonian(time, state, input).f * timeStep;
+      // incurred quantities
+      vector_t input = mpcnetPtr_->computeInput(time, state);
+      metricsPtr->incurredHamiltonian += mpcPtr_->getSolverPtr()->getHamiltonian(time, state, input).f * timeStep;
 
       // forward simulate system with learned controller
       scalar_array_t timeTrajectory;

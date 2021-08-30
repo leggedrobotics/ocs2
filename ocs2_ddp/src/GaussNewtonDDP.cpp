@@ -321,6 +321,55 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const {
+  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
+  partition = std::max(partition, initActivePartition_);
+  partition = std::min(partition, finalActivePartition_);
+
+  ModelData modelData;
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[partition]);
+  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[partition]);
+
+  // perform the LQ approximation of the OC problem
+  LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], settings().checkNumericalStability_);
+  lqapprox.approximateLQProblem(time, state, input, modelData);
+  modelData.checkSizes(state.rows(), input.rows());
+
+  // augment the cost with state-only equality and state-input inequality terms
+  augmentCostWorker(0, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0, modelData);
+
+  // state-input equality constraint cost nu(x) * g(x,u)
+  // note: nu has no approximation and is evaluated at the nominal state as it can be very sensitive
+  ScalarFunctionQuadraticApproximation constraintCost;
+  const vector_t nu = getStateInputEqualityConstraintLagrangian(time, xNominal);
+  constraintCost.f = nu.transpose() * modelData.stateInputEqConstr_.f;
+  constraintCost.dfdx = modelData.stateInputEqConstr_.dfdx.transpose() * nu;
+  constraintCost.dfdu = modelData.stateInputEqConstr_.dfdu.transpose() * nu;
+  constraintCost.dfdxx = matrix_t::Zero(state.rows(), state.rows());
+  constraintCost.dfdux = matrix_t::Zero(input.rows(), state.rows());
+  constraintCost.dfduu = matrix_t::Zero(input.rows(), input.rows());
+
+  // "future" cost dVdx(x) * f(x,u)
+  ScalarFunctionQuadraticApproximation futureCost;
+  const ScalarFunctionQuadraticApproximation V = getValueFunction(time, state);
+  futureCost.f = V.dfdx.transpose() * modelData.dynamics_.f;
+  futureCost.dfdx = V.dfdxx.transpose() * modelData.dynamics_.f + modelData.dynamics_.dfdx.transpose() * V.dfdx;
+  futureCost.dfdu = modelData.dynamics_.dfdu.transpose() * V.dfdx;
+  futureCost.dfdxx = V.dfdxx.transpose() * modelData.dynamics_.dfdx + modelData.dynamics_.dfdx.transpose() * V.dfdxx;
+  futureCost.dfdux = modelData.dynamics_.dfdu.transpose() * V.dfdxx;
+  futureCost.dfduu = matrix_t::Zero(input.rows(), input.rows());
+
+  // assemble the LQ approximation of the Hamiltonian
+  ScalarFunctionQuadraticApproximation hamiltonian;
+  hamiltonian = modelData.cost_;
+  hamiltonian += constraintCost;
+  hamiltonian += futureCost;
+  return hamiltonian;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
   size_t activeSubsystem = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
   activeSubsystem = std::max(activeSubsystem, initActivePartition_);

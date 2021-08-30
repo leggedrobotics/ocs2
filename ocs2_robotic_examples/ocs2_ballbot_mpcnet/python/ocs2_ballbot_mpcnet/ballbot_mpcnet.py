@@ -6,7 +6,7 @@ import numpy as np
 
 from torch.utils.tensorboard import SummaryWriter
 
-from ocs2_mpcnet.loss import BehavioralCloning as Loss
+from ocs2_mpcnet.loss import Hamiltonian as Loss
 from ocs2_mpcnet.memory import ReplayMemory as Memory
 from ocs2_mpcnet.policy import LinearPolicy as Policy
 
@@ -41,7 +41,7 @@ writer = SummaryWriter("runs/" + folder)
 os.makedirs(name="policies/" + folder)
 
 # loss
-loss = Loss(torch.tensor(config.R, device=config.device, dtype=config.dtype).diag(), np.diag(config.R))
+loss = Loss()
 
 # memory
 memory_capacity = 1000000
@@ -145,7 +145,7 @@ try:
                 relative_state = torch.tensor(sample.relative_state, dtype=config.dtype, device=config.device)
                 p, U = policy(generalized_time, relative_state)
                 u_predicted = torch.matmul(p, U)
-                empirical_loss = empirical_loss + loss.compute_torch(u_predicted, u_target)
+                empirical_loss = empirical_loss + loss.compute_torch(x, x, u_predicted, u_target, sample.hamiltonian)
             # compute the gradients
             empirical_loss.backward()
             # logging

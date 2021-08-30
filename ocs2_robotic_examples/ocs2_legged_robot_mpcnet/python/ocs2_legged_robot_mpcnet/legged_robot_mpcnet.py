@@ -7,7 +7,7 @@ import numpy as np
 
 from torch.utils.tensorboard import SummaryWriter
 
-from ocs2_mpcnet.loss import BehavioralCloning as ExpertsLoss
+from ocs2_mpcnet.loss import Hamiltonian as ExpertsLoss
 from ocs2_mpcnet.loss import CrossEntropy as GatingLoss
 from ocs2_mpcnet.memory import ReplayMemory as Memory
 
@@ -53,7 +53,7 @@ os.makedirs(name="policies/" + folder)
 # loss
 epsilon = 1e-8  # epsilon to improve numerical stability of logs and denominators
 my_lambda = 1.0  # parameter to control the relative importance of both loss types
-experts_loss = ExpertsLoss(torch.tensor(config.R, device=config.device, dtype=config.dtype).diag(), np.diag(config.R))
+experts_loss = ExpertsLoss()
 gating_loss = GatingLoss(torch.tensor(epsilon, device=config.device, dtype=config.dtype), np.array(epsilon))
 
 # memory
@@ -172,7 +172,7 @@ try:
                 relative_state = torch.tensor(sample.relative_state, dtype=config.dtype, device=config.device)
                 p, U = policy(generalized_time, relative_state)
                 u_predicted = torch.matmul(p, U)
-                empirical_experts_loss = empirical_experts_loss + experts_loss.compute_torch(u_predicted, u_target)
+                empirical_experts_loss = empirical_experts_loss + experts_loss.compute_torch(x, x, u_predicted, u_target, sample.hamiltonian)
                 empirical_gating_loss = empirical_gating_loss + gating_loss.compute_torch(p_target, p)
             empirical_loss = empirical_experts_loss + my_lambda * empirical_gating_loss
             # compute the gradients

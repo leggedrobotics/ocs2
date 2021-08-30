@@ -1,6 +1,6 @@
-#include "ocs2_legged_robot_mpcnet/helper/Logic.h"
+#include "ocs2_legged_robot/gait/LegLogic.h"
 
-#include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
+#include "ocs2_legged_robot/gait/MotionPhaseDefinition.h"
 
 namespace ocs2 {
 namespace legged_robot {

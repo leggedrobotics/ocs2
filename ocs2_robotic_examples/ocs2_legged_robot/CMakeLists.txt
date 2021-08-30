@@ -84,6 +84,7 @@ add_library(ocs2_legged_robot
   src/gait/Gait.cpp
   src/gait/GaitReceiver.cpp
   src/gait/GaitSchedule.cpp
+  src/gait/LegLogic.cpp
   src/gait/ModeSequenceTemplate.cpp
   src/LeggedRobotInterface.cpp
   src/LeggedRobotPreComputation.cpp

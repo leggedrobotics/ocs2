@@ -1,7 +1,8 @@
 #pragma once
 
 #include <ocs2_core/reference/ModeSchedule.h>
-#include <ocs2_legged_robot/common/Types.h>
+
+#include "ocs2_legged_robot/common/Types.h"
 
 namespace ocs2 {
 namespace legged_robot {

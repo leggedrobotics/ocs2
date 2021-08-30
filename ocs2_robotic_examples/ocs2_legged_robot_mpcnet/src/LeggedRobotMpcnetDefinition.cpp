@@ -2,9 +2,8 @@
 
 #include <iostream>
 
+#include <ocs2_legged_robot/gait/LegLogic.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
-
-#include "ocs2_legged_robot_mpcnet/helper/Logic.h"
 
 namespace ocs2 {
 namespace legged_robot {

@@ -39,7 +39,6 @@ include_directories(
 # main library
 add_library(${PROJECT_NAME}
   src/helper/Logic.cpp
-  src/helper/Rotation.cpp
   src/LeggedRobotMpcnetDefinition.cpp
   src/LeggedRobotMpcnetInterface.cpp
 )

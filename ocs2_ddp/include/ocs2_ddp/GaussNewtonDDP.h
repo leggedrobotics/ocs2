@@ -102,6 +102,8 @@ class GaussNewtonDDP : public SolverBase {
 
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
 
+  ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const override;
+
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
   void rewindOptimizer(size_t firstIndex) override;

@@ -338,32 +338,28 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // augment the cost with state-only equality and state-input inequality terms
   augmentCostWorker(0, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0, modelData);
 
-  // state-input equality constraint cost nu(x) * g(x,u)
+  // initialize the Hamiltonian with the augmented cost
+  ScalarFunctionQuadraticApproximation hamiltonian(modelData.cost_);
+
+  // add the state-input equality constraint cost nu(x) * g(x,u) to the Hamiltonian
   // note: nu has no approximation and is evaluated at the nominal state as it can be very sensitive
-  ScalarFunctionQuadraticApproximation constraintCost;
   const vector_t nu = getStateInputEqualityConstraintLagrangian(time, xNominal);
-  constraintCost.f = nu.transpose() * modelData.stateInputEqConstr_.f;
-  constraintCost.dfdx = modelData.stateInputEqConstr_.dfdx.transpose() * nu;
-  constraintCost.dfdu = modelData.stateInputEqConstr_.dfdu.transpose() * nu;
-  constraintCost.dfdxx = matrix_t::Zero(state.rows(), state.rows());
-  constraintCost.dfdux = matrix_t::Zero(input.rows(), state.rows());
-  constraintCost.dfduu = matrix_t::Zero(input.rows(), input.rows());
+  hamiltonian.f += nu.transpose() * modelData.stateInputEqConstr_.f;
+  hamiltonian.dfdx.noalias() += modelData.stateInputEqConstr_.dfdx.transpose() * nu;
+  hamiltonian.dfdu.noalias() += modelData.stateInputEqConstr_.dfdu.transpose() * nu;
+  // dfddx is zero for the state-input equality constraint cost
+  // dfdux is zero for the state-input equality constraint cost
+  // dfduu is zero for the state-input equality constraint cost
 
-  // "future" cost dVdx(x) * f(x,u)
-  ScalarFunctionQuadraticApproximation futureCost;
+  // add the "future cost" dVdx(x) * f(x,u) to the Hamiltonian
   const ScalarFunctionQuadraticApproximation V = getValueFunction(time, state);
-  futureCost.f = V.dfdx.transpose() * modelData.dynamics_.f;
-  futureCost.dfdx = V.dfdxx.transpose() * modelData.dynamics_.f + modelData.dynamics_.dfdx.transpose() * V.dfdx;
-  futureCost.dfdu = modelData.dynamics_.dfdu.transpose() * V.dfdx;
-  futureCost.dfdxx = V.dfdxx.transpose() * modelData.dynamics_.dfdx + modelData.dynamics_.dfdx.transpose() * V.dfdxx;
-  futureCost.dfdux = modelData.dynamics_.dfdu.transpose() * V.dfdxx;
-  futureCost.dfduu = matrix_t::Zero(input.rows(), input.rows());
+  hamiltonian.f += V.dfdx.transpose() * modelData.dynamics_.f;
+  hamiltonian.dfdx.noalias() += V.dfdxx.transpose() * modelData.dynamics_.f + modelData.dynamics_.dfdx.transpose() * V.dfdx;
+  hamiltonian.dfdu.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdx;
+  hamiltonian.dfdxx.noalias() += V.dfdxx.transpose() * modelData.dynamics_.dfdx + modelData.dynamics_.dfdx.transpose() * V.dfdxx;
+  hamiltonian.dfdux.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdxx;
+  // dfduu is zero for the "future cost"
 
-  // assemble the LQ approximation of the Hamiltonian
-  ScalarFunctionQuadraticApproximation hamiltonian;
-  hamiltonian = modelData.cost_;
-  hamiltonian += constraintCost;
-  hamiltonian += futureCost;
   return hamiltonian;
 }
 

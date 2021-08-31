@@ -52,7 +52,7 @@ os.makedirs(name="policies/" + folder)
 
 # loss
 epsilon = 1e-8  # epsilon to improve numerical stability of logs and denominators
-my_lambda = 1.0  # parameter to control the relative importance of both loss types
+my_lambda = 10.0  # parameter to control the relative importance of both loss types
 experts_loss = ExpertsLoss()
 gating_loss = GatingLoss(torch.tensor(epsilon, device=config.device, dtype=config.dtype), np.array(epsilon))
 

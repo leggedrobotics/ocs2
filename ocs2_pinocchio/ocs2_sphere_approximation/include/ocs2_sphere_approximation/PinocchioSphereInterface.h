@@ -86,6 +86,9 @@ class PinocchioSphereInterface final {
   /** Get the array of the radius of each sphere */
   scalar_array_t getSphereRadii() const { return sphereRadii_; };
 
+  /** Get the array of the radius of each sphere */
+  scalar_array_t& getSphereRadii() { return sphereRadii_; };
+
   /** Get the array of the center position of each sphere in world frame */
   std::vector<vector3_t> getSphereCentersToObjectCenter(size_t approxId) const {
     return sphereApproximations_[approxId].getSphereCentersToObjectCenter();

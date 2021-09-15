@@ -43,7 +43,7 @@ OverallReference::OverallReference(const scalar_array_t trajTimes, const vector_
   }
 }
 
-int OverallReference::getIndex(scalar_t time) {
+int OverallReference::getIndex(scalar_t time) const {
   for (int i = 0; i < switchtimes_.size() - 1; i++) {
     if (switchtimes_[i + 1] >= time) {
       return i;
@@ -53,7 +53,7 @@ int OverallReference::getIndex(scalar_t time) {
   return -1;
 }
 
-void OverallReference::getInput(scalar_t time, vector_t& input) {
+void OverallReference::getInput(scalar_t time, vector_t& input) const {
   int idx = getIndex(time);
   if (idx >= 0 && idx < References_.size()) {
     References_[idx].getInput(time, input);
@@ -62,13 +62,13 @@ void OverallReference::getInput(scalar_t time, vector_t& input) {
   }
 }
 
-vector_t OverallReference::getInput(scalar_t time) {
+vector_t OverallReference::getInput(scalar_t time) const {
   vector_t u;
   getInput(time, u);
   return u;
 }
 
-void OverallReference::getState(int idx, scalar_t time, vector_t& x) {
+void OverallReference::getState(int idx, scalar_t time, vector_t& x) const {
   if (idx >= 0 && idx < References_.size()) {
     if (time < 2) {
       References_[idx].getState(time, x);
@@ -80,13 +80,13 @@ void OverallReference::getState(int idx, scalar_t time, vector_t& x) {
   }
 }
 
-vector_t OverallReference::getState(int idx, scalar_t time) {
+vector_t OverallReference::getState(int idx, scalar_t time) const {
   vector_t state;
   getState(idx, time, state);
   return state;
 }
 
-void OverallReference::getState(scalar_t time, vector_t& x) {
+void OverallReference::getState(scalar_t time, vector_t& x) const {
   int idx = getIndex(time);
   if (idx >= 0 && idx < References_.size()) {
     References_[idx].getState(time, x);
@@ -95,7 +95,7 @@ void OverallReference::getState(scalar_t time, vector_t& x) {
   }
 }
 
-vector_t OverallReference::getState(scalar_t time) {
+vector_t OverallReference::getState(scalar_t time) const {
   vector_t state;
   getState(time, state);
   return state;
@@ -124,7 +124,7 @@ void OverallReference::display(int i) {
   References_[i].display();
 }
 
-void OverallReference::jumpMap(vector_t& x) {
+void OverallReference::jumpMap(vector_t& x) const {
   scalar_t e = 0.95;
   x[1] = x[1] - (1 + e) * x[1];
   x[2] = x[2] + 1;

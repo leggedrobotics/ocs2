@@ -61,9 +61,9 @@ TEST(TestStateConstraintCppAd, getValue) {
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
 
-  const auto val = constraint.getValue(t, x);
-  const auto lin = constraint.getLinearApproximation(t, x);
-  const auto quad = constraint.getQuadraticApproximation(t, x);
+  const auto val = constraint.getValue(t, x, ocs2::PreComputation());
+  const auto lin = constraint.getLinearApproximation(t, x, ocs2::PreComputation());
+  const auto quad = constraint.getQuadraticApproximation(t, x, ocs2::PreComputation());
 
   EXPECT_TRUE(val.isApprox((ocs2::vector_t(2) << 1.5, 7).finished()));
   EXPECT_TRUE(lin.f.isApprox(val));
@@ -104,9 +104,9 @@ TEST(TestStateInputConstraintCppAd, getValue) {
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
   const ocs2::vector_t u = ocs2::vector_t::Ones(1);
 
-  const auto val = constraint.getValue(t, x, u);
-  const auto lin = constraint.getLinearApproximation(t, x, u);
-  const auto quad = constraint.getQuadraticApproximation(t, x, u);
+  const auto val = constraint.getValue(t, x, u, ocs2::PreComputation());
+  const auto lin = constraint.getLinearApproximation(t, x, u, ocs2::PreComputation());
+  const auto quad = constraint.getQuadraticApproximation(t, x, u, ocs2::PreComputation());
 
   EXPECT_TRUE(val.isApprox((ocs2::vector_t(2) << 2.5, 6).finished()));
   EXPECT_TRUE(lin.f.isApprox(val));

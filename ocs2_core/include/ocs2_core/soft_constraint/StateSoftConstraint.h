@@ -42,20 +42,18 @@ namespace ocs2 {
  *   Implements the cost penalty for state constraint terms
  *   \f$ h_i(x) \quad \forall  i \in [1,..,M] \f$
  *
- *   penalty = \f$ \sum_{i=1}^{M} p(h_i(x)) \f$
+ *   penalty(t, x) = \f$ \sum_{i=1}^{M} p(t, h_i(x)) \f$
  *
  *   The scalar penalty function \f$ p() \f$ and its derivatives are provided by the user.
  *   This class uses the chain rule to compute the second-order approximation of the constraint-penalty. In the case that the
  *   second-order approximation of constraint is not provided, it employs a Gauss-Newton approximation technique which only
- *   relies on the first-order approximation.
+ *   relies on the first-order approximation. In general, the penalty function can be a function of time.
  *
  *   A few commonly-used penalty functions have been provided by the toolbox such as Relaxed-Barrier and Squared-Hinge
  *   penalty functions.
  */
 class StateSoftConstraint final : public StateCost {
  public:
-  using BASE = StateCost;
-
   /**
    * Constructor.
    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
@@ -82,10 +80,14 @@ class StateSoftConstraint final : public StateCost {
 
   StateSoftConstraint* clone() const override;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& /* targetTrajectories */) const override;
+  bool isActive(scalar_t time) const override;
+
+  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& /* targetTrajectories */,
+                    const PreComputation& preComp) const override;
 
   ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const TargetTrajectories& /* targetTrajectories */) const override;
+                                                                 const TargetTrajectories& /* targetTrajectories */,
+                                                                 const PreComputation& preComp) const override;
 
  private:
   StateSoftConstraint(const StateSoftConstraint& other);

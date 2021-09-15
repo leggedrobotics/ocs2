@@ -38,13 +38,11 @@ namespace continuous_time_lqr {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-solution solve(const SystemDynamicsBase& systemDynamics, const CostFunctionBase& costFunctionBase, scalar_t time, const vector_t& state,
-               const vector_t& input, const Settings& settings) {
+solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& state, const vector_t& input, const Settings& settings) {
   const size_t stateDim = state.size();
 
   // --- Form the Linear quadratic approximation ---
-  ConstraintBase noConstraint;
-  LinearQuadraticApproximator lqapprox(systemDynamics, noConstraint, costFunctionBase, settings.checkNumericalCharacteristics);
+  LinearQuadraticApproximator lqapprox(problem, settings.checkNumericalCharacteristics);
 
   // Obtain model data at the provided reference
   ModelData modelData;

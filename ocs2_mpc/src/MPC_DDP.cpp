@@ -37,19 +37,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_DDP::MPC_DDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-                 const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
-                 mpc::Settings mpcSettings, const CostFunctionBase* heuristicsFunctionPtr /*= nullptr*/)
-
+MPC_DDP::MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
+                 const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
     : MPC_BASE(std::move(mpcSettings)) {
   switch (ddpSettings.algorithm_) {
     case ddp::Algorithm::SLQ:
-      ddpPtr_.reset(new SLQ(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
-                            heuristicsFunctionPtr));
+      ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
       break;
     case ddp::Algorithm::ILQR:
-      ddpPtr_.reset(new ILQR(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
-                             heuristicsFunctionPtr));
+      ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
       break;
   }
 }

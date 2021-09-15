@@ -1,9 +1,0 @@
-/*!
-\page ocs2_ddp_page OCS2 DDP
-This module implements the switched-systems constrained DDP-based solvers with Gauss-Newton approximation 
-for both continuous and discrete times  \cite farshidian17a .
-
-[Click to see all members of this module](\ref ocs2_ddp)
-
-[Back to Home Page](\ref index)
-*/

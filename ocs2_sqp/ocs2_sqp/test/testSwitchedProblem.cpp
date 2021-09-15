@@ -32,24 +32,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_sqp/MultipleShootingSolver.h"
 #include "ocs2_sqp/TimeDiscretization.h"
 
-#include <ocs2_core/constraint/LinearConstraint.h>
+#include <ocs2_core/constraint/LinearStateInputConstraint.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
-#include <ocs2_qp_solver/test/testProblemsGeneration.h>
+#include <ocs2_oc/test/testProblemsGeneration.h>
 
 namespace ocs2 {
 namespace {
 /**
  * A constraint that in mode 0 sets u[0] = 0 and in mode 1 sets u[1] = 1
  */
-class SwitchedConstraint : public ocs2::ConstraintBase {
+class SwitchedConstraint : public StateInputConstraint {
  public:
   explicit SwitchedConstraint(std::shared_ptr<ReferenceManager> referenceManagerPtr)
-      : referenceManagerPtr_(std::move(referenceManagerPtr)), subsystemConstraintsPtr_(2) {
-    int n = 3;
-    int m = 2;
-    int nc = 1;
+      : StateInputConstraint(ConstraintOrder::Linear), referenceManagerPtr_(std::move(referenceManagerPtr)) {
+    constexpr int n = 3;
+    constexpr int m = 2;
+    constexpr int nc = 1;
 
     auto stateInputConstraints0 = VectorFunctionLinearApproximation::Zero(nc, n, m);
     stateInputConstraints0.dfdu << 1.0, 0.0;
@@ -57,59 +59,72 @@ class SwitchedConstraint : public ocs2::ConstraintBase {
     auto stateInputConstraints1 = VectorFunctionLinearApproximation::Zero(nc, n, m);
     stateInputConstraints1.dfdu << 0.0, 1.0;
 
-    subsystemConstraintsPtr_[0] =
-        qp_solver::getOcs2Constraints(stateInputConstraints0, VectorFunctionLinearApproximation(), VectorFunctionLinearApproximation());
-    subsystemConstraintsPtr_[1] =
-        qp_solver::getOcs2Constraints(stateInputConstraints1, VectorFunctionLinearApproximation(), VectorFunctionLinearApproximation());
+    subsystemConstraintsPtr_.emplace_back(getOcs2Constraints(stateInputConstraints0));
+    subsystemConstraintsPtr_.emplace_back(getOcs2Constraints(stateInputConstraints1));
   }
 
   ~SwitchedConstraint() override = default;
+  SwitchedConstraint* clone() const override { return new SwitchedConstraint(*this); }
 
+  size_t getNumConstraints(scalar_t time) const override {
+    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(time);
+    return subsystemConstraintsPtr_[activeMode]->getNumConstraints(time);
+  }
+
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override {
+    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(time);
+    return subsystemConstraintsPtr_[activeMode]->getValue(time, state, input, preComp);
+  };
+
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const PreComputation& preComp) const {
+    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(time);
+    return subsystemConstraintsPtr_[activeMode]->getLinearApproximation(time, state, input, preComp);
+  }
+
+ private:
   SwitchedConstraint(const SwitchedConstraint& other)
-      : ocs2::ConstraintBase(other), referenceManagerPtr_(other.referenceManagerPtr_) {
+      : ocs2::StateInputConstraint(other), referenceManagerPtr_(other.referenceManagerPtr_) {
     for (const auto& constraint : other.subsystemConstraintsPtr_) {
       subsystemConstraintsPtr_.emplace_back(constraint->clone());
     }
   }
 
-  SwitchedConstraint* clone() const override { return new SwitchedConstraint(*this); }
-
-  vector_t stateInputEqualityConstraint(scalar_t t, const vector_t& x, const vector_t& u) override {
-    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemConstraintsPtr_[activeMode]->stateInputEqualityConstraint(t, x, u);
-  }
-
-  VectorFunctionLinearApproximation stateInputEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x,
-                                                                                    const vector_t& u) override {
-    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemConstraintsPtr_[activeMode]->stateInputEqualityConstraintLinearApproximation(t, x, u);
-  }
-
- public:
-  std::vector<std::unique_ptr<ConstraintBase>> subsystemConstraintsPtr_;
   std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+  std::vector<std::unique_ptr<ocs2::StateInputConstraint>> subsystemConstraintsPtr_;
 };
 
 std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scalar_t eventTime) {
   constexpr int n = 3;
   constexpr int m = 2;
 
-  // ReferenceManager
-  const ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
-  const ocs2::ModeSchedule modeSchedule({eventTime}, {0, 1});
-  auto referenceManagerPtr = std::make_shared<ocs2::ReferenceManager>(targetTrajectories, modeSchedule);
+  ocs2::OptimalControlProblem problem;
 
   // System
-  const auto dynamics = ocs2::qp_solver::getRandomDynamics(n, m);
+  const auto dynamics = ocs2::getRandomDynamics(n, m);
   const auto jumpMap = matrix_t::Random(n, n);
-  std::unique_ptr<ocs2::LinearSystemDynamics> systemPtr(new ocs2::LinearSystemDynamics(dynamics.dfdx, dynamics.dfdu, jumpMap));
+  problem.dynamicsPtr.reset(new ocs2::LinearSystemDynamics(dynamics.dfdx, dynamics.dfdu, jumpMap));
 
   // Cost
-  auto costPtr = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(n, m), ocs2::qp_solver::getRandomCost(n, 0));
-  costPtr->setTargetTrajectoriesPtr(&targetTrajectories);
+  problem.costPtr->add("intermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(n, m)));
+  problem.softConstraintPtr->add("intermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(n, m)));
+  problem.preJumpCostPtr->add("eventCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(n, 0)));
+  problem.preJumpSoftConstraintPtr->add("eventCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(n, 0)));
+  problem.finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(n, 0)));
+  problem.finalSoftConstraintPtr->add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(n, 0)));
+
+  // Reference Manager
+  const ocs2::ModeSchedule modeSchedule({eventTime}, {0, 1});
+  const ocs2::TargetTrajectories targetTrajectories({0.0}, {ocs2::vector_t::Random(n)}, {ocs2::vector_t::Random(m)});
+  std::shared_ptr<ocs2::ReferenceManager> referenceManagerPtr(new ocs2::ReferenceManager(targetTrajectories, modeSchedule));
+
+  problem.targetTrajectoriesPtr = &targetTrajectories;
 
   // Constraint
-  ocs2::SwitchedConstraint switchedConstraint(referenceManagerPtr);
+  problem.equalityConstraintPtr->add("switchedConstraint",
+                                     std::unique_ptr<StateInputConstraint>(new ocs2::SwitchedConstraint(referenceManagerPtr)));
+
+  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Solver settings
   ocs2::multiple_shooting::Settings settings;
@@ -125,10 +140,9 @@ std::pair<PrimalSolution, std::vector<PerformanceIndex>> solveWithEventTime(scal
   const ocs2::scalar_t finalTime = 1.0;
   const ocs2::vector_t initState = ocs2::vector_t::Random(n);
   const ocs2::scalar_array_t partitioningTimes{0.0};
-  ocs2::DefaultInitializer zeroInitializer(m);
 
   // Set up solver
-  ocs2::MultipleShootingSolver solver(settings, systemPtr.get(), costPtr.get(), &zeroInitializer, &switchedConstraint);
+  ocs2::MultipleShootingSolver solver(settings, problem, zeroInitializer);
   solver.setReferenceManager(referenceManagerPtr);
 
   // Solve

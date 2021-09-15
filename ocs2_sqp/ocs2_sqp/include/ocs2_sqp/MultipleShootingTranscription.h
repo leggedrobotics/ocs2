@@ -30,11 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
-#include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/integration/SensitivityIntegrator.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 namespace ocs2 {
@@ -54,11 +51,8 @@ struct Transcription {
 /**
  * Compute the multiple shooting transcription for a single intermediate node.
  *
- * @param systemDynamics : Continuous time dynamics.
+ * @param optimalControlProblem : Definition of the optimal control problem
  * @param sensitivityDiscretizer : Integrator to use for creating the discrete dynamics.
- * @param costFunction : Continuous time cost function.
- * @param constraintPtr : (Optional) constraints to be evaluated at start of the interval
- * @param penaltyPtr : (Optional) penalty function to use in case of inequality constraints.
  * @param projectStateInputEqualityConstraints
  * @param t : Start of the discrete interval
  * @param dt : Duration of the interval
@@ -67,19 +61,16 @@ struct Transcription {
  * @param u : Input, taken to be constant across the interval.
  * @return multiple shooting transcription for this node.
  */
-Transcription setupIntermediateNode(SystemDynamicsBase& systemDynamics, DynamicsSensitivityDiscretizer& sensitivityDiscretizer,
-                                    CostFunctionBase& costFunction, ConstraintBase* constraintPtr, SoftConstraintPenalty* penaltyPtr,
-                                    bool projectStateInputEqualityConstraints, scalar_t t, scalar_t dt, const vector_t& x,
-                                    const vector_t& x_next, const vector_t& u);
+Transcription setupIntermediateNode(const OptimalControlProblem& optimalControlProblem,
+                                    DynamicsSensitivityDiscretizer& sensitivityDiscretizer, bool projectStateInputEqualityConstraints,
+                                    scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
  * Compute only the performance index for a single intermediate node.
  * Corresponds to the performance index returned by "setupIntermediateNode"
  */
-PerformanceIndex computeIntermediatePerformance(SystemDynamicsBase& systemDynamics, DynamicsDiscretizer& discretizer,
-                                                CostFunctionBase& costFunction, ConstraintBase* constraintPtr,
-                                                SoftConstraintPenalty* penaltyPtr, scalar_t t, scalar_t dt, const vector_t& x,
-                                                const vector_t& x_next, const vector_t& u);
+PerformanceIndex computeIntermediatePerformance(const OptimalControlProblem& optimalControlProblem, DynamicsDiscretizer& discretizer,
+                                                scalar_t t, scalar_t dt, const vector_t& x, const vector_t& x_next, const vector_t& u);
 
 /**
  * Results of the transcription at a terminal node
@@ -93,21 +84,18 @@ struct TerminalTranscription {
 /**
  * Compute the multiple shooting transcription the terminal node.
  *
- * @param terminalCostFunctionPtr : (Optional) terminal cost function
- * @param constraintPtr : (Optional) terminal constraints
+ * @param optimalControlProblem : Definition of the optimal control problem
  * @param t : Time at the terminal node
  * @param x : Terminal state
  * @return multiple shooting transcription for the terminal node.
  */
-TerminalTranscription setupTerminalNode(CostFunctionBase* terminalCostFunctionPtr, ConstraintBase* constraintPtr, scalar_t t,
-                                        const vector_t& x);
+TerminalTranscription setupTerminalNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
  * Compute only the performance index for the terminal node.
  * Corresponds to the performance index returned by "setTerminalNode"
  */
-PerformanceIndex computeTerminalPerformance(CostFunctionBase* terminalCostFunctionPtr, ConstraintBase* constraintPtr, scalar_t t,
-                                            const vector_t& x);
+PerformanceIndex computeTerminalPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x);
 
 /**
  * Results of the transcription at an event
@@ -122,23 +110,21 @@ struct EventTranscription {
 /**
  * Compute the jump transcription at an event node.
  *
- * @param systemDynamics
- * @param eventCostFunctionPtr
- * @param constraintPtr
+ * @param optimalControlProblem : Definition of the optimal control problem
  * @param t : Time at the event node
  * @param x : Pre-event state
  * @param x_next : Post-event state
  * @return multiple shooting transcription for the event node.
  */
-EventTranscription setupEventNode(SystemDynamicsBase& systemDynamics, CostFunctionBase* eventCostFunctionPtr, ConstraintBase* constraintPtr,
-                                  scalar_t t, const vector_t& x, const vector_t& x_next);
+EventTranscription setupEventNode(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
+                                  const vector_t& x_next);
 
 /**
  * Compute only the performance index for the event node.
  * Corresponds to the performance index returned by "setupEventNode"
  */
-PerformanceIndex computeEventPerformance(SystemDynamicsBase& systemDynamics, CostFunctionBase* eventCostFunctionPtr,
-                                         ConstraintBase* constraintPtr, scalar_t t, const vector_t& x, const vector_t& x_next);
+PerformanceIndex computeEventPerformance(const OptimalControlProblem& optimalControlProblem, scalar_t t, const vector_t& x,
+                                         const vector_t& x_next);
 
 }  // namespace multiple_shooting
 }  // namespace ocs2

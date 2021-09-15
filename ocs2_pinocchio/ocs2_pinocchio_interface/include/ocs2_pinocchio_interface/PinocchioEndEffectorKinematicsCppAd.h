@@ -42,7 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * End-effector Kinematics implementation using pinocchio and CppAD.
+ * This class provides the CppAD implementation the end-effector Kinematics based on pinocchio. No pre-computation is required. The class has
+ * two constructors. The constructor with an additional argument, "updateCallback", is meant for cases where PinocchioStateInputMapping
+ * requires some extra update calls on PinocchioInterface, such as the centroidal model mapping (refer to CentroidalModelPinocchioMapping).
  *
  * See also PinocchioEndEffectorKinematics, which uses analytical computation and caching.
  */
@@ -78,7 +80,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
    * @param [in] stateDim : size of state vector
    * @param [in] inputDim : size of input vector
    * @param [in] updateCallback : In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
-   * use this callback.
+   *                              use this callback.
    * @param [in] modelName : name of the generate model library
    * @param [in] modelFolder : folder to save the model library files to
    * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if

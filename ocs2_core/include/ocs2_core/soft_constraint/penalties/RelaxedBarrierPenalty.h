@@ -72,9 +72,9 @@ class RelaxedBarrierPenalty final : public PenaltyBase {
 
   RelaxedBarrierPenalty* clone() const override { return new RelaxedBarrierPenalty(*this); }
 
-  scalar_t getValue(scalar_t h) const override;
-  scalar_t getDerivative(scalar_t h) const override;
-  scalar_t getSecondDerivative(scalar_t h) const override;
+  scalar_t getValue(scalar_t t, scalar_t h) const override;
+  scalar_t getDerivative(scalar_t t, scalar_t h) const override;
+  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
 
  private:
   RelaxedBarrierPenalty(const RelaxedBarrierPenalty& other) = default;

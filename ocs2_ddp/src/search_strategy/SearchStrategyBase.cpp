@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 
+#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+
 #include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
 
 namespace ocs2 {
@@ -132,43 +134,60 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SearchStrategyBase::rolloutCostAndConstraints(
-    ConstraintBase& constraints, CostFunctionBase& costFunction, CostFunctionBase& heuristicsFunction,
-    const scalar_array2_t& timeTrajectoriesStock, const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
-    const vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-    std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const {
+void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array2_t& timeTrajectoriesStock,
+                                                   const size_array2_t& postEventIndicesStock,
+                                                   const vector_array2_t& stateTrajectoriesStock,
+                                                   const vector_array2_t& inputTrajectoriesStock,
+                                                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
+                                                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
+                                                   scalar_t& heuristicsValue) const {
+  auto& preComputation = *problem.preComputationPtr;
+
   for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
     auto eventsPastTheEndItr = postEventIndicesStock[i].begin();
     for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
       const auto t = timeTrajectoriesStock[i][k];
       const auto& x = stateTrajectoriesStock[i][k];
       const auto& u = inputTrajectoriesStock[i][k];
+      auto& modelData = modelDataTrajectoriesStock[i][k];
+
+      preComputation.request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u);
 
       // intermediate cost
-      modelDataTrajectoriesStock[i][k].cost_.f = costFunction.cost(t, x, u);
+      modelData.cost_.f = computeCost(problem, t, x, u);
 
       // state equality constraint
-      modelDataTrajectoriesStock[i][k].stateEqConstr_.f = constraints.stateEqualityConstraint(t, x);
+      modelData.stateEqConstr_.f = problem.stateEqualityConstraintPtr->getValue(t, x, preComputation);
 
       // state-input equality constraint
-      modelDataTrajectoriesStock[i][k].stateInputEqConstr_.f = constraints.stateInputEqualityConstraint(t, x, u);
+      modelData.stateInputEqConstr_.f = problem.equalityConstraintPtr->getValue(t, x, u, preComputation);
 
       // inequality constraints
-      modelDataTrajectoriesStock[i][k].ineqConstr_.f = constraints.inequalityConstraint(t, x, u);
+      modelData.ineqConstr_.f = problem.inequalityConstraintPtr->getValue(t, x, u, preComputation);
 
       // event time cost and constraints
       if (eventsPastTheEndItr != postEventIndicesStock[i].end() && k + 1 == *eventsPastTheEndItr) {
         const auto ke = std::distance(postEventIndicesStock[i].begin(), eventsPastTheEndItr);
-        modelDataEventTimesStock[i][ke].cost_.f = costFunction.finalCost(t, x);
-        modelDataEventTimesStock[i][ke].stateEqConstr_.f = constraints.finalStateEqualityConstraint(t, x);
+        auto& modelDataEvent = modelDataEventTimesStock[i][ke];
+
+        preComputation.requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x);
+
+        // pre-jump cost
+        modelDataEvent.cost_.f = computeEventCost(problem, t, x);
+
+        // pre-jump constraint
+        modelDataEvent.stateEqConstr_.f = problem.preJumpEqualityConstraintPtr->getValue(t, x, preComputation);
+
         eventsPastTheEndItr++;
       }
     }  // end of k loop
   }    // end of i loop
 
   // calculate the Heuristics function at the final time
-  heuristicsValue = heuristicsFunction.finalCost(timeTrajectoriesStock[finalActivePartition_].back(),
-                                                 stateTrajectoriesStock[finalActivePartition_].back());
+  const auto t = timeTrajectoriesStock[finalActivePartition_].back();
+  const auto& x = stateTrajectoriesStock[finalActivePartition_].back();
+  preComputation.requestFinal(Request::Cost + Request::SoftConstraint, t, x);
+  heuristicsValue = computeFinalCost(problem, t, x);
 }
 
 /******************************************************************************************************/
@@ -208,7 +227,7 @@ PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const Soft
     // inequality constraints penalty
     scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock[i].size());
     std::transform(modelDataTrajectoriesStock[i].begin(), modelDataTrajectoriesStock[i].end(), inequalityPenaltyTrajectory.begin(),
-                   [&](const ModelData& m) { return ineqConstrPenalty.getValue(m.ineqConstr_.f); });
+                   [&](const ModelData& m) { return ineqConstrPenalty.getValue(m.time_, m.ineqConstr_.f); });
 
     performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock[i], inequalityPenaltyTrajectory);
 

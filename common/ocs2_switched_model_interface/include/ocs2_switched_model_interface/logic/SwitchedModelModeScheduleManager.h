@@ -31,6 +31,10 @@ class SwitchedModelModeScheduleManager : public ocs2::ReferenceManager {
   ocs2::Synchronized<TerrainModel>& getTerrainModel() { return terrainModel_; }
   const ocs2::Synchronized<TerrainModel>& getTerrainModel() const { return terrainModel_; }
 
+  void setInverseKinematics(inverse_kinematics_function_t inverseKinematicsFunction) {
+    inverseKinematicsFunction_ = inverseKinematicsFunction;
+  }
+
   // Write-able access to dynamics parameters
   ocs2::Synchronized<ComKinoSystemDynamicsParameters<scalar_t>>& getDynamicsParameters() { return newDynamicsParameters_; }
   const ocs2::Synchronized<ComKinoSystemDynamicsParameters<scalar_t>>& getDynamicsParameters() const { return newDynamicsParameters_; }
@@ -45,6 +49,7 @@ class SwitchedModelModeScheduleManager : public ocs2::ReferenceManager {
   ocs2::Synchronized<GaitSchedule> gaitSchedule_;
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
   ocs2::Synchronized<TerrainModel> terrainModel_;
+  inverse_kinematics_function_t inverseKinematicsFunction_;
 
   //! Parameters active in the current MPC optimization
   ComKinoSystemDynamicsParameters<scalar_t> activeDynamicsParameters_;

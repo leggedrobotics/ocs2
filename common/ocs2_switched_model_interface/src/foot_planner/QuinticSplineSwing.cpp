@@ -35,7 +35,7 @@ scalar_t QuinticSpline::normalizedTime(scalar_t t) const {
 }
 
 QuinticSwing::QuinticSwing(const SwingNode& start, scalar_t midHeight, const SwingNode& end)
-    : QuinticSwing(start, SwingNode{(start.time + end.time) / 2.0, midHeight, 0.0}, end) {}
+    : QuinticSwing(start, SwingNode{0.5 * (start.time + end.time), midHeight, 0.0}, end) {}
 
 QuinticSwing::QuinticSwing(const SwingNode& start, const SwingNode& mid, const SwingNode& end) : midTime_(mid.time) {
   assert(start.time < mid.time);

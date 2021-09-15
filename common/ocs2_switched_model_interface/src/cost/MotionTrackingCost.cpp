@@ -73,30 +73,57 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
   return costElementsToVector(motionTarget);
 }
 
+vector_t computeMotionReferences(scalar_t time, const comkino_state_t& x, const comkino_input_t& u,
+                                 const SwingTrajectoryPlanner& swingTrajectoryPlanner) {
+  // Extract elements from reference
+  const auto comPose = getComPose(x);
+  const auto com_comTwist = getComLocalVelocities(x);
+  const auto eulerAngles = getOrientation(comPose);
+  const auto qJoints = getJointPositions(x);
+  const auto dqJoints = getJointVelocities(u);
+
+  CostElements<scalar_t> motionTarget;
+  motionTarget.eulerXYZ = eulerAngles;
+  motionTarget.comPosition = getPositionInOrigin(comPose);
+  motionTarget.comAngularVelocity = rotateVectorBaseToOrigin(getAngularVelocity(com_comTwist), eulerAngles);
+  motionTarget.comLinearVelocity = rotateVectorBaseToOrigin(getLinearVelocity(com_comTwist), eulerAngles);
+  for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+    const auto& footPhase = swingTrajectoryPlanner.getFootPhase(leg, time);
+    motionTarget.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
+    motionTarget.footPosition[leg] = footPhase.getPositionInWorld(time);
+    motionTarget.jointVelocity[leg] = dqJoints.template segment<3>(3 * leg);
+    motionTarget.footVelocity[leg] = footPhase.getVelocityInWorld(time);
+    motionTarget.contactForce[leg] = u.template segment<3>(3 * leg);
+  }
+  return costElementsToVector(motionTarget);
+}
+
 }  // namespace
 
 MotionTrackingCost::MotionTrackingCost(const Weights& settings, const SwitchedModelModeScheduleManager& modeScheduleManager,
-                                       const kinematic_model_t& kinematicModel, const ad_kinematic_model_t& adKinematicModel,
-                                       const com_model_t& comModel, const ad_com_model_t& adComModel, bool recompile)
+                                       const SwingTrajectoryPlanner& swingTrajectoryPlanner, const kinematic_model_t& kinematicModel,
+                                       const ad_kinematic_model_t& adKinematicModel, const com_model_t& comModel,
+                                       const ad_com_model_t& adComModel, bool recompile)
     : modeScheduleManagerPtr_(&modeScheduleManager),
+      swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
       kinematicModelPtr_(kinematicModel.clone()),
       adKinematicModelPtr_(adKinematicModel.clone()),
       comModelPtr_(comModel.clone()),
       adComModelPtr_(adComModel.clone()) {
   // Weights are sqrt of settings
-  CostElements<ocs2::ad_scalar_t> weightStruct;
-  weightStruct.eulerXYZ = settings.eulerXYZ.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-  weightStruct.comPosition = settings.comPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-  weightStruct.comAngularVelocity = settings.comAngularVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-  weightStruct.comLinearVelocity = settings.comLinearVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
+  CostElements<ocs2::scalar_t> weightStruct;
+  weightStruct.eulerXYZ = settings.eulerXYZ.cwiseSqrt();
+  weightStruct.comPosition = settings.comPosition.cwiseSqrt();
+  weightStruct.comAngularVelocity = settings.comAngularVelocity.cwiseSqrt();
+  weightStruct.comLinearVelocity = settings.comLinearVelocity.cwiseSqrt();
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    weightStruct.jointPosition[leg] = settings.jointPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.footPosition[leg] = settings.footPosition.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.jointVelocity[leg] = settings.jointVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.footVelocity[leg] = settings.footVelocity.cwiseSqrt().cast<ocs2::ad_scalar_t>();
-    weightStruct.contactForce[leg] = settings.contactForce.cwiseSqrt().cast<ocs2::ad_scalar_t>();
+    weightStruct.jointPosition[leg] = settings.jointPosition.cwiseSqrt();
+    weightStruct.footPosition[leg] = settings.footPosition.cwiseSqrt();
+    weightStruct.jointVelocity[leg] = settings.jointVelocity.cwiseSqrt();
+    weightStruct.footVelocity[leg] = settings.footVelocity.cwiseSqrt();
+    weightStruct.contactForce[leg] = settings.contactForce.cwiseSqrt();
   }
-  sqrtWeights_ = costElementsToVector(weightStruct);
+  sqrtWeights_ = costElementsToVector(weightStruct).cast<ocs2::ad_scalar_t>();
 
   initialize(STATE_DIM, INPUT_DIM, costVectorLength, "MotionTrackingCost", "/tmp/ocs2", recompile);
 };
@@ -113,14 +140,14 @@ ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2
     uRef = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getComPose(xRef)));
   }
 
-  // The target references are the parameters
-  return computeMotionTargets<ocs2::scalar_t>(xRef, uRef, *kinematicModelPtr_, *comModelPtr_);
+  return computeMotionReferences(time, xRef, uRef, *swingTrajectoryPlannerPtr_);
 }
 
 MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
     : ocs2::StateInputCostGaussNewtonAd(other),
       sqrtWeights_(other.sqrtWeights_),
       modeScheduleManagerPtr_(other.modeScheduleManagerPtr_),
+      swingTrajectoryPlannerPtr_(other.swingTrajectoryPlannerPtr_),
       kinematicModelPtr_(other.kinematicModelPtr_->clone()),
       adKinematicModelPtr_(other.adKinematicModelPtr_->clone()),
       comModelPtr_(other.comModelPtr_->clone()),
@@ -129,7 +156,13 @@ MotionTrackingCost::MotionTrackingCost(const MotionTrackingCost& other)
 ocs2::ad_vector_t MotionTrackingCost::costVectorFunction(ocs2::ad_scalar_t time, const ocs2::ad_vector_t& state,
                                                          const ocs2::ad_vector_t& input, const ocs2::ad_vector_t& parameters) const {
   const auto currentTargets = computeMotionTargets<ocs2::ad_scalar_t>(state, input, *adKinematicModelPtr_, *adComModelPtr_);
-  return (currentTargets - parameters).cwiseProduct(sqrtWeights_);
+  ocs2::ad_vector_t errors = (currentTargets - parameters).cwiseProduct(sqrtWeights_);
+
+  // For the orientation, we replace the error in Euler angles coordinates with a proper rotation error.
+  errors.head<3>() = rotationError(rotationMatrixOriginToBase<ocs2::ad_scalar_t>(currentTargets.head<3>()),
+                                   rotationMatrixOriginToBase<ocs2::ad_scalar_t>(parameters.head<3>()))
+                         .cwiseProduct(sqrtWeights_.head<3>());
+  return errors;
 }
 
 MotionTrackingCost::Weights loadWeightsFromFile(const std::string& filename, const std::string& fieldname, bool verbose) {

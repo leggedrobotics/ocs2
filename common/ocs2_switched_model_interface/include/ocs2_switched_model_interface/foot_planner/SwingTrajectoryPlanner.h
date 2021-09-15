@@ -36,6 +36,8 @@ struct SwingTrajectoryPlannerSettings {
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
 
+using inverse_kinematics_function_t = std::function<vector3_t(int, const vector3_t&)>;
+
 class SwingTrajectoryPlanner {
  public:
   SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
@@ -46,6 +48,10 @@ class SwingTrajectoryPlanner {
   void updateSwingMotions(scalar_t initTime, scalar_t finalTime, const comkino_state_t& currentState,
                           const ocs2::TargetTrajectories& targetTrajectories,
                           const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg);
+
+  void adaptTargetTrajectoriesWithInverseKinematics(ocs2::TargetTrajectories& targetTrajectories,
+                                                    const inverse_kinematics_function_t& inverseKinematicsFunction,
+                                                    scalar_t finalTime) const;
 
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
 

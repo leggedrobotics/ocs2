@@ -41,6 +41,10 @@ void SwitchedModelModeScheduleManager::modifyReferences(scalar_t initTime, scala
   // Prepare swing motions
   swingTrajectoryPtr_->updateSwingMotions(initTime, finalTime, initState, targetTrajectories, extractContactTimingsPerLeg(modeSchedule));
 
+  if (inverseKinematicsFunction_) {
+    swingTrajectoryPtr_->adaptTargetTrajectoriesWithInverseKinematics(targetTrajectories, inverseKinematicsFunction_, finalTime);
+  }
+
   {
     auto lockedDynamicsParameterPtr = newDynamicsParameters_.lock();
     activeDynamicsParameters_ = *lockedDynamicsParameterPtr;  // Copy external parameters to the active parameter set

@@ -17,7 +17,7 @@ AnymalPyBindings::AnymalPyBindings(std::string varargs) {
     namespace po = boost::program_options;
     auto args = po::split_unix(varargs);
     po::options_description desc("Options");
-    desc.add_options()("help", "produce help message and quit")("name,n", po::value<std::string>(&robotName_), "robot name (e.g., croc)")(
+    desc.add_options()("help", "produce help message and quit")("name,n", po::value<std::string>(&robotName_), "robot name (e.g., chip)")(
         "config,c", po::value<std::string>(&configName_), "configuration name (e.g., c_series)");
 
     po::command_line_parser parser(args);

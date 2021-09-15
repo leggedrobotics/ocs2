@@ -13,4 +13,16 @@ TerrainPlane PlanarTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(co
   return {projectPositionInWorldOntoPlaneAlongGravity(positionInWorld, terrainPlane_), terrainPlane_.orientationWorldToTerrain};
 }
 
+vector3_t PlanarTerrainModel::getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const {
+  // The highest point on a plane is at the end of the line
+  const auto projection1 = getLocalTerrainAtPositionInWorldAlongGravity(position1InWorld).positionInWorld;
+  const auto projection2 = getLocalTerrainAtPositionInWorldAlongGravity(position2InWorld).positionInWorld;
+
+  if (projection1.z() > projection2.z()) {
+    return projection1;
+  } else {
+    return projection2;
+  }
+}
+
 }  // namespace switched_model

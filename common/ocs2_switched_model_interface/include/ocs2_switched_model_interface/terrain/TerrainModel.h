@@ -30,6 +30,8 @@ class TerrainModel {
 
   /** Returns the signed distance field for this terrain if one is available */
   virtual const SignedDistanceField* getSignedDistanceField() const { return nullptr; }
+
+  virtual vector3_t getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const = 0;
 };
 
 }  // namespace switched_model

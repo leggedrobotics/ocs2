@@ -13,7 +13,7 @@ from ocs2_anymal_mpc import (
 class anymal_mpc_python_tests(unittest.TestCase):
     def setUp(self):
         print("Instantiating MPC interface")
-        self.mpc = mpc_interface("--name croc --config c_series")
+        self.mpc = mpc_interface("--name chip --config c_series")
         self.STATE_DIM = 24
         self.INPUT_DIM = 24
 

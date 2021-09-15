@@ -1,2 +1,2 @@
 library 'continuous_integration_pipeline'
-ciPipeline("--environment anymal --release 21.01 --recipes raisimlib")
+ciPipeline("--environment anymal --recipes raisimlib --dependencies 'git@bitbucket.org:leggedrobotics/ocs2_dev;ocs2_anymal;git'")

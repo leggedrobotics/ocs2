@@ -79,8 +79,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
-    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(),
-                                           settings_.errorGain, scaling * settings_.sdfMidswingMargin));
+    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_.get(), settings_.errorGain,
+                                           scaling * settings_.sdfMidswingMargin));
   }
 
   // Loop through contact phases
@@ -115,8 +115,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       liftOff.velocity *= scaling;
       touchDown.velocity *= scaling;
       eventTimes.push_back(currentContactTiming.end);
-      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_->getSignedDistanceField(),
-                                             settings_.errorGain, scaling * settings_.sdfMidswingMargin));
+      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_.get(), settings_.errorGain,
+                                             scaling * settings_.sdfMidswingMargin));
     }
   }
 
@@ -193,6 +193,32 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
   }
 
   return nominalFootholdTerrain;
+}
+
+void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::TargetTrajectories& targetTrajectories,
+                                                                          const inverse_kinematics_function_t& inverseKinematicsFunction,
+                                                                          scalar_t finalTime) const {
+  for (int k = 0; k < targetTrajectories.timeTrajectory.size(); ++k) {
+    const scalar_t t = targetTrajectories.timeTrajectory[k];
+
+    const base_coordinate_t basePose = comModel_->calculateBasePose(getComPose(comkino_state_t(targetTrajectories.stateTrajectory[k])));
+    const vector3_t basePositionInWorld = getPositionInOrigin(basePose);
+    const vector3_t eulerXYZ = getOrientation(basePose);
+
+    for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
+      const auto& footPhase = this->getFootPhase(leg, t);
+      const vector3_t PositionBaseToFootInWorldFrame = footPhase.getPositionInWorld(t) - basePositionInWorld;
+      const vector3_t PositionBaseToFootInBaseFrame = rotateVectorOriginToBase(PositionBaseToFootInWorldFrame, eulerXYZ);
+
+      const size_t offset = 2 * BASE_COORDINATE_SIZE + 3 * leg;
+      targetTrajectories.stateTrajectory[k].segment(offset, 3) = inverseKinematicsFunction(leg, PositionBaseToFootInBaseFrame);
+    }
+
+    // Can stop adaptation as soon as we have processed a point beyond the horizon.
+    if (t > finalTime) {
+      break;
+    }
+  }
 }
 
 void SwingTrajectoryPlanner::updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition,

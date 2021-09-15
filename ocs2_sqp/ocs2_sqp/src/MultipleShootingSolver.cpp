@@ -223,7 +223,6 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   // Initial state
   const scalar_t initTime = getIntervalStart(timeDiscretization[0]);
   if (initTime < interpolateTill) {
-    assert(timeDiscretization[0].event != AnnotatedTime::Event::PreEvent);  // first discretization is never PreEvent.
     stateTrajectory.push_back(
         LinearInterpolation::interpolate(initTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
   } else {
@@ -241,9 +240,7 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
       const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
       vector_t input, nextState;
       if (time < interpolateTill) {
-        const bool useController = false;
-        std::tie(input, nextState) =
-            multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back(), useController);
+        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
       } else {  // Using initializer
         std::tie(input, nextState) =
             multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());

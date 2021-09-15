@@ -92,65 +92,80 @@ TEST(testRotations, eulerRates) {
 }
 
 TEST(testRotations, rotationMatrixToAngleAxis) {
-  const ocs2::scalar_t angletol = 1e-6;
   const ocs2::scalar_t vectol = 1e-6;
 
-  // small angle case
-  {
-    auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(switched_model::matrix3_t::Identity());
-    ASSERT_NEAR(computedAngleAxis.norm(), 0.0, angletol);
-
-    const ocs2::scalar_t smallAngle = 1e-12;
-    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(smallAngle, switched_model::vector3_t::Random().normalized());
-    computedAngleAxis = switched_model::rotationMatrixToAngleAxis(angleAxis.toRotationMatrix());
-    ASSERT_NEAR(computedAngleAxis.norm(), smallAngle, angletol);
-    ASSERT_NEAR((computedAngleAxis - smallAngle * angleAxis.axis()).norm(), 0.0, vectol);
-  }
-
-  // halve rotation case
-  {
-    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(M_PI, switched_model::vector3_t::Random().normalized());
+  auto runTest = [=](const Eigen::AngleAxis<ocs2::scalar_t>& angleAxis) {
     auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
-    ASSERT_NEAR(computedAngleAxis.norm(), M_PI, angletol);
-    ocs2::scalar_t dotCheck = computedAngleAxis.dot(angleAxis.axis()) / M_PI;  // We should either find the axis itself or the negative axis
-    if (dotCheck > 0.0) {
-      ASSERT_NEAR(dotCheck, 1.0, vectol);
-    } else {
-      ASSERT_NEAR(dotCheck, -1.0, vectol);
-    }
-  }
-
-  // close before halve rotation case
-  {
-    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(M_PI + 1e-8, switched_model::vector3_t::Random().normalized());
+    return (computedAngleAxis - angleAxis.angle() * angleAxis.axis()).norm() < vectol;
+  };
+  auto message = [=](const Eigen::AngleAxis<ocs2::scalar_t>& angleAxis) {
     auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
-    ASSERT_NEAR(computedAngleAxis.norm(), 2.0 * M_PI - angleAxis.angle(), angletol);
-    ASSERT_NEAR((computedAngleAxis + (2.0 * M_PI - angleAxis.angle()) * angleAxis.axis()).norm(), 0.0, vectol);
+    std::stringstream ss;
+    ss << "Failed test for angle: " << angleAxis.angle() << ", axle: " << angleAxis.axis().transpose()
+       << "\n computed: " << computedAngleAxis.transpose() << ", should be " << (angleAxis.angle() * angleAxis.axis()).transpose();
+    return ss.str();
+  };
+
+  // Test edge cases
+  const ocs2::scalar_t smallAngle = 1e-12;
+  const ocs2::scalar_t smallAngle2 = 1e-6;
+  const ocs2::scalar_array_t edgeCases = {0.0, smallAngle, smallAngle2, M_PI_2, M_PI - smallAngle2, M_PI - smallAngle, M_PI};
+  const switched_model::vector3_t rotationUnitVector = switched_model::vector3_t{1.0, -1.0, 3.0}.normalized();
+
+  for (auto angle : edgeCases) {
+    EXPECT_TRUE(runTest({angle, rotationUnitVector})) << message({angle, rotationUnitVector});
+    EXPECT_TRUE(runTest({angle, -rotationUnitVector})) << message({angle, -rotationUnitVector});
   }
 
-  // close after halve rotation case
-  {
-    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(M_PI - 1e-8, switched_model::vector3_t::Random().normalized());
-    auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis<ocs2::scalar_t>(angleAxis.toRotationMatrix());
-    ASSERT_NEAR(computedAngleAxis.norm(), angleAxis.angle(), angletol);
-    ASSERT_NEAR((computedAngleAxis - angleAxis.angle() * angleAxis.axis()).norm(), 0.0, vectol);
-  }
-
-  // All in between mixed
+  // Test range of angles
   ocs2::scalar_t dAngle = 1e-4;
-  for (ocs2::scalar_t angle = 0.0; angle < 2.0 * M_PI; angle += dAngle) {
+  for (ocs2::scalar_t angle = 0.0; angle < M_PI; angle += dAngle) {
     const switched_model::vector3_t axis = switched_model::vector3_t::Random().normalized();  // random axis
-    const Eigen::AngleAxis<ocs2::scalar_t> angleAxis(angle, axis);
-    const switched_model::matrix3_t R = angleAxis.toRotationMatrix();
-
-    const auto computedAngleAxis = switched_model::rotationMatrixToAngleAxis(R);
-
-    if (angle > M_PI) {
-      ASSERT_NEAR(computedAngleAxis.norm(), 2.0 * M_PI - angle, angletol);
-      ASSERT_NEAR((computedAngleAxis + (2.0 * M_PI - angle) * angleAxis.axis()).norm(), 0.0, vectol);
-    } else {
-      ASSERT_NEAR(computedAngleAxis.norm(), angle, angletol);
-      ASSERT_NEAR((computedAngleAxis - angle * angleAxis.axis()).norm(), 0.0, vectol);
-    }
+    EXPECT_TRUE(runTest({angle, axis})) << message({angle, axis});
+    EXPECT_TRUE(runTest({angle, -axis})) << message({angle, -axis});
   }
+}
+
+TEST(testRotations, rotationErrorJacobian) {
+  using ad_vector_t = ocs2::CppAdInterface::ad_vector_t;
+  using ad_scalar_t = ocs2::CppAdInterface::ad_scalar_t;
+
+  auto adFunction = [](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+    switched_model::vector3_ad_t eulerAngles = x.head<3>();
+    switched_model::vector3_ad_t eulerAnglesReference = p.head<3>();
+    y = switched_model::rotationError(switched_model::rotationMatrixOriginToBase(eulerAngles),
+                                      switched_model::rotationMatrixOriginToBase(eulerAnglesReference));
+  };
+
+  ocs2::CppAdInterface adInterface(adFunction, 3, 3, "rotationErrorJacobianTest");
+  adInterface.createModels();
+
+  // Check Jacobian at origin
+  switched_model::matrix3_t jacOrigin = adInterface.getJacobian(switched_model::vector3_t::Zero(), switched_model::vector3_t::Zero());
+  ASSERT_LT((jacOrigin - switched_model::matrix3_t::Identity()).norm(), 1e-6);
+
+  // Check Jacobian at full rotation
+  switched_model::matrix3_t jac2Pi =
+      adInterface.getJacobian(switched_model::vector3_t::Zero(), switched_model::vector3_t{0.0, 0.0, 2.0 * M_PI});
+  ASSERT_LT((jac2Pi - switched_model::matrix3_t::Identity()).norm(), 1e-6);
+
+  auto gradientDescent = [&](const switched_model::vector3_t& eulerAnglesStart, switched_model::vector3_t eulerAnglesReference) {
+    switched_model::vector3_t eulerAngles = eulerAnglesStart;
+    for (int i = 0; i < 1000; i++) {
+      switched_model::matrix3_t jac = adInterface.getJacobian(eulerAngles, eulerAnglesReference);
+      switched_model::vector3_t error = adInterface.getFunctionValue(eulerAngles, eulerAnglesReference);
+      eulerAngles = eulerAngles - 0.1 * jac.fullPivHouseholderQr().solve(error);
+    }
+    return eulerAngles;
+  };
+
+  // Able to do gradient descent with exactly Pi offset
+  switched_model::vector3_t eulerAngles = switched_model::vector3_t::Zero();
+  switched_model::vector3_t eulerAnglesReference = switched_model::vector3_t{0.0, 0.0, M_PI};
+  ASSERT_LT((gradientDescent(eulerAngles, eulerAnglesReference) - eulerAnglesReference).norm(), 1e-6);
+
+  // Able to do gradient descent between random angles
+  eulerAngles = switched_model::vector3_t::Random();
+  eulerAnglesReference = switched_model::vector3_t::Random();
+  ASSERT_LT((gradientDescent(eulerAngles, eulerAnglesReference) - eulerAnglesReference).norm(), 1e-6);
 }

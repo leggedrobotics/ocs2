@@ -159,7 +159,9 @@ ocs2::ad_vector_t MotionTrackingCost::costVectorFunction(ocs2::ad_scalar_t time,
                                                          const ocs2::ad_vector_t& input, const ocs2::ad_vector_t& parameters) const {
   const auto currentTargets = computeMotionTargets<ocs2::ad_scalar_t>(state, input, *adKinematicModelPtr_, *adComModelPtr_);
   ocs2::ad_vector_t errors = (currentTargets - parameters).cwiseProduct(sqrtWeights_);
-  errors.head<3>() = rotationError(rotationMatrixOriginToBase<ocs2::ad_scalar_t>(state.head<3>()),
+
+  // For the orientation, we replace the error in Euler angles coordinates with a proper rotation error.
+  errors.head<3>() = rotationError(rotationMatrixOriginToBase<ocs2::ad_scalar_t>(currentTargets.head<3>()),
                                    rotationMatrixOriginToBase<ocs2::ad_scalar_t>(parameters.head<3>()))
                          .cwiseProduct(sqrtWeights_.head<3>());
   return errors;

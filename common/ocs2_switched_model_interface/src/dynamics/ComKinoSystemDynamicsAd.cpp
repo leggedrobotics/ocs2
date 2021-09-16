@@ -83,11 +83,9 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
   /*
    * Base dynamics with the following assumptions:
    *  - Zero joint acceleration
-   *  - Zero Coriolis/Centrifugal terms (base and joint velocity both passed as zero)
    */
-  stateDerivativeCoM.segment(6, 6) = comModel.calculateBaseLocalAccelerations(basePose, base_coordinate_s_t<SCALAR_T>::Zero(), qJoints,
-                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(),
-                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(), JcTransposeLambda);
+  stateDerivativeCoM.segment(6, 6) = comModel.calculateBaseLocalAccelerations(
+      basePose, baseLocalVelocities, qJoints, getJointVelocities(comKinoInput), joint_coordinate_s_t<SCALAR_T>::Zero(), JcTransposeLambda);
   return stateDerivativeCoM;
 }
 

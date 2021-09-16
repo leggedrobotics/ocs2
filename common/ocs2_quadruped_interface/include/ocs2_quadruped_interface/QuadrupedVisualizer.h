@@ -79,7 +79,6 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   void publishBaseTransform(ros::Time timeStamp, const base_coordinate_t& basePose);
   void publishCartesianMarkers(ros::Time timeStamp, const contact_flag_t& contactFlags, const feet_array_t<vector3_t>& feetPosition,
                                const feet_array_t<vector3_t>& feetForce) const;
-  void publishCenterOfMassPose(ros::Time timeStamp, const base_coordinate_t& comPose) const;
   void publishEndEffectorPoses(ros::Time timeStamp, const feet_array_t<vector3_t>& feetPositions,
                                const feet_array_t<Eigen::Quaternion<scalar_t>>& feetOrientations) const;
   void publishCollisionSpheres(ros::Time timeStamp, const base_coordinate_t& basePose, const joint_coordinate_t& jointAngles) const;
@@ -106,7 +105,6 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
 
   // Current state publisher..
   ros::Publisher currentStatePublisher_;
-  ros::Publisher currentPosePublisher_;
   ros::Publisher currentFeetPosesPublisher_;
   ros::Publisher currentCollisionSpheresPublisher_;
 

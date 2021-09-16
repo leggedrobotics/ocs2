@@ -50,7 +50,6 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   stateOptimizedFeetPosePublishers_[2] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/LH", 1);
   stateOptimizedFeetPosePublishers_[3] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/RH", 1);
   currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentState", 1);
-  currentPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentPose", 1);
   currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPoses", 1);
   currentCollisionSpheresPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentCollisionSpheres", 1);
 
@@ -82,7 +81,7 @@ void QuadrupedVisualizer::update(const ocs2::SystemObservation& observation, con
 void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::SystemObservation& observation) {
   // Extract components from state
   const state_vector_t switchedState = observation.state.head(STATE_DIM);
-  const base_coordinate_t basePose = getComPose(switchedState);
+  const base_coordinate_t basePose = getBasePose(switchedState);
   const joint_coordinate_t qJoints = getJointPositions(state_vector_t(observation.state));
   const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(basePose));
 
@@ -100,7 +99,6 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::Sy
   publishJointTransforms(timeStamp, qJoints);
   publishBaseTransform(timeStamp, basePose);
   publishCartesianMarkers(timeStamp, modeNumber2StanceLeg(observation.mode), feetPosition, feetForce);
-  publishCenterOfMassPose(timeStamp, basePose);
   publishEndEffectorPoses(timeStamp, feetPosition, feetOrientations);
   publishCollisionSpheres(timeStamp, basePose, qJoints);
 }
@@ -167,18 +165,6 @@ void QuadrupedVisualizer::publishCartesianMarkers(ros::Time timeStamp, const con
 
   // Publish cartesian markers (minus the CoM Pose)
   currentStatePublisher_.publish(markerArray);
-}
-
-void QuadrupedVisualizer::publishCenterOfMassPose(ros::Time timeStamp, const base_coordinate_t& comPose) const {
-  geometry_msgs::Pose pose;
-  pose.position = ocs2::getPointMsg(getPositionInOrigin(comPose));
-  pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(comPose)));
-
-  geometry_msgs::PoseArray poseArray;
-  poseArray.header = ocs2::getHeaderMsg(frameId_, timeStamp);
-  poseArray.poses.push_back(std::move(pose));
-
-  currentPosePublisher_.publish(poseArray);
 }
 
 void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const ocs2::TargetTrajectories& targetTrajectories) const {
@@ -305,7 +291,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   // Extract Com and Feet from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     const state_vector_t switchedState = state.head(STATE_DIM);
-    const base_coordinate_t basePose = getComPose(switchedState);
+    const base_coordinate_t basePose = getBasePose(switchedState);
     const joint_coordinate_t qJoints = getJointPositions(switchedState);
 
     // Fill com position and pose msgs
@@ -356,7 +342,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
       const auto postEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event + 1]);
       const vector_t postEventState = ocs2::LinearInterpolation::interpolate(eventTimes[event], mpcTimeTrajectory, mpcStateTrajectory);
       const state_vector_t postEventSwitchedState = postEventState.head(STATE_DIM);
-      const base_coordinate_t basePose = getComPose(postEventSwitchedState);
+      const base_coordinate_t basePose = getBasePose(postEventSwitchedState);
       const joint_coordinate_t qJoints = getJointPositions(postEventSwitchedState);
 
       for (int i = 0; i < NUM_CONTACT_POINTS; i++) {

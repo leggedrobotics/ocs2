@@ -173,9 +173,9 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   const size_t stateTrajSize = stateTrajectory.size();
   const size_t inputTrajSize = inputTrajectory.size();
 
-  // Reserve com messages
-  std::vector<geometry_msgs::Point> desiredComPositionMsg;
-  desiredComPositionMsg.reserve(stateTrajSize);
+  // Reserve Base messages
+  std::vector<geometry_msgs::Point> desiredBasePositionMsg;
+  desiredBasePositionMsg.reserve(stateTrajSize);
   geometry_msgs::PoseArray poseArray;
   poseArray.poses.reserve(stateTrajSize);
   visualization_msgs::MarkerArray velArray;
@@ -221,7 +221,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     const vector3_t o_baseAngVel = o_R_b * getAngularVelocity(baseTwist);
 
     // Fill message containers
-    desiredComPositionMsg.push_back(pose.position);
+    desiredBasePositionMsg.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
     velArray.markers.emplace_back(getArrowAtPointMsg(o_baseVel / velScale_, basePositionInOrigin, ocs2::Color::blue));
     angVelArray.markers.emplace_back(getArrowAtPointMsg(o_baseAngVel / velScale_, basePositionInOrigin, ocs2::Color::green));
@@ -240,9 +240,9 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   }
 
   // Headers
-  auto comLineMsg = getLineMsg(std::move(desiredComPositionMsg), ocs2::Color::green, trajectoryLineWidth_);
-  comLineMsg.header = ocs2::getHeaderMsg(frameId_, timeStamp);
-  comLineMsg.id = 0;
+  auto baseLineMsg = getLineMsg(std::move(desiredBasePositionMsg), ocs2::Color::green, trajectoryLineWidth_);
+  baseLineMsg.header = ocs2::getHeaderMsg(frameId_, timeStamp);
+  baseLineMsg.id = 0;
   poseArray.header = ocs2::getHeaderMsg(frameId_, timeStamp);
   ocs2::assignHeader(feetPoseArrays.begin(), feetPoseArrays.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
   ocs2::assignHeader(velArray.markers.begin(), velArray.markers.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
@@ -251,7 +251,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   ocs2::assignIncreasingId(angVelArray.markers.begin(), angVelArray.markers.end());
 
   // Publish
-  costDesiredBasePositionPublisher_.publish(comLineMsg);
+  costDesiredBasePositionPublisher_.publish(baseLineMsg);
   costDesiredBasePosePublisher_.publish(poseArray);
   costDesiredBaseVelocityPublisher_.publish(velArray);
   costDesiredBaseAngVelocityPublisher_.publish(angVelArray);
@@ -280,25 +280,25 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   feet_array_t<geometry_msgs::PoseArray> feetPoseMsgs;
   std::for_each(feetPoseMsgs.begin(), feetPoseMsgs.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(mpcStateTrajectory.size()); });
 
-  // Reserve Com Msg
-  std::vector<geometry_msgs::Point> mpcComPositionMsgs;
-  mpcComPositionMsgs.reserve(mpcStateTrajectory.size());
+  // Reserve Base Msg
+  std::vector<geometry_msgs::Point> mpcBasePositionMsgs;
+  mpcBasePositionMsgs.reserve(mpcStateTrajectory.size());
 
   // Reserve Pose array
   geometry_msgs::PoseArray poseArray;
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
-  // Extract Com and Feet from state
+  // Extract Base and Feet from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     const state_vector_t switchedState = state.head(STATE_DIM);
     const base_coordinate_t basePose = getBasePose(switchedState);
     const joint_coordinate_t qJoints = getJointPositions(switchedState);
 
-    // Fill com position and pose msgs
+    // Fill Base position and pose msgs
     geometry_msgs::Pose pose;
     pose.position = ocs2::getPointMsg(getPositionInOrigin(basePose));
     pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(basePose)));
-    mpcComPositionMsgs.push_back(pose.position);
+    mpcBasePositionMsgs.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
 
     // Fill feet msgs
@@ -316,13 +316,13 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
 
   // Convert feet msgs to Array message
   visualization_msgs::MarkerArray markerArray;
-  markerArray.markers.reserve(NUM_CONTACT_POINTS + 2);  // 1 trajectory per foot + 1 for the future footholds + 1 for the com trajectory
+  markerArray.markers.reserve(NUM_CONTACT_POINTS + 2);  // 1 trajectory per foot + 1 for the future footholds + 1 for the Base trajectory
   for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
     markerArray.markers.emplace_back(getLineMsg(std::move(feetMsgs[i]), feetColorMap_[i], trajectoryLineWidth_));
     markerArray.markers.back().ns = "EE Trajectories";
   }
-  markerArray.markers.emplace_back(getLineMsg(std::move(mpcComPositionMsgs), ocs2::Color::red, trajectoryLineWidth_));
-  markerArray.markers.back().ns = "CoM Trajectory";
+  markerArray.markers.emplace_back(getLineMsg(std::move(mpcBasePositionMsgs), ocs2::Color::red, trajectoryLineWidth_));
+  markerArray.markers.back().ns = "Base Trajectory";
 
   // Future footholds
   visualization_msgs::Marker sphereList;

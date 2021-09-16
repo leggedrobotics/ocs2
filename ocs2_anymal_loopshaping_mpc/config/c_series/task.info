@@ -32,6 +32,7 @@ model_settings
   mpcGoalCommandDelay           0.1
 
   gaitOptimization              false
+  simplifyDynamics              true
 
   recompileLibraries            true
 

@@ -31,8 +31,8 @@ rbd_state_t SwitchedModelStateEstimator::estimateRbdModelState(const comkino_sta
                                                                const joint_coordinate_t& dqJoints) const {
   rbd_state_t rbdState;
 
-  base_coordinate_t basePose = getComPose(comkinoState);
-  base_coordinate_t baseLocalVelocities = getComLocalVelocities(comkinoState);
+  base_coordinate_t basePose = getBasePose(comkinoState);
+  base_coordinate_t baseLocalVelocities = getBaseLocalVelocities(comkinoState);
   joint_coordinate_t qJoints = getJointPositions(comkinoState);
 
   rbdState << basePose, qJoints, baseLocalVelocities, dqJoints;

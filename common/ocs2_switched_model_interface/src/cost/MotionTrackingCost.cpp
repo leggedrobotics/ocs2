@@ -52,8 +52,8 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
                                                     const KinematicsModelBase<SCALAR_T>& kinematics,
                                                     const ComModelBase<SCALAR_T>& comModel) {
   // Extract elements from reference
-  const auto basePose = getComPose(x);
-  const auto base_baseTwist = getComLocalVelocities(x);
+  const auto basePose = getBasePose(x);
+  const auto base_baseTwist = getBaseLocalVelocities(x);
   const auto eulerAngles = getOrientation(basePose);
   const auto qJoints = getJointPositions(x);
   const auto dqJoints = getJointVelocities(u);
@@ -76,17 +76,17 @@ Eigen::Matrix<SCALAR_T, -1, 1> computeMotionTargets(const comkino_state_s_t<SCAL
 vector_t computeMotionReferences(scalar_t time, const comkino_state_t& x, const comkino_input_t& u,
                                  const SwingTrajectoryPlanner& swingTrajectoryPlanner) {
   // Extract elements from reference
-  const auto comPose = getComPose(x);
-  const auto com_comTwist = getComLocalVelocities(x);
-  const auto eulerAngles = getOrientation(comPose);
+  const auto basePose = getBasePose(x);
+  const auto baseTwist = getBaseLocalVelocities(x);
+  const auto eulerAngles = getOrientation(basePose);
   const auto qJoints = getJointPositions(x);
   const auto dqJoints = getJointVelocities(u);
 
   CostElements<scalar_t> motionTarget;
   motionTarget.eulerXYZ = eulerAngles;
-  motionTarget.comPosition = getPositionInOrigin(comPose);
-  motionTarget.comAngularVelocity = rotateVectorBaseToOrigin(getAngularVelocity(com_comTwist), eulerAngles);
-  motionTarget.comLinearVelocity = rotateVectorBaseToOrigin(getLinearVelocity(com_comTwist), eulerAngles);
+  motionTarget.comPosition = getPositionInOrigin(basePose);
+  motionTarget.comAngularVelocity = rotateVectorBaseToOrigin(getAngularVelocity(baseTwist), eulerAngles);
+  motionTarget.comLinearVelocity = rotateVectorBaseToOrigin(getLinearVelocity(baseTwist), eulerAngles);
   for (size_t leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
     const auto& footPhase = swingTrajectoryPlanner.getFootPhase(leg, time);
     motionTarget.jointPosition[leg] = qJoints.template segment<3>(3 * leg);
@@ -137,7 +137,7 @@ ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2
   if (uRef.isZero()) {
     // Get stance configuration
     const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-    uRef = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getComPose(xRef)));
+    uRef = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getBasePose(xRef)));
   }
 
   return computeMotionReferences(time, xRef, uRef, *swingTrajectoryPlannerPtr_);

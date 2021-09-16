@@ -15,7 +15,7 @@ base_coordinate_s_t<SCALAR_T> computeExternalForcesInBaseFrame(const KinematicsM
                                                                const comkino_input_s_t<SCALAR_T>& comKinoInput,
                                                                const ComKinoSystemDynamicsParameters<SCALAR_T>& parameters) {
   // Extract elements from state
-  const base_coordinate_s_t<SCALAR_T> basePose = getComPose(comKinoState);
+  const base_coordinate_s_t<SCALAR_T> basePose = getBasePose(comKinoState);
   const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
   const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(basePose);
 
@@ -90,28 +90,27 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivative(const
                                                                            const comkino_input_s_t<SCALAR_T>& comKinoInput,
                                                                            const ComKinoSystemDynamicsParameters<SCALAR_T>& parameters) {
   // Extract elements from state
-  const base_coordinate_s_t<SCALAR_T> basePose = getComPose(comKinoState);
+  const base_coordinate_s_t<SCALAR_T> basePose = getBasePose(comKinoState);
   const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(basePose);
-  const base_coordinate_s_t<SCALAR_T> baseLocalVelocities = getComLocalVelocities(comKinoState);
-  const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(baseLocalVelocities);
-  const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(baseLocalVelocities);
+  const base_coordinate_s_t<SCALAR_T> baseLocalVelocities = getBaseLocalVelocities(comKinoState);
+  const vector3_s_t<SCALAR_T> baseLocalAngularVelocity = getAngularVelocity(baseLocalVelocities);
+  const vector3_s_t<SCALAR_T> baseLocalLinearVelocity = getLinearVelocity(baseLocalVelocities);
   const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
   const joint_coordinate_s_t<SCALAR_T> qdJoints = getJointVelocities(comKinoInput);
 
-  const base_coordinate_s_t<SCALAR_T> JcTransposeLambda =
-      computeExternalForcesInBaseFrame(kinematicsModel, comKinoState, comKinoInput, parameters);
+  const base_coordinate_s_t<SCALAR_T> extForce = computeExternalForcesInBaseFrame(kinematicsModel, comKinoState, comKinoInput, parameters);
 
   // pose dynamics
   com_state_s_t<SCALAR_T> stateDerivativeCoM;
-  stateDerivativeCoM.segment(0, 3) = switched_model::angularVelocitiesToEulerAngleDerivatives(com_comAngularVelocity, baseEulerAngles);
-  stateDerivativeCoM.segment(3, 3) = rotateVectorBaseToOrigin(com_comLinearVelocity, baseEulerAngles);
+  stateDerivativeCoM.segment(0, 3) = switched_model::angularVelocitiesToEulerAngleDerivatives(baseLocalAngularVelocity, baseEulerAngles);
+  stateDerivativeCoM.segment(3, 3) = rotateVectorBaseToOrigin(baseLocalLinearVelocity, baseEulerAngles);
 
   /*
    * Base dynamics with the following assumptions:
    *  - Zero joint acceleration
    */
   stateDerivativeCoM.segment(6, 6) = comModel.calculateBaseLocalAccelerations(basePose, baseLocalVelocities, qJoints, qdJoints,
-                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(), JcTransposeLambda);
+                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(), extForce);
   return stateDerivativeCoM;
 }
 
@@ -121,29 +120,28 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivativeSimpli
     const comkino_state_s_t<SCALAR_T>& comKinoState, const comkino_input_s_t<SCALAR_T>& comKinoInput,
     const ComKinoSystemDynamicsParameters<SCALAR_T>& parameters) {
   // Extract elements from state
-  const base_coordinate_s_t<SCALAR_T> basePose = getComPose(comKinoState);
+  const base_coordinate_s_t<SCALAR_T> basePose = getBasePose(comKinoState);
   const vector3_s_t<SCALAR_T> baseEulerAngles = getOrientation(basePose);
-  const base_coordinate_s_t<SCALAR_T> baseLocalVelocities = getComLocalVelocities(comKinoState);
-  const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(baseLocalVelocities);
-  const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(baseLocalVelocities);
+  const base_coordinate_s_t<SCALAR_T> baseLocalVelocities = getBaseLocalVelocities(comKinoState);
+  const vector3_s_t<SCALAR_T> baseLocalAngularVelocity = getAngularVelocity(baseLocalVelocities);
+  const vector3_s_t<SCALAR_T> baseLocalLinearVelocity = getLinearVelocity(baseLocalVelocities);
   const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
 
-  const base_coordinate_s_t<SCALAR_T> JcTransposeLambda =
-      computeExternalForcesInBaseFrame(kinematicsModel, comKinoState, comKinoInput, parameters);
+  const base_coordinate_s_t<SCALAR_T> extForce = computeExternalForcesInBaseFrame(kinematicsModel, comKinoState, comKinoInput, parameters);
 
   // pose dynamics
   com_state_s_t<SCALAR_T> stateDerivativeCoM;
-  stateDerivativeCoM.segment(0, 3) = switched_model::angularVelocitiesToEulerAngleDerivatives(com_comAngularVelocity, baseEulerAngles);
-  stateDerivativeCoM.segment(3, 3) = rotateVectorBaseToOrigin(com_comLinearVelocity, baseEulerAngles);
+  stateDerivativeCoM.segment(0, 3) = switched_model::angularVelocitiesToEulerAngleDerivatives(baseLocalAngularVelocity, baseEulerAngles);
+  stateDerivativeCoM.segment(3, 3) = rotateVectorBaseToOrigin(baseLocalLinearVelocity, baseEulerAngles);
 
   /*
    * Base dynamics with the following assumptions:
    *  - Zero joint acceleration
    *  - Zero velocity (i.e. no centrifugal/coriolis terms)
    */
-  stateDerivativeCoM.segment(6, 6) = comModel.calculateBaseLocalAccelerations(basePose, base_coordinate_s_t<SCALAR_T>::Zero(), qJoints,
-                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(),
-                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(), JcTransposeLambda);
+  stateDerivativeCoM.segment(6, 6) =
+      comModel.calculateBaseLocalAccelerations(basePose, base_coordinate_s_t<SCALAR_T>::Zero(), qJoints,
+                                               joint_coordinate_s_t<SCALAR_T>::Zero(), joint_coordinate_s_t<SCALAR_T>::Zero(), extForce);
   return stateDerivativeCoM;
 }
 

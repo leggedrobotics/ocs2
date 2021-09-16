@@ -95,8 +95,8 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
   comkino_input_t input(observation.input);
 
   // Extract elements from state
-  const base_coordinate_t basePose = getComPose(state);
-  const base_coordinate_t baseLocalVelocities = getComLocalVelocities(state);
+  const base_coordinate_t basePose = getBasePose(state);
+  const base_coordinate_t baseLocalVelocities = getBaseLocalVelocities(state);
   const joint_coordinate_t qJoints = getJointPositions(state);
   const joint_coordinate_t dqJoints = getJointVelocities(input);
   const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin(getOrientation(basePose));

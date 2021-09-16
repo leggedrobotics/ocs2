@@ -15,8 +15,7 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   costFunctionPtr_.reset(new SwitchedModelCostBase(costSettings(), *getSwitchedModelModeScheduleManagerPtr(),
                                                    getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(), kinematicModel,
                                                    adKinematicModel, comModel, adComModel, modelSettings()));
-  dynamicsPtr_.reset(new ComKinoSystemDynamicsAd(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
-                                                 modelSettings().recompileLibraries_));
+  dynamicsPtr_.reset(new ComKinoSystemDynamicsAd(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(), modelSettings()));
   constraintsPtr_.reset(new ComKinoConstraintBaseAd(adKinematicModel, adComModel, *getSwitchedModelModeScheduleManagerPtr(),
                                                     getSwitchedModelModeScheduleManagerPtr()->getSwingTrajectoryPlanner(),
                                                     modelSettings()));

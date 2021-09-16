@@ -24,17 +24,6 @@ AnymalBearKinematics<SCALAR_T>* AnymalBearKinematics<SCALAR_T>::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-switched_model::joint_coordinate_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::nominalJointConfiguration() const {
-  switched_model::joint_coordinate_s_t<SCALAR_T> defaultJointConfig;
-  defaultJointConfig << SCALAR_T(-0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(-0.1),
-      SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.1), SCALAR_T(-0.7), SCALAR_T(1.0);
-  return defaultJointConfig;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;

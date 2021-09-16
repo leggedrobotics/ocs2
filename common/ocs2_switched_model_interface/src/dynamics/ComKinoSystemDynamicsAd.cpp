@@ -126,6 +126,7 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivativeSimpli
   const base_coordinate_s_t<SCALAR_T> baseLocalVelocities = getComLocalVelocities(comKinoState);
   const vector3_s_t<SCALAR_T> com_comAngularVelocity = getAngularVelocity(baseLocalVelocities);
   const vector3_s_t<SCALAR_T> com_comLinearVelocity = getLinearVelocity(baseLocalVelocities);
+  const joint_coordinate_s_t<SCALAR_T> qJoints = getJointPositions(comKinoState);
 
   const base_coordinate_s_t<SCALAR_T> JcTransposeLambda =
       computeExternalForcesInBaseFrame(kinematicsModel, comKinoState, comKinoInput, parameters);
@@ -137,14 +138,12 @@ com_state_s_t<SCALAR_T> ComKinoSystemDynamicsAd::computeComStateDerivativeSimpli
 
   /*
    * Base dynamics with the following assumptions:
-   *  - Inertia and CoM at nominal joint configuration
    *  - Zero joint acceleration
-   *  - Zero base velocity
-   *  - Zero joint velocity
+   *  - Zero velocity (i.e. no centrifugal/coriolis terms)
    */
-  stateDerivativeCoM.segment(6, 6) = comModel.calculateBaseLocalAccelerations(
-      basePose, base_coordinate_s_t<SCALAR_T>::Zero(), kinematicsModel.nominalJointConfiguration(), joint_coordinate_s_t<SCALAR_T>::Zero(),
-      joint_coordinate_s_t<SCALAR_T>::Zero(), JcTransposeLambda);
+  stateDerivativeCoM.segment(6, 6) = comModel.calculateBaseLocalAccelerations(basePose, base_coordinate_s_t<SCALAR_T>::Zero(), qJoints,
+                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(),
+                                                                              joint_coordinate_s_t<SCALAR_T>::Zero(), JcTransposeLambda);
   return stateDerivativeCoM;
 }
 

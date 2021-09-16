@@ -32,6 +32,8 @@ class KinematicsModelBase {
 
   virtual KinematicsModelBase<SCALAR_T>* clone() const = 0;
 
+  virtual joint_coordinate_s_t<SCALAR_T> nominalJointConfiguration() const = 0;
+
   virtual vector3_s_t<SCALAR_T> positionBaseToFootInBaseFrame(size_t footIndex,
                                                               const joint_coordinate_s_t<SCALAR_T>& jointPositions) const = 0;
 

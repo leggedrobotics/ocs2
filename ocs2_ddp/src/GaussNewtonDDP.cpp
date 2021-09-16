@@ -322,28 +322,27 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t t
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const {
-  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
-  partition = std::max(partition, initActivePartition_);
-  partition = std::min(partition, finalActivePartition_);
-
   ModelData modelData;
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_[partition]);
-  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[partition]);
 
   // perform the LQ approximation of the OC problem
+  // note that the cost already includes:
+  // - state-input intermediate cost
+  // - state-input soft constraint cost
+  // - state-only intermediate cost
+  // - state-only soft constraint cost
   LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], settings().checkNumericalStability_);
   lqapprox.approximateLQProblem(time, state, input, modelData);
   modelData.checkSizes(state.rows(), input.rows());
 
-  // augment the cost with state-only equality and state-input inequality terms
+  // augment the cost with state-only equality and state-input inequality constraint terms
   augmentCostWorker(0, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0, modelData);
 
   // initialize the Hamiltonian with the augmented cost
   ScalarFunctionQuadraticApproximation hamiltonian(modelData.cost_);
 
   // add the state-input equality constraint cost nu(x) * g(x,u) to the Hamiltonian
-  // note: nu has no approximation and is evaluated at the nominal state as it can be very sensitive
-  const vector_t nu = getStateInputEqualityConstraintLagrangian(time, xNominal);
+  // note that nu has no approximation and is used as a constant
+  const vector_t nu = getStateInputEqualityConstraintLagrangian(time, state);
   hamiltonian.f += nu.transpose() * modelData.stateInputEqConstr_.f;
   hamiltonian.dfdx.noalias() += modelData.stateInputEqConstr_.dfdx.transpose() * nu;
   hamiltonian.dfdu.noalias() += modelData.stateInputEqConstr_.dfdu.transpose() * nu;

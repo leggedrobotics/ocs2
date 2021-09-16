@@ -35,7 +35,7 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     throw std::runtime_error("[SwingTrajectoryPlanner] terrain cannot be null. Update the terrain before planning swing motions");
   }
 
-  const auto basePose = comModel_->calculateBasePose(getComPose(currentState));
+  const auto basePose = getBasePose(currentState);
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
 
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
@@ -157,8 +157,7 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
 
       // Compute foot position from cost desired trajectory
       vector_t state = targetTrajectories.getDesiredState(middleContactTime);
-      const base_coordinate_t middleContactDesiredComPose = state.head<BASE_COORDINATE_SIZE>();
-      const auto desiredBasePose = comModel_->calculateBasePose(middleContactDesiredComPose);
+      const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
 
@@ -202,7 +201,7 @@ void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::
   for (int k = 0; k < targetTrajectories.timeTrajectory.size(); ++k) {
     const scalar_t t = targetTrajectories.timeTrajectory[k];
 
-    const base_coordinate_t basePose = comModel_->calculateBasePose(getComPose(comkino_state_t(targetTrajectories.stateTrajectory[k])));
+    const base_coordinate_t basePose = getBasePose(comkino_state_t(targetTrajectories.stateTrajectory[k]));
     const vector3_t basePositionInWorld = getPositionInOrigin(basePose);
     const vector3_t eulerXYZ = getOrientation(basePose);
 

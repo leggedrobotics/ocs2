@@ -13,9 +13,9 @@ namespace switched_model {
  *
  * state = [theta, p, w, v, q (4x)]
  * theta: EulerXYZ (3x1)
- * p: CoM position in Origin frame (3x1)
- * w: CoM angular velocity in Base Frame (3x1)
- * v: CoM linear velocity in Base Frame (3x1)
+ * p: Base position in Origin frame (3x1)
+ * w: Base angular velocity in Base Frame (3x1)
+ * v: Base linear velocity in Base Frame (3x1)
  * q: Joint angles per leg [HAA, HFE, KFE] (3x1) [4x]
  *
  * input = [lambda (4x), qj (4x)]
@@ -139,7 +139,7 @@ using rbd_state_t = rbd_state_s_t<scalar_t>;
 using rbd_state_ad_t = rbd_state_s_t<ocs2::CppAdInterface::ad_scalar_t>;
 
 template <typename SCALAR_T>
-base_coordinate_s_t<SCALAR_T> getComPose(const comkino_state_s_t<SCALAR_T>& comkinoState) {
+base_coordinate_s_t<SCALAR_T> getBasePose(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template head<BASE_COORDINATE_SIZE>();
 }
 
@@ -169,7 +169,7 @@ base_coordinate_s_t<SCALAR_T> getBaseLocalVelocity(const rbd_state_s_t<SCALAR_T>
 }
 
 template <typename SCALAR_T>
-base_coordinate_s_t<SCALAR_T> getComLocalVelocities(const comkino_state_s_t<SCALAR_T>& comkinoState) {
+base_coordinate_s_t<SCALAR_T> getBaseLocalVelocities(const comkino_state_s_t<SCALAR_T>& comkinoState) {
   return comkinoState.template segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
 }
 

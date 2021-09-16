@@ -29,10 +29,10 @@ ComKinoInitializer* ComKinoInitializer::clone() const {
 /******************************************************************************************************/
 void ComKinoInitializer::compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) {
   const comkino_state_t comkinoState = state;
-  const auto comPose = getComPose(comkinoState);
+  const auto basePose = getBasePose(comkinoState);
   const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
 
-  input = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(comPose));
+  input = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(basePose));
 
   nextState = state;
 }

@@ -106,7 +106,7 @@ TEST(TestFrictionConeConstraint, gravityAligned_flatTerrain) {
   switched_model::comkino_input_t u = switched_model::comkino_input_t::Random();
 
   // Set terrain parallel to the body
-  const switched_model::vector3_t eulerXYZ = switched_model::getOrientation(switched_model::getComPose(x));
+  const switched_model::vector3_t eulerXYZ = switched_model::getOrientation(switched_model::getBasePose(x));
   switched_model::TerrainPlane terrainPlane;
   terrainPlane.orientationWorldToTerrain = switched_model::rotationMatrixOriginToBase(eulerXYZ);
 

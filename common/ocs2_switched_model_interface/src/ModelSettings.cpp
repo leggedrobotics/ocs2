@@ -48,6 +48,7 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.targetDisplacementVelocity_, prefix + "targetDisplacementVelocity", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.targetRotationVelocity_, prefix + "targetRotationVelocity", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.gaitOptimization_, prefix + "gaitOptimization", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.simplifyDynamics_, prefix + "simplifyDynamics", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceFrictionConeConstraint_, prefix + "enforceFrictionConeConstraint", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient_, prefix + "frictionCoefficient", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceTorqueConstraint_, prefix + "enforceTorqueConstraint", verbose);

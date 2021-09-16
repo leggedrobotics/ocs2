@@ -95,15 +95,11 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
   comkino_input_t input(observation.input);
 
   // Extract elements from state
-  const base_coordinate_t comPose = getComPose(state);
-  const base_coordinate_t com_comTwist = getComLocalVelocities(state);
+  const base_coordinate_t basePose = getBasePose(state);
+  const base_coordinate_t baseLocalVelocities = getBaseLocalVelocities(state);
   const joint_coordinate_t qJoints = getJointPositions(state);
   const joint_coordinate_t dqJoints = getJointVelocities(input);
-
-  // Get base state from com state
-  const base_coordinate_t basePose = comModel_->calculateBasePose(comPose);
-  const base_coordinate_t com_baseTwist = comModel_->calculateBaseLocalVelocities(com_comTwist);
-  const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin(getOrientation(comPose));
+  const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin(getOrientation(basePose));
 
   // Contact state
   const contact_flag_t contactFlags = modeNumber2StanceLeg(observation.mode);
@@ -129,7 +125,7 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
       static_cast<double>(contactFlags[2]),
       static_cast<double>(contactFlags[3]),
       basePose,
-      com_baseTwist,
+      baseLocalVelocities,
       qJoints,
       dqJoints,
       contactForcesInWorld[0],

@@ -25,11 +25,9 @@ namespace tpl {
 /******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalChipCom<SCALAR_T>::AnymalChipCom() {
-  switched_model::joint_coordinate_s_t<SCALAR_T> defaultJointConfig;
-  defaultJointConfig << SCALAR_T(-0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(0.1), SCALAR_T(0.7), SCALAR_T(-1.0), SCALAR_T(-0.1),
-      SCALAR_T(-0.7), SCALAR_T(1.0), SCALAR_T(0.1), SCALAR_T(-0.7), SCALAR_T(1.0);
-
-  setJointConfiguration(defaultJointConfig);
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+  iit::chip::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
+  totalMass_ = inertiaProperties_.getTotalMass();
 }
 
 /******************************************************************************************************/
@@ -38,30 +36,6 @@ AnymalChipCom<SCALAR_T>::AnymalChipCom() {
 template <typename SCALAR_T>
 AnymalChipCom<SCALAR_T>* AnymalChipCom<SCALAR_T>::clone() const {
   return new AnymalChipCom<SCALAR_T>(*this);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-template <typename SCALAR_T>
-void AnymalChipCom<SCALAR_T>::setJointConfiguration(const switched_model::joint_coordinate_s_t<SCALAR_T>& q) {
-  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
-  iit::chip::dyn::tpl::InertiaProperties<trait_t> inertiaProperties_;
-  iit::chip::tpl::HomogeneousTransforms<trait_t> homTransforms_;
-  iit::chip::tpl::ForceTransforms<trait_t> forceTransforms_;
-  iit::chip::dyn::tpl::JSIM<trait_t> jointSpaceInertiaMatrix_(inertiaProperties_, forceTransforms_);
-
-  jointSpaceInertiaMatrix_.update(q);
-  comPositionBaseFrame_ = iit::chip::getWholeBodyCOM(inertiaProperties_, q, homTransforms_);
-
-  comInertia_ = jointSpaceInertiaMatrix_.getWholeBodyInertia();
-  SCALAR_T mass = comInertia_(5, 5);
-  switched_model::matrix3_s_t<SCALAR_T> crossComPositionBaseFrame = switched_model::crossProductMatrix<SCALAR_T>(comPositionBaseFrame_);
-  comInertia_.template topLeftCorner<3, 3>() -= mass * crossComPositionBaseFrame * crossComPositionBaseFrame.transpose();
-  comInertia_.template topRightCorner<3, 3>().setZero();
-  comInertia_.template bottomLeftCorner<3, 3>().setZero();
-
-  totalMass_ = inertiaProperties_.getTotalMass();
 }
 
 template <typename SCALAR_T>

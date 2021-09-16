@@ -21,6 +21,7 @@ struct ModelSettings {
   scalar_t targetDisplacementVelocity_ = 0.5;
   scalar_t targetRotationVelocity_ = 0.3;
   bool gaitOptimization_ = false;
+  bool simplifyDynamics_ = true;
   bool enforceFrictionConeConstraint_ = false;
   scalar_t frictionCoefficient_ = 1.0;
   bool enforceTorqueConstraint_ = false;

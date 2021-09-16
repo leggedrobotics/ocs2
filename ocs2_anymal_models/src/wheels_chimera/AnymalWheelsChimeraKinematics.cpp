@@ -24,6 +24,9 @@ AnymalWheelsChimeraKinematics<SCALAR_T>* AnymalWheelsChimeraKinematics<SCALAR_T>
   return new AnymalWheelsChimeraKinematics<SCALAR_T>(*this);
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::positionBaseToWheelAxisInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

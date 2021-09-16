@@ -14,10 +14,14 @@ namespace robcogen_helpers {
 template <typename SCALAR_T, int NUM_JOINTS_IMPL>
 struct BaseDynamicsTerms {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  /// 6 x 6 : inertia tensor of the base
   Eigen::Matrix<SCALAR_T, switched_model::BASE_COORDINATE_SIZE, switched_model::BASE_COORDINATE_SIZE> Mb;
+  /// 6 x number joints : inertial coupling between joints and base
   Eigen::Matrix<SCALAR_T, switched_model::BASE_COORDINATE_SIZE, NUM_JOINTS_IMPL> Mj;
+  /// centrifugal/coriolis effects on the base
   switched_model::base_coordinate_s_t<SCALAR_T> C;
-  switched_model::base_coordinate_s_t<SCALAR_T> G;
+  /// result of inv(Mb) * G, where G is the gravitation base term of the rigid body dynamics.
+  switched_model::base_coordinate_s_t<SCALAR_T> invMbG;
 };
 
 template <typename INVDYN, typename JSIM, typename SCALAR_T, int NUM_JOINTS_IMPL>
@@ -36,15 +40,11 @@ BaseDynamicsTerms<SCALAR_T, NUM_JOINTS_IMPL> getBaseDynamicsTermsImpl(INVDYN& in
 
   {  // Get gravitational vector
     // gravity vector in the base frame
-    switched_model::vector6_s_t<SCALAR_T> gravity;
-    const auto b_R_o = switched_model::rotationMatrixOriginToBase<SCALAR_T>(switched_model::getOrientation(qBase));
     const SCALAR_T gravitationalAcceleration = SCALAR_T(9.81);
-    gravity << switched_model::vector3_s_t<SCALAR_T>::Zero(),
-        b_R_o * switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration);
-
-    switched_model::vector6_s_t<SCALAR_T> baseWrench;
-    Eigen::Matrix<SCALAR_T, NUM_JOINTS_IMPL, 1> jForces;
-    inverseDynamics.G_terms_fully_actuated(baseDynamicsTerms.G, jForces, gravity);
+    baseDynamicsTerms.invMbG << switched_model::vector3_s_t<SCALAR_T>::Zero(),
+        switched_model::rotateVectorOriginToBase(
+            switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), gravitationalAcceleration),
+            switched_model::getOrientation(qBase));
   }
 
   {  // Get coriolis/centrifugal vector
@@ -72,11 +72,12 @@ typename switched_model::WholebodyDynamics<SCALAR_T>::DynamicsTerms getDynamicsT
   {  // Get gravitational vector
     // gravity vector in the base frame
     switched_model::vector6_s_t<SCALAR_T> gravity;
-    const auto b_R_o = switched_model::rotationMatrixOriginToBase<SCALAR_T>(switched_model::getOrientation(qBase));
     //! @todo(jcarius) Gravity hardcoded
     const SCALAR_T gravitationalAcceleration = SCALAR_T(9.81);
     gravity << switched_model::vector3_s_t<SCALAR_T>::Zero(),
-        b_R_o * switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration);
+        switched_model::rotateVectorOriginToBase(
+            switched_model::vector3_s_t<SCALAR_T>(SCALAR_T(0.0), SCALAR_T(0.0), -gravitationalAcceleration),
+            switched_model::getOrientation(qBase));
 
     switched_model::vector6_s_t<SCALAR_T> baseWrench;
     switched_model::joint_coordinate_s_t<SCALAR_T> jForces;
@@ -215,10 +216,10 @@ switched_model::base_coordinate_s_t<SCALAR_T> computeBaseAcceleration(
     const switched_model::base_coordinate_s_t<SCALAR_T>& forcesOnBaseInBaseFrame) {
   const auto baseDynamics = getBaseDynamicsTermsImpl(inverseDynamics, jsim, basePose, baseLocalVelocities, jointPositions, jointVelocities);
 
-  switched_model::base_coordinate_s_t<SCALAR_T> baseForces = forcesOnBaseInBaseFrame - baseDynamics.G - baseDynamics.C;
+  switched_model::base_coordinate_s_t<SCALAR_T> baseForces = forcesOnBaseInBaseFrame - baseDynamics.C;
   baseForces.noalias() -= baseDynamics.Mj * jointAccelerations;
 
-  return inertiaTensorSolve<SCALAR_T>(baseDynamics.Mb, baseForces);
+  return inertiaTensorSolve<SCALAR_T>(baseDynamics.Mb, baseForces) - baseDynamics.invMbG;
 }
 
 }  // namespace robcogen_helpers

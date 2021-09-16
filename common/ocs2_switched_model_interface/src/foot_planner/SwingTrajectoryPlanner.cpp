@@ -201,7 +201,7 @@ void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::
   for (int k = 0; k < targetTrajectories.timeTrajectory.size(); ++k) {
     const scalar_t t = targetTrajectories.timeTrajectory[k];
 
-    const base_coordinate_t basePose = comModel_->calculateBasePose(getComPose(comkino_state_t(targetTrajectories.stateTrajectory[k])));
+    const base_coordinate_t basePose = getComPose(comkino_state_t(targetTrajectories.stateTrajectory[k]));
     const vector3_t basePositionInWorld = getPositionInOrigin(basePose);
     const vector3_t eulerXYZ = getOrientation(basePose);
 

@@ -230,7 +230,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     pose.position = ocs2::getPointMsg(basePositionInOrigin);
     pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(eulerXYZ));
 
-    // Construct vel msg    
+    // Construct vel msg
     const vector3_t o_baseVel = o_R_b * getLinearVelocity(baseTwist);
     const vector3_t o_baseAngVel = o_R_b * getAngularVelocity(baseTwist);
 
@@ -304,7 +304,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
 
   // Extract Com and Feet from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
-	const state_vector_t switchedState = state.head(STATE_DIM);
+    const state_vector_t switchedState = state.head(STATE_DIM);
     const base_coordinate_t basePose = getComPose(switchedState);
     const joint_coordinate_t qJoints = getJointPositions(switchedState);
 
@@ -355,7 +355,7 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
       const auto preEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event]);
       const auto postEventContactFlags = modeNumber2StanceLeg(subsystemSequence[event + 1]);
       const vector_t postEventState = ocs2::LinearInterpolation::interpolate(eventTimes[event], mpcTimeTrajectory, mpcStateTrajectory);
-	  const state_vector_t postEventSwitchedState = postEventState.head(STATE_DIM);
+      const state_vector_t postEventSwitchedState = postEventState.head(STATE_DIM);
       const base_coordinate_t basePose = getComPose(postEventSwitchedState);
       const joint_coordinate_t qJoints = getJointPositions(postEventSwitchedState);
 

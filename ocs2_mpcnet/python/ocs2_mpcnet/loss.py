@@ -11,27 +11,41 @@ class Hamiltonian:
 
     @staticmethod
     def compute_torch(x_inquiry, x_nominal, u_inquiry, u_nominal, hamiltonian):
-        dx = torch.sub(x_inquiry, x_nominal)
-        du = torch.sub(u_inquiry, u_nominal)
-        dHdxx = 0.5 * torch.dot(dx, torch.matmul(torch.tensor(hamiltonian.dfdxx, dtype=config.dtype, device=config.device), dx))
-        dHdux = torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfdux, dtype=config.dtype, device=config.device), dx))
-        dHduu = 0.5 * torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfduu, dtype=config.dtype, device=config.device), du))
-        dHdx = torch.dot(torch.tensor(hamiltonian.dfdx, dtype=config.dtype, device=config.device), dx)
-        dHdu = torch.dot(torch.tensor(hamiltonian.dfdu, dtype=config.dtype, device=config.device), du)
-        H = torch.tensor(hamiltonian.f, dtype=config.dtype, device=config.device)
-        return dHdxx + dHdux + dHduu + dHdx + dHdu + H
+        if torch.equal(x_inquiry, x_nominal):
+            du = torch.sub(u_inquiry, u_nominal)
+            dHduu = 0.5 * torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfduu, dtype=config.dtype, device=config.device), du))
+            dHdu = torch.dot(torch.tensor(hamiltonian.dfdu, dtype=config.dtype, device=config.device), du)
+            H = torch.tensor(hamiltonian.f, dtype=config.dtype, device=config.device)
+            return dHduu + dHdu + H
+        else:
+            dx = torch.sub(x_inquiry, x_nominal)
+            du = torch.sub(u_inquiry, u_nominal)
+            dHdxx = 0.5 * torch.dot(dx, torch.matmul(torch.tensor(hamiltonian.dfdxx, dtype=config.dtype, device=config.device), dx))
+            dHdux = torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfdux, dtype=config.dtype, device=config.device), dx))
+            dHduu = 0.5 * torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfduu, dtype=config.dtype, device=config.device), du))
+            dHdx = torch.dot(torch.tensor(hamiltonian.dfdx, dtype=config.dtype, device=config.device), dx)
+            dHdu = torch.dot(torch.tensor(hamiltonian.dfdu, dtype=config.dtype, device=config.device), du)
+            H = torch.tensor(hamiltonian.f, dtype=config.dtype, device=config.device)
+            return dHdxx + dHdux + dHduu + dHdx + dHdu + H
 
     @staticmethod
     def compute_numpy(x_inquiry, x_nominal, u_inquiry, u_nominal, hamiltonian):
-        dx = np.subtract(x_inquiry, x_nominal)
-        du = np.subtract(u_inquiry, u_nominal)
-        dHdxx = 0.5 * np.dot(dx, np.matmul(hamiltonian.dfdxx, dx))
-        dHdux = np.dot(du, np.matmul(hamiltonian.dfdux, dx))
-        dHduu = 0.5 * np.dot(du, np.matmul(hamiltonian.dfduu, du))
-        dHdx = np.dot(hamiltonian.dfdx, dx)
-        dHdu = np.dot(hamiltonian.dfdu, du)
-        H = hamiltonian.f
-        return dHdxx + dHdux + dHduu + dHdx + dHdu + H
+        if np.array_equal(x_inquiry, x_nominal):
+            du = np.subtract(u_inquiry, u_nominal)
+            dHduu = 0.5 * np.dot(du, np.matmul(hamiltonian.dfduu, du))
+            dHdu = np.dot(hamiltonian.dfdu, du)
+            H = hamiltonian.f
+            return dHduu + dHdu + H
+        else:
+            dx = np.subtract(x_inquiry, x_nominal)
+            du = np.subtract(u_inquiry, u_nominal)
+            dHdxx = 0.5 * np.dot(dx, np.matmul(hamiltonian.dfdxx, dx))
+            dHdux = np.dot(du, np.matmul(hamiltonian.dfdux, dx))
+            dHduu = 0.5 * np.dot(du, np.matmul(hamiltonian.dfduu, du))
+            dHdx = np.dot(hamiltonian.dfdx, dx)
+            dHdu = np.dot(hamiltonian.dfdu, du)
+            H = hamiltonian.f
+            return dHdxx + dHdux + dHduu + dHdx + dHdu + H
 
 
 class BehavioralCloning:

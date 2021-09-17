@@ -28,8 +28,8 @@ for i in range(config.STATE_DIM):
 # settings for computing metrics by applying learned policy
 policy_evaluation_time_step = 0.1
 policy_evaluation_duration = 3.0
-policy_evaluation_n_threads = 2
-policy_evaluation_n_tasks = 10
+policy_evaluation_n_threads = 1
+policy_evaluation_n_tasks = 5
 
 # mpcnet interface
 mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_n_threads)

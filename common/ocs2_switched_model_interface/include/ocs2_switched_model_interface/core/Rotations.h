@@ -162,11 +162,7 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotateVectorOriginToBase(const Eigen::Matrix<SCALA
 
 template <typename SCALAR_T>
 Eigen::Quaternion<SCALAR_T> quaternionBaseToOrigin(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
-  const auto roll = eulerAngles(0);
-  const auto pitch = eulerAngles(1);
-  const auto yaw = eulerAngles(2);
-  return Eigen::AngleAxis<SCALAR_T>(roll, Eigen::Vector3d::UnitX()) * Eigen::AngleAxis<SCALAR_T>(pitch, Eigen::Vector3d::UnitY()) *
-         Eigen::AngleAxis<SCALAR_T>(yaw, Eigen::Vector3d::UnitZ());
+  return Eigen::Quaternion<SCALAR_T>(rotationMatrixBaseToOrigin(eulerAngles));
 }
 
 template <typename SCALAR_T>

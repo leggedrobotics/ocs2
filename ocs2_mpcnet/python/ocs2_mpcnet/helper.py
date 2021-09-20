@@ -1,7 +1,26 @@
+import torch
 import numpy as np
 
 from ocs2_mpcnet import size_array, scalar_array, vector_array, SystemObservation, SystemObservationArray,\
     ModeSchedule, ModeScheduleArray, TargetTrajectories, TargetTrajectoriesArray
+
+
+def bdot(bv1, bv2):
+    # batched dot product
+    # TODO(areske): find the best implementation
+    return torch.sum(torch.mul(bv1, bv2), dim=1)
+
+
+def bmv(bm, bv):
+    # batched matrix-vector product
+    # TODO(areske): find the best implementation
+    return torch.matmul(bm, bv.unsqueeze(dim=2)).squeeze(dim=2)
+
+
+def bmm(bm1, bm2):
+    # batched matrix-matrix product
+    # TODO(areske): find the best implementation
+    return torch.matmul(bm1, bm2)
 
 
 def get_size_array(data):

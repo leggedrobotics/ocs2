@@ -31,10 +31,6 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
   costDesiredFeetPositionPublishers_[1] = nodeHandle.advertise<visualization_msgs::Marker>("/ocs2_anymal/desiredFeetTrajectory/RF", 1);
   costDesiredFeetPositionPublishers_[2] = nodeHandle.advertise<visualization_msgs::Marker>("/ocs2_anymal/desiredFeetTrajectory/LH", 1);
   costDesiredFeetPositionPublishers_[3] = nodeHandle.advertise<visualization_msgs::Marker>("/ocs2_anymal/desiredFeetTrajectory/RH", 1);
-  costDesiredFeetPosePublishers_[0] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/LF", 1);
-  costDesiredFeetPosePublishers_[1] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/RF", 1);
-  costDesiredFeetPosePublishers_[2] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/LH", 1);
-  costDesiredFeetPosePublishers_[3] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/desiredFeetPoseTrajectory/RH", 1);
   costDesiredFeetVelocityPublishers_[0] =
       nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/desiredFeetVelTrajectory/LF", 1);
   costDesiredFeetVelocityPublishers_[1] =
@@ -45,10 +41,6 @@ void QuadrupedVisualizer::launchVisualizerNode(ros::NodeHandle& nodeHandle) {
       nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/desiredFeetVelTrajectory/RH", 1);
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedPoseTrajectory", 1);
-  stateOptimizedFeetPosePublishers_[0] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/LF", 1);
-  stateOptimizedFeetPosePublishers_[1] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/RF", 1);
-  stateOptimizedFeetPosePublishers_[2] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/LH", 1);
-  stateOptimizedFeetPosePublishers_[3] = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/optimizedFeetPoseTrajectory/RH", 1);
   currentStatePublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentState", 1);
   currentFeetPosesPublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/ocs2_anymal/currentFeetPoses", 1);
   currentCollisionSpheresPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/ocs2_anymal/currentCollisionSpheres", 1);
@@ -82,17 +74,22 @@ void QuadrupedVisualizer::publishObservation(ros::Time timeStamp, const ocs2::Sy
   // Extract components from state
   const state_vector_t switchedState = observation.state.head(STATE_DIM);
   const base_coordinate_t basePose = getBasePose(switchedState);
-  const joint_coordinate_t qJoints = getJointPositions(state_vector_t(observation.state));
+  const auto o_basePosition = getPositionInOrigin(basePose);
   const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(getOrientation(basePose));
+  const joint_coordinate_t qJoints = getJointPositions(state_vector_t(observation.state));
 
   // Compute cartesian state and inputs
   feet_array_t<vector3_t> feetPosition;
   feet_array_t<vector3_t> feetForce;
   feet_array_t<Eigen::Quaternion<scalar_t>> feetOrientations;
   for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-    feetPosition[i] = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
+    feetPosition[i] = o_basePosition;
+    feetPosition[i].noalias() += o_R_b * kinematicModelPtr_->positionBaseToFootInBaseFrame(i, qJoints);
+
     feetForce[i] = o_R_b * observation.input.segment<3>(3 * i);
-    feetOrientations[i] = Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints));
+
+    const matrix3_t footOrientationInOriginFrame = o_R_b * kinematicModelPtr_->footOrientationInBaseFrame(i, qJoints);
+    feetOrientations[i] = Eigen::Quaternion<scalar_t>(footOrientationInOriginFrame);
   }
 
   // Publish
@@ -190,8 +187,6 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     desiredFeetPositionMsgs[i].reserve(stateTrajSize);
     feetVelArray[i].markers.reserve(stateTrajSize);
   }
-  feet_array_t<geometry_msgs::PoseArray> feetPoseArrays;
-  std::for_each(feetPoseArrays.begin(), feetPoseArrays.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(stateTrajSize); });
 
   for (size_t k = 0; k < stateTrajSize; ++k) {
     const state_vector_t state = stateTrajectory[k];
@@ -205,7 +200,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     // Extract elements from state
     const base_coordinate_t basePose = state.head<6>();
     const base_coordinate_t baseTwist = state.segment<6>(6);
-    const auto basePositionInOrigin = getPositionInOrigin(basePose);
+    const auto o_basePosition = getPositionInOrigin(basePose);
     const auto eulerXYZ = getOrientation(basePose);
     const Eigen::Matrix3d o_R_b = rotationMatrixBaseToOrigin<scalar_t>(eulerXYZ);
     const auto qJoints = getJointPositions(state);
@@ -213,7 +208,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
 
     // Construct pose msg
     geometry_msgs::Pose pose;
-    pose.position = ocs2::getPointMsg(basePositionInOrigin);
+    pose.position = ocs2::getPointMsg(o_basePosition);
     pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(eulerXYZ));
 
     // Construct vel msg
@@ -223,18 +218,17 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     // Fill message containers
     desiredBasePositionMsg.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
-    velArray.markers.emplace_back(getArrowAtPointMsg(o_baseVel / velScale_, basePositionInOrigin, ocs2::Color::blue));
-    angVelArray.markers.emplace_back(getArrowAtPointMsg(o_baseAngVel / velScale_, basePositionInOrigin, ocs2::Color::green));
+    velArray.markers.emplace_back(getArrowAtPointMsg(o_baseVel / velScale_, o_basePosition, ocs2::Color::blue));
+    angVelArray.markers.emplace_back(getArrowAtPointMsg(o_baseAngVel / velScale_, o_basePosition, ocs2::Color::green));
 
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-      const auto o_footPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
-      const auto o_footVelocity = kinematicModelPtr_->footVelocityInOriginFrame(i, basePose, baseTwist, qJoints, qVelJoints);
-      geometry_msgs::Pose footPose;
-      footPose.position = ocs2::getPointMsg(o_footPosition);
-      footPose.orientation =
-          ocs2::getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
-      desiredFeetPositionMsgs[i].push_back(footPose.position);
-      feetPoseArrays[i].poses.push_back(std::move(footPose));
+      const vector3_t b_baseToFoot = kinematicModelPtr_->positionBaseToFootInBaseFrame(i, qJoints);
+      auto o_footPosition = o_basePosition;
+      o_footPosition.noalias() += o_R_b * b_baseToFoot;
+      const vector3_t b_footVelocity = kinematicModelPtr_->footVelocityRelativeToBaseInBaseFrame(i, qJoints, qVelJoints) +
+                                       getLinearVelocity(baseTwist) + getAngularVelocity(baseTwist).cross(b_baseToFoot);
+      const vector3_t o_footVelocity = o_R_b * b_footVelocity;
+      desiredFeetPositionMsgs[i].push_back(ocs2::getPointMsg(o_footPosition));
       feetVelArray[i].markers.emplace_back(getArrowAtPointMsg(o_footVelocity / velScale_, o_footPosition, feetColorMap_[i]));
     }
   }
@@ -244,7 +238,7 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
   baseLineMsg.header = ocs2::getHeaderMsg(frameId_, timeStamp);
   baseLineMsg.id = 0;
   poseArray.header = ocs2::getHeaderMsg(frameId_, timeStamp);
-  ocs2::assignHeader(feetPoseArrays.begin(), feetPoseArrays.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
+
   ocs2::assignHeader(velArray.markers.begin(), velArray.markers.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
   ocs2::assignIncreasingId(velArray.markers.begin(), velArray.markers.end());
   ocs2::assignHeader(angVelArray.markers.begin(), angVelArray.markers.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
@@ -259,7 +253,6 @@ void QuadrupedVisualizer::publishDesiredTrajectory(ros::Time timeStamp, const oc
     auto footLineMsg = getLineMsg(std::move(desiredFeetPositionMsgs[i]), feetColorMap_[i], trajectoryLineWidth_);
     footLineMsg.header = ocs2::getHeaderMsg(frameId_, timeStamp);
     footLineMsg.id = 0;
-    costDesiredFeetPosePublishers_[i].publish(feetPoseArrays[i]);
     costDesiredFeetPositionPublishers_[i].publish(footLineMsg);
     ocs2::assignHeader(feetVelArray[i].markers.begin(), feetVelArray[i].markers.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
     ocs2::assignIncreasingId(feetVelArray[i].markers.begin(), feetVelArray[i].markers.end());
@@ -277,8 +270,6 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   // Reserve Feet msg
   feet_array_t<std::vector<geometry_msgs::Point>> feetMsgs;
   std::for_each(feetMsgs.begin(), feetMsgs.end(), [&](std::vector<geometry_msgs::Point>& v) { v.reserve(mpcStateTrajectory.size()); });
-  feet_array_t<geometry_msgs::PoseArray> feetPoseMsgs;
-  std::for_each(feetPoseMsgs.begin(), feetPoseMsgs.end(), [&](geometry_msgs::PoseArray& p) { p.poses.reserve(mpcStateTrajectory.size()); });
 
   // Reserve Base Msg
   std::vector<geometry_msgs::Point> mpcBasePositionMsgs;
@@ -292,25 +283,23 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     const state_vector_t switchedState = state.head(STATE_DIM);
     const base_coordinate_t basePose = getBasePose(switchedState);
+    const vector3_t o_basePosition = getPositionInOrigin(basePose);
+    const vector3_t eulerXYZ = getOrientation(basePose);
+    const matrix3_t o_R_b = rotationMatrixBaseToOrigin(eulerXYZ);
     const joint_coordinate_t qJoints = getJointPositions(switchedState);
 
     // Fill Base position and pose msgs
     geometry_msgs::Pose pose;
-    pose.position = ocs2::getPointMsg(getPositionInOrigin(basePose));
-    pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(getOrientation(basePose)));
+    pose.position = ocs2::getPointMsg(o_basePosition);
+    pose.orientation = ocs2::getOrientationMsg(quaternionBaseToOrigin<double>(eulerXYZ));
     mpcBasePositionMsgs.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
 
     // Fill feet msgs
     for (size_t i = 0; i < NUM_CONTACT_POINTS; i++) {
-      const auto o_feetPosition = kinematicModelPtr_->footPositionInOriginFrame(i, basePose, qJoints);
-      const auto position = ocs2::getPointMsg(o_feetPosition);
-      feetMsgs[i].push_back(position);
-      geometry_msgs::Pose footPose;
-      footPose.position = position;
-      footPose.orientation =
-          ocs2::getOrientationMsg(Eigen::Quaternion<scalar_t>(kinematicModelPtr_->footOrientationInOriginFrame(i, basePose, qJoints)));
-      feetPoseMsgs[i].poses.push_back(std::move(footPose));
+      auto o_footPosition = o_basePosition;
+      o_footPosition.noalias() += o_R_b * kinematicModelPtr_->positionBaseToFootInBaseFrame(i, qJoints);
+      feetMsgs[i].push_back(ocs2::getPointMsg(o_footPosition));
     }
   });
 
@@ -360,13 +349,9 @@ void QuadrupedVisualizer::publishOptimizedStateTrajectory(ros::Time timeStamp, c
   ocs2::assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
   ocs2::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
   poseArray.header = ocs2::getHeaderMsg(frameId_, timeStamp);
-  ocs2::assignHeader(feetPoseMsgs.begin(), feetPoseMsgs.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    stateOptimizedFeetPosePublishers_[i].publish(feetPoseMsgs[i]);
-  }
 }
 
 void QuadrupedVisualizer::publishEndEffectorPoses(ros::Time timeStamp, const feet_array_t<vector3_t>& feetPositions,

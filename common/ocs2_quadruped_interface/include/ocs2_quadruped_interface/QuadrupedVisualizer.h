@@ -95,13 +95,11 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   ros::Publisher costDesiredBaseVelocityPublisher_;
   ros::Publisher costDesiredBaseAngVelocityPublisher_;
   feet_array_t<ros::Publisher> costDesiredFeetPositionPublishers_;
-  feet_array_t<ros::Publisher> costDesiredFeetPosePublishers_;
   feet_array_t<ros::Publisher> costDesiredFeetVelocityPublishers_;
 
   // State optimized publisher.
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher stateOptimizedPosePublisher_;
-  feet_array_t<ros::Publisher> stateOptimizedFeetPosePublishers_;
 
   // Current state publisher..
   ros::Publisher currentStatePublisher_;

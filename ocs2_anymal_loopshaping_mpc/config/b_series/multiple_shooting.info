@@ -11,4 +11,5 @@ multiple_shooting
   printLinesearch                       false
   useFeedbackPolicy                     true
   integratorType                        RK2
+  threadPriority                        50
 }

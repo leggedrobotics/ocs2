@@ -44,12 +44,9 @@ vector_t MpcnetOnnxController::computeInput(const scalar_t t, const vector_t& x)
   // run inference
   Ort::RunOptions runOptions;
   std::vector<Ort::Value> outputValues = sessionPtr_->Run(runOptions, inputNames_.data(), inputValues.data(), 2, outputNames_.data(), 2);
-  // evaluate output tensor objects
-  Eigen::Map<Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1>> pEigenData(outputValues[0].GetTensorMutableData<tensor_element_t>(),
-                                                                            outputShapes_[0][0], 1);
-  Eigen::Map<Eigen::Matrix<tensor_element_t, Eigen::Dynamic, Eigen::Dynamic>> uEigenData(
-      outputValues[1].GetTensorMutableData<tensor_element_t>(), outputShapes_[1][1], outputShapes_[1][0]);
-  Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> u = uEigenData * pEigenData;
+  // evaluate output tensor objects (note that from u, p, U we only need u = U * p which is already evaluated by the model)
+  Eigen::Map<Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1>> u(outputValues[0].GetTensorMutableData<tensor_element_t>(),
+                                                                   outputShapes_[0][1], outputShapes_[0][0]);
   return u.cast<scalar_t>();
 }
 

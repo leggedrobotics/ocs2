@@ -50,7 +50,7 @@ class MixtureOfLinearExpertsPolicy(Policy):
         # gating
         self.gating_net = torch.nn.Sequential(
             torch.nn.Linear(self.dim_in, self.num_experts),
-            torch.nn.Softmax(dim=0)
+            torch.nn.Softmax(dim=1)
         )
         # experts
         self.expert_nets = torch.nn.ModuleList(
@@ -77,7 +77,7 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
             torch.nn.Linear(self.dim_in, self.dim_hidden_gating),
             torch.nn.Tanh(),
             torch.nn.Linear(self.dim_hidden_gating, self.num_experts),
-            torch.nn.Softmax(dim=0)
+            torch.nn.Softmax(dim=1)
         )
         # experts
         self.expert_nets = torch.nn.ModuleList(

@@ -103,7 +103,7 @@ try:
                 memory.push(data[i].t, data[i].x, data[i].u, torch.ones(1, device=config.device, dtype=config.dtype), data[i].generalized_time, data[i].relative_state, data[i].hamiltonian)
             # logging
             writer.add_scalar('data/new_data_points', len(data), iteration)
-            writer.add_scalar('data/total_data_points', memory.size, iteration)
+            writer.add_scalar('data/total_data_points', len(memory), iteration)
             print("iteration", iteration, "received data points", len(data), "requesting with alpha", alpha)
             # start new data generation
             start_data_generation(alpha=alpha, policy=policy)

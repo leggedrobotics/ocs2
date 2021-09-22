@@ -93,9 +93,8 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
       size_array_t postEventIndicesStock;
       vector_array_t stateTrajectory;
       vector_array_t inputTrajectory;
-      rolloutPtr_->run(primalSolution.timeTrajectory_[0], primalSolution.stateTrajectory_[0], primalSolution.timeTrajectory_[0] + timeStep,
-                       &behavioralController, primalSolution.modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock,
-                       stateTrajectory, inputTrajectory);
+      rolloutPtr_->run(time, state, time + timeStep, &behavioralController, {}, timeTrajectory, postEventIndicesStock, stateTrajectory,
+                       inputTrajectory);
 
       // update time, state and iteration
       time = timeTrajectory.back();

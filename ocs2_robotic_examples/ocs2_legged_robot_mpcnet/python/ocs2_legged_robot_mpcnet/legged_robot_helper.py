@@ -97,7 +97,7 @@ def get_dynamic_diagonal_walk_1(duration):
 def get_dynamic_diagonal_walk_2(duration):
     # contact schedule: LF_LH_RH, LF_RH LF_RF_RH, RF_LH_RH, RF_LH, LF_RF_LH
     # swing schedule: RF, RF_LH, LH, LF, LF_RH, RH
-    event_times_template = np.array([0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9], dtype=np.float64)
+    event_times_template = np.array([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], dtype=np.float64)
     mode_sequence_template = np.array([11, 9, 13, 7, 6, 14], dtype=np.uintp)
     return helper.get_event_times_and_mode_sequence(15, duration, event_times_template, mode_sequence_template)
 

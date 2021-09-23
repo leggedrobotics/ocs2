@@ -157,7 +157,7 @@ scalar_array_t MPC_BASE::initializePartitionTimes(scalar_t timeHorizon, size_t n
 void MPC_BASE::adjustTimeHorizon(const scalar_array_t& partitionTimes, scalar_t& initTime, scalar_t& finalTime) {
   // TODO(mspieler): Workaround for when initTime and finalTime are close to a partition boundary.
   //                 Times are rounded towards a smaller time horizon to avoid very short partitions.
-  const scalar_t partitionTimeTolerance = 4e-3;       //! @badcode magic epsilon
+  const scalar_t partitionTimeTolerance = 1e-3;       //! @badcode magic epsilon
   const scalar_t deltaTimePastFirstPartition = 1e-5;  //! @badcode magic epsilon
 
   // current active subsystem

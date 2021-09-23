@@ -1,6 +1,7 @@
 import torch
 
 from ocs2_mpcnet import config
+from ocs2_mpcnet.helper import bmv
 
 
 class Policy(torch.nn.Module):
@@ -20,8 +21,8 @@ class LinearPolicy(Policy):
         self.linear = torch.nn.Linear(self.dim_in, self.dim_out)
 
     def forward(self, t, x):
-        u = self.linear(torch.cat((t, x)))
-        return torch.ones(1, device=config.device, dtype=config.dtype), u.reshape((1, self.dim_out))
+        u = self.linear(torch.cat((t, x), dim=1))
+        return u, torch.ones(len(u), 1, device=config.device, dtype=config.dtype), u.unsqueeze(dim=2)
 
 
 class NonlinearPolicy(Policy):
@@ -35,9 +36,9 @@ class NonlinearPolicy(Policy):
         self.linear2 = torch.nn.Linear(self.dim_hidden, self.dim_out)
 
     def forward(self, t, x):
-        z = self.activation(self.linear1(torch.cat((t, x))))
+        z = self.activation(self.linear1(torch.cat((t, x), dim=1)))
         u = self.linear2(z)
-        return torch.ones(1, device=config.device, dtype=config.dtype), u.reshape((1, self.dim_out))
+        return u, torch.ones(len(u), 1, device=config.device, dtype=config.dtype), u.unsqueeze(dim=2)
 
 
 class MixtureOfLinearExpertsPolicy(Policy):
@@ -49,7 +50,7 @@ class MixtureOfLinearExpertsPolicy(Policy):
         # gating
         self.gating_net = torch.nn.Sequential(
             torch.nn.Linear(self.dim_in, self.num_experts),
-            torch.nn.Softmax(dim=0)
+            torch.nn.Softmax(dim=1)
         )
         # experts
         self.expert_nets = torch.nn.ModuleList(
@@ -57,9 +58,10 @@ class MixtureOfLinearExpertsPolicy(Policy):
         )
 
     def forward(self, t, x):
-        p = self.gating_net(torch.cat((t, x)))
-        u = torch.stack([self.expert_nets[i](torch.cat((t, x))) for i in range(self.num_experts)])
-        return p, u
+        p = self.gating_net(torch.cat((t, x), dim=1))
+        U = torch.stack([self.expert_nets[i](torch.cat((t, x), dim=1)) for i in range(self.num_experts)], dim=2)
+        u = bmv(U, p)
+        return u, p, U
 
 
 class MixtureOfNonlinearExpertsPolicy(Policy):
@@ -75,7 +77,7 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
             torch.nn.Linear(self.dim_in, self.dim_hidden_gating),
             torch.nn.Tanh(),
             torch.nn.Linear(self.dim_hidden_gating, self.num_experts),
-            torch.nn.Softmax(dim=0)
+            torch.nn.Softmax(dim=1)
         )
         # experts
         self.expert_nets = torch.nn.ModuleList(
@@ -83,9 +85,10 @@ class MixtureOfNonlinearExpertsPolicy(Policy):
         )
 
     def forward(self, t, x):
-        p = self.gating_net(torch.cat((t, x)))
-        u = torch.stack([self.expert_nets[i](torch.cat((t, x))) for i in range(self.num_experts)])
-        return p, u
+        p = self.gating_net(torch.cat((t, x), dim=1))
+        U = torch.stack([self.expert_nets[i](torch.cat((t, x), dim=1)) for i in range(self.num_experts)], dim=2)
+        u = bmv(U, p)
+        return u, p, U
 
 
 class LinearExpert(torch.nn.Module):

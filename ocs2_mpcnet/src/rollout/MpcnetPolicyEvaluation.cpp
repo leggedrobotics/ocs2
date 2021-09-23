@@ -30,10 +30,11 @@ MpcnetPolicyEvaluation::MetricsPtr MpcnetPolicyEvaluation::run(const std::string
   int iteration = 0;
   try {
     while (time <= targetTrajectories.timeTrajectory.back()) {
-      // run mpc
+      // run mpc and get solution
       if (!mpcPtr_->run(time, state)) {
         throw std::runtime_error("MpcnetPolicyEvaluation::run Main routine of MPC returned false.");
       }
+      PrimalSolution primalSolution = mpcPtr_->getSolverPtr()->primalSolution(mpcPtr_->getSolverPtr()->getFinalTime());
 
       // incurred quantities
       vector_t input = mpcnetPtr_->computeInput(time, state);
@@ -44,8 +45,9 @@ MpcnetPolicyEvaluation::MetricsPtr MpcnetPolicyEvaluation::run(const std::string
       size_array_t postEventIndicesStock;
       vector_array_t stateTrajectory;
       vector_array_t inputTrajectory;
-      rolloutPtr_->run(time, state, time + timeStep, mpcnetPtr_.get(), {}, timeTrajectory, postEventIndicesStock, stateTrajectory,
-                       inputTrajectory);
+      rolloutPtr_->run(primalSolution.timeTrajectory_.front(), primalSolution.stateTrajectory_.front(),
+                       primalSolution.timeTrajectory_.front() + timeStep, mpcnetPtr_.get(), primalSolution.modeSchedule_.eventTimes,
+                       timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 
       // update time, state and iteration
       time = timeTrajectory.back();

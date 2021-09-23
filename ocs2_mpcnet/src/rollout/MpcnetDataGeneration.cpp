@@ -60,8 +60,8 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
         // get nominal data point
         {
           DataPoint dataPoint;
-          dataPoint.t = primalSolution.timeTrajectory_[0];
-          dataPoint.x = primalSolution.stateTrajectory_[0];
+          dataPoint.t = primalSolution.timeTrajectory_.front();
+          dataPoint.x = primalSolution.stateTrajectory_.front();
           dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
           dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
           dataPoint.generalizedTime = mpcnetPtr_->getGeneralizedTime(dataPoint.t);
@@ -73,9 +73,9 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
         // get samples around nominal data point
         for (int i = 0; i < nSamples; i++) {
           DataPoint dataPoint;
-          dataPoint.t = primalSolution.timeTrajectory_[0];
-          dataPoint.x = primalSolution.stateTrajectory_[0] +
-                        L * vector_t::NullaryExpr(primalSolution.stateTrajectory_[0].size(), standardNormalNullaryOp);
+          dataPoint.t = primalSolution.timeTrajectory_.front();
+          dataPoint.x = primalSolution.stateTrajectory_.front() +
+                        L * vector_t::NullaryExpr(primalSolution.stateTrajectory_.front().size(), standardNormalNullaryOp);
           dataPoint.u = primalSolution.controllerPtr_->computeInput(dataPoint.t, dataPoint.x);
           dataPoint.mode = primalSolution.modeSchedule_.modeAtTime(dataPoint.t);
           dataPoint.generalizedTime = mpcnetPtr_->getGeneralizedTime(dataPoint.t);
@@ -93,9 +93,9 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
       size_array_t postEventIndicesStock;
       vector_array_t stateTrajectory;
       vector_array_t inputTrajectory;
-      rolloutPtr_->run(primalSolution.timeTrajectory_[0], primalSolution.stateTrajectory_[0], primalSolution.timeTrajectory_[0] + timeStep,
-                       &behavioralController, primalSolution.modeSchedule_.eventTimes, timeTrajectory, postEventIndicesStock,
-                       stateTrajectory, inputTrajectory);
+      rolloutPtr_->run(primalSolution.timeTrajectory_.front(), primalSolution.stateTrajectory_.front(),
+                       primalSolution.timeTrajectory_.front() + timeStep, &behavioralController, primalSolution.modeSchedule_.eventTimes,
+                       timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
 
       // update time, state and iteration
       time = timeTrajectory.back();

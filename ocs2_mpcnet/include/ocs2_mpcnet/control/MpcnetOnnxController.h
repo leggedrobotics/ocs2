@@ -18,12 +18,12 @@ inline std::shared_ptr<Ort::Env> createOnnxEnvironment() {
 /**
  * A neural network controller using ONNX Runtime based on the Open Neural Network Exchange (ONNX) format.
  * The model of the policy computes u, p, U = model(t, x) with
- * t: generalized time (dimensionOfTime x 1),
- * x: relative state (dimensionOfState x 1),
- * u: predicted input (dimensionOfInput x 1),
- * p: predicted expert weights (numberOfExperts x 1),
- * U: predicted expert inputs (dimensionOfInput x numberOfExperts).
- * @note From batch processing during training there is actually an additional first dimension with size 1 for the variables of the model.
+ * t: generalized time (1 x dimensionOfTime),
+ * x: relative state (1 x dimensionOfState),
+ * u: predicted input (1 x dimensionOfInput),
+ * p: predicted expert weights (1 x numberOfExperts),
+ * U: predicted expert inputs (1 x dimensionOfInput x numberOfExperts).
+ * @note The additional first dimension with size 1 for the variables of the model comes from batch processing during training.
  */
 class MpcnetOnnxController : public MpcnetControllerBase {
  public:

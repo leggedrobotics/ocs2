@@ -1,7 +1,6 @@
 import torch
-import numpy as np
 
-from ocs2_mpcnet import config
+from ocs2_mpcnet.helper import bdot, bmv
 
 
 class Hamiltonian:
@@ -10,42 +9,30 @@ class Hamiltonian:
     # H(x,u) = 1/2 dx' dHdxx dx + du' dHdux dx + 1/2 du' dHduu du + dHdx' dx + dHdu' du + H
 
     @staticmethod
-    def compute_torch(x_inquiry, x_nominal, u_inquiry, u_nominal, hamiltonian):
+    def compute_sample(x_inquiry, x_nominal, u_inquiry, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H):
         if torch.equal(x_inquiry, x_nominal):
             du = torch.sub(u_inquiry, u_nominal)
-            dHduu = 0.5 * torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfduu, dtype=config.dtype, device=config.device), du))
-            dHdu = torch.dot(torch.tensor(hamiltonian.dfdu, dtype=config.dtype, device=config.device), du)
-            H = torch.tensor(hamiltonian.f, dtype=config.dtype, device=config.device)
-            return dHduu + dHdu + H
+            return 0.5 * torch.dot(du, torch.mv(dHduu, du)) + torch.dot(dHdu, du) + H
+        elif torch.equal(u_inquiry, u_nominal):
+            dx = torch.sub(x_inquiry, x_nominal)
+            return 0.5 * torch.dot(dx, torch.mv(dHdxx, dx)) + torch.dot(dHdx, dx) + H
         else:
             dx = torch.sub(x_inquiry, x_nominal)
             du = torch.sub(u_inquiry, u_nominal)
-            dHdxx = 0.5 * torch.dot(dx, torch.matmul(torch.tensor(hamiltonian.dfdxx, dtype=config.dtype, device=config.device), dx))
-            dHdux = torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfdux, dtype=config.dtype, device=config.device), dx))
-            dHduu = 0.5 * torch.dot(du, torch.matmul(torch.tensor(hamiltonian.dfduu, dtype=config.dtype, device=config.device), du))
-            dHdx = torch.dot(torch.tensor(hamiltonian.dfdx, dtype=config.dtype, device=config.device), dx)
-            dHdu = torch.dot(torch.tensor(hamiltonian.dfdu, dtype=config.dtype, device=config.device), du)
-            H = torch.tensor(hamiltonian.f, dtype=config.dtype, device=config.device)
-            return dHdxx + dHdux + dHduu + dHdx + dHdu + H
+            return 0.5 * torch.dot(dx, torch.mv(dHdxx, dx)) + torch.dot(du, torch.mv(dHdux, dx)) + 0.5 * torch.dot(du, torch.mv(dHduu, du)) + torch.dot(dHdx, dx) + torch.dot(dHdu, du) + H
 
     @staticmethod
-    def compute_numpy(x_inquiry, x_nominal, u_inquiry, u_nominal, hamiltonian):
-        if np.array_equal(x_inquiry, x_nominal):
-            du = np.subtract(u_inquiry, u_nominal)
-            dHduu = 0.5 * np.dot(du, np.matmul(hamiltonian.dfduu, du))
-            dHdu = np.dot(hamiltonian.dfdu, du)
-            H = hamiltonian.f
-            return dHduu + dHdu + H
+    def compute_batch(x_inquiry, x_nominal, u_inquiry, u_nominal, dHdxx, dHdux, dHduu, dHdx, dHdu, H):
+        if torch.equal(x_inquiry, x_nominal):
+            du = torch.sub(u_inquiry, u_nominal)
+            return 0.5 * bdot(du, bmv(dHduu, du)) + bdot(dHdu, du) + H
+        elif torch.equal(u_inquiry, u_nominal):
+            dx = torch.sub(x_inquiry, x_nominal)
+            return 0.5 * bdot(dx, bmv(dHdxx, dx)) + bdot(dHdx, dx) + H
         else:
-            dx = np.subtract(x_inquiry, x_nominal)
-            du = np.subtract(u_inquiry, u_nominal)
-            dHdxx = 0.5 * np.dot(dx, np.matmul(hamiltonian.dfdxx, dx))
-            dHdux = np.dot(du, np.matmul(hamiltonian.dfdux, dx))
-            dHduu = 0.5 * np.dot(du, np.matmul(hamiltonian.dfduu, du))
-            dHdx = np.dot(hamiltonian.dfdx, dx)
-            dHdu = np.dot(hamiltonian.dfdu, du)
-            H = hamiltonian.f
-            return dHdxx + dHdux + dHduu + dHdx + dHdu + H
+            dx = torch.sub(x_inquiry, x_nominal)
+            du = torch.sub(u_inquiry, u_nominal)
+            return 0.5 * bdot(dx, bmv(dHdxx, dx)) + bdot(du, bmv(dHdux, dx)) + 0.5 * bdot(du, bmv(dHduu, du)) + bdot(dHdx, dx) + bdot(dHdu, du) + H
 
 
 class BehavioralCloning:
@@ -53,17 +40,17 @@ class BehavioralCloning:
     # Uses a simple quadratic function as loss
     # BC(u) = du' R du
 
-    def __init__(self, R_torch, R_numpy):
-        self.R_torch = R_torch
-        self.R_numpy = R_numpy
+    def __init__(self, R, batch_size):
+        self.R = R
+        self.R_batch = torch.stack([R for i in range(batch_size)])
 
-    def compute_torch(self, u_predicted, u_target):
+    def compute_sample(self, u_predicted, u_target):
         du = torch.sub(u_predicted, u_target)
-        return torch.dot(du, torch.matmul(self.R_torch, du))
+        return torch.dot(du, torch.mv(self.R, du))
 
-    def compute_numpy(self, u_predicted, u_target):
-        du = np.subtract(u_predicted, u_target)
-        return np.dot(du, np.matmul(self.R_numpy, du))
+    def compute_batch(self, u_predicted, u_target):
+        du = torch.sub(u_predicted, u_target)
+        return bdot(du, bmv(self.R_batch, du))
 
 
 class CrossEntropy:
@@ -71,12 +58,11 @@ class CrossEntropy:
     # Uses the cross entropy between two probability distributions as loss
     # CE(p_target, p_predicted) = - sum(p_target * log(p_predicted))
 
-    def __init__(self, epsilon_torch, epsilon_numpy):
-        self.epsilon_torch = epsilon_torch
-        self.epsilon_numpy = epsilon_numpy
+    def __init__(self, epsilon):
+        self.epsilon = epsilon
 
-    def compute_torch(self, p_target, p_predicted):
-        return - torch.dot(p_target, torch.log(torch.add(p_predicted, self.epsilon_torch)))
+    def compute_sample(self, p_target, p_predicted):
+        return - torch.dot(p_target, torch.log(p_predicted + self.epsilon))
 
-    def compute_numpy(self, p_target, p_predicted):
-        return - np.dot(p_target, np.log(np.add(p_predicted, self.epsilon_numpy)))
+    def compute_batch(self, p_target, p_predicted):
+        return - bdot(p_target, torch.log(p_predicted + self.epsilon))

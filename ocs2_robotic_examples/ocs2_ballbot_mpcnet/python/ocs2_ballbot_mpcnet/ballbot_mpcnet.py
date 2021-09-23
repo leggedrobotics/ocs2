@@ -7,7 +7,7 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 from ocs2_mpcnet.loss import Hamiltonian as Loss
-from ocs2_mpcnet.memory import ReplayMemory as Memory
+from ocs2_mpcnet.memory import CircularMemory as Memory
 from ocs2_mpcnet.policy import LinearPolicy as Policy
 
 from ocs2_ballbot_mpcnet import ballbot_config as config
@@ -45,15 +45,15 @@ loss = Loss()
 
 # memory
 memory_capacity = 1000000
-memory = Memory(memory_capacity)
+memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM)
 
 # policy
 policy = Policy(config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM)
 policy.to(config.device)
 print("Initial policy parameters:")
 print(list(policy.named_parameters()))
-dummy_input = (torch.randn(config.TIME_DIM, device=config.device, dtype=config.dtype),
-               torch.randn(config.STATE_DIM, device=config.device, dtype=config.dtype))
+dummy_input = (torch.randn(1, config.TIME_DIM, device=config.device, dtype=config.dtype),
+               torch.randn(1, config.STATE_DIM, device=config.device, dtype=config.dtype))
 print("Saving initial policy.")
 save_path = "policies/" + folder + "/initial_policy"
 torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
@@ -99,11 +99,11 @@ try:
             # get generated data
             data = mpcnet_interface.getGeneratedData()
             for i in range(len(data)):
-                # push t, x, u, mode, generalized time, relative state, Hamiltonian into memory
-                memory.push(data[i].t, data[i].x, data[i].u, data[i].mode, data[i].generalized_time, data[i].relative_state, data[i].hamiltonian)
+                # push t, x, u, p, generalized time, relative state, Hamiltonian into memory
+                memory.push(data[i].t, data[i].x, data[i].u, torch.ones(1, device=config.device, dtype=config.dtype), data[i].generalized_time, data[i].relative_state, data[i].hamiltonian)
             # logging
             writer.add_scalar('data/new_data_points', len(data), iteration)
-            writer.add_scalar('data/total_data_points', memory.size, iteration)
+            writer.add_scalar('data/total_data_points', len(memory), iteration)
             print("iteration", iteration, "received data points", len(data), "requesting with alpha", alpha)
             # start new data generation
             start_data_generation(alpha=alpha, policy=policy)
@@ -128,24 +128,17 @@ try:
             torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
             torch.save(obj=policy, f=save_path + ".pt")
 
-        # extract batch of samples from replay memory
-        samples = memory.sample(batch_size)
+        # extract batch from memory
+        t, x, u, p, generalized_time, relative_state, dHdxx, dHdux, dHduu, dHdx, dHdu, H = memory.sample(batch_size)
 
         # take an optimization step
         def closure():
             # clear the gradients
             optimizer.zero_grad()
+            # prediction
+            u_predicted, p_predicted, U_predicted = policy(generalized_time, relative_state)
             # compute the empirical loss
-            empirical_loss = torch.zeros(1, dtype=config.dtype, device=config.device)
-            for sample in samples:
-                t = torch.tensor(sample.t, dtype=config.dtype, device=config.device)
-                x = torch.tensor(sample.x, dtype=config.dtype, device=config.device)
-                u_target = torch.tensor(sample.u, dtype=config.dtype, device=config.device)
-                generalized_time = torch.tensor(sample.generalized_time, dtype=config.dtype, device=config.device)
-                relative_state = torch.tensor(sample.relative_state, dtype=config.dtype, device=config.device)
-                p, U = policy(generalized_time, relative_state)
-                u_predicted = torch.matmul(p, U)
-                empirical_loss = empirical_loss + loss.compute_torch(x, x, u_predicted, u_target, sample.hamiltonian)
+            empirical_loss = loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum()
             # compute the gradients
             empirical_loss.backward()
             # logging

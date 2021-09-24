@@ -46,12 +46,12 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   const contact_flag_t& getContactFlags() const { return contactFlags_; };
   const vector3_t& getSurfaceNormalInOriginFrame(size_t leg) const { return surfaceNormalsInOriginFrame_[leg]; };
 
-  // Precomputation access : cost / constraint
+  // Precomputation access : any(cost, constraint, softConstraint)
   const vector3_t& footPositionInOriginFrame(size_t leg) const { return feetPositionInOriginFrame_[leg]; }
   const vector3_t& footVelocityInOriginFrame(size_t leg) const { return feetVelocitiesInOriginFrame_[leg]; }
   const std::vector<kinematic_model_t::CollisionSphere>& collisionSpheresInOriginFrame() const { return collisionSpheresInOriginFrame_; }
 
-  // Precomputation access : {cost / constraint, derivatives}
+  // Precomputation access : any(cost, constraint, softConstraint) + (derivatives)
   const matrix_t& footPositionInOriginFrameStateDerivative(size_t leg) const { return feetPositionInOriginFrameStateDerivative_[leg]; }
   const VectorFunctionLinearApproximation& footVelocityInOriginFrameDerivative(size_t leg) const {
     return feetVelocitiesInOriginFrameDerivative_[leg];

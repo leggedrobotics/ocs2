@@ -13,8 +13,6 @@
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/LoopshapingSynchronizedModule.h>
 
-#include <ocs2_switched_model_interface/Dimensions.h>
-
 #include "ocs2_quadruped_loopshaping_interface/LoopshapingDimensions.h"
 
 namespace switched_model_loopshaping {

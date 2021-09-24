@@ -4,7 +4,7 @@
 #include <raisim/World.hpp>
 #include <utility>
 
-#include <ocs2_switched_model_interface/Dimensions.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
@@ -20,10 +20,6 @@ namespace anymal {
 class AnymalRaisimConversions {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using dim_t = ocs2::Dimensions<switched_model::STATE_DIM, switched_model::INPUT_DIM>;
-  using state_vector_t = typename dim_t::state_vector_t;
-  using input_vector_t = typename dim_t::input_vector_t;
 
   using com_model_t = switched_model::ComModelBase<double>;
   using kinematic_model_t = switched_model::KinematicsModelBase<double>;

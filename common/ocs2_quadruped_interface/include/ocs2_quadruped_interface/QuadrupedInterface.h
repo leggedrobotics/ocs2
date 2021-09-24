@@ -12,7 +12,6 @@
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
-#include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
@@ -32,11 +31,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
 
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
-
-  using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-  using state_vector_t = dimension_t::state_vector_t;
-  using state_matrix_t = dimension_t::state_matrix_t;
-  using input_matrix_t = dimension_t::input_matrix_t;
 
   using synchronized_module_t = ocs2::SolverSynchronizedModule;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;

@@ -8,7 +8,7 @@
 #include <ros/node_handle.h>
 #include <tf/transform_broadcaster.h>
 
-#include <ocs2_switched_model_interface/Dimensions.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 
@@ -19,14 +19,6 @@ namespace switched_model {
 
 class QuadrupedVisualizer : public ocs2::DummyObserver {
  public:
-  using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-  using scalar_t = typename dimension_t::scalar_t;
-  using state_vector_t = typename dimension_t::state_vector_t;
-  using scalar_array_t = typename dimension_t::scalar_array_t;
-  using size_array_t = typename dimension_t::size_array_t;
-  using state_vector_array_t = typename dimension_t::state_vector_array_t;
-  using input_vector_t = typename dimension_t::input_vector_t;
-
   using com_model_t = ComModelBase<scalar_t>;
   using kinematic_model_t = KinematicsModelBase<scalar_t>;
 

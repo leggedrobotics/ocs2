@@ -9,7 +9,6 @@
 #include <functional>
 #include <random>
 
-#include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h>
 #include <ocs2_switched_model_interface/constraint/EndEffectorVelocityInFootFrameConstraint.h>
 #include <ocs2_switched_model_interface/constraint/FootNormalConstraint.h>

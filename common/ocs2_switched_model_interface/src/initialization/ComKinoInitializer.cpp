@@ -1,6 +1,5 @@
 #include "ocs2_switched_model_interface/initialization/ComKinoInitializer.h"
 
-#include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 
 namespace switched_model {

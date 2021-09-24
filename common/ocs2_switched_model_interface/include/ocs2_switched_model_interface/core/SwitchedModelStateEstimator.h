@@ -7,10 +7,7 @@
 
 #pragma once
 
-#include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
-
-#include <memory>
 
 namespace switched_model {
 

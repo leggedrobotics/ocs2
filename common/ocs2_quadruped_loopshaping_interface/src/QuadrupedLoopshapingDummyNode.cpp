@@ -26,8 +26,7 @@ void quadrupedLoopshapingDummyNode(ros::NodeHandle& nodeHandle, const QuadrupedL
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  auto visualizer = std::make_shared<switched_model::QuadrupedVisualizer>(quadrupedInterface.getKinematicModel(),
-                                                                          quadrupedInterface.getComModel(), nodeHandle);
+  auto visualizer = std::make_shared<switched_model::QuadrupedVisualizer>(quadrupedInterface.getKinematicModel(), nodeHandle);
 
   // Logging
   std::string logFileName = "/tmp/ocs2/QuadrupedLoopshapingDummyNodeLog.txt";

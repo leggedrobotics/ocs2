@@ -8,9 +8,8 @@
 #include <ros/node_handle.h>
 #include <tf/transform_broadcaster.h>
 
-#include <ocs2_switched_model_interface/core/SwitchedModel.h>
-#include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
+#include <ocs2_switched_model_interface/core/SwitchedModel.h>
 
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include <ocs2_ros_interfaces/visualization/VisualizationColors.h>
@@ -19,7 +18,6 @@ namespace switched_model {
 
 class QuadrupedVisualizer : public ocs2::DummyObserver {
  public:
-  using com_model_t = ComModelBase<scalar_t>;
   using kinematic_model_t = KinematicsModelBase<scalar_t>;
 
   /** Visualization settings (publicly available) */
@@ -41,10 +39,8 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
    * @param n
    * @param maxUpdateFrequency : maximum publish frequency measured in MPC time.
    */
-  QuadrupedVisualizer(const kinematic_model_t& kinematicModel, const com_model_t& comModel, ros::NodeHandle& n,
-                      scalar_t maxUpdateFrequency = 1000.0)
+  QuadrupedVisualizer(const kinematic_model_t& kinematicModel, ros::NodeHandle& n, scalar_t maxUpdateFrequency = 1000.0)
       : kinematicModelPtr_(kinematicModel.clone()),
-        comModelPtr_(comModel.clone()),
         lastTime_(std::numeric_limits<scalar_t>::lowest()),
         minPublishTimeDifference_(1.0 / maxUpdateFrequency) {
     launchVisualizerNode(n);
@@ -76,7 +72,6 @@ class QuadrupedVisualizer : public ocs2::DummyObserver {
   void publishCollisionSpheres(ros::Time timeStamp, const base_coordinate_t& basePose, const joint_coordinate_t& jointAngles) const;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
-  std::unique_ptr<com_model_t> comModelPtr_;
 
   tf::TransformBroadcaster tfBroadcaster_;
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;

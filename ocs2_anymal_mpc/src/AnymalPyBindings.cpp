@@ -32,7 +32,7 @@ void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const 
     char* fake_argv[] = {arg0};
     ros::init(fake_argc, fake_argv, "anymal_visualization_node");
     ros::NodeHandle n;
-    visualizer_.reset(new switched_model::QuadrupedVisualizer(anymalInterface->getKinematicModel(), anymalInterface->getComModel(), n));
+    visualizer_.reset(new switched_model::QuadrupedVisualizer(anymalInterface->getKinematicModel(), n));
   }
 
   assert(t.size() == x.size());

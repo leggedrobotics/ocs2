@@ -28,10 +28,6 @@ TEST_F(AnymalCerberusSwitchedModelTests, Kinematics) {
   this->printKinematics();
 }
 
-TEST_F(AnymalCerberusSwitchedModelTests, ComDynamics) {
-  this->printComModel();
-}
-
 TEST_F(AnymalCerberusSwitchedModelTests, baseDynamics) {
   this->testBaseDynamics();
 }

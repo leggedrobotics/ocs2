@@ -12,17 +12,11 @@
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalChipKinematics<SCALAR_T>* AnymalChipKinematics<SCALAR_T>::clone() const {
   return new AnymalChipKinematics<SCALAR_T>(*this);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalChipKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -50,9 +44,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalChipKinematics<SCALAR_T>::positionBa
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 typename AnymalChipKinematics<SCALAR_T>::joint_jacobian_block_t AnymalChipKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -81,10 +72,6 @@ typename AnymalChipKinematics<SCALAR_T>::joint_jacobian_block_t AnymalChipKinema
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalChipKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -112,9 +99,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalChipKinematics<SCALAR_T>::footOrient
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 std::vector<typename AnymalChipKinematics<SCALAR_T>::CollisionSphere> AnymalChipKinematics<SCALAR_T>::collisionSpheresInBaseFrame(
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

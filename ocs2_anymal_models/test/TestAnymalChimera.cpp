@@ -28,9 +28,6 @@ TEST_F(AnymalChimeraSwitchedModelTests, Kinematics) {
   this->printKinematics();
 }
 
-TEST_F(AnymalChimeraSwitchedModelTests, ComDynamics) {
-  this->printComModel();
-}
 
 TEST_F(AnymalChimeraSwitchedModelTests, baseDynamics) {
   this->testBaseDynamics();

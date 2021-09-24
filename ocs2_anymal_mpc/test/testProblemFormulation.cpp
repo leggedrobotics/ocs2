@@ -7,6 +7,7 @@
 #include <ocs2_anymal_mpc/AnymalInterface.h>
 
 #include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
 class TestAnymalModel : public ::testing::Test {
  public:
@@ -20,26 +21,22 @@ class TestAnymalModel : public ::testing::Test {
     // Get interface
     anymalInterface = anymal::getAnymalInterface(anymal::stringToAnymalModel(robotName), configFolder);
 
+    problem = anymalInterface->getOptimalControlProblem();
+
     // Cost desired
     ocs2::scalar_t initTime = 0.0;
     ocs2::scalar_t finalTime = 1.0;
     const ocs2::vector_t state = anymalInterface->getInitialState();
     const ocs2::vector_t input = ocs2::vector_t::Zero(switched_model::INPUT_DIM);
     targetTrajectories = ocs2::TargetTrajectories{{initTime}, {state}, {input}};
-
-    dynamics.reset(anymalInterface->getDynamics().clone());
-    cost.reset(anymalInterface->getCost().clone());
-    constraints.reset(anymalInterface->getConstraintPtr()->clone());
+    problem.targetTrajectoriesPtr = &targetTrajectories;
 
     // Initialize
     anymalInterface->getReferenceManagerPtr()->preSolverRun(initTime, finalTime, state);
-    cost->setTargetTrajectoriesPtr(&targetTrajectories);
   }
 
   std::unique_ptr<switched_model::QuadrupedInterface> anymalInterface;
-  std::unique_ptr<ocs2::SystemDynamicsBase> dynamics;
-  std::unique_ptr<ocs2::CostFunctionBase> cost;
-  std::unique_ptr<ocs2::ConstraintBase> constraints;
+  ocs2::OptimalControlProblem problem;
   ocs2::TargetTrajectories targetTrajectories;
 };
 
@@ -52,28 +49,24 @@ TEST_F(TestAnymalModel, all) {
 
   timer.startTimer();
   for (int i = 0; i < N; i++) {
-    dynamics->linearApproximation(t, x, u);
+    problem.dynamicsPtr->linearApproximation(t, x, u);
   }
   timer.endTimer();
   std::cout << "Dynamics " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
 
+  constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Constraint + ocs2::Request::Approximation;
+  problem.preComputationPtr->request(request, t, x, u);
+
   timer.startTimer();
   for (int i = 0; i < N; i++) {
-    constraints->stateInputEqualityConstraintLinearApproximation(t, x, u);
+    problem.equalityConstraintPtr->getLinearApproximation(t, x, u, *problem.preComputationPtr);
   }
   timer.endTimer();
   std::cout << "Constraints state-input " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
 
   timer.startTimer();
   for (int i = 0; i < N; i++) {
-    constraints->inequalityConstraintQuadraticApproximation(t, x, u);
-  }
-  timer.endTimer();
-  std::cout << "Constraints inequality " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
-
-  timer.startTimer();
-  for (int i = 0; i < N; i++) {
-    cost->costQuadraticApproximation(t, x, u);
+    ocs2::approximateCost(problem, t, x, u);
   }
   timer.endTimer();
   std::cout << "Cost " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
@@ -88,10 +81,27 @@ TEST_F(TestAnymalModel, dynamics) {
 
   timer.startTimer();
   for (int i = 0; i < N; i++) {
-    dynamics->linearApproximation(t, x, u);
+    problem.dynamicsPtr->linearApproximation(t, x, u);
   }
   timer.endTimer();
   std::cout << "Dynamics " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
+}
+
+TEST_F(TestAnymalModel, precomputation) {
+  ocs2::scalar_t t = 0.0;
+  const ocs2::vector_t x = anymalInterface->getInitialState();
+  const ocs2::vector_t u = ocs2::vector_t::Zero(24);
+  ocs2::benchmark::RepeatedTimer timer;
+  int N = 100000;
+
+  constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Constraint + ocs2::Request::Approximation;
+
+  timer.startTimer();
+  for (int i = 0; i < N; i++) {
+    problem.preComputationPtr->request(request, t, x, u);
+  }
+  timer.endTimer();
+  std::cout << "Precomputation " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
 }
 
 TEST_F(TestAnymalModel, constraints_eq) {
@@ -99,29 +109,17 @@ TEST_F(TestAnymalModel, constraints_eq) {
   const ocs2::vector_t x = anymalInterface->getInitialState();
   const ocs2::vector_t u = ocs2::vector_t::Zero(24);
   ocs2::benchmark::RepeatedTimer timer;
-  int N = 100000;
+  int N = 1000000;
+
+  constexpr auto request = ocs2::Request::Constraint + ocs2::Request::Approximation;
+  problem.preComputationPtr->request(request, t, x, u);
 
   timer.startTimer();
   for (int i = 0; i < N; i++) {
-    constraints->stateInputEqualityConstraintLinearApproximation(t, x, u);
+    problem.equalityConstraintPtr->getLinearApproximation(t, x, u, *problem.preComputationPtr);
   }
   timer.endTimer();
   std::cout << "Constraints state-input " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
-}
-
-TEST_F(TestAnymalModel, constraints_ineq) {
-  ocs2::scalar_t t = 0.0;
-  const ocs2::vector_t x = anymalInterface->getInitialState();
-  const ocs2::vector_t u = ocs2::vector_t::Zero(24);
-  ocs2::benchmark::RepeatedTimer timer;
-  int N = 100000;
-
-  timer.startTimer();
-  for (int i = 0; i < N; i++) {
-    constraints->inequalityConstraintQuadraticApproximation(t, x, u);
-  }
-  timer.endTimer();
-  std::cout << "Constraints inequality " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
 }
 
 TEST_F(TestAnymalModel, cost) {
@@ -131,9 +129,30 @@ TEST_F(TestAnymalModel, cost) {
   ocs2::benchmark::RepeatedTimer timer;
   int N = 100000;
 
+  constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Constraint + ocs2::Request::Approximation;
+  problem.preComputationPtr->request(request, t, x, u);
+
   timer.startTimer();
   for (int i = 0; i < N; i++) {
-    cost->costQuadraticApproximation(t, x, u);
+    ocs2::approximateCost(problem, t, x, u);
+  }
+  timer.endTimer();
+  std::cout << "Cost " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";
+}
+
+TEST_F(TestAnymalModel, terminalCost) {
+  ocs2::scalar_t t = 0.0;
+  const ocs2::vector_t x = anymalInterface->getInitialState();
+  const ocs2::vector_t u = ocs2::vector_t::Zero(24);
+  ocs2::benchmark::RepeatedTimer timer;
+  int N = 100000;
+
+  constexpr auto request = ocs2::Request::Cost + ocs2::Request::SoftConstraint + ocs2::Request::Approximation;
+  problem.preComputationPtr->requestFinal(request, t, x);
+
+  timer.startTimer();
+  for (int i = 0; i < N; i++) {
+    ocs2::approximateFinalCost(problem, t, x);
   }
   timer.endTimer();
   std::cout << "Cost " << timer.getLastIntervalInMilliseconds() / N << " ms per call\n";

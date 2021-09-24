@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import os
 
 from ocs2_anymal_mpc import mpc_interface
 from ocs2_anymal_mpc import (
@@ -12,8 +13,11 @@ from ocs2_anymal_mpc import (
 
 class anymal_mpc_python_tests(unittest.TestCase):
     def setUp(self):
+        taskFile = 'c_series'
+        libFolder = ''
         print("Instantiating MPC interface")
-        self.mpc = mpc_interface("--name chip --config c_series")
+        print("Instantiating MPC interface")
+        self.mpc = mpc_interface(taskFile, libFolder)
         self.STATE_DIM = 24
         self.INPUT_DIM = 24
 

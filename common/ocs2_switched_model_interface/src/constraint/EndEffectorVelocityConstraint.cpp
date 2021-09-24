@@ -4,32 +4,50 @@
 
 #include "ocs2_switched_model_interface/constraint/EndEffectorVelocityConstraint.h"
 
+#include "ocs2_switched_model_interface/core/SwitchedModelPrecomputation.h"
+
 namespace switched_model {
 
-EndEffectorVelocityConstraint::EndEffectorVelocityConstraint(int legNumber, settings_t settings, ad_com_model_t& adComModel,
-                                                             ad_kinematic_model_t& adKinematicsModel, bool generateModels,
-                                                             const std::string& constraintPrefix)
-    : EndEffectorConstraint(constraintPrefix, legNumber, std::move(settings), adComModel, adKinematicsModel,
-                            EndEffectorVelocityConstraint::adfunc, generateModels) {}
+EndEffectorVelocityConstraint::EndEffectorVelocityConstraint(int legNumber, const SwitchedModelModeScheduleManager& modeScheduleManager)
+    : StateInputConstraint(ocs2::ConstraintOrder::Linear), legNumber_(legNumber), modeScheduleManager_(&modeScheduleManager) {}
 
 EndEffectorVelocityConstraint* EndEffectorVelocityConstraint::clone() const {
   return new EndEffectorVelocityConstraint(*this);
 };
 
-void EndEffectorVelocityConstraint::adfunc(ad_com_model_t& adComModel, ad_kinematic_model_t& adKinematicsModel, int legNumber,
-                                           const ocs2::ad_vector_t& tapedInput, ocs2::ad_vector_t& o_footVelocity) {
-  // Extract elements from taped input
-  comkino_state_ad_t x = tapedInput.segment(1, STATE_DIM);
-  comkino_input_ad_t u = tapedInput.segment(1 + STATE_DIM, INPUT_DIM);
+bool EndEffectorVelocityConstraint::isActive(scalar_t time) const {
+  return modeScheduleManager_->getContactFlags(time)[legNumber_];
+}
 
-  // Extract elements from state
-  const base_coordinate_ad_t basePose = getBasePose(x);
-  const base_coordinate_ad_t baseTwist = getBaseLocalVelocities(x);
-  const joint_coordinate_ad_t qJoints = getJointPositions(x);
-  const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
+size_t EndEffectorVelocityConstraint::getNumConstraints(scalar_t time) const {
+  return 2;
+}
 
-  // Get base state from com state
-  o_footVelocity = adKinematicsModel.footVelocityInOriginFrame(legNumber, basePose, baseTwist, qJoints, dqJoints);
-};
+vector_t EndEffectorVelocityConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input,
+                                                 const ocs2::PreComputation& preComp) const {
+  const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
+  const auto& footPhase = switchedModelPreComp.getFootPhase(legNumber_);
+  const auto tangentBasis = tangentialBasisFromSurfaceNormal(footPhase.normalDirectionInWorldFrame(time));
+
+  const auto& o_footVelocity = switchedModelPreComp.footVelocityInOriginFrame(legNumber_);
+  return tangentBasis * o_footVelocity;
+}
+
+VectorFunctionLinearApproximation EndEffectorVelocityConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                                        const vector_t& input,
+                                                                                        const ocs2::PreComputation& preComp) const {
+  const auto& switchedModelPreComp = ocs2::cast<SwitchedModelPreComputation>(preComp);
+  const auto& footPhase = switchedModelPreComp.getFootPhase(legNumber_);
+  const auto tangentBasis = tangentialBasisFromSurfaceNormal(footPhase.normalDirectionInWorldFrame(time));
+
+  const auto& o_footVelocity = switchedModelPreComp.footVelocityInOriginFrame(legNumber_);
+  const auto& o_footVelocityDerivative = switchedModelPreComp.footVelocityInOriginFrameDerivative(legNumber_);
+
+  VectorFunctionLinearApproximation constraint;
+  constraint.f.noalias() = tangentBasis * o_footVelocity;
+  constraint.dfdx.noalias() = tangentBasis * o_footVelocityDerivative.dfdx;
+  constraint.dfdu.noalias() = tangentBasis * o_footVelocityDerivative.dfdu;
+  return constraint;
+}
 
 }  // namespace switched_model

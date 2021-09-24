@@ -39,15 +39,14 @@ base_coordinate_s_t<SCALAR_T> computeExternalForcesInBaseFrame(const KinematicsM
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ad_kinematic_model_t& adKinematicModel, const ad_com_model_t& adComModel,
                                                  const SwitchedModelModeScheduleManager& modeScheduleManager, ModelSettings settings)
-    : Base(STATE_DIM, INPUT_DIM),
-      adKinematicModelPtr_(adKinematicModel.clone()),
+    : adKinematicModelPtr_(adKinematicModel.clone()),
       adComModelPtr_(adComModel.clone()),
       modeScheduleManagerPtr_(&modeScheduleManager),
       settings_(settings) {
   std::string libName = "anymal_dynamics";
   std::string libFolder = "/tmp/ocs2";
   const bool verbose = settings_.recompileLibraries_;
-  this->initialize(libName, libFolder, settings_.recompileLibraries_, verbose);
+  this->initialize(STATE_DIM, INPUT_DIM, libName, libFolder, settings_.recompileLibraries_, verbose);
 }
 
 ComKinoSystemDynamicsAd::ComKinoSystemDynamicsAd(const ComKinoSystemDynamicsAd& rhs)

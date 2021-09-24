@@ -7,7 +7,7 @@ namespace anymal {
 
 class AnymalPyBindings final : public ocs2::PythonInterface {
  public:
-  explicit AnymalPyBindings(std::string varargs);
+  explicit AnymalPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "");
 
   void visualizeTrajectory(const ocs2::scalar_array_t& t, const ocs2::vector_array_t& x, const ocs2::vector_array_t& u,
                            ocs2::scalar_t speed) override;

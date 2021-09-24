@@ -11,10 +11,9 @@
 
 namespace switched_model {
 
-SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
-                                               const KinematicsModelBase<scalar_t>& kinematicsModel,
-                                               const joint_coordinate_t& nominalJointPositions)
-    : settings_(std::move(settings)), comModel_(comModel.clone()), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {}
+SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings,
+                                               const KinematicsModelBase<scalar_t>& kinematicsModel)
+    : settings_(std::move(settings)), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {}
 
 void SwingTrajectoryPlanner::updateTerrain(std::unique_ptr<TerrainModel> terrainModel) {
   terrainModel_ = std::move(terrainModel);
@@ -79,8 +78,12 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
     const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
     liftOff.velocity *= scaling;
     touchDown.velocity *= scaling;
-    footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_.get(), settings_.errorGain,
-                                           scaling * settings_.sdfMidswingMargin));
+
+    SwingPhase::SwingProfile swingProfile;
+    swingProfile.swingHeight = scaling * settings_.swingHeight;
+    swingProfile.sdfMidswingMargin = scaling * settings_.sdfMidswingMargin;
+
+    footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
   }
 
   // Loop through contact phases
@@ -114,9 +117,13 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
       const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
       liftOff.velocity *= scaling;
       touchDown.velocity *= scaling;
+
+      SwingPhase::SwingProfile swingProfile;
+      swingProfile.swingHeight = scaling * settings_.swingHeight;
+      swingProfile.sdfMidswingMargin = scaling * settings_.sdfMidswingMargin;
+
       eventTimes.push_back(currentContactTiming.end);
-      footPhases.emplace_back(new SwingPhase(liftOff, scaling * settings_.swingHeight, touchDown, terrainModel_.get(), settings_.errorGain,
-                                             scaling * settings_.sdfMidswingMargin));
+      footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
     }
   }
 

@@ -10,17 +10,14 @@
 
 #include <iit/rbd/traits/TraitSelector.h>
 #include <ocs2_anymal_models/RobcogenHelpers.h>
-#include "ocs2_anymal_models/wheels_chimera/generated/inverse_dynamics.h"
 #include "ocs2_anymal_models/wheels_chimera/generated/inertia_properties.h"
+#include "ocs2_anymal_models/wheels_chimera/generated/inverse_dynamics.h"
 #include "ocs2_anymal_models/wheels_chimera/generated/jsim.h"
 #include "ocs2_anymal_models/wheels_chimera/generated/transforms.h"
 
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalWheelsChimeraCom<SCALAR_T>::AnymalWheelsChimeraCom() {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
@@ -28,9 +25,6 @@ AnymalWheelsChimeraCom<SCALAR_T>::AnymalWheelsChimeraCom() {
   totalMass_ = inertiaProperties_.getTotalMass();
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalWheelsChimeraCom<SCALAR_T>* AnymalWheelsChimeraCom<SCALAR_T>::clone() const {
   return new AnymalWheelsChimeraCom<SCALAR_T>(*this);

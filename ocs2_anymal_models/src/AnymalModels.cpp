@@ -26,22 +26,16 @@
 namespace anymal {
 
 std::string toString(AnymalModel model) {
-  static const std::unordered_map<AnymalModel, std::string> map{{AnymalModel::Bear, "bear"},
-                                                                {AnymalModel::Cerberus, "cerberus"},
-                                                                {AnymalModel::Chimera, "chimera"},
-                                                                {AnymalModel::Chip, "chip"},
-                                                                {AnymalModel::Wheels, "wheels"},
-                                                                {AnymalModel::WheelsChimera, "wheels_chimera"}};
+  static const std::unordered_map<AnymalModel, std::string> map{
+      {AnymalModel::Bear, "bear"}, {AnymalModel::Cerberus, "cerberus"}, {AnymalModel::Chimera, "chimera"},
+      {AnymalModel::Chip, "chip"}, {AnymalModel::Wheels, "wheels"},     {AnymalModel::WheelsChimera, "wheels_chimera"}};
   return map.at(model);
 }
 
 AnymalModel stringToAnymalModel(const std::string& name) {
-  static const std::unordered_map<std::string, AnymalModel> map{{"bear", AnymalModel::Bear},
-                                                                {"cerberus", AnymalModel::Cerberus},
-                                                                {"chimera", AnymalModel::Chimera},
-                                                                {"chip", AnymalModel::Chip},
-                                                                {"wheels", AnymalModel::Wheels},
-                                                                {"wheels_chimera", AnymalModel::WheelsChimera}};
+  static const std::unordered_map<std::string, AnymalModel> map{
+      {"bear", AnymalModel::Bear}, {"cerberus", AnymalModel::Cerberus}, {"chimera", AnymalModel::Chimera},
+      {"chip", AnymalModel::Chip}, {"wheels", AnymalModel::Wheels},     {"wheels_chimera", AnymalModel::WheelsChimera}};
   return map.at(name);
 }
 

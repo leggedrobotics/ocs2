@@ -22,7 +22,8 @@ QuadrupedLoopshapingInterface::QuadrupedLoopshapingInterface(std::unique_ptr<swi
       this->getLoopshapingDefinition()->concatenateSystemAndFilterState(getQuadrupedInterface().getInitialState(), initialFilterState);
 
   // wrap with loopshaping
-  timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(getDynamics(), getQuadrupedInterface().rolloutSettings()));
+  timeTriggeredRolloutPtr_.reset(
+      new ocs2::TimeTriggeredRollout(*getOptimalControlProblem().dynamicsPtr, getQuadrupedInterface().rolloutSettings()));
   loopshapingSynchronizedModule_ = std::make_shared<ocs2::LoopshapingSynchronizedModule>(this->getLoopshapingDefinition(),
                                                                                          getQuadrupedInterface().getSynchronizedModules());
 }

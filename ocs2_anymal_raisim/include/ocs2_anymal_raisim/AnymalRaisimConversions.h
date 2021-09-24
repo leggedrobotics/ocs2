@@ -7,7 +7,6 @@
 #include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
-#include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 #include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
 
 namespace anymal {
@@ -34,7 +33,7 @@ class AnymalRaisimConversions {
    * @brief Constructor
    */
   AnymalRaisimConversions(const com_model_t& comModel, const kinematic_model_t& kinematicModel, const wholebody_model_t& wholebodyModel)
-      : switchedModelStateEstimator_(comModel), kinematicModelPtr_(kinematicModel.clone()), wholebodyModelPtr_(wholebodyModel.clone()) {}
+      : kinematicModelPtr_(kinematicModel.clone()), wholebodyModelPtr_(wholebodyModel.clone()) {}
 
   /**
    * @brief Convert ocs2 anymal state to generalized coordinate and generalized velocity used by RAIsim
@@ -97,7 +96,6 @@ class AnymalRaisimConversions {
   raisim::HeightMap const* terrain_ = nullptr;
 
  private:
-  const switched_model::SwitchedModelStateEstimator switchedModelStateEstimator_;  // const for thread safety
   std::unique_ptr<const kinematic_model_t> kinematicModelPtr_;
   std::unique_ptr<const wholebody_model_t> wholebodyModelPtr_;
 };

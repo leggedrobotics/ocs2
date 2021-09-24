@@ -1,56 +1,21 @@
-visualization
-{
-    slowdown     1.0
-    vizTime      200
-}
-
 model_settings
 {
-  constrainedIntegration        true
-
-  gravitationalAcceleration     9.81
-
-  contactForceWeight            1.0
-  zDirectionPositionWeight      0.0
-  zDirectionVelocityWeight      0.5
-
-  enforceFrictionConeConstraint false
-  frictionCoefficient           0.7
-
-  enforceTorqueConstraint       false
-  torqueLimit                   40.0
-
-  swing_trajectory_settings
-  {
-    liftOffVelocity               0.2
-    touchDownVelocity            -0.4
-    swingHeight                   0.08
-    touchdownAfterHorizon         0.2
-    errorGain                     20.0
-    swingTimeScale                0.15
-    sdfMidswingMargin             0.04
-    terrainMargin                 0.035
-    previousFootholdFactor        0.333
-    previousFootholdDeadzone      0.05
-    previousFootholdTimeDeadzone  0.25
-  }
-
-  mpcGoalCommandDelay           0.1
-
-  gaitOptimization              false
-
+  algorithm                     SQP
+  simplifyDynamics              true  ; true: neglect centrifugal and coriolis terms
   recompileLibraries            true
 
-  ; FootPlacementCostParameters
-  mu                            0.1   ; magnitude scaling
-  delta                         0.01  ; [m] distance from constraint boundary where the barrier becomes quadratic.
+  frictionCoefficient           0.5
+  muFrictionCone                0.1
+  deltaFrictionCone             5.0
 
-  ; FootPlacementCostParameters Sdf
+  muFootPlacement               0.1   ; magnitude scaling
+  deltaFootPlacement            0.01  ; [m] distance from constraint boundary where the barrier becomes quadratic.
+
   muSdf                         2.5
   deltaSdf                      0.005
 
-  muJoints                      1.0
-  deltaJoints                   0.05
+  muJoints                      0.1
+  deltaJoints                   0.01
 
   joint_lower_limits
   {
@@ -84,7 +49,20 @@ model_settings
      (11,0)  2.70       ; RH_KFE
   }
 
-  algorithm                     SQP
+  swing_trajectory_settings
+  {
+    liftOffVelocity               0.2
+    touchDownVelocity            -0.4
+    swingHeight                   0.08
+    touchdownAfterHorizon         0.2
+    errorGain                     20.0
+    swingTimeScale                0.15
+    sdfMidswingMargin             0.04
+    terrainMargin                 0.035
+    previousFootholdFactor        0.333
+    previousFootholdDeadzone      0.05
+    previousFootholdTimeDeadzone  0.25
+  }
 }
 
 terrainPlane

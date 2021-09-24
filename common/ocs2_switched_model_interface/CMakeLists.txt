@@ -45,9 +45,6 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-	src/constraint/AnymalWheelsComKinoConstraintAd.cpp
-	src/constraint/ComKinoConstraintBaseAd.cpp
-	src/constraint/EndEffectorConstraint.cpp
 	src/constraint/EndEffectorVelocityConstraint.cpp
 	src/constraint/EndEffectorVelocityInFootFrameConstraint.cpp
 	src/constraint/FootNormalConstraint.cpp
@@ -55,11 +52,12 @@ add_library(${PROJECT_NAME}
 	src/constraint/ZeroForceConstraint.cpp
 	src/dynamics/ComKinoSystemDynamicsAd.cpp
 	src/dynamics/ComKinoDynamicsParameters.cpp
+	src/cost/CollisionAvoidanceCost.cpp
 	src/cost/FootPlacementCost.cpp
+	src/cost/FrictionConeCost.cpp
 	src/cost/JointLimitsSoftConstraint.cpp
 	src/cost/LinearStateInequalitySoftConstraint.cpp
 	src/cost/MotionTrackingCost.cpp
-	src/cost/SwitchedModelCostBase.cpp
 	src/foot_planner/CubicSpline.cpp
 	src/foot_planner/FootPhase.cpp
 	src/foot_planner/QuinticSplineSwing.cpp
@@ -78,10 +76,11 @@ add_library(${PROJECT_NAME}
 	src/terrain/PlanarTerrainModel.cpp
 	src/terrain/PlaneFitting.cpp
 	src/terrain/TerrainPlane.cpp
-	src/ComModelBase.cpp
-	src/KinematicsModelBase.cpp
-	src/ModelSettings.cpp
-	src/SwitchedModelStateEstimator.cpp
+	src/core/ComModelBase.cpp
+	src/core/KinematicsModelBase.cpp
+	src/core/ModelSettings.cpp
+	src/core/SwitchedModelPrecomputation.cpp
+	src/core/SwitchedModelStateEstimator.cpp
 )
 add_dependencies(${PROJECT_NAME}
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -142,10 +141,18 @@ target_link_libraries(test_${PROJECT_NAME}_core
 	gtest_main
 )
 
-catkin_add_gtest(test_${PROJECT_NAME}_footplanner
-	test/foot_planner/testSwingPhase.cpp
+catkin_add_gtest(test_${PROJECT_NAME}_cost
 	test/cost/testFootplacementCost.cpp
 	test/cost/testJointLimitsSoftConstraint.cpp
+	test/cost/testFrictionConeCost.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_cost
+	${PROJECT_NAME}
+	gtest_main
+)
+
+catkin_add_gtest(test_${PROJECT_NAME}_footplanner
+	test/foot_planner/testSwingPhase.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}_footplanner
 	${PROJECT_NAME}

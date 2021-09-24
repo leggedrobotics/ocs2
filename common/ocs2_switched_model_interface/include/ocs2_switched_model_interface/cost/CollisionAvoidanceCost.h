@@ -12,14 +12,14 @@
 namespace switched_model {
 
 /**
- * Implements footplacement penalty function for a provided polygon.
+ * Implements the collision avoidance penalty function for all collision spheres given by the precomputation.
  * Uses a Gauss-Newton approximation to generate a positive semi-definite cost Hessian w.r.t. state.
  */
-class FootPlacementCost final : public ocs2::StateCost {
+class CollisionAvoidanceCost final : public ocs2::StateCost {
  public:
-  FootPlacementCost(ocs2::RelaxedBarrierPenalty::Config settings);
+  CollisionAvoidanceCost(ocs2::RelaxedBarrierPenalty::Config settings);
 
-  FootPlacementCost* clone() const override;
+  CollisionAvoidanceCost* clone() const override;
 
   scalar_t getValue(scalar_t time, const vector_t& state, const ocs2::TargetTrajectories& targetTrajectories,
                     const ocs2::PreComputation& preComp) const override;
@@ -29,9 +29,9 @@ class FootPlacementCost final : public ocs2::StateCost {
                                                                  const ocs2::PreComputation& preComp) const override;
 
  private:
-  FootPlacementCost(const FootPlacementCost& rhs);
+  CollisionAvoidanceCost(const CollisionAvoidanceCost& rhs);
 
-  std::unique_ptr<ocs2::RelaxedBarrierPenalty> polygonPenalty_;
+  std::unique_ptr<ocs2::RelaxedBarrierPenalty> penalty_;
 };
 
 }  // namespace switched_model

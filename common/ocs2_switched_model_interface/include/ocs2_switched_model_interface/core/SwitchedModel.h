@@ -45,7 +45,9 @@ constexpr size_t STATE_DIM = 2 * BASE_COORDINATE_SIZE + JOINT_COORDINATE_SIZE;  
 constexpr size_t INPUT_DIM = 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;                  // 24
 
 /* Import ocs2 types into the switched_model namespace */
+using ocs2::ad_matrix_t;
 using ocs2::ad_scalar_t;
+using ocs2::ad_vector_t;
 using ocs2::matrix_array_t;
 using ocs2::matrix_t;
 using ocs2::scalar_array_t;

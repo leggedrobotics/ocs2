@@ -36,10 +36,6 @@ TEST_F(AnymalChipSwitchedModelTests, Kinematics) {
   this->printKinematics();
 }
 
-TEST_F(AnymalChipSwitchedModelTests, ComDynamics) {
-  this->printComModel();
-}
-
 TEST_F(AnymalChipSwitchedModelTests, baseDynamics) {
   this->testBaseDynamics();
 }

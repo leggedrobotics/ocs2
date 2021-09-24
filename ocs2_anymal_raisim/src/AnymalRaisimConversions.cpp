@@ -2,13 +2,13 @@
 
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
+#include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 
 namespace anymal {
 
 std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::stateToRaisimGenCoordGenVel(const state_vector_t& state,
                                                                                                  const input_vector_t& input) const {
-  const auto ocs2RbdState =
-      switchedModelStateEstimator_.estimateRbdModelState(state, input.segment<switched_model::JOINT_COORDINATE_SIZE>(12));
+  const auto ocs2RbdState = switched_model::estimateRbdModelState(state, input.segment<switched_model::JOINT_COORDINATE_SIZE>(12));
   const auto basePose = switched_model::getBasePose(ocs2RbdState);
   const auto baseTwist = switched_model::getBaseLocalVelocity(ocs2RbdState);
 
@@ -58,7 +58,7 @@ switched_model::rbd_state_t AnymalRaisimConversions::raisimGenCoordGenVelToRbdSt
 
 AnymalRaisimConversions::state_vector_t AnymalRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q,
                                                                                              const Eigen::VectorXd& dq) const {
-  return switchedModelStateEstimator_.estimateComkinoModelState(raisimGenCoordGenVelToRbdState(q, dq));
+  return switched_model::estimateComkinoModelState(raisimGenCoordGenVelToRbdState(q, dq));
 }
 
 std::pair<Eigen::VectorXd, Eigen::VectorXd> AnymalRaisimConversions::inputToRaisimPdTargets(double, const input_vector_t& input,

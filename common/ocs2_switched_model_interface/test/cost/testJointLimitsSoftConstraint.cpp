@@ -36,7 +36,6 @@ TEST(TestJointLimits, infiniteLimits) {
   JointLimitsSoftConstraint jointLimitsSoftConstraint({lower, upper}, {mu, delta});
 
   joint_coordinate_t middle = 0.5 * (lower + upper);
-  auto value = jointLimitsSoftConstraint.getValue(middle);
   auto quadApprox = jointLimitsSoftConstraint.getQuadraticApproximation(middle);
 
   // Gradient and curvature are both almost zero

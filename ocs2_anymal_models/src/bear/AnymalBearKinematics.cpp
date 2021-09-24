@@ -12,17 +12,11 @@
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalBearKinematics<SCALAR_T>* AnymalBearKinematics<SCALAR_T>::clone() const {
   return new AnymalBearKinematics<SCALAR_T>(*this);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -50,10 +44,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::positionBa
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -80,10 +70,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalBearKinematics<SCALAR_T>::footOrient
       throw std::runtime_error("Undefined endeffector index.");
   }
 }
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 
 template <typename SCALAR_T>
 typename AnymalBearKinematics<SCALAR_T>::joint_jacobian_block_t AnymalBearKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
@@ -113,9 +99,6 @@ typename AnymalBearKinematics<SCALAR_T>::joint_jacobian_block_t AnymalBearKinema
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 std::vector<typename AnymalBearKinematics<SCALAR_T>::CollisionSphere> AnymalBearKinematics<SCALAR_T>::collisionSpheresInBaseFrame(
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

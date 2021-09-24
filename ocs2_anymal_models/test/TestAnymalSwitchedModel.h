@@ -16,7 +16,7 @@
 #include <ocs2_switched_model_interface/core/Rotations.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
 #include <ocs2_switched_model_interface/core/WholebodyDynamics.h>
-#include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
+#include <ocs2_switched_model_interface/cost/MotionTrackingCost.h>
 #include <ocs2_switched_model_interface/test/TestEvaluateConstraints.h>
 
 namespace switched_model {
@@ -41,48 +41,11 @@ class TestAnymalSwitchedModel : public ::testing::Test {
         randPos{std::bind(std::ref(posDist_), std::ref(generator_))} {}
 
   void testCosts() {
-    //    SwitchedModelModeScheduleManager modeScheduleManager(nullptr, nullptr, nullptr);
-    //    MotionTrackingCost::Weights weights;
-    //    weights.eulerXYZ << 100.0, 200.0, 200.0;
-    //    weights.comPosition << 1000.0, 1000.0, 1500.0;
-    //    weights.comAngularVelocity << 5.0, 10.0, 10.0;
-    //    weights.comLinearVelocity << 15.0, 15.0, 30.0;
-    //    weights.jointPosition.setConstant(1.0);  // some regularization
-    //    weights.contactForce.setConstant(0.001);
-    //    weights.footPosition.setConstant(60.0);
-    //    weights.footVelocity.setConstant(1.0);
-    //
-    //    switched_model::MotionTrackingCost motionTrackingCost(weights, modeScheduleManager, *kinematics_, *kinematicsAd_, *comModel_,
-    //    true); ocs2::scalar_t t = 0.0; comkino_state_t x = comkino_state_t::Zero(); x.segment<JOINT_COORDINATE_SIZE>(2 *
-    //    BASE_COORDINATE_SIZE) << -0.25, 0.60, -0.85, 0.25, 0.60, -0.85, -0.25, -0.60, 0.85, 0.25, -0.60,
-    //        0.85;
-    //    comkino_input_t u = weightCompensatingInputs(*comModel_, constantFeetArray(true), x.head(3));
-    //    ocs2::TargetTrajectories targetTrajectories({t}, {x}, {u});
-    //
-    //    const auto approx = motionTrackingCost.getQuadraticApproximation(t, x, u, targetTrajectories);
-    //
-    //    // Reference equals current state input, should have zero cost and zero gradient.
-    //    ASSERT_LT(approx.f, 1e-9);
-    //    ASSERT_LT(approx.dfdx.norm(), 1e-9);
-    //    ASSERT_LT(approx.dfdu.norm(), 1e-9);
-    //    ASSERT_TRUE(approx.dfdxx.allFinite());
-    //    ASSERT_TRUE(approx.dfduu.allFinite());
-    //    ASSERT_TRUE(approx.dfdux.allFinite());
+    // TODO
   }
 
   void testConstraints() {
-    EndEffectorConstraintSettings endEffectorConstraintSettings(2, 3);
-    endEffectorConstraintSettings.A << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0;
-    endEffectorConstraintSettings.b << 2.0, 3.0;
-    EXPECT_NO_THROW(evaluateConstraint<EndEffectorVelocityConstraint>(*comModelAd_, *kinematicsAd_, endEffectorConstraintSettings));
-    EXPECT_NO_THROW(
-        evaluateConstraint<EndEffectorVelocityInFootFrameConstraint>(*comModelAd_, *kinematicsAd_, endEffectorConstraintSettings));
-
-    FootNormalConstraintMatrix footNormalConstraintMatrix;
-    footNormalConstraintMatrix.positionMatrix << 0.1, 0.2, 0.3;
-    footNormalConstraintMatrix.velocityMatrix << 0.4, 0.5, 0.6;
-    footNormalConstraintMatrix.constant = 2.0;
-    EXPECT_NO_THROW(evaluateConstraint<FootNormalConstraint>(*comModelAd_, *kinematicsAd_, footNormalConstraintMatrix));
+    // TODO
   }
 
   void testBaseDynamics() {
@@ -126,16 +89,6 @@ class TestAnymalSwitchedModel : public ::testing::Test {
     std::cout << "Foot jacobian LH:\n" << kinematics_->baseToFootJacobianInBaseFrame(2, qJoints) << std::endl;
     std::cout << "Foot jacobian RH:\n" << kinematics_->baseToFootJacobianInBaseFrame(3, qJoints) << std::endl;
   }
-
-  void printComModel(){
-      //    std::cout << "comPositionBaseFrameDefault:\n" << comModel_->comPositionBaseFrame() << std::endl;
-      //    std::cout << "comInertiaDefault:\n" << comModel_->comInertia() << std::endl;
-      //    const joint_coordinate_t qJoints = joint_coordinate_t::Zero();
-      //    std::cout << "Joint coordinates:\n" << qJoints.transpose() << std::endl;
-      //    comModel_->setJointConfiguration(qJoints);
-      //    std::cout << "comPositionBaseFrame:\n" << comModel_->comPositionBaseFrame() << std::endl;
-      //    std::cout << "comInertia:\n" << comModel_->comInertia() << std::endl;
-  };
 
   void testEndeffectorOrientation() {
     const base_coordinate_t basePose = base_coordinate_t::Zero();

@@ -9,17 +9,14 @@
 
 #include <iit/rbd/traits/TraitSelector.h>
 #include <ocs2_anymal_models/RobcogenHelpers.h>
-#include "ocs2_anymal_models/bear/generated/inverse_dynamics.h"
 #include "ocs2_anymal_models/bear/generated/inertia_properties.h"
+#include "ocs2_anymal_models/bear/generated/inverse_dynamics.h"
 #include "ocs2_anymal_models/bear/generated/jsim.h"
 #include "ocs2_anymal_models/bear/generated/transforms.h"
 
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalBearCom<SCALAR_T>::AnymalBearCom() {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
@@ -27,9 +24,6 @@ AnymalBearCom<SCALAR_T>::AnymalBearCom() {
   totalMass_ = inertiaProperties_.getTotalMass();
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalBearCom<SCALAR_T>* AnymalBearCom<SCALAR_T>::clone() const {
   return new AnymalBearCom<SCALAR_T>(*this);

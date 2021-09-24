@@ -7,7 +7,6 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
 
-#include "ocs2_switched_model_interface/core/ComModelBase.h"
 #include "ocs2_switched_model_interface/core/KinematicsModelBase.h"
 #include "ocs2_switched_model_interface/core/SwitchedModel.h"
 #include "ocs2_switched_model_interface/foot_planner/FootPhase.h"
@@ -40,8 +39,7 @@ using inverse_kinematics_function_t = std::function<vector3_t(int, const vector3
 
 class SwingTrajectoryPlanner {
  public:
-  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const ComModelBase<scalar_t>& comModel,
-                         const KinematicsModelBase<scalar_t>& kinematicsModel, const joint_coordinate_t& nominalJointPositions);
+  SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings, const KinematicsModelBase<scalar_t>& kinematicsModel);
 
   void updateTerrain(std::unique_ptr<TerrainModel> terrainModel);
 
@@ -69,7 +67,6 @@ class SwingTrajectoryPlanner {
                                                           scalar_t finalTime, const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;
-  std::unique_ptr<ComModelBase<scalar_t>> comModel_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
 
   feet_array_t<std::pair<scalar_t, TerrainPlane>> lastContacts_;

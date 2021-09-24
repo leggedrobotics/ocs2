@@ -9,17 +9,14 @@
 
 #include <iit/rbd/traits/TraitSelector.h>
 #include <ocs2_anymal_models/RobcogenHelpers.h>
-#include "ocs2_anymal_models/cerberus/generated/inverse_dynamics.h"
 #include "ocs2_anymal_models/cerberus/generated/inertia_properties.h"
+#include "ocs2_anymal_models/cerberus/generated/inverse_dynamics.h"
 #include "ocs2_anymal_models/cerberus/generated/jsim.h"
 #include "ocs2_anymal_models/cerberus/generated/transforms.h"
 
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalCerberusCom<SCALAR_T>::AnymalCerberusCom() {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
@@ -27,9 +24,6 @@ AnymalCerberusCom<SCALAR_T>::AnymalCerberusCom() {
   totalMass_ = inertiaProperties_.getTotalMass();
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalCerberusCom<SCALAR_T>* AnymalCerberusCom<SCALAR_T>::clone() const {
   return new AnymalCerberusCom<SCALAR_T>(*this);

@@ -34,17 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace multiple_shooting {
 
-std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x,
-                                                         bool useController) {
-  // Use interpolation for next state
-  const auto nextState = LinearInterpolation::interpolate(tNext, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_);
-
-  // Determine input
-  if (useController) {
-    return {primalSolution.controllerPtr_->computeInput(t, x), nextState};
-  } else {
-    return {LinearInterpolation::interpolate(t, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_), nextState};
-  }
+std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x) {
+  return {LinearInterpolation::interpolate(t, primalSolution.timeTrajectory_, primalSolution.inputTrajectory_),
+          LinearInterpolation::interpolate(tNext, primalSolution.timeTrajectory_, primalSolution.stateTrajectory_)};
 }
 
 }  // namespace multiple_shooting

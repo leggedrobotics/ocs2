@@ -4,50 +4,37 @@
 
 #pragma once
 
-#include <ocs2_core/constraint/StateInputConstraintCppAd.h>
+#include <ocs2_core/constraint/StateInputConstraint.h>
 
-#include <ocs2_switched_model_interface/core/ComModelBase.h>
-#include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
-#include <ocs2_switched_model_interface/foot_planner/FootPhase.h>
 
 namespace switched_model {
 
 /**
  * Implements the swing motion equality constraint in the normal direction of the terrain.
+ * Active both in contact (to stabilize the position w.r.t. terrain) and in swing (to follow the trajectory in normal direction)
  *
  * The constraint is a hybrid position-velocity constraint formulated in task space:
- * A_p * p + A_v * v + b = 0
- *
- * The derivative of the end-effector velocity and position w.r.t the joint space is generated with auto-differentation.
+ * A_p * position + A_v * velocity + b = 0
  */
-class FootNormalConstraint : public ocs2::StateInputConstraintCppAd {
+class FootNormalConstraint : public ocs2::StateInputConstraint {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  using ad_com_model_t = ComModelBase<ad_scalar_t>;
-  using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
-  using settings_t = FootNormalConstraintMatrix;
-
-  FootNormalConstraint(int legNumber, settings_t settings, const ad_com_model_t& adComModel, const ad_kinematic_model_t& adKinematicsModel,
-                       bool generateModel);
+  FootNormalConstraint(int legNumber);
 
   FootNormalConstraint* clone() const override;
 
-  void configure(const settings_t& settings) { settings_ = settings; };
+  bool isActive(scalar_t time) const override { return true; }
 
-  vector_t getParameters(scalar_t time) const override;
   size_t getNumConstraints(scalar_t time) const override { return 1; }
+
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const ocs2::PreComputation& preComp) const override;
+
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const ocs2::PreComputation& preComp) const override;
 
  private:
   FootNormalConstraint(const FootNormalConstraint& rhs);
 
-  ocs2::ad_vector_t constraintFunction(ad_scalar_t time, const ocs2::ad_vector_t& state, const ocs2::ad_vector_t& input,
-                                       const ocs2::ad_vector_t& parameters) const override;
-
-  settings_t settings_;
-  std::unique_ptr<ad_com_model_t> adComModelPtr_;
-  std::unique_ptr<ad_kinematic_model_t> adKinematicsModelPtr_;
   const int legNumber_;
 };
 

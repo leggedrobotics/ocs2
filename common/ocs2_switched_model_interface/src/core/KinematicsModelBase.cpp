@@ -11,9 +11,6 @@
 
 namespace switched_model {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::positionBaseToFeetInBaseFrame(
     const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -24,9 +21,6 @@ feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::positionBaseT
   return baseToFeetPositions;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(size_t footIndex,
                                                                                const base_coordinate_s_t<SCALAR_T>& basePose,
@@ -38,9 +32,6 @@ vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(s
   return o_baseToFoot + o_basePosition;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFrame(
     size_t footIndex, const base_coordinate_s_t<SCALAR_T>& basePose, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -48,9 +39,6 @@ matrix3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footOrientationInOriginFram
   return o_R_b * footOrientationInBaseFrame(footIndex, jointPositions);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::feetPositionsInOriginFrame(
     const base_coordinate_s_t<SCALAR_T>& basePoseInOriginFrame, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -66,9 +54,6 @@ feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::feetPositions
   return feetPositionsInOriginFrame;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 typename KinematicsModelBase<SCALAR_T>::joint_jacobian_t KinematicsModelBase<SCALAR_T>::baseToFootJacobianInBaseFrame(
     size_t footIndex, const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

@@ -12,17 +12,11 @@
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalChimeraKinematics<SCALAR_T>* AnymalChimeraKinematics<SCALAR_T>::clone() const {
   return new AnymalChimeraKinematics<SCALAR_T>(*this);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalChimeraKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -50,10 +44,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalChimeraKinematics<SCALAR_T>::positio
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalChimeraKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -80,10 +70,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalChimeraKinematics<SCALAR_T>::footOri
       throw std::runtime_error("Undefined endeffector index.");
   }
 }
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 
 template <typename SCALAR_T>
 typename AnymalChimeraKinematics<SCALAR_T>::joint_jacobian_block_t AnymalChimeraKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
@@ -113,9 +99,6 @@ typename AnymalChimeraKinematics<SCALAR_T>::joint_jacobian_block_t AnymalChimera
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 std::vector<typename AnymalChimeraKinematics<SCALAR_T>::CollisionSphere> AnymalChimeraKinematics<SCALAR_T>::collisionSpheresInBaseFrame(
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

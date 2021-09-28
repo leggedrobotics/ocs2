@@ -2,9 +2,10 @@
 #include <ros/package.h>
 #include <ros/ros.h>
 
+#include "ocs2_anymal_raisim/AnymalRaisimDummy.h"
+
 #include <ocs2_anymal_models/AnymalModels.h>
 #include <ocs2_anymal_mpc/AnymalInterface.h>
-#include <ocs2_anymal_raisim/AnymalRaisimDummy.h>
 #include <ocs2_mpc/MPC_Settings.h>
 
 int main(int argc, char* argv[]) {

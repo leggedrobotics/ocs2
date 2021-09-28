@@ -20,9 +20,6 @@
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalChipCom<SCALAR_T>::AnymalChipCom() {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
@@ -30,9 +27,6 @@ AnymalChipCom<SCALAR_T>::AnymalChipCom() {
   totalMass_ = inertiaProperties_.getTotalMass();
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalChipCom<SCALAR_T>* AnymalChipCom<SCALAR_T>::clone() const {
   return new AnymalChipCom<SCALAR_T>(*this);

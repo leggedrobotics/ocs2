@@ -38,24 +38,18 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
     std::cerr << " #### ==================================================" << std::endl;
   }
 
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.constrainedIntegration_, prefix + "constrainedIntegration", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.gravitationalAcceleration_, prefix + "gravitationalAcceleration", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.contactForceWeight_, prefix + "contactForceWeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.zDirectionPositionWeight_, prefix + "zDirectionPositionWeight", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.zDirectionVelocityWeight_, prefix + "zDirectionVelocityWeight", verbose);
+  std::string algorithmName = toAlgorithmName(modelSettings.algorithm_);
+  ocs2::loadData::loadPtreeValue(pt, algorithmName, prefix + "algorithm", verbose);
+  modelSettings.algorithm_ = fromAlgorithmName(algorithmName);
+
   ocs2::loadData::loadPtreeValue(pt, modelSettings.phaseTransitionStanceTime_, prefix + "phaseTransitionStanceTime", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.mpcGoalCommandDelay_, prefix + "mpcGoalCommandDelay", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.targetDisplacementVelocity_, prefix + "targetDisplacementVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.targetRotationVelocity_, prefix + "targetRotationVelocity", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.gaitOptimization_, prefix + "gaitOptimization", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.simplifyDynamics_, prefix + "simplifyDynamics", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceFrictionConeConstraint_, prefix + "enforceFrictionConeConstraint", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient_, prefix + "frictionCoefficient", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.enforceTorqueConstraint_, prefix + "enforceTorqueConstraint", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.torqueLimit_, prefix + "torqueLimit", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.mu_, prefix + "mu", verbose);
-  ocs2::loadData::loadPtreeValue(pt, modelSettings.delta_, prefix + "delta", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient_, prefix + "frictionCoefficient", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.muFrictionCone_, prefix + "muFrictionCone", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaFrictionCone_, prefix + "deltaFrictionCone", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.muFootPlacement_, prefix + "muFootPlacement", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaFootPlacement_, prefix + "deltaFootPlacement", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.muSdf_, prefix + "muSdf", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaSdf_, prefix + "deltaSdf", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.muJoints_, prefix + "muJoints", verbose);
@@ -67,10 +61,6 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
     std::cerr << " joint lower limits: " << modelSettings.lowerJointLimits_.transpose() << "\n";
     std::cerr << " joint upper limits: " << modelSettings.upperJointLimits_.transpose() << "\n";
   }
-
-  std::string algorithmName = toAlgorithmName(modelSettings.algorithm_);
-  ocs2::loadData::loadPtreeValue(pt, algorithmName, prefix + "algorithm", verbose);
-  modelSettings.algorithm_ = fromAlgorithmName(algorithmName);
 
   if (verbose) {
     std::cerr << " #### ================================================ ####" << std::endl;

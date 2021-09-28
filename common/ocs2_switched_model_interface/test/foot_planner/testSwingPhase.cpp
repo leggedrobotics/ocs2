@@ -12,9 +12,8 @@ TEST(TestSwingPhase, flatTerrainSwing) {
   TerrainPlane flatTerrain;
   const SwingPhase::SwingEvent liftOff{0.5, 0.2, &flatTerrain};
   const SwingPhase::SwingEvent touchdown{1.0, -0.2, &flatTerrain};
-  const scalar_t midHeight = 0.1;
 
-  SwingPhase swingPhase(liftOff, midHeight, touchdown);
+  SwingPhase swingPhase(liftOff, touchdown, SwingPhase::SwingProfile());
 
   auto startConstraint = swingPhase.getFootNormalConstraintInWorldFrame(liftOff.time);
   ASSERT_TRUE(startConstraint.velocityMatrix.isApprox(surfaceNormalInWorld((flatTerrain)).transpose()));

@@ -4,6 +4,7 @@
 #include <ocs2_quadruped_interface/QuadrupedDummyNode.h>
 #include <ocs2_raisim/RaisimRollout.h>
 #include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
+#include <ocs2_switched_model_interface/core/SwitchedModelStateEstimator.h>
 
 namespace anymal {
 
@@ -37,8 +38,7 @@ void runAnymalRaisimDummy(ros::NodeHandle& nodeHandle, std::unique_ptr<switched_
     heightmapPub->publishGridmap(*terrain);
 
     auto& initState = anymalInterface->getInitialState();
-    switched_model::SwitchedModelStateEstimator stateEstimator(anymalInterface->getComModel());
-    const auto initRbdState = stateEstimator.estimateRbdModelState(initState, switched_model::joint_coordinate_t::Zero());
+    const auto initRbdState = switched_model::estimateRbdModelState(initState, switched_model::joint_coordinate_t::Zero());
     const auto feetPositions = anymalInterface->getKinematicModel().feetPositionsInOriginFrame(
         switched_model::getBasePose(initRbdState), switched_model::getJointPositions(initRbdState));
     const Eigen::Vector3d& footPositionWithMinimumClearance =

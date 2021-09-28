@@ -16,17 +16,11 @@
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalWheelsChimeraKinematics<SCALAR_T>* AnymalWheelsChimeraKinematics<SCALAR_T>::clone() const {
   return new AnymalWheelsChimeraKinematics<SCALAR_T>(*this);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::positionBaseToWheelAxisInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -56,9 +50,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::p
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -71,9 +62,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::p
   return positionBaseToWheelAxisInBaseFrame(footIndex, jointPositions) + wheelOffset;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 typename AnymalWheelsChimeraKinematics<SCALAR_T>::joint_jacobian_block_t
 AnymalWheelsChimeraKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
@@ -112,9 +100,6 @@ AnymalWheelsChimeraKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::wheelAxisOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -144,9 +129,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::w
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -160,9 +142,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsChimeraKinematics<SCALAR_T>::f
   return wheelAxisOrientationInBaseFrame(footIndex, jointPositions) * wheelAxis_R_foot;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 std::vector<typename AnymalWheelsChimeraKinematics<SCALAR_T>::CollisionSphere>
 AnymalWheelsChimeraKinematics<SCALAR_T>::collisionSpheresInBaseFrame(

@@ -16,17 +16,11 @@
 namespace anymal {
 namespace tpl {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 AnymalWheelsKinematics<SCALAR_T>* AnymalWheelsKinematics<SCALAR_T>::clone() const {
   return new AnymalWheelsKinematics<SCALAR_T>(*this);
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::positionBaseToWheelAxisInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -56,9 +50,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -71,9 +62,6 @@ switched_model::vector3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::position
   return positionBaseToWheelAxisInBaseFrame(footIndex, jointPositions) + wheelOffset;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_block_t AnymalWheelsKinematics<SCALAR_T>::baseToFootJacobianBlockInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -111,9 +99,6 @@ typename AnymalWheelsKinematics<SCALAR_T>::joint_jacobian_block_t AnymalWheelsKi
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::wheelAxisOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -143,9 +128,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::wheelAxi
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrientationInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
@@ -159,9 +141,6 @@ switched_model::matrix3_s_t<SCALAR_T> AnymalWheelsKinematics<SCALAR_T>::footOrie
   return wheelAxisOrientationInBaseFrame(footIndex, jointPositions) * wheelAxis_R_foot;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 template <typename SCALAR_T>
 std::vector<typename AnymalWheelsKinematics<SCALAR_T>::CollisionSphere> AnymalWheelsKinematics<SCALAR_T>::collisionSpheresInBaseFrame(
     const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

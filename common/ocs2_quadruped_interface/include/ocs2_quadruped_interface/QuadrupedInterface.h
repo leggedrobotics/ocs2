@@ -12,12 +12,11 @@
 
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
-#include <ocs2_switched_model_interface/Dimensions.h>
 #include <ocs2_switched_model_interface/core/ComModelBase.h>
 #include <ocs2_switched_model_interface/core/KinematicsModelBase.h>
 #include <ocs2_switched_model_interface/core/ModelSettings.h>
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
-#include <ocs2_switched_model_interface/cost/SwitchedModelCostBase.h>
+#include <ocs2_switched_model_interface/cost/MotionTrackingCost.h>
 
 #include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 
@@ -32,11 +31,6 @@ class QuadrupedInterface : public ocs2::RobotInterface {
 
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using ad_kinematic_model_t = KinematicsModelBase<ad_scalar_t>;
-
-  using dimension_t = ocs2::Dimensions<STATE_DIM, INPUT_DIM>;
-  using state_vector_t = dimension_t::state_vector_t;
-  using state_matrix_t = dimension_t::state_matrix_t;
-  using input_matrix_t = dimension_t::input_matrix_t;
 
   using synchronized_module_t = ocs2::SolverSynchronizedModule;
   using synchronized_module_ptr_array_t = std::vector<std::shared_ptr<synchronized_module_t>>;
@@ -61,11 +55,15 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Gets the mode schedule manager */
   std::shared_ptr<ocs2::ReferenceManagerInterface> getReferenceManagerPtr() const override { return modeScheduleManagerPtr_; }
 
+  const ocs2::OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
+
   /** Gets kinematic model */
   const kinematic_model_t& getKinematicModel() const { return *kinematicModelPtr_; }
+  const ad_kinematic_model_t& getKinematicModelAd() const { return *adKinematicModelPtr_; }
 
   /** Gets center of mass model */
   const com_model_t& getComModel() const { return *comModelPtr_; }
+  const ad_com_model_t& getComModelAd() const { return *adComModelPtr_; }
 
   /** Gets the loaded initial state */
   state_vector_t& getInitialState() { return initialState_; }
@@ -89,6 +87,21 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Gets the solver synchronized modules */
   virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const = 0;
 
+ protected:
+  std::unique_ptr<ocs2::OptimalControlProblem> problemPtr_;
+
+  std::unique_ptr<ocs2::PreComputation> createPrecomputation() const;
+  std::unique_ptr<ocs2::StateInputCost> createMotionTrackingCost() const;
+  std::unique_ptr<ocs2::StateCost> createFootPlacementCost() const;
+  std::unique_ptr<ocs2::StateCost> createCollisionAvoidanceCost() const;
+  std::unique_ptr<ocs2::StateCost> createJointLimitsSoftConstraint() const;
+  std::unique_ptr<ocs2::SystemDynamicsBase> createDynamics() const;
+  std::unique_ptr<ocs2::StateInputConstraint> createZeroForceConstraint(size_t leg) const;
+  std::unique_ptr<ocs2::StateInputConstraint> createFootNormalConstraint(size_t leg) const;
+  std::unique_ptr<ocs2::StateInputConstraint> createEndEffectorVelocityConstraint(size_t leg) const;
+  std::unique_ptr<ocs2::StateInputConstraint> createEndEffectorVelocityInFootFrameConstraint(size_t leg) const;
+  std::unique_ptr<ocs2::StateInputCost> createFrictionConeCost(size_t leg) const;
+
  private:
   /** Load the general quadruped settings from file. */
   void loadSettings(const std::string& pathToConfigFile);
@@ -98,7 +111,9 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   MotionTrackingCost::Weights trackingWeights_;
 
   std::unique_ptr<kinematic_model_t> kinematicModelPtr_;
+  std::unique_ptr<ad_kinematic_model_t> adKinematicModelPtr_;
   std::unique_ptr<com_model_t> comModelPtr_;
+  std::unique_ptr<ad_com_model_t> adComModelPtr_;
   std::shared_ptr<SwitchedModelModeScheduleManager> modeScheduleManagerPtr_;
 
   state_vector_t initialState_;

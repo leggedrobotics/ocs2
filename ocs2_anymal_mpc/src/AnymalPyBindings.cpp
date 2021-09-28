@@ -2,48 +2,20 @@
 
 #include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
 #include <ocs2_ddp/DDP_Settings.h>
-#include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_quadruped_interface/QuadrupedMpc.h>
 
 #include "ocs2_anymal_mpc/AnymalInterface.h"
 
-#include <boost/program_options.hpp>
-
 namespace anymal {
 
-AnymalPyBindings::AnymalPyBindings(std::string varargs) {
-  // parsing varargs
-  {
-    namespace po = boost::program_options;
-    auto args = po::split_unix(varargs);
-    po::options_description desc("Options");
-    desc.add_options()("help", "produce help message and quit")("name,n", po::value<std::string>(&robotName_), "robot name (e.g., chip)")(
-        "config,c", po::value<std::string>(&configName_), "configuration name (e.g., c_series)");
-
-    po::command_line_parser parser(args);
-    parser.options(desc);
-    po::parsed_options parsed_options = parser.run();
-
-    po::variables_map vm;
-    po::store(parsed_options, vm);
-    po::notify(vm);
-
-    if (vm.count("name") + vm.count("config") == 0 || vm.count("help") > 0) {
-      std::cerr << desc << std::endl;
-      std::stringstream ss;
-      ss << "Varargs wrong when instantiating AnymalPyBindings:\n" << desc << std::endl;
-      throw std::runtime_error(ss.str());
-    }
-  }
-
+AnymalPyBindings::AnymalPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile)
+    : configName_(taskFile), robotName_("chip") {
   auto anymalInterface = getAnymalInterface(stringToAnymalModel(robotName_), getConfigFolder(configName_));
   const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePath(configName_));
   const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePath(configName_));
 
-  std::unique_ptr<ocs2::MPC_DDP> mpcPtr(new ocs2::MPC_DDP(
-      &anymalInterface->getRollout(), &anymalInterface->getDynamics(), anymalInterface->getConstraintPtr(), &anymalInterface->getCost(),
-      &anymalInterface->getInitializer(), ddpSettings, mpcSettings, anymalInterface->getTerminalCostPtr()));
-  mpcPtr->getSolverPtr()->setReferenceManager(anymalInterface->getReferenceManagerPtr());
+  auto mpcPtr = switched_model::getDdpMpc(*anymalInterface, mpcSettings, ddpSettings);
 
   init(*anymalInterface, std::move(mpcPtr));
 
@@ -60,7 +32,7 @@ void AnymalPyBindings::visualizeTrajectory(const ocs2::scalar_array_t& t, const 
     char* fake_argv[] = {arg0};
     ros::init(fake_argc, fake_argv, "anymal_visualization_node");
     ros::NodeHandle n;
-    visualizer_.reset(new switched_model::QuadrupedVisualizer(anymalInterface->getKinematicModel(), anymalInterface->getComModel(), n));
+    visualizer_.reset(new switched_model::QuadrupedVisualizer(anymalInterface->getKinematicModel(), n));
   }
 
   assert(t.size() == x.size());

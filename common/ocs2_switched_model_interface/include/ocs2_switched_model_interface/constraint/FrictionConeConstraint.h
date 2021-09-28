@@ -3,6 +3,7 @@
 #include <ocs2_core/constraint/StateInputConstraint.h>
 
 #include <ocs2_switched_model_interface/core/SwitchedModel.h>
+#include <ocs2_switched_model_interface/logic/SwitchedModelModeScheduleManager.h>
 
 namespace switched_model {
 
@@ -53,25 +54,27 @@ class FrictionConeConstraint final : public ocs2::StateInputConstraint {
    * @param [in] config : Friction model settings.
    * @param [in] legNumber : leg index in {0, 1, 2, 3}.
    */
-  FrictionConeConstraint(Config config, int legNumber);
+  FrictionConeConstraint(Config config, int legNumber, const SwitchedModelModeScheduleManager& modeScheduleManager);
 
   ~FrictionConeConstraint() override = default;
 
   FrictionConeConstraint* clone() const override { return new FrictionConeConstraint(*this); }
 
-  void setSurfaceNormalInWorld(const vector3_t& surfaceNormalInWorld);
+  bool isActive(scalar_t time) const override;
 
   size_t getNumConstraints(scalar_t time) const override { return 1; };
 
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const ocs2::PreComputation& preComp) const override;
 
-  VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const vector_t& state,
-                                                           const vector_t& input) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(ocs2::scalar_t time, const vector_t& state, const vector_t& input,
+                                                           const ocs2::PreComputation& preComp) const override;
 
-  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const vector_t& input) const override;
+  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                 const ocs2::PreComputation& preComp) const override;
 
  private:
+  matrix3_t getRotationWorldToTerrain(const ocs2::PreComputation& preComp) const;
+
   struct LocalForceDerivatives {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     matrix3_t dF_deuler;  // derivative local force w.r.t. body euler angles
@@ -95,8 +98,9 @@ class FrictionConeConstraint final : public ocs2::StateInputConstraint {
 
   FrictionConeConstraint(const FrictionConeConstraint& other) = default;
   vector_t coneConstraint(const vector3_t& localForces) const;
-  vector3_t computeLocalForces(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const;
-  LocalForceDerivatives computeLocalForceDerivatives(const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const;
+  vector3_t computeLocalForces(const matrix3_t& t_R_w, const vector3_t& eulerXYZ, const vector3_t& forcesInBodyFrame) const;
+  LocalForceDerivatives computeLocalForceDerivatives(const matrix3_t& t_R_w, const vector3_t& eulerXYZ,
+                                                     const vector3_t& forcesInBodyFrame) const;
   ConeLocalDerivatives computeConeLocalDerivatives(const vector3_t& localForces) const;
   ConeDerivatives computeConeConstraintDerivatives(const ConeLocalDerivatives& coneLocalDerivatives,
                                                    const LocalForceDerivatives& localForceDerivatives) const;
@@ -109,7 +113,7 @@ class FrictionConeConstraint final : public ocs2::StateInputConstraint {
 
   const Config config_;
   const int legNumber_;
-  matrix3_t t_R_w;  // rotation world to terrain
+  const SwitchedModelModeScheduleManager* modeScheduleManager_;
 };
 
 }  // namespace switched_model

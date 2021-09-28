@@ -28,10 +28,6 @@ TEST_F(AnymalBearSwitchedModelTests, Kinematics) {
   this->printKinematics();
 }
 
-TEST_F(AnymalBearSwitchedModelTests, ComDynamics) {
-  this->printComModel();
-}
-
 TEST_F(AnymalBearSwitchedModelTests, baseDynamics) {
   this->testBaseDynamics();
 }

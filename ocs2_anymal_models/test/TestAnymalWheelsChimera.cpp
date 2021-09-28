@@ -27,10 +27,6 @@ TEST_F(AnymalWheelsChimeraSwitchedModelTests, Kinematics) {
   this->printKinematics();
 }
 
-TEST_F(AnymalWheelsChimeraSwitchedModelTests, ComDynamics) {
-  this->printComModel();
-}
-
 TEST_F(AnymalWheelsChimeraSwitchedModelTests, EndeffectorOrientation) {
   this->testEndeffectorOrientation();
 }

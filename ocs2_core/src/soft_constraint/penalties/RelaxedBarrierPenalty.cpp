@@ -34,7 +34,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getValue(scalar_t h) const {
+scalar_t RelaxedBarrierPenalty::getValue(scalar_t t, scalar_t h) const {
   if (h > config_.delta) {
     return -config_.mu * log(h);
   } else {
@@ -46,7 +46,7 @@ scalar_t RelaxedBarrierPenalty::getValue(scalar_t h) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getDerivative(scalar_t h) const {
+scalar_t RelaxedBarrierPenalty::getDerivative(scalar_t t, scalar_t h) const {
   if (h > config_.delta) {
     return -config_.mu / h;
   } else {
@@ -57,7 +57,7 @@ scalar_t RelaxedBarrierPenalty::getDerivative(scalar_t h) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getSecondDerivative(scalar_t h) const {
+scalar_t RelaxedBarrierPenalty::getSecondDerivative(scalar_t t, scalar_t h) const {
   if (h > config_.delta) {
     return config_.mu / (h * h);
   } else {

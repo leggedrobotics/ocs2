@@ -1,9 +1,0 @@
-/*!
-\page ocs2_ocs2_page OCS2 OCS2
-
-This module implements the continuous-time unconstrained OCS2 algorithm for switched systems \cite farshidian17b.
-
-[Click to see all members of this module](\ref ocs2_ocs2)
-
-[Back to Home Page](\ref index)
-*/

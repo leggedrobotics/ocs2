@@ -3,7 +3,8 @@ project(ocs2_qp_solver)
 
 find_package(catkin REQUIRED COMPONENTS
   ocs2_core
-  )
+  ocs2_oc
+)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -23,6 +24,7 @@ catkin_package(
    ${PROJECT_NAME}
   CATKIN_DEPENDS
     ocs2_core
+    ocs2_oc
   DEPENDS
 )
 

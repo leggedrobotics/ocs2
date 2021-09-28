@@ -37,32 +37,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-class SelfCollisionConstraint final : public StateConstraint {
+/**
+ *  This class provides a variant of the Self-collision constraints, which allows for caching. Therefore It is the user's
+ *  responsibility to call the required updates on the PinocchioInterface in pre-computation requests.
+ */
+class SelfCollisionConstraint : public StateConstraint {
  public:
+  /**
+   * Constructor
+   *
+   * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
+   * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+   * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
+   */
   SelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping, PinocchioGeometryInterface pinocchioGeometryInterface,
                           scalar_t minimumDistance);
-  ~SelfCollisionConstraint() override = default;
-  SelfCollisionConstraint* clone() const override { return new SelfCollisionConstraint(*this); }
 
-  size_t getNumConstraints(scalar_t time) const override;
+  ~SelfCollisionConstraint() override = default;
+
+  size_t getNumConstraints(scalar_t time) const final;
 
   /** Get the self collision distance values
+   *
    * @note Requires pinocchio::forwardKinematics().
    */
-  vector_t getValue(scalar_t time, const vector_t& state) const override;
+  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const final;
 
   /** Get the self collision distance approximation
-   * @note Requires pinocchio::forwardKinematics(), pinocchio::updateGlobalPlacements() and pinocchio::computeJointJacobians().
+   *
+   * @note Requires pinocchio::forwardKinematics(),
+   *                pinocchio::updateGlobalPlacements(),
+   *                pinocchio::computeJointJacobians().
+   * @note In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
+   * you should also call tham as well.
    */
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
+                                                           const PreComputation& preComputation) const final;
 
-  /** Caches the pointer to the pinocchio interface. */
-  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) { pinocchioInterfacePtr_ = &pinocchioInterface; }
+ protected:
+  /** Get the pinocchio interface updated with the requested computation. */
+  virtual const PinocchioInterface& getPinocchioInterface(const PreComputation& preComputation) const = 0;
 
- private:
   SelfCollisionConstraint(const SelfCollisionConstraint& rhs);
 
-  PinocchioInterface* pinocchioInterfacePtr_ = nullptr;
   SelfCollision selfCollision_;
   std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
 };

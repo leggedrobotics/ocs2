@@ -59,37 +59,37 @@ LoopshapingPreComputation* LoopshapingPreComputation::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LoopshapingPreComputation::request(Request request, scalar_t t, const vector_t& x, const vector_t& u) {
+void LoopshapingPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
   systemState_ = loopshapingDefinition_->getSystemState(x);
   systemInput_ = loopshapingDefinition_->getSystemInput(x, u);
   filterState_ = loopshapingDefinition_->getFilterState(x);
   filterInput_ = loopshapingDefinition_->getFilteredInput(x, u);
 
-  systemPreCompPtr_->request(request, t, x_system_, u_system_);
+  systemPreCompPtr_->request(request, t, systemState_, systemInput_);
   if (request.contains(Request::Cost)) {
     // state-input cost function is evaluated on both u_system and u_filter.
-    filteredSystemPreCompPtr_->request(request, t, x_system_, u_filter_);
+    filteredSystemPreCompPtr_->request(request, t, systemState_, filterInput_);
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LoopshapingPreComputation::requestPreJump(Request request, scalar_t t, const vector_t& x) {
+void LoopshapingPreComputation::requestPreJump(RequestSet request, scalar_t t, const vector_t& x) {
   systemState_ = loopshapingDefinition_->getSystemState(x);
   filterState_ = loopshapingDefinition_->getFilterState(x);
 
-  systemPreCompPtr_->requestPreJump(request, t, x_system_);
+  systemPreCompPtr_->requestPreJump(request, t, systemState_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LoopshapingPreComputation::requestFinal(Request request, scalar_t t, const vector_t& x) {
+void LoopshapingPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) {
   systemState_ = loopshapingDefinition_->getSystemState(x);
   filterState_ = loopshapingDefinition_->getFilterState(x);
 
-  systemPreCompPtr_->requestFinal(request, t, x_system_);
+  systemPreCompPtr_->requestFinal(request, t, systemState_);
 }
 
 }  // namespace ocs2

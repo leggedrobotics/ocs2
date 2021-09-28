@@ -28,83 +28,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
-
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h>
+#include <ocs2_core/loopshaping/constraint/LoopshapingStateConstraint.h>
+#include <ocs2_core/loopshaping/constraint/LoopshapingStateInputConstraint.h>
 
 namespace ocs2 {
+namespace LoopshapingConstraint {
 
-std::unique_ptr<LoopshapingConstraint> LoopshapingConstraint::create(std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
-  switch (loopshapingDefinition->getType()) {
-    case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintOutputPattern(std::move(loopshapingDefinition)));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintInputPattern(std::move(loopshapingDefinition)));
-    case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<LoopshapingConstraint>(new LoopshapingConstraintEliminatePattern(std::move(loopshapingDefinition)));
-    default:
-      throw std::runtime_error("[LoopshapingConstraint::create] invalid loopshaping type");
-  }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateConstraintCollection> create(const StateConstraintCollection& systemConstraint,
+                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+  return std::unique_ptr<StateConstraintCollection>(new LoopshapingStateConstraint(systemConstraint, loopshapingDefinition));
 }
 
-std::unique_ptr<LoopshapingConstraint> LoopshapingConstraint::create(const ConstraintBase& systemConstraint,
-                                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateInputConstraintCollection> create(const StateInputConstraintCollection& systemConstraint,
+                                                       std::shared_ptr<LoopshapingDefinition> loopshapingDefinition) {
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
-      return std::unique_ptr<LoopshapingConstraint>(
+      return std::unique_ptr<StateInputConstraintCollection>(
           new LoopshapingConstraintOutputPattern(systemConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingConstraint>(
+      return std::unique_ptr<StateInputConstraintCollection>(
           new LoopshapingConstraintInputPattern(systemConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
-      return std::unique_ptr<LoopshapingConstraint>(
+      return std::unique_ptr<StateInputConstraintCollection>(
           new LoopshapingConstraintEliminatePattern(systemConstraint, std::move(loopshapingDefinition)));
     default:
       throw std::runtime_error("[LoopshapingConstraint::create] invalid loopshaping type");
   }
 }
 
-vector_t LoopshapingConstraint::stateEqualityConstraint(scalar_t t, const vector_t& x) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  return systemConstraint_->stateEqualityConstraint(t, x_system);
-}
-
-vector_t LoopshapingConstraint::inequalityConstraint(scalar_t t, const vector_t& x, const vector_t& u) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  return systemConstraint_->inequalityConstraint(t, x_system, u_system);
-}
-
-vector_t LoopshapingConstraint::finalStateEqualityConstraint(scalar_t t, const vector_t& x) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  return systemConstraint_->finalStateEqualityConstraint(t, x_system);
-}
-
-VectorFunctionLinearApproximation LoopshapingConstraint::stateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const auto c_system = systemConstraint_->stateEqualityConstraintLinearApproximation(t, x_system);
-
-  VectorFunctionLinearApproximation c;
-  c.f = c_system.f;
-  c.dfdx.resize(c.f.rows(), x.rows());
-  c.dfdx.leftCols(x_system.rows()) = c_system.dfdx;
-  c.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
-
-  return c;
-}
-
-VectorFunctionLinearApproximation LoopshapingConstraint::finalStateEqualityConstraintLinearApproximation(scalar_t t, const vector_t& x) {
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const auto cf_system = systemConstraint_->finalStateEqualityConstraintLinearApproximation(t, x_system);
-
-  VectorFunctionLinearApproximation cf;
-  cf.f = cf_system.f;
-  cf.dfdx.resize(cf.f.rows(), x.rows());
-  cf.dfdx.leftCols(x_system.rows()) = cf_system.dfdx;
-  cf.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
-
-  return cf;
-}
-
+}  // namespace LoopshapingConstraint
 }  // namespace ocs2

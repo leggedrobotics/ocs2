@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ddp/ContinuousTimeLqr.h"
 
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 
 #include <ocs2_qp_solver/test/testProblemsGeneration.h>
@@ -47,17 +47,20 @@ TEST(testContinousTimeLqr, compareWithMatlab) {
   const matrix_t Q = (matrix_t(2, 2) << 3.0, 2.0, 2.0, 4.0).finished();
   const matrix_t R = (matrix_t(1, 1) << 5.0).finished();
   const matrix_t P = (matrix_t(1, 2) << 0.1, 0.2).finished();
-  const matrix_t QFinal = matrix_t::Zero(2, 2);
-  QuadraticCostFunction cost(Q, R, QFinal, P);
+  std::unique_ptr<StateInputCost> cost(new QuadraticStateInputCost(Q, R, P));
 
   const scalar_t time = 0.0;
   const vector_t state = vector_t::Zero(2);
   const vector_t input = vector_t::Zero(1);
   const TargetTrajectories targetTrajectories({time}, {state}, {input});
-  cost.setTargetTrajectoriesPtr(&targetTrajectories);
+
+  ocs2::OptimalControlProblem problem;
+  problem.dynamicsPtr.reset(dynamics.clone());
+  problem.costPtr->add("cost", std::move(cost));
+  problem.targetTrajectoriesPtr = &targetTrajectories;
 
   // Solve LQR
-  const auto lqrSolution = continuous_time_lqr::solve(dynamics, cost, time, state, input);
+  const auto lqrSolution = continuous_time_lqr::solve(problem, time, state, input);
 
   // MATLAB results, notice sign difference with MATLAB, ocs2 computes K for u = K * x
   const matrix_t K_check = (matrix_t(1, 2) << -0.905054653909129, -1.802904101100247).finished();
@@ -76,23 +79,27 @@ TEST(testContinousTimeLqr, evaluateCAREresidual) {
     const int m = n / 2;
 
     // random dynamics
-    const auto dynamicsMatrices = qp_solver::getRandomDynamics(n, m);
-    const auto dynamics = qp_solver::getOcs2Dynamics(dynamicsMatrices);
+    const auto dynamicsMatrices = getRandomDynamics(n, m);
+    const auto dynamics = getOcs2Dynamics(dynamicsMatrices);
 
     // random costs
-    const auto costMatrices = qp_solver::getRandomCost(n, m);
-    const auto cost = qp_solver::getOcs2Cost(costMatrices, ocs2::ScalarFunctionQuadraticApproximation::Zero(n, m));
+    const auto costMatrices = getRandomCost(n, m);
+    auto cost = getOcs2Cost(costMatrices);
     const scalar_t time = 0.0;
     const vector_t state = vector_t::Random(n);
     const vector_t input = vector_t::Random(m);
     const TargetTrajectories targetTrajectories({time}, {state}, {input});
-    cost->setTargetTrajectoriesPtr(&targetTrajectories);
+
+    ocs2::OptimalControlProblem problem;
+    problem.dynamicsPtr.reset(dynamics->clone());
+    problem.costPtr->add("cost", std::move(cost));
+    problem.targetTrajectoriesPtr = &targetTrajectories;
 
     // Solve LQR
     const scalar_t timeLinearization = 0.0;
     const vector_t stateLinearization = vector_t::Random(n);
     const vector_t inputLinearization = vector_t::Random(m);
-    const auto lqrSolution = continuous_time_lqr::solve(*dynamics, *cost, timeLinearization, stateLinearization, inputLinearization);
+    const auto lqrSolution = continuous_time_lqr::solve(problem, timeLinearization, stateLinearization, inputLinearization);
 
     // Check CARE
     const auto& A = dynamicsMatrices.dfdx;

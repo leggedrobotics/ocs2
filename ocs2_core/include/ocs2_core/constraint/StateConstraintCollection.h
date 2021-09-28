@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/StateConstraint.h>
 #include <ocs2_core/misc/Collection.h>
@@ -52,13 +53,15 @@ class StateConstraintCollection : public Collection<StateConstraint> {
   virtual size_t getNumConstraints(scalar_t time) const;
 
   /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state) const;
+  virtual vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const;
 
   /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const;
+  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
+                                                                   const PreComputation& preComp) const;
 
   /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state) const;
+  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                         const PreComputation& preComp) const;
 
  protected:
   /** Copy constructor */

@@ -1,0 +1,26 @@
+<launch>
+    <arg name="rviz"       default="true" />
+    <arg name="multiplot"  default="false"/>
+    <arg name="task_name"  default="mpc"/>
+    <arg name="debug"      default="false"/>
+
+    <group if="$(arg rviz)">
+      <include file="$(find ocs2_double_integrator_ros)/launch/visualize.launch"/>
+    </group>
+
+    <group if="$(arg multiplot)">
+      <include file="$(find ocs2_double_integrator_ros)/launch/multiplot.launch"/>
+    </group>
+
+    <node if="$(arg debug)" pkg="ocs2_double_integrator_ros" type="double_integrator_mpc" name="double_integrator_mpc"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb --args"/>
+
+    <node unless="$(arg debug)" pkg="ocs2_double_integrator_ros" type="double_integrator_mpc" name="double_integrator_mpc"
+          output="screen" args="$(arg task_name)" launch-prefix=""/>
+
+    <node pkg="ocs2_double_integrator_ros" type="double_integrator_dummy_test" name="double_integrator_dummy_test"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+
+    <node pkg="ocs2_double_integrator_ros" type="double_integrator_target" name="double_integrator_target"
+          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+</launch>

@@ -29,8 +29,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
+
+#include <ocs2_core/test/testTools.h>
 
 #include "ocs2_qp_solver/Ocs2QpSolver.h"
 #include "ocs2_qp_solver/test/testProblemsGeneration.h"
@@ -58,26 +63,41 @@ class Ocs2QpSolverTest : public testing::Test {
 
   Ocs2QpSolverTest() {
     srand(0);
-    cost = ocs2::qp_solver::getOcs2Cost(ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM),
-                                        ocs2::qp_solver::getRandomCost(STATE_DIM, INPUT_DIM));
+
+    system = ocs2::getOcs2Dynamics(ocs2::getRandomDynamics(STATE_DIM, INPUT_DIM));
+
+    // create unconstrained problem
+    unconstrainedProblem = ocs2::OptimalControlProblem();  // reset
+    unconstrainedProblem.dynamicsPtr.reset(system->clone());
+
+    unconstrainedProblem.costPtr->add("IntermediateCost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
+    unconstrainedProblem.finalCostPtr->add("FinalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
+
+    // create constrained problem
+    constrainedProblem = unconstrainedProblem;  // copies unconstrained problem
+
+    constrainedProblem.equalityConstraintPtr->add(
+        "equality", ocs2::getOcs2Constraints(ocs2::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints)));
+    constrainedProblem.stateEqualityConstraintPtr->add(
+        "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numStateOnlyConstraints)));
+    constrainedProblem.finalEqualityConstraintPtr->add(
+        "equality", ocs2::getOcs2StateOnlyConstraints(ocs2::getRandomConstraints(STATE_DIM, 0, numFinalStateOnlyConstraints)));
+
     targetTrajectories =
         ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
-    cost->setTargetTrajectoriesPtr(&targetTrajectories);
-    system = ocs2::qp_solver::getOcs2Dynamics(ocs2::qp_solver::getRandomDynamics(STATE_DIM, INPUT_DIM));
-    constraint =
-        ocs2::qp_solver::getOcs2Constraints(ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateInputConstraints),
-                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numStateOnlyConstraints),
-                                            ocs2::qp_solver::getRandomConstraints(STATE_DIM, INPUT_DIM, numFinalStateOnlyConstraints));
+    constrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
+    unconstrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
+
     nominalTrajectory = ocs2::qp_solver::getRandomTrajectory(N, STATE_DIM, INPUT_DIM, dt);
     x0 = ocs2::vector_t::Random(STATE_DIM);
-    constrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, *constraint, nominalTrajectory, x0);
-    unconstrainedSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, x0);
+    unconstrainedSolution = solveLinearQuadraticOptimalControlProblem(unconstrainedProblem, nominalTrajectory, x0);
+    constrainedSolution = solveLinearQuadraticOptimalControlProblem(constrainedProblem, nominalTrajectory, x0);
   }
 
-  std::unique_ptr<ocs2::CostFunctionBase> cost;
   ocs2::TargetTrajectories targetTrajectories;
   std::unique_ptr<ocs2::SystemDynamicsBase> system;
-  std::unique_ptr<ocs2::ConstraintBase> constraint;
+  ocs2::OptimalControlProblem unconstrainedProblem;
+  ocs2::OptimalControlProblem constrainedProblem;
   ocs2::qp_solver::ContinuousTrajectory nominalTrajectory;
   ocs2::vector_t x0;
   ocs2::qp_solver::ContinuousTrajectory constrainedSolution;
@@ -104,17 +124,33 @@ TEST_F(Ocs2QpSolverTest, satisfiesDynamics) {
 }
 
 TEST_F(Ocs2QpSolverTest, satisfiesConstraints) {
-  const auto g0 = constraint->stateInputEqualityConstraint(constrainedSolution.timeTrajectory[0], constrainedSolution.stateTrajectory[0],
-                                                           constrainedSolution.inputTrajectory[0]);
+  auto& preComputation = *unconstrainedProblem.preComputationPtr;
+  const auto t0 = constrainedSolution.timeTrajectory[0];
+  const auto& x0 = constrainedSolution.stateTrajectory[0];
+  const auto& u0 = constrainedSolution.inputTrajectory[0];
+  preComputation.request(ocs2::Request::Constraint, t0, x0, u0);
+
+  const auto g0 = unconstrainedProblem.equalityConstraintPtr->getValue(t0, x0, u0, preComputation);
   ASSERT_TRUE(g0.isZero(precision));
+
   for (int k = 1; k < N; ++k) {
-    const auto g = constraint->stateInputEqualityConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k],
-                                                            constrainedSolution.inputTrajectory[k]);
+    const auto t = constrainedSolution.timeTrajectory[k];
+    const auto& x = constrainedSolution.stateTrajectory[k];
+    const auto& u = constrainedSolution.inputTrajectory[k];
+    preComputation.request(ocs2::Request::Constraint, t, x, u);
+
+    const auto g = unconstrainedProblem.equalityConstraintPtr->getValue(t, x, u, preComputation);
     ASSERT_TRUE(g.isZero(precision));
-    const auto h = constraint->stateEqualityConstraint(constrainedSolution.timeTrajectory[k], constrainedSolution.stateTrajectory[k]);
+
+    const auto h = unconstrainedProblem.stateEqualityConstraintPtr->getValue(t, x, preComputation);
     ASSERT_TRUE(h.isZero(precision));
   }
-  const auto gf = constraint->finalStateEqualityConstraint(constrainedSolution.timeTrajectory[N], constrainedSolution.stateTrajectory[N]);
+
+  const auto tf = constrainedSolution.timeTrajectory[N];
+  const auto& xf = constrainedSolution.stateTrajectory[N];
+  preComputation.requestFinal(ocs2::Request::Constraint, tf, xf);
+
+  const auto gf = unconstrainedProblem.finalEqualityConstraintPtr->getValue(tf, xf, preComputation);
   ASSERT_TRUE(gf.isZero(precision));
 }
 
@@ -124,22 +160,22 @@ TEST_F(Ocs2QpSolverTest, invariantUnderLinearization) {
   linearization2.timeTrajectory = nominalTrajectory.timeTrajectory;
 
   // Compare solutions
-  auto solution2 = solveLinearQuadraticOptimalControlProblem(*cost, *system, *constraint, linearization2, x0);
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(constrainedSolution.stateTrajectory, solution2.stateTrajectory, precision));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(constrainedSolution.inputTrajectory, solution2.inputTrajectory, precision));
+  auto solution2 = solveLinearQuadraticOptimalControlProblem(constrainedProblem, linearization2, x0);
+  ASSERT_TRUE(ocs2::isEqual(constrainedSolution.stateTrajectory, solution2.stateTrajectory, precision));
+  ASSERT_TRUE(ocs2::isEqual(constrainedSolution.inputTrajectory, solution2.inputTrajectory, precision));
 }
 
 TEST_F(Ocs2QpSolverTest, knownSolutionAtOrigin) {
   // If the cost's nominal trajectory is set to zero, and the initial state is zero, then the solution has only zeros.
   targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Zero(STATE_DIM)}, {ocs2::vector_t::Zero(INPUT_DIM)});
-  cost->setTargetTrajectoriesPtr(&targetTrajectories);
+  unconstrainedProblem.targetTrajectoriesPtr = &targetTrajectories;
   const auto zeroX0 = ocs2::vector_t::Zero(STATE_DIM);
 
   // Obtain solution, with non-zero nominalTrajectory
-  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(*cost, *system, nominalTrajectory, zeroX0);
+  auto zeroSolution = solveLinearQuadraticOptimalControlProblem(unconstrainedProblem, nominalTrajectory, zeroX0);
 
   ocs2::vector_array_t allStatesZero(N + 1, ocs2::vector_t::Zero(STATE_DIM));
   ocs2::vector_array_t allInputsZero(N, ocs2::vector_t::Zero(INPUT_DIM));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.stateTrajectory, allStatesZero));
-  ASSERT_TRUE(ocs2::qp_solver::isEqual(zeroSolution.inputTrajectory, allInputsZero));
+  ASSERT_TRUE(ocs2::isEqual(zeroSolution.stateTrajectory, allStatesZero));
+  ASSERT_TRUE(ocs2::isEqual(zeroSolution.inputTrajectory, allInputsZero));
 }

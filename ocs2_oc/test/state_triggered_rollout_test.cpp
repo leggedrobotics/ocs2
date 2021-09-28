@@ -243,7 +243,7 @@ TEST(StateRolloutTests, runHybridDynamics) {
   std::vector<size_t> subsystemsSequence{1};
   // Construct State TriggerdRollout Object
   ocs2::rollout::Settings rolloutSettings;
-  ocs2::hybridSysDynamics dynamics;
+  ocs2::HybridSysDynamics dynamics;
   ocs2::StateTriggeredRollout rollout(dynamics, rolloutSettings);
   // Construct Variables for run
   // Simulation time

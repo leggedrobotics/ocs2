@@ -34,13 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
@@ -61,17 +60,14 @@ class LineSearchStrategy final : public SearchStrategyBase {
    * @param [in] baseSettings: The basic settings for the search strategy algorithms.
    * @param [in] settings: The line search settings.
    * @param [in] threadPoolRef: A reference to the thread pool instance.
-   * @param [in] rolloutRef: An array of references to the rollout class.
-   * @param [in] constraintsRef: An array of references to the constraint class.
-   * @param [in] heuristicsFunctionsRef: An array of references to the heuristics function.
+   * @param [in] rolloutRefStock: An array of references to the rollout.
+   * @param [in] optimalControlProblemRef: An array of references to the optimal control problem.
    * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                      std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
-                     std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock,
-                     std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock,
-                     std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock,
+                     std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRef,
                      SoftConstraintPenalty& ineqConstrPenaltyRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
@@ -137,9 +133,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
   mutable std::mutex outputDisplayGuardMutex_;
 
   std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock_;
-  std::vector<std::reference_wrapper<ConstraintBase>> constraintsRefStock_;
-  std::vector<std::reference_wrapper<CostFunctionBase>> costFunctionRefStock_;
-  std::vector<std::reference_wrapper<CostFunctionBase>> heuristicsFunctionsRefStock_;
+  std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock_;
   SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 

@@ -203,9 +203,13 @@ std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproxi
   out << "f: " << f.f.transpose() << '\n';
   out << "dfdx:\n" << f.dfdx << '\n';
   out << "dfdu:\n" << f.dfdu << '\n';
-  for (size_t i = 0; i < f.f.size(); i++) {
+  for (size_t i = 0; i < f.f.rows(); i++) {
     out << "dfdxx[" << i << "]:\n" << f.dfdxx[i] << '\n';
+  }
+  for (size_t i = 0; i < f.f.rows(); i++) {
     out << "dfdux[" << i << "]:\n" << f.dfdux[i] << '\n';
+  }
+  for (size_t i = 0; i < f.f.rows(); i++) {
     out << "dfduu[" << i << "]:\n" << f.dfduu[i] << '\n';
   }
   return out;

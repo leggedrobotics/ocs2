@@ -14,6 +14,7 @@
   <build_depend>cmake_clang_tools</build_depend>
 
   <depend>ocs2_ballbot</depend>
+  <depend>ocs2_ballbot_ros</depend>
   <depend>ocs2_mpcnet</depend>
 
 </package>

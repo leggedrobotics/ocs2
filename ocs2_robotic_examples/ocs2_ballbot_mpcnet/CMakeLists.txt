@@ -3,6 +3,7 @@ project(ocs2_ballbot_mpcnet)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ballbot
+  ocs2_ballbot_ros
   ocs2_mpcnet
 )
 
@@ -64,6 +65,20 @@ set_target_properties(BallbotMpcnetPybindings
     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )
 
+# MPC-Net dummy node
+add_executable(ballbot_mpcnet_dummy
+  src/BallbotMpcnetDummyNode.cpp
+)
+add_dependencies(ballbot_mpcnet_dummy
+  ${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(ballbot_mpcnet_dummy
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(ballbot_mpcnet_dummy PRIVATE ${OCS2_CXX_FLAGS})
+
 catkin_python_setup()
 
 #########################
@@ -73,7 +88,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
    message(STATUS "Run clang tooling for target ocs2_ballbot_mpcnet")
    add_clang_tooling(
-     TARGETS ${PROJECT_NAME}
+     TARGETS ${PROJECT_NAME} ballbot_mpcnet_dummy
      SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
      CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
      CF_WERROR
@@ -96,6 +111,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS BallbotMpcnetPybindings
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
+
+install(TARGETS ballbot_mpcnet_dummy
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY launch policy
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############

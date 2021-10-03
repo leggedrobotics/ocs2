@@ -75,9 +75,9 @@ class SphereApproximation {
 
  private:
   void approximateBox(const vector_t& sides);
-  void approximateCylinder(const scalar_t& radius, const scalar_t& length);
-  bool approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection, const scalar_t& maxExcessR,
-                             scalar_t& shift, scalar_t& alpha, scalar_t& numCircles);
+  void approximateCylinder(const scalar_t radius, const scalar_t length);
+  bool approximateCircleBase(const scalar_t radiusBase, const scalar_t radiusSphereCrossSection, const scalar_t maxExcessR, scalar_t& shift,
+                             scalar_t& alpha, scalar_t& numCircles);
 
   const size_t geomObjId_;
   const scalar_t maxExcess_;

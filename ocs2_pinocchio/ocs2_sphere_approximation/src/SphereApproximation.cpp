@@ -158,7 +158,7 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SphereApproximation::approximateCylinder(const scalar_t& radius, const scalar_t& length) {
+void SphereApproximation::approximateCylinder(const scalar_t radius, const scalar_t length) {
   // First, approximate the rectangle cross-section of the cylinder
   vector_t sides(2);
   sides << 2 * radius, length;
@@ -247,8 +247,8 @@ void SphereApproximation::approximateCylinder(const scalar_t& radius, const scal
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool SphereApproximation::approximateCircleBase(const scalar_t& radiusBase, const scalar_t& radiusSphereCrossSection,
-                                                const scalar_t& maxExcessR, scalar_t& shift, scalar_t& alpha, scalar_t& numCircles) {
+bool SphereApproximation::approximateCircleBase(const scalar_t radiusBase, const scalar_t radiusSphereCrossSection,
+                                                const scalar_t maxExcessR, scalar_t& shift, scalar_t& alpha, scalar_t& numCircles) {
   if (radiusSphereCrossSection < radiusBase - std::numeric_limits<scalar_t>::epsilon()) {
     shift = radiusBase + std::min(0.0, maxExcessR - radiusSphereCrossSection);
     alpha =

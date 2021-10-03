@@ -27,8 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_ddp/ILQR.h>
-
+#include "ocs2_ddp/ILQR.h"
 #include <ocs2_ddp/riccati_equations/RiccatiTransversalityConditions.h>
 
 namespace ocs2 {
@@ -36,12 +35,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ILQR::ILQR(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-           const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
-           const CostFunctionBase* heuristicsFunctionPtr /* = nullptr*/)
-
-    : BASE(rolloutPtr, systemDynamicsPtr, systemConstraintsPtr, costFunctionPtr, initializerPtr, std::move(ddpSettings),
-           heuristicsFunctionPtr) {
+ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+           const Initializer& initializer)
+    : BASE(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::ILQR) {
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");
@@ -79,8 +75,11 @@ void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const
     while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
       // execute continuous time LQ approximation for the given partition and time index
       continuousTimeModelData = modelDataTrajectory[timeIndex];
-      BASE::linearQuadraticApproximatorPtrStock_[taskId]->approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                                                               inputTrajectory[timeIndex], continuousTimeModelData);
+
+      LinearQuadraticApproximator lqapprox(BASE::optimalControlProblemStock_[taskId], BASE::settings().checkNumericalStability_);
+      lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
+                                    continuousTimeModelData);
+      continuousTimeModelData.checkSizes(stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
 
       // discretize LQ problem
       scalar_t timeStep = 0.0;

@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <type_traits>
 
+#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/constraint/ConstraintOrder.h>
 
@@ -43,34 +44,36 @@ class StateInputConstraint {
   virtual ~StateInputConstraint() = default;
   virtual StateInputConstraint* clone() const = 0;
 
-  /** Set constraint activity */
-  void setActivity(bool activity) { active_ = activity; }
-
-  /** Check constraint activity */
-  bool isActive() const { return active_; }
-
   /** Get the constraint order (Linear or Quadratic) */
   constexpr ConstraintOrder getOrder() const { return order_; };
+
+  /** Check constraint activity */
+  virtual bool isActive(scalar_t time) const { return true; }
 
   /** Get the size of the constraint vector at given time */
   virtual size_t getNumConstraints(scalar_t time) const = 0;
 
   /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input) const = 0;
+  virtual vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const = 0;
 
   /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input) const {
+  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                   const PreComputation& preComp) const {
     if (order_ == ConstraintOrder::Linear) {
       throw std::runtime_error("[StateInputConstraint] Linear approximation not implemented!");
     } else {
-      throw std::runtime_error("[StateInputConstraint] The class only provides Quadratic approximationn! call getQuadraticApproximation()");
+      throw std::runtime_error("[StateInputConstraint] The class only provides Quadratic approximation! call getQuadraticApproximation()");
     }
   }
 
   /** Get the constraint quadratic approximation */
-  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const vector_t& input) const {
-    throw std::runtime_error("[StateInputConstraint] Quadratic approximation not implemented!");
+  virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                                         const PreComputation& preComp) const {
+    if (order_ == ConstraintOrder::Quadratic) {
+      throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented!");
+    } else {
+      throw std::runtime_error("[StateConstraint] The class only provides Linear approximation! call getLinearApproximation()");
+    }
   }
 
  protected:
@@ -78,7 +81,6 @@ class StateInputConstraint {
 
  private:
   ConstraintOrder order_;
-  bool active_ = true;
 };
 
 // Template for conditional compilation using SFINAE

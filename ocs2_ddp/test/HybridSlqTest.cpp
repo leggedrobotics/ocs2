@@ -32,13 +32,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/initialization/OperatingPoints.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
-#include <ocs2_ddp/SLQ.h>
 #include <ocs2_oc/rollout/StateTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
-
 #include <ocs2_oc/test/dynamics_hybrid_slq_test.h>
+
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
+#include <ocs2_core/initialization/OperatingPoints.h>
+
+#include <ocs2_ddp/SLQ.h>
 
 /*
  * Test for StateTriggeredRollout in combination with SLQ
@@ -101,24 +103,34 @@ TEST(HybridSlqTest, state_rollout_slq) {
   initState << 0, 1, 1;
 
   // rollout
-  hybridSysDynamics systemDynamics;
+  HybridSysDynamics systemDynamics;
   StateTriggeredRollout stateTriggeredRollout(systemDynamics, rolloutSettings);
 
   // constraints
-  hybridSysConstraints systemConstraints;
+  std::unique_ptr<StateInputConstraint> systemConstraints(new HybridSysBounds);
+
   // cost function
   matrix_t Q(stateDim, stateDim);
   Q << 50, 0, 0, 0, 50, 0, 0, 0, 0;
-  matrix_t Qf(stateDim, stateDim);
-  Qf << 50, 0, 0, 0, 50, 0, 0, 0, 0;
   matrix_t R(inputDim, inputDim);
   R << 1;
+  std::unique_ptr<ocs2::StateInputCost> cost(new QuadraticStateInputCost(Q, R));
+  matrix_t Qf(stateDim, stateDim);
+  Qf << 50, 0, 0, 0, 50, 0, 0, 0, 0;
+  std::unique_ptr<ocs2::StateCost> preJumpCost(new QuadraticStateCost(Qf));
+  std::unique_ptr<ocs2::StateCost> finalCost(new QuadraticStateCost(Qf));
+
+  ocs2::OptimalControlProblem problem;
+  problem.dynamicsPtr.reset(systemDynamics.clone());
+  problem.inequalityConstraintPtr->add("bounds", std::move(systemConstraints));
+  problem.costPtr->add("cost", std::move(cost));
+  problem.preJumpCostPtr->add("preJumpCost", std::move(preJumpCost));
+  problem.finalCostPtr->add("finalCost", std::move(finalCost));
+
   vector_t xNominal = vector_t::Zero(stateDim);
   vector_t uNominal = vector_t::Zero(inputDim);
   TargetTrajectories targetTrajectories({startTime}, {xNominal}, {uNominal});
   auto referenceManager = std::make_shared<ReferenceManager>(std::move(targetTrajectories));
-
-  QuadraticCostFunction systemCost(Q, R, Qf);
 
   // operatingTrajectories
   vector_t stateOperatingPoint = vector_t::Zero(stateDim);
@@ -126,8 +138,9 @@ TEST(HybridSlqTest, state_rollout_slq) {
   OperatingPoints operatingTrajectories(stateOperatingPoint, inputOperatingPoint);
 
   std::cout << "Starting SLQ Procedure" << std::endl;
+
   // SLQ
-  SLQ slq(&stateTriggeredRollout, &systemDynamics, &systemConstraints, &systemCost, &operatingTrajectories, ddpSettings);
+  SLQ slq(ddpSettings, stateTriggeredRollout, problem, operatingTrajectories);
   slq.setReferenceManager(referenceManager);
   slq.run(startTime, initState, finalTime, partitioningTimes);
   auto solution = slq.primalSolution(finalTime);
@@ -141,7 +154,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
     }
   }
 
-  scalar_t cost;
   for (int i = 0; i < solution.stateTrajectory_.size(); i++) {
     // Test 1 : Constraint Compliance
     scalar_t constraint0 = -solution.inputTrajectory_[i][0] + 2;

@@ -53,7 +53,7 @@ QuadraticStateInputCost* QuadraticStateInputCost::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t QuadraticStateInputCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                           const TargetTrajectories& targetTrajectories) const {
+                                           const TargetTrajectories& targetTrajectories, const PreComputation&) const {
   vector_t stateDeviation, inputDeviation;
   std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, targetTrajectories);
 
@@ -68,20 +68,19 @@ scalar_t QuadraticStateInputCost::getValue(scalar_t time, const vector_t& state,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApproximation(
-    scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& targetTrajectories) const {
+ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                                        const vector_t& input,
+                                                                                        const TargetTrajectories& targetTrajectories,
+                                                                                        const PreComputation&) const {
   vector_t stateDeviation, inputDeviation;
   std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, targetTrajectories);
 
-  const vector_t qDeviation = Q_ * stateDeviation;
-  const vector_t rDeviation = R_ * inputDeviation;
-
   ScalarFunctionQuadraticApproximation L;
-  L.f = 0.5 * stateDeviation.dot(qDeviation) + 0.5 * inputDeviation.dot(rDeviation);
-  L.dfdx = qDeviation;
-  L.dfdu = rDeviation;
   L.dfdxx = Q_;
   L.dfduu = R_;
+  L.dfdx.noalias() = Q_ * stateDeviation;
+  L.dfdu.noalias() = R_ * inputDeviation;
+  L.f = 0.5 * stateDeviation.dot(L.dfdx) + 0.5 * inputDeviation.dot(L.dfdu);
 
   if (P_.size() == 0) {
     L.dfdux.setZero(input.size(), state.size());

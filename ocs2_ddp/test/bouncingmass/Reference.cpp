@@ -48,20 +48,20 @@ Reference::Reference(scalar_t t0, scalar_t t1, const vector_t& p0, const vector_
   t1_ = t1;
 }
 
-void Reference::getInput(scalar_t time, vector_t& input) {
+void Reference::getInput(scalar_t time, vector_t& input) const {
   input.setZero(1);
   for (int i = 0; i < polU_.size(); i++) {
     input[0] += polU_[i] * std::pow(time, i);
   }
 }
 
-vector_t Reference::getInput(scalar_t time) {
+vector_t Reference::getInput(scalar_t time) const {
   vector_t input;
   getInput(time, input);
   return input;
 }
 
-void Reference::getState(scalar_t time, vector_t& x) {
+void Reference::getState(scalar_t time, vector_t& x) const {
   if (time <= t1_ && time >= t0_) {
     x.setZero(3);
     for (int i = 0; i < polU_.size(); i++) {
@@ -151,9 +151,9 @@ void Reference::Create5thOrdPol(scalar_t t0, scalar_t t1, const vector_t& p0, co
   polX_ = Ainv * x;
 }
 
-void Reference::interpolate_ext(scalar_t time, vector_t& x) {
-  scalar_array_t* tVec;
-  vector_array_t* xVec;
+void Reference::interpolate_ext(scalar_t time, vector_t& x) const {
+  const scalar_array_t* tVec;
+  const vector_array_t* xVec;
   if (time < t0_) {
     tVec = &tPre_;
     xVec = &xPre_;

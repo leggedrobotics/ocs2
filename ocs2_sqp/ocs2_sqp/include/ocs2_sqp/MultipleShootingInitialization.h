@@ -54,15 +54,13 @@ inline std::pair<vector_t, vector_t> initializeIntermediateNode(Initializer& ini
 /**
  * Interpolate a primal solution for state-input initialization at a intermediate node
  *
- * @param initializer : System initializer
+ * @param primalSolution : previous solution
  * @param t :  Start of the discrete interval
  * @param tNext : End time of te discrete interval
  * @param x : Starting state of the discrete interval
- * @param useController : true = uses the controller of the primal solution, false = uses the input trajectory of the primal solution
  * @return {u(t), x(tNext)} : input and state transition
  */
-std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x,
-                                                         bool useController);
+std::pair<vector_t, vector_t> initializeIntermediateNode(PrimalSolution& primalSolution, scalar_t t, scalar_t tNext, const vector_t& x);
 
 /**
  * Initialize the state jump at an event node.

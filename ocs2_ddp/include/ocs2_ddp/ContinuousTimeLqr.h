@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 namespace continuous_time_lqr {
@@ -66,16 +66,16 @@ struct Settings {
  *      Numerical Methods for Linear Control Systems,
  *      Academic Press, 2004, Pages 519-599, ISBN 9780122035906, https://doi.org/10.1016/B978-012203590-6/50017-3.
  *
- * @param systemDynamics
- * @param costFunctionBase
+ * @param systemDynamics : The system dynamics
+ * @param problem : The optimal control problem
  * @param time : time around which the LQ approximation is made.
  * @param state : state around which the LQ approximation is made.
  * @param input : input around which the LQ approximation is made.
  * @param settings : algorithm settings.
  * @return {FeedbackGains K, Value function S}
  */
-solution solve(const SystemDynamicsBase& systemDynamics, const CostFunctionBase& costFunctionBase, scalar_t time, const vector_t& state,
-               const vector_t& input, const Settings& settings = Settings());
+solution solve(OptimalControlProblem& problem, scalar_t time, const vector_t& state, const vector_t& input,
+               const Settings& settings = Settings());
 
 }  // namespace continuous_time_lqr
 }  // namespace ocs2

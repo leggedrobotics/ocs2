@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_ddp/ILQR.h>
 #include <ocs2_ddp/SLQ.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/circular_kinematics.h>
 
@@ -60,18 +61,15 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     }();
 
     // dynamics and rollout
-    systemPtr.reset(new ocs2::CircularKinematicsSystem);
-    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(*systemPtr, rolloutSettings));
+    ocs2::CircularKinematicsSystem systemDynamics;
+    rolloutPtr.reset(new ocs2::TimeTriggeredRollout(systemDynamics, rolloutSettings));
 
-    // cost function
+    // optimal control problem
     boost::filesystem::path filePath(__FILE__);
-    std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
-    costPtr.reset(new ocs2::CircularKinematicsCost);
+    const std::string libraryFolder = filePath.parent_path().generic_string() + "/ddp_test_generated";
+    problem = ocs2::createCircularKinematicsProblem(libraryFolder);
 
-    // constraint
-    constraintPtr.reset(new ocs2::CircularKinematicsConstraints);
-
-    // operatingTrajectories
+    // initializer
     initializerPtr.reset(new ocs2::DefaultInitializer(INPUT_DIM));
   }
 
@@ -127,10 +125,8 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
   const ocs2::vector_t initState = (ocs2::vector_t(STATE_DIM) << 1.0, 0.0).finished();  // radius 1.0
   const ocs2::scalar_array_t partitioningTimes{startTime, (startTime + finalTime) / 2.0, finalTime};
 
-  std::unique_ptr<ocs2::SystemDynamicsBase> systemPtr;
   std::unique_ptr<ocs2::TimeTriggeredRollout> rolloutPtr;
-  std::unique_ptr<ocs2::CircularKinematicsCost> costPtr;
-  std::unique_ptr<ocs2::ConstraintBase> constraintPtr;
+  ocs2::OptimalControlProblem problem;
   std::unique_ptr<ocs2::Initializer> initializerPtr;
 };
 
@@ -147,7 +143,7 @@ TEST_P(CircularKinematicsTest, SLQ) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::SLQ ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, problem, *initializerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";
@@ -170,7 +166,7 @@ TEST_P(CircularKinematicsTest, ILQR) {
   const auto ddpSettings = getSettings(ocs2::ddp::Algorithm::ILQR, getNumThreads(), getSearchStrategy());
 
   // instantiate
-  ocs2::ILQR ddp(rolloutPtr.get(), systemPtr.get(), constraintPtr.get(), costPtr.get(), initializerPtr.get(), ddpSettings);
+  ocs2::ILQR ddp(ddpSettings, *rolloutPtr, problem, *initializerPtr);
 
   if (ddpSettings.displayInfo_ || ddpSettings.displayShortSummary_) {
     std::cerr << "\n" << getTestName(ddpSettings) << "\n";

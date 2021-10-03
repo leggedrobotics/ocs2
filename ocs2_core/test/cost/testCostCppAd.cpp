@@ -58,8 +58,8 @@ TEST(TestStateCostCppAd, getValue) {
   const ocs2::scalar_t t = 0.0;
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
 
-  const auto val = cost.getValue(t, x, desiredTrajectory);
-  const auto approx = cost.getQuadraticApproximation(t, x, desiredTrajectory);
+  const auto val = cost.getValue(t, x, desiredTrajectory, ocs2::PreComputation());
+  const auto approx = cost.getQuadraticApproximation(t, x, desiredTrajectory, ocs2::PreComputation());
 
   EXPECT_NEAR(val, 1.5, 1e-6);
   EXPECT_NEAR(approx.f, val, 1e-6);
@@ -97,8 +97,8 @@ TEST(TestStateInputCostCppAd, getValue) {
   const ocs2::vector_t x = ocs2::vector_t::Ones(2);
   const ocs2::vector_t u = ocs2::vector_t::Ones(1);
 
-  const auto val = cost.getValue(t, x, u, desiredTrajectory);
-  const auto approx = cost.getQuadraticApproximation(t, x, u, desiredTrajectory);
+  const auto val = cost.getValue(t, x, u, desiredTrajectory, ocs2::PreComputation());
+  const auto approx = cost.getQuadraticApproximation(t, x, u, desiredTrajectory, ocs2::PreComputation());
 
   EXPECT_NEAR(val, 4.0, 1e-6);
   EXPECT_NEAR(approx.f, val, 1e-6);
@@ -142,8 +142,8 @@ TEST(TestGNStateInputCostCppAd, getValue) {
 
   ocs2::vector_t f = TestGNStateInputCost::costVector(t, x, u);
 
-  const auto val = cost.getValue(t, x, u, desiredTrajectory);
-  const auto approx = cost.getQuadraticApproximation(t, x, u, desiredTrajectory);
+  const auto val = cost.getValue(t, x, u, desiredTrajectory, ocs2::PreComputation());
+  const auto approx = cost.getQuadraticApproximation(t, x, u, desiredTrajectory, ocs2::PreComputation());
 
   // cost = 0.5 * |f|^2 = 0.5*x(0)^2 + 0.5*x(1)^2 + 0.5*(t*u(0))^2 + 0.5*(x(0) + u(0))^2
   ASSERT_DOUBLE_EQ(val, 0.5 * f.squaredNorm());
@@ -157,5 +157,5 @@ TEST(TestGNStateInputCostCppAd, getValue) {
   ASSERT_DOUBLE_EQ(approx.dfdxx(1, 1), 1.0);
   ASSERT_DOUBLE_EQ(approx.dfdux(0, 0), 1.0);
   ASSERT_DOUBLE_EQ(approx.dfdux(0, 1), 0.0);
-  ASSERT_DOUBLE_EQ(approx.dfduu(0, 0), (t*t + 1.0));
+  ASSERT_DOUBLE_EQ(approx.dfduu(0, 0), (t * t + 1.0));
 }

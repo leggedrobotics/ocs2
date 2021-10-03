@@ -44,7 +44,8 @@ namespace ocs2 {
  */
 class SystemDynamicsBaseAD : public SystemDynamicsBase {
  public:
-  SystemDynamicsBaseAD(size_t stateDim, size_t inputDim);
+  /** Constructor */
+  SystemDynamicsBaseAD();
 
   /** Default destructor */
   ~SystemDynamicsBaseAD() override = default;
@@ -52,24 +53,25 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   /**
    * Initializes model libraries
    *
+   * @param stateDim : state vector dimension.
+   * @param inputDim : input vector dimension.
    * @param modelName : name of the generate model library
    * @param modelFolder : folder to save the model library files to
-   * @param recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
-   * available.
+   * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
    * @param verbose : print information.
    */
-  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                  bool verbose = true);
+  void initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
+                  bool recompileLibraries = true, bool verbose = true);
 
-  vector_t computeFlowMap(scalar_t time, const vector_t& state, const vector_t& input) final;
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
 
-  vector_t computeJumpMap(scalar_t time, const vector_t& state) final;
+  vector_t computeJumpMap(scalar_t t, const vector_t& x, const PreComputation&) final;
 
-  vector_t computeGuardSurfaces(scalar_t time, const vector_t& state) final;
+  vector_t computeGuardSurfaces(scalar_t t, const vector_t& x) final;
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation&) final;
 
-  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x) final;
+  VectorFunctionLinearApproximation jumpMapLinearApproximation(scalar_t t, const vector_t& x, const PreComputation&) final;
 
   VectorFunctionLinearApproximation guardSurfacesLinearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final;
 
@@ -165,32 +167,11 @@ class SystemDynamicsBaseAD : public SystemDynamicsBase {
   virtual size_t getNumGuardSurfacesParameters() const { return 0; }
 
  private:
-  /**
-   * Sets all the required CppAdCodeGenInterfaces
-   */
-  void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
-
-  /**
-   * Create the forward model and derivatives.
-   *
-   * @param [in] verbose: display information.
-   */
-  void createModels(bool verbose);
-
-  /**
-   * Loads the forward model and derivatives if available. Constructs them otherwise.
-   *
-   * @param [in] verbose: display information
-   */
-  void loadModelsIfAvailable(bool verbose);
-
-  size_t stateDim_;
-  size_t inputDim_;
-
   std::unique_ptr<CppAdInterface> flowMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> jumpMapADInterfacePtr_;
   std::unique_ptr<CppAdInterface> guardSurfacesADInterfacePtr_;
 
+  /** Cached jacobians for time derivative */
   matrix_t flowJacobian_;
   matrix_t jumpJacobian_;
   matrix_t guardJacobian_;

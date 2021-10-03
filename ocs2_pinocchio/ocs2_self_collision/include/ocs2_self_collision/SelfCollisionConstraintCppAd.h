@@ -38,6 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
+/**
+ * This class provides the CppAD variant of the Self-collision constraints. Therefore no pre-computation is required. The class has
+ * two constructors. The constructor with an additional argument, "updateCallback", is meant for cases that PinocchioStateInputMapping
+ * requires extra update calls on PinocchioInterface, such as the centroidal model mapping (refer to CentroidalModelPinocchioMapping).
+ *
+ * See also SelfCollisionConstraint, which uses analytical computation and caching.
+ */
 class SelfCollisionConstraintCppAd final : public StateConstraint {
  public:
   using update_pinocchio_interface_callback =
@@ -86,27 +93,16 @@ class SelfCollisionConstraintCppAd final : public StateConstraint {
 
   size_t getNumConstraints(scalar_t time) const override;
 
-  /** Get the self collision distance values
-   * @note Requires pinocchio::forwardKinematics().
-   */
-  vector_t getValue(scalar_t time, const vector_t& state) const override;
+  /** Get the self collision distance values */
+  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
-  /** Get the self collision distance approximation
-   * @note Requires pinocchio::forwardKinematics().
-   */
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state) const override;
-
-  /** Caches the pointer to the pinocchio interface with pre-computed kinematics. (optional) */
-  void setPinocchioInterface(PinocchioInterface& pinocchioInterface) {
-    pinocchioInterfaceCachePtr_ = &pinocchioInterface;
-    mappingPtr_->setPinocchioInterface(pinocchioInterface);
-  }
+  /** Get the self collision distance approximation */
+  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
  private:
   SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs);
 
-  PinocchioInterface pinocchioInterface_;
-  PinocchioInterface* pinocchioInterfaceCachePtr_ = nullptr;
+  mutable PinocchioInterface pinocchioInterface_;
   SelfCollisionCppAd selfCollision_;
   std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
   update_pinocchio_interface_callback updateCallback_;

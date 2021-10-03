@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/constraint/ConstraintBase.h>
-#include <ocs2_core/cost/QuadraticCostFunction.h>
+#include <ocs2_core/cost/QuadraticStateCost.h>
+#include <ocs2_core/cost/QuadraticStateInputCost.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
@@ -47,10 +47,10 @@ class EXP0_Sys1 final : public LinearSystemDynamics {
   EXP0_Sys1() : LinearSystemDynamics(matrix_t(2, 2), matrix_t(2, 1)) {
     LinearSystemDynamics::A_ << 0.6, 1.2, -0.8, 3.4;
     LinearSystemDynamics::B_ << 1, 1;
-  };
-  ~EXP0_Sys1() = default;
+  }
+  ~EXP0_Sys1() override = default;
 
-  EXP0_Sys1* clone() const final { return new EXP0_Sys1(*this); }
+  EXP0_Sys1* clone() const override { return new EXP0_Sys1(*this); }
 
  private:
   EXP0_Sys1(const EXP0_Sys1& other) = default;
@@ -65,9 +65,9 @@ class EXP0_Sys2 final : public LinearSystemDynamics {
     LinearSystemDynamics::A_ << 4, 3, -1, 0;
     LinearSystemDynamics::B_ << 2, -1;
   };
-  ~EXP0_Sys2() = default;
+  ~EXP0_Sys2() override = default;
 
-  EXP0_Sys2* clone() const final { return new EXP0_Sys2(*this); }
+  EXP0_Sys2* clone() const override { return new EXP0_Sys2(*this); }
 
  private:
   EXP0_Sys2(const EXP0_Sys2& other) = default;
@@ -76,7 +76,7 @@ class EXP0_Sys2 final : public LinearSystemDynamics {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_System final : public SystemDynamicsBase {
+class EXP0_System : public SystemDynamicsBase {
  public:
   explicit EXP0_System(std::shared_ptr<ReferenceManager> referenceManagerPtr)
       : referenceManagerPtr_(std::move(referenceManagerPtr)), subsystemDynamicsPtr_(2) {
@@ -88,14 +88,15 @@ class EXP0_System final : public SystemDynamicsBase {
 
   EXP0_System* clone() const final { return new EXP0_System(*this); }
 
-  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u) final {
+  vector_t computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComp) final {
     const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u);
+    return subsystemDynamicsPtr_[activeMode]->computeFlowMap(t, x, u, preComp);
   }
 
-  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u) final {
+  VectorFunctionLinearApproximation linearApproximation(scalar_t t, const vector_t& x, const vector_t& u,
+                                                        const PreComputation& preComp) final {
     const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemDynamicsPtr_[activeMode]->linearApproximation(t, x, u);
+    return subsystemDynamicsPtr_[activeMode]->linearApproximation(t, x, u, preComp);
   }
 
  private:
@@ -108,59 +109,48 @@ class EXP0_System final : public SystemDynamicsBase {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-class EXP0_CostFunction : public CostFunctionBase {
+class EXP0_Cost final : public QuadraticStateInputCost {
  public:
-  explicit EXP0_CostFunction(std::shared_ptr<ReferenceManager> referenceManagerPtr) : referenceManagerPtr_(std::move(referenceManagerPtr)) {
-    const matrix_t Q = (matrix_t(2, 2) << 0.0, 0.0, 0.0, 1.0).finished();
-    const matrix_t R = (matrix_t(1, 1) << 1.0).finished();
-    const matrix_t Qf = (matrix_t(2, 2) << 1.0, 0.0, 0.0, 1.0).finished();
-    subsystemCostsPtr_[0].reset(new QuadraticCostFunction(Q, R, matrix_t::Zero(2, 2)));
-    subsystemCostsPtr_[1].reset(new QuadraticCostFunction(Q, R, Qf));
-
-    subsystemCostsPtr_[0]->setTargetTrajectoriesPtr(&referenceManagerPtr_->getTargetTrajectories());
-    subsystemCostsPtr_[1]->setTargetTrajectoriesPtr(&referenceManagerPtr_->getTargetTrajectories());
-  }
-
-  ~EXP0_CostFunction() = default;
-
-  EXP0_CostFunction* clone() const final { return new EXP0_CostFunction(*this); }
-
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) final {
-    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->cost(t, x, u);
-  }
-
-  scalar_t finalCost(scalar_t t, const vector_t& x) final {
-    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->finalCost(t, x);
-  }
-
-  ScalarFunctionQuadraticApproximation costQuadraticApproximation(scalar_t t, const vector_t& x, const vector_t& u) final {
-    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->costQuadraticApproximation(t, x, u);
-  }
-
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) final {
-    const auto activeMode = referenceManagerPtr_->getModeSchedule().modeAtTime(t);
-    return subsystemCostsPtr_[activeMode]->finalCostQuadraticApproximation(t, x);
-  }
+  EXP0_Cost() : QuadraticStateInputCost((matrix_t(2, 2) << 0.0, 0.0, 0.0, 1.0).finished(), matrix_t::Identity(1, 1)) {}
+  ~EXP0_Cost() override = default;
+  EXP0_Cost* clone() const override { return new EXP0_Cost(*this); }
 
  private:
-  EXP0_CostFunction(const EXP0_CostFunction& other) : EXP0_CostFunction(other.referenceManagerPtr_) {}
+  EXP0_Cost(const EXP0_Cost& other) = default;
 
-  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
-  std::vector<std::shared_ptr<CostFunctionBase>> subsystemCostsPtr_{2};
+  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
+                                                       const TargetTrajectories& targetTrajectories) const override {
+    return {state - targetTrajectories.stateTrajectory[0], input - targetTrajectories.inputTrajectory[0]};
+  }
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-inline std::shared_ptr<ReferenceManager> getExp0ReferenceManager(scalar_array_t eventTimes, std::vector<size_t> modeSequence) {
+class EXP0_FinalCost final : public QuadraticStateCost {
+ public:
+  EXP0_FinalCost() : QuadraticStateCost(matrix_t::Identity(2, 2)) {}
+  ~EXP0_FinalCost() override = default;
+  EXP0_FinalCost* clone() const override { return new EXP0_FinalCost(*this); }
+
+ private:
+  EXP0_FinalCost(const EXP0_FinalCost& other) = default;
+
+  vector_t getStateDeviation(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const override {
+    return state - targetTrajectories.stateTrajectory[0];
+  }
+};
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+inline std::shared_ptr<ReferenceManager> getExp0ReferenceManager(const scalar_array_t& eventTimes,
+                                                                 const std::vector<size_t>& modeSequence) {
   const vector_t x = (vector_t(2) << 4.0, 2.0).finished();
   const vector_t u = (vector_t(1) << 0.0).finished();
   TargetTrajectories targetTrajectories({0.0}, {x}, {u});
 
-  ModeSchedule modeSchedule(std::move(eventTimes), std::move(modeSequence));
+  ModeSchedule modeSchedule(eventTimes, modeSequence);
 
   return std::make_shared<ReferenceManager>(std::move(targetTrajectories), std::move(modeSchedule));
 }

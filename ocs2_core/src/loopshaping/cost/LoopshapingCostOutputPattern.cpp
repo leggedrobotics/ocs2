@@ -27,34 +27,44 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCostOutputPattern.h>
 
 namespace ocs2 {
 
-ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::costQuadraticApproximation(scalar_t t, const vector_t& x,
-                                                                                              const vector_t& u) {
+ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::getQuadraticApproximation(scalar_t t, const vector_t& x,
+                                                                                             const vector_t& u,
+                                                                                             const TargetTrajectories& targetTrajectories,
+                                                                                             const PreComputation& preComp) const {
+  if (this->empty()) {
+    return ScalarFunctionQuadraticApproximation::Zero(x.rows(), u.rows());
+  }
+
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
   const scalar_t gamma = loopshapingDefinition_->gamma_;
   const auto& r_filter = loopshapingDefinition_->getInputFilter();
-  const vector_t x_system = loopshapingDefinition_->getSystemState(x);
-  const vector_t u_system = loopshapingDefinition_->getSystemInput(x, u);
-  const vector_t x_filter = loopshapingDefinition_->getFilterState(x);
-  const vector_t u_filter = loopshapingDefinition_->getFilteredInput(x, u);
-  const auto& L_system = systemCost_->costQuadraticApproximation(t, x_system, u_system);
-  const auto& L_filter = systemCost_->costQuadraticApproximation(t, x_system, u_filter);
+  const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
+  const auto& x_system = preCompLS.getSystemState();
+  const auto& u_system = preCompLS.getSystemInput();
+  const auto& x_filter = preCompLS.getFilterState();
+  const auto& u_filter = preCompLS.getFilteredInput();
 
-  ScalarFunctionQuadraticApproximation L;
+  const auto L_system =
+      StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
+
+  const auto L_filter = StateInputCostCollection::getQuadraticApproximation(t, x_system, u_filter, targetTrajectories,
+                                                                            preCompLS.getFilteredSystemPreComputation());
+
+  ScalarFunctionQuadraticApproximation L(x.rows(), u.rows());
   L.f = gamma * L_filter.f + (1.0 - gamma) * L_system.f;
 
-  L.dfdx.resize(x.rows());
   L.dfdx.head(x_system.rows()) = gamma * L_filter.dfdx + (1.0 - gamma) * L_system.dfdx;
   if (isDiagonal) {
-    L.dfdx.tail(x_filter.rows()) = gamma * r_filter.getCdiag() * L_filter.dfdu;
+    L.dfdx.tail(x_filter.rows()) = gamma * r_filter.getCdiag().diagonal().cwiseProduct(L_filter.dfdu);
   } else {
     L.dfdx.tail(x_filter.rows()) = gamma * r_filter.getC().transpose() * L_filter.dfdu;
   }
 
-  L.dfdxx.resize(x.rows(), x.rows());
   L.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()) = gamma * L_filter.dfdxx + (1.0 - gamma) * L_system.dfdxx;
   if (isDiagonal) {
     L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()) = gamma * L_filter.dfdux.transpose() * r_filter.getCdiag();
@@ -66,14 +76,13 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::costQuadratic
   L.dfdxx.bottomLeftCorner(x_filter.rows(), x_system.rows()) = L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()).transpose();
 
   if (isDiagonal) {
-    L.dfdu = gamma * r_filter.getDdiag() * L_filter.dfdu + (1.0 - gamma) * L_system.dfdu;
+    L.dfdu = gamma * r_filter.getDdiag().diagonal().cwiseProduct(L_filter.dfdu) + (1.0 - gamma) * L_system.dfdu;
     L.dfduu = gamma * r_filter.getDdiag() * L_filter.dfduu * r_filter.getDdiag() + (1.0 - gamma) * L_system.dfduu;
   } else {
     L.dfdu = gamma * r_filter.getD().transpose() * L_filter.dfdu + (1.0 - gamma) * L_system.dfdu;
     L.dfduu = gamma * r_filter.getD().transpose() * L_filter.dfduu * r_filter.getD() + (1.0 - gamma) * L_system.dfduu;
   }
 
-  L.dfdux.resize(u.rows(), x.rows());
   if (isDiagonal) {
     L.dfdux.leftCols(x_system.rows()) = gamma * r_filter.getDdiag() * L_filter.dfdux + (1.0 - gamma) * L_system.dfdux;
     L.dfdux.rightCols(x_filter.rows()) = gamma * r_filter.getDdiag() * L_filter.dfduu * r_filter.getCdiag();

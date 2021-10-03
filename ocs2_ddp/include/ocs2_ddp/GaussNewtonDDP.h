@@ -30,10 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/constraint/ConstraintBase.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/control/TrajectorySpreadingControllerAdjustment.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/misc/Benchmark.h>
@@ -45,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/SolverBase.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
@@ -72,25 +71,15 @@ class GaussNewtonDDP : public SolverBase {
   };
 
   /**
-   * class for collecting SLQ data
-   */
-  friend class DDP_DataCollector;
-
-  /**
    * Constructor
-   *
-   * @param [in] rolloutPtr: The rollout class used for simulating the system dynamics.
-   * @param [in] systemDynamicsPtr: The system dynamics and derivatives for the subsystems.
-   * @param [in] systemConstraintsPtr: The system constraint function and its derivatives for subsystems.
-   * @param [in] costFunctionPtr: The cost function (intermediate and final costs) and its derivatives for subsystems.
-   * @param [in] initializerPtr: This class initializes the state-input for the time steps that no controller is available.
+
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
-   * @param [in] heuristicsFunctionPtr: Heuristic function used in the infinite time optimal control formulation.
-   * If it is not defined, we will use the final cost function defined in costFunctionPtr.
+   * @param [in] rollout: The rollout class used for simulating the system dynamics.
+   * @param [in] optimalControlProblem: The optimal control problem formulation.
+   * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  GaussNewtonDDP(const RolloutBase* rolloutPtr, const SystemDynamicsBase* systemDynamicsPtr, const ConstraintBase* systemConstraintsPtr,
-                 const CostFunctionBase* costFunctionPtr, const Initializer* initializerPtr, ddp::Settings ddpSettings,
-                 const CostFunctionBase* heuristicsFunctionPtr);
+  GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+                 const Initializer& initializer);
 
   /**
    * Destructor.
@@ -454,7 +443,7 @@ class GaussNewtonDDP : public SolverBase {
   scalar_array_t partitioningTimes_;
 
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
-  std::vector<std::unique_ptr<LinearQuadraticApproximator>> linearQuadraticApproximatorPtrStock_;
+  std::vector<OptimalControlProblem> optimalControlProblemStock_;
 
   // optimized controller
   std::vector<LinearController> nominalControllersStock_;
@@ -502,7 +491,6 @@ class GaussNewtonDDP : public SolverBase {
 
   std::vector<std::unique_ptr<RolloutBase>> dynamicsForwardRolloutPtrStock_;
   std::vector<std::unique_ptr<RolloutBase>> initializerRolloutPtrStock_;
-  std::vector<std::unique_ptr<CostFunctionBase>> heuristicsFunctionsPtrStock_;
   std::unique_ptr<SoftConstraintPenalty> penaltyPtr_;
 
   // used for caching the nominal trajectories for which the LQ problem is

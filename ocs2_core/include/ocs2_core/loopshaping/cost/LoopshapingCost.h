@@ -31,37 +31,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#include <ocs2_core/Types.h>
-#include <ocs2_core/cost/CostFunctionBase.h>
+#include <ocs2_core/cost/StateCostCollection.h>
+#include <ocs2_core/cost/StateInputCostCollection.h>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 
 namespace ocs2 {
+namespace LoopshapingCost {
 
-class LoopshapingCost : public CostFunctionBase {
- public:
-  ~LoopshapingCost() override = default;
+/** Factory for Loopshaping state-only cost wrapper */
+std::unique_ptr<StateCostCollection> create(const StateCostCollection& systemCost,
+                                            std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  LoopshapingCost(const LoopshapingCost& obj)
-      : CostFunctionBase(), systemCost_(obj.systemCost_->clone()), loopshapingDefinition_(obj.loopshapingDefinition_) {}
-
-  static std::unique_ptr<LoopshapingCost> create(const CostFunctionBase& systemCost,
+/** Factory for Loopshaping state-input cost wrapper */
+std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection& systemCost,
                                                  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition);
 
-  void setTargetTrajectoriesPtr(const TargetTrajectories* targetTrajectoriesPtr) override;
-  scalar_t cost(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCost(scalar_t t, const vector_t& x) override;
-  ScalarFunctionQuadraticApproximation finalCostQuadraticApproximation(scalar_t t, const vector_t& x) override;
-  scalar_t costDerivativeTime(scalar_t t, const vector_t& x, const vector_t& u) override;
-  scalar_t finalCostDerivativeTime(scalar_t t, const vector_t& x) override;
-
- protected:
-  LoopshapingCost(const CostFunctionBase& systemCost, std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-      : CostFunctionBase(), systemCost_(systemCost.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
-
-  std::unique_ptr<CostFunctionBase> systemCost_;
-  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
-
-  using CostFunctionBase::targetTrajectoriesPtr_;
-};
-
+}  // namespace LoopshapingCost
 }  // namespace ocs2

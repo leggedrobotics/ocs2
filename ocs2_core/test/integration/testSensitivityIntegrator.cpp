@@ -29,21 +29,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include "ocs2_core/integration/SensitivityIntegrator.h"
 #include "ocs2_core/integration/Integrator.h"
+#include "ocs2_core/integration/SensitivityIntegrator.h"
 
+#include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/dynamics/LinearSystemDynamics.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
-#include <ocs2_core/control/FeedforwardController.h>
 
 namespace {
-ocs2::LinearSystemDynamics getSystem() {
+std::unique_ptr<ocs2::LinearSystemDynamics> getSystem() {
   ocs2::matrix_t A(2, 2);
   A << -2, -1,  // clang-format off
       1,  0;  // clang-format on
   ocs2::matrix_t B(2, 1);
   B << 1, 0;
-  return {A, B};
+  return std::unique_ptr<ocs2::LinearSystemDynamics>(new ocs2::LinearSystemDynamics(A, B));
 }
 }  // namespace
 
@@ -60,8 +60,10 @@ TEST(test_sensitivity_integrator, eulerSensitivity) {
 
   // Check with more readable version of sensitivity computation.
   const auto eulerdynamics_check = [&]() {
+    const ocs2::PreComputation preComp;
+
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
+    const ocs2::VectorFunctionLinearApproximation k1 = system->linearApproximation(t, x, u, preComp);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -77,9 +79,9 @@ TEST(test_sensitivity_integrator, eulerSensitivity) {
     return discreteApproximation;
   }();
 
-  const auto eulerForwardDynamics = eulerDiscretization(system, t, x, u, dt);
+  const auto eulerForwardDynamics = eulerDiscretization(*system, t, x, u, dt);
   ASSERT_TRUE(eulerForwardDynamics.isApprox(eulerdynamics_check.f));
-  const auto eulerLinearizedDynamics = eulerSensitivityDiscretization(system, t, x, u, dt);
+  const auto eulerLinearizedDynamics = eulerSensitivityDiscretization(*system, t, x, u, dt);
   ASSERT_TRUE(eulerLinearizedDynamics.f.isApprox(eulerdynamics_check.f));
   ASSERT_TRUE(eulerLinearizedDynamics.dfdx.isApprox(eulerdynamics_check.dfdx));
   ASSERT_TRUE(eulerLinearizedDynamics.dfdu.isApprox(eulerdynamics_check.dfdu));
@@ -99,10 +101,11 @@ TEST(test_sensitivity_integrator, rk2Sensitivity) {
   // Check with more readable version of sensitivity computation.
   const auto rk2dynamics_check = [&]() {
     const ocs2::scalar_t dt_halve = dt / 2.0;
+    const ocs2::PreComputation preComp;
 
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
-    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt, x + dt * k1.f, u);
+    const ocs2::VectorFunctionLinearApproximation k1 = system->linearApproximation(t, x, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k2 = system->linearApproximation(t + dt, x + dt * k1.f, u, preComp);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -120,9 +123,9 @@ TEST(test_sensitivity_integrator, rk2Sensitivity) {
     return discreteApproximation;
   }();
 
-  const auto rk2ForwardDynamics = rk2Discretization(system, t, x, u, dt);
+  const auto rk2ForwardDynamics = rk2Discretization(*system, t, x, u, dt);
   ASSERT_TRUE(rk2ForwardDynamics.isApprox(rk2dynamics_check.f));
-  const auto rk2LinearizedDynamics = rk2SensitivityDiscretization(system, t, x, u, dt);
+  const auto rk2LinearizedDynamics = rk2SensitivityDiscretization(*system, t, x, u, dt);
   ASSERT_TRUE(rk2LinearizedDynamics.f.isApprox(rk2dynamics_check.f));
   ASSERT_TRUE(rk2LinearizedDynamics.dfdx.isApprox(rk2dynamics_check.dfdx));
   ASSERT_TRUE(rk2LinearizedDynamics.dfdu.isApprox(rk2dynamics_check.dfdu));
@@ -144,12 +147,13 @@ TEST(test_sensitivity_integrator, rk4Sensitivity) {
     const ocs2::scalar_t dt_halve = dt / 2.0;
     const ocs2::scalar_t dt_sixth = dt / 6.0;
     const ocs2::scalar_t dt_third = dt / 3.0;
+    const ocs2::PreComputation preComp;
 
     // System evaluations
-    const ocs2::VectorFunctionLinearApproximation k1 = system.linearApproximation(t, x, u);
-    const ocs2::VectorFunctionLinearApproximation k2 = system.linearApproximation(t + dt_halve, x + dt_halve * k1.f, u);
-    const ocs2::VectorFunctionLinearApproximation k3 = system.linearApproximation(t + dt_halve, x + dt_halve * k2.f, u);
-    const ocs2::VectorFunctionLinearApproximation k4 = system.linearApproximation(t + dt, x + dt * k3.f, u);
+    const ocs2::VectorFunctionLinearApproximation k1 = system->linearApproximation(t, x, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k2 = system->linearApproximation(t + dt_halve, x + dt_halve * k1.f, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k3 = system->linearApproximation(t + dt_halve, x + dt_halve * k2.f, u, preComp);
+    const ocs2::VectorFunctionLinearApproximation k4 = system->linearApproximation(t + dt, x + dt * k3.f, u, preComp);
 
     // State sensitivity \dot{Sx} = dfdx(t) Sx, with Sx(0) = Identity()
     const ocs2::matrix_t dk1dxk = k1.dfdx;
@@ -172,9 +176,9 @@ TEST(test_sensitivity_integrator, rk4Sensitivity) {
     return discreteApproximation;
   }();
 
-  const auto rk4ForwardDynamics = rk4Discretization(system, t, x, u, dt);
+  const auto rk4ForwardDynamics = rk4Discretization(*system, t, x, u, dt);
   ASSERT_TRUE(rk4ForwardDynamics.isApprox(rk4dynamics_check.f));
-  const auto rk4LinearizedDynamics = rk4SensitivityDiscretization(system, t, x, u, dt);
+  const auto rk4LinearizedDynamics = rk4SensitivityDiscretization(*system, t, x, u, dt);
   ASSERT_TRUE(rk4LinearizedDynamics.f.isApprox(rk4dynamics_check.f));
   ASSERT_TRUE(rk4LinearizedDynamics.dfdx.isApprox(rk4dynamics_check.dfdx));
   ASSERT_TRUE(rk4LinearizedDynamics.dfdu.isApprox(rk4dynamics_check.dfdu));
@@ -193,15 +197,15 @@ TEST(test_sensitivity_integrator, vsBoostRK4) {
   ocs2::vector_array_t stateTrajectory;
   auto observer = ocs2::Observer(&stateTrajectory, &timeTrajectory);
   ocs2::FeedforwardController controller({t, t}, {u, u});
-  system.setController(&controller);
+  system->setController(&controller);
   int maxNumSteps = 4;
-  integrator->integrateConst(system, observer, x, t, t+dt, dt, maxNumSteps);
+  integrator->integrateConst(*system, observer, x, t, t + dt, dt, maxNumSteps);
   const auto boostRk4ForwardDynamics = stateTrajectory.back();
 
   // This version
   auto type = ocs2::SensitivityIntegratorType::RK4;
   auto rk4Discretization = ocs2::selectDynamicsDiscretization(type);
-  const auto rk4ForwardDynamics = rk4Discretization(system, t, x, u, dt);
+  const auto rk4ForwardDynamics = rk4Discretization(*system, t, x, u, dt);
 
   // Check
   ASSERT_TRUE(rk4ForwardDynamics.isApprox(boostRk4ForwardDynamics));

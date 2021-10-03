@@ -167,43 +167,20 @@ void SphereApproximation::approximateCylinder(const scalar_t radius, const scala
   if (sides(0) > sides(1)) {
     std::swap(idxSorted[0], idxSorted[1]);
   }
-
-  // TODO (jichiu): Figure a better way to store the desired ratio maxExcessL / maxExcess
-  scalar_t maxExcessL = maxExcess_ * 0.7;
-  vector_t initSphereRadii(3);
-  size_t caseIdx;
-  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExcessL, std::sqrt(2) * maxExcessL / (std::sqrt(2) - 1);
-  sphereRadius_ = initSphereRadii.minCoeff(&caseIdx);
-
   vector_t distances(2);
   vector_t numSpheres(2);
 
-  if (caseIdx == 0) {
-    distances = sides / 2;
+  // TODO (jichiu): Figure a better way to store the desired ratio maxExcessL / maxExcess
+  scalar_t maxExcessL = maxExcess_ * 0.7;
 
-    numSpheres = vector_t::Ones(2);
-
-  } else if (caseIdx == 1) {
-    distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
-    distances[idxSorted[1]] = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[idxSorted[0]], 2));
-
-    numSpheres[idxSorted[0]] = 1;
-    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
-
-    // Re-calculate the distances
-    distances[idxSorted[1]] = sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]);
-
-  } else {
-    distances = (sphereRadius_ - maxExcessL) * vector_t::Ones(2);
-
-    numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
-    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
-
-    // Re-calculate the distances
-    distances = std::max(sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]])) *
-                vector_t::Ones(2);
+  approximateRectanglularCrossSection(sides, idxSorted, maxExcess_, sphereRadius_, numSpheres, distances);
+  bool recursiveApproximation = false;  // If recursive approximation of the cylinder base is necessary.
+  if (numSpheres[0] > 1) {
+    // More than one sphere is required along radial direction with maxExcess. Re-approximate the rectangular cross-section using the
+    // reduced threshold in favor of the later approximation of the circular base.
+    approximateRectanglularCrossSection(sides, idxSorted, maxExcessL, sphereRadius_, numSpheres, distances);
+    recursiveApproximation = true;
   }
-  sphereRadius_ = distances.norm();
 
   scalar_t spacingLength;
   if (numSpheres[1] > 1) {
@@ -211,24 +188,27 @@ void SphereApproximation::approximateCylinder(const scalar_t radius, const scala
   }
 
   // Second, approximate the circle base of the cylinder
-  bool approximateCylinderBase = true;
-  scalar_t radiusBase = radius;
-  scalar_t radiusCircle = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[1], 2));
-  scalar_t maxExcessR = maxExcess_ - maxExcessL;
   vector_array_t circleCentersToBaseCenter;
+  if (!recursiveApproximation) {
+    circleCentersToBaseCenter.push_back(vector_t::Zero(2));
+  } else {
+    scalar_t radiusBase = radius;
+    scalar_t radiusCircle = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[1], 2));
+    scalar_t maxExcessR = maxExcess_ - maxExcessL;
 
-  while (approximateCylinderBase) {
-    scalar_t shift, alpha, numCircles;
-    approximateCylinderBase = approximateCircleBase(radiusBase, radiusCircle, maxExcessR, shift, alpha, numCircles);
+    while (recursiveApproximation) {
+      scalar_t shift, alpha, numCircles;
+      recursiveApproximation = approximateCircleBase(radiusBase, radiusCircle, maxExcessR, shift, alpha, numCircles);
 
-    for (size_t i = 0; i < numCircles; i++) {
-      vector_t circleCenter(2);
-      circleCenter << shift * std::sin(i * alpha), shift * std::cos(i * alpha);
-      circleCentersToBaseCenter.push_back(circleCenter);
+      for (size_t i = 0; i < numCircles; i++) {
+        vector_t circleCenter(2);
+        circleCenter << shift * std::sin(i * alpha), shift * std::cos(i * alpha);
+        circleCentersToBaseCenter.push_back(circleCenter);
+      }
+
+      // Enclose the uncovered area by another circle with radiusBase
+      radiusBase = shift / std::cos(alpha / 2) - radiusCircle;
     }
-
-    // Enclose the uncovered area by another circle with radiusBase
-    radiusBase = shift / std::cos(alpha / 2) - radiusCircle;
   }
 
   numSpheres[0] = circleCentersToBaseCenter.size();
@@ -242,6 +222,44 @@ void SphereApproximation::approximateCylinder(const scalar_t radius, const scala
       count++;
     }
   }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void SphereApproximation::approximateRectanglularCrossSection(const vector_t& sides, const size_array_t& idxSorted,
+                                                              const scalar_t maxExcess, scalar_t& sphereRadius, vector_t& numSpheres,
+                                                              vector_t& distances) {
+  vector_t initSphereRadii(3);
+  size_t caseIdx;
+  initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExcess, std::sqrt(2) * maxExcess / (std::sqrt(2) - 1);
+  sphereRadius = initSphereRadii.minCoeff(&caseIdx);
+
+  if (caseIdx == 0) {
+    distances = sides / 2;
+
+    numSpheres = vector_t::Ones(2);
+
+  } else if (caseIdx == 1) {
+    distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
+    distances[idxSorted[1]] = std::sqrt(std::pow(sphereRadius, 2) - std::pow(distances[idxSorted[0]], 2));
+
+    numSpheres[idxSorted[0]] = 1;
+    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+
+    // Re-calculate the distances
+    distances[idxSorted[1]] = sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]);
+  } else {
+    distances = (sphereRadius - maxExcess) * vector_t::Ones(2);
+
+    numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
+    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+
+    // Re-calculate the distances
+    distances = std::max(sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]])) *
+                vector_t::Ones(2);
+  }
+  sphereRadius = distances.norm();
 }
 
 /******************************************************************************************************/

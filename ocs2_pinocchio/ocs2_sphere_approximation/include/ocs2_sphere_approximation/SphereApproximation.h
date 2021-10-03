@@ -76,6 +76,8 @@ class SphereApproximation {
  private:
   void approximateBox(const vector_t& sides);
   void approximateCylinder(const scalar_t radius, const scalar_t length);
+  void approximateRectanglularCrossSection(const vector_t& sides, const size_array_t& idxSorted, const scalar_t maxExcess,
+                                           scalar_t& sphereRadius, vector_t& numSpheres, vector_t& distances);
   bool approximateCircleBase(const scalar_t radiusBase, const scalar_t radiusSphereCrossSection, const scalar_t maxExcessR, scalar_t& shift,
                              scalar_t& alpha, scalar_t& numCircles);
 

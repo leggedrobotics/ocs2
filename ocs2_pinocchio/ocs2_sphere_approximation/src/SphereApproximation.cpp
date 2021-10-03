@@ -37,8 +37,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SphereApproximation::SphereApproximation(const size_t geomObjId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess)
-    : geomObjId_(geomObjId), maxExcess_(maxExcess) {
+SphereApproximation::SphereApproximation(const size_t geomObjId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess,
+                                         const scalar_t shrinkRatio)
+    : geomObjId_(geomObjId), maxExcess_(maxExcess), shrinkRatio_(shrinkRatio) {
+  if (shrinkRatio <= 0.0 || shrinkRatio >= 1.0) {
+    throw std::runtime_error("[SphereApproximation] shrinkRation must be larger than 0.0 and smaller than 1.0!");
+  }
   const auto& nodeType = geometryPtr->getNodeType();
   switch (nodeType) {
     case hpp::fcl::NODE_TYPE::GEOM_BOX: {
@@ -167,11 +171,10 @@ void SphereApproximation::approximateCylinder(const scalar_t radius, const scala
   if (sides(0) > sides(1)) {
     std::swap(idxSorted[0], idxSorted[1]);
   }
+
+  scalar_t maxExcessL = maxExcess_ * shrinkRatio_;
   vector_t distances(2);
   vector_t numSpheres(2);
-
-  // TODO (jichiu): Figure a better way to store the desired ratio maxExcessL / maxExcess
-  scalar_t maxExcessL = maxExcess_ * 0.7;
 
   approximateRectanglularCrossSection(sides, idxSorted, maxExcess_, sphereRadius_, numSpheres, distances);
   bool recursiveApproximation = false;  // If recursive approximation of the cylinder base is necessary.

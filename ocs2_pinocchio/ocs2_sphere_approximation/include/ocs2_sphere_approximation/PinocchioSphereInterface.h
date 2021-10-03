@@ -52,9 +52,10 @@ class PinocchioSphereInterface final {
    * @param [in] pinocchioInterface : pinocchio interface
    * @param [in] collisionLinks : vector of the names of links to be approximated with spheres
    * @param [in] maxExcess : vector of the maximum allowed excess for the sphere approximation of each link
+   * @param [in] shrinkRatio: ratio of shrinking maxExcess when recursive approximation of the cylinder base is necessary
    */
   PinocchioSphereInterface(const PinocchioInterface& pinocchioInterface, std::vector<std::string> collisionLinks,
-                           const std::vector<scalar_t>& maxExcesses);
+                           const std::vector<scalar_t>& maxExcesses, const scalar_t shrinkRatio);
 
   /** Compute the sphere center positions in world frame
    *

@@ -46,7 +46,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioSphereInterface::PinocchioSphereInterface(const PinocchioInterface& pinocchioInterface, std::vector<std::string> collisionLinks,
-                                                   const std::vector<scalar_t>& maxExcesses)
+                                                   const std::vector<scalar_t>& maxExcesses, const scalar_t shrinkRatio)
     : geometryModelPtr_(new pinocchio::GeometryModel), collisionLinks_(std::move(collisionLinks)) {
   buildGeomFromPinocchioInterface(pinocchioInterface, *geometryModelPtr_);
 
@@ -56,7 +56,7 @@ PinocchioSphereInterface::PinocchioSphereInterface(const PinocchioInterface& pin
       const pinocchio::GeometryObject& object = geometryModelPtr_->geometryObjects[j];
       const std::string parentFrameName = pinocchioInterface.getModel().frames[object.parentFrame].name;
       if (parentFrameName == link) {
-        sphereApproximations_.emplace_back(j, object.geometry.get(), maxExcesses[i]);
+        sphereApproximations_.emplace_back(j, object.geometry.get(), maxExcesses[i], shrinkRatio);
       }
     }
   }

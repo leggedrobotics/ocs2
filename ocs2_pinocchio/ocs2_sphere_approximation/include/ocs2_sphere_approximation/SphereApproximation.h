@@ -55,8 +55,10 @@ class SphereApproximation {
    * @param [in] geomObjectId : index of the geometry object in GeoemtryModel
    * @param [in] geometryPtr : pointer to the geometry stored in GeometryModel
    * @param [in] maxExcess : maximum allowed excess from the object surface to the sphere surface
+   * @param [in] shrinkRatio: ratio of shrinking maxExcess when recursive approximation of the cylinder base is necessary
    */
-  SphereApproximation(const size_t geomObjectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess);
+  SphereApproximation(const size_t geomObjectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess,
+                      const scalar_t shrinkRatio);
 
   /** Get the index of the geometry object stored in GeometryModel */
   size_t getGeomObjId() const { return geomObjId_; };
@@ -83,6 +85,7 @@ class SphereApproximation {
 
   const size_t geomObjId_;
   const scalar_t maxExcess_;
+  const scalar_t shrinkRatio_;
 
   size_t numSpheres_;
   scalar_t sphereRadius_;

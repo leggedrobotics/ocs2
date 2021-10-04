@@ -5,6 +5,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   pybind11_catkin
   ocs2_mpc
   ocs2_python_interface
+  ocs2_ros_interfaces
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -44,6 +45,8 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/control/MpcnetBehavioralController.cpp
   src/control/MpcnetOnnxController.cpp
+  src/dummy/MpcnetDummyLoopRos.cpp
+  src/dummy/MpcnetDummyObserverRos.cpp
   src/rollout/MpcnetDataGeneration.cpp
   src/rollout/MpcnetPolicyEvaluation.cpp
   src/rollout/MpcnetRolloutManager.cpp

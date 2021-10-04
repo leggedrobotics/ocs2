@@ -29,10 +29,13 @@ class QuadrupedPointfootInterface : public QuadrupedInterface {
 
   const ComKinoInitializer& getInitializer() const override { return *initializerPtr_; }
 
+  const ScalarFunctionQuadraticApproximation& nominalCostApproximation() const override { return nominalCostApproximation_; }
+
  private:
   std::unique_ptr<ComKinoInitializer> initializerPtr_;
   std::unique_ptr<ocs2::TimeTriggeredRollout> timeTriggeredRolloutPtr_;
   synchronized_module_ptr_array_t solverModules_;
+  ScalarFunctionQuadraticApproximation nominalCostApproximation_;
 };
 
 }  // namespace switched_model

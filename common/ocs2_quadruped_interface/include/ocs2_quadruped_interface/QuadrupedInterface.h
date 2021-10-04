@@ -87,6 +87,9 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   /** Gets the solver synchronized modules */
   virtual const synchronized_module_ptr_array_t& getSynchronizedModules() const = 0;
 
+  /** Cost approximation at the nominal state and input*/
+  virtual const ScalarFunctionQuadraticApproximation& nominalCostApproximation() const = 0;
+
  protected:
   std::unique_ptr<ocs2::OptimalControlProblem> problemPtr_;
 

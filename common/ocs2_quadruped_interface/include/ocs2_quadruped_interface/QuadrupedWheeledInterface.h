@@ -30,10 +30,13 @@ class QuadrupedWheeledInterface : public QuadrupedInterface {
 
   const initializer_t& getInitializer() const override { return *initializerPtr_; }
 
+  const ScalarFunctionQuadraticApproximation& nominalCostApproximation() const override { return nominalCostApproximation_; }
+
  private:
   std::unique_ptr<initializer_t> initializerPtr_;
   std::unique_ptr<time_triggered_rollout_t> timeTriggeredRolloutPtr_;
   synchronized_module_ptr_array_t solverModules_;
+  ScalarFunctionQuadraticApproximation nominalCostApproximation_;
 };
 
 }  // namespace switched_model

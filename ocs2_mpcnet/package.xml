@@ -17,5 +17,6 @@
 
   <depend>ocs2_mpc</depend>
   <depend>ocs2_python_interface</depend>
+  <depend>ocs2_ros_interfaces</depend>
 
 </package>

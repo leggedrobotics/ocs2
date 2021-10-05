@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/loopshaping/cost/LoopshapingStateCost.h>
 #include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraint.h>
 #include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraintEliminatePattern.h>
-#include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraintInputPattern.h>
 #include <ocs2_core/loopshaping/soft_constraint/LoopshapingSoftConstraintOutputPattern.h>
 #include <ocs2_core/loopshaping/soft_constraint/LoopshapingStateInputSoftConstraint.h>
 
@@ -55,9 +54,6 @@ std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection&
     case LoopshapingType::outputpattern:
       return std::unique_ptr<StateInputCostCollection>(
           new LoopshapingSoftConstraintOutputPattern(systemSoftConstraint, std::move(loopshapingDefinition)));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<StateInputCostCollection>(
-          new LoopshapingSoftConstraintInputPattern(systemSoftConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<StateInputCostCollection>(
           new LoopshapingSoftConstraintEliminatePattern(systemSoftConstraint, std::move(loopshapingDefinition)));

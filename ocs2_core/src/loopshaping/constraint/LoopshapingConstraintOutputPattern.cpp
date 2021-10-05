@@ -46,19 +46,22 @@ VectorFunctionLinearApproximation LoopshapingConstraintOutputPattern::getLinearA
   const auto& preComp_system = preCompLS.getSystemPreComputation();
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
+  const auto stateDim = x.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x.rows() - sysStateDim;
 
-  const auto g_system = StateInputConstraintCollection::getLinearApproximation(t, x_system, u_system, preComp_system);
+  // Not const so we can move
+  auto g_system = StateInputConstraintCollection::getLinearApproximation(t, x_system, u_system, preComp_system);
+  const auto numConstraints = g_system.f.rows();
 
   VectorFunctionLinearApproximation g;
   g.f = std::move(g_system.f);
 
-  g.dfdx.resize(g.f.rows(), x.rows());
-  g.dfdx.leftCols(x_system.rows()) = g_system.dfdx;
-  g.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
+  g.dfdx.resize(numConstraints, stateDim);
+  g.dfdx.leftCols(sysStateDim) = g_system.dfdx;
+  g.dfdx.rightCols(filtStateDim).setZero();
 
-  g.dfdu.resize(g.f.rows(), u.rows());
-  g.dfdu.leftCols(u_system.rows()).noalias() = g_system.dfdu;
-  g.dfdu.rightCols(u.rows() - u_system.rows()).setZero();
+  g.dfdu = std::move(g_system.dfdu);
 
   return g;
 }
@@ -78,30 +81,36 @@ VectorFunctionQuadraticApproximation LoopshapingConstraintOutputPattern::getQuad
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& x_filter = preCompLS.getFilterState();
+  const auto stateDim = x.rows();
+  const auto inputDim = u.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x_filter.rows();
 
-  const auto h_system = StateInputConstraintCollection::getQuadraticApproximation(t, x_system, u_system, preComp_system);
+  // Not const so we can move
+  auto h_system = StateInputConstraintCollection::getQuadraticApproximation(t, x_system, u_system, preComp_system);
+  const auto numConstraints = h_system.f.rows();
 
   VectorFunctionQuadraticApproximation h;
   h.f = std::move(h_system.f);
 
-  h.dfdx.resize(h.f.rows(), x.rows());
-  h.dfdx.leftCols(x_system.rows()) = h_system.dfdx;
-  h.dfdx.rightCols(x_filter.rows()).setZero();
+  h.dfdx.resize(numConstraints, stateDim);
+  h.dfdx.leftCols(sysStateDim) = h_system.dfdx;
+  h.dfdx.rightCols(filtStateDim).setZero();
 
-  h.dfdu = h_system.dfdu;
+  h.dfdu = std::move(h_system.dfdu);
 
-  h.dfdxx.resize(h.f.rows());
-  h.dfduu.resize(h.f.rows());
-  h.dfdux.resize(h.f.rows());
-  for (size_t i = 0; i < h.f.rows(); i++) {
-    h.dfdxx[i].setZero(x.rows(), x.rows());
-    h.dfdxx[i].topLeftCorner(x_system.rows(), x_system.rows()) = h_system.dfdxx[i];
+  h.dfdxx.resize(numConstraints);
+  h.dfduu.resize(numConstraints);
+  h.dfdux.resize(numConstraints);
+  for (size_t i = 0; i < numConstraints; i++) {
+    h.dfdxx[i].setZero(stateDim, stateDim);
+    h.dfdxx[i].topLeftCorner(sysStateDim, sysStateDim) = h_system.dfdxx[i];
 
-    h.dfduu[i] = h_system.dfduu[i];
+    h.dfduu[i] = std::move(h_system.dfduu[i]);
 
-    h.dfdux[i].resize(u.rows(), x.rows());
-    h.dfdux[i].leftCols(x_system.rows()) = h_system.dfdux[i];
-    h.dfdux[i].rightCols(x_filter.rows()).setZero();
+    h.dfdux[i].resize(inputDim, stateDim);
+    h.dfdux[i].leftCols(sysStateDim) = h_system.dfdux[i];
+    h.dfdux[i].rightCols(filtStateDim).setZero();
   }
 
   return h;

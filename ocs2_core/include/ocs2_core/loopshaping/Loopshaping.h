@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
 #include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingFilterConstraint.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
 #include <ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h>
 #include <ocs2_core/loopshaping/dynamics/LoopshapingFilterDynamics.h>

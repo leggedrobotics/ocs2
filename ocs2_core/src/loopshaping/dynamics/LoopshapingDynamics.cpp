@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/loopshaping/dynamics/LoopshapingDynamics.h>
 #include <ocs2_core/loopshaping/dynamics/LoopshapingDynamicsEliminatePattern.h>
-#include <ocs2_core/loopshaping/dynamics/LoopshapingDynamicsInputPattern.h>
 #include <ocs2_core/loopshaping/dynamics/LoopshapingDynamicsOutputPattern.h>
 
 namespace ocs2 {
@@ -81,13 +80,20 @@ VectorFunctionLinearApproximation LoopshapingDynamics::jumpMapLinearApproximatio
   VectorFunctionLinearApproximation jumpMap;
   jumpMap.f = loopshapingDefinition_->concatenateSystemAndFilterState(jumpMap_system.f, jumMap_filter);
 
-  jumpMap.dfdx.resize(jumpMap.f.size(), jumpMap.f.size());
-  jumpMap.dfdx.topLeftCorner(jumpMap_system.f.size(), x_system.size()) = jumpMap_system.dfdx;
-  jumpMap.dfdx.topRightCorner(jumpMap_system.f.size(), jumMap_filter.size()).setZero();
-  jumpMap.dfdx.bottomLeftCorner(jumMap_filter.size(), x_system.size()).setZero();
-  jumpMap.dfdx.bottomRightCorner(jumMap_filter.size(), jumMap_filter.size()).setIdentity();
+  const auto postJumpStateDim = jumpMap.f.rows();
+  const auto postJumpSysStateDim = jumpMap_system.f.rows();
+  const auto postJumpFiltStateDim = jumMap_filter.rows();
+  const auto stateDim = x.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = stateDim - sysStateDim;
 
-  jumpMap.dfdu.resize(jumpMap.f.size(), 0);
+  jumpMap.dfdx.resize(postJumpStateDim, stateDim);
+  jumpMap.dfdx.topLeftCorner(postJumpSysStateDim, sysStateDim) = jumpMap_system.dfdx;
+  jumpMap.dfdx.bottomLeftCorner(postJumpFiltStateDim, sysStateDim).setZero();
+  jumpMap.dfdx.topRightCorner(postJumpSysStateDim, filtStateDim).setZero();
+  jumpMap.dfdx.bottomRightCorner(postJumpFiltStateDim, filtStateDim).setIdentity();
+
+  jumpMap.dfdu.resize(postJumpStateDim, 0);
 
   return jumpMap;
 }
@@ -121,9 +127,6 @@ std::unique_ptr<LoopshapingDynamics> LoopshapingDynamics::create(const SystemDyn
     case LoopshapingType::outputpattern:
       return std::unique_ptr<LoopshapingDynamics>(
           new LoopshapingDynamicsOutputPattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingDynamics>(
-          new LoopshapingDynamicsInputPattern(systemDynamics, std::move(loopshapingDefinition), preComputation));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<LoopshapingDynamics>(
           new LoopshapingDynamicsEliminatePattern(systemDynamics, std::move(loopshapingDefinition), preComputation));

@@ -1,10 +1,35 @@
-//
-// Created by rgrandia on 14.02.20.
-//
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+
+#include "ocs2_core/loopshaping/LoopshapingFilter.h"
 
 #include <iostream>
-
-#include <ocs2_core/loopshaping/LoopshapingFilter.h>
 
 namespace ocs2 {
 
@@ -28,41 +53,57 @@ Filter::Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D)
       numInputs_(B_.cols()),
       numOutputs_(C_.rows()) {
   checkSize();
+
+  // Prepare inv(A)
+  if (A_.size() > 0) {
+    Aqr_.compute(A_);
+  }
+
+  // Prepare inv([A, B; C, D])
+  matrix_t ABCD(numStates_ + numInputs_, numStates_ + numInputs_);
+  ABCD << A_, B_, C_, D_;
+  ABCDqr_.compute(ABCD);
 }
 
 void Filter::print() const {
-  std::cout << "numStates: " << numStates_ << std::endl;
-  std::cout << "numInputs: " << numInputs_ << std::endl;
-  std::cout << "numOutputs: " << numOutputs_ << std::endl;
-  std::cout << "A: \n" << A_ << std::endl;
-  std::cout << "B: \n" << B_ << std::endl;
-  std::cout << "C: \n" << C_ << std::endl;
-  std::cout << "D: \n" << D_ << std::endl;
+  std::cerr << "numStates: " << numStates_ << std::endl;
+  std::cerr << "numInputs: " << numInputs_ << std::endl;
+  std::cerr << "numOutputs: " << numOutputs_ << std::endl;
+  auto printMatrix = [](const std::string& name, const matrix_t& m) {
+    if (m.isDiagonal()) {
+      std::cerr << name << ": (diagonal) \n" << m.diagonal().transpose() << "\n";
+    } else {
+      std::cerr << name << ": \n" << m << "\n";
+    }
+  };
+  printMatrix("A", A_);
+  printMatrix("B", B_);
+  printMatrix("C", C_);
+  printMatrix("D", D_);
 }
 
 void Filter::findEquilibriumForOutput(const vector_t& y, vector_t& x, vector_t& u) const {
   // Solve (given y)
   // [0  =  [  A    B    [x
   //  y]       C    D  ]  u]
-  matrix_t ABCD(numStates_ + numInputs_, numStates_ + numInputs_);
-  ABCD << A_, B_, C_, D_;
-
-  vector_t x_u;
   vector_t zero_y(numStates_ + numOutputs_);
   zero_y << vector_t::Zero(numStates_), y;
 
-  x_u = ABCD.colPivHouseholderQr().solve(zero_y);
+  const vector_t x_u = ABCDqr_.solve(zero_y);
 
-  x = x_u.segment(0, numStates_);
-  u = x_u.segment(numStates_, numInputs_);
+  x = x_u.head(numStates_);
+  u = x_u.tail(numInputs_);
 }
 
 void Filter::findEquilibriumForInput(const vector_t& u, vector_t& x, vector_t& y) const {
   // Solve (given u)
   // [0  =  [  A    B    [x
   //  y]       C    D  ]  u]
-  x = -A_.colPivHouseholderQr().solve(B_ * u);
-  y = C_ * x + D_ * u;
+  y.noalias() = D_ * u;
+  if (numStates_ > 0) {
+    x = -Aqr_.solve(B_ * u);
+    y.noalias() += C_ * x;
+  }
 }
 
 void Filter::checkSize() const {

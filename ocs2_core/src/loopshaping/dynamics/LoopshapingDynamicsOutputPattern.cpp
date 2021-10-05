@@ -8,7 +8,9 @@ vector_t LoopshapingDynamicsOutputPattern::filterFlowmap(const vector_t& x_filte
   if (loopshapingDefinition_->isDiagonal()) {
     return r_filter.getAdiag().diagonal().cwiseProduct(x_filter) + r_filter.getBdiag().diagonal().cwiseProduct(u_system);
   } else {
-    return r_filter.getA() * x_filter + r_filter.getB() * u_system;
+    vector_t dynamics_filter = r_filter.getA() * x_filter;
+    dynamics_filter.noalias() += r_filter.getB() * u_system;
+    return dynamics_filter;
   }
 }
 
@@ -22,18 +24,23 @@ VectorFunctionLinearApproximation LoopshapingDynamicsOutputPattern::linearApprox
   const auto& u_filter = preCompLS.getFilteredInput();
   const auto dynamics_system = systemDynamics_->linearApproximation(t, x_system, u_system);
 
+  const auto stateDim = x.rows();
+  const auto inputDim = u.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x_filter.rows();
+
   VectorFunctionLinearApproximation dynamics;
   dynamics.f = loopshapingDefinition_->concatenateSystemAndFilterState(dynamics_system.f, filterFlowmap(x_filter, u_filter, u_system));
 
-  dynamics.dfdx.resize(x.rows(), x.rows());
-  dynamics.dfdx.topLeftCorner(x_system.rows(), x_system.rows()) = dynamics_system.dfdx;
-  dynamics.dfdx.topRightCorner(x_system.rows(), x_filter.rows()).setZero();
-  dynamics.dfdx.bottomLeftCorner(x_filter.rows(), x_system.rows()).setZero();
-  dynamics.dfdx.bottomRightCorner(x_filter.rows(), x_filter.rows()) = r_filter.getA();
+  dynamics.dfdx.resize(stateDim, stateDim);
+  dynamics.dfdx.topLeftCorner(sysStateDim, sysStateDim) = dynamics_system.dfdx;
+  dynamics.dfdx.bottomLeftCorner(filtStateDim, sysStateDim).setZero();
+  dynamics.dfdx.topRightCorner(sysStateDim, filtStateDim).setZero();
+  dynamics.dfdx.bottomRightCorner(filtStateDim, filtStateDim) = r_filter.getA();
 
-  dynamics.dfdu.resize(x.rows(), u.rows());
-  dynamics.dfdu.topRows(x_system.rows()) = dynamics_system.dfdu;
-  dynamics.dfdu.bottomRows(x_filter.rows()) = r_filter.getB();
+  dynamics.dfdu.resize(stateDim, inputDim);
+  dynamics.dfdu.topRows(sysStateDim) = dynamics_system.dfdu;
+  dynamics.dfdu.bottomRows(filtStateDim) = r_filter.getB();
 
   return dynamics;
 }

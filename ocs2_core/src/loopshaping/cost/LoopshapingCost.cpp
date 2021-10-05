@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/loopshaping/cost/LoopshapingCost.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCostEliminatePattern.h>
-#include <ocs2_core/loopshaping/cost/LoopshapingCostInputPattern.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingCostOutputPattern.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingStateCost.h>
 #include <ocs2_core/loopshaping/cost/LoopshapingStateInputCost.h>
@@ -53,8 +52,6 @@ std::unique_ptr<StateInputCostCollection> create(const StateInputCostCollection&
   switch (loopshapingDefinition->getType()) {
     case LoopshapingType::outputpattern:
       return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostOutputPattern(systemCost, std::move(loopshapingDefinition)));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostInputPattern(systemCost, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<LoopshapingStateInputCost>(new LoopshapingCostEliminatePattern(systemCost, std::move(loopshapingDefinition)));
     default:

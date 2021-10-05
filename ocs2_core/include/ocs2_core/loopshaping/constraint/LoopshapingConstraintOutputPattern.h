@@ -7,10 +7,6 @@
 
 namespace ocs2 {
 
-/*
- * FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM
- * FULL_INPUT_DIM = SYSTEM_INPUT_DIM
- */
 class LoopshapingConstraintOutputPattern final : public LoopshapingStateInputConstraint {
  public:
   using BASE = LoopshapingStateInputConstraint;

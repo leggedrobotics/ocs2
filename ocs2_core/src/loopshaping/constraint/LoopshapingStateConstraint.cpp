@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/loopshaping/constraint/LoopshapingStateConstraint.h>
 
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h>
 
 namespace ocs2 {
@@ -63,16 +62,21 @@ VectorFunctionLinearApproximation LoopshapingStateConstraint::getLinearApproxima
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto stateDim = x.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x.rows() - sysStateDim;
 
-  const auto c_system = StateConstraintCollection::getLinearApproximation(t, x_system, preComp_system);
+  // Not const so we can move
+  auto c_system = StateConstraintCollection::getLinearApproximation(t, x_system, preComp_system);
+  const auto numConstraints = c_system.f.rows();
 
   VectorFunctionLinearApproximation c;
 
   c.f = std::move(c_system.f);
 
-  c.dfdx.resize(c.f.rows(), x.rows());
-  c.dfdx.leftCols(x_system.rows()) = c_system.dfdx;
-  c.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
+  c.dfdx.resize(numConstraints, stateDim);
+  c.dfdx.leftCols(sysStateDim) = c_system.dfdx;
+  c.dfdx.rightCols(filtStateDim).setZero();
 
   return c;
 }
@@ -89,21 +93,26 @@ VectorFunctionQuadraticApproximation LoopshapingStateConstraint::getQuadraticApp
   const LoopshapingPreComputation& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& preComp_system = preCompLS.getSystemPreComputation();
+  const auto stateDim = x.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x.rows() - sysStateDim;
 
+  // Not const so we can move
   const auto c_system = StateConstraintCollection::getQuadraticApproximation(t, x_system, preComp_system);
+  const auto numConstraints = c_system.f.rows();
 
   VectorFunctionQuadraticApproximation c;
 
   c.f = std::move(c_system.f);
 
-  c.dfdx.resize(c.f.rows(), x.rows());
-  c.dfdx.leftCols(x_system.rows()) = c_system.dfdx;
-  c.dfdx.rightCols(x.rows() - x_system.rows()).setZero();
+  c.dfdx.resize(numConstraints, stateDim);
+  c.dfdx.leftCols(sysStateDim) = c_system.dfdx;
+  c.dfdx.rightCols(filtStateDim).setZero();
 
-  c.dfdxx.resize(c.f.rows());
-  for (size_t i = 0; i < c.f.rows(); i++) {
-    c.dfdxx[i].setZero(x.rows(), x.rows());
-    c.dfdxx[i].topLeftCorner(x_system.rows(), x_system.rows()) = c_system.dfdxx[i];
+  c.dfdxx.resize(numConstraints);
+  for (size_t i = 0; i < numConstraints; i++) {
+    c.dfdxx[i].setZero(stateDim, stateDim);
+    c.dfdxx[i].topLeftCorner(sysStateDim, sysStateDim) = c_system.dfdxx[i];
   }
 
   return c;

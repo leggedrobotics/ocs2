@@ -45,11 +45,8 @@ scalar_t LoopshapingStateInputCost::getValue(scalar_t t, const vector_t& x, cons
 
   const scalar_t L_system =
       StateInputCostCollection::getValue(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
-  const scalar_t L_filter =
-      StateInputCostCollection::getValue(t, x_system, u_filter, targetTrajectories, preCompLS.getFilteredSystemPreComputation());
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
 
-  return gamma * L_filter + (1.0 - gamma) * L_system;
+  return L_system + loopshapingDefinition_->loopshapingCost(u_filter);
 }
 
 }  // namespace ocs2

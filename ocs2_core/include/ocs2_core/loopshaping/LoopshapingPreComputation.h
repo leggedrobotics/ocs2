@@ -65,9 +65,6 @@ class LoopshapingPreComputation final : public PreComputation {
   /** Precomputation evaluated for the system state and system input */
   const PreComputation& getSystemPreComputation() const { return *systemPreCompPtr_; }
 
-  /** Precomputation evaluated for the system state and filtered input */
-  const PreComputation& getFilteredSystemPreComputation() const { return *filteredSystemPreCompPtr_; }
-
  private:
   LoopshapingPreComputation(const LoopshapingPreComputation& rhs);
 
@@ -79,7 +76,6 @@ class LoopshapingPreComputation final : public PreComputation {
   std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
 
   std::unique_ptr<PreComputation> systemPreCompPtr_;
-  std::unique_ptr<PreComputation> filteredSystemPreCompPtr_;
 };
 
 }  // namespace ocs2

@@ -64,7 +64,7 @@ void LoopshapingInitializer::compute(scalar_t time, const vector_t& state, scala
   // filter state-input initializer
   vector_t equilibriumFilterNextState, equilibriumFilterInput;
   loopshapingDefinition_->getFilterEquilibrium(systemInput, equilibriumFilterNextState, equilibriumFilterInput);
-  input = loopshapingDefinition_->concatenateSystemAndFilterInput(systemInput, equilibriumFilterInput);
+  input = loopshapingDefinition_->augmentedSystemInput(systemInput, equilibriumFilterInput);
   nextState = loopshapingDefinition_->concatenateSystemAndFilterState(systemNextState, equilibriumFilterNextState);
 }
 

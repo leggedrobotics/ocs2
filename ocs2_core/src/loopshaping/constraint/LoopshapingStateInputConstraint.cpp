@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/loopshaping/constraint/LoopshapingStateInputConstraint.h>
 
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h>
 
 namespace ocs2 {

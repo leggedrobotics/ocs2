@@ -5,95 +5,54 @@
 #include <gtest/gtest.h>
 #include <experimental/filesystem>
 
+#include <ocs2_core/PreComputation.h>
+#include <ocs2_core/loopshaping/LoopshapingDefinition.h>
+#include <ocs2_core/loopshaping/LoopshapingPreComputation.h>
+#include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
+
 namespace ocs2 {
 
-struct TestConfiguration_r_filter {
-  static constexpr size_t SYSTEM_STATE_DIM = 2;
-  static constexpr size_t SYSTEM_INPUT_DIM = 3;
-  static constexpr size_t FILTER_STATE_DIM = 4;
-  static constexpr size_t FILTER_INPUT_DIM = 3;
-  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
-  static constexpr size_t FULL_INPUT_DIM = SYSTEM_INPUT_DIM;
-  static const std::string fileName;
-};
-
-struct TestConfiguration_r_simple_filter {
-  static constexpr size_t SYSTEM_STATE_DIM = 2;
-  static constexpr size_t SYSTEM_INPUT_DIM = 3;
-  static constexpr size_t FILTER_STATE_DIM = 0;
-  static constexpr size_t FILTER_INPUT_DIM = 3;
-  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
-  static constexpr size_t FULL_INPUT_DIM = SYSTEM_INPUT_DIM;
-  static const std::string fileName;
-};
-
-struct TestConfiguration_r_ballbot_filter {
-  static constexpr size_t SYSTEM_STATE_DIM = 16;
-  static constexpr size_t SYSTEM_INPUT_DIM = 6;
-  static constexpr size_t FILTER_STATE_DIM = 3;
-  static constexpr size_t FILTER_INPUT_DIM = 6;
-  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
-  static constexpr size_t FULL_INPUT_DIM = SYSTEM_INPUT_DIM;
-  static const std::string fileName;
-};
-
-struct TestConfiguration_s_filter {
-  static constexpr size_t SYSTEM_STATE_DIM = 2;
-  static constexpr size_t SYSTEM_INPUT_DIM = 3;
-  static constexpr size_t FILTER_STATE_DIM = 4;
-  static constexpr size_t FILTER_INPUT_DIM = 3;
-  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
-  static constexpr size_t FULL_INPUT_DIM = SYSTEM_INPUT_DIM + FILTER_INPUT_DIM;
-  static const std::string fileName;
-};
-
-struct TestConfiguration_s_simple_filter {
-  static constexpr size_t SYSTEM_STATE_DIM = 2;
-  static constexpr size_t SYSTEM_INPUT_DIM = 3;
-  static constexpr size_t FILTER_STATE_DIM = 0;
-  static constexpr size_t FILTER_INPUT_DIM = 3;
-  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
-  static constexpr size_t FULL_INPUT_DIM = SYSTEM_INPUT_DIM + FILTER_INPUT_DIM;
-  static const std::string fileName;
-};
-
-struct TestConfiguration_s_eliminate_filter {
-  static constexpr size_t SYSTEM_STATE_DIM = 2;
-  static constexpr size_t SYSTEM_INPUT_DIM = 3;
-  static constexpr size_t FILTER_STATE_DIM = 4;
-  static constexpr size_t FILTER_INPUT_DIM = 3;
-  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
-  static constexpr size_t FULL_INPUT_DIM = FILTER_INPUT_DIM;
-  static const std::string fileName;
-};
-
-struct TestConfiguration_s_simple_eliminate_filter {
-  static constexpr size_t SYSTEM_STATE_DIM = 2;
-  static constexpr size_t SYSTEM_INPUT_DIM = 3;
-  static constexpr size_t FILTER_STATE_DIM = 0;
-  static constexpr size_t FILTER_INPUT_DIM = 3;
-  static constexpr size_t FULL_STATE_DIM = SYSTEM_STATE_DIM + FILTER_STATE_DIM;
-  static constexpr size_t FULL_INPUT_DIM = FILTER_INPUT_DIM;
-  static const std::string fileName;
-};
-
-// Add configurations here:
-typedef ::testing::Types<
-    TestConfiguration_r_filter,
-    TestConfiguration_r_simple_filter,
-    TestConfiguration_r_ballbot_filter,
-    TestConfiguration_s_filter,
-    TestConfiguration_s_simple_filter,
-    TestConfiguration_s_eliminate_filter,
-    TestConfiguration_s_simple_eliminate_filter>
-    FilterConfigurations;
+const std::vector<std::string> configNames = {"loopshaping_r.conf", "loopshaping_r_ballbot.conf",    "loopshaping_r_simple.conf",
+                                              "loopshaping_s.conf", "loopshaping_s_integrator.conf", "loopshaping_s_simple.conf"};
 
 inline std::string getAbsolutePathToConfigurationFile(const std::string& fileName) {
   const std::experimental::filesystem::path pathToTest = std::experimental::filesystem::path(__FILE__);
   return std::string(pathToTest.parent_path()) + "/" + fileName;
 }
 
+class LoopshapingTestConfiguration {
+ public:
+  LoopshapingTestConfiguration(const std::string& configName);
 
+ protected:
+  std::shared_ptr<LoopshapingDefinition> loopshapingDefinition_;
+  std::unique_ptr<PreComputation> preComp_sys_;
+  std::unique_ptr<LoopshapingPreComputation> preComp_;
 
-} // namespace ocs2
+  size_t systemStateDim_;
+  size_t filterStateDim_;
+  size_t inputDim_;
 
+  const scalar_t tol = 1e-9;
+
+  scalar_t t;
+  vector_t x_;
+  vector_t u_;
+  vector_t x_sys_;
+  vector_t u_sys_;
+  vector_t x_filter_;
+  vector_t u_filter_;
+
+  vector_t x_disturbance_;
+  vector_t u_disturbance_;
+  vector_t x_sys_disturbance_;
+  vector_t u_sys_disturbance_;
+  vector_t x_filter_disturbance_;
+  vector_t u_filter_disturbance_;
+
+ private:
+  void getRandomStateInput(size_t systemStateDim, size_t filterStateDim, size_t inputDim, vector_t& x_sys, vector_t& u_sys,
+                           vector_t& x_filter, vector_t& u_filter, vector_t& x, vector_t& u, scalar_t range = 1.0);
+};
+
+}  // namespace ocs2

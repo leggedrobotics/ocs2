@@ -4,67 +4,51 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/property_tree/info_parser.hpp>
+#include "testLoopshapingConfigurations.h"
 
 #include <ocs2_core/loopshaping/LoopshapingPropertyTree.h>
-#include <experimental/filesystem>
 
 using namespace ocs2;
 
-const std::experimental::filesystem::path pathToTest(__FILE__);
-const std::string settingsFile_r = std::string(pathToTest.parent_path()) + "/loopshaping_r.conf";
-const std::string settingsFile_r_simple = std::string(pathToTest.parent_path()) + "/loopshaping_r_simple.conf";
-const std::string settingsFile_s = std::string(pathToTest.parent_path()) + "/loopshaping_s.conf";
-const std::string settingsFile_s_simple = std::string(pathToTest.parent_path()) + "/loopshaping_s_simple.conf";
-
-TEST(testLoopshapingDefinition, SISO_Definition) {
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(settingsFile_r, pt);
-
-  auto filter0 = loopshaping_property_tree::readSISOFilter(pt, "r_filter.Filter0");
-  std::cout << "\nFilter0" << std::endl;
-  filter0.print();
-
-  auto filter1 = loopshaping_property_tree::readSISOFilter(pt, "r_filter.Filter1");
-  std::cout << "\nFilter1" << std::endl;
-  filter1.print();
+TEST(testLoopshapingDefinition, readingAllDefinitions) {
+  for (const auto config : configNames) {
+    const auto configPath = getAbsolutePathToConfigurationFile(config);
+    auto loopshapingDefinition = loopshaping_property_tree::load(configPath);
+    loopshapingDefinition->print();
+  }
 
   ASSERT_TRUE(true);
 }
 
-TEST(testLoopshapingDefinition, MIMO_Definition) {
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(settingsFile_s, pt);
-  auto filter = loopshaping_property_tree::readMIMOFilter(pt, "s_inv_filter", /*invert=*/true);
-  filter.print();
+TEST(testLoopshapingDefinition, stateInputAccessFunctions) {
+  for (const auto config : configNames) {
+    const auto configPath = getAbsolutePathToConfigurationFile(config);
+    auto loopshapingDefinition = loopshaping_property_tree::load(configPath);
 
-  ASSERT_TRUE(true);
-}
+    const size_t stateDim = loopshapingDefinition->getInputFilter().getNumStates();
+    const size_t systemStateDim = 1;
+    const size_t augmentedstateDim = stateDim + systemStateDim;
+    const size_t inputDim = loopshapingDefinition->getInputFilter().getNumInputs();
 
-TEST(testLoopshapingDefinition, Loopshaping_Definition_r) {
-  auto filter = loopshaping_property_tree::load(settingsFile_r);
-  filter->print();
+    const vector_t augmentedState = vector_t::Random(augmentedstateDim);
+    const vector_t augmentedInput = vector_t::Random(inputDim);
 
-  ASSERT_TRUE(true);
-}
+    const vector_t systemState = loopshapingDefinition->getSystemState(augmentedState);
+    ASSERT_TRUE(augmentedState.head(systemStateDim).isApprox(systemState));
 
-TEST(testLoopshapingDefinition, Loopshaping_Definition_r_simple) {
-  auto filter = loopshaping_property_tree::load(settingsFile_r_simple);
-  filter->print();
+    const vector_t filterState = loopshapingDefinition->getFilterState(augmentedState);
+    ASSERT_TRUE(augmentedState.tail(stateDim).isApprox(filterState));
 
-  ASSERT_TRUE(true);
-}
+    const vector_t augmentedStateConstructed = loopshapingDefinition->concatenateSystemAndFilterState(systemState, filterState);
+    ASSERT_TRUE(augmentedState.isApprox(augmentedStateConstructed));
 
-TEST(testLoopshapingDefinition, Loopshaping_Definition_s) {
-  auto filter = loopshaping_property_tree::load(settingsFile_s);
-  filter->print();
+    const vector_t systemInput = loopshapingDefinition->getSystemInput(augmentedState, augmentedInput);
+    const vector_t filteredInput = loopshapingDefinition->getFilteredInput(augmentedState, augmentedInput);
+    const vector_t augmentedInputConstructed = loopshapingDefinition->augmentedSystemInput(systemInput, filteredInput);
+    ASSERT_TRUE(augmentedInput.isApprox(augmentedInputConstructed));
 
-  ASSERT_TRUE(true);
-}
-
-TEST(testLoopshapingDefinition, Loopshaping_Definition_s_simple) {
-  auto filter = loopshaping_property_tree::load(settingsFile_s_simple);
-  filter->print();
-
-  ASSERT_TRUE(true);
+    vector_t equilibriumState;
+    vector_t equilibriumInput;
+    loopshapingDefinition->getFilterEquilibrium(systemInput, equilibriumState, equilibriumInput);
+  }
 }

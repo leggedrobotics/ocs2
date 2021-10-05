@@ -9,12 +9,12 @@ using namespace ocs2;
 
 TEST(testLoopshapingFilterDynamics, Integration) {
   constexpr size_t FILTER_STATE_DIM = 3;
-  constexpr size_t INPUT_DIM = 2;
-  matrix_t A(FILTER_STATE_DIM, FILTER_STATE_DIM), B(FILTER_STATE_DIM, INPUT_DIM), C(1, FILTER_STATE_DIM), D(1, INPUT_DIM);
+  constexpr size_t INPUT_DIM = 1;
+  matrix_t A(FILTER_STATE_DIM, FILTER_STATE_DIM), B(FILTER_STATE_DIM, INPUT_DIM), C(INPUT_DIM, FILTER_STATE_DIM), D(INPUT_DIM, INPUT_DIM);
   A << -1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0;
-  B << 1.0, 1.0, 1.0, 1.0, 1.0, 1.0;
+  B << 1.0, 1.0, 1.0;
   C << 0.0, 0.0, 0.0;
-  D << 1.0, 1.0;
+  D << 1.0;
   Filter filter(A, B, C, D);
   auto loopshapingDefinition = std::shared_ptr<LoopshapingDefinition>(new LoopshapingDefinition(LoopshapingType::outputpattern, filter));
   using TestLoopshapingFilterDynamics = LoopshapingFilterDynamics;

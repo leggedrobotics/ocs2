@@ -16,6 +16,7 @@ std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface> getAn
 
   // load loopshaping
   auto loopshapingDefinition = ocs2::loopshaping_property_tree::load(configFolder + "/loopshaping.info");
+  loopshapingDefinition->costMatrix() = quadrupedInterface->nominalCostApproximation().dfduu;
   loopshapingDefinition->print();
 
   return std::unique_ptr<switched_model_loopshaping::QuadrupedLoopshapingInterface>(

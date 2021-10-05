@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -64,7 +64,7 @@ void LoopshapingInitializer::compute(scalar_t time, const vector_t& state, scala
   // filter state-input initializer
   vector_t equilibriumFilterNextState, equilibriumFilterInput;
   loopshapingDefinition_->getFilterEquilibrium(systemInput, equilibriumFilterNextState, equilibriumFilterInput);
-  input = loopshapingDefinition_->concatenateSystemAndFilterInput(systemInput, equilibriumFilterInput);
+  input = loopshapingDefinition_->augmentedSystemInput(systemInput, equilibriumFilterInput);
   nextState = loopshapingDefinition_->concatenateSystemAndFilterState(systemNextState, equilibriumFilterNextState);
 }
 

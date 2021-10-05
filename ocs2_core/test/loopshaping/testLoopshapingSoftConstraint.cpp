@@ -1,4 +1,31 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
 
 #include "testLoopshapingSoftConstraint.h"
 
@@ -6,44 +33,16 @@
 
 using namespace ocs2;
 
-TYPED_TEST_CASE(TestFixtureLoopShapingSoftConstraint, FilterConfigurations);
-
-TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateInputValue) {
-  this->preComputation->request(Request::Cost + Request::SoftConstraint, this->t, this->x, this->u);
-  const auto L = this->loopshapingCost->getValue(this->t, this->x, this->u, this->targetTrajectories, *this->preComputation);
-  const auto L_soft_constraint =
-      this->loopshapingSoftConstraint->getValue(this->t, this->x, this->u, this->targetTrajectories, *this->preComputation);
-  EXPECT_LE(std::abs(L - L_soft_constraint), this->tol);
-
-  const auto L_system = this->systemCost->getValue(this->t, this->x_sys, this->u_sys, this->targetTrajectories, PreComputation());
-  EXPECT_LE(std::abs(L_system - L_soft_constraint), this->tol);
+TEST(TestFixtureLoopShapingSoftConstraint, testStateInputApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingSoftConstraint test(config);
+    test.testStateInputApproximation();
+  }
 }
 
-TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateInputApproximation) {
-  this->preComputation->request(Request::Cost + Request::SoftConstraint + Request::Approximation, this->t, this->x, this->u);
-  const auto L =
-      this->loopshapingCost->getQuadraticApproximation(this->t, this->x, this->u, this->targetTrajectories, *this->preComputation);
-  const auto L_soft_constraint = this->loopshapingSoftConstraint->getQuadraticApproximation(
-      this->t, this->x, this->u, this->targetTrajectories, *this->preComputation);
-  EXPECT_TRUE(isApprox(L, L_soft_constraint));
-}
-
-TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateValue) {
-  this->preComputation->requestFinal(Request::Cost + Request::SoftConstraint, this->t, this->x);
-  const auto L = this->loopshapingStateCost->getValue(this->t, this->x, this->targetTrajectories, *this->preComputation);
-  const auto L_soft_constraint =
-      this->loopshapingStateSoftConstraint->getValue(this->t, this->x, this->targetTrajectories, *this->preComputation);
-  EXPECT_LE(std::abs(L - L_soft_constraint), this->tol);
-
-  const auto L_system = this->systemStateCost->getValue(this->t, this->x_sys, this->targetTrajectories, PreComputation());
-  EXPECT_LE(std::abs(L_system - L_soft_constraint), this->tol);
-}
-
-TYPED_TEST(TestFixtureLoopShapingSoftConstraint, testStateApproximation) {
-  this->preComputation->requestFinal(Request::Cost + Request::SoftConstraint + Request::Approximation, this->t, this->x);
-  const auto L =
-      this->loopshapingStateCost->getQuadraticApproximation(this->t, this->x, this->targetTrajectories, *this->preComputation);
-  const auto L_soft_constraint = this->loopshapingStateSoftConstraint->getQuadraticApproximation(
-      this->t, this->x, this->targetTrajectories, *this->preComputation);
-  EXPECT_TRUE(isApprox(L, L_soft_constraint));
+TEST(TestFixtureLoopShapingSoftConstraint, testStateApproximation) {
+  for (const auto config : configNames) {
+    TestFixtureLoopShapingSoftConstraint test(config);
+    test.testStateApproximation();
+  }
 }

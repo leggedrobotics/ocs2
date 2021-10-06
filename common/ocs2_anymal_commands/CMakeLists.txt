@@ -49,6 +49,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/PoseCommandToCostDesiredRos.cpp
   src/TerrainAdaptation.cpp
+  src/LoadMotions.cpp
   )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -109,10 +110,12 @@ install(DIRECTORY config
 ## Testing ##
 #############
 
-catkin_add_gtest(test_${PROJECT_NAME}_terrain
+catkin_add_gtest(test_${PROJECT_NAME}
+  test/testLoadMotions.cpp
   test/testTerrainAdaptation.cpp
 )
-target_link_libraries(test_${PROJECT_NAME}_terrain
+target_link_libraries(test_${PROJECT_NAME}
   ${PROJECT_NAME}
+  -lstdc++fs
   gtest_main
 )

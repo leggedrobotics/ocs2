@@ -48,30 +48,78 @@ enum class LoopshapingType { outputpattern, eliminatepattern };
  */
 class LoopshapingDefinition {
  public:
+  /**
+   * Constructor
+   * @param loopshapingType : Type of loopshaping system augmentation to apply
+   * @param filter : Filter encoding the dynamics between system and loopshaping (=filtered) inputs
+   * @param costMatrix : Quadratic cost term to apply to the filtered inputs. Defaults to identity if not provided.
+   */
   LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, matrix_t costMatrix = matrix_t());
 
+  /** Get the loopshaping type */
   LoopshapingType getType() const { return loopshapingType_; }
+
+  /** True if all matrices of the loopshaping filter are diagonal */
   bool isDiagonal() const { return diagonal_; }
+
+  /** Get access to the filter specification */
   const Filter& getInputFilter() const { return filter_; }
 
+  /** Compute the cost on the filtered inputs */
   scalar_t loopshapingCost(const vector_t& filteredInput) const { return 0.5 * filteredInput.dot(R_ * filteredInput); }
 
+  /** Get the quadratic cost matrix for the filtered inputs */
   matrix_t& costMatrix() { return R_; }
 
+  /** Display details of the LoopshapingDefinition  */
   void print() const;
 
+  /**
+   * @param state : state of the augmented system
+   * @return state of the original system
+   */
   vector_t getSystemState(const vector_t& state) const { return state.head(state.rows() - filter_.getNumStates()); }
 
+  /**
+   * @param state : state of the augmented system
+   * @param input : input of the augmented system
+   * @return input of the original system
+   */
   vector_t getSystemInput(const vector_t& state, const vector_t& input) const;
 
+  /**
+   * @param state : state of the augmented system
+   * @return state of the loopshaping filter
+   */
   vector_t getFilterState(const vector_t& state) const { return state.tail(filter_.getNumStates()); }
 
+  /**
+   * @param state : state of the augmented system
+   * @param input : input of the augmented system
+   * @return the filtered input
+   */
   vector_t getFilteredInput(const vector_t& state, const vector_t& input) const;
 
+  /**
+   * @param systemState : state of the original system
+   * @param filterState : state of the loopshaping filter
+   * @return state of the augmented system
+   */
   vector_t concatenateSystemAndFilterState(const vector_t& systemState, const vector_t& filterState) const;
 
+  /**
+   * @param systemInput : input of the original system
+   * @param filterInput : the filtered input
+   * @return input of the augmented system
+   */
   vector_t augmentedSystemInput(const vector_t& systemInput, const vector_t& filterInput) const;
 
+  /**
+   * Finds a loopshaping state and input such that they are in equilibrium with a given system input
+   * @param systemInput : input of the original system
+   * @param filterState (return) : state of the loopshaping filter
+   * @param filterInput (return) : the filtered input
+   */
   void getFilterEquilibrium(const vector_t& systemInput, vector_t& filterState, vector_t& filterInput) const;
 
  private:

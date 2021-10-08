@@ -50,6 +50,8 @@ add_library(${PROJECT_NAME}
   src/PoseCommandToCostDesiredRos.cpp
   src/TerrainAdaptation.cpp
   src/LoadMotions.cpp
+  src/ModeSequenceKeyboard.cpp
+  src/AnimatronicCommandToCostDesiredRos.cpp
   )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -75,7 +77,6 @@ target_link_libraries(target_command_node
 target_compile_options(target_command_node PRIVATE ${OCS2_CXX_FLAGS})
 
 add_executable(gait_command_node
-  src/ModeSequenceKeyboard.cpp
   src/AnymalGaitNode.cpp
 )
 add_dependencies(gait_command_node
@@ -83,9 +84,23 @@ add_dependencies(gait_command_node
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(gait_command_node
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_options(gait_command_node PRIVATE ${OCS2_CXX_FLAGS})
+
+add_executable(motion_command_node
+  src/AnymalMotionCommandNode.cpp
+  )
+add_dependencies(motion_command_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  )
+target_link_libraries(motion_command_node
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  )
+target_compile_options(motion_command_node PRIVATE ${OCS2_CXX_FLAGS})
 
 #############
 ## Install ##
@@ -99,7 +114,7 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
-install(TARGETS target_command_node gait_command_node
+install(TARGETS target_command_node gait_command_node motion_command_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY config

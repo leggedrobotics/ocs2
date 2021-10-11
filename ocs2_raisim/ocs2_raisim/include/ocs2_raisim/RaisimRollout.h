@@ -37,10 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_raisim/RaisimRolloutSettings.h"
 
-#ifdef USE_RAISIM_VISUALIZER
-#include <raisim/OgreVis.hpp>
-#endif
-
 namespace ocs2 {
 
 /**
@@ -160,12 +156,6 @@ class RaisimRollout final : public RolloutBase {
   raisim::Ground* ground_ = nullptr;
   raisim::HeightMap* heightMap_ = nullptr;
   raisim::ArticulatedSystem* system_ = nullptr;
-
-#ifdef USE_RAISIM_VISUALIZER
-  // Handles to Raisim visualization objects
-  std::vector<raisim::GraphicObject>* systemVisual_;
-  std::vector<raisim::GraphicObject>* groundVisual_;
-#endif
 
   // Robot-specific conversion function handles
   state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel_;

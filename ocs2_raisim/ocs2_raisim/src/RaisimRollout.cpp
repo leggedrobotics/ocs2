@@ -66,21 +66,6 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
   std::cerr << std::endl;
 
   ground_ = world_.addGround();
-
-#ifdef USE_RAISIM_VISUALIZER
-  auto vis = raisim::OgreVis::get();
-  vis->setWorld(&world_);
-  vis->setWindowSize(1280, 720);
-  // more setup options here: https://github.com/leggedrobotics/raisimGym/blob/master/raisim_gym/env/env/ANYmal/Environment.hpp
-  vis->initApp();
-
-  systemVisual_ = vis->createGraphicalObject(system_, "system");
-  groundVisual_ = vis->createGraphicalObject(ground_, 20, "floor", "checkerboard_green");
-
-  vis->setDesiredFPS(30);
-  vis->select(groundVisual_->at(0), false);
-  vis->getCameraMan()->setYawPitchDist(Ogre::Radian(M_PI_4), Ogre::Radian(-1.3), 3, true);
-#endif
 }
 
 /******************************************************************************************************/
@@ -188,9 +173,6 @@ const raisim::HeightMap* RaisimRollout::getTerrain() const {
 void RaisimRollout::deleteGroundPlane() {
   if (ground_ != nullptr) {
     world_.removeObject(ground_);
-#ifdef USE_RAISIM_VISUALIZER
-    raisim::OgreVis::get()->remove(ground_);
-#endif
     ground_ = nullptr;
   }
 }
@@ -248,11 +230,6 @@ void RaisimRollout::runSimulation(const time_interval_t& timeInterval, Controlle
     }
 
     world_.integrate2();  // actually move time foward and change the state
-
-#ifdef USE_RAISIM_VISUALIZER
-    auto vis = raisim::OgreVis::get();
-    vis->renderOneFrame();
-#endif
   }
 
   world_.setTimeStep(this->settings().timeStep);

@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdlib>
 
+#include <raisim/RaisimServer.hpp>
 #include <raisim/World.hpp>
 
 #include <ocs2_oc/rollout/RolloutBase.h>
@@ -58,7 +59,8 @@ class RaisimRollout final : public RolloutBase {
   /**
    * Constructor
    *
-   * @param[in] path: Absolute file path to the *.urdf description or the urdf string (xml document)
+   * @param[in] urdfFile: Absolute file path to the *.urdf description or the urdf string (xml document)
+   * @param[in] resourcePath: Path to the resource directory (meshes etc.)
    * @param[in] stateToRaisimGenCoordGenVel: Transformation function that converts ocs2 state to generalized coordinate and generalized
    * velocity used by Raisim
    * @param[in] raisimGenCoordGenVelToState: Transformation function that converts Raisim generalized coordinates and velocities to ocs2
@@ -72,7 +74,7 @@ class RaisimRollout final : public RolloutBase {
    * @note The function handles stateToRaisimGenCoordGenVel, raisimGenCoordGenVelToState, inputToRaisimGeneralizedForce,
    * dataExtractionCallback, inputToRaisimPdTargets must be thread safe, i.e., multiple rollout instances might execute them in parallel
    */
-  RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+  RaisimRollout(std::string urdfFile, std::string resourcePath, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                 raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                 input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
                 data_extraction_callback_t dataExtractionCallback = nullptr,
@@ -149,13 +151,17 @@ class RaisimRollout final : public RolloutBase {
 
  private:
   // Save some constructor/function arguments required for copy constructor / cloning
-  std::string urdf_;
+  std::string urdfFile_;
+  std::string resourcePath_;
 
   // Handles to Raisim objects
   raisim::World world_;
   raisim::Ground* ground_ = nullptr;
   raisim::HeightMap* heightMap_ = nullptr;
   raisim::ArticulatedSystem* system_ = nullptr;
+
+  // Handle to Raisim visualization
+  raisim::RaisimServer* server_ = nullptr;
 
   // Robot-specific conversion function handles
   state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel_;

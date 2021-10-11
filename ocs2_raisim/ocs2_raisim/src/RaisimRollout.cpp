@@ -34,14 +34,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
+RaisimRollout::RaisimRollout(std::string urdfFile, std::string resourcePath,
+                             state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel,
                              raisim_gen_coord_gen_vel_to_state_t raisimGenCoordGenVelToState,
                              input_to_raisim_generalized_force_t inputToRaisimGeneralizedForce,
                              data_extraction_callback_t dataExtractionCallback, RaisimRolloutSettings raisimRolloutSettings,
                              input_to_raisim_pd_targets_t inputToRaisimPdTargets)
     : RolloutBase(raisimRolloutSettings.rolloutSettings_),
       raisimRolloutSettings_(std::move(raisimRolloutSettings)),
-      urdf_(std::move(urdf)),
+      urdfFile_(std::move(urdfFile)),
+      resourcePath_(std::move(resourcePath)),
       ground_(nullptr),
       system_(nullptr),
       stateToRaisimGenCoordGenVel_(std::move(stateToRaisimGenCoordGenVel)),
@@ -51,7 +53,7 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
       inputToRaisimPdTargets_(std::move(inputToRaisimPdTargets)) {
   world_.setTimeStep(this->settings().timeStep);
 
-  system_ = world_.addArticulatedSystem(urdf_, "", raisimRolloutSettings_.orderedJointNames_);
+  system_ = world_.addArticulatedSystem(urdfFile_, resourcePath_, raisimRolloutSettings_.orderedJointNames_);
   system_->setControlMode(raisimRolloutSettings_.controlMode_);
   if (raisimRolloutSettings_.controlMode_ != raisim::ControlMode::FORCE_AND_TORQUE) {
     system_->setPdGains(raisimRolloutSettings_.pGains_, raisimRolloutSettings_.dGains_);
@@ -66,13 +68,16 @@ RaisimRollout::RaisimRollout(std::string urdf, state_to_raisim_gen_coord_gen_vel
   std::cerr << std::endl;
 
   ground_ = world_.addGround();
+
+  server_ = new raisim::RaisimServer(&world_);
+  server_->launchServer();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 RaisimRollout::RaisimRollout(const RaisimRollout& other)
-    : RaisimRollout(other.urdf_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
+    : RaisimRollout(other.urdfFile_, other.resourcePath_, other.stateToRaisimGenCoordGenVel_, other.raisimGenCoordGenVelToState_,
                     other.inputToRaisimGeneralizedForce_, other.dataExtractionCallback_, other.raisimRolloutSettings_,
                     other.inputToRaisimPdTargets_) {
   if (other.heightMap_ != nullptr) {

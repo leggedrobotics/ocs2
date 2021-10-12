@@ -46,7 +46,7 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     }
 
     // Nominal footholds / terrain planes
-    nominalFootholdsPerLeg_[leg] =
+    std::tie(nominalFootholdsPerLeg_[leg], heuristicFootholdsPerLeg_[leg]) =
         selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, initTime, finalTime, *terrainModel_);
 
     // Create swing trajectories
@@ -138,17 +138,18 @@ scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, sca
   }
 }
 
-std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                                                const ocs2::TargetTrajectories& targetTrajectories,
-                                                                                scalar_t initTime, scalar_t finalTime,
-                                                                                const TerrainModel& terrainModel) const {
+std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
+    int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
+    scalar_t finalTime, const TerrainModel& terrainModel) const {
   std::vector<ConvexTerrain> nominalFootholdTerrain;
+  std::vector<vector3_t> heuristicFootholds;
 
   // Nominal foothold is equal to current foothold for legs in contact
   if (startsWithStancePhase(contactTimings)) {
     ConvexTerrain convexTerrain;
     convexTerrain.plane = lastContacts_[leg].second;
     nominalFootholdTerrain.push_back(convexTerrain);
+    heuristicFootholds.push_back(convexTerrain.plane.positionInWorld);
   }
 
   // For future contact phases, use TargetTrajectories at halve the contact phase
@@ -191,15 +192,17 @@ std::vector<ConvexTerrain> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
       if (contactPhase.start < finalTime) {
         ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld);
         nominalFootholdTerrain.push_back(convexTerrain);
+        heuristicFootholds.push_back(nominalFootholdPositionInWorld);
       } else {  // After the horizon -> we are only interested in the position and orientation
         ConvexTerrain convexTerrain;
         convexTerrain.plane = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(nominalFootholdPositionInWorld);
         nominalFootholdTerrain.push_back(convexTerrain);
+        heuristicFootholds.push_back(nominalFootholdPositionInWorld);
       }
     }
   }
 
-  return nominalFootholdTerrain;
+  return {nominalFootholdTerrain, heuristicFootholds};
 }
 
 void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::TargetTrajectories& targetTrajectories,

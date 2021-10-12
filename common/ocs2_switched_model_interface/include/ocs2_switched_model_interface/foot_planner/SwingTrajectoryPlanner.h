@@ -54,6 +54,7 @@ class SwingTrajectoryPlanner {
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
 
   std::vector<ConvexTerrain> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
+  std::vector<vector3_t> getHeuristicFootholds(size_t leg) const { return heuristicFootholdsPerLeg_[leg]; }
 
   const SignedDistanceField* getSignedDistanceField() const;
 
@@ -62,9 +63,9 @@ class SwingTrajectoryPlanner {
   std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> generateSwingTrajectories(
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
   scalar_t getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const;
-  std::vector<ConvexTerrain> selectNominalFootholdTerrain(int leg, const std::vector<ContactTiming>& contactTimings,
-                                                          const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
-                                                          scalar_t finalTime, const TerrainModel& terrainModel) const;
+  std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> selectNominalFootholdTerrain(
+      int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
+      scalar_t finalTime, const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
@@ -74,6 +75,7 @@ class SwingTrajectoryPlanner {
   feet_array_t<std::vector<scalar_t>> feetNormalTrajectoriesEvents_;
 
   feet_array_t<std::vector<ConvexTerrain>> nominalFootholdsPerLeg_;
+  feet_array_t<std::vector<vector3_t>> heuristicFootholdsPerLeg_;
   std::unique_ptr<TerrainModel> terrainModel_;
 };
 

@@ -34,6 +34,9 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
     throw std::runtime_error("[SwingTrajectoryPlanner] terrain cannot be null. Update the terrain before planning swing motions");
   }
 
+  // Need a copy to provide joint references later (possibly adapted with inverse kinematics)
+  targetTrajectories_ = targetTrajectories;
+
   const auto basePose = getBasePose(currentState);
   const auto feetPositions = kinematicsModel_->feetPositionsInOriginFrame(basePose, getJointPositions(currentState));
 
@@ -47,7 +50,7 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
 
     // Nominal footholds / terrain planes
     std::tie(nominalFootholdsPerLeg_[leg], heuristicFootholdsPerLeg_[leg]) =
-        selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, initTime, finalTime, *terrainModel_);
+        selectNominalFootholdTerrain(leg, contactTimings, targetTrajectories, initTime, currentState, finalTime, *terrainModel_);
 
     // Create swing trajectories
     std::tie(feetNormalTrajectoriesEvents_[leg], feetNormalTrajectories_[leg]) = generateSwingTrajectories(leg, contactTimings, finalTime);
@@ -57,6 +60,16 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
 const FootPhase& SwingTrajectoryPlanner::getFootPhase(size_t leg, scalar_t time) const {
   const auto index = ocs2::lookup::findIndexInTimeArray(feetNormalTrajectoriesEvents_[leg], time);
   return *feetNormalTrajectories_[leg][index];
+}
+
+joint_coordinate_t SwingTrajectoryPlanner::getJointPositionsReference(scalar_t time) const {
+  const comkino_state_t xRef = targetTrajectories_.getDesiredState(time);
+  return getJointPositions(xRef);
+}
+
+joint_coordinate_t SwingTrajectoryPlanner::getJointVelocitiesReference(scalar_t time) const {
+  comkino_input_t uRef = targetTrajectories_.getDesiredInput(time);
+  return getJointVelocities(uRef);
 }
 
 auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const
@@ -140,7 +153,26 @@ scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, sca
 
 std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPlanner::selectNominalFootholdTerrain(
     int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
-    scalar_t finalTime, const TerrainModel& terrainModel) const {
+    const comkino_state_t& currentState, scalar_t finalTime, const TerrainModel& terrainModel) const {
+  // Zmp preparation
+  const auto initBasePose = getBasePose(currentState);
+  const auto initBasePosition = getPositionInOrigin(initBasePose);
+  const auto initBaseOrientation = getOrientation(initBasePose);
+  const auto initBaseTwistInBase = getBaseLocalVelocities(currentState);
+  const auto initBaseLinearVelocityInWorld = rotateVectorBaseToOrigin(getLinearVelocity(initBaseTwistInBase), initBaseOrientation);
+  vector_t initDesiredState = targetTrajectories.getDesiredState(initTime);
+  const base_coordinate_t initDesiredBasePose = initDesiredState.head<BASE_COORDINATE_SIZE>();
+  const auto initDesiredBasePosition = getPositionInOrigin(initDesiredBasePose);
+  const base_coordinate_t initDesiredBaseTwistInBase = initDesiredState.segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
+  const auto initDesiredBaseLinearVelocityInWorld =
+      rotateVectorBaseToOrigin(getLinearVelocity(initDesiredBaseTwistInBase), getOrientation(initDesiredBasePose));
+
+  // Compute zmp / inverted pendulum foot placement offset: delta p = sqrt(h / g) * (v - v_des)
+  scalar_t pendulumFrequency = std::sqrt(settings_.invertedPendulumHeight / 9.81);
+  scalar_t zmpX = pendulumFrequency * (initBaseLinearVelocityInWorld.x() - initDesiredBaseLinearVelocityInWorld.x());
+  scalar_t zmpY = pendulumFrequency * (initBaseLinearVelocityInWorld.y() - initDesiredBaseLinearVelocityInWorld.y());
+  const vector3_t zmpReactiveOffset = {zmpX, zmpY, 0.0};
+
   std::vector<ConvexTerrain> nominalFootholdTerrain;
   std::vector<vector3_t> heuristicFootholds;
 
@@ -153,6 +185,7 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
   }
 
   // For future contact phases, use TargetTrajectories at halve the contact phase
+  int contactCount = 0;
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase)) {
       const auto middleContactTime = [&] {
@@ -168,6 +201,11 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
       const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+
+      // Add ZMP offset to the first upcoming foothold.
+      if (contactCount == 0) {
+        referenceFootholdPositionInWorld += zmpReactiveOffset;
+      }
 
       // Get previous terrain projected foothold if there was one at this time
       vector3_t previousFootholdPositionInWorld = referenceFootholdPositionInWorld;
@@ -199,19 +237,20 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
         nominalFootholdTerrain.push_back(convexTerrain);
         heuristicFootholds.push_back(nominalFootholdPositionInWorld);
       }
+
+      ++contactCount;
     }
   }
 
   return {nominalFootholdTerrain, heuristicFootholds};
 }
 
-void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::TargetTrajectories& targetTrajectories,
-                                                                          const inverse_kinematics_function_t& inverseKinematicsFunction,
-                                                                          scalar_t finalTime) const {
-  for (int k = 0; k < targetTrajectories.timeTrajectory.size(); ++k) {
-    const scalar_t t = targetTrajectories.timeTrajectory[k];
+void SwingTrajectoryPlanner::adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction,
+                                                                       scalar_t finalTime) {
+  for (int k = 0; k < targetTrajectories_.timeTrajectory.size(); ++k) {
+    const scalar_t t = targetTrajectories_.timeTrajectory[k];
 
-    const base_coordinate_t basePose = getBasePose(comkino_state_t(targetTrajectories.stateTrajectory[k]));
+    const base_coordinate_t basePose = getBasePose(comkino_state_t(targetTrajectories_.stateTrajectory[k]));
     const vector3_t basePositionInWorld = getPositionInOrigin(basePose);
     const vector3_t eulerXYZ = getOrientation(basePose);
 
@@ -221,7 +260,7 @@ void SwingTrajectoryPlanner::adaptTargetTrajectoriesWithInverseKinematics(ocs2::
       const vector3_t PositionBaseToFootInBaseFrame = rotateVectorOriginToBase(PositionBaseToFootInWorldFrame, eulerXYZ);
 
       const size_t offset = 2 * BASE_COORDINATE_SIZE + 3 * leg;
-      targetTrajectories.stateTrajectory[k].segment(offset, 3) = inverseKinematicsFunction(leg, PositionBaseToFootInBaseFrame);
+      targetTrajectories_.stateTrajectory[k].segment(offset, 3) = inverseKinematicsFunction(leg, PositionBaseToFootInBaseFrame);
     }
 
     // Can stop adaptation as soon as we have processed a point beyond the horizon.

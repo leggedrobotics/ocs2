@@ -79,8 +79,8 @@ vector_t computeMotionReferences(scalar_t time, const comkino_state_t& x, const 
   const auto basePose = getBasePose(x);
   const auto baseTwist = getBaseLocalVelocities(x);
   const auto eulerAngles = getOrientation(basePose);
-  const auto qJoints = getJointPositions(x);
-  const auto dqJoints = getJointVelocities(u);
+  const auto qJoints = swingTrajectoryPlanner.getJointPositionsReference(time);
+  const auto dqJoints = swingTrajectoryPlanner.getJointVelocitiesReference(time);
 
   CostElements<scalar_t> motionTarget;
   motionTarget.eulerXYZ = eulerAngles;

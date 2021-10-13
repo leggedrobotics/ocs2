@@ -59,9 +59,9 @@ model_settings
     swingTimeScale                0.15
     sdfMidswingMargin             0.04
     terrainMargin                 0.035
-    previousFootholdFactor        0.333
-    previousFootholdDeadzone      0.05
-    previousFootholdTimeDeadzone  0.25
+    previousFootholdFactor        0.2
+    previousFootholdDeadzone      0.025
+    previousFootholdTimeDeadzone  0.20
   }
 }
 

@@ -42,7 +42,7 @@ void SwitchedModelModeScheduleManager::modifyReferences(scalar_t initTime, scala
   swingTrajectoryPtr_->updateSwingMotions(initTime, finalTime, initState, targetTrajectories, extractContactTimingsPerLeg(modeSchedule));
 
   if (inverseKinematicsFunction_) {
-    swingTrajectoryPtr_->adaptTargetTrajectoriesWithInverseKinematics(targetTrajectories, inverseKinematicsFunction_, finalTime);
+    swingTrajectoryPtr_->adaptJointReferencesWithInverseKinematics(inverseKinematicsFunction_, finalTime);
   }
 
   {

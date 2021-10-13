@@ -31,6 +31,7 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t previousFootholdFactor = 0.0;        // factor in [0, 1] with which to take previous foothold into account.
   scalar_t previousFootholdDeadzone = 0.0;      // previous foothold is taken if the new reference is within this threshold. [m]
   scalar_t previousFootholdTimeDeadzone = 0.0;  // previous foothold is taken if the contact phase is starting withing this time. [s]
+  scalar_t invertedPendulumHeight = 0.5;        // height used for the inverted pendulum foothold adjustment
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
@@ -47,11 +48,12 @@ class SwingTrajectoryPlanner {
                           const ocs2::TargetTrajectories& targetTrajectories,
                           const feet_array_t<std::vector<ContactTiming>>& contactTimingsPerLeg);
 
-  void adaptTargetTrajectoriesWithInverseKinematics(ocs2::TargetTrajectories& targetTrajectories,
-                                                    const inverse_kinematics_function_t& inverseKinematicsFunction,
-                                                    scalar_t finalTime) const;
+  void adaptJointReferencesWithInverseKinematics(const inverse_kinematics_function_t& inverseKinematicsFunction, scalar_t finalTime);
 
   const FootPhase& getFootPhase(size_t leg, scalar_t time) const;
+
+  joint_coordinate_t getJointPositionsReference(scalar_t time) const;
+  joint_coordinate_t getJointVelocitiesReference(scalar_t time) const;
 
   std::vector<ConvexTerrain> getNominalFootholds(size_t leg) const { return nominalFootholdsPerLeg_[leg]; }
   std::vector<vector3_t> getHeuristicFootholds(size_t leg) const { return heuristicFootholdsPerLeg_[leg]; }
@@ -65,7 +67,7 @@ class SwingTrajectoryPlanner {
   scalar_t getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const;
   std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> selectNominalFootholdTerrain(
       int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
-      scalar_t finalTime, const TerrainModel& terrainModel) const;
+      const comkino_state_t& currentState, scalar_t finalTime, const TerrainModel& terrainModel) const;
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
@@ -77,6 +79,8 @@ class SwingTrajectoryPlanner {
   feet_array_t<std::vector<ConvexTerrain>> nominalFootholdsPerLeg_;
   feet_array_t<std::vector<vector3_t>> heuristicFootholdsPerLeg_;
   std::unique_ptr<TerrainModel> terrainModel_;
+
+  ocs2::TargetTrajectories targetTrajectories_;
 };
 
 }  // namespace switched_model

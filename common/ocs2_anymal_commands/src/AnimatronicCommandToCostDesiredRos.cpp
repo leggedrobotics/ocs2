@@ -2,7 +2,7 @@
 // Created by Timon Kaufmann in June 2021
 //
 
-#include "ocs2_anymal_commands/AnimatronicCommandToCostDesiredRos.h"
+#include "ocs2_anymal_commands/MotionCommandInterface.h"
 
 #include <ros/package.h>
 
@@ -16,7 +16,7 @@
 
 namespace switched_model {
 
-AnimatronicCommandToCostDesiredRos::AnimatronicCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, const std::string& configFile,
+MotionCommandInterface::MotionCommandInterface(ros::NodeHandle& nodeHandle, const std::string& configFile,
                                                                        const std::string& robotName)
     : localTerrain_() {
   std::vector<std::string> motionList;
@@ -38,16 +38,16 @@ AnimatronicCommandToCostDesiredRos::AnimatronicCommandToCostDesiredRos(ros::Node
 
   // Subsribers
   observationSubscriber_ =
-      nodeHandle.subscribe(robotName + "_mpc_observation", 1, &AnimatronicCommandToCostDesiredRos::observationCallback, this);
-  terrainSubscriber_ = nodeHandle.subscribe("/ocs2_anymal/localTerrain", 1, &AnimatronicCommandToCostDesiredRos::terrainCallback, this);
+      nodeHandle.subscribe(robotName + "_mpc_observation", 1, &MotionCommandInterface::observationCallback, this);
+  terrainSubscriber_ = nodeHandle.subscribe("/ocs2_anymal/localTerrain", 1, &MotionCommandInterface::terrainCallback, this);
 }
 
-void AnimatronicCommandToCostDesiredRos::observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
+void MotionCommandInterface::observationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
   std::lock_guard<std::mutex> lock(observationMutex_);
   observationPtr_.reset(new ocs2::SystemObservation(ocs2::ros_msg_conversions::readObservationMsg(*msg)));
 }
 
-void AnimatronicCommandToCostDesiredRos::getKeyboardCommand() {
+void MotionCommandInterface::getKeyboardCommand() {
   const std::string commandMsg = "Enter the desired motion, for the list of available motions enter \"list\"";
   std::cout << commandMsg << ": ";
 
@@ -73,7 +73,7 @@ void AnimatronicCommandToCostDesiredRos::getKeyboardCommand() {
   }
 }
 
-void AnimatronicCommandToCostDesiredRos::terrainCallback(const visualization_msgs::Marker::ConstPtr& msg) {
+void MotionCommandInterface::terrainCallback(const visualization_msgs::Marker::ConstPtr& msg) {
   Eigen::Quaterniond orientationTerrainToWorld{msg->pose.orientation.w, msg->pose.orientation.x, msg->pose.orientation.y,
                                                msg->pose.orientation.z};
 
@@ -82,7 +82,7 @@ void AnimatronicCommandToCostDesiredRos::terrainCallback(const visualization_msg
   localTerrain_.orientationWorldToTerrain = orientationTerrainToWorld.toRotationMatrix().transpose();
 }
 
-void AnimatronicCommandToCostDesiredRos::printAnimationList() const {
+void MotionCommandInterface::printAnimationList() const {
   std::cout << "\nList of available motions:\n";
   for (const auto& s : motionData_) {
     std::cout << "  * " << s.first << "\n";
@@ -90,7 +90,7 @@ void AnimatronicCommandToCostDesiredRos::printAnimationList() const {
   std::cout << std::endl;
 }
 
-void AnimatronicCommandToCostDesiredRos::publishMotion(const std::pair<ocs2::TargetTrajectories, Gait>& motion) {
+void MotionCommandInterface::publishMotion(const std::pair<ocs2::TargetTrajectories, Gait>& motion) {
   ros::spinOnce();  // Trigger callback
   ocs2::SystemObservation observation;
   {

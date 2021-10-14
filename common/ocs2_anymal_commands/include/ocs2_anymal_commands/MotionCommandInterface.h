@@ -23,10 +23,10 @@
 
 namespace switched_model {
 
-class AnimatronicCommandToCostDesiredRos {
+class MotionCommandInterface {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  AnimatronicCommandToCostDesiredRos(ros::NodeHandle& nodeHandle, const std::string& configFile, const std::string& robotName);
+  MotionCommandInterface(ros::NodeHandle& nodeHandle, const std::string& configFile, const std::string& robotName);
 
   void publishMotion(const std::pair<ocs2::TargetTrajectories, Gait>& motion);
 

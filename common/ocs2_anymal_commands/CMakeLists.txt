@@ -51,7 +51,8 @@ add_library(${PROJECT_NAME}
   src/TerrainAdaptation.cpp
   src/LoadMotions.cpp
   src/ModeSequenceKeyboard.cpp
-  src/AnimatronicCommandToCostDesiredRos.cpp
+  src/MotionCommandInterface.cpp
+  src/MotionCommandDummy.cpp
   )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

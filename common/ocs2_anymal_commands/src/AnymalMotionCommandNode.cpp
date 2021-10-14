@@ -1,7 +1,7 @@
 
 #include <ros/package.h>
 
-#include "ocs2_anymal_commands/MotionCommandInterface.h"
+#include "ocs2_anymal_commands/MotionCommandDummy.h"
 
 int main(int argc, char* argv[]) {
   const std::string robotName = "anymal";
@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, robotName + "_mpc_motion_command");
   ros::NodeHandle nodeHandle;
 
-  switched_model::MotionCommandInterface commandInterface(nodeHandle, motionFile, robotName);
+  switched_model::MotionCommandDummy commandInterface(nodeHandle, motionFile, robotName);
 
   ros::Rate rate(10);
   while (ros::ok() && ros::master::check()) {

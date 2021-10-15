@@ -134,10 +134,11 @@ ocs2::vector_t MotionTrackingCost::getParameters(ocs2::scalar_t time, const ocs2
   comkino_input_t uRef = targetTrajectories.getDesiredInput(time);
 
   // If the input has zero values, overwrite it.
-  if (uRef.isZero()) {
+  if (uRef.head<3 * NUM_CONTACT_POINTS>().isZero()) {
     // Get stance configuration
     const auto contactFlags = modeScheduleManagerPtr_->getContactFlags(time);
-    uRef = weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getBasePose(xRef)));
+    uRef.head<3 * NUM_CONTACT_POINTS>() =
+        weightCompensatingInputs(*comModelPtr_, contactFlags, getOrientation(getBasePose(xRef))).head<3 * NUM_CONTACT_POINTS>();
   }
 
   return computeMotionReferences(time, xRef, uRef, *swingTrajectoryPlannerPtr_);

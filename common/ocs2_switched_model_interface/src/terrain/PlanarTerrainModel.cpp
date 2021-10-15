@@ -25,4 +25,12 @@ vector3_t PlanarTerrainModel::getHighestObstacleAlongLine(const vector3_t& posit
   }
 }
 
+std::vector<vector2_t> PlanarTerrainModel::getHeightProfileAlongLine(const vector3_t& position1InWorld,
+                                                                     const vector3_t& position2InWorld) const {
+  // Provide end points and one middle point as the height profile.
+  const auto projection1 = getLocalTerrainAtPositionInWorldAlongGravity(position1InWorld).positionInWorld;
+  const auto projection2 = getLocalTerrainAtPositionInWorldAlongGravity(position2InWorld).positionInWorld;
+  return {{0.0, projection1.z()}, {0.5, 0.5 * (projection1.z() + projection2.z())}, {1.0, projection2.z()}};
+}
+
 }  // namespace switched_model

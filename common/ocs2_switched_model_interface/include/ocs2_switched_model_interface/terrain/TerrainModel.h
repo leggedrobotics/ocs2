@@ -32,6 +32,13 @@ class TerrainModel {
   virtual const SignedDistanceField* getSignedDistanceField() const { return nullptr; }
 
   virtual vector3_t getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const = 0;
+
+  /**
+   * Returns the height profiles between two points in world frame. Provided as a set of points {alpha, height}, where alpha in [0, 1] is
+   * the progress along the line. position1InWorld -> alpha = 0, position2InWorld -> alpha = 1.
+   * Height is the absolute height in world frame.
+   */
+  virtual std::vector<vector2_t> getHeightProfileAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const = 0;
 };
 
 }  // namespace switched_model

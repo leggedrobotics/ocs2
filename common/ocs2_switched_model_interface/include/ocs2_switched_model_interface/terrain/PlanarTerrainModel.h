@@ -22,6 +22,8 @@ class PlanarTerrainModel : public TerrainModel {
 
   vector3_t getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
 
+  std::vector<vector2_t> getHeightProfileAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
+
  private:
   TerrainPlane terrainPlane_;
 };

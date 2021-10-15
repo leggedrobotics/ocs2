@@ -121,33 +121,53 @@ void SwingPhase::setFullSwing(const SwingProfile& swingProfile, const TerrainMod
   const vector3_t liftOffVelocityInWorld = {0.0, 0.0, liftOff_.velocity};
   const SwingNode3d start{liftOff_.time, liftOffPositionInWorld, liftOffVelocityInWorld};
 
-  // toucdown conditions: touching down in surface normal direction
+  // touchdown conditions: touching down in surface normal direction
   const auto& touchDownPositionInWorld = touchDown_.terrainPlane->positionInWorld;
   const vector3_t touchDownVelocityInWorld = touchDown_.velocity * surfaceNormalInWorld(*touchDown_.terrainPlane);
   const SwingNode3d end{touchDown_.time, touchDownPositionInWorld, touchDownVelocityInWorld};
 
   // Apex
-  const scalar_t maxBetweenLiftAndTouch = std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z());
-  scalar_t apexHeight = maxBetweenLiftAndTouch + swingHeight;
-  if (terrainModel != nullptr) {
-    const auto highestObstacle = terrainModel->getHighestObstacleAlongLine(liftOffPositionInWorld, touchDownPositionInWorld);
-    apexHeight = std::max(apexHeight, highestObstacle.z() + sdfMidswingMargin);
-    // limit adaptation to 3 times swing height
-    apexHeight = std::min(apexHeight, maxBetweenLiftAndTouch + 3.0 * swingHeight);
+  SwingNode3d apex;
+  apex.time = 0.5 * (start.time + end.time);
+  const vector3_t swingVector = touchDownPositionInWorld - liftOffPositionInWorld;
+  if (swingVector.head<2>().norm() > 0.01) {
+    const vector3_t middleStraightlinePoint = 0.5 * (liftOffPositionInWorld + touchDownPositionInWorld);
+
+    // Get a unit vector perpendicular to the swing vector and in the plane formed by the World-Z axis and the swing vector.
+    const vector3_t swingTrajectoryNormal = swingVector.cross(vector3_t(0.0, 0.0, 1.0).cross(swingVector)).normalized();
+
+    // Blind swing height
+    apex.position = middleStraightlinePoint + swingHeight * swingTrajectoryNormal;
+
+    // Terrain adaptation if information is available
+    if (terrainModel != nullptr) {
+      const auto heightProfile = terrainModel->getHeightProfileAlongLine(liftOffPositionInWorld, touchDownPositionInWorld);
+
+      // Find the maximum obstacle. An obstacle is a height point sticking out above the line between liftoff and touchdown.
+      scalar_t maxObstacleHeight = 0.0;
+      for (const auto& point : heightProfile) {
+        const scalar_t pointProgress = point[0];
+        const scalar_t pointHeight = point[1];
+        const scalar_t heightRelativeToSwingLine = pointHeight - (liftOffPositionInWorld.z() + pointProgress * swingVector.z());
+        const scalar_t relativeHeightProjectedOnNormal = heightRelativeToSwingLine * swingTrajectoryNormal.z();
+        if (relativeHeightProjectedOnNormal > maxObstacleHeight) {
+          maxObstacleHeight = relativeHeightProjectedOnNormal;
+        }
+      }
+      // Clip max obstacle to two times swing height to protect against outliers. (Total swing height will be max 3 * swing height)
+      maxObstacleHeight = std::min(maxObstacleHeight, 2.0 * swingHeight);
+
+      apex.position += maxObstacleHeight * swingTrajectoryNormal;
+    }
+
+    // Velocity at apex points purely in swing direction
+    apex.velocity = apexVelocityFactor / swingDuration * swingVector;
+  } else {  // (cases where target is above or intersecting with current position)
+    // No point in checking the terrain. Start and end point will fall in the same cell.
+    apex.position = touchDownPositionInWorld;
+    apex.position.z() = std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z()) + swingHeight;
+    apex.velocity = vector3_t::Zero();
   }
-
-  vector3_t apexPositionInWorld{0.5 * (liftOffPositionInWorld.x() + touchDownPositionInWorld.x()),
-                                0.5 * (liftOffPositionInWorld.y() + touchDownPositionInWorld.y()), apexHeight};
-
-  const scalar_t distanceLiftoffToApex = (apexPositionInWorld - liftOffPositionInWorld).norm();
-  const scalar_t distancetouchDownToApex = (apexPositionInWorld - touchDownPositionInWorld).norm();
-  const scalar_t apexTime = liftOff_.time + distanceLiftoffToApex / (distanceLiftoffToApex + distancetouchDownToApex) * swingDuration;
-
-  const vector3_t apexVelocityInWorld{apexVelocityFactor * (touchDownPositionInWorld.x() - liftOffPositionInWorld.x()) / swingDuration,
-                                      apexVelocityFactor * (touchDownPositionInWorld.y() - liftOffPositionInWorld.y()) / swingDuration,
-                                      0.0};
-
-  const SwingNode3d apex{apexTime, apexPositionInWorld, apexVelocityInWorld};
 
   motion_.reset(new SwingSpline3d(start, apex, end));
 

@@ -68,34 +68,5 @@ std::pair<scalar_t, GaitSchedule::GaitSequence> fromMessage(const ocs2_switched_
   return {msg.startTime, fromMessage(msg.gaitSequence)};
 }
 
-ocs2_switched_model_msgs::trajectory_request::Request toTrajectoryRequest(std::string command, const ocs2::SystemObservation& observation,
-                                                                          scalar_t offsetTime) {
-  ocs2_switched_model_msgs::trajectory_request::Request request;
-  request.offsetTime = offsetTime;
-  request.trajectoryCommand = std::move(command);
-  request.observation = ocs2::ros_msg_conversions::createObservationMsg(observation);
-  return request;
-}
-
-std::tuple<std::string, ocs2::SystemObservation, scalar_t> fromTrajectoryRequest(
-    const ocs2_switched_model_msgs::trajectory_request::Request& request) {
-  ocs2::SystemObservation observation = ocs2::ros_msg_conversions::readObservationMsg(request.observation);
-  return {request.trajectoryCommand, std::move(observation), request.offsetTime};
-}
-
-ocs2_switched_model_msgs::trajectory_request::Response toTrajectoryResponse(const ocs2::TargetTrajectories& targetTrajectories,
-                                                                            const GaitSchedule::GaitSequence& gaitSequence) {
-  ocs2_switched_model_msgs::trajectory_request::Response response;
-  response.trajectory = ocs2::ros_msg_conversions::createTargetTrajectoriesMsg(targetTrajectories);
-  response.gaitSequence = toMessage(gaitSequence);
-  return response;
-}
-
-std::pair<ocs2::TargetTrajectories, GaitSchedule::GaitSequence> fromTrajectoryResponse(
-    const ocs2_switched_model_msgs::trajectory_request::Response& response) {
-  ocs2::TargetTrajectories targetTrajectories = ocs2::ros_msg_conversions::readTargetTrajectoriesMsg(response.trajectory);
-  return {std::move(targetTrajectories), fromMessage(response.gaitSequence)};
-}
-
 }  // namespace ros_msg_conversions
 }  // namespace switched_model

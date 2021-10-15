@@ -6,12 +6,10 @@
 
 #include <ros/package.h>
 
-#include <ocs2_core/misc/CommandLine.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_switched_model_msgs/scheduled_gait_sequence.h>
 #include <ocs2_switched_model_interface/ros_msg_conversions/RosMsgConversions.h>
 
-#include "ocs2_anymal_commands/LoadMotions.h"
 #include "ocs2_anymal_commands/TerrainAdaptation.h"
 
 namespace switched_model {

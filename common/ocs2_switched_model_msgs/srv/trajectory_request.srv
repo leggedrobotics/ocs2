@@ -1,10 +1,6 @@
 # Trajectory request service
 
-string trajectoryCommand                            # the command
-ocs2_msgs/mpc_observation observation               # The latest observation
-float32 offsetTime                                  # Time to schedule the start of the trajectory at
----
 ocs2_msgs/mpc_target_trajectories trajectory        # The trajectory to track
-gait_sequence gaitSequence                          # The gait,
-                                                    # the 0th element of the time is the
-                                                    # gait start time
+gait_sequence gaitSequence                          # The gait
+---
+bool success                                        # 1 if successful 0 if trajectory couldn't be started.

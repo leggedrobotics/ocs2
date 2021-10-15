@@ -31,15 +31,5 @@ GaitSchedule::GaitSequence fromMessage(const ocs2_switched_model_msgs::gait_sequ
 ocs2_switched_model_msgs::scheduled_gait_sequence toMessage(scalar_t startTime, const GaitSchedule::GaitSequence& gaitSequence);
 std::pair<scalar_t, GaitSchedule::GaitSequence> fromMessage(const ocs2_switched_model_msgs::scheduled_gait_sequence& msg);
 
-ocs2_switched_model_msgs::trajectory_request::Request toTrajectoryRequest(std::string command, const ocs2::SystemObservation& observation,
-                                                                          scalar_t offsetTime);
-std::tuple<std::string, ocs2::SystemObservation, scalar_t> fromTrajectoryRequest(
-    const ocs2_switched_model_msgs::trajectory_request::Request& request);
-
-ocs2_switched_model_msgs::trajectory_request::Response toTrajectoryResponse(const ocs2::TargetTrajectories& targetTrajectories,
-                                                                            const GaitSchedule::GaitSequence& gaitSequence);
-std::pair<ocs2::TargetTrajectories, GaitSchedule::GaitSequence> fromTrajectoryResponse(
-    const ocs2_switched_model_msgs::trajectory_request::Response& response);
-
 }  // namespace ros_msg_conversions
 }  // namespace switched_model

@@ -31,7 +31,7 @@
         output="screen" args="$(arg target_command)" launch-prefix="gnome-terminal --"/>
 
     <node pkg="ocs2_anymal_commands" type="motion_command_node" name="motion_command_node"
-          output="screen" launch-prefix="gnome-terminal --"/>
+          output="screen" args="dummy" launch-prefix="gnome-terminal --"/>
 
     <!-- Launch Performance Indices Multi-plot -->
     <include if="$(arg performance_indices)" file="$(find ocs2_ros_interfaces)/launch/performance_indices.launch">

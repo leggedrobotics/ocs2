@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME}
   src/ModeSequenceKeyboard.cpp
   src/MotionCommandInterface.cpp
   src/MotionCommandDummy.cpp
+  src/MotionCommandController.cpp
   )
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}

@@ -48,7 +48,7 @@ note the license and notice files in the source directory.
 
 Credits 
 ~~~~~~~~
-The following people have been involved in the development of the OCS2:
+The following people have been involved in the development of OCS2:
 
 **Project Manager**: 
 Farbod Farshidian (ETHZ).

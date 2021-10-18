@@ -54,7 +54,7 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintEliminatePattern::
   // dfdx
   L.dfdx.head(x_system.rows()) = L_system.dfdx;
   if (isDiagonal) {
-    L.dfdx.tail(x_filter.rows()).noalias() = s_filter.getCdiag() * L_system.dfdu;
+    L.dfdx.tail(x_filter.rows()).noalias() = s_filter.getCdiag().diagonal().cwiseProduct(L_system.dfdu);
   } else {
     L.dfdx.tail(x_filter.rows()).noalias() = s_filter.getC().transpose() * L_system.dfdu;
   }
@@ -75,7 +75,7 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintEliminatePattern::
 
   // dfdu & dfduu
   if (isDiagonal) {
-    L.dfdu.noalias() = s_filter.getDdiag() * L_system.dfdu;
+    L.dfdu.noalias() = s_filter.getDdiag().diagonal().cwiseProduct(L_system.dfdu);
     L.dfduu.noalias() = s_filter.getDdiag() * L_system.dfduu * s_filter.getDdiag();
   } else {
     L.dfdu.noalias() = s_filter.getD().transpose() * L_system.dfdu;

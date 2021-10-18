@@ -129,9 +129,9 @@ class FrictionConeConstraint final : public StateInputConstraint {
   ConeDerivatives computeConeConstraintDerivatives(const ConeLocalDerivatives& coneLocalDerivatives,
                                                    const LocalForceDerivatives& localForceDerivatives) const;
 
-  matrix_t frictionConeInputDerivative(const ConeDerivatives& coneDerivatives) const;
-  matrix_t frictionConeSecondDerivativeInput(const ConeDerivatives& coneDerivatives) const;
-  matrix_t frictionConeSecondDerivativeState(const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeInputDerivative(size_t inputDim, const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeSecondDerivativeInput(size_t inputDim, const ConeDerivatives& coneDerivatives) const;
+  matrix_t frictionConeSecondDerivativeState(size_t stateDim, const ConeDerivatives& coneDerivatives) const;
 
   const SwitchedModelReferenceManager* referenceManagerPtr_;
 

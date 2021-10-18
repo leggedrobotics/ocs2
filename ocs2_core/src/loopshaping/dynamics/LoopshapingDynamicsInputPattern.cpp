@@ -34,7 +34,7 @@ namespace ocs2 {
 vector_t LoopshapingDynamicsInputPattern::filterFlowmap(const vector_t& x_filter, const vector_t& u_filter, const vector_t& u_system) {
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
   if (loopshapingDefinition_->isDiagonal()) {
-    return s_filter.getAdiag() * x_filter + s_filter.getBdiag() * u_filter;
+    return s_filter.getAdiag().diagonal().cwiseProduct(x_filter) + s_filter.getBdiag().diagonal().cwiseProduct(u_filter);
   } else {
     vector_t filterStateDerivative;
     filterStateDerivative.noalias() = s_filter.getA() * x_filter;

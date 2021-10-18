@@ -31,9 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdlib>
 
-#include <ocs2_oc/rollout/RolloutBase.h>
-#include <ocs2_raisim/RaisimRolloutSettings.h>
 #include <raisim/World.hpp>
+
+#include <ocs2_oc/rollout/RolloutBase.h>
+
+#include "ocs2_raisim/RaisimRolloutSettings.h"
 
 #ifdef USE_RAISIM_VISUALIZER
 #include <raisim/OgreVis.hpp>

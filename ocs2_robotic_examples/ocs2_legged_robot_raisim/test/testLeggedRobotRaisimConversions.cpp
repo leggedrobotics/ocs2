@@ -19,7 +19,7 @@ TEST(LeggedRobotRaisim, Conversions) {
   // raisim conversions
   ocs2::RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout");
   ocs2::legged_robot::LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(),
-                                                               interface.modelSettings());
+                                                               interface.modelSettings(), false);
   // consistency test ocs2 -> raisim -> ocs2
   for (size_t i = 0; i < 100; i++) {
     ocs2::vector_t stateIn(24);
@@ -40,18 +40,9 @@ TEST(LeggedRobotRaisim, Conversions) {
     Eigen::VectorXd qIn;
     qIn.setRandom(19);
     qIn.segment<4>(3).normalize();
-    // resample if random values would trigger an exception
-    while(qIn.tail<12>().array().abs().maxCoeff() > 2.0 * M_PI) {
-      qIn.setRandom(19);
-      qIn.segment<4>(3).normalize();
-    }
 
     Eigen::VectorXd dqIn;
     dqIn.setRandom(18);
-    // resample if random values would trigger an exception
-    while (dqIn.head<6>().array().abs().maxCoeff() > 10.0 or dqIn.tail<12>().array().abs().maxCoeff() > 30.0) {
-      dqIn.setRandom(18);
-    }
 
     ocs2::vector_t state = conversions.raisimGenCoordGenVelToState(qIn, dqIn);
     ocs2::vector_t input(24);

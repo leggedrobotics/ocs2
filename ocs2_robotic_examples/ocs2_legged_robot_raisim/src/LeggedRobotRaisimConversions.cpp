@@ -60,7 +60,7 @@ Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(doub
   generalizedForce.tail<12>() = ocs2JointOrderToRaisimJointOrder((Eigen::VectorXd(12) << torque.tail<12>()).finished());
 
   // check
-  if (generalizedForce.array().abs().maxCoeff() > 100) {
+  if (check_ and generalizedForce.array().abs().maxCoeff() > 100) {
     std::stringstream ss;
     ss << "LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce -- Raisim input unstable:"
        << "\ngeneralizedForce = " << generalizedForce.transpose();
@@ -72,9 +72,9 @@ Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(doub
 
 vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
   // check
-  if (q.tail<12>().array().abs().maxCoeff() > 2.0 * M_PI  // joint position
-      or dq.head<6>().array().abs().maxCoeff() > 10.0     // linear/angular base velocity
-      or dq.tail<12>().array().abs().maxCoeff() > 30.0    // joint velocity
+  if (check_ and (q.tail<12>().array().abs().maxCoeff() > 2.0 * M_PI  // joint position
+                  or dq.head<6>().array().abs().maxCoeff() > 10.0     // linear/angular base velocity
+                  or dq.tail<12>().array().abs().maxCoeff() > 30.0)   // joint velocity
   ) {
     std::stringstream ss;
     ss << "LeggedRobotRaisimConversions::raisimGenCoordGenVelToRbdState -- Raisim state unstable:"

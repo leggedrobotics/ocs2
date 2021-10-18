@@ -21,9 +21,12 @@ class LeggedRobotRaisimConversions {
    * @param [in] pinocchioInterface : The predefined pinocchio interface for the robot.
    * @param [in] centroidalModelInfo : The centroidal model information.
    * @param [in] modelSettings : The model settings.
+   * @param [in] check : Whether to check if the variables coming from or going to RaiSim are reasonable (by default true).
    */
-  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, ModelSettings modelSettings)
-      : centroidalModelRbdConversionsPtr_(new CentroidalModelRbdConversions(pinocchioInterface, centroidalModelInfo)),
+  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, ModelSettings modelSettings,
+                               bool check = true)
+      : check_(check),
+        centroidalModelRbdConversionsPtr_(new CentroidalModelRbdConversions(pinocchioInterface, centroidalModelInfo)),
         pinocchioCentroidalInverseDynamicsPDPtr_(
             new PinocchioCentroidalInverseDynamicsPD(pinocchioInterface, centroidalModelInfo, modelSettings.contactNames3DoF)) {}
 
@@ -113,6 +116,7 @@ class LeggedRobotRaisimConversions {
   raisim::HeightMap const* terrain_ = nullptr;
 
  private:
+  bool check_;
   Eigen::Vector3d continuousOrientation_;
   std::unique_ptr<CentroidalModelRbdConversions> centroidalModelRbdConversionsPtr_;
   std::unique_ptr<PinocchioCentroidalInverseDynamicsPD> pinocchioCentroidalInverseDynamicsPDPtr_;

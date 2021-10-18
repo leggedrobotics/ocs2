@@ -12,7 +12,7 @@ features of each example.
 System             State Dim. Input Dim. Constrained Caching
 ================== ========== ========== =========== ========
 Double Integrator  2          1          No          No
-Cart Pole          4          1          Yes         No
+Cartpole           4          1          Yes         No
 Ballbot            10         3          No          No
 Quadrotor          12         4          No          No
 Mobile Manipulator 9          8          Yes         Yes / No
@@ -21,7 +21,7 @@ Legged Robot       24         24         Yes         No
 
 For all these robotic examples, there are two separate packages:
 
-1. **ocs2_<robot>**- Provides the library with the robot-specfic MPC implementation.
+1. **ocs2_<robot>**: Provides the library with the robot-specific MPC implementation.
 2. **ocs2_<robot>_ros**:  Wraps around the MPC implementation with ROS to define ROS nodes.
 
 
@@ -46,12 +46,16 @@ cost through a reference manager module.
     # Launch the example
     roslaunch ocs2_double_integrator_ros double_integrator.launch
 
+.. image:: ../tools/sphinx/_static/gif/double_integrator.gif
+   :alt: double_integrator.gif cannot be displayed!
+   :target: _static/gif/double_integrator.gif
+
 .. _doxid-ocs2_doc_robotic_examples_cartpole:
 
-Cart Pole
+Cartpole
 ^^^^^^^^^
 
-The cart-pole example is a classic control problem where a pole is
+The cartpole example is a classic control problem where a pole is
 attached through an unactuated joint to a cart. The car moves along a
 frictionless track. The goal is to swing up and balance the pendulum
 starting from the downright position by accelerating a decelerating the
@@ -67,6 +71,10 @@ cart along the track.
 
     # Launch the example
     roslaunch ocs2_cartpole_ros cartpole.launch
+
+.. image:: ../tools/sphinx/_static/gif/cartpole.gif
+   :alt: cartpole.gif cannot be displayed!
+   :target: _static/gif/cartpole.gif
 
 .. _doxid-ocs2_doc_robotic_examples_ballbot:
 
@@ -92,6 +100,10 @@ control the robot’s XY position and yaw based on user command.
     # Launch the example
     roslaunch ocs2_ballbot_ros ballbot.launch
 
+.. image:: ../tools/sphinx/_static/gif/ballbot.gif
+   :alt: ballbot.gif cannot be displayed!
+   :target: _static/gif/ballbot.gif
+
 .. _doxid-ocs2_doc_robotic_examples_quadrotor:
 
 Quadrotor
@@ -114,6 +126,10 @@ command defined as the quadrotor’s 3D position and yaw.
     # Launch the example
     roslaunch ocs2_quadrotor_ros quadrotor.launch
 
+.. image:: ../tools/sphinx/_static/gif/quadrotor.gif
+   :alt: quadrotor.gif cannot be displayed!
+   :target: _static/gif/quadrotor.gif
+
 .. _doxid-ocs2_doc_robotic_examples_mobile_manipulator:
 
 Mobile Manipulator
@@ -125,10 +141,11 @@ The control inputs are the 6 joint velocities of the arm and the forward
 and rotational velocities of the base. The objective of the task is to
 track a 6DoF end-effector pose. The joint position and velocity limits
 are included in the constraint of the optimal control problem.
+Self-collision avoidance is achieved based on the collision
+bodies in the URDF model and collision avoidance constraints (refer to
+ocs2_self_collision). 
 
-Moreover, self-collision avoidance is achieved based on the collision
-bodies of the URDF model and collision avoidance constraints (refer to
-ocs2_self_collision). This example implements both the cache and the
+Note: This example implements both the cache and the
 non-cache variants of the MPC, which can be chosen through the
 usePreComputation flag in the config file. 
 
@@ -142,6 +159,10 @@ usePreComputation flag in the config file.
 
     # Launch the example
     roslaunch ocs2_mobile_manipulator_ros mobile_manipulator.launch
+
+.. image:: ../tools/sphinx/_static/gif/mobile_manipulator.gif
+   :alt: mobile_manipulator.gif cannot be displayed!
+   :target: _static/gif/mobile_manipulator.gif
 
 .. _doxid-ocs2_doc_robotic_examples_legged_robot:
 
@@ -164,7 +185,7 @@ feet track a predefined motion in the z-direction.
 The system dynamics are modeled in two ways which can be chosen from the
 config file: (1) The single rigid body dynamics (SRBD): This model
 assumes that the system has constant inertia regardless of its joint
-position. It also includes the full kinematics of the system (2) The
+positions. It also includes the full kinematics of the system (2) The
 full centroidal dynamics (FCD): This model uses the centroidal dynamics,
 which incorporates the motion of the robot’s limbs. Similar to SRBD, it
 considers the full kinematics of the robot.
@@ -179,3 +200,7 @@ considers the full kinematics of the robot.
 
     # Launch the example
     roslaunch ocs2_legged_robot legged_robot.launch
+
+.. image:: ../tools/sphinx/_static/gif/legged_robot.gif
+   :alt: legged_robot.gif cannot be displayed!
+   :target: _static/gif/legged_robot.gif

@@ -1,0 +1,78 @@
+rollout
+{
+  checkNumericalStability       false
+  minTimeStep                   0.0025
+
+  raisim_rollout
+  {
+    setSimulatorStateOnRolloutRunAlways false
+    setSimulatorStateOnRolloutRunOnce true
+    controlDecimation 1
+    generateTerrain true
+    terrainRoughness 1.0
+    terrainSeed 1
+
+    orderedJointNames
+    {
+       [0] LF_HAA
+       [1] LF_HFE
+       [2] LF_KFE
+       [3] RF_HAA ; LH_HAA
+       [4] RF_HFE ; LH_HFE
+       [5] RF_KFE ; LH_KFE
+       [6] LH_HAA ; RF_HAA
+       [7] LH_HFE ; RF_HFE
+       [8] LH_KFE ; RF_KFE
+       [9] RH_HAA
+      [10] RH_HFE
+      [11] RH_KFE
+    }
+
+    controlMode 0
+
+    pGains
+    {
+       [0] 0.0
+       [1] 0.0
+       [2] 0.0
+       [3] 0.0
+       [4] 0.0
+       [5] 0.0
+       [6] 0.0
+       [7] 0.0
+       [8] 0.0
+       [9] 0.0
+      [10] 0.0
+      [11] 0.0
+      [12] 0.0
+      [13] 0.0
+      [14] 0.0
+      [15] 0.0
+      [16] 0.0
+      [17] 0.0
+    }
+
+    dGains
+    {
+       [0] 0.0
+       [1] 0.0
+       [2] 0.0
+       [3] 0.0
+       [4] 0.0
+       [5] 0.0
+       [6] 5.0
+       [7] 5.0
+       [8] 5.0
+       [9] 5.0
+      [10] 5.0
+      [11] 5.0
+      [12] 5.0
+      [13] 5.0
+      [14] 5.0
+      [15] 5.0
+      [16] 5.0
+      [17] 5.0
+    }
+  }
+
+}

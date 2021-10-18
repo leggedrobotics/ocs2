@@ -42,11 +42,12 @@ class PinocchioCentroidalInverseDynamicsPD final {
    * Get the torque.
    * @param [in] desiredState : The desired ocs2 state.
    * @param [in] desiredInput : The desired ocs2 input.
+   * @param [in] desiredJointAccelerations : The desired joint accelerations.
    * @param [in] measuredState : The measured ocs2 state (required for PD control).
    * @param [in] measuredInput : The measured ocs2 input (required for PD control).
    */
-  vector_t getTorque(const vector_t& desiredState, const vector_t& desiredInput, const vector_t& measuredState,
-                     const vector_t& measuredInput);
+  vector_t getTorque(const vector_t& desiredState, const vector_t& desiredInput, const vector_t& desiredJointAccelerations,
+                     const vector_t& measuredState, const vector_t& measuredInput);
 
  private:
   PinocchioInterface* pinocchioInterfacePtr_;

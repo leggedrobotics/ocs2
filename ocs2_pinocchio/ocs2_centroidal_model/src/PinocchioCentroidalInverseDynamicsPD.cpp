@@ -24,7 +24,8 @@ PinocchioCentroidalInverseDynamicsPD::PinocchioCentroidalInverseDynamicsPD(Pinoc
 /******************************************************************************************************/
 /******************************************************************************************************/
 vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desiredState, const vector_t& desiredInput,
-                                                         const vector_t& measuredState, const vector_t& measuredInput) {
+                                                         const vector_t& desiredJointAccelerations, const vector_t& measuredState,
+                                                         const vector_t& measuredInput) {
   // handles
   auto& interface = *pinocchioInterfacePtr_;
   const auto& info = centroidalModelPinocchioMapping_.getCentroidalModelInfo();
@@ -32,7 +33,6 @@ vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desired
   auto& data = pinocchioInterfacePtr_->getData();
 
   // desired
-  const vector_t desiredJointAccelerations = vector_t::Zero(info.actuatedDofNum);  // TODO(areske): retrieve this?
   CentroidalModelRbdConversions::Vector6 desiredBasePose, desiredBaseVelocity, desiredBaseAcceleration;
   centroidalModelRbdConversions_.computeBaseKinematicsFromCentroidalModel(desiredState, desiredInput, desiredJointAccelerations,
                                                                           desiredBasePose, desiredBaseVelocity, desiredBaseAcceleration);

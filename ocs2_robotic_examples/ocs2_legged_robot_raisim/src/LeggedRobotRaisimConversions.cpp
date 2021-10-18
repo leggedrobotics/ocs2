@@ -51,7 +51,9 @@ Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(doub
   // get torque
   const vector_t measuredState = raisimGenCoordGenVelToState(q, dq);
   const vector_t measuredInput = raisimGenCoordGenVelToInput(q, dq);
-  const vector_t torque = pinocchioCentroidalInverseDynamicsPDPtr_->getTorque(state, input, measuredState, measuredInput);
+  const vector_t desiredJointAccelerations = vector_t::Zero(12);  // TODO(areske): retrieve this from controller?
+  const vector_t torque =
+      pinocchioCentroidalInverseDynamicsPDPtr_->getTorque(state, input, desiredJointAccelerations, measuredState, measuredInput);
 
   // convert to raisim
   Eigen::VectorXd generalizedForce = Eigen::VectorXd::Zero(18);

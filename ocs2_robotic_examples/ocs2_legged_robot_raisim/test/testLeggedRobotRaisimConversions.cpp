@@ -40,9 +40,18 @@ TEST(LeggedRobotRaisim, Conversions) {
     Eigen::VectorXd qIn;
     qIn.setRandom(19);
     qIn.segment<4>(3).normalize();
+    // resample if random values would trigger an exception
+    while(qIn.tail<12>().array().abs().maxCoeff() > 2.0 * M_PI) {
+      qIn.setRandom(19);
+      qIn.segment<4>(3).normalize();
+    }
 
     Eigen::VectorXd dqIn;
     dqIn.setRandom(18);
+    // resample if random values would trigger an exception
+    while (dqIn.head<6>().array().abs().maxCoeff() > 10.0 or dqIn.tail<12>().array().abs().maxCoeff() > 30.0) {
+      dqIn.setRandom(18);
+    }
 
     ocs2::vector_t state = conversions.raisimGenCoordGenVelToState(qIn, dqIn);
     ocs2::vector_t input(24);

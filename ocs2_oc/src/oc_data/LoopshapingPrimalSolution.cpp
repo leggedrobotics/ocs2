@@ -39,10 +39,9 @@ PrimalSolution loopshapingToSystemPrimalSolution(const PrimalSolution& primalSol
   systemPrimalSolution.stateTrajectory_.reserve(primalSolution.stateTrajectory_.size());
   systemPrimalSolution.inputTrajectory_.reserve(primalSolution.inputTrajectory_.size());
   for (size_t k = 0; k < primalSolution.stateTrajectory_.size(); ++k) {
-    const auto systemState = loopshapingDefinition.getSystemState(primalSolution.stateTrajectory_[k]);
-    const auto systemInput = loopshapingDefinition.getSystemInput(systemState, primalSolution.inputTrajectory_[k]);
-    systemPrimalSolution.stateTrajectory_.push_back(std::move(systemState));
-    systemPrimalSolution.inputTrajectory_.push_back(std::move(systemInput));
+    systemPrimalSolution.stateTrajectory_.push_back(loopshapingDefinition.getSystemState(primalSolution.stateTrajectory_[k]));
+    const auto& systemState = systemPrimalSolution.stateTrajectory_.back();
+    systemPrimalSolution.inputTrajectory_.push_back(loopshapingDefinition.getSystemInput(systemState, primalSolution.inputTrajectory_[k]));
   }
   return systemPrimalSolution;
 }

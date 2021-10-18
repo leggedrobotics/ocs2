@@ -187,6 +187,10 @@ void GaussNewtonDDP::reset() {
     cachedModelDataEventTimesStock_[i].clear();
     cachedProjectedModelDataTrajectoriesStock_[i].clear();
     cachedRiccatiModificationTrajectoriesStock_[i].clear();
+    cachedSsTimeTrajectoryStock_[i].clear();
+    cachedsTrajectoryStock_[i].clear();
+    cachedSvTrajectoryStock_[i].clear();
+    cachedSmTrajectoryStock_[i].clear();
   }  // end of i loop
 
   // reset timers
@@ -302,10 +306,10 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t t
 
   // Interpolate value function trajectory
   ScalarFunctionQuadraticApproximation valueFunction;
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, SsTimeTrajectoryStock_[partition]);
-  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, SmTrajectoryStock_[partition]);
-  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, SvTrajectoryStock_[partition]);
-  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, sTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedSsTimeTrajectoryStock_[partition]);
+  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, cachedSmTrajectoryStock_[partition]);
+  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, cachedSvTrajectoryStock_[partition]);
+  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, cachedsTrajectoryStock_[partition]);
 
   // Re-center around query state
   const vector_t xNominal =
@@ -429,12 +433,31 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
       SvFinalStock_[i] = SvFinalStock_[firstIndex + i];
       sFinalStock_[i] = sFinalStock_[firstIndex + i];
       xFinalStock_[i] = xFinalStock_[firstIndex + i];
+
+      cachedTimeTrajectoriesStock_[i].swap(cachedTimeTrajectoriesStock_[firstIndex + i]);
+      cachedPostEventIndicesStock_[i].swap(cachedPostEventIndicesStock_[firstIndex + i]);
+      cachedStateTrajectoriesStock_[i].swap(cachedStateTrajectoriesStock_[firstIndex + i]);
+      cachedInputTrajectoriesStock_[i].swap(cachedInputTrajectoriesStock_[firstIndex + i]);
+      cachedSsTimeTrajectoryStock_[i].swap(cachedSsTimeTrajectoryStock_[firstIndex + i]);
+      cachedsTrajectoryStock_[i].swap(cachedsTrajectoryStock_[firstIndex + i]);
+      cachedSvTrajectoryStock_[i].swap(cachedSvTrajectoryStock_[firstIndex + i]);
+      cachedSmTrajectoryStock_[i].swap(cachedSmTrajectoryStock_[firstIndex + i]);
+
     } else {
       nominalControllersStock_[i].clear();
       SmFinalStock_[i].setZero(0, 0);
       SvFinalStock_[i].setZero(0);
       sFinalStock_[i] = 0.0;
       xFinalStock_[i].setZero(0);
+
+      cachedTimeTrajectoriesStock_[i].clear();
+      cachedPostEventIndicesStock_[i].clear();
+      cachedStateTrajectoriesStock_[i].clear();
+      cachedInputTrajectoriesStock_[i].clear();
+      cachedSsTimeTrajectoryStock_[i].clear();
+      cachedsTrajectoryStock_[i].clear();
+      cachedSvTrajectoryStock_[i].clear();
+      cachedSmTrajectoryStock_[i].clear();
     }
   }
 }
@@ -493,6 +516,10 @@ void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
   cachedPostEventIndicesStock_.resize(numPartitions);
   cachedStateTrajectoriesStock_.resize(numPartitions);
   cachedInputTrajectoriesStock_.resize(numPartitions);
+  cachedSsTimeTrajectoryStock_.resize(numPartitions);
+  cachedsTrajectoryStock_.resize(numPartitions);
+  cachedSvTrajectoryStock_.resize(numPartitions);
+  cachedSmTrajectoryStock_.resize(numPartitions);
 
   /*
    * Riccati solver variables and controller update
@@ -1228,7 +1255,7 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runSearchStrategy(scalar_t expectedCost) {
+void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost) {
   auto performanceIndex = performanceIndex_;
   scalar_array2_t timeTrajectoriesStock(numPartitions_);
   size_array2_t postEventIndicesStock(numPartitions_);
@@ -1238,9 +1265,9 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t expectedCost) {
   std::vector<std::vector<ModelData>> modelDataEventTimesStock(numPartitions_);
 
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
-  bool success = searchStrategyPtr_->run(expectedCost, modeSchedule, nominalControllersStock_, performanceIndex, timeTrajectoriesStock,
-                                         postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock, modelDataTrajectoriesStock,
-                                         modelDataEventTimesStock, avgTimeStepFP_);
+  bool success = searchStrategyPtr_->run(lqModelExpectedCost, modeSchedule, nominalControllersStock_, performanceIndex,
+                                         timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
+                                         modelDataTrajectoriesStock, modelDataEventTimesStock, avgTimeStepFP_);
 
   // accept or reject the search
   if (success) {
@@ -1258,7 +1285,7 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t expectedCost) {
     }
 
   } else {
-    // swap back the cached nominal trajectories
+    // swap back the cached optimized trajectories
     swapDataToCache();
     // replace the cached controller as the nominal
     nominalControllersStock_.swap(cachedControllersStock_);
@@ -1327,6 +1354,10 @@ void GaussNewtonDDP::swapDataToCache() {
   cachedModelDataEventTimesStock_.swap(modelDataEventTimesStock_);
   cachedProjectedModelDataTrajectoriesStock_.swap(projectedModelDataTrajectoriesStock_);
   cachedRiccatiModificationTrajectoriesStock_.swap(riccatiModificationTrajectoriesStock_);
+  cachedSsTimeTrajectoryStock_.swap(SsTimeTrajectoryStock_);
+  cachedsTrajectoryStock_.swap(sTrajectoryStock_);
+  cachedSvTrajectoryStock_.swap(SvTrajectoryStock_);
+  cachedSmTrajectoryStock_.swap(SmTrajectoryStock_);
 }
 
 /******************************************************************************************************/
@@ -1478,16 +1509,13 @@ void GaussNewtonDDP::runInit() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runIteration(bool unreliableControllerIncrement) {
+void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
   // disable Eigen multi-threading
   Eigen::setNbThreads(1);
 
   // finding the optimal stepLength
   searchStrategyTimer_.startTimer();
-  // the controller which is designed solely based on operation trajectories possibly has invalid feedforward.
-  // Therefore the expected cost/merit (calculated by the Riccati solution) is not reliable as well.
-  scalar_t expectedCost = unreliableControllerIncrement ? performanceIndex_.merit : sTrajectoryStock_[initActivePartition_].front();
-  runSearchStrategy(expectedCost);
+  runSearchStrategy(lqModelExpectedCost);
   searchStrategyTimer_.endTimer();
 
   // update the constraint penalty coefficients
@@ -1667,7 +1695,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     performanceIndexHistory_.push_back(performanceIndex_);
 
     // run the an iteration of the DDP algorithm and update the member variables
-    runIteration(unreliableControllerIncrement);
+    // the controller which is designed solely based on operation trajectories possibly has invalid feedforward.
+    // Therefore the expected cost/merit (calculated by the Riccati solution) is not reliable as well.
+    const scalar_t lqModelExpectedCost =
+        unreliableControllerIncrement ? performanceIndex_.merit : cachedsTrajectoryStock_[initActivePartition_].front();
+    runIteration(lqModelExpectedCost);
 
     // increment iteration counter
     totalNumIterations_++;
@@ -1695,7 +1727,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();
-  runSearchStrategy(sTrajectoryStock_[initActivePartition_].front());
+  const scalar_t lqModelExpectedCost = cachedsTrajectoryStock_[initActivePartition_].front();
+  runSearchStrategy(lqModelExpectedCost);
   searchStrategyTimer_.endTimer();
 
   performanceIndexHistory_.push_back(performanceIndex_);

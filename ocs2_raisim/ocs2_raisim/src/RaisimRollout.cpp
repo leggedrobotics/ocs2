@@ -66,6 +66,12 @@ RaisimRollout::RaisimRollout(std::string urdfFile, std::string resourcePath,
     std::cerr << "\t" << bodyName;
   }
   std::cerr << std::endl;
+  const auto movableJointNames = system_->getMovableJointNames();
+  std::cerr << "Movable Joint Names are";
+  for (const auto& movableJointName : movableJointNames) {
+    std::cerr << "\t" << movableJointName;
+  }
+  std::cerr << std::endl;
 
   ground_ = world_.addGround();
 

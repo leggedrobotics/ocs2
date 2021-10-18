@@ -42,11 +42,11 @@ Kinematics
 OCS2 provides a Kinematics interface for any named frame in the URDF
 model based on the Pinocchio library. This interface provides a
 first-order model of position, orientation error, and velocity for a
-list named frames. OCS2 offers two interfaces:
+list of named frames. OCS2 offers two interfaces:
 PinocchioEndEffectorKinematics, which is based on analytical deviates,
 and PinocchioEndEffectorKinematicsCppAd, which is based on auto
 differentiation. The former is often used when one intends to rely on
-the caching capability of OCS2; Otherwise, the CppAd variant can be
+the caching capability of OCS2; Otherwise, the CppAd variant should be
 used.
 
 Self Collision Avoidance
@@ -55,8 +55,8 @@ Self Collision Avoidance
 The OCS2 library provides helper classes for defining self-collision
 avoidance constraints. These constraints are conveniently defined
 through the URDF model and a user-defined list of collision bodies. This
-list should be a subset of the collision bodies of the URDF model. It is
-intended to avoiding collision checking in between all the bodies, and
-reducing the computation overhead. The collision constraints computation
+list should be a subset of the collision bodies of the URDF model. This list
+is used to avoid collision checking in between all the bodies, and
+to reduce the computation overhead. The collision constraints computation
 requires the HPP-FCL and the Pinocchio libraries. For more details on
 the implementation, refer to the package ocs2_self_collision.

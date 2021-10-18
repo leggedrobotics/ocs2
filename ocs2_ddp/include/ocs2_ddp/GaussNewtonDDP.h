@@ -371,9 +371,9 @@ class GaussNewtonDDP : public SolverBase {
 
   /**
    * Runs the search strategy. It ony updates the controller or nominal trajectories is search was successful.
-   * @param [in] expectedCost: The expected cost based on the LQ model optimization.
+   * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
    */
-  void runSearchStrategy(scalar_t expectedCost);
+  void runSearchStrategy(scalar_t lqModelExpectedCost);
 
   /**
    * Caches the iteration's data.
@@ -409,10 +409,9 @@ class GaussNewtonDDP : public SolverBase {
 
   /**
    * Runs a single iteration of Gauss-Newton DDP.
-   * @param [in] unreliableControllerIncrement: True if the controller is designed based on an unreliable LQ approximation
-   * such as operating trajectories.
+   * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
    */
-  void runIteration(bool unreliableControllerIncrement);
+  void runIteration(scalar_t lqModelExpectedCost);
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -507,6 +506,11 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<std::vector<ModelData>> cachedModelDataEventTimesStock_;
   std::vector<std::vector<ModelData>> cachedProjectedModelDataTrajectoriesStock_;
   std::vector<std::vector<riccati_modification::Data>> cachedRiccatiModificationTrajectoriesStock_;
+
+  scalar_array2_t cachedSsTimeTrajectoryStock_;
+  scalar_array2_t cachedsTrajectoryStock_;
+  vector_array2_t cachedSvTrajectoryStock_;
+  matrix_array2_t cachedSmTrajectoryStock_;
 
   scalar_array_t sFinalStock_;
   vector_array_t SvFinalStock_;

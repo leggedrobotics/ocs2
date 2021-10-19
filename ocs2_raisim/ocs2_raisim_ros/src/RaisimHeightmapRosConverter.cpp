@@ -33,10 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-grid_map_msgs::GridMapPtr RaisimHeightmapRosConverter::convertHeightmapToGridmap(const raisim::HeightMap& heightMap) {
+grid_map_msgs::GridMapPtr RaisimHeightmapRosConverter::convertHeightmapToGridmap(const raisim::HeightMap& heightMap,
+                                                                                 const std::string& frameId) {
   grid_map_msgs::GridMapPtr gridMapMsg(new grid_map_msgs::GridMap());
 
-  gridMapMsg->info.header.frame_id = "world";
+  gridMapMsg->info.header.frame_id = frameId;
   gridMapMsg->info.header.stamp = ros::Time::now();
 
   const auto xResolution = heightMap.getXSize() / static_cast<double>(heightMap.getXSamples());
@@ -86,11 +87,11 @@ std::unique_ptr<raisim::HeightMap> RaisimHeightmapRosConverter::convertGridmapTo
   return heightMap;
 }
 
-void RaisimHeightmapRosConverter::publishGridmap(const raisim::HeightMap& heightMap) {
+void RaisimHeightmapRosConverter::publishGridmap(const raisim::HeightMap& heightMap, const std::string& frameID) {
   if (!gridmapPublisher_) {
     gridmapPublisher_.reset(new ros::Publisher(nodeHandle_.advertise<grid_map_msgs::GridMap>("/raisim_heightmap", 1, true)));
   }
-  auto gridMapMsg = convertHeightmapToGridmap(heightMap);
+  auto gridMapMsg = convertHeightmapToGridmap(heightMap, frameID);
   gridmapPublisher_->publish(gridMapMsg);
 }
 

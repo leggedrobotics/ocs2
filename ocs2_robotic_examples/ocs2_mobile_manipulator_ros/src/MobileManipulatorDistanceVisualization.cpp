@@ -38,8 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
 #include <ros/package.h>
 #include <ros/ros.h>

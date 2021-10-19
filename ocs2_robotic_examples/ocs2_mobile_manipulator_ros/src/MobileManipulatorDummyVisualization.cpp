@@ -44,9 +44,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 
+#include <ocs2_mobile_manipulator/AccessHelperFunctions.h>
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_ros/MobileManipulatorDummyVisualization.h>
 
 namespace ocs2 {
@@ -107,8 +108,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   bool activate = true;
   loadData::loadPtreeValue(pt, activate, "selfCollision.activate", true);
   // create pinocchio interface
-  const auto& urdfTree = ::urdf::parseURDFFile(urdfFile);
-  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfTree, removeJointNames, modelType));
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames));
   // activate markers for self-collision visualization
   if (activate) {
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
@@ -139,19 +139,21 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) {
   // publish world -> base transform
-  const auto position = getBasePosition(observation.state, modelInfo_);
-  const auto orientation = getBaseOrientation(observation.state, modelInfo_);
+  const vector_t basePose = getBasePose(observation.state, modelInfo_);
+  const auto r_world_base = Eigen::Matrix<scalar_t, 3, 1>(basePose.head<3>());
+  const Eigen::Quaternion<scalar_t> q_world_base =
+      ::ocs2::getQuaternionFromEulerAnglesZyx(Eigen::Matrix<scalar_t, 3, 1>(basePose.tail<3>()));
 
   geometry_msgs::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
   base_tf.child_frame_id = modelInfo_.baseFrame;
-  base_tf.transform.translation = ros_msg_helpers::getVectorMsg(position);
-  base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(orientation);
+  base_tf.transform.translation = ros_msg_helpers::getVectorMsg(r_world_base);
+  base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(q_world_base);
   tfBroadcaster_.sendTransform(base_tf);
 
   // publish joints transforms
-  const auto j_arm = getArmJointPositions(observation.state, modelInfo_);
+  const vector_t j_arm = getArmJointAngles(observation.state, modelInfo_);
   std::map<std::string, scalar_t> jointPositions;
   for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) {
     jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
@@ -213,9 +215,15 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
 
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
+    // extract from observation
+    const auto basePose = getBasePose(state, modelInfo_);
+    const auto r_world_base = Eigen::Matrix<scalar_t, 3, 1>(basePose.head<3>());
+    const Eigen::Quaternion<scalar_t> q_world_base = getQuaternionFromEulerAnglesZyx(Eigen::Matrix<scalar_t, 3, 1>(basePose.tail<3>()));
+
+    // convert to ros message
     geometry_msgs::Pose pose;
-    pose.position = ros_msg_helpers::getPointMsg(getBasePosition(state, modelInfo_));
-    pose.orientation = ros_msg_helpers::getOrientationMsg(getBaseOrientation(state, modelInfo_));
+    pose.position = ros_msg_helpers::getPointMsg(r_world_base);
+    pose.orientation = ros_msg_helpers::getOrientationMsg(q_world_base);
     baseTrajectory.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
   });

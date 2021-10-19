@@ -37,16 +37,16 @@ namespace ocs2 {
 namespace mobile_manipulator {
 
 /**
- * Provides read/write access to the base pose.
+ * Provides read/write access to the base position.
  */
-template <typename Derived>
-Eigen::Block<Derived, 6, 1> getBasePose(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
+template <typename SCALAR>
+Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info);
 
 /**
- * Provides read access to the base pose.
+ * Provides read/write access to the base orientation.
  */
-template <typename Derived>
-const Eigen::Block<const Derived, 6, 1> getBasePose(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
+template <typename SCALAR>
+Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info);
 
 /**
  * Provides read/write access to the arm joint angles.
@@ -58,7 +58,9 @@ Eigen::Block<Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state
  * Provides read access to the arm joint angles.
  */
 template <typename Derived>
-const Eigen::Block<const Derived, -1, 1> getArmJointAngles(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
+const Eigen::Block<const Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2
+
+#include "implementation/AccessHelperFunctionsImpl.h"

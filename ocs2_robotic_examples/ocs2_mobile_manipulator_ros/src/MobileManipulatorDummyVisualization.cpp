@@ -139,10 +139,8 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) {
   // publish world -> base transform
-  const vector_t basePose = getBasePose(observation.state, modelInfo_);
-  const auto r_world_base = Eigen::Matrix<scalar_t, 3, 1>(basePose.head<3>());
-  const Eigen::Quaternion<scalar_t> q_world_base =
-      ::ocs2::getQuaternionFromEulerAnglesZyx(Eigen::Matrix<scalar_t, 3, 1>(basePose.tail<3>()));
+  const auto r_world_base = getBasePosition(observation.state, modelInfo_);
+  const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(observation.state, modelInfo_);
 
   geometry_msgs::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
@@ -153,7 +151,7 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
   tfBroadcaster_.sendTransform(base_tf);
 
   // publish joints transforms
-  const vector_t j_arm = getArmJointAngles(observation.state, modelInfo_);
+  const auto j_arm = getArmJointAngles(observation.state, modelInfo_);
   std::map<std::string, scalar_t> jointPositions;
   for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) {
     jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
@@ -216,9 +214,8 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
     // extract from observation
-    const auto basePose = getBasePose(state, modelInfo_);
-    const auto r_world_base = Eigen::Matrix<scalar_t, 3, 1>(basePose.head<3>());
-    const Eigen::Quaternion<scalar_t> q_world_base = getQuaternionFromEulerAnglesZyx(Eigen::Matrix<scalar_t, 3, 1>(basePose.tail<3>()));
+    const auto r_world_base = getBasePosition(state, modelInfo_);
+    const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, modelInfo_);
 
     // convert to ros message
     geometry_msgs::Pose pose;

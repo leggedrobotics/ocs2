@@ -78,7 +78,6 @@ link_directories(
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
   src/FactoryFunctions.cpp
-  src/AccessHelperFunctions.cpp
   src/MobileManipulatorPreComputation.cpp
   src/MobileManipulatorPinocchioMapping.cpp
   src/constraint/EndEffectorConstraint.cpp

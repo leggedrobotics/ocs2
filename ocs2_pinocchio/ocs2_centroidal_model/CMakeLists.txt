@@ -66,6 +66,7 @@ add_library(${PROJECT_NAME}
   src/CentroidalModelInfo.cpp
   src/FactoryFunctions.cpp
   src/ModelHelperFunctions.cpp
+  src/PinocchioCentroidalInverseDynamicsPD.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

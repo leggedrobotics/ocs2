@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_legged_robot_raisim</name>
+  <version>0.0.1</version>
+  <description>The ocs2_legged_robot_raisim package</description>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+
+  <author email="areske@ethz.ch">Alexander Reske</author>
+
+  <license>BSD3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>ocs2_legged_robot</depend>
+  <depend>ocs2_raisim</depend>
+  <depend>ocs2_raisim_ros</depend>
+
+</package>

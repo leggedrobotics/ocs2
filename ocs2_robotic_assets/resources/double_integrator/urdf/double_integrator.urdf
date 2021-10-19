@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<robot name="double_integrator">
+    <link name="slideBar">
+    <visual>
+      <geometry>
+        <box size="300 0.01 0.01"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="grey">
+        <color rgba="0.75 0.75 0.75 1.0"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <link name="cart">
+    <visual>
+      <geometry>
+        <sphere radius="0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="grey">
+        <color rgba="0.75 0.75 0.75 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+          <box size="0.5 0.5 0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="slider_to_cart" type="prismatic">
+    <axis xyz="1 0 0"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="slideBar"/>
+    <child link="cart"/>
+    <limit effort="100000.0" lower="-150" upper="150" velocity="50"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+
+  <link name="target">
+    <visual>
+      <geometry>
+        <sphere radius="0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="red">
+        <color rgba="1.0 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+          <box size="0.5 0.5 0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="slider_to_target" type="prismatic">
+    <axis xyz="1 0 0"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="slideBar"/>
+    <child link="target"/>
+    <limit effort="100000.0" lower="-150" upper="150" velocity="50"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+
+</robot>

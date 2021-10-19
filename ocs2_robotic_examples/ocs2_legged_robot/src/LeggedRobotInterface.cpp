@@ -89,16 +89,17 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFile, const st
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-  loadData::loadPtreeValue(pt, display_, "legged_robot_interface.display", true);
+  bool verbose;
+  loadData::loadPtreeValue(pt, verbose, "legged_robot_interface.verbose", false);
 
   // load setting from loading file
-  modelSettings_ = loadModelSettings(taskFile);
-  ddpSettings_ = ddp::loadSettings(taskFile);
-  mpcSettings_ = mpc::loadSettings(taskFile);
-  rolloutSettings_ = rollout::loadSettings(taskFile, "rollout");
+  modelSettings_ = loadModelSettings(taskFile, "model_settings", verbose);
+  ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
+  mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
+  rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
 
   // OptimalConrolProblem
-  setupOptimalConrolProblem(taskFile, urdfFile, referenceFile);
+  setupOptimalConrolProblem(taskFile, urdfFile, referenceFile, verbose);
 
   // initial state
   initialState_.setZero(centroidalModelInfo_.stateDim);
@@ -109,7 +110,7 @@ LeggedRobotInterface::LeggedRobotInterface(const std::string& taskFile, const st
 /******************************************************************************************************/
 /******************************************************************************************************/
 void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile, const std::string& urdfFile,
-                                                     const std::string& referenceFile) {
+                                                     const std::string& referenceFile, bool verbose) {
   // PinocchioInterface
   pinocchioInterfacePtr_.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(urdfFile, modelSettings_.jointNames)));
 
@@ -120,11 +121,11 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 
   // Swing trajectory planner
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
-      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config"), 4));
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), 4));
 
   // Mode schedule manager
   referenceManagerPtr_ =
-      std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile), std::move(swingTrajectoryPlanner));
+      std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile, verbose), std::move(swingTrajectoryPlanner));
 
   // Optimal control problem
   problemPtr_.reset(new OptimalControlProblem);
@@ -143,13 +144,13 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   // Cost terms
-  problemPtr_->costPtr->add("baseTrackingCost", getBaseTrackingCost(taskFile, centroidalModelInfo_));
+  problemPtr_->costPtr->add("baseTrackingCost", getBaseTrackingCost(taskFile, centroidalModelInfo_, false));
 
   // Constraint terms
   // friction cone settings
   scalar_t frictionCoefficient = 0.7;
   RelaxedBarrierPenalty::Config barrierPenaltyConfig;
-  std::tie(frictionCoefficient, barrierPenaltyConfig) = loadFrictionConeSettings(taskFile);
+  std::tie(frictionCoefficient, barrierPenaltyConfig) = loadFrictionConeSettings(taskFile, verbose);
 
   bool useAnalyticalGradientsConstraints = false;
   loadData::loadCppDataType(taskFile, "legged_robot_interface.useAnalyticalGradientsConstraints", useAnalyticalGradientsConstraints);
@@ -197,7 +198,7 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::string& file) {
+std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::string& file, bool verbose) const {
   const auto initModeSchedule = loadModeSchedule(file, "initialModeSchedule", false);
   const auto defaultModeSequenceTemplate = loadModeSequenceTemplate(file, "defaultModeSequenceTemplate", false);
 
@@ -213,8 +214,13 @@ std::shared_ptr<GaitSchedule> LeggedRobotInterface::loadGaitSchedule(const std::
   }();
 
   // display
-  std::cerr << "\nInitial Modes Schedule: \n" << initModeSchedule << std::endl;
-  std::cerr << "\nDefault Modes Sequence Template: \n" << defaultModeSequenceTemplate << std::endl;
+  if (verbose) {
+    std::cerr << "\n#### Modes Schedule: ";
+    std::cerr << "\n#### =============================================================================\n";
+    std::cerr << "Initial Modes Schedule: \n" << initModeSchedule;
+    std::cerr << "Default Modes Sequence Template: \n" << defaultModeSequenceTemplate;
+    std::cerr << "#### =============================================================================\n";
+  }
 
   return std::make_shared<GaitSchedule>(initModeSchedule, defaultModeSequenceTemplate, modelSettings_.phaseTransitionStanceTime);
 }
@@ -249,7 +255,8 @@ void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info) {
+std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info,
+                                                                          bool verbose) {
   matrix_t Q(info.stateDim, info.stateDim);
   loadData::loadEigenMatrix(taskFile, "Q", Q);
   matrix_t R(info.inputDim, info.inputDim);
@@ -257,7 +264,7 @@ std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const 
 
   initializeInputCostWeight(taskFile, info, R);
 
-  if (display_) {
+  if (verbose) {
     std::cerr << "\n #### Base Tracking Cost Coefficients: ";
     std::cerr << "\n #### =============================================================================\n";
     std::cerr << "Q:\n" << Q << "\n";
@@ -271,21 +278,22 @@ std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<scalar_t, RelaxedBarrierPenalty::Config> LeggedRobotInterface::loadFrictionConeSettings(const std::string& taskFile) const {
+std::pair<scalar_t, RelaxedBarrierPenalty::Config> LeggedRobotInterface::loadFrictionConeSettings(const std::string& taskFile,
+                                                                                                  bool verbose) const {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
   const std::string prefix = "frictionConeSoftConstraint.";
 
   scalar_t frictionCoefficient = 1.0;
   RelaxedBarrierPenalty::Config barrierPenaltyConfig;
-  if (display_) {
+  if (verbose) {
     std::cerr << "\n #### Friction Cone Settings: ";
     std::cerr << "\n #### =============================================================================\n";
   }
-  loadData::loadPtreeValue(pt, frictionCoefficient, prefix + "frictionCoefficient", display_);
-  loadData::loadPtreeValue(pt, barrierPenaltyConfig.mu, prefix + "mu", display_);
-  loadData::loadPtreeValue(pt, barrierPenaltyConfig.delta, prefix + "delta", display_);
-  if (display_) {
+  loadData::loadPtreeValue(pt, frictionCoefficient, prefix + "frictionCoefficient", verbose);
+  loadData::loadPtreeValue(pt, barrierPenaltyConfig.mu, prefix + "mu", verbose);
+  loadData::loadPtreeValue(pt, barrierPenaltyConfig.delta, prefix + "delta", verbose);
+  if (verbose) {
     std::cerr << " #### =============================================================================\n";
   }
 

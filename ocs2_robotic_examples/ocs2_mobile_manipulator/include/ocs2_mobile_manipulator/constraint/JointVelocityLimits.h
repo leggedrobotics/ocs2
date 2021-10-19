@@ -49,7 +49,7 @@ class JointVelocityLimits final : public StateInputConstraint {
 
  private:
   JointVelocityLimits(const JointVelocityLimits& other) = default;
-  size_t inputDim_;
+  const size_t inputDim_;
 };
 
 }  // namespace mobile_manipulator

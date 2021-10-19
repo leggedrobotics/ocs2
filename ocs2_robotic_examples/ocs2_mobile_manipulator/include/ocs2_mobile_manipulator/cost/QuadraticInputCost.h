@@ -50,7 +50,7 @@ class QuadraticInputCost final : public QuadraticStateInputCost {
   }
 
  private:
-  size_t stateDim_;
+  const size_t stateDim_;
 };
 
 }  // namespace mobile_manipulator

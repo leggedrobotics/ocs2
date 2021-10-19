@@ -5,6 +5,7 @@ project(ocs2_mobile_manipulator_ros)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
+  roslib
   tf
   urdf
   kdl_parser
@@ -16,6 +17,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ddp
   ocs2_mpc
   ocs2_robotic_tools
+  ocs2_robotic_assets
   ocs2_pinocchio_interface
   ocs2_self_collision
   ocs2_self_collision_visualization
@@ -23,7 +25,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  roslib
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 

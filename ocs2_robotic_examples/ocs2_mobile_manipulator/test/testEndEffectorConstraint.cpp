@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
+#include <ocs2_robotic_assets/package_path.h>
 
 #include "ocs2_mobile_manipulator/FactoryFunctions.h"
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
@@ -97,7 +98,7 @@ class testEndEffectorConstraint : public ::testing::Test {
 
   PinocchioInterface createMobileManipulatorPinocchioInterface() {
     // files
-    const std::string urdfPath = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
+    const std::string urdfPath = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
     const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
     // read manipulator type
     ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");

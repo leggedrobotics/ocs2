@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<robot xmlns:ns2="http://www.ros.org" xmlns:xi="http://www.w3.org/2003/XInclude" name="ballbot">
+
+  <material name="grey">
+      <color rgba="0.5 0.5 0.5 1.0"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.0 0.0 0.8 1.0"/>
+  </material>
+
+  <link name="world">
+  </link>
+  <!-- Fixed joint to add dummy inertia link -->
+  <joint name="world_to_world_inertia" type="fixed">
+    <parent link="world"/>
+    <child link="world_inertia"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <!-- Dummy inertia link, because KDL cannot have inertia on the pelvis link -->
+  <link name="world_inertia">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.001"/>
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+    </inertial>
+  </link>
+  <link name="dummy_ball1">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.001"/>
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+    </inertial>
+  </link>
+  <link name="ball">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="2.65"/>
+      <inertia ixx="0.0166" ixy="0.0" ixz="0.0" iyy="0.0166" iyz="0.0" izz="0.0166"/>
+    </inertial>
+    <visual>
+        <geometry>
+          <sphere radius="0.125"/>
+        </geometry>
+        <material name="blue"/>
+    </visual>
+  </link>
+  <link name="dummy_base1">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+      </inertial>
+  </link>
+  <link name="dummy_base2">
+        <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+        </inertial>
+  </link>
+  <link name="base">
+        <inertial>
+          <origin xyz="0.003 0.0033 0.1956" rpy="0.0 0.0 0.0"/>
+          <mass value="18.66"/>
+          <inertia ixx="1.80" ixy="0.0" ixz="0.0" iyy="1.8037" iyz="0.0" izz="0.166703"/>
+        </inertial>
+        <visual>
+          <origin rpy="0 0 0.275" xyz="0 0 0"/>
+        <geometry>
+          <mesh filename="package://ocs2_robotic_assets/resources/ballbot/meshes/base.obj" scale="1.0 1.0 1.0"/>
+        </geometry>
+        <material name="grey"/>
+        </visual>
+  </link>
+
+  <joint name="jball_x" type="prismatic">
+    <origin xyz="0.0 0.0 0.125" rpy="0.0 0.0 0.0"/>
+    <parent link="world_inertia"/>
+    <child link="dummy_ball1"/>
+    <axis xyz="1.0 0.0 0.0"/>
+    <limit effort="60" velocity="100.0" lower="-1e4" upper="1e4" />
+  </joint>
+  <joint name="jball_y" type="prismatic">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <parent link="dummy_ball1"/>
+      <child link="ball"/>
+      <axis xyz="0.0 1.0 0.0"/>
+      <limit effort="60" velocity="100.0" lower="-1e4" upper="1e4" />
+  </joint>
+  <joint name="jbase_z" type="revolute">
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <parent link="ball"/>
+      <child link="dummy_base1"/>
+      <axis xyz="0.0 0.0 1.0"/>
+      <limit lower="-1e4" upper="1e4" effort="-1.0" velocity="-1.0"/>
+  </joint>
+  <joint name="jbase_y" type="revolute">
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <parent link="dummy_base1"/>
+      <child link="dummy_base2"/>
+      <axis xyz="0.0 1.0 0.0"/>
+      <limit lower="-1.57" upper="1.57" effort="-1.0" velocity="-1.0"/>
+  </joint>
+  <joint name="jbase_x" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="dummy_base2"/>
+        <child link="base"/>
+        <axis xyz="1.0 0.0 0.0"/>
+        <limit lower="-1.57" upper="1.57" effort="-1.0" velocity="-1.0"/>
+  </joint>
+</robot>

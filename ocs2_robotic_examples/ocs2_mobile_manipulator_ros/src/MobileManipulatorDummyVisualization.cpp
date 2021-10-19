@@ -105,12 +105,12 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   // read if self-collision checking active
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-  bool activate = true;
-  loadData::loadPtreeValue(pt, activate, "selfCollision.activate", true);
+  bool activateSelfCollision = true;
+  loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
   // create pinocchio interface
   PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames));
   // activate markers for self-collision visualization
-  if (activate) {
+  if (activateSelfCollision) {
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
     loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", collisionObjectPairs, true);
     PinocchioGeometryInterface geomInterface(pinocchioInterface, collisionObjectPairs);

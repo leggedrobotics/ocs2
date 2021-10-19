@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
+#include <ocs2_robotic_assets/package_path.h>
 
 #include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
@@ -55,7 +56,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
   MobileManipulatorIntegrationTest() {
     const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
     const std::string libFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated";
-    const std::string urdfFile = ocs2::mobile_manipulator::getPath() + "/urdf/mobile_manipulator.urdf";
+    const std::string urdfFile = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
     mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface(taskFile, libFolder, urdfFile));
     // obtain robot model info
     modelInfo = mobileManipulatorInterfacePtr->getManipulatorModelInfo();

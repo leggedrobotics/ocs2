@@ -75,7 +75,7 @@ class testEndEffectorConstraint : public ::testing::Test {
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr;
   std::unique_ptr<MobileManipulatorPreComputation> preComputationPtr;
   std::shared_ptr<ReferenceManager> referenceManagerPtr;
-  MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping;
+  MobileManipulatorPinocchioMapping pinocchioMapping;
   ManipulatorModelInfo modelInfo;
 
  protected:
@@ -106,8 +106,7 @@ class testEndEffectorConstraint : public ::testing::Test {
     std::vector<std::string> removeJointNames;
     loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
     // initialize pinocchio interface
-    const auto& urdfTree = ::urdf::parseURDFFile(urdfPath);
-    return createPinocchioInterface(urdfTree, removeJointNames, modelType);
+    return createPinocchioInterface(urdfPath, modelType, removeJointNames);
   }
 };
 

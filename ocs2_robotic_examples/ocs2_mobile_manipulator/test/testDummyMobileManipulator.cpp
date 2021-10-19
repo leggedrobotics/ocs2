@@ -68,7 +68,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
 
     // initialize kinematics
     const std::string modelName = "end_effector_kinematics_dummytest";
-    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMapping(modelInfo.toCppAd());
+    MobileManipulatorPinocchioMappingCppAd pinocchioMapping(modelInfo);
     const auto& pinocchioInterface = mobileManipulatorInterfacePtr->getPinocchioInterface();
     eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {modelInfo.eeFrame},
                                                                   modelInfo.stateDim, modelInfo.inputDim, modelName));

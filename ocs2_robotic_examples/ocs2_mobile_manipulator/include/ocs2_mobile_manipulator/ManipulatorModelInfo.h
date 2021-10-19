@@ -29,6 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+// C/C++
+#include <string>
+#include <vector>
+
 namespace ocs2 {
 namespace mobile_manipulator {
 
@@ -42,12 +46,11 @@ enum class ManipulatorModelType {
 };
 
 /**
- * @brief A data structure to store manipulator information. 
- * 
+ * @brief A data structure to store manipulator information.
+ *
  * The attributes are filled by resolving the URDF model parsed.
  */
 struct ManipulatorModelInfo {
-  
   ManipulatorModelType manipulatorModelType;  // type of manipulator: floating-base, wheel-base, default
   size_t stateDim;                            // number of states needed to define the system flow map
   size_t inputDim;                            // number of inputs needed to define the system flow map

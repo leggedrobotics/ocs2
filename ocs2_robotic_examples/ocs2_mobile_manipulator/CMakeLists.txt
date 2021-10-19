@@ -77,7 +77,6 @@ link_directories(
 
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
-  src/ManipulatorModelInfo.cpp
   src/FactoryFunctions.cpp
   src/MobileManipulatorPreComputation.cpp
   src/MobileManipulatorPinocchioMapping.cpp

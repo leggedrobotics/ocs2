@@ -41,8 +41,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorPreComputation::MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface,
-                                                                 const ManipulatorModelInfo& info)
+MobileManipulatorPreComputation::MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info)
     : pinocchioInterface_(std::move(pinocchioInterface)), pinocchioMapping_(info) {}
 
 /******************************************************************************************************/

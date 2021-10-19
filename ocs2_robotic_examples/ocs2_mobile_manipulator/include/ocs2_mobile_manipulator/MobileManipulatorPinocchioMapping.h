@@ -37,7 +37,16 @@ namespace ocs2 {
 namespace mobile_manipulator {
 
 template <typename SCALAR>
-class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
+class MobileManipulatorPinocchioMappingTpl;
+
+using MobileManipulatorPinocchioMapping = MobileManipulatorPinocchioMappingTpl<scalar_t>;
+using MobileManipulatorPinocchioMappingCppAd = MobileManipulatorPinocchioMappingTpl<ad_scalar_t>;
+
+/**
+ * Pinocchio state and input mapping.
+ */
+template <typename SCALAR>
+class MobileManipulatorPinocchioMappingTpl final : public PinocchioStateInputMapping<SCALAR> {
  public:
   using Base = PinocchioStateInputMapping<SCALAR>;
   using typename Base::matrix_t;
@@ -47,10 +56,10 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
    * Constructor
    * @param [in] info : mobile manipulator model information.
    */
-  explicit MobileManipulatorPinocchioMapping(ManipulatorModelInfoTpl<SCALAR> info);
+  explicit MobileManipulatorPinocchioMappingTpl(ManipulatorModelInfo info);
 
-  ~MobileManipulatorPinocchioMapping() override = default;
-  MobileManipulatorPinocchioMapping<SCALAR>* clone() const override;
+  ~MobileManipulatorPinocchioMappingTpl() override = default;
+  MobileManipulatorPinocchioMappingTpl<SCALAR>* clone() const override;
 
   /**
    * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state.
@@ -83,12 +92,12 @@ class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMappin
   /**
    * Returns the mobile manipulator model info.
    */
-  const ManipulatorModelInfoTpl<SCALAR>& getManipulatorModelInfo() const { return modelInfo_; }
+  const ManipulatorModelInfo& getManipulatorModelInfo() const { return modelInfo_; }
 
  private:
-  MobileManipulatorPinocchioMapping(const MobileManipulatorPinocchioMapping& rhs) = default;
+  MobileManipulatorPinocchioMappingTpl(const MobileManipulatorPinocchioMappingTpl& rhs) = default;
 
-  const ManipulatorModelInfoTpl<SCALAR> modelInfo_;
+  const ManipulatorModelInfo modelInfo_;
 };
 
 }  // namespace mobile_manipulator

@@ -44,7 +44,7 @@ Eigen::Block<Derived, 6, 1> getBasePose(Eigen::MatrixBase<Derived>& state, const
     case ManipulatorModelType::DefaultManipulator: {
       // for default arm, we assume robot is at identity pose
       return Eigen::Vector3d::Zero();
-       // for default arm, we assume robot is at identity pose
+      // for default arm, we assume robot is at identity pose
       return Eigen::Quaterniond::Identity();
       break;
     }
@@ -53,7 +53,7 @@ Eigen::Block<Derived, 6, 1> getBasePose(Eigen::MatrixBase<Derived>& state, const
       Eigen::Vector3d position;
       position << state(0), state(1), state(2);
       return position;
-       // for floating arm, the base orientation is given by ZYX joints
+      // for floating arm, the base orientation is given by ZYX joints
       return ::ocs2::getQuaternionFromEulerAnglesZyx<double>(state.segment<3>(3));
       break;
     }
@@ -91,8 +91,7 @@ Eigen::Block<Derived, -1, 1> getJointAngles(Eigen::MatrixBase<Derived>& state, c
 }
 
 template <typename Derived, typename SCALAR>
-const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state,
-                                                        const ManipulatorModelInfo& info) {
+const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info) {
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
   return Eigen::Block<const Derived, -1, 1>(state.derived(), 12, 0, info.armDim, 1);

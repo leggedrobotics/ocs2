@@ -58,8 +58,7 @@ Eigen::Block<Derived, -1, 1> getJointAngles(Eigen::MatrixBase<Derived>& state, c
  * Provides read access to the arm joint angles.
  */
 template <typename Derived>
-const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state,
-                                                        const ManipulatorModelInfo& info);
+const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

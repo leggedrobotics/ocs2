@@ -36,22 +36,22 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-MobileManipulatorPinocchioMapping<SCALAR>::MobileManipulatorPinocchioMapping(ManipulatorModelInfoTpl<SCALAR> info)
+MobileManipulatorPinocchioMappingTpl<SCALAR>::MobileManipulatorPinocchioMappingTpl(ManipulatorModelInfo info)
     : modelInfo_(std::move(info)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-MobileManipulatorPinocchioMapping<SCALAR>* MobileManipulatorPinocchioMapping<SCALAR>::clone() const {
-  return new MobileManipulatorPinocchioMapping<SCALAR>(*this);
+MobileManipulatorPinocchioMappingTpl<SCALAR>* MobileManipulatorPinocchioMappingTpl<SCALAR>::clone() const {
+  return new MobileManipulatorPinocchioMappingTpl<SCALAR>(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
+auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t {
   return state;
 }
 
@@ -59,7 +59,8 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointPosition(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const -> vector_t {
+auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const
+    -> vector_t {
   vector_t vPinocchio = vector_t::Zero(modelInfo_.stateDim);
   // set velocity model based on model type
   switch (modelInfo_.manipulatorModelType) {
@@ -77,7 +78,9 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const 
       vPinocchio << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.armDim);
       break;
     }
-    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
+    default: {
+      throw std::runtime_error("The chosen manipulator model type is not supported!");
+    }
   }  // end of switch-case
 
   return vPinocchio;
@@ -87,7 +90,7 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getPinocchioJointVelocity(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-auto MobileManipulatorPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
+auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
     -> std::pair<matrix_t, matrix_t> {
   // set jacobian model based on model type
   switch (modelInfo_.manipulatorModelType) {
@@ -104,21 +107,23 @@ auto MobileManipulatorPinocchioMapping<SCALAR>::getOcs2Jacobian(const vector_t& 
       Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
       const SCALAR theta = state(2);
       // clang-format off
-        dvdu_base << cos(theta), 0,
-                     sin(theta), 0,
-                     0, 1.0;
+      dvdu_base << cos(theta), SCALAR(0),
+                   sin(theta), SCALAR(0),
+                   SCALAR(0), SCALAR(1.0);
       // clang-format on
       dfdu.template leftCols<2>() = Jv.template leftCols<3>() * dvdu_base;
       dfdu.template rightCols(modelInfo_.armDim) = Jv.template rightCols(modelInfo_.armDim);
       return {Jq, dfdu};
     }
-    default: { throw std::runtime_error("The chosen manipulator model type is not supported!"); }
+    default: {
+      throw std::runtime_error("The chosen manipulator model type is not supported!");
+    }
   }  // end of switch-case
 }
 
 // explicit template instantiation
-template class ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping<ocs2::scalar_t>;
-template class ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping<ocs2::ad_scalar_t>;
+template class ocs2::mobile_manipulator::MobileManipulatorPinocchioMappingTpl<ocs2::scalar_t>;
+template class ocs2::mobile_manipulator::MobileManipulatorPinocchioMappingTpl<ocs2::ad_scalar_t>;
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

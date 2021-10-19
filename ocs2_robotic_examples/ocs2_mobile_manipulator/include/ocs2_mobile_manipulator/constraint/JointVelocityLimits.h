@@ -38,7 +38,7 @@ namespace mobile_manipulator {
 
 class JointVelocityLimits final : public StateInputConstraint {
  public:
-  explicit JointVelocityLimits(size_t inputDim) : inputDim_(inputDim), StateInputConstraint(ConstraintOrder::Linear) {}
+  explicit JointVelocityLimits(size_t inputDim) : StateInputConstraint(ConstraintOrder::Linear), inputDim_(inputDim) {}
   ~JointVelocityLimits() override = default;
   JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
 

@@ -118,13 +118,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << " #### =============================================================================" << std::endl;
 
   // create pinocchio interface
-  const auto& urdfTree = ::urdf::parseURDFFile(urdfFile);
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfTree, removeJointNames, modelType)));
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType, removeJointNames)));
   std::cerr << *pinocchioInterfacePtr_;
 
   // ManipulatorModelInfo
-  manipulatorModelInfo_ =
-      mobile_manipulator::createManipulatorModelInfo(*pinocchioInterfacePtr_, modelType, baseFrame, eeFrame);
+  manipulatorModelInfo_ = mobile_manipulator::createManipulatorModelInfo(*pinocchioInterfacePtr_, modelType, baseFrame, eeFrame);
 
   bool usePreComputation = true;
   bool recompileLibraries = true;
@@ -153,22 +151,19 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
 
   // Constraints
-  // input limits cost
+  // input limits constraint
   problem_.softConstraintPtr->add("jointVelocityLimit", getJointVelocityLimitConstraint(taskFile));
-  // end-effector state cost
+  // end-effector state constraint
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "endEffector",
                                                                                usePreComputation, libraryFolder, recompileLibraries));
   problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, taskFile, "finalEndEffector",
                                                                                     usePreComputation, libraryFolder, recompileLibraries));
-  // self-collision avoidance cost
-  {
-    bool activate = true;
-    loadData::loadPtreeValue(pt, activate, "selfCollision.activate", true);
-    if (activate) {
-      problem_.stateSoftConstraintPtr->add(
-          "selfCollision",
-          getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile, usePreComputation, libraryFolder, recompileLibraries));
-    }
+  // self-collision avoidance constraint
+  bool activateSelfCollision = true;
+  loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
+  if (activateSelfCollision) {
+    problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile,
+                                                                                     usePreComputation, libraryFolder, recompileLibraries));
   }
 
   // Dynamics
@@ -247,11 +242,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
-    MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping(manipulatorModelInfo_);
+    MobileManipulatorPinocchioMapping pinocchioMapping(manipulatorModelInfo_);
     PinocchioEndEffectorKinematics eeKinematics(pinocchioInterface, pinocchioMapping, {manipulatorModelInfo_.eeFrame});
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   } else {
-    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMappingCppAd(manipulatorModelInfo_.toCppAd());
+    MobileManipulatorPinocchioMappingCppAd pinocchioMappingCppAd(manipulatorModelInfo_);
     PinocchioEndEffectorKinematicsCppAd eeKinematics(pinocchioInterface, pinocchioMappingCppAd, {manipulatorModelInfo_.eeFrame},
                                                      manipulatorModelInfo_.stateDim, manipulatorModelInfo_.inputDim,
                                                      "end_effector_kinematics", libraryFolder, recompileLibraries, false);
@@ -298,11 +293,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) {
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorSelfCollisionConstraint(
-        MobileManipulatorPinocchioMapping<scalar_t>(manipulatorModelInfo_), std::move(geometryInterface), minimumDistance));
+        MobileManipulatorPinocchioMapping(manipulatorModelInfo_), std::move(geometryInterface), minimumDistance));
   } else {
     constraint = std::unique_ptr<StateConstraint>(new SelfCollisionConstraintCppAd(
-        pinocchioInterface, MobileManipulatorPinocchioMapping<scalar_t>(manipulatorModelInfo_), std::move(geometryInterface),
-        minimumDistance, "self_collision", libraryFolder, recompileLibraries, false));
+        pinocchioInterface, MobileManipulatorPinocchioMappingCppAd(manipulatorModelInfo_), std::move(geometryInterface), minimumDistance,
+        "self_collision", libraryFolder, recompileLibraries, false));
   }
 
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));

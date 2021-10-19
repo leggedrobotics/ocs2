@@ -59,7 +59,7 @@ class MobileManipulatorPreComputation : public PreComputation {
 
  private:
   PinocchioInterface pinocchioInterface_;
-  MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping_;
+  MobileManipulatorPinocchioMapping pinocchioMapping_;
 };
 
 }  // namespace mobile_manipulator

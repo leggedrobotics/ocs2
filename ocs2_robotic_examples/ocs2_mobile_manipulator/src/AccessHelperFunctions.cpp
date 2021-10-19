@@ -27,6 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "ocs2_mobile_manipulator/AccessHelperFunctions.h"
+
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 namespace ocs2 {
@@ -46,55 +48,71 @@ Eigen::Block<Derived, 6, 1> getBasePose(Eigen::MatrixBase<Derived>& state, const
       return Eigen::Vector3d::Zero();
       // for default arm, we assume robot is at identity pose
       return Eigen::Quaterniond::Identity();
-      break;
     }
     case ManipulatorModelType::FloatingArmManipulator: {
       // for floating arm, the first three entries correspond to base position
-      Eigen::Vector3d position;
-      position << state(0), state(1), state(2);
-      return position;
+      return state.head(3);
       // for floating arm, the base orientation is given by ZYX joints
       return ::ocs2::getQuaternionFromEulerAnglesZyx<double>(state.segment<3>(3));
-      break;
     }
     case ManipulatorModelType::WheelBasedMobileManipulator: {
       // for wheel-based, we assume 2D base position
-      Eigen::Vector3d position;
-      position << state(0), state(1), 0.0;
+      return Eigen::Vector3d(state(0), state(1), 0.0);
       // for wheel-based, we assume only yaw
       return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
-      return position;
-      break;
     }
     default:
       throw std::invalid_argument("Invalid manipulator model type provided.");
-      break;
   }
-  return Eigen::Block<Derived, 6, 1>(state.derived(), 6, 0);
 }
 
 template <typename Derived, typename SCALAR>
 const Eigen::Block<const Derived, 6, 1> getBasePose(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info) {
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
-  return Eigen::Block<const Derived, 6, 1>(state.derived(), 6, 0);
+  // resolve the position vector based on robot type.
+  switch (info.manipulatorModelType) {
+    case ManipulatorModelType::DefaultManipulator: {
+      // for default arm, we assume robot is at identity pose
+      return Eigen::Vector3d::Zero();
+      // for default arm, we assume robot is at identity pose
+      return Eigen::Quaterniond::Identity();
+    }
+    case ManipulatorModelType::FloatingArmManipulator: {
+      // for floating arm, the first three entries correspond to base position
+      return state.head(3);
+      // for floating arm, the base orientation is given by ZYX joints
+      return ::ocs2::getQuaternionFromEulerAnglesZyx<double>(state.segment<3>(3));
+    }
+    case ManipulatorModelType::WheelBasedMobileManipulator: {
+      // for wheel-based, we assume 2D base position
+      return Eigen::Vector3d(state(0), state(1), 0.0);
+      // for wheel-based, we assume only yaw
+      return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
+    }
+    default:
+      throw std::invalid_argument("Invalid manipulator model type provided.");
+  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename Derived, typename SCALAR>
-Eigen::Block<Derived, -1, 1> getJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info) {
+Eigen::Block<Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info) {
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
-  return Eigen::Block<Derived, -1, 1>(state.derived(), 12, 0, info.actuatedDofNum, 1);
+  const size_t startRow = info.stateDim - info.armDim;
+  return Eigen::Block<Derived, -1, 1>(state.derived(), startRow, 0, info.armDim, 1);
 }
 
 template <typename Derived, typename SCALAR>
-const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info) {
+const Eigen::Block<const Derived, -1, 1> getArmJointAngles(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info) {
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
-  return Eigen::Block<const Derived, -1, 1>(state.derived(), 12, 0, info.armDim, 1);
+  // resolve for arm dof start index
+  const size_t startRow = info.stateDim - info.armDim;
+  return Eigen::Block<const Derived, -1, 1>(state.derived(), startRow, 0, info.armDim, 1);
 }
 
 }  // namespace mobile_manipulator

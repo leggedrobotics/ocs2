@@ -52,15 +52,13 @@ const Eigen::Block<const Derived, 6, 1> getBasePose(const Eigen::MatrixBase<Deri
  * Provides read/write access to the arm joint angles.
  */
 template <typename Derived>
-Eigen::Block<Derived, -1, 1> getJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
+Eigen::Block<Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
 /**
  * Provides read access to the arm joint angles.
  */
 template <typename Derived>
-const Eigen::Block<const Derived, -1, 1> getJointAngles(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
+const Eigen::Block<const Derived, -1, 1> getArmJointAngles(const Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2
-
-#include "implementation/AccessHelperFunctionsImpl.h"

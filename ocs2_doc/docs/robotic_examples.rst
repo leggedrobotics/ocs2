@@ -193,13 +193,13 @@ considers the full kinematics of the robot.
 .. code-block:: bash
 
     # Build the example
-    catkin build ocs2_legged_robot
+    catkin build ocs2_legged_robot ocs2_legged_robot_ros
     # Source workspace
     # Do not forget to change <...> parts
     source <directory_to_ws>/<catkin_ws_name>/devel/setup.bash
 
     # Launch the example
-    roslaunch ocs2_legged_robot legged_robot.launch
+    roslaunch ocs2_legged_robot_ros legged_robot.launch
 
 .. image:: ../tools/sphinx/_static/gif/legged_robot.gif
    :alt: legged_robot.gif cannot be displayed!

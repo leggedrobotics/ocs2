@@ -46,6 +46,15 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::
   return state;
 }
 
+vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToInput(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+  // convert to input
+  vector_t input = vector_t::Zero(24);
+  // TODO(areske): retrieve measured contact forces from RaiSim?
+  input.tail<12>() = raisimJointOrderToOcs2JointOrder(dq.tail<12>());
+
+  return input;
+}
+
 Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state,
                                                                             const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
   // get torque
@@ -100,15 +109,6 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToRbdState(const Eige
   }
 
   return rbdState;
-}
-
-vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToInput(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
-  // convert to input
-  vector_t input = vector_t::Zero(24);
-  // TODO(areske): retrieve measured contact forces from RaiSim?
-  input.tail<12>() = raisimJointOrderToOcs2JointOrder(dq.tail<12>());
-
-  return input;
 }
 
 vector_t LeggedRobotRaisimConversions::raisimJointOrderToOcs2JointOrder(const Eigen::VectorXd& raisimJoint) {

@@ -45,9 +45,7 @@ TEST(LeggedRobotRaisim, Conversions) {
     dqIn.setRandom(18);
 
     ocs2::vector_t state = conversions.raisimGenCoordGenVelToState(qIn, dqIn);
-    ocs2::vector_t input(24);
-    input.head<12>().setZero();           // contact forces
-    input.tail<12>() = dqIn.tail<12>();  // joint velocities
+    ocs2::vector_t input = conversions.raisimGenCoordGenVelToInput(qIn, dqIn);
 
     Eigen::VectorXd qOut, dqOut;
     std::tie(qOut, dqOut) = conversions.stateToRaisimGenCoordGenVel(state, input);

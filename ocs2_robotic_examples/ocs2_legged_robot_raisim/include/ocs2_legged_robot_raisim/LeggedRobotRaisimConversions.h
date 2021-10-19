@@ -52,6 +52,14 @@ class LeggedRobotRaisimConversions {
   vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
 
   /**
+   * @brief Convert RaiSim generalized coordinates and velocities to ocs2 input.
+   * @param [in] q : The generalized coordinate.
+   * @param [in] dq : The generalized velocity.
+   * @return The corresponding ocs2 input (includes state-information due to the kinematic leg model).
+   */
+  vector_t raisimGenCoordGenVelToInput(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
+
+  /**
    * @brief Convert ocs2 control input to RaiSim generalized force.
    * @param [in] time : The current time.
    * @param [in] input : The control computed by the ocs2 controller.
@@ -78,14 +86,6 @@ class LeggedRobotRaisimConversions {
    * @return The corresponding RBD state.
    */
   vector_t raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
-
-  /**
-   * @brief Convert RaiSim generalized coordinates and velocities to ocs2 input.
-   * @param [in] q : The generalized coordinate.
-   * @param [in] dq : The generalized velocity.
-   * @return The corresponding ocs2 input (includes state-information due to the kinematic leg model).
-   */
-  vector_t raisimGenCoordGenVelToInput(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
 
   /**
    * @brief Convert RaiSim joint variables to ocs2 joint variables.

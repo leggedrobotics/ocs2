@@ -129,7 +129,7 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
   publishObservation(timeStamp, observation);
   publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
   publishOptimizedTrajectory(timeStamp, policy);
-  if (geometryVisualization_) {
+  if (geometryVisualization_ != nullptr) {
     geometryVisualization_->publishDistances(observation.state);
   }
 }

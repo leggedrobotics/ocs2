@@ -60,7 +60,7 @@ class MobileManipulatorDummyVisualization final : public DummyObserver {
   void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
   PinocchioInterface pinocchioInterface_;
-  ManipulatorModelInfo modelInfo_;
+  const ManipulatorModelInfo modelInfo_;
 
   std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_{nullptr};
   tf::TransformBroadcaster tfBroadcaster_;

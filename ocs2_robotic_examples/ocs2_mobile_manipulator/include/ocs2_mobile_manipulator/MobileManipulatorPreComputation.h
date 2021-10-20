@@ -44,7 +44,7 @@ namespace mobile_manipulator {
 /** Callback for caching and reference update */
 class MobileManipulatorPreComputation : public PreComputation {
  public:
-  explicit MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info);
+  MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info);
 
   ~MobileManipulatorPreComputation() override = default;
 

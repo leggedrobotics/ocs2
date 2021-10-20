@@ -62,13 +62,13 @@ class MobileManipulatorDummyVisualization final : public DummyObserver {
   PinocchioInterface pinocchioInterface_;
   const ManipulatorModelInfo modelInfo_;
 
-  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_{nullptr};
+  std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
   tf::TransformBroadcaster tfBroadcaster_;
 
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher stateOptimizedPosePublisher_;
 
-  std::unique_ptr<GeometryInterfaceVisualization> geometryVisualization_{nullptr};
+  std::unique_ptr<GeometryInterfaceVisualization> geometryVisualization_;
 };
 
 }  // namespace mobile_manipulator

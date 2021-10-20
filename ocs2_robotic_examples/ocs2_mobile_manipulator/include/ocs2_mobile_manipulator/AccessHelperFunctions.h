@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2020, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,36 +25,42 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
-#include <ocs2_ros_interfaces/command/TargetTrajectoriesInteractiveMarker.h>
+#pragma once
 
-using namespace ocs2;
+#include <Eigen/Core>
+
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+
+namespace ocs2 {
+namespace mobile_manipulator {
 
 /**
- * Converts the pose of the interactive marker to TargetTrajectories.
+ * Provides read/write access to the base position.
  */
-TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position, const Eigen::Quaterniond& orientation,
-                                                const SystemObservation& observation) {
-  // time trajectory
-  const scalar_array_t timeTrajectory{observation.time};
-  // state trajectory: 3 + 4 for desired position vector and orientation quaternion
-  const vector_t target = (vector_t(7) << position, orientation.coeffs()).finished();
-  const vector_array_t stateTrajectory{target};
-  // input trajectory
-  const vector_array_t inputTrajectory{vector_t::Zero(observation.input.size())};
+template <typename SCALAR>
+Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info);
 
-  return {timeTrajectory, stateTrajectory, inputTrajectory};
-}
+/**
+ * Provides read/write access to the base orientation.
+ */
+template <typename SCALAR>
+Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info);
 
-int main(int argc, char* argv[]) {
-  const std::string robotName = "mobile_manipulator";
-  ::ros::init(argc, argv, robotName + "_target");
-  ::ros::NodeHandle nodeHandle;
+/**
+ * Provides read/write access to the arm joint angles.
+ */
+template <typename Derived>
+Eigen::Block<Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
-  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
-  targetPoseCommand.publishInteractiveMarker();
+/**
+ * Provides read access to the arm joint angles.
+ */
+template <typename Derived>
+const Eigen::Block<const Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state, const ManipulatorModelInfo& info);
 
-  // Successful exit
-  return 0;
-}
+}  // namespace mobile_manipulator
+}  // namespace ocs2
+
+#include "implementation/AccessHelperFunctionsImpl.h"

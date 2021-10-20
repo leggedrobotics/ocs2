@@ -30,12 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // needs to be included before boost
 #include <pinocchio/multibody/geometry.hpp>
 
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 #include <ocs2_self_collision/loadStdVectorOfPair.h>
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
+#include <ocs2_mobile_manipulator/FactoryFunctions.h>
+#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
 #include <ros/package.h>
@@ -72,14 +75,18 @@ int main(int argc, char** argv) {
   // Initialize ros node
   ros::init(argc, argv, "distance_visualization");
   ros::NodeHandle nodeHandle;
+  // Get ROS parameters
+  std::string urdfPath, taskFile;
+  nodeHandle.getParam("/taskFile", taskFile);
+  nodeHandle.getParam("/urdfFile", urdfPath);
 
-  const std::string urdfPath = ros::package::getPath("ocs2_robotic_assets") + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
-  const std::string taskFileFolder = "mpc";
-  const std::string taskFile = ros::package::getPath("ocs2_mobile_manipulator") + "/config/" + taskFileFolder + "/task.info";
-
-  std::cerr << "Loading task file: " << taskFile << std::endl;
-
-  pInterface.reset(new PinocchioInterface(MobileManipulatorInterface::buildPinocchioInterface(urdfPath)));
+  // read manipulator type
+  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "manipulatorModelType");
+  // read the joints to make fixed
+  std::vector<std::string> removeJointNames;
+  loadData::loadStdVector<std::string>(taskFile, "removeJoints", removeJointNames, true);
+  // create pinocchio interface
+  pInterface.reset(new PinocchioInterface(::ocs2::mobile_manipulator::createPinocchioInterface(urdfPath, modelType)));
 
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
@@ -97,7 +104,7 @@ int main(int argc, char** argv) {
 
   gInterface.reset(new PinocchioGeometryInterface(*pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
 
-  vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base"));
+  vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, "base_link"));
 
   ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);
 

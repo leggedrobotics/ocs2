@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,29 +29,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/cost/QuadraticStateInputCost.h>
+// C/C++
+#include <string>
+#include <vector>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class QuadraticInputCost final : public QuadraticStateInputCost {
- public:
-  QuadraticInputCost(matrix_t R, size_t stateDim)
-      : QuadraticStateInputCost(matrix_t::Zero(stateDim, stateDim), std::move(R)), stateDim_(stateDim) {}
+/**
+ * @brief Defines various manipulator models.
+ */
+enum class ManipulatorModelType {
+  DefaultManipulator = 0,           // default model from the parsed URDF directly
+  WheelBasedMobileManipulator = 1,  // adds dummy XY-Y joints to the model parsed from URDF
+  FloatingArmManipulator = 2,       // adds dummy XYZ-RPY joints to the model parsed from URDF
+};
 
-  ~QuadraticInputCost() override = default;
-
-  QuadraticInputCost(const QuadraticInputCost& rhs) = default;
-  QuadraticInputCost* clone() const override { return new QuadraticInputCost(*this); }
-
-  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                       const TargetTrajectories& targetTrajectories) const override {
-    const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
-    return {vector_t::Zero(stateDim_), inputDeviation};
-  }
-
- private:
-  const size_t stateDim_;
+/**
+ * @brief A data structure to store manipulator information.
+ *
+ * The attributes are filled by resolving the URDF model parsed.
+ */
+struct ManipulatorModelInfo {
+  ManipulatorModelType manipulatorModelType;  // type of manipulator: floating-base, wheel-base, default
+  size_t stateDim;                            // number of states needed to define the system flow map
+  size_t inputDim;                            // number of inputs needed to define the system flow map
+  size_t armDim;                              // number of DOFs in the robot arm
+  std::string baseFrame;                      // name of the root frame of the robot
+  std::string eeFrame;                        // name of the end-effector frame of the robot
+  std::vector<std::string> dofNames;          // name of the actuated DOFs in the robot
 };
 
 }  // namespace mobile_manipulator

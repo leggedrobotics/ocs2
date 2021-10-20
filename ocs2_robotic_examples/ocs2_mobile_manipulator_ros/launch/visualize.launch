@@ -7,7 +7,7 @@
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg urdf_file)"/>
   <param name="use_gui" value="true"/>
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-  <node if="$(arg test)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rvizconfig)" output="screen" if="$(arg rviz)"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <node if="$(arg test)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rvizconfig)" output="screen" if="$(arg rviz)" />
 </launch>

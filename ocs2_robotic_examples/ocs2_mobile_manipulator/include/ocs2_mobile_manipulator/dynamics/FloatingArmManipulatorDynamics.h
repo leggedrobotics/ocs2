@@ -29,27 +29,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
+#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 
-#include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class JointVelocityLimits final : public StateInputConstraint {
+/**
+ * Implementation of a fixed arm manipulator dynamics.
+ *
+ * The fixed-arm manipulator has the state: (6-DOF base pose, arm joints).
+ * The base orientation is represented using quaternion orientation.
+ * The end-effector targets are assumed to given with respect to the world frame.
+ * The arm is assumed to be velocity controlled.
+ */
+class FloatingArmManipulatorDynamics final : public SystemDynamicsBaseAD {
  public:
-  explicit JointVelocityLimits(size_t inputDim) : StateInputConstraint(ConstraintOrder::Linear), inputDim_(inputDim) {}
-  ~JointVelocityLimits() override = default;
-  JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
+  /**
+   * Constructor
+   *
+   * @param [in] modelInfo : The manipulator information.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
+   * @param [in] verbose : Display information.
+   */
+  FloatingArmManipulatorDynamics(const ManipulatorModelInfo& modelInfo, const std::string& modelName,
+                                 const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
-  size_t getNumConstraints(scalar_t time) const override { return inputDim_; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation&) const override;
+  ~FloatingArmManipulatorDynamics() override = default;
+  FloatingArmManipulatorDynamics* clone() const override { return new FloatingArmManipulatorDynamics(*this); }
 
  private:
-  JointVelocityLimits(const JointVelocityLimits& other) = default;
-  const size_t inputDim_;
+  FloatingArmManipulatorDynamics(const FloatingArmManipulatorDynamics& rhs) = default;
+
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& /*parameters*/) const override;
 };
 
 }  // namespace mobile_manipulator

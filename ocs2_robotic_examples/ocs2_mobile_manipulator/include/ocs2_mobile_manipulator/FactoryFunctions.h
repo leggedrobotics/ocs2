@@ -29,38 +29,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
 #include <string>
+#include <vector>
 
-#include <ocs2_core/PreComputation.h>
+#include <urdf_parser/urdf_parser.h>
+
+#include <ocs2_core/Types.h>
+#include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h>
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-/** Callback for caching and reference update */
-class MobileManipulatorPreComputation : public PreComputation {
- public:
-  MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info);
+/** Create a MobileManipulatorModel PinocchioInterface from a URDF
+ * @param [in] robotUrdfPath: The robot URDF path.
+ * @param [in] type: Type of robot model (fixed-arm or wheel-based)
+ * @return PinocchioInterface
+ */
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type);
 
-  ~MobileManipulatorPreComputation() override = default;
+/** Create a MobileManipulatorModel PinocchioInterface from a URDF
+ * @param [in] robotUrdfPath: The robot URDF path.
+ * @param [in] type: Type of robot model (fixed-arm or wheel-based)
+ * @param [in] jointNames: The joint names from URDF to make fixed/unactuated.
+ * @return PinocchioInterface
+ */
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type,
+                                            const std::vector<std::string>& jointNames);
 
-  MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
-  MobileManipulatorPreComputation* clone() const override;
+/**
+ * Create a scalar-typed ManipulatorModelInfo.
+ * @param [in] interface: Pinocchio interface
+ * @param [in] type: Type of template model (default-arm or wheel-based or floating-arm)
+ * @param [in] baseFrame: Name of the root frame.
+ * @param [in] eeFrame: Name of the end-effector frame.
+ * @return ManipulatorModelInfo
+ */
+ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type,
+                                                const std::string& baseFrame, const std::string& eeFrame);
 
-  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
-  void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
-
-  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
-  const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }
-
- private:
-  PinocchioInterface pinocchioInterface_;
-  MobileManipulatorPinocchioMapping pinocchioMapping_;
-};
+/** Load ManipulatorModelType for a config file */
+ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName = "manipulatorModelType");
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

@@ -27,30 +27,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
-
-#include <memory>
-
-#include <ocs2_core/constraint/StateInputConstraint.h>
+#include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class JointVelocityLimits final : public StateInputConstraint {
- public:
-  explicit JointVelocityLimits(size_t inputDim) : StateInputConstraint(ConstraintOrder::Linear), inputDim_(inputDim) {}
-  ~JointVelocityLimits() override = default;
-  JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+FloatingArmManipulatorDynamics::FloatingArmManipulatorDynamics(const ManipulatorModelInfo& info, const std::string& modelName,
+                                                               const std::string& modelFolder /*= "/tmp/ocs2"*/,
+                                                               bool recompileLibraries /*= true*/, bool verbose /*= true*/) {
+  this->initialize(info.stateDim, info.inputDim, modelName, modelFolder, recompileLibraries, verbose);
+}
 
-  size_t getNumConstraints(scalar_t time) const override { return inputDim_; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation&) const override;
-
- private:
-  JointVelocityLimits(const JointVelocityLimits& other) = default;
-  const size_t inputDim_;
-};
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ad_vector_t FloatingArmManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                                          const ad_vector_t&) const {
+  ad_vector_t dxdt = ad_vector_t::Zero(state.size());
+  dxdt.tail(input.size()) = input;  // only arm joint state
+  return dxdt;
+}
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

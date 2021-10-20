@@ -29,27 +29,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
+#include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include <ocs2_core/constraint/StateInputConstraint.h>
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class JointVelocityLimits final : public StateInputConstraint {
+/**
+ * Implementation of a wheel-based mobile manipulator.
+ *
+ * The wheel-based manipulator is simulated 2D-bicycle model for the base. The state
+ * of the robot is: (base x, base y, base yaw, arm joints).
+ *
+ * The robot is assumed to be velocity controlled with the base commands as the forward
+ * velocity and the angular velocity around z.
+ */
+class WheelBasedMobileManipulatorDynamics final : public SystemDynamicsBaseAD {
  public:
-  explicit JointVelocityLimits(size_t inputDim) : StateInputConstraint(ConstraintOrder::Linear), inputDim_(inputDim) {}
-  ~JointVelocityLimits() override = default;
-  JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
+  /**
+   * Constructor
+   *
+   * @param [in] modelInfo : The manipulator information.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
+   * @param [in] verbose : Display information.
+   */
+  WheelBasedMobileManipulatorDynamics(ManipulatorModelInfo modelInfo, const std::string& modelName,
+                                      const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
-  size_t getNumConstraints(scalar_t time) const override { return inputDim_; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation&) const override;
+  ~WheelBasedMobileManipulatorDynamics() override = default;
+  WheelBasedMobileManipulatorDynamics* clone() const override { return new WheelBasedMobileManipulatorDynamics(*this); }
 
  private:
-  JointVelocityLimits(const JointVelocityLimits& other) = default;
-  const size_t inputDim_;
+  WheelBasedMobileManipulatorDynamics(const WheelBasedMobileManipulatorDynamics& rhs) = default;
+
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& /*parameters*/) const override;
+
+  const ManipulatorModelInfo info_;
 };
 
 }  // namespace mobile_manipulator

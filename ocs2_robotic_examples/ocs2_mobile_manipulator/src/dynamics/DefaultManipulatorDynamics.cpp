@@ -25,17 +25,29 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+******************************************************************************/
 
-#pragma once
-
-#include <cstddef>
+#include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-constexpr size_t STATE_DIM = 6 + 3;  // 6 DOF arm + 2D position + heading
-constexpr size_t INPUT_DIM = 6 + 2;  // 6 DOF arm vel. + forward vel. + rotational vel.
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+DefaultManipulatorDynamics::DefaultManipulatorDynamics(const ManipulatorModelInfo& info, const std::string& modelName,
+                                                       const std::string& modelFolder, bool recompileLibraries /*= true*/,
+                                                       bool verbose /*= true*/) {
+  this->initialize(info.stateDim, info.inputDim, modelName, modelFolder, recompileLibraries, verbose);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ad_vector_t DefaultManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                                                      const ad_vector_t&) const {
+  return input;
+}
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

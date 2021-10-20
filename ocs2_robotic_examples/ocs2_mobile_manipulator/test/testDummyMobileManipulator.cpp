@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_robotic_assets/package_path.h>
 
 #include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 #include "ocs2_mobile_manipulator/package_path.h"
 
@@ -57,18 +58,20 @@ class MobileManipulatorIntegrationTest : public testing::Test {
     const std::string libFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated";
     const std::string urdfFile = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
     mobileManipulatorInterfacePtr.reset(new MobileManipulatorInterface(taskFile, libFolder, urdfFile));
+    // obtain robot model info
+    modelInfo = mobileManipulatorInterfacePtr->getManipulatorModelInfo();
 
     // initialize reference
     const vector_t goalState = (vector_t(7) << goalPosition, goalOrientation.coeffs()).finished();
-    TargetTrajectories targetTrajectories({initTime}, {goalState}, {vector_t::Zero(INPUT_DIM)});
+    TargetTrajectories targetTrajectories({initTime}, {goalState}, {vector_t::Zero(modelInfo.inputDim)});
     mobileManipulatorInterfacePtr->getReferenceManagerPtr()->setTargetTrajectories(std::move(targetTrajectories));
 
     // initialize kinematics
     const std::string modelName = "end_effector_kinematics_dummytest";
-    MobileManipulatorPinocchioMapping<ad_scalar_t> pinocchioMapping;
+    MobileManipulatorPinocchioMappingCppAd pinocchioMapping(modelInfo);
     const auto& pinocchioInterface = mobileManipulatorInterfacePtr->getPinocchioInterface();
-    eeKinematicsPtr.reset(
-        new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {"WRIST_2"}, STATE_DIM, INPUT_DIM, modelName));
+    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(pinocchioInterface, pinocchioMapping, {modelInfo.eeFrame},
+                                                                  modelInfo.stateDim, modelInfo.inputDim, modelName));
   }
 
   std::unique_ptr<MPC_DDP> getMpc() {
@@ -102,6 +105,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
   const vector3_t goalPosition = vector3_t(-0.5, -0.8, 0.6);
   const quaternion_t goalOrientation = quaternion_t(0.33, 0.0, 0.0, 0.95);
 
+  ManipulatorModelInfo modelInfo;
   std::unique_ptr<MobileManipulatorInterface> mobileManipulatorInterfacePtr;
   std::unique_ptr<PinocchioEndEffectorKinematicsCppAd> eeKinematicsPtr;
 };
@@ -119,7 +123,7 @@ TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
   SystemObservation observation;
   observation.time = initTime;
   observation.state = mobileManipulatorInterfacePtr->getInitialState();
-  observation.input.setZero(INPUT_DIM);
+  observation.input.setZero(modelInfo.inputDim);
   mpcInterface.setCurrentObservation(observation);
 
   // run MPC for N iterations
@@ -135,12 +139,12 @@ TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
       vector_t optimalState, optimalInput;
 
       mpcInterface.updatePolicy();
-      mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
+      mpcInterface.evaluatePolicy(time, vector_t::Zero(modelInfo.stateDim), optimalState, optimalInput, mode);
 
       // use optimal state for the next observation:
       observation.time = time;
       observation.state = optimalState;
-      observation.input.setZero(INPUT_DIM);
+      observation.input.setZero(modelInfo.inputDim);
       mpcInterface.setCurrentObservation(observation);
     }
   }
@@ -170,7 +174,7 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
         if (mpcInterface.initialPolicyReceived()) {
           size_t mode;
           mpcInterface.updatePolicy();
-          mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
+          mpcInterface.evaluatePolicy(time, vector_t::Zero(modelInfo.stateDim), optimalState, optimalInput, mode);
         }
         if (std::abs(time - finalTime) < 0.005) {
           verifyTrackingQuality(optimalState);
@@ -191,7 +195,7 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
         // use optimal state for the next observation:
         observation.time = time;
         observation.state = optimalState;
-        observation.input.setZero(INPUT_DIM);
+        observation.input.setZero(modelInfo.inputDim);
       }
       mpcInterface.setCurrentObservation(observation);
       mpcInterface.advanceMpc();

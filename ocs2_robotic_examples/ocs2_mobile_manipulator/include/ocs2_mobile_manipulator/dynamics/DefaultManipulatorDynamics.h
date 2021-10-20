@@ -31,26 +31,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/dynamics/SystemDynamicsBaseAD.h>
 
-#include <ocs2_mobile_manipulator/definitions.h>
+#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class MobileManipulatorDynamics final : public SystemDynamicsBaseAD {
+/**
+ * Implementation of a fixed arm manipulator dynamics.
+ *
+ * The fixed-arm manipulator has the state: (arm joints).
+ * The end-effector targets are assumed to given with respect to the base frame.
+ * The arm is assumed to be velocity controlled.
+ */
+class DefaultManipulatorDynamics final : public SystemDynamicsBaseAD {
  public:
-  using Base = SystemDynamicsBaseAD;
+  /**
+   * Constructor
+   *
+   * @param [in] modelInfo : The manipulator information.
+   * @param [in] modelName : name of the generate model library
+   * @param [in] modelFolder : folder to save the model library files to
+   * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
+   * @param [in] verbose : Display information.
+   */
+  DefaultManipulatorDynamics(const ManipulatorModelInfo& modelInfo, const std::string& modelName,
+                             const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
 
-  explicit MobileManipulatorDynamics(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
-                                     bool recompileLibraries = true, bool verbose = true);
-  ~MobileManipulatorDynamics() override = default;
-  MobileManipulatorDynamics* clone() const override { return new MobileManipulatorDynamics(*this); }
-
-  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                            const ad_vector_t& parameters) const override;
+  ~DefaultManipulatorDynamics() override = default;
+  DefaultManipulatorDynamics* clone() const override { return new DefaultManipulatorDynamics(*this); }
 
  private:
-  MobileManipulatorDynamics(const MobileManipulatorDynamics& rhs) = default;
+  DefaultManipulatorDynamics(const DefaultManipulatorDynamics& rhs) = default;
+
+  ad_vector_t systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
+                            const ad_vector_t& /*parameters*/) const override;
 };
 
 }  // namespace mobile_manipulator

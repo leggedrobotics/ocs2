@@ -36,7 +36,7 @@ namespace mobile_manipulator {
 
 class QuadraticInputCost final : public QuadraticStateInputCost {
  public:
-  explicit QuadraticInputCost(matrix_t R, const size_t& stateDim)
+  QuadraticInputCost(matrix_t R, size_t stateDim)
       : QuadraticStateInputCost(matrix_t::Zero(stateDim, stateDim), std::move(R)), stateDim_(stateDim) {}
 
   ~QuadraticInputCost() override = default;

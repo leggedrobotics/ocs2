@@ -430,11 +430,6 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
   for (size_t i = 0; i < numPartitions_; i++) {
     if (i < preservedLength) {
       swap(nominalControllersStock_[i], nominalControllersStock_[firstIndex + i]);
-      SmFinalStock_[i] = SmFinalStock_[firstIndex + i];
-      SvFinalStock_[i] = SvFinalStock_[firstIndex + i];
-      sFinalStock_[i] = sFinalStock_[firstIndex + i];
-      xFinalStock_[i] = xFinalStock_[firstIndex + i];
-
       cachedTimeTrajectoriesStock_[i].swap(cachedTimeTrajectoriesStock_[firstIndex + i]);
       cachedPostEventIndicesStock_[i].swap(cachedPostEventIndicesStock_[firstIndex + i]);
       cachedStateTrajectoriesStock_[i].swap(cachedStateTrajectoriesStock_[firstIndex + i]);
@@ -446,10 +441,6 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
 
     } else {
       nominalControllersStock_[i].clear();
-      SmFinalStock_[i].setZero(0, 0);
-      SvFinalStock_[i].setZero(0);
-      sFinalStock_[i] = 0.0;
-      xFinalStock_[i].setZero(0);
 
       cachedTimeTrajectoriesStock_[i].clear();
       cachedPostEventIndicesStock_[i].clear();
@@ -525,10 +516,6 @@ void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {
   /*
    * Riccati solver variables and controller update
    */
-  SmFinalStock_ = matrix_array_t(numPartitions);
-  SvFinalStock_ = vector_array_t(numPartitions);
-  sFinalStock_ = scalar_array_t(numPartitions);
-  xFinalStock_ = vector_array_t(numPartitions);
 
   SsTimeTrajectoryStock_.resize(numPartitions);
   SsNormalizedTimeTrajectoryStock_.resize(numPartitions);
@@ -809,16 +796,20 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
     const std::vector<std::pair<int, int>> indexPeriodArray = distributeWork(ddpSettings_.nThreads_);
 
     // correct the end of parrtition's final values based on the cached values
+    matrix_array_t SmFinalStock_(numPartitions_);
+    vector_array_t SvFinalStock_(numPartitions_);
+    scalar_array_t sFinalStock_(numPartitions_);
+
     SmFinalStock_[finalActivePartition_] = SmFinal;
     SvFinalStock_[finalActivePartition_] = SvFinal;
     sFinalStock_[finalActivePartition_] = sFinal;
-    xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
     for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
       const vector_t& xFinalUpdated = nominalStateTrajectoriesStock_[i + 1].front();
-      const vector_t deltaState = xFinalUpdated - xFinalStock_[i];
-      const vector_t SmFinalDeltaState = SmFinalStock_[i] * deltaState;
-      sFinalStock_[i] += deltaState.dot(0.5 * SmFinalDeltaState + SvFinalStock_[i]);
-      SvFinalStock_[i] += SmFinalDeltaState;
+
+      const auto interpolatedFinalValueFunc = getValueFunction(nominalTimeTrajectoriesStock_[i + 1].front(), xFinalUpdated);
+      SmFinalStock_[i] = interpolatedFinalValueFunc.dfdxx;
+      SvFinalStock_[i] = interpolatedFinalValueFunc.dfdx;
+      sFinalStock_[i] = interpolatedFinalValueFunc.f;
     }  // end of loop
 
     nextTaskId_ = 0;
@@ -830,18 +821,6 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
     };
     runParallel(task, indexPeriodArray.size());
   }
-
-  // update the final values for the next iteration
-  SmFinalStock_[finalActivePartition_] = SmFinal;
-  SvFinalStock_[finalActivePartition_] = SvFinal;
-  sFinalStock_[finalActivePartition_] = sFinal;
-  xFinalStock_[finalActivePartition_] = nominalStateTrajectoriesStock_[finalActivePartition_].back();
-  for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
-    SmFinalStock_[i] = SmTrajectoryStock_[i + 1].front();
-    SvFinalStock_[i] = SvTrajectoryStock_[i + 1].front();
-    sFinalStock_[i] = sTrajectoryStock_[i + 1].front();
-    xFinalStock_[i] = nominalStateTrajectoriesStock_[i + 1].front();
-  }  // end of i loop
 
   // testing the numerical stability of the Riccati equations
   if (ddpSettings_.checkNumericalStability_) {

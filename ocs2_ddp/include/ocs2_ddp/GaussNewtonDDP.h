@@ -512,11 +512,6 @@ class GaussNewtonDDP : public SolverBase {
   vector_array2_t cachedSvTrajectoryStock_;
   matrix_array2_t cachedSmTrajectoryStock_;
 
-  scalar_array_t sFinalStock_;
-  vector_array_t SvFinalStock_;
-  matrix_array_t SmFinalStock_;
-  vector_array_t xFinalStock_;
-
   ScalarFunctionQuadraticApproximation heuristics_;
 
   ConstraintPenaltyCoefficients constraintPenaltyCoefficients_;

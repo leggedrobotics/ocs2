@@ -39,7 +39,12 @@ namespace ocs2 {
 template <>
 template <>
 PinocchioInterfaceCppAd PinocchioInterface::toCppAd() const {
-  return PinocchioInterfaceCppAd(getModel().cast<ad_scalar_t>());
+  auto cppAdModel = getModel().cast<ad_scalar_t>();
+
+  // TODO (rgrandia) : remove after bug fix. The cast function forgets to copy this member.
+  cppAdModel.supports = getModel().supports;
+
+  return PinocchioInterfaceCppAd(cppAdModel);
 }
 
 /******************************************************************************************************/

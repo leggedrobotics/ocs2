@@ -23,6 +23,9 @@ MpcnetDataGeneration::DataPtr MpcnetDataGeneration::run(scalar_t alpha, const st
   // reset mpc
   mpcPtr_->reset();
 
+  // reset rollout, i.e. reset the internal simulator state (e.g. relevant for RaiSim)
+  rolloutPtr_->resetRollout();
+
   // prepare learned controller
   mpcnetPtr_->loadPolicyModel(policyFilePath);
 

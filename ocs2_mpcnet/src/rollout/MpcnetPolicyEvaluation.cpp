@@ -19,6 +19,9 @@ MpcnetPolicyEvaluation::MetricsPtr MpcnetPolicyEvaluation::run(const std::string
   // reset mpc
   mpcPtr_->reset();
 
+  // reset rollout, i.e. reset the internal simulator state (e.g. relevant for RaiSim)
+  rolloutPtr_->resetRollout();
+
   // prepare learned controller
   mpcnetPtr_->loadPolicyModel(policyFilePath);
 

@@ -75,8 +75,10 @@ RaisimRollout::RaisimRollout(std::string urdfFile, std::string resourcePath,
 
   ground_ = world_.addGround();
 
-  server_ = new raisim::RaisimServer(&world_);
-  server_->launchServer();
+  if (raisimRolloutSettings_.raisimServer_) {
+    server_ = new raisim::RaisimServer(&world_);
+    server_->launchServer(raisimRolloutSettings_.portNumber_);
+  }
 }
 
 /******************************************************************************************************/

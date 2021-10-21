@@ -11,6 +11,8 @@ rollout
     generateTerrain true
     terrainRoughness 1.0
     terrainSeed 1
+    raisimServer true
+    portNumber 8080
 
     orderedJointNames
     {

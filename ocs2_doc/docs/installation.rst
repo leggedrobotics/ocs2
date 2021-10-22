@@ -10,6 +10,14 @@ Prerequisites
 The OCS2 library is written in C++11. It is tested under Ubuntu 20.04 with library versions as 
 provided in the package sources.
 
+Source code
+------------
+The source code is hosted on GitHub: `leggedrobotics/ocs2 <https://github.com/leggedrobotics/ocs2>`_. 
+
+    .. code-block:: bash
+    
+        # Clone OCS2
+        git clone git@github.com:leggedrobotics/ocs2.git
 
 Dependencies
 ------------

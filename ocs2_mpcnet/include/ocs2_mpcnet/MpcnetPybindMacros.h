@@ -88,7 +88,7 @@ using namespace pybind11::literals;
     pybind11::module::import("ocs2_mpcnet.MpcnetPybindings");                                                                              \
     /* bind actual MPC-Net interface for specific robot */                                                                                 \
     pybind11::class_<MPCNET_INTERFACE>(m, "MpcnetInterface")                                                                               \
-        .def(pybind11::init<size_t, size_t>())                                                                                             \
+        .def(pybind11::init<size_t, size_t, bool>())                                                                                       \
         .def("startDataGeneration", &MPCNET_INTERFACE::startDataGeneration, "alpha"_a, "policyFilePath"_a, "timeStep"_a,                   \
              "dataDecimation"_a, "nSamples"_a, "samplingCovariance"_a.noconvert(), "initialObservations"_a, "modeSchedules"_a,             \
              "targetTrajectories"_a)                                                                                                       \

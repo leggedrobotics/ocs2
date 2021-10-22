@@ -380,6 +380,10 @@ class GaussNewtonDDP : public SolverBase {
    */
   void swapDataToCache();
 
+  void swapDualSolutionsToCache();
+
+  void cacheNominalTrajectories();
+
   /**
    * Corrects the initial caching of the nominal trajectories.
    * This is necessary for:
@@ -511,6 +515,9 @@ class GaussNewtonDDP : public SolverBase {
   scalar_array2_t cachedsTrajectoryStock_;
   vector_array2_t cachedSvTrajectoryStock_;
   matrix_array2_t cachedSmTrajectoryStock_;
+  // cached nominal trajectories from previous (preserved between consecutive iteration)
+  scalar_array2_t cachedNominalTimeTrajectoriesStock_;
+  vector_array2_t cachedNominalStateTrajectoriesStock_;
 
   ScalarFunctionQuadraticApproximation heuristics_;
 

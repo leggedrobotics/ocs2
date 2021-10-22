@@ -304,6 +304,13 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t t
   partition = std::max(partition, initActivePartition_);
   partition = std::min(partition, finalActivePartition_);
 
+  // Find the first non-empty partition from the back
+  // It is useful in MPC setup where the final time of the second to last partition was not reached in the cached dual solution
+  // It will be removed after a proper way of rectifying both cached primal and dual solutions by using new nominal trajectories is
+  // discovered
+  for (; partition > initActivePartition_ && cachedSsTimeTrajectoryStock_[partition].empty(); partition--) {
+  };
+
   // Interpolate value function trajectory
   ScalarFunctionQuadraticApproximation valueFunction;
   const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedSsTimeTrajectoryStock_[partition]);
@@ -312,8 +319,8 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t t
   valueFunction.f = LinearInterpolation::interpolate(indexAlpha, cachedsTrajectoryStock_[partition]);
 
   // Re-center around query state
-  const vector_t xNominal =
-      LinearInterpolation::interpolate(time, cachedTimeTrajectoriesStock_[partition], cachedStateTrajectoriesStock_[partition]);
+  const vector_t xNominal = LinearInterpolation::interpolate(time, cachedNominalTimeTrajectoriesStock_[partition],
+                                                             cachedNominalStateTrajectoriesStock_[partition]);
   const vector_t deltaX = state - xNominal;
   const vector_t SmDeltaX = valueFunction.dfdxx * deltaX;
   valueFunction.f += deltaX.dot(0.5 * SmDeltaX + valueFunction.dfdx);
@@ -438,6 +445,13 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
       cachedsTrajectoryStock_[i].swap(cachedsTrajectoryStock_[firstIndex + i]);
       cachedSvTrajectoryStock_[i].swap(cachedSvTrajectoryStock_[firstIndex + i]);
       cachedSmTrajectoryStock_[i].swap(cachedSmTrajectoryStock_[firstIndex + i]);
+      cachedNominalTimeTrajectoriesStock_[i].swap(cachedNominalTimeTrajectoriesStock_[firstIndex + i]);
+      cachedNominalStateTrajectoriesStock_[i].swap(cachedNominalStateTrajectoriesStock_[firstIndex + i]);
+
+      SsTimeTrajectoryStock_[i].swap(SsTimeTrajectoryStock_[firstIndex + i]);
+      sTrajectoryStock_[i].swap(sTrajectoryStock_[firstIndex + i]);
+      SvTrajectoryStock_[i].swap(SvTrajectoryStock_[firstIndex + i]);
+      SmTrajectoryStock_[i].swap(SmTrajectoryStock_[firstIndex + i]);
 
     } else {
       nominalControllersStock_[i].clear();
@@ -450,6 +464,13 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {
       cachedsTrajectoryStock_[i].clear();
       cachedSvTrajectoryStock_[i].clear();
       cachedSmTrajectoryStock_[i].clear();
+      cachedNominalTimeTrajectoriesStock_[i].clear();
+      cachedNominalStateTrajectoriesStock_[i].clear();
+
+      SsTimeTrajectoryStock_[i].clear();
+      sTrajectoryStock_[i].clear();
+      SvTrajectoryStock_[i].clear();
+      SmTrajectoryStock_[i].clear();
     }
   }
 }
@@ -1334,12 +1355,19 @@ void GaussNewtonDDP::swapDataToCache() {
   cachedModelDataEventTimesStock_.swap(modelDataEventTimesStock_);
   cachedProjectedModelDataTrajectoriesStock_.swap(projectedModelDataTrajectoriesStock_);
   cachedRiccatiModificationTrajectoriesStock_.swap(riccatiModificationTrajectoriesStock_);
+}
+
+void GaussNewtonDDP::swapDualSolutionsToCache() {
   cachedSsTimeTrajectoryStock_.swap(SsTimeTrajectoryStock_);
   cachedsTrajectoryStock_.swap(sTrajectoryStock_);
   cachedSvTrajectoryStock_.swap(SvTrajectoryStock_);
   cachedSmTrajectoryStock_.swap(SmTrajectoryStock_);
 }
 
+void GaussNewtonDDP::cacheNominalTrajectories() {
+  cachedNominalTimeTrajectoriesStock_ = nominalTimeTrajectoriesStock_;
+  cachedNominalStateTrajectoriesStock_ = nominalStateTrajectoriesStock_;
+}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -1646,9 +1674,10 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // cache the nominal trajectories before the new rollout (time, state, input, ...)
   swapDataToCache();
-
+  swapDualSolutionsToCache();
   // run DDP initializer and update the member variables
   runInit();
+  cacheNominalTrajectories();
 
   // increment iteration counter
   totalNumIterations_++;
@@ -1672,6 +1701,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
     // cache the nominal trajectories before the new rollout (time, state, input, ...)
     swapDataToCache();
+    swapDualSolutionsToCache();
     performanceIndexHistory_.push_back(performanceIndex_);
 
     // run the an iteration of the DDP algorithm and update the member variables
@@ -1680,6 +1710,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     const scalar_t lqModelExpectedCost =
         unreliableControllerIncrement ? performanceIndex_.merit : cachedsTrajectoryStock_[initActivePartition_].front();
     runIteration(lqModelExpectedCost);
+    cacheNominalTrajectories();
 
     // increment iteration counter
     totalNumIterations_++;

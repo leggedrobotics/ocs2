@@ -1,12 +1,43 @@
-#include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
+/******************************************************************************
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+
 #include <ros/topic.h>
+
+#include "ocs2_raisim_ros/RaisimHeightmapRosConverter.h"
 
 namespace ocs2 {
 
-grid_map_msgs::GridMapPtr RaisimHeightmapRosConverter::convertHeightmapToGridmap(const raisim::HeightMap& heightMap) {
+grid_map_msgs::GridMapPtr RaisimHeightmapRosConverter::convertHeightmapToGridmap(const raisim::HeightMap& heightMap,
+                                                                                 const std::string& frameId) {
   grid_map_msgs::GridMapPtr gridMapMsg(new grid_map_msgs::GridMap());
 
-  gridMapMsg->info.header.frame_id = "world";
+  gridMapMsg->info.header.frame_id = frameId;
   gridMapMsg->info.header.stamp = ros::Time::now();
 
   const auto xResolution = heightMap.getXSize() / static_cast<double>(heightMap.getXSamples());
@@ -56,11 +87,11 @@ std::unique_ptr<raisim::HeightMap> RaisimHeightmapRosConverter::convertGridmapTo
   return heightMap;
 }
 
-void RaisimHeightmapRosConverter::publishGridmap(const raisim::HeightMap& heightMap) {
+void RaisimHeightmapRosConverter::publishGridmap(const raisim::HeightMap& heightMap, const std::string& frameID) {
   if (!gridmapPublisher_) {
     gridmapPublisher_.reset(new ros::Publisher(nodeHandle_.advertise<grid_map_msgs::GridMap>("/raisim_heightmap", 1, true)));
   }
-  auto gridMapMsg = convertHeightmapToGridmap(heightMap);
+  auto gridMapMsg = convertHeightmapToGridmap(heightMap, frameID);
   gridmapPublisher_->publish(gridMapMsg);
 }
 

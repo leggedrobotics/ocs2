@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <iostream>
 #include <iterator>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>

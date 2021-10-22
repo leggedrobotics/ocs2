@@ -31,8 +31,11 @@ policy_evaluation_duration = 3.0
 policy_evaluation_n_threads = 1
 policy_evaluation_n_tasks = 5
 
+# rollout settings for data generation and policy evaluation
+raisim = False
+
 # mpcnet interface
-mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_n_threads)
+mpcnet_interface = MpcnetInterface(data_generation_n_threads, policy_evaluation_n_threads, raisim)
 
 # logging
 description = "description"

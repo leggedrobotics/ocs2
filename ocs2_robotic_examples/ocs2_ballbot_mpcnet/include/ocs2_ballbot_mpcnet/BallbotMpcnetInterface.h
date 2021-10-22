@@ -15,8 +15,9 @@ class BallbotMpcnetInterface : public MpcnetInterfaceBase {
    * Constructor.
    * @param [in] nDataGenerationThreads : Number of data generation threads.
    * @param [in] nPolicyEvaluationThreads : Number of policy evaluation threads.
+   * @param [in] raisim : Whether to use RaiSim for the rollouts.
    */
-  BallbotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads);
+  BallbotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads, bool raisim);
 
   /**
    * Default destructor.

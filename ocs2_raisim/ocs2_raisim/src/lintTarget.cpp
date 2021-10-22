@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,28 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "ocs2_robotic_tools/common/LoopshapingRobotInterface.h"
+#include "ocs2_raisim/RaisimRollout.h"
+#include "ocs2_raisim/RaisimRolloutSettings.h"
 
-#include <ocs2_oc/oc_problem/LoopshapingOptimalControlProblem.h>
-
-namespace ocs2 {
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-LoopshapingRobotInterface::LoopshapingRobotInterface(std::unique_ptr<RobotInterface> robotInterfacePtr,
-                                                     std::shared_ptr<LoopshapingDefinition> loopshapingDefinitionPtr)
-    : robotInterfacePtr_(std::move(robotInterfacePtr)), loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)) {
-  // wrap with loopshaping
-  optimalControlProblem_ =
-      LoopshapingOptimalControlProblem::create(robotInterfacePtr_->getOptimalControlProblem(), loopshapingDefinitionPtr_);
-
-  initializerPtr_.reset(new ocs2::LoopshapingInitializer(robotInterfacePtr_->getInitializer(), loopshapingDefinitionPtr_));
-
-  if (robotInterfacePtr_->getReferenceManagerPtr() != nullptr) {
-    loopshapingReferenceManager_ =
-        std::make_shared<LoopshapingReferenceManager>(robotInterfacePtr_->getReferenceManagerPtr(), loopshapingDefinitionPtr_);
-  }
+int main() {
+  return 0;
 }
-
-}  // namespace ocs2

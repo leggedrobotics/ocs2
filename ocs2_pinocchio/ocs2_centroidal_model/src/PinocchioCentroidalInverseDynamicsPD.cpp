@@ -1,3 +1,32 @@
+/******************************************************************************
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+******************************************************************************/
+
 #include "ocs2_centroidal_model/PinocchioCentroidalInverseDynamicsPD.h"
 
 #include <pinocchio/algorithm/rnea.hpp>
@@ -11,7 +40,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioCentroidalInverseDynamicsPD::PinocchioCentroidalInverseDynamicsPD(PinocchioInterface& pinocchioInterface,
-                                                                           CentroidalModelInfo centroidalModelInfo,
+                                                                           const CentroidalModelInfo& centroidalModelInfo,
                                                                            std::vector<std::string> contactNames3DoF)
     : pinocchioInterfacePtr_(&pinocchioInterface),
       centroidalModelPinocchioMapping_(centroidalModelInfo),
@@ -26,6 +55,9 @@ PinocchioCentroidalInverseDynamicsPD::PinocchioCentroidalInverseDynamicsPD(Pinoc
 vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desiredState, const vector_t& desiredInput,
                                                          const vector_t& desiredJointAccelerations, const vector_t& measuredState,
                                                          const vector_t& measuredInput) {
+  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
+  using matrix3_t = Eigen::Matrix<scalar_t, 3, 3>;
+
   // handles
   auto& interface = *pinocchioInterfacePtr_;
   const auto& info = centroidalModelPinocchioMapping_.getCentroidalModelInfo();
@@ -42,12 +74,12 @@ vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desired
   aDesired << desiredBaseAcceleration, desiredJointAccelerations;
   pinocchio::container::aligned_vector<pinocchio::Force> fextDesired(model.njoints, pinocchio::Force::Zero());
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    const auto name = contactNames3DoF_[i];
+    const auto& name = contactNames3DoF_[i];
     const auto frameIndex = model.getBodyId(name);
     const auto jointIndex = model.frames[frameIndex].parent;
-    const Eigen::Vector3d translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
-    const Eigen::Matrix3d rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
-    const Eigen::Vector3d contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);
+    const vector3_t translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
+    const matrix3_t rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
+    const vector3_t contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);
     fextDesired[jointIndex].linear() = contactForce;
     fextDesired[jointIndex].angular() = translationJointFrameToContactFrame.cross(contactForce);
   }
@@ -61,8 +93,8 @@ vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desired
   vector_t torque = pinocchio::rnea(model, data, qDesired, vDesired, aDesired, fextDesired);
 
   // feedback
-  torque.noalias() += pGains_ * (qDesired - qMeasured);
-  torque.noalias() += dGains_ * (vDesired - vMeasured);
+  torque.noalias() += pGains_.cwiseProduct(qDesired - qMeasured);
+  torque.noalias() += dGains_.cwiseProduct(vDesired - vMeasured);
 
   return torque;
 }

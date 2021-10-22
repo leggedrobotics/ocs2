@@ -48,7 +48,7 @@ vector_t LoopshapingFilterConstraint::getValue(scalar_t t, const vector_t& x, co
   const auto& u_filter = preCompLS.getFilteredInput();
 
   if (isDiagonal) {
-    return s_filter.getCdiag() * x_filter + s_filter.getDdiag() * u_filter - u_system;
+    return s_filter.getCdiag().diagonal().cwiseProduct(x_filter) + s_filter.getDdiag().diagonal().cwiseProduct(u_filter) - u_system;
   } else {
     return s_filter.getC() * x_filter + s_filter.getD() * u_filter - u_system;
   }
@@ -73,7 +73,7 @@ VectorFunctionLinearApproximation LoopshapingFilterConstraint::getLinearApproxim
 
   VectorFunctionLinearApproximation g(u_system.rows(), x.rows(), u.rows());
   if (isDiagonal) {
-    g.f = s_filter.getCdiag() * x_filter + s_filter.getDdiag() * u_filter - u_system;
+    g.f = s_filter.getCdiag().diagonal().cwiseProduct(x_filter) + s_filter.getDdiag().diagonal().cwiseProduct(u_filter) - u_system;
   } else {
     g.f = s_filter.getC() * x_filter + s_filter.getD() * u_filter - u_system;
   }

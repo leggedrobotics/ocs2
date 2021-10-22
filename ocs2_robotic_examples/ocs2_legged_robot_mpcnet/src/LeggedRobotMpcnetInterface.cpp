@@ -7,13 +7,15 @@
 #include <ocs2_mpcnet/control/MpcnetOnnxController.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_raisim/RaisimRollout.h>
+#include <ocs2_raisim/RaisimRolloutSettings.h>
 
 #include "ocs2_legged_robot_mpcnet/LeggedRobotMpcnetDefinition.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
-LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads) {
+LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads, bool raisim) {
   // create ONNX environment
   auto onnxEnvironmentPtr = createOnnxEnvironment();
   // path to config files
@@ -33,14 +35,35 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
   mpcnetDefinitionPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   referenceManagerPtrs.reserve(nDataGenerationThreads + nPolicyEvaluationThreads);
   for (int i = 0; i < (nDataGenerationThreads + nPolicyEvaluationThreads); i++) {
-    LeggedRobotInterface leggedRobotInterface(taskFileFolderName, targetCommandFile, urdf::parseURDFFile(urdfFile));
-    std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr(new LeggedRobotMpcnetDefinition(leggedRobotInterface.getInitialState()));
-    mpcPtrs.push_back(getMpc(leggedRobotInterface));
+    leggedRobotInterfacePtrs_.push_back(std::unique_ptr<LeggedRobotInterface>(
+        new LeggedRobotInterface(taskFileFolderName, targetCommandFile, urdf::parseURDFFile(urdfFile))));
+    std::shared_ptr<MpcnetDefinitionBase> mpcnetDefinitionPtr(
+        new LeggedRobotMpcnetDefinition(leggedRobotInterfacePtrs_[i]->getInitialState()));
+    mpcPtrs.push_back(getMpc(*leggedRobotInterfacePtrs_[i]));
     mpcnetPtrs.push_back(std::unique_ptr<MpcnetControllerBase>(
-        new MpcnetOnnxController(mpcnetDefinitionPtr, leggedRobotInterface.getReferenceManagerPtr(), onnxEnvironmentPtr)));
-    rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(leggedRobotInterface.getRollout().clone()));
+        new MpcnetOnnxController(mpcnetDefinitionPtr, leggedRobotInterfacePtrs_[i]->getReferenceManagerPtr(), onnxEnvironmentPtr)));
+    if (raisim) {
+      RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout");
+      raisimRolloutSettings.portNumber_ += i;
+      leggedRobotRaisimConversionsPtrs_.push_back(std::unique_ptr<LeggedRobotRaisimConversions>(new LeggedRobotRaisimConversions(
+          leggedRobotInterfacePtrs_[i]->getPinocchioInterface(), leggedRobotInterfacePtrs_[i]->getCentroidalModelInfo(),
+          leggedRobotInterfacePtrs_[i]->modelSettings(), false)));
+      leggedRobotRaisimConversionsPtrs_[i]->setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
+      rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(new RaisimRollout(
+          ros::package::getPath("anymal_c_simple_description") + "/urdf/anymal.urdf",
+          ros::package::getPath("anymal_c_simple_description") + "/meshes",
+          std::bind(&LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel, leggedRobotRaisimConversionsPtrs_[i].get(),
+                    std::placeholders::_1, std::placeholders::_2),
+          std::bind(&LeggedRobotRaisimConversions::raisimGenCoordGenVelToState, leggedRobotRaisimConversionsPtrs_[i].get(),
+                    std::placeholders::_1, std::placeholders::_2),
+          std::bind(&LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce, leggedRobotRaisimConversionsPtrs_[i].get(),
+                    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
+          nullptr, raisimRolloutSettings, nullptr)));
+    } else {
+      rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(leggedRobotInterfacePtrs_[i]->getRollout().clone()));
+    }
     mpcnetDefinitionPtrs.push_back(mpcnetDefinitionPtr);
-    referenceManagerPtrs.push_back(leggedRobotInterface.getReferenceManagerPtr());
+    referenceManagerPtrs.push_back(leggedRobotInterfacePtrs_[i]->getReferenceManagerPtr());
   }
   mpcnetRolloutManagerPtr_.reset(new MpcnetRolloutManager(nDataGenerationThreads, nPolicyEvaluationThreads, std::move(mpcPtrs),
                                                           std::move(mpcnetPtrs), std::move(rolloutPtrs), mpcnetDefinitionPtrs,

@@ -39,7 +39,6 @@ namespace ocs2 {
 /**
  * Centroidal inverse dynamics with PD control using Pinocchio:
  * torque = torque_inverse_dynamics + pGains * (qDesired - qMeasured) + dGains * (vDesired - vMeasured)
- * @note 6 DoF contacts are not yet implemented
  */
 class PinocchioCentroidalInverseDynamicsPD final {
  public:
@@ -48,9 +47,10 @@ class PinocchioCentroidalInverseDynamicsPD final {
    * @param [in] pinocchioInterface : The predefined pinocchio interface for the robot.
    * @param [in] centroidalModelInfo : The centroidal model information.
    * @param [in] contactNames3DoF : The names of the 3 DoF contacts.
+   * @param [in] contactNames6DoF : The names of the 6 DoF contacts.
    */
   PinocchioCentroidalInverseDynamicsPD(PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& centroidalModelInfo,
-                                       std::vector<std::string> contactNames3DoF);
+                                       std::vector<std::string> contactNames3DoF, std::vector<std::string> contactNames6DoF);
 
   /**
    * Default destructor.
@@ -83,6 +83,7 @@ class PinocchioCentroidalInverseDynamicsPD final {
   CentroidalModelPinocchioMapping centroidalModelPinocchioMapping_;
   CentroidalModelRbdConversions centroidalModelRbdConversions_;
   const std::vector<std::string> contactNames3DoF_;
+  const std::vector<std::string> contactNames6DoF_;
   vector_t pGains_;
   vector_t dGains_;
 };

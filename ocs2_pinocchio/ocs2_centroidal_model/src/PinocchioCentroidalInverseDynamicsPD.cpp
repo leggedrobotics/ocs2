@@ -41,11 +41,13 @@ namespace ocs2 {
 /******************************************************************************************************/
 PinocchioCentroidalInverseDynamicsPD::PinocchioCentroidalInverseDynamicsPD(PinocchioInterface& pinocchioInterface,
                                                                            const CentroidalModelInfo& centroidalModelInfo,
-                                                                           std::vector<std::string> contactNames3DoF)
+                                                                           std::vector<std::string> contactNames3DoF,
+                                                                           std::vector<std::string> contactNames6DoF)
     : pinocchioInterfacePtr_(&pinocchioInterface),
       centroidalModelPinocchioMapping_(centroidalModelInfo),
       centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo),
-      contactNames3DoF_(std::move(contactNames3DoF)) {
+      contactNames3DoF_(std::move(contactNames3DoF)),
+      contactNames6DoF_(std::move(contactNames6DoF)) {
   centroidalModelPinocchioMapping_.setPinocchioInterface(pinocchioInterface);
 }
 
@@ -82,6 +84,17 @@ vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desired
     const vector3_t contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);
     fextDesired[jointIndex].linear() = contactForce;
     fextDesired[jointIndex].angular() = translationJointFrameToContactFrame.cross(contactForce);
+  }
+  for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
+    const auto& name = contactNames6DoF_[i];
+    const auto frameIndex = model.getBodyId(name);
+    const auto jointIndex = model.frames[frameIndex].parent;
+    const vector3_t translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
+    const matrix3_t rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
+    const vector3_t contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);
+    const vector3_t contactTorque = rotationWorldFrameToJointFrame * centroidal_model::getContactTorques(desiredInput, i, info);
+    fextDesired[jointIndex].linear() = contactForce;
+    fextDesired[jointIndex].angular() = translationJointFrameToContactFrame.cross(contactForce) + contactTorque;
   }
 
   // measured

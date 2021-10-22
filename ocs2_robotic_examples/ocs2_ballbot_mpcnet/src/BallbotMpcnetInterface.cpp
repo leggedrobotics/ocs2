@@ -12,7 +12,7 @@
 namespace ocs2 {
 namespace ballbot {
 
-BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads) {
+BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, size_t nPolicyEvaluationThreads, bool raisim) {
   // create ONNX environment
   auto onnxEnvironmentPtr = createOnnxEnvironment();
   // path to config file
@@ -36,7 +36,11 @@ BallbotMpcnetInterface::BallbotMpcnetInterface(size_t nDataGenerationThreads, si
     mpcPtrs.push_back(getMpc(ballbotInterface));
     mpcnetPtrs.push_back(std::unique_ptr<MpcnetControllerBase>(
         new MpcnetOnnxController(mpcnetDefinitionPtr, ballbotInterface.getReferenceManagerPtr(), onnxEnvironmentPtr)));
-    rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(ballbotInterface.getRollout().clone()));
+    if (raisim) {
+      throw std::runtime_error("BallbotMpcnetInterface::BallbotMpcnetInterface RaiSim rollout not yet implemented for ballbot.");
+    } else {
+      rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(ballbotInterface.getRollout().clone()));
+    }
     mpcnetDefinitionPtrs.push_back(mpcnetDefinitionPtr);
     referenceManagerPtrs.push_back(ballbotInterface.getReferenceManagerPtr());
   }

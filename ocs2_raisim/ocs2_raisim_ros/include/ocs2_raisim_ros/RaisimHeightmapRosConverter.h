@@ -52,9 +52,10 @@ class RaisimHeightmapRosConverter {
   /**
    * @brief Converts the Raisim height map to a GridMap ROS message
    * @param[in] heightMap: The heightMap object from Raisim
+   * @param[in] frameId: The frameId for the GridMap ROS message
    * @return The converted GridMap ROS message
    */
-  static grid_map_msgs::GridMapPtr convertHeightmapToGridmap(const raisim::HeightMap& heightMap);
+  static grid_map_msgs::GridMapPtr convertHeightmapToGridmap(const raisim::HeightMap& heightMap, const std::string& = "world");
 
   /**
    * @brief Converts a GridMap ROS message to a Raisim height map
@@ -66,9 +67,10 @@ class RaisimHeightmapRosConverter {
   /**
    * @brief Publishes the Raisim height map through a ROS publisher. It internally calls convertHeightmapToGridmap
    * @note The publisher is latched, hence the timing of publishing is not dependent on the subscriber's state
+   * @param[in] frameId: The frameId for the GridMap ROS message
    * @param[in] heightMap: The heightMap object from Raisim
    */
-  void publishGridmap(const raisim::HeightMap& heightMap);
+  void publishGridmap(const raisim::HeightMap& heightMap, const std::string& frameId = "world");
 
   /**
    * @brief Obtains the raisim heightmap from ros, e.g., if the terrain is created and published by another node

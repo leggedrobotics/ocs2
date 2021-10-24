@@ -42,8 +42,10 @@ vector_t LeggedRobotMpcnetDefinition::getGeneralizedTime(scalar_t t, const ModeS
 vector_t LeggedRobotMpcnetDefinition::getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) {
   vector_t relativeState = x - targetTrajectories.getDesiredState(t);
   matrix3_t R = getRotationMatrixFromZyxEulerAngles<scalar_t>(x.segment<3>(9)).transpose();
+  relativeState.segment<3>(0) = R * relativeState.segment<3>(0);
+  relativeState.segment<3>(3) = R * relativeState.segment<3>(3);
   relativeState.segment<3>(6) = R * relativeState.segment<3>(6);
-  relativeState.segment<3>(9) = R * relativeState.segment<3>(9);
+  // TODO(areske): use quaternionDistance() for orientation error?
   return relativeState;
 }
 

@@ -11,6 +11,10 @@ vector_t BallbotMpcnetDefinition::getRelativeState(scalar_t t, const vector_t& x
   return x - targetTrajectories.getDesiredState(t);
 }
 
+matrix_t BallbotMpcnetDefinition::getInputTransformation(scalar_t t, const vector_t& x) {
+  return matrix_t::Identity(3, 3);
+}
+
 bool BallbotMpcnetDefinition::validState(const vector_t& x) {
   return true;
 }

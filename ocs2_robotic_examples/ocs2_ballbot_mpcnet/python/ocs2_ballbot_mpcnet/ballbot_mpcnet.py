@@ -6,6 +6,7 @@ import numpy as np
 
 from torch.utils.tensorboard import SummaryWriter
 
+from ocs2_mpcnet.helper import bmv, bmm
 from ocs2_mpcnet.loss import Hamiltonian as Loss
 from ocs2_mpcnet.memory import CircularMemory as Memory
 from ocs2_mpcnet.policy import LinearPolicy as Policy
@@ -102,8 +103,9 @@ try:
             # get generated data
             data = mpcnet_interface.getGeneratedData()
             for i in range(len(data)):
-                # push t, x, u, p, generalized time, relative state, Hamiltonian into memory
-                memory.push(data[i].t, data[i].x, data[i].u, torch.ones(1, device=config.device, dtype=config.dtype), data[i].generalized_time, data[i].relative_state, data[i].hamiltonian)
+                # push t, x, u, p, generalized time, relative state, input_transformation, Hamiltonian into memory
+                memory.push(data[i].t, data[i].x, data[i].u, torch.ones(1, device=config.device, dtype=config.dtype),
+                            data[i].generalized_time, data[i].relative_state, data[i].input_transformation, data[i].hamiltonian)
             # logging
             writer.add_scalar('data/new_data_points', len(data), iteration)
             writer.add_scalar('data/total_data_points', len(memory), iteration)
@@ -132,7 +134,7 @@ try:
             torch.save(obj=policy, f=save_path + ".pt")
 
         # extract batch from memory
-        t, x, u, p, generalized_time, relative_state, dHdxx, dHdux, dHduu, dHdx, dHdu, H = memory.sample(batch_size)
+        t, x, u, p, generalized_time, relative_state, input_transformation, dHdxx, dHdux, dHduu, dHdx, dHdu, H = memory.sample(batch_size)
 
         # take an optimization step
         def closure():
@@ -140,6 +142,8 @@ try:
             optimizer.zero_grad()
             # prediction
             u_predicted, p_predicted, U_predicted = policy(generalized_time, relative_state)
+            u_predicted = bmv(input_transformation, u_predicted)
+            U_predicted = bmm(input_transformation, U_predicted)
             # compute the empirical loss
             empirical_loss = loss.compute_batch(x, x, u_predicted, u, dHdxx, dHdux, dHduu, dHdx, dHdu, H).sum()
             # compute the gradients

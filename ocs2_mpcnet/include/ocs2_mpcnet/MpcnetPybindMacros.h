@@ -70,6 +70,7 @@ using namespace pybind11::literals;
         .def_readwrite("mode", &MPCNET_INTERFACE::data_point_t::mode)                                       \
         .def_readwrite("generalized_time", &MPCNET_INTERFACE::data_point_t::generalizedTime)                \
         .def_readwrite("relative_state", &MPCNET_INTERFACE::data_point_t::relativeState)                    \
+        .def_readwrite("input_transformation", &MPCNET_INTERFACE::data_point_t::inputTransformation)        \
         .def_readwrite("hamiltonian", &MPCNET_INTERFACE::data_point_t::hamiltonian);                        \
     /* bind metrics struct */                                                                               \
     pybind11::class_<MPCNET_INTERFACE::metrics_t>(m, "Metrics")                                             \

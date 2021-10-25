@@ -49,6 +49,16 @@ vector_t LeggedRobotMpcnetDefinition::getRelativeState(scalar_t t, const vector_
   return relativeState;
 }
 
+matrix_t LeggedRobotMpcnetDefinition::getInputTransformation(scalar_t t, const vector_t& x) {
+  matrix3_t R = getRotationMatrixFromZyxEulerAngles<scalar_t>(x.segment<3>(9));
+  matrix_t inputTransformation = matrix_t::Identity(24, 24);
+  inputTransformation.block<3, 3>(0, 0) = R;
+  inputTransformation.block<3, 3>(3, 3) = R;
+  inputTransformation.block<3, 3>(6, 6) = R;
+  inputTransformation.block<3, 3>(9, 9) = R;
+  return inputTransformation;
+}
+
 bool LeggedRobotMpcnetDefinition::validState(const vector_t& x) {
   vector_t deviation = x - defaultState_;
   if (std::abs(deviation[8]) > 0.2) {

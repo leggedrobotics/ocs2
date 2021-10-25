@@ -8,7 +8,11 @@ vector_t BallbotMpcnetDefinition::getGeneralizedTime(scalar_t t, const ModeSched
 }
 
 vector_t BallbotMpcnetDefinition::getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) {
-  return x - targetTrajectories.getDesiredState(t);
+  vector_t relativeState = x - targetTrajectories.getDesiredState(t);
+  Eigen::Matrix<scalar_t, 2, 2> R = (Eigen::Matrix<scalar_t, 2, 2>() << cos(x(2)), -sin(x(2)), sin(x(2)), cos(x(2))).finished().transpose();
+  relativeState.segment<2>(0) = R * relativeState.segment<2>(0);
+  relativeState.segment<2>(5) = R * relativeState.segment<2>(5);
+  return relativeState;
 }
 
 matrix_t BallbotMpcnetDefinition::getInputTransformation(scalar_t t, const vector_t& x) {

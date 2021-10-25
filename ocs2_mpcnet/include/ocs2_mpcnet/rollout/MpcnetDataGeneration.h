@@ -31,6 +31,7 @@ class MpcnetDataGeneration {
     size_t mode;
     vector_t generalizedTime;
     vector_t relativeState;
+    matrix_t inputTransformation;
     ScalarFunctionQuadraticApproximation hamiltonian;
   };
   using DataArray = std::vector<DataPoint>;

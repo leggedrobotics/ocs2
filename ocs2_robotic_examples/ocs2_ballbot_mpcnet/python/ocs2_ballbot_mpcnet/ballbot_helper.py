@@ -13,20 +13,28 @@ def get_default_event_times_and_mode_sequence(duration):
 
 
 def get_random_initial_state():
+    max_linear_velocity_x = 0.5
+    max_linear_velocity_y = 0.5
+    max_euler_angle_derivative_z = 45.0 * np.pi / 180.0
+    max_euler_angle_derivative_y = 45.0 * np.pi / 180.0
+    max_euler_angle_derivative_x = 45.0 * np.pi / 180.0
     random_state = np.zeros(config.STATE_DIM)
-    random_state[0] = np.random.uniform(-0.5, 0.5)  # base x
-    random_state[1] = np.random.uniform(-0.5, 0.5)  # base y
-    random_state[2] = np.random.uniform(-0.5, 0.5)  # base yaw
-    random_state[3] = np.random.uniform(-0.1, 0.1)  # base pitch
-    random_state[4] = np.random.uniform(-0.1, 0.1)  # base roll
+    random_state[5] = np.random.uniform(-max_linear_velocity_x, max_linear_velocity_x)
+    random_state[6] = np.random.uniform(-max_linear_velocity_y, max_linear_velocity_y)
+    random_state[7] = np.random.uniform(-max_euler_angle_derivative_z, max_euler_angle_derivative_z)
+    random_state[8] = np.random.uniform(-max_euler_angle_derivative_y, max_euler_angle_derivative_y)
+    random_state[9] = np.random.uniform(-max_euler_angle_derivative_x, max_euler_angle_derivative_x)
     return random_state
 
 
 def get_random_target_state():
+    max_position_x = 1.0
+    max_position_y = 1.0
+    max_orientation_z = 45.0 * np.pi / 180.0
     random_state = np.zeros(config.STATE_DIM)
-    random_state[0] = np.random.uniform(-0.5, 0.5)  # base x
-    random_state[1] = np.random.uniform(-0.5, 0.5)  # base y
-    random_state[2] = np.random.uniform(-0.5, 0.5)  # base yaw
+    random_state[0] = np.random.uniform(-max_position_x, max_position_x)
+    random_state[1] = np.random.uniform(-max_position_y, max_position_y)
+    random_state[2] = np.random.uniform(-max_orientation_z, max_orientation_z)
     return random_state
 
 

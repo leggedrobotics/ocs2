@@ -53,6 +53,14 @@ class MpcnetControllerBase : public ControllerBase {
     return mpcnetDefinitionPtr_->getRelativeState(t, x, referenceManagerPtr_->getTargetTrajectories());
   }
 
+  /**
+   * Get the input transformation.
+   * @param[in] t : Absolute time.
+   * @param[in] x : Robot state.
+   * @return The input transformation.
+   */
+  matrix_t getInputTransformation(scalar_t t, const vector_t& x) { return mpcnetDefinitionPtr_->getInputTransformation(t, x); }
+
   ControllerType getType() const override { return ControllerType::MPCNET; }
 
   MpcnetControllerBase* clone() const override = 0;

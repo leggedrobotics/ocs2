@@ -47,7 +47,7 @@ vector_t MpcnetOnnxController::computeInput(const scalar_t t, const vector_t& x)
   // evaluate output tensor objects (note that from u, p, U we only need u = U * p which is already evaluated by the model)
   Eigen::Map<Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1>> u(outputValues[0].GetTensorMutableData<tensor_element_t>(),
                                                                    outputShapes_[0][1], outputShapes_[0][0]);
-  return u.cast<scalar_t>();
+  return getInputTransformation(t, x) * u.cast<scalar_t>();
 }
 
 }  // namespace ocs2

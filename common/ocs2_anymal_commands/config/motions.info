@@ -1,5 +1,7 @@
 motionList
 {
     [0] walking
-
+    [1] walking_v3
+    [2] walking_low
+    [3] inplace
 }

@@ -38,6 +38,14 @@ class MpcnetDefinitionBase {
   virtual vector_t getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) = 0;
 
   /**
+   * Get the input transformation.
+   * @param[in] t : Absolute time.
+   * @param[in] x : Robot state.
+   * @return The input transformation.
+   */
+  virtual matrix_t getInputTransformation(scalar_t t, const vector_t& x) = 0;
+
+  /**
    * Check if a state is valid.
    * @param [in] x : State.
    * @return True if valid.

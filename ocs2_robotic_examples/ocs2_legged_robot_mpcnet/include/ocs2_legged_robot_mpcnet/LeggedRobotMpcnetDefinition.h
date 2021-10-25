@@ -32,6 +32,11 @@ class LeggedRobotMpcnetDefinition : public MpcnetDefinitionBase {
   vector_t getRelativeState(scalar_t t, const vector_t& x, const TargetTrajectories& targetTrajectories) override;
 
   /**
+   * @see MpcnetDefinitionBase::getInputTransformation
+   */
+  matrix_t getInputTransformation(scalar_t t, const vector_t& x) override;
+
+  /**
    * @see MpcnetDefinitionBase::validState
    */
   bool validState(const vector_t& x) override;

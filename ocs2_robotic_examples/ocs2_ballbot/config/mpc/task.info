@@ -53,7 +53,7 @@ ddp
   preComputeRiccatiTerms        true
   useNominalTimeForBackwardPass false
 
-  useFeedbackPolicy             false
+  useFeedbackPolicy             true
 
   strategy                      LINE_SEARCH
   lineSearch

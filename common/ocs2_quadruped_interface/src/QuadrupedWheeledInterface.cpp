@@ -24,7 +24,7 @@ QuadrupedWheeledInterface::QuadrupedWheeledInterface(const kinematic_model_t& ki
   problemPtr_->costPtr->add("MotionTrackingCost", createMotionTrackingCost());
   problemPtr_->stateSoftConstraintPtr->add("FootPlacementCost", createFootPlacementCost());
   problemPtr_->stateSoftConstraintPtr->add("CollisionAvoidanceCost", createCollisionAvoidanceCost());
-  problemPtr_->stateSoftConstraintPtr->add("JointLimitCost", createJointLimitsSoftConstraint());
+  problemPtr_->softConstraintPtr->add("JointLimitCost", createJointLimitsSoftConstraint());
 
   // Dynamics
   problemPtr_->dynamicsPtr = createDynamics();

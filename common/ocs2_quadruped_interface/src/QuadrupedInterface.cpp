@@ -90,9 +90,11 @@ std::unique_ptr<ocs2::StateCost> QuadrupedInterface::createCollisionAvoidanceCos
       new CollisionAvoidanceCost(ocs2::RelaxedBarrierPenalty::Config(modelSettings().muSdf_, modelSettings().deltaSdf_)));
 }
 
-std::unique_ptr<ocs2::StateCost> QuadrupedInterface::createJointLimitsSoftConstraint() const {
-  return std::unique_ptr<ocs2::StateCost>(new JointLimitsSoftConstraint(
-      {modelSettings().lowerJointLimits_, modelSettings().upperJointLimits_}, {modelSettings().muJoints_, modelSettings().deltaJoints_}));
+std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createJointLimitsSoftConstraint() const {
+  return std::unique_ptr<ocs2::StateInputCost>(new JointLimitsSoftConstraint(
+      {modelSettings().lowerJointLimits_, modelSettings().upperJointLimits_}, modelSettings().jointVelocityLimits,
+      {modelSettings().muJointsPosition_, modelSettings().deltaJointsPosition_},
+      {modelSettings().muJointsVelocity_, modelSettings().muJointsVelocity_}));
 }
 
 std::unique_ptr<ocs2::SystemDynamicsBase> QuadrupedInterface::createDynamics() const {

@@ -11,17 +11,24 @@ using namespace switched_model;
 TEST(TestJointLimits, quadraticApproximation) {
   joint_coordinate_t upper = joint_coordinate_t::Constant(0.5);
   joint_coordinate_t lower = joint_coordinate_t::Constant(-0.5);
+  joint_coordinate_t velocity = joint_coordinate_t::Constant(2.0);
   const scalar_t mu = 0.1;
   const scalar_t delta = 0.05;
 
-  JointLimitsSoftConstraint jointLimitsSoftConstraint({lower, upper}, {mu, delta});
+  JointLimitsSoftConstraint jointLimitsSoftConstraint({lower, upper}, velocity, {mu, delta}, {mu, delta});
 
-  joint_coordinate_t middle = 0.5 * (lower + upper);
-  auto value = jointLimitsSoftConstraint.getValue(middle);
-  auto quadApprox = jointLimitsSoftConstraint.getQuadraticApproximation(middle);
+  joint_coordinate_t middlePosition = 0.5 * (lower + upper);
+  joint_coordinate_t middleVelocity = joint_coordinate_t::Zero();
+  auto value = jointLimitsSoftConstraint.getValue(middlePosition, middleVelocity);
+  auto quadApprox = jointLimitsSoftConstraint.getQuadraticApproximation(middlePosition, middleVelocity);
 
   // Gradient is zero in middle of limits
   ASSERT_DOUBLE_EQ(quadApprox.dfdx.norm(), 0.0);
+  ASSERT_DOUBLE_EQ(quadApprox.dfdu.norm(), 0.0);
+
+  // Positive definite (diagonal) Hessians
+  ASSERT_GE(quadApprox.dfdxx.diagonal().minCoeff(), 0.0);
+  ASSERT_GE(quadApprox.dfduu.diagonal().minCoeff(), 0.0);
 
   // Value is consistent
   ASSERT_DOUBLE_EQ(quadApprox.f, value);
@@ -30,15 +37,20 @@ TEST(TestJointLimits, quadraticApproximation) {
 TEST(TestJointLimits, infiniteLimits) {
   joint_coordinate_t upper = joint_coordinate_t::Constant(1e30);
   joint_coordinate_t lower = joint_coordinate_t::Constant(-1e30);
+  joint_coordinate_t velocity = joint_coordinate_t::Constant(1e30);
   const scalar_t mu = 0.1;
   const scalar_t delta = 0.05;
 
-  JointLimitsSoftConstraint jointLimitsSoftConstraint({lower, upper}, {mu, delta});
+  JointLimitsSoftConstraint jointLimitsSoftConstraint({lower, upper}, velocity, {mu, delta}, {mu, delta});
 
-  joint_coordinate_t middle = 0.5 * (lower + upper);
-  auto quadApprox = jointLimitsSoftConstraint.getQuadraticApproximation(middle);
+  joint_coordinate_t middlePosition = 0.5 * (lower + upper);
+  joint_coordinate_t middleVelocity = joint_coordinate_t::Zero();
+  auto quadApprox = jointLimitsSoftConstraint.getQuadraticApproximation(middlePosition, middleVelocity);
 
   // Gradient and curvature are both almost zero
   ASSERT_LT(quadApprox.dfdx.norm(), 1e-30);
+  ASSERT_LT(quadApprox.dfdu.norm(), 1e-30);
   ASSERT_LT(quadApprox.dfdxx.norm(), 1e-30);
+  ASSERT_LT(quadApprox.dfdux.norm(), 1e-30);
+  ASSERT_LT(quadApprox.dfduu.norm(), 1e-30);
 }

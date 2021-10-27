@@ -33,8 +33,11 @@ struct ModelSettings {
   // Joint Limits
   joint_coordinate_t lowerJointLimits_ = joint_coordinate_t::Constant(-1e30);
   joint_coordinate_t upperJointLimits_ = joint_coordinate_t::Constant(1e30);
-  scalar_t muJoints_ = 0.1;
-  scalar_t deltaJoints_ = 0.1;
+  joint_coordinate_t jointVelocityLimits = joint_coordinate_t::Constant(1e30);
+  scalar_t muJointsPosition_ = 0.1;
+  scalar_t deltaJointsPosition_ = 0.1;
+  scalar_t muJointsVelocity_ = 0.1;
+  scalar_t deltaJointsVelocity_ = 0.1;
 };
 
 ModelSettings loadModelSettings(const std::string& filename, bool verbose = true);

@@ -97,7 +97,7 @@ class QuadrupedInterface : public ocs2::RobotInterface {
   std::unique_ptr<ocs2::StateInputCost> createMotionTrackingCost() const;
   std::unique_ptr<ocs2::StateCost> createFootPlacementCost() const;
   std::unique_ptr<ocs2::StateCost> createCollisionAvoidanceCost() const;
-  std::unique_ptr<ocs2::StateCost> createJointLimitsSoftConstraint() const;
+  std::unique_ptr<ocs2::StateInputCost> createJointLimitsSoftConstraint() const;
   std::unique_ptr<ocs2::SystemDynamicsBase> createDynamics() const;
   std::unique_ptr<ocs2::StateInputConstraint> createZeroForceConstraint(size_t leg) const;
   std::unique_ptr<ocs2::StateInputConstraint> createFootNormalConstraint(size_t leg) const;

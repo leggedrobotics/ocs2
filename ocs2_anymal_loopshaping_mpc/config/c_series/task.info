@@ -1,8 +1,8 @@
 model_settings
 {
   algorithm                     SQP
-  simplifyDynamics              true  ; true: neglect centrifugal and coriolis terms
-  recompileLibraries            true
+  simplifyDynamics              false  ; true: neglect centrifugal and coriolis terms
+  recompileLibraries            false
 
   frictionCoefficient           0.5
   muFrictionCone                0.1
@@ -58,7 +58,7 @@ model_settings
     errorGain                     20.0
     swingTimeScale                0.15
     sdfMidswingMargin             0.04
-    terrainMargin                 0.035
+    terrainMargin                 0.0
     previousFootholdFactor        0.2
     previousFootholdDeadzone      0.025
     previousFootholdTimeDeadzone  0.20

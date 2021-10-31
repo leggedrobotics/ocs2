@@ -300,27 +300,15 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
-  size_t partition = lookup::findBoundedActiveIntervalInTimeArray(partitioningTimes_, time);
-  partition = std::max(partition, initActivePartition_);
-  partition = std::min(partition, finalActivePartition_);
-
-  // Find the first non-empty partition from the back
-  // It is useful in MPC setup where the final time of the second to last partition was not reached in the cached dual solution
-  // It will be removed after a proper way of rectifying both cached primal and dual solutions by using new nominal trajectories is
-  // discovered
-  for (; partition > initActivePartition_ && cachedSsTimeTrajectoryStock_[partition].empty(); partition--) {
-  };
-
-  // Interpolate value function trajectory
   ScalarFunctionQuadraticApproximation valueFunction;
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedSsTimeTrajectoryStock_[partition]);
-  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, cachedSmTrajectoryStock_[partition]);
-  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, cachedSvTrajectoryStock_[partition]);
-  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, cachedsTrajectoryStock_[partition]);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedSsTimeTrajectoryStock_[0]);
+  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, cachedSmTrajectoryStock_[0]);
+  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, cachedSvTrajectoryStock_[0]);
+  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, cachedsTrajectoryStock_[0]);
 
   // Re-center around query state
-  const vector_t xNominal = LinearInterpolation::interpolate(time, cachedNominalTimeTrajectoriesStock_[partition],
-                                                             cachedNominalStateTrajectoriesStock_[partition]);
+  const vector_t xNominal =
+      LinearInterpolation::interpolate(time, cachedNominalTimeTrajectoriesStock_[0], cachedNominalStateTrajectoriesStock_[0]);
   const vector_t deltaX = state - xNominal;
   const vector_t SmDeltaX = valueFunction.dfdxx * deltaX;
   valueFunction.f += deltaX.dot(0.5 * SmDeltaX + valueFunction.dfdx);
@@ -610,6 +598,36 @@ std::vector<std::pair<int, int>> GaussNewtonDDP::distributeWork(int numWorkers) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeArray(scalar_array_t timeArray, int numWorkers) {
+  scalar_array_t desiredPartitionPoints;
+  const scalar_t duration = timeArray.back() - timeArray.front();
+
+  desiredPartitionPoints.resize(numWorkers + 1);
+  desiredPartitionPoints.front() = timeArray.front();
+  const scalar_t increment = duration / static_cast<scalar_t>(numWorkers);
+  for (size_t i = 0; i < desiredPartitionPoints.size() - 2; i++) {
+    desiredPartitionPoints[i + 1] = desiredPartitionPoints[i] + increment;
+  }
+  desiredPartitionPoints.back() = timeArray.back();
+
+  std::vector<std::pair<int, int>> partitionIntervals;
+  int startPos = 0;
+  int endPos;
+  for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
+    auto& time = desiredPartitionPoints[i];
+    endPos = std::distance(timeArray.begin(), std::lower_bound(timeArray.begin(), timeArray.end(), time));
+    if (endPos != startPos) {
+      partitionIntervals.emplace_back(startPos, endPos);
+      startPos = endPos;
+    }
+  }
+  partitionIntervals.back().second += 1;  // Assign the end point to the end partition
+
+  return partitionIntervals;
+}
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t N) {
   threadPool_.runParallel([&](int) { taskFunction(); }, N);
 }
@@ -807,27 +825,34 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
     sTrajectoryStock_[i].clear();
   }  // end of i loop
 
+  const auto outputN = nominalTimeTrajectoriesStock_[0].size();
+  SsTimeTrajectoryStock_[0].resize(outputN);
+  SmTrajectoryStock_[0].resize(outputN);
+  SvTrajectoryStock_[0].resize(outputN);
+  sTrajectoryStock_[0].resize(outputN);
+
   // solve it sequentially for the first iteration
   if (totalNumIterations_ == 0) {
-    std::pair<int, int> indexPeriod{initActivePartition_, finalActivePartition_};
-    solveRiccatiEquationsForPartitions(0, indexPeriod, SmFinal, SvFinal, sFinal);
+    std::pair<int, int> partitionInterval{0, nominalTimeTrajectoriesStock_[0].size()};
+    solveRiccatiEquationsForPartitions(0, partitionInterval, SmFinal, SvFinal, sFinal);
 
   } else {  // solve it in parallel
     // distribution of the sequential tasks (e.g. Riccati solver) in between threads
-    const std::vector<std::pair<int, int>> indexPeriodArray = distributeWork(ddpSettings_.nThreads_);
+    std::vector<std::pair<int, int>> partitionIntervals =
+        getPartitionIntervalsFromTimeArray(nominalTimeTrajectoriesStock_[0], ddpSettings_.nThreads_);
 
     // correct the end of parrtition's final values based on the cached values
-    matrix_array_t SmFinalStock_(numPartitions_);
-    vector_array_t SvFinalStock_(numPartitions_);
-    scalar_array_t sFinalStock_(numPartitions_);
+    matrix_array_t SmFinalStock_(partitionIntervals.size());
+    vector_array_t SvFinalStock_(partitionIntervals.size());
+    scalar_array_t sFinalStock_(partitionIntervals.size());
 
-    SmFinalStock_[finalActivePartition_] = SmFinal;
-    SvFinalStock_[finalActivePartition_] = SvFinal;
-    sFinalStock_[finalActivePartition_] = sFinal;
-    for (size_t i = initActivePartition_; i < finalActivePartition_; i++) {
-      const vector_t& xFinalUpdated = nominalStateTrajectoriesStock_[i + 1].front();
-
-      const auto interpolatedFinalValueFunc = getValueFunction(nominalTimeTrajectoriesStock_[i + 1].front(), xFinalUpdated);
+    SmFinalStock_.back() = SmFinal;
+    SvFinalStock_.back() = SvFinal;
+    sFinalStock_.back() = sFinal;
+    for (size_t i = 0; i < partitionIntervals.size() - 1; i++) {
+      const vector_t& xFinalUpdated = nominalStateTrajectoriesStock_[0][partitionIntervals[i + 1].first];
+      const auto interpolatedFinalValueFunc =
+          getValueFunction(nominalTimeTrajectoriesStock_[0][partitionIntervals[i + 1].first], xFinalUpdated);
       SmFinalStock_[i] = interpolatedFinalValueFunc.dfdxx;
       SvFinalStock_[i] = interpolatedFinalValueFunc.dfdx;
       sFinalStock_[i] = interpolatedFinalValueFunc.f;
@@ -836,11 +861,10 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
     nextTaskId_ = 0;
     std::function<void(void)> task = [&] {
       const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-      const auto& indexPeriod = indexPeriodArray[taskId];
-      solveRiccatiEquationsForPartitions(taskId, indexPeriod, SmFinalStock_[indexPeriod.second], SvFinalStock_[indexPeriod.second],
-                                         sFinalStock_[indexPeriod.second]);
+      const auto& partitionInterval = partitionIntervals[taskId];
+      solveRiccatiEquationsForPartitions(taskId, partitionInterval, SmFinalStock_[taskId], SvFinalStock_[taskId], sFinalStock_[taskId]);
     };
-    runParallel(task, indexPeriodArray.size());
+    runParallel(task, partitionIntervals.size());
   }
 
   // testing the numerical stability of the Riccati equations
@@ -891,19 +915,9 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& indexPeriod, matrix_t SmFinal,
+void GaussNewtonDDP::solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& partitionInterval, matrix_t SmFinal,
                                                         vector_t SvFinal, scalar_t sFinal) {
-  for (int i = indexPeriod.second; i >= indexPeriod.first; i--) {
-    assert(initActivePartition_ <= i && i <= finalActivePartition_);
-
-    // solve the backward pass
-    riccatiEquationsWorker(taskId, i, SmFinal, SvFinal, sFinal);
-
-    // set the final value for next Riccati equation
-    SmFinal = SmTrajectoryStock_[i].front();
-    SvFinal = SvTrajectoryStock_[i].front();
-    sFinal = sTrajectoryStock_[i].front();
-  }  // end of i loop
+  riccatiEquationsWorker(taskId, partitionInterval, SmFinal, SvFinal, sFinal);
 }
 
 /******************************************************************************************************/

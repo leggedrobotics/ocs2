@@ -245,10 +245,12 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] SvFinal: The final Sv for Riccati equation.
    * @param [in] sFinal: The final s for Riccati equation.
    */
-  virtual void riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
-                                      const scalar_t& sFinal) = 0;
+  virtual void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval, const matrix_t& SmFinal,
+                                      const vector_t& SvFinal, const scalar_t& sFinal) = 0;
 
  private:
+  std::vector<std::pair<int, int>> getPartitionIntervalsFromTimeArray(scalar_array_t timeArray, int numWorkers);
+
   /**
    * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
    * @param [in] numThreads: Number of threads.

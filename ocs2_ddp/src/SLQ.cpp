@@ -212,33 +212,29 @@ matrix_t SLQ::computeHamiltonianHessian(const ModelData& modelData, const matrix
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, const matrix_t& SmFinal, const vector_t& SvFinal,
-                                 const scalar_t& sFinal) {
+void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval, const matrix_t& SmFinal,
+                                 const vector_t& SvFinal, const scalar_t& sFinal) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
-  riccatiEquationsPtrStock_[workerIndex]->setData(
-      &BASE::nominalTimeTrajectoriesStock_[partitionIndex], &BASE::projectedModelDataTrajectoriesStock_[partitionIndex],
-      &BASE::nominalPostEventIndicesStock_[partitionIndex], &BASE::modelDataEventTimesStock_[partitionIndex],
-      &BASE::riccatiModificationTrajectoriesStock_[partitionIndex]);
+  riccatiEquationsPtrStock_[workerIndex]->setData(&BASE::nominalTimeTrajectoriesStock_[0], &BASE::projectedModelDataTrajectoriesStock_[0],
+                                                  &BASE::nominalPostEventIndicesStock_[0], &BASE::modelDataEventTimesStock_[0],
+                                                  &BASE::riccatiModificationTrajectoriesStock_[0]);
 
   // const partition containers
-  const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[partitionIndex];
-  const auto& nominalEventsPastTheEndIndices = BASE::nominalPostEventIndicesStock_[partitionIndex];
+  const auto& nominalTimeTrajectory = BASE::nominalTimeTrajectoriesStock_[0];
+  const auto& nominalEventsPastTheEndIndices = BASE::nominalPostEventIndicesStock_[0];
 
   // Modified partition containers
-  auto& SsNormalizedTime = BASE::SsNormalizedTimeTrajectoryStock_[partitionIndex];
-  auto& SsNormalizedPostEventIndices = BASE::SsNormalizedEventsPastTheEndIndecesStock_[partitionIndex];
-  auto& SsTimeTrajectory = BASE::SsTimeTrajectoryStock_[partitionIndex];
-  auto& SmTrajectory = BASE::SmTrajectoryStock_[partitionIndex];
-  auto& SvTrajectory = BASE::SvTrajectoryStock_[partitionIndex];
-  auto& sTrajectory = BASE::sTrajectoryStock_[partitionIndex];
+  auto& SsTimeTrajectory = BASE::SsTimeTrajectoryStock_[0];
+  auto& SmTrajectory = BASE::SmTrajectoryStock_[0];
+  auto& SvTrajectory = BASE::SvTrajectoryStock_[0];
+  auto& sTrajectory = BASE::sTrajectoryStock_[0];
 
   // Convert final value of value function in vector format
   vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(SmFinal, SvFinal, sFinal);
 
-  // Clear output containers
-  SsNormalizedTime.clear();
-  SsNormalizedPostEventIndices.clear();
+  scalar_array_t SsNormalizedTime;
+  size_array_t SsNormalizedPostEventIndices;
 
   /*
    *  The riccati equations are solved backwards in time
@@ -250,10 +246,22 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, cons
    *  if true: the integration will produce the same time nodes set in nominalTime (=resulting from the forward pass),
    *  if false: the SsNormalized time is a result of adaptive integration.
    */
+
+  scalar_array_t partitionTimeTrajectory(nominalTimeTrajectory.begin() + partitionInterval.first,
+                                         nominalTimeTrajectory.begin() + partitionInterval.second);
+  auto firstEventItr =
+      std::lower_bound(nominalEventsPastTheEndIndices.begin(), nominalEventsPastTheEndIndices.end(), partitionInterval.first);
+  auto lastEventItr =
+      std::lower_bound(nominalEventsPastTheEndIndices.begin(), nominalEventsPastTheEndIndices.end(), partitionInterval.second);
+
+  size_array_t partitionEventsPastTheEndIndices;
+  std::transform(firstEventItr, lastEventItr, std::back_inserter(partitionEventsPastTheEndIndices),
+                 [&partitionInterval](size_t i) -> size_t { return i - partitionInterval.first; });
+
   vector_array_t allSsTrajectory;
   if (settings().useNominalTimeForBackwardPass_) {
     integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
-                                        nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
+                                        partitionTimeTrajectory, partitionEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
                                         SsNormalizedPostEventIndices, allSsTrajectory);
   } else {
     integrateRiccatiEquationAdaptiveTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
@@ -263,18 +271,15 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, size_t partitionIndex, cons
 
   // De-normalize time and convert value function to matrix format
   size_t outputN = SsNormalizedTime.size();
-  SsTimeTrajectory.resize(outputN);
-  SmTrajectory.resize(outputN);
-  SvTrajectory.resize(outputN);
-  sTrajectory.resize(outputN);
-  for (size_t k = 0; k < outputN; k++) {
-    SsTimeTrajectory[k] = -SsNormalizedTime[outputN - 1 - k];
-    ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k], SmTrajectory[k], SvTrajectory[k], sTrajectory[k]);
+  for (size_t k = partitionInterval.first; k < partitionInterval.second; k++) {
+    SsTimeTrajectory[k] = -SsNormalizedTime[outputN - 1 - k + partitionInterval.first];
+    ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k + partitionInterval.first], SmTrajectory[k],
+                                                   SvTrajectory[k], sTrajectory[k]);
   }  // end of k loop
 
   if (settings().debugPrintRollout_) {
     std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-    std::cerr << "Partition: " << partitionIndex << ", backward pass time trajectory";
+    std::cerr << "Partition: " << 0 << ", backward pass time trajectory";
     std::cerr << std::endl << "+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
     for (size_t k = 0; k < outputN; k++) {
       std::cerr << "k: " << k << ", t = " << std::setprecision(12) << SsTimeTrajectory[k] << "\n";

@@ -252,13 +252,6 @@ class GaussNewtonDDP : public SolverBase {
   std::vector<std::pair<int, int>> getPartitionIntervalsFromTimeArray(scalar_array_t timeArray, int numWorkers);
 
   /**
-   * Distributes the sequential tasks (e.g. Riccati solver) in between threads.
-   * @param [in] numThreads: Number of threads.
-   * @return The pair of the initial and final Indices for solving Riccati equations in parallel
-   */
-  std::vector<std::pair<int, int>> distributeWork(int numThreads) const;
-
-  /**
    * Forward integrate the system dynamics with given controller and operating trajectories. In general, it uses the
    * given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
    * However, if the provided controller does not cover the period [initTime, finalTime], it extrapolates (zero-order)
@@ -275,11 +268,10 @@ class GaussNewtonDDP : public SolverBase {
    *
    * @return average time step.
    */
-  scalar_t rolloutInitialTrajectory(std::vector<LinearController>& controllersStock, scalar_array2_t& timeTrajectoriesStock,
-                                    size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                                    vector_array2_t& inputTrajectoriesStock,
-                                    std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                                    std::vector<std::vector<ModelData>>& modelDataEventTimesStock, size_t workerIndex = 0);
+  scalar_t rolloutInitialTrajectory(LinearController& controllersStock, scalar_array_t& timeTrajectoriesStock,
+                                    size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
+                                    vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
+                                    std::vector<ModelData>& modelDataEventTimesStock, size_t workerIndex = 0);
 
   /**
    * Display rollout info and scores.
@@ -444,42 +436,37 @@ class GaussNewtonDDP : public SolverBase {
   scalar_t finalTime_ = 0.0;
   vector_t initState_;
 
-  size_t initActivePartition_ = 0;
-  size_t finalActivePartition_ = 0;
-  size_t numPartitions_ = 0;
-  scalar_array_t partitioningTimes_;
-
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
   std::vector<OptimalControlProblem> optimalControlProblemStock_;
 
   // optimized controller
-  std::vector<LinearController> nominalControllersStock_;
+  LinearController nominalControllersStock_;
 
   // optimized trajectories
-  scalar_array2_t nominalTimeTrajectoriesStock_;
-  size_array2_t nominalPostEventIndicesStock_;
-  vector_array2_t nominalStateTrajectoriesStock_;
-  vector_array2_t nominalInputTrajectoriesStock_;
+  scalar_array_t nominalTimeTrajectoriesStock_;
+  size_array_t nominalPostEventIndicesStock_;
+  vector_array_t nominalStateTrajectoriesStock_;
+  vector_array_t nominalInputTrajectoriesStock_;
 
   // intermediate model data trajectory
-  std::vector<std::vector<ModelData>> modelDataTrajectoriesStock_;
+  std::vector<ModelData> modelDataTrajectoriesStock_;
 
   // event times model data
-  std::vector<std::vector<ModelData>> modelDataEventTimesStock_;
+  std::vector<ModelData> modelDataEventTimesStock_;
 
   // projected model data trajectory
-  std::vector<std::vector<ModelData>> projectedModelDataTrajectoriesStock_;
+  std::vector<ModelData> projectedModelDataTrajectoriesStock_;
 
   // Riccati modification
-  std::vector<std::vector<riccati_modification::Data>> riccatiModificationTrajectoriesStock_;
+  std::vector<riccati_modification::Data> riccatiModificationTrajectoriesStock_;
 
   // Riccati solution coefficients
-  scalar_array2_t SsTimeTrajectoryStock_;
-  scalar_array2_t SsNormalizedTimeTrajectoryStock_;
-  size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
-  scalar_array2_t sTrajectoryStock_;
-  vector_array2_t SvTrajectoryStock_;
-  matrix_array2_t SmTrajectoryStock_;
+  scalar_array_t SsTimeTrajectoryStock_;
+  scalar_array_t SsNormalizedTimeTrajectoryStock_;
+  size_array_t SsNormalizedEventsPastTheEndIndecesStock_;
+  scalar_array_t sTrajectoryStock_;
+  vector_array_t SvTrajectoryStock_;
+  matrix_array_t SmTrajectoryStock_;
 
  private:
   ddp::Settings ddpSettings_;
@@ -502,24 +489,24 @@ class GaussNewtonDDP : public SolverBase {
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
-  std::vector<LinearController> cachedControllersStock_;
-  scalar_array2_t cachedTimeTrajectoriesStock_;
-  size_array2_t cachedPostEventIndicesStock_;
-  vector_array2_t cachedStateTrajectoriesStock_;
-  vector_array2_t cachedInputTrajectoriesStock_;
+  LinearController cachedControllersStock_;
+  scalar_array_t cachedTimeTrajectoriesStock_;
+  size_array_t cachedPostEventIndicesStock_;
+  vector_array_t cachedStateTrajectoriesStock_;
+  vector_array_t cachedInputTrajectoriesStock_;
 
-  std::vector<std::vector<ModelData>> cachedModelDataTrajectoriesStock_;
-  std::vector<std::vector<ModelData>> cachedModelDataEventTimesStock_;
-  std::vector<std::vector<ModelData>> cachedProjectedModelDataTrajectoriesStock_;
-  std::vector<std::vector<riccati_modification::Data>> cachedRiccatiModificationTrajectoriesStock_;
+  std::vector<ModelData> cachedModelDataTrajectoriesStock_;
+  std::vector<ModelData> cachedModelDataEventTimesStock_;
+  std::vector<ModelData> cachedProjectedModelDataTrajectoriesStock_;
+  std::vector<riccati_modification::Data> cachedRiccatiModificationTrajectoriesStock_;
 
-  scalar_array2_t cachedSsTimeTrajectoryStock_;
-  scalar_array2_t cachedsTrajectoryStock_;
-  vector_array2_t cachedSvTrajectoryStock_;
-  matrix_array2_t cachedSmTrajectoryStock_;
+  scalar_array_t cachedSsTimeTrajectoryStock_;
+  scalar_array_t cachedsTrajectoryStock_;
+  vector_array_t cachedSvTrajectoryStock_;
+  matrix_array_t cachedSmTrajectoryStock_;
   // cached nominal trajectories from previous (preserved between consecutive iteration)
-  scalar_array2_t cachedNominalTimeTrajectoriesStock_;
-  vector_array2_t cachedNominalStateTrajectoriesStock_;
+  scalar_array_t cachedNominalTimeTrajectoriesStock_;
+  vector_array_t cachedNominalStateTrajectoriesStock_;
 
   ScalarFunctionQuadraticApproximation heuristics_;
 

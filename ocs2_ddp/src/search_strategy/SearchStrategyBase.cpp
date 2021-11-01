@@ -59,59 +59,52 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
                                                vector_array2_t& inputTrajectoriesStock,
                                                std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
                                                std::vector<std::vector<ModelData>>& modelDataEventTimesStock) const {
-  if (controllersStock.size() != numPartitions_) {
-    throw std::runtime_error("controllersStock has less controllers then the number of subsystems");
-  }
-
   // prepare outputs
-  timeTrajectoriesStock.resize(numPartitions_);
-  postEventIndicesStock.resize(numPartitions_);
-  stateTrajectoriesStock.resize(numPartitions_);
-  inputTrajectoriesStock.resize(numPartitions_);
-  modelDataTrajectoriesStock.resize(numPartitions_);
-  modelDataEventTimesStock.resize(numPartitions_);
-  for (size_t i = 0; i < numPartitions_; i++) {
-    timeTrajectoriesStock[i].clear();
-    postEventIndicesStock[i].clear();
-    stateTrajectoriesStock[i].clear();
-    inputTrajectoriesStock[i].clear();
-    modelDataTrajectoriesStock[i].clear();
-    modelDataEventTimesStock[i].clear();
-  }
+  timeTrajectoriesStock.resize(1);
+  postEventIndicesStock.resize(1);
+  stateTrajectoriesStock.resize(1);
+  inputTrajectoriesStock.resize(1);
+  modelDataTrajectoriesStock.resize(1);
+  modelDataEventTimesStock.resize(1);
+
+  timeTrajectoriesStock[0].clear();
+  postEventIndicesStock[0].clear();
+  stateTrajectoriesStock[0].clear();
+  inputTrajectoriesStock[0].clear();
+  modelDataTrajectoriesStock[0].clear();
+  modelDataEventTimesStock[0].clear();
 
   size_t numSteps = 0;
   vector_t xCurrent = initState_;
-  for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
-    // start and end of rollout segment
-    const scalar_t t0 = (i == initActivePartition_) ? initTime_ : partitioningTimes_[i];
-    const scalar_t tf = (i == finalActivePartition_) ? finalTime_ : partitioningTimes_[i + 1];
+  // start and end of rollout segment
+  const scalar_t t0 = initTime_;
+  const scalar_t tf = finalTime_;
 
-    // Rollout with controller
-    xCurrent = rollout.run(t0, xCurrent, tf, &controllersStock[i], modeSchedule.eventTimes, timeTrajectoriesStock[i],
-                           postEventIndicesStock[i], stateTrajectoriesStock[i], inputTrajectoriesStock[i]);
+  // Rollout with controller
+  xCurrent = rollout.run(t0, xCurrent, tf, &controllersStock[0], modeSchedule.eventTimes, timeTrajectoriesStock[0],
+                         postEventIndicesStock[0], stateTrajectoriesStock[0], inputTrajectoriesStock[0]);
 
-    // update model data trajectory
-    modelDataTrajectoriesStock[i].resize(timeTrajectoriesStock[i].size());
-    for (size_t k = 0; k < timeTrajectoriesStock[i].size(); k++) {
-      modelDataTrajectoriesStock[i][k].time_ = timeTrajectoriesStock[i][k];
-      modelDataTrajectoriesStock[i][k].stateDim_ = stateTrajectoriesStock[i][k].size();
-      modelDataTrajectoriesStock[i][k].inputDim_ = inputTrajectoriesStock[i][k].size();
-      modelDataTrajectoriesStock[i][k].dynamicsBias_.setZero(stateTrajectoriesStock[i][k].size());
-    }
+  // update model data trajectory
+  modelDataTrajectoriesStock[0].resize(timeTrajectoriesStock[0].size());
+  for (size_t k = 0; k < timeTrajectoriesStock[0].size(); k++) {
+    modelDataTrajectoriesStock[0][k].time_ = timeTrajectoriesStock[0][k];
+    modelDataTrajectoriesStock[0][k].stateDim_ = stateTrajectoriesStock[0][k].size();
+    modelDataTrajectoriesStock[0][k].inputDim_ = inputTrajectoriesStock[0][k].size();
+    modelDataTrajectoriesStock[0][k].dynamicsBias_.setZero(stateTrajectoriesStock[0][k].size());
+  }
 
-    // update model data at event times
-    modelDataEventTimesStock[i].resize(postEventIndicesStock[i].size());
-    for (size_t ke = 0; ke < postEventIndicesStock[i].size(); ke++) {
-      const auto index = postEventIndicesStock[i][ke] - 1;
-      modelDataEventTimesStock[i][ke].time_ = timeTrajectoriesStock[i][index];
-      modelDataEventTimesStock[i][ke].stateDim_ = stateTrajectoriesStock[i][index].size();
-      modelDataEventTimesStock[i][ke].inputDim_ = inputTrajectoriesStock[i][index].size();
-      modelDataEventTimesStock[i][ke].dynamicsBias_.setZero(stateTrajectoriesStock[i][index].size());
-    }
+  // update model data at event times
+  modelDataEventTimesStock[0].resize(postEventIndicesStock[0].size());
+  for (size_t ke = 0; ke < postEventIndicesStock[0].size(); ke++) {
+    const auto index = postEventIndicesStock[0][ke] - 1;
+    modelDataEventTimesStock[0][ke].time_ = timeTrajectoriesStock[0][index];
+    modelDataEventTimesStock[0][ke].stateDim_ = stateTrajectoriesStock[0][index].size();
+    modelDataEventTimesStock[0][ke].inputDim_ = inputTrajectoriesStock[0][index].size();
+    modelDataEventTimesStock[0][ke].dynamicsBias_.setZero(stateTrajectoriesStock[0][index].size());
+  }
 
-    // total number of steps
-    numSteps += timeTrajectoriesStock[i].size();
-  }  // end of i loop
+  // total number of steps
+  numSteps += timeTrajectoriesStock[0].size();
 
   // debug print
   if (baseSettings_.debugPrintRollout) {

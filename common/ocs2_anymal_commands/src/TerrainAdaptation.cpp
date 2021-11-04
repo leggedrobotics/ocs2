@@ -29,6 +29,11 @@ vector3_t getHeadingVectorInWorld(const vector3_t& eulerXYZ) {
   return rotationMatrixBaseToOrigin(eulerXYZ).col(0);  // x-axis in world frame
 }
 
+scalar_t getHeadingAngleInWorld(const vector3_t& eulerXYZ) {
+  // Align to a horizontal terrain. Return the yaw
+  return alignDesiredOrientationToTerrain(eulerXYZ, TerrainPlane()).z();
+}
+
 matrix3_t getOrientationProjectedHeadingFrameToWorld(const vector3_t& headingVector, const TerrainPlane& terrainPlane) {
   // Construct desired axis system
   // x-Axis points in same direction as the original x axis in world when both are projected to the world XY plane

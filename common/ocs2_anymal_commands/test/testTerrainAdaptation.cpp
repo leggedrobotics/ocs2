@@ -24,6 +24,25 @@ TEST(TestTerrainAdaptation, adaptDesiredOrientationToTerrain_flatTerrain) {
   vector3_t desiredEulerXYZ_multipleRotations(0, 0, 10.0);
   const auto adaptedEulerXYZ_multipleRotations = alignDesiredOrientationToTerrain(desiredEulerXYZ_multipleRotations, flatTerrain);
   ASSERT_TRUE(desiredEulerXYZ_multipleRotations.isApprox(adaptedEulerXYZ_multipleRotations));
+
+  vector3_t desiredEulerXYZ_mixed(1.0, 2.0, 10.0);
+  const auto adaptedEulerXYZ_mixed = alignDesiredOrientationToTerrain(desiredEulerXYZ_mixed, flatTerrain);
+  ASSERT_TRUE(std::abs(adaptedEulerXYZ_mixed.x()) < 1e-9);
+  ASSERT_TRUE(std::abs(adaptedEulerXYZ_mixed.y()) < 1e-9);
+}
+
+TEST(TestTerrainAdaptation, headingAngle) {
+  vector3_t desiredEulerXYZ(0, 0, -0.1);
+  const auto headingAngle = getHeadingAngleInWorld(desiredEulerXYZ);
+  ASSERT_DOUBLE_EQ(headingAngle, desiredEulerXYZ.z());
+
+  vector3_t desiredEulerXYZ_zero(0, 0, 0);
+  const auto headingAngle_zero = getHeadingAngleInWorld(desiredEulerXYZ_zero);
+  ASSERT_DOUBLE_EQ(headingAngle_zero, desiredEulerXYZ_zero.z());
+
+  vector3_t desiredEulerXYZ_multipleRotations(0, 0, 10.0);
+  const auto headingAngle_multipleRotations = getHeadingAngleInWorld(desiredEulerXYZ_multipleRotations);
+  ASSERT_DOUBLE_EQ(headingAngle_multipleRotations, desiredEulerXYZ_multipleRotations.z());
 }
 
 TEST(TestTerrainAdaptation, adaptDesiredOrientationToTerrain_randomTerrain) {

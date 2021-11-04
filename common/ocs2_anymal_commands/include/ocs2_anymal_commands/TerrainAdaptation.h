@@ -33,6 +33,14 @@ vector3_t eulerXYZFromRotationMatrix(const matrix3_t& orientationTargetToWorld, 
 vector3_t getHeadingVectorInWorld(const vector3_t& eulerXYZ);
 
 /**
+ * Compute the yaw angle around the world Z that leads to the current heading projected to the XY plane
+ *
+ * @param eulerXYZ : current body eulerXYZ from which the heading vector is derived.
+ * @return Angle between the world X axis and the projected heading frame
+ */
+scalar_t getHeadingAngleInWorld(const vector3_t& eulerXYZ);
+
+/**
  * Returns a rotation matrix from the "projected heading frame" to world. See definition below.
  */
 matrix3_t getOrientationProjectedHeadingFrameToWorld(const vector3_t& headingVector, const TerrainPlane& terrainPlane);

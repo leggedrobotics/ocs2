@@ -410,6 +410,7 @@ void GaussNewtonDDP::computeNormalizedTime(const scalar_array_t& timeTrajectory,
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::adjustController(const scalar_array_t& newEventTimes, const scalar_array_t& controllerEventTimes) {
+  // TODO:
   // adjust the nominal controllerStock using trajectory spreading
   // if (!nominalControllersStock_.empty()) {
   //   trajectorySpreadingController_.adjustController(newEventTimes, controllerEventTimes, nominalControllersStock_);

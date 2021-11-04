@@ -2,7 +2,7 @@ multiple_shooting
 {
   dt                                    0.015
   sqpIteration                          1
-  deltaTol                              1e-2
+  deltaTol                              1e-4
   inequalityConstraintMu                0.1
   inequalityConstraintDelta             5.0
   projectStateInputEqualityConstraints  true

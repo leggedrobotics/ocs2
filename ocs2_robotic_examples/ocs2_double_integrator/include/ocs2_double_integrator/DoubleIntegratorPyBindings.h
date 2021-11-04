@@ -21,7 +21,11 @@ class DoubleIntegratorPyBindings final : public PythonInterface {
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    * @param [in] urdfFile: The absolute path to the URDF of the robot. This is not used for double integrator.
    */
-  explicit DoubleIntegratorPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "") {
+  DoubleIntegratorPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile = "") {
+    // System dimensions
+    stateDim_ = static_cast<int>(STATE_DIM);
+    inputDim_ = static_cast<int>(INPUT_DIM);
+
     // Robot interface
     DoubleIntegratorInterface doubleIntegratorInterface(taskFile, libraryFolder);
 

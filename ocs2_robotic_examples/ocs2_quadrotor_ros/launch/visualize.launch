@@ -1,6 +1,6 @@
 <launch>
     <arg name="rvizconfig"   default="$(find ocs2_quadrotor_ros)/rviz/quadrotor.rviz" />
-    <arg name="model"        default="$(find ocs2_quadrotor)/urdf/quadrotor.urdf"/>
+    <arg name="model"        default="$(find ocs2_robotic_assets)/resources/quadrotor/urdf/quadrotor.urdf"/>
 
     <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
 

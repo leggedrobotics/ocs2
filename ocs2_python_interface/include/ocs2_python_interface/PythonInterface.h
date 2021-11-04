@@ -59,6 +59,20 @@ class PythonInterface {
   virtual ~PythonInterface() = default;
 
   /**
+   * @brief Get the state dimension of the dynamics system.
+   *
+   * @return The number of states in the system.
+   */
+  int getStateDim() const { return stateDim_; }
+
+  /**
+   * @brief Get the input dimension of the dynamics system.
+   *
+   * @return The number of inputs in the system.
+   */
+  int getInputDim() const { return inputDim_; }
+
+  /**
    * @brief resets MPC to its original state
    * @param[in] targetTrajectories: The new target to be optimized for after resetting
    */
@@ -169,6 +183,9 @@ class PythonInterface {
 
  protected:
   std::unique_ptr<PenaltyBase> penalty_;
+
+  int stateDim_ = -1;  // -1 indicates that it is not initialized
+  int inputDim_ = -1;  // -1 indicates that it is not initialized
 
  private:
   std::unique_ptr<MPC_BASE> mpcPtr_;

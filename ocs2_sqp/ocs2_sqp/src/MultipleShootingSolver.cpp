@@ -515,9 +515,9 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
     const scalar_t newConstraintViolation = constraintViolation(performanceNew);
 
     const bool stepAccepted = [&]() {
-      if (baselineConstraintViolation > g_max) {
-        // High constraint violation. Only accept decrease in constraints
-        return newConstraintViolation < baselineConstraintViolation;
+      if (newConstraintViolation > std::max(g_max, baselineConstraintViolation)) {
+        // High constraint violation. Only accept decrease in constraints. Prevents new constraint violation higher than g_max
+        return false;
       } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min && armijoDescentMetric < 0.0) {
         // With low violation and having a descent direction, require the armijo condition.
         return (performanceNew.merit < baseline.merit + armijoFactor * alpha * armijoDescentMetric);

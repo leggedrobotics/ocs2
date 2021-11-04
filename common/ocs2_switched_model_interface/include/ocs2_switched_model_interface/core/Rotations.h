@@ -223,6 +223,17 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToAngleAxis(const Eigen::Matrix<SCAL
                           quaternionSol);
 }
 
+/**
+ * Computes a rotation error as the angle axis representation. The error is expressed in the observing frame.
+ * The rotation error is positive when rotating from the reference to the current.
+ *
+ * rotationErrorInWorld = rotationError(rotationWorldToBase, rotationWorldToRef)
+ *
+ * @tparam SCALAR_T
+ * @param rotationMatrixToCurrent
+ * @param rotationMatrixToReference
+ * @return
+ */
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> rotationError(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixToCurrent,
                                             const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixToReference) {

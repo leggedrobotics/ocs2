@@ -388,22 +388,25 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                           scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices) {
-  const int N = timeTrajectory.size();
-  const int NE = postEventIndices.size();
-
+void GaussNewtonDDP::retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
+                                                  const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
+                                                  size_array_t& normalizedPostEventIndices) {
+  // Although the rightmost point is excluded from the current interval, i.e. it won't be written into the dual solution array, it(+1) is
+  // still needed to start the backward pass
+  auto firstTimeItr = timeTrajectory.begin() + partitionInterval.first;
+  auto lastTimeItr = timeTrajectory.begin() + partitionInterval.second + 1;
+  const int N = partitionInterval.second - partitionInterval.first + 1;
   // normalized time
   normalizedTimeTrajectory.resize(N);
-  for (int k = 0; k < N; k++) {
-    normalizedTimeTrajectory[N - 1 - k] = -timeTrajectory[k];
-  }
+  std::transform(firstTimeItr, lastTimeItr, normalizedTimeTrajectory.rbegin(), [](scalar_t t) -> scalar_t { return -t; });
 
+  auto firstEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.first);
+  auto lastEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.second);
+  const int NE = std::distance(firstEventItr, lastEventItr);
   // normalized event past the index
   normalizedPostEventIndices.resize(NE);
-  for (int k = 0; k < NE; k++) {
-    normalizedPostEventIndices[NE - 1 - k] = N - postEventIndices[k];
-  }
+  std::transform(firstEventItr, lastEventItr, normalizedPostEventIndices.rbegin(),
+                 [N, &partitionInterval](size_t i) -> size_t { return N - i + partitionInterval.first; });
 }
 
 /******************************************************************************************************/
@@ -441,14 +444,13 @@ std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeAr
   int startPos = 0;
   int endPos;
   for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
-    auto& time = desiredPartitionPoints[i];
+    const scalar_t& time = desiredPartitionPoints[i];
     endPos = std::distance(timeArray.begin(), std::lower_bound(timeArray.begin(), timeArray.end(), time));
     if (endPos != startPos) {
       partitionIntervals.emplace_back(startPos, endPos);
       startPos = endPos;
     }
   }
-  partitionIntervals.back().second += 1;  // Assign the end point to the end partition
 
   return partitionIntervals;
 }
@@ -636,7 +638,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
 
   // solve it sequentially for the first iteration
   if (totalNumIterations_ == 0) {
-    std::pair<int, int> partitionInterval{0, nominalTimeTrajectoriesStock_.size()};
+    std::pair<int, int> partitionInterval{0, nominalTimeTrajectoriesStock_.size() - 1};
     solveRiccatiEquationsForPartitions(0, partitionInterval, SmFinal, SvFinal, sFinal);
 
   } else {  // solve it in parallel
@@ -669,6 +671,11 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmF
     };
     runParallel(task, partitionIntervals.size());
   }
+
+  SsTimeTrajectoryStock_.back() = nominalTimeTrajectoriesStock_.back();
+  SmTrajectoryStock_.back() = SmFinal;
+  SvTrajectoryStock_.back() = SvFinal;
+  sTrajectoryStock_.back() = sFinal;
 
   // testing the numerical stability of the Riccati equations
   if (ddpSettings_.checkNumericalStability_) {

@@ -130,8 +130,9 @@ class GaussNewtonDDP : public SolverBase {
    * @param [out] normalizedTimeTrajectory: The reversed and negated timeTrajectory.
    * @param [out] normalizedPostEventIndices: The corresponding post event indices of normalizedTimeTrajectory.
    */
-  static void computeNormalizedTime(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                    scalar_array_t& normalizedTimeTrajectory, size_array_t& normalizedPostEventIndices);
+  static void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
+                                           const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
+                                           size_array_t& normalizedPostEventIndices);
 
   /**
    * Adjust the nominal controller based on the last changes in the logic rules.

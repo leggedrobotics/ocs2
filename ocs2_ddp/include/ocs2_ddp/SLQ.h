@@ -87,9 +87,10 @@ class SLQ final : public GaussNewtonDDP {
    * @param allSsTrajectory [out] : Value function in vector format.
    */
   void integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
-                                           const scalar_array_t& nominalTimeTrajectory, const size_array_t& nominalEventsPastTheEndIndices,
-                                           vector_t allSsFinal, scalar_array_t& SsNormalizedTime,
-                                           size_array_t& SsNormalizedPostEventIndices, vector_array_t& allSsTrajectory);
+                                           const std::pair<int, int>& partitionInterval, const scalar_array_t& nominalTimeTrajectory,
+                                           const size_array_t& nominalEventsPastTheEndIndices, vector_t allSsFinal,
+                                           scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
+                                           vector_array_t& allSsTrajectory);
 
   /**
    * Integrates the riccati equation and freely selects the time nodes for the value function.

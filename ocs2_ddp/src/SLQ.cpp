@@ -244,23 +244,11 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
    *  if true: the integration will produce the same time nodes set in nominalTime (=resulting from the forward pass),
    *  if false: the SsNormalized time is a result of adaptive integration.
    */
-
-  scalar_array_t partitionTimeTrajectory(nominalTimeTrajectory.begin() + partitionInterval.first,
-                                         nominalTimeTrajectory.begin() + partitionInterval.second);
-  auto firstEventItr =
-      std::lower_bound(nominalEventsPastTheEndIndices.begin(), nominalEventsPastTheEndIndices.end(), partitionInterval.first);
-  auto lastEventItr =
-      std::lower_bound(nominalEventsPastTheEndIndices.begin(), nominalEventsPastTheEndIndices.end(), partitionInterval.second);
-
-  size_array_t partitionEventsPastTheEndIndices;
-  std::transform(firstEventItr, lastEventItr, std::back_inserter(partitionEventsPastTheEndIndices),
-                 [&partitionInterval](size_t i) -> size_t { return i - partitionInterval.first; });
-
   vector_array_t allSsTrajectory;
   if (settings().useNominalTimeForBackwardPass_) {
     integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
-                                        partitionTimeTrajectory, partitionEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
-                                        SsNormalizedPostEventIndices, allSsTrajectory);
+                                        partitionInterval, nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal),
+                                        SsNormalizedTime, SsNormalizedPostEventIndices, allSsTrajectory);
   } else {
     integrateRiccatiEquationAdaptiveTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
                                          nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
@@ -290,18 +278,18 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
-                                              const scalar_array_t& nominalTimeTrajectory,
+                                              const std::pair<int, int>& partitionInterval, const scalar_array_t& nominalTimeTrajectory,
                                               const size_array_t& nominalEventsPastTheEndIndices, vector_t allSsFinal,
                                               scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
                                               vector_array_t& allSsTrajectory) {
-  // Extract sizes
-  const int nominalTimeSize = nominalTimeTrajectory.size();
-  const int numEvents = nominalEventsPastTheEndIndices.size();
-  auto partitionDuration = nominalTimeTrajectory.back() - nominalTimeTrajectory.front();
-  const auto maxNumSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
-
   // normalized time and post event indices
-  BASE::computeNormalizedTime(nominalTimeTrajectory, nominalEventsPastTheEndIndices, SsNormalizedTime, SsNormalizedPostEventIndices);
+  BASE::retrieveActiveNormalizedTime(partitionInterval, nominalTimeTrajectory, nominalEventsPastTheEndIndices, SsNormalizedTime,
+                                     SsNormalizedPostEventIndices);
+  // Extract sizes
+  const int nominalTimeSize = SsNormalizedTime.size();
+  const int numEvents = SsNormalizedPostEventIndices.size();
+  auto partitionDuration = nominalTimeTrajectory[partitionInterval.second] - nominalTimeTrajectory[partitionInterval.first];
+  const auto maxNumSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
 
   // Normalized switching time indices, start and end of the partition are added at the beginning and end
   using iterator_t = scalar_array_t::const_iterator;

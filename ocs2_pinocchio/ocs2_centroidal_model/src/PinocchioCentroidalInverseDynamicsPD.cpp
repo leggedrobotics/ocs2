@@ -40,14 +40,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioCentroidalInverseDynamicsPD::PinocchioCentroidalInverseDynamicsPD(PinocchioInterface& pinocchioInterface,
-                                                                           const CentroidalModelInfo& centroidalModelInfo,
-                                                                           std::vector<std::string> contactNames3DoF,
-                                                                           std::vector<std::string> contactNames6DoF)
+                                                                           const CentroidalModelInfo& centroidalModelInfo)
     : pinocchioInterfacePtr_(&pinocchioInterface),
       centroidalModelPinocchioMapping_(centroidalModelInfo),
-      centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo),
-      contactNames3DoF_(std::move(contactNames3DoF)),
-      contactNames6DoF_(std::move(contactNames6DoF)) {
+      centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo) {
   centroidalModelPinocchioMapping_.setPinocchioInterface(pinocchioInterface);
 }
 
@@ -76,8 +72,7 @@ vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desired
   aDesired << desiredBaseAcceleration, desiredJointAccelerations;
   pinocchio::container::aligned_vector<pinocchio::Force> fextDesired(model.njoints, pinocchio::Force::Zero());
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
-    const auto& name = contactNames3DoF_[i];
-    const auto frameIndex = model.getBodyId(name);
+    const auto frameIndex = info.endEffectorFrameIndices[i];
     const auto jointIndex = model.frames[frameIndex].parent;
     const vector3_t translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
     const matrix3_t rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
@@ -86,8 +81,7 @@ vector_t PinocchioCentroidalInverseDynamicsPD::getTorque(const vector_t& desired
     fextDesired[jointIndex].angular() = translationJointFrameToContactFrame.cross(contactForce);
   }
   for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
-    const auto& name = contactNames6DoF_[i];
-    const auto frameIndex = model.getBodyId(name);
+    const auto frameIndex = info.endEffectorFrameIndices[i];
     const auto jointIndex = model.frames[frameIndex].parent;
     const vector3_t translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
     const matrix3_t rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();

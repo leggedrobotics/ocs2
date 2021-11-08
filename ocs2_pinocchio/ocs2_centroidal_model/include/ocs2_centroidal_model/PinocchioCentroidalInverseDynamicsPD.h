@@ -46,11 +46,8 @@ class PinocchioCentroidalInverseDynamicsPD final {
    * Constructor
    * @param [in] pinocchioInterface : The predefined pinocchio interface for the robot.
    * @param [in] centroidalModelInfo : The centroidal model information.
-   * @param [in] contactNames3DoF : The names of the 3 DoF contacts.
-   * @param [in] contactNames6DoF : The names of the 6 DoF contacts.
    */
-  PinocchioCentroidalInverseDynamicsPD(PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& centroidalModelInfo,
-                                       std::vector<std::string> contactNames3DoF, std::vector<std::string> contactNames6DoF);
+  PinocchioCentroidalInverseDynamicsPD(PinocchioInterface& pinocchioInterface, const CentroidalModelInfo& centroidalModelInfo);
 
   /**
    * Default destructor.
@@ -82,8 +79,6 @@ class PinocchioCentroidalInverseDynamicsPD final {
   PinocchioInterface* pinocchioInterfacePtr_;
   CentroidalModelPinocchioMapping centroidalModelPinocchioMapping_;
   CentroidalModelRbdConversions centroidalModelRbdConversions_;
-  const std::vector<std::string> contactNames3DoF_;
-  const std::vector<std::string> contactNames6DoF_;
   vector_t pGains_;
   vector_t dGains_;
 };

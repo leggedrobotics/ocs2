@@ -58,11 +58,11 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-                             PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock,
-                             size_array2_t& postEventIndicesStock, vector_array2_t& stateTrajectoriesStock,
-                             vector_array2_t& inputTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controllersStock,
+                             PerformanceIndex& performanceIndex, scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock,
+                             vector_array_t& stateTrajectoriesStock, vector_array_t& inputTrajectoriesStock,
+                             std::vector<ModelData>& modelDataTrajectoriesStock, std::vector<ModelData>& modelDataEventTimesStock,
+                             scalar_t& avgTimeStepFP) {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(settings_.minStepLength_, settings_.maxStepLength_)) {
@@ -130,7 +130,7 @@ bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSche
   lineSearchModule_.modelDataEventTimesStockPtrStar = &modelDataEventTimesStock;
 
   nextTaskId_ = 0;
-  std::function<void(int)> task = [&](int) { lineSearchTask(); };
+  std::function<void(int)> task = [this](int) { lineSearchTask(); };
   threadPoolRef_.runParallel(task, threadPoolRef_.numThreads());
 
   // revitalize all integrators
@@ -139,9 +139,7 @@ bool LineSearchStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSche
   }
 
   // clear the feedforward increments
-  for (auto& controller : controllersStock) {
-    controller.deltaBiasArray_.clear();
-  }
+  controllersStock.deltaBiasArray_.clear();
 
   avgTimeStepFP = avgTimeStepFP_;
 
@@ -161,12 +159,12 @@ void LineSearchStrategy::lineSearchTask() {
 
   // local search forward simulation's variables
   PerformanceIndex performanceIndex;
-  scalar_array2_t timeTrajectoriesStock(numPartitions_);
-  size_array2_t postEventIndicesStock(numPartitions_);
-  vector_array2_t stateTrajectoriesStock(numPartitions_);
-  vector_array2_t inputTrajectoriesStock(numPartitions_);
-  std::vector<std::vector<ModelData>> modelDataTrajectoriesStock(numPartitions_);
-  std::vector<std::vector<ModelData>> modelDataEventTimesStock(numPartitions_);
+  scalar_array_t timeTrajectoriesStock;
+  size_array_t postEventIndicesStock;
+  vector_array_t stateTrajectoriesStock;
+  vector_array_t inputTrajectoriesStock;
+  std::vector<ModelData> modelDataTrajectoriesStock;
+  std::vector<ModelData> modelDataEventTimesStock;
 
   while (true) {
     size_t alphaExp = lineSearchModule_.alphaExpNext++;
@@ -194,11 +192,9 @@ void LineSearchStrategy::lineSearchTask() {
     }
 
     // modifying uff by local increments
-    std::vector<LinearController> controllersStock = lineSearchModule_.initControllersStock;
-    for (auto& controller : controllersStock) {
-      for (size_t k = 0; k < controller.size(); k++) {
-        controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
-      }
+    LinearController controllersStock = lineSearchModule_.initControllersStock;
+    for (size_t k = 0; k < controllersStock.size(); k++) {
+      controllersStock.biasArray_[k] += stepLength * controllersStock.deltaBiasArray_[k];
     }
 
     try {
@@ -254,7 +250,7 @@ void LineSearchStrategy::lineSearchTask() {
       if (armijoCondition && stepLength > lineSearchModule_.stepLengthStar) {
         lineSearchModule_.stepLengthStar = stepLength;
         *lineSearchModule_.performanceIndexPtrStar = performanceIndex;
-        lineSearchModule_.controllersStockPtrStar->swap(controllersStock);
+        swap(*lineSearchModule_.controllersStockPtrStar, controllersStock);
         lineSearchModule_.timeTrajectoriesStockPtrStar->swap(timeTrajectoriesStock);
         lineSearchModule_.postEventIndicesStockPtrStar->swap(postEventIndicesStock);
         lineSearchModule_.stateTrajectoriesStockPtrStar->swap(stateTrajectoriesStock);

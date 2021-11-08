@@ -100,11 +100,11 @@ class SearchStrategyBase {
    * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
    * @return whether the search was successful or failed.
    */
-  virtual bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-                   PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                   vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                   std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                   std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) = 0;
+  virtual bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controllersStock,
+                   PerformanceIndex& performanceIndex, scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock,
+                   vector_array_t& stateTrajectoriesStock, vector_array_t& inputTrajectoriesStock,
+                   std::vector<ModelData>& modelDataTrajectoriesStock, std::vector<ModelData>& modelDataEventTimesStock,
+                   scalar_t& avgTimeStepFP) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -151,11 +151,10 @@ class SearchStrategyBase {
    * @param [out] modelDataEventTimesStock: Array of model data at event times.
    * @param [out] heuristicsValue: The Heuristics function value.
    */
-  void rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array2_t& timeTrajectoriesStock,
-                                 const size_array2_t& postEventIndicesStock, const vector_array2_t& stateTrajectoriesStock,
-                                 const vector_array2_t& inputTrajectoriesStock,
-                                 std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                                 std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& heuristicsValue) const;
+  void rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array_t& timeTrajectoriesStock,
+                                 const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectoriesStock,
+                                 const vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
+                                 std::vector<ModelData>& modelDataEventTimesStock, scalar_t& heuristicsValue) const;
 
   /**
    * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
@@ -169,10 +168,9 @@ class SearchStrategyBase {
    * @return The cost, merit function and ISEs of constraints for the trajectory.
    */
   PerformanceIndex calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
-                                                    const scalar_array2_t& timeTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                                                    const std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
-                                                    scalar_t heuristicsValue) const;
+                                                    const scalar_array_t& timeTrajectoriesStock,
+                                                    const std::vector<ModelData>& modelDataTrajectoriesStock,
+                                                    const std::vector<ModelData>& modelDataEventTimesStock, scalar_t heuristicsValue) const;
 
  protected:
   /**
@@ -191,20 +189,18 @@ class SearchStrategyBase {
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-                             scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                             vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                             std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                             std::vector<std::vector<ModelData>>& modelDataEventTimesStock) const;
+  scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, LinearController& controllersStock,
+                             scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock,
+                             vector_array_t& stateTrajectoriesStock, vector_array_t& inputTrajectoriesStock,
+                             std::vector<ModelData>& modelDataTrajectoriesStock, std::vector<ModelData>& modelDataEventTimesStock) const;
 
   /**
    * Calculates the integral of the squared (IS) norm of the controller update.
    *
    * @param [in] controllersStock: An array of controllers.
-   * @retuen The integral of the squared (IS) norm of the controller update.
+   * @return The integral of the squared (IS) norm of the controller update.
    */
-  scalar_t calculateControllerUpdateIS(const std::vector<LinearController>& controllersStock) const;
-
+  scalar_t calculateControllerUpdateIS(const LinearController& controller) const;
   search_strategy::Settings baseSettings_;
 
   scalar_t initTime_;

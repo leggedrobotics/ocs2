@@ -58,12 +58,11 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule,
-                                     std::vector<LinearController>& controllersStock, PerformanceIndex& performanceIndex,
-                                     scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-                                     vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-                                     std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock,
-                                     std::vector<std::vector<ModelData>>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controllersStock,
+                                     PerformanceIndex& performanceIndex, scalar_array_t& timeTrajectoriesStock,
+                                     size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
+                                     vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
+                                     std::vector<ModelData>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
@@ -72,10 +71,8 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
 
   // do a full step rollout
   const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
-  for (auto& controller : controllersStock) {
-    for (size_t k = 0; k < controller.size(); k++) {
-      controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
-    }
+  for (size_t k = 0; k < controllersStock.size(); k++) {
+    controllersStock.biasArray_[k] += stepLength * controllersStock.deltaBiasArray_[k];
   }
 
   try {
@@ -192,9 +189,7 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& 
     // accept the solution
     levenbergMarquardtModule_.numSuccessiveRejections = 0;
     // update nominal controller: just clear the feedforward increments
-    for (auto& controller : controllersStock) {
-      controller.deltaBiasArray_.clear();
-    }
+    controllersStock.deltaBiasArray_.clear();
     return true;
 
   } else {

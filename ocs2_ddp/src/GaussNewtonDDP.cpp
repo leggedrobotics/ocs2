@@ -1065,25 +1065,9 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost) {
 
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
 
-  std::vector<LinearController> V_nominalControllersStock_{nominalControllersStock_};
-  scalar_array2_t V_timeTrajectoriesStock{timeTrajectoriesStock};
-  vector_array2_t V_stateTrajectoriesStock{stateTrajectoriesStock};
-  vector_array2_t V_inputTrajectoriesStock{inputTrajectoriesStock};
-  size_array2_t V_postEventIndicesStock{postEventIndicesStock};
-  std::vector<std::vector<ModelData>> V_modelDataTrajectoriesStock{modelDataTrajectoriesStock};
-  std::vector<std::vector<ModelData>> V_modelDataEventTimesStock{modelDataEventTimesStock};
-
-  bool success = searchStrategyPtr_->run(
-      lqModelExpectedCost, modeSchedule, V_nominalControllersStock_, performanceIndex, V_timeTrajectoriesStock, V_postEventIndicesStock,
-      V_stateTrajectoriesStock, V_inputTrajectoriesStock, V_modelDataTrajectoriesStock, V_modelDataEventTimesStock, avgTimeStepFP_);
-
-  nominalControllersStock_ = V_nominalControllersStock_[0];
-  timeTrajectoriesStock = V_timeTrajectoriesStock[0];
-  stateTrajectoriesStock = V_stateTrajectoriesStock[0];
-  inputTrajectoriesStock = V_inputTrajectoriesStock[0];
-  postEventIndicesStock = V_postEventIndicesStock[0];
-  modelDataTrajectoriesStock = V_modelDataTrajectoriesStock[0];
-  modelDataEventTimesStock = V_modelDataEventTimesStock[0];
+  bool success = searchStrategyPtr_->run(lqModelExpectedCost, modeSchedule, nominalControllersStock_, performanceIndex,
+                                         timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
+                                         modelDataTrajectoriesStock, modelDataEventTimesStock, avgTimeStepFP_);
 
   // accept or reject the search
   if (success) {
@@ -1184,6 +1168,7 @@ void GaussNewtonDDP::cacheNominalTrajectories() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
+  // TODO:
   // for each partition
   // for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
   //   if (cachedTimeTrajectoriesStock_[i].empty()) {
@@ -1268,18 +1253,9 @@ void GaussNewtonDDP::runInit() {
         nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, taskId);
     scalar_t heuristicsValue = 0.0;
 
-    std::vector<LinearController> V_nominalControllersStock{nominalControllersStock_};
-    scalar_array2_t V_nominalTimeTrajectoriesStock{nominalTimeTrajectoriesStock_};
-    vector_array2_t V_nominalStateTrajectoriesStock{nominalStateTrajectoriesStock_};
-    vector_array2_t V_nominalInputTrajectoriesStock{nominalInputTrajectoriesStock_};
-    size_array2_t V_nominalPostEventIndicesStock{nominalPostEventIndicesStock_};
-    std::vector<std::vector<ModelData>> V_modelDataTrajectoriesStock{modelDataTrajectoriesStock_};
-    std::vector<std::vector<ModelData>> V_modelDataEventTimesStock{modelDataEventTimesStock_};
-
-    searchStrategyPtr_->rolloutCostAndConstraints(optimalControlProblemStock_[taskId], V_nominalTimeTrajectoriesStock,
-                                                  V_nominalPostEventIndicesStock, V_nominalStateTrajectoriesStock,
-                                                  V_nominalInputTrajectoriesStock, V_modelDataTrajectoriesStock, V_modelDataEventTimesStock,
-                                                  heuristicsValue);
+    searchStrategyPtr_->rolloutCostAndConstraints(
+        optimalControlProblemStock_[taskId], nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
+        nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, heuristicsValue);
 
     // This is necessary for:
     // + The moving horizon (MPC) application
@@ -1287,15 +1263,7 @@ void GaussNewtonDDP::runInit() {
     correctInitcachedNominalTrajectories();
 
     performanceIndex_ = searchStrategyPtr_->calculateRolloutPerformanceIndex(
-        *penaltyPtr_, V_nominalTimeTrajectoriesStock, V_modelDataTrajectoriesStock, V_modelDataEventTimesStock, heuristicsValue);
-
-    nominalControllersStock_ = V_nominalControllersStock[0];
-    nominalTimeTrajectoriesStock_ = V_nominalTimeTrajectoriesStock[0];
-    nominalStateTrajectoriesStock_ = V_nominalStateTrajectoriesStock[0];
-    nominalInputTrajectoriesStock_ = V_nominalInputTrajectoriesStock[0];
-    nominalPostEventIndicesStock_ = V_nominalPostEventIndicesStock[0];
-    modelDataTrajectoriesStock_ = V_modelDataTrajectoriesStock[0];
-    modelDataEventTimesStock_ = V_modelDataEventTimesStock[0];
+        *penaltyPtr_, nominalTimeTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, heuristicsValue);
 
     // calculates rollout merit
     performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);

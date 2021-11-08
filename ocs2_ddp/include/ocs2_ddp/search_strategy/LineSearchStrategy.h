@@ -80,11 +80,10 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   void reset() override {}
 
-  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, std::vector<LinearController>& controllersStock,
-           PerformanceIndex& performanceIndex, scalar_array2_t& timeTrajectoriesStock, size_array2_t& postEventIndicesStock,
-           vector_array2_t& stateTrajectoriesStock, vector_array2_t& inputTrajectoriesStock,
-           std::vector<std::vector<ModelData>>& modelDataTrajectoriesStock, std::vector<std::vector<ModelData>>& modelDataEventTimesStock,
-           scalar_t& avgTimeStepFP) override;
+  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controllersStock, PerformanceIndex& performanceIndex,
+           scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
+           vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
+           std::vector<ModelData>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -108,7 +107,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
     scalar_t baselineMerit = 0.0;           // the merit of the rollout for zero learning rate
     scalar_t initControllerUpdateIS = 0.0;  // integral of the squared (IS) norm of the controller update.
     const ModeSchedule* modeSchedulePtr;
-    std::vector<LinearController> initControllersStock;
+    LinearController initControllersStock;
 
     std::atomic_size_t alphaExpNext{0};
     std::vector<bool> alphaProcessed;
@@ -116,13 +115,13 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
     std::atomic<scalar_t> stepLengthStar{0.0};
     PerformanceIndex* performanceIndexPtrStar;
-    std::vector<LinearController>* controllersStockPtrStar;
-    scalar_array2_t* timeTrajectoriesStockPtrStar;
-    size_array2_t* postEventIndicesStockPtrStar;
-    vector_array2_t* stateTrajectoriesStockPtrStar;
-    vector_array2_t* inputTrajectoriesStockPtrStar;
-    std::vector<std::vector<ModelData>>* modelDataTrajectoriesStockPtrStar;
-    std::vector<std::vector<ModelData>>* modelDataEventTimesStockPtrStar;
+    LinearController* controllersStockPtrStar;
+    scalar_array_t* timeTrajectoriesStockPtrStar;
+    size_array_t* postEventIndicesStockPtrStar;
+    vector_array_t* stateTrajectoriesStockPtrStar;
+    vector_array_t* inputTrajectoriesStockPtrStar;
+    std::vector<ModelData>* modelDataTrajectoriesStockPtrStar;
+    std::vector<ModelData>* modelDataEventTimesStockPtrStar;
   };
 
   line_search::Settings settings_;

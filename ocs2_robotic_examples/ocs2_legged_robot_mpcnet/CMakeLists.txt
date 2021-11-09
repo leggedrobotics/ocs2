@@ -65,6 +65,20 @@ set_target_properties(LeggedRobotMpcnetPybindings
     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )
 
+# MPC-Net dummy node
+add_executable(legged_robot_mpcnet_dummy
+  src/LeggedRobotMpcnetDummyNode.cpp
+)
+add_dependencies(legged_robot_mpcnet_dummy
+  ${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(legged_robot_mpcnet_dummy
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(legged_robot_mpcnet_dummy PRIVATE ${OCS2_CXX_FLAGS})
+
 catkin_python_setup()
 
 #########################
@@ -74,7 +88,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
    message(STATUS "Run clang tooling for target ocs2_legged_robot_mpcnet")
    add_clang_tooling(
-     TARGETS ${PROJECT_NAME}
+     TARGETS ${PROJECT_NAME} legged_robot_mpcnet_dummy
      SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
      CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
      CF_WERROR
@@ -97,6 +111,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(TARGETS LeggedRobotMpcnetPybindings
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
+
+install(TARGETS legged_robot_mpcnet_dummy
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY launch policy
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############

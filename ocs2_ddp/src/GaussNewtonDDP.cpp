@@ -336,6 +336,10 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // - state-only soft constraint cost
   LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], settings().checkNumericalStability_);
   lqapprox.approximateLQProblem(time, state, input, modelData);
+  modelData.time_ = time;
+  modelData.stateDim_ = state.rows();
+  modelData.inputDim_ = input.rows();
+  modelData.dynamicsBias_.setZero(state.rows());
   modelData.checkSizes(state.rows(), input.rows());
 
   // augment the cost with state-only equality and state-input inequality constraint terms

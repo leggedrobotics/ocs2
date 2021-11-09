@@ -6,7 +6,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   pybind11_catkin
-  roslib
   ocs2_core
   ocs2_ddp
   ocs2_mpc

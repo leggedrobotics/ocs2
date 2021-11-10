@@ -22,5 +22,6 @@
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_cartpole</depend>
   <depend>robot_state_publisher</depend>
+  <depend>ocs2_robotic_assets</depend>
   
 </package>

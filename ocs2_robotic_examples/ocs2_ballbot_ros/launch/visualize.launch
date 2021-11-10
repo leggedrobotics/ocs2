@@ -1,7 +1,7 @@
 <launch>
-  <arg name="rviz"    default="true" />
+  <arg name="rviz"       default="true" />
+  <arg name="model"      default="$(find ocs2_robotic_assets)/resources/ballbot/urdf/ballbot.urdf"/>
   <arg name="rvizconfig" default="$(find ocs2_ballbot_ros)/rviz/ballbot.rviz" />
-  <arg name="model" default="$(find ocs2_ballbot)/urdf/ballbot.urdf"/>
   
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
   

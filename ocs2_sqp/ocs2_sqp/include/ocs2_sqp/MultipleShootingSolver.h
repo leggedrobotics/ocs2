@@ -75,6 +75,10 @@ class MultipleShootingSolver : public SolverBase {
     throw std::runtime_error("[MultipleShootingSolver] getValueFunction() not available yet.");
   };
 
+  ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const override {
+    throw std::runtime_error("[MultipleShootingSolver] getHamiltonian() not available yet.");
+  }
+
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
     throw std::runtime_error("[MultipleShootingSolver] getStateInputEqualityConstraintLagrangian() not available yet.");
   }

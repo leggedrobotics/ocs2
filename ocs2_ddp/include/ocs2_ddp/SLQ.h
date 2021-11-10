@@ -115,6 +115,8 @@ class SLQ final : public GaussNewtonDDP {
   std::vector<std::shared_ptr<ContinuousTimeRiccatiEquations>> riccatiEquationsPtrStock_;
   std::vector<std::unique_ptr<IntegratorBase>> riccatiIntegratorPtrStock_;
   vector_array2_t allSsTrajectoryStock_;
+  scalar_array2_t SsNormalizedTimeTrajectoryStock_;
+  size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
 };
 
 }  // namespace ocs2

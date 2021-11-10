@@ -463,8 +463,6 @@ class GaussNewtonDDP : public SolverBase {
 
   // Riccati solution coefficients
   scalar_array_t SsTimeTrajectoryStock_;
-  scalar_array_t SsNormalizedTimeTrajectoryStock_;
-  size_array_t SsNormalizedEventsPastTheEndIndecesStock_;
   scalar_array_t sTrajectoryStock_;
   vector_array_t SvTrajectoryStock_;
   matrix_array_t SmTrajectoryStock_;

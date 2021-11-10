@@ -624,8 +624,6 @@ scalar_t GaussNewtonDDP::calculateRolloutMerit(const PerformanceIndex& performan
 scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
   // clear partitions
   SsTimeTrajectoryStock_.clear();
-  SsNormalizedTimeTrajectoryStock_.clear();
-  SsNormalizedEventsPastTheEndIndecesStock_.clear();
   SmTrajectoryStock_.clear();
   SvTrajectoryStock_.clear();
   sTrajectoryStock_.clear();

@@ -42,7 +42,10 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
   }
+
   allSsTrajectoryStock_.resize(settings().nThreads_);
+  SsNormalizedTimeTrajectoryStock_.resize(settings().nThreads_);
+  SsNormalizedEventsPastTheEndIndecesStock_.resize(settings().nThreads_);
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
@@ -231,8 +234,10 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
   // Convert final value of value function in vector format
   vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(SmFinal, SvFinal, sFinal);
 
-  scalar_array_t SsNormalizedTime;
-  size_array_t SsNormalizedPostEventIndices;
+  scalar_array_t& SsNormalizedTime = SsNormalizedTimeTrajectoryStock_[workerIndex];
+  SsNormalizedTime.clear();
+  size_array_t& SsNormalizedPostEventIndices = SsNormalizedEventsPastTheEndIndecesStock_[workerIndex];
+  SsNormalizedPostEventIndices.clear();
 
   /*
    *  The riccati equations are solved backwards in time

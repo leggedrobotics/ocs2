@@ -36,6 +36,9 @@ extensions = [
 
 bibtex_bibfiles = ['refs.bib']
 
+# Bibliography Style
+bibtex_default_style = 'unsrt'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

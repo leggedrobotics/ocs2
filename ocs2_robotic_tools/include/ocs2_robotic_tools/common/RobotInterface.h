@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 
 namespace ocs2 {
 

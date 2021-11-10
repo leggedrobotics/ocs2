@@ -8,13 +8,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
-  ocs2_ros_interfaces
-
-  # visualization deps
-  roscpp
-  std_msgs
-  geometry_msgs
-  visualization_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -53,7 +46,14 @@ catkin_package(
 ## Build ##
 ###########
 
-set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS_OTHER} -Wno-ignored-attributes -Wno-invalid-partial-specialization -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR)
+set(FLAGS
+  ${OCS2_CXX_FLAGS}
+  ${pinocchio_CFLAGS_OTHER}
+  -Wno-ignored-attributes
+  -Wno-invalid-partial-specialization   # to silence warning with unsupported Eigen Tensor
+  -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR
+  -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
+)
 
 include_directories(
   include
@@ -71,7 +71,6 @@ link_directories(
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
   src/PinocchioGeometryInterface.cpp
-  src/visualization/GeometryInterfaceVisualization.cpp
   src/loadStdVectorOfPair.cpp
   src/SelfCollision.cpp
   src/SelfCollisionCppAd.cpp

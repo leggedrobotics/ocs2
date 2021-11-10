@@ -1,0 +1,12 @@
+<launch>
+    <arg name="rviz"       default="true" />
+    <arg name="rvizconfig" default="$(find ocs2_cartpole_ros)/rviz/cartpole.rviz" />
+    <arg name="model"      default="$(find ocs2_robotic_assets)/resources/cartpole/urdf/cartpole.urdf"/>
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
+    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node pkg="rviz" type="rviz" name="Cartpole" args="-d $(arg rvizconfig)" output="screen" if="$(arg rviz)"/>
+    
+</launch>
+	

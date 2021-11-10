@@ -27,6 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+#include <iostream>
+#include <string>
+
 #include "ocs2_cartpole/CartPoleInterface.h"
 #include "ocs2_cartpole/dynamics/CartPoleSystemDynamics.h"
 
@@ -35,7 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/misc/LoadData.h>
 
-#include <ros/package.h>
+// Boost
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace ocs2 {
 namespace cartpole {
@@ -43,84 +48,57 @@ namespace cartpole {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CartPoleInterface::CartPoleInterface(const std::string& taskFileFolderName) {
-  taskFile_ = ros::package::getPath("ocs2_cartpole") + "/config/" + taskFileFolderName + "/task.info";
-  std::cerr << "Loading task file: " << taskFile_ << std::endl;
+CartPoleInterface::CartPoleInterface(const std::string& taskFile, const std::string& libraryFolder) {
+  // check that task file exists
+  boost::filesystem::path taskFilePath(taskFile);
+  if (boost::filesystem::exists(taskFilePath)) {
+    std::cerr << "[CartPoleInterface] Loading task file: " << taskFilePath << std::endl;
+  } else {
+    throw std::invalid_argument("[CartPoleInterface] Task file not found: " + taskFilePath.string());
+  }
+  // create library folder if it does not exist
+  boost::filesystem::path libraryFolderPath(libraryFolder);
+  boost::filesystem::create_directories(libraryFolderPath);
+  std::cerr << "[CartPoleInterface] Generated library path: " << libraryFolderPath << std::endl;
 
-  libraryFolder_ = ros::package::getPath("ocs2_cartpole") + "/auto_generated";
-  std::cerr << "Generated library path: " << libraryFolder_ << std::endl;
-
-  // load setting from loading file
-  loadSettings(taskFile_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void CartPoleInterface::loadSettings(const std::string& taskFile) {
-  /*
-   * Default initial condition
-   */
+  // Default initial condition
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
   loadData::loadEigenMatrix(taskFile, "x_final", xFinal_);
   std::cerr << "x_init:   " << initialState_.transpose() << std::endl;
   std::cerr << "x_final:  " << xFinal_.transpose() << std::endl;
 
-  /*
-   * DDP-MPC settings
-   */
+  // DDP-MPC settings
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
 
   /*
-   * Cartpole parameters
-   */
-  CartPoleParameters cartPoleParameters;
-  cartPoleParameters.loadSettings(taskFile);
-
-  /*
-   * Dynamics
-   */
-  std::unique_ptr<CartPoleSytemDynamics> dynamicsPtr(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder_));
-
-  /*
-   * Rollout
-   */
-  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
-  rolloutPtr_.reset(new TimeTriggeredRollout(*dynamicsPtr, rolloutSettings));
-
-  /*
    * Optimal control problem
    */
-  problem_.dynamicsPtr = std::move(dynamicsPtr);
-
-  /*
-   * Cost function
-   */
+  // Cost
   matrix_t Q(STATE_DIM, STATE_DIM);
   matrix_t R(INPUT_DIM, INPUT_DIM);
   matrix_t Qf(STATE_DIM, STATE_DIM);
   loadData::loadEigenMatrix(taskFile, "Q", Q);
   loadData::loadEigenMatrix(taskFile, "R", R);
   loadData::loadEigenMatrix(taskFile, "Q_final", Qf);
-  std::cerr << "Q:  \n" << Q << std::endl;
-  std::cerr << "R:  \n" << Q << std::endl;
-  std::cerr << "Q_final:\n" << Qf << std::endl;
+  std::cerr << "Q:  \n" << Q << "\n";
+  std::cerr << "R:  \n" << R << "\n";
+  std::cerr << "Q_final:\n" << Qf << "\n";
 
   problem_.costPtr->add("cost", std::unique_ptr<StateInputCost>(new QuadraticStateInputCost(Q, R)));
   problem_.finalCostPtr->add("finalCost", std::unique_ptr<StateCost>(new QuadraticStateCost(Qf)));
 
-  /*
-   * Initialization
-   */
-  cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
-}
+  // Dynamics
+  CartPoleParameters cartPoleParameters;
+  cartPoleParameters.loadSettings(taskFile);
+  problem_.dynamicsPtr.reset(new CartPoleSytemDynamics(cartPoleParameters, libraryFolder));
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::unique_ptr<MPC_DDP> CartPoleInterface::getMpc() {
-  return std::unique_ptr<MPC_DDP>(new MPC_DDP(mpcSettings_, ddpSettings_, *rolloutPtr_, problem_, *cartPoleInitializerPtr_));
+  // Rollout
+  auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
+
+  // Initialization
+  cartPoleInitializerPtr_.reset(new DefaultInitializer(INPUT_DIM));
 }
 
 }  // namespace cartpole

@@ -29,15 +29,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <string>
-
+// OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/initialization/Initializer.h>
-#include <ocs2_mpc/MPC_DDP.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
-#include <ocs2_mobile_manipulator/definitions.h>
+#include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
@@ -50,9 +51,15 @@ class MobileManipulatorInterface final : public RobotInterface {
  public:
   /**
    * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
+   *
+   * @note Creates directory for generated library into if it does not exist.
+   * @throw Invalid argument error if input task file or urdf file does not exist.
+   *
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
+   * @param [in] urdfFile: The absolute path to the URDF file for the robot.
    */
-  explicit MobileManipulatorInterface(const std::string& taskFileFolderName);
+  MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
 
   const vector_t& getInitialState() { return initialState_; }
 
@@ -60,20 +67,17 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<MPC_DDP> getMpc();
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
-  const Initializer& getInitializer() const override { return *initializerPtr_; }
-
   std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
+
+  const Initializer& getInitializer() const override { return *initializerPtr_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
-  /** MobileManipulator PinocchioInterface factory */
-  static PinocchioInterface buildPinocchioInterface(const std::string& urdfPath);
+  const ManipulatorModelInfo& getManipulatorModelInfo() const { return manipulatorModelInfo_; }
 
  private:
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
@@ -81,23 +85,23 @@ class MobileManipulatorInterface final : public RobotInterface {
                                                       const std::string& prefix, bool useCaching, const std::string& libraryFolder,
                                                       bool recompileLibraries);
   std::unique_ptr<StateCost> getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,
-                                                        const std::string& urdfPath, bool useCaching, const std::string& libraryFolder,
+                                                        const std::string& urdfFile, bool useCaching, const std::string& libraryFolder,
                                                         bool recompileLibraries);
   std::unique_ptr<StateInputCost> getJointVelocityLimitConstraint(const std::string& taskFile);
-
-  void loadSettings(const std::string& taskFile, const std::string& libraryFolder);
 
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
   OptimalControlProblem problem_;
-  std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<Initializer> initializerPtr_;
   std::shared_ptr<ReferenceManager> referenceManagerPtr_;
 
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  std::unique_ptr<RolloutBase> rolloutPtr_;
+  std::unique_ptr<Initializer> initializerPtr_;
 
-  vector_t initialState_{STATE_DIM};
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  ManipulatorModelInfo manipulatorModelInfo_;
+
+  vector_t initialState_;
 };
 
 }  // namespace mobile_manipulator

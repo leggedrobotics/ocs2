@@ -29,15 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// C++
-#include <cstdlib>
-#include <iostream>
-#include <string>
-
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/initialization/Initializer.h>
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
+#include <ocs2_robotic_tools/common/RobotInterface.h>
 
 #include <ocs2_mpc/MPC_DDP.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
@@ -52,10 +51,11 @@ class DoubleIntegratorInterface final : public RobotInterface {
  public:
   /**
    * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
-   * @param [in] verbose: Load the settings verbose.
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
+   * @param [in] verbose: Load the settings in verbose.
    */
-  explicit DoubleIntegratorInterface(const std::string& taskFileFolderName, bool verbose = true);
+  DoubleIntegratorInterface(const std::string& taskFile, const std::string& libraryFolder, bool verbose = true);
 
   /** Destructor */
   ~DoubleIntegratorInterface() override = default;
@@ -68,33 +68,22 @@ class DoubleIntegratorInterface final : public RobotInterface {
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<ocs2::MPC_DDP> getMpc(bool warmStart = true);
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
+
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const Initializer& getInitializer() const override { return *linearSystemInitializerPtr_; }
 
  private:
-  /**
-   * Loads the settings from the path file.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void loadSettings(const std::string& taskFile, bool verbose);
-
-  /**************
-   * Variables
-   **************/
-  std::string taskFile_;
-  std::string libraryFolder_;
-
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
 
-  std::unique_ptr<RolloutBase> rolloutPtr_;
   OptimalControlProblem problem_;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+
+  std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> linearSystemInitializerPtr_;
 
   vector_t initialState_{STATE_DIM};

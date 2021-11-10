@@ -34,11 +34,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/geometry.hpp>
 
 #include <gtest/gtest.h>
-#include <ros/package.h>
 
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_self_collision/SelfCollision.h>
 #include <ocs2_self_collision/SelfCollisionCppAd.h>
+#include <ocs2_robotic_assets/package_path.h>
+
+#include "ocs2_mobile_manipulator/FactoryFunctions.h"
+#include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
+#include "ocs2_mobile_manipulator/package_path.h"
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -46,8 +50,7 @@ using namespace mobile_manipulator;
 class TestSelfCollision : public ::testing::Test {
  public:
   TestSelfCollision()
-      : pinocchioInterface(mobile_manipulator::MobileManipulatorInterface::buildPinocchioInterface(urdfPath)),
-        geometryInterface(pinocchioInterface, collisionPairs) {}
+      : pinocchioInterface(createMobileManipulatorPinocchioInterface()), geometryInterface(pinocchioInterface, collisionPairs) {}
 
   void computeValue(PinocchioInterface& pinocchioInterface, const vector_t q) {
     const auto& model = pinocchioInterface.getModel();
@@ -66,12 +69,25 @@ class TestSelfCollision : public ::testing::Test {
   const vector_t jointPositon = (vector_t(9) << 1.0, 1.0, 0.5, 2.5, -1.0, 1.5, 0.0, 1.0, 0.0).finished();
   const std::vector<std::pair<size_t, size_t>> collisionPairs = {{1, 4}, {1, 6}, {1, 9}};
 
-  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
-  const std::string libraryFolder = ros::package::getPath("ocs2_mobile_manipulator") + "/auto_generated";
+  const std::string libraryFolder = ocs2::mobile_manipulator::getPath() + "/auto_generated";
   const scalar_t minDistance = 0.1;
 
   PinocchioInterface pinocchioInterface;
   PinocchioGeometryInterface geometryInterface;
+
+ protected:
+  PinocchioInterface createMobileManipulatorPinocchioInterface() {
+    const std::string urdfPath = ocs2::robotic_assets::getPath() + "/resources/mobile_manipulator/urdf/mobile_manipulator.urdf";
+    const std::string taskFile = ocs2::mobile_manipulator::getPath() + "/config/mpc/task.info";
+
+    // read manipulator type
+    ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+    // read the joints to make fixed
+    std::vector<std::string> removeJointNames;
+    loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+    // initialize pinocchio interface
+    return createPinocchioInterface(urdfPath, modelType, removeJointNames) ;
+  }
 };
 
 TEST_F(TestSelfCollision, AnalyticalVsAutoDiffValue) {

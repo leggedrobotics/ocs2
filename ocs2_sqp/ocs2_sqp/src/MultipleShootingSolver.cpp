@@ -200,7 +200,15 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
   // Determine till when to use the previous solution
   const scalar_t interpolateTill = (totalNumIterations_ > 0) ? primalSolution_.timeTrajectory_.back() : timeDiscretization.front().time;
 
-  stateTrajectory.push_back(initState);
+  // Initial state
+  const scalar_t initTime = getIntervalStart(timeDiscretization[0]);
+  if (initTime < interpolateTill) {
+    stateTrajectory.push_back(
+        LinearInterpolation::interpolate(initTime, primalSolution_.timeTrajectory_, primalSolution_.stateTrajectory_));
+  } else {
+    stateTrajectory.push_back(initState);
+  }
+
   for (int i = 0; i < N; i++) {
     if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
       // Event Node
@@ -211,10 +219,8 @@ void MultipleShootingSolver::initializeStateInputTrajectories(const vector_t& in
       const scalar_t time = getIntervalStart(timeDiscretization[i]);
       const scalar_t nextTime = getIntervalEnd(timeDiscretization[i + 1]);
       vector_t input, nextState;
-      if (time < interpolateTill) {  // Using previous solution
-        const bool useController = (i == 0);
-        std::tie(input, nextState) =
-            multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back(), useController);
+      if (time < interpolateTill) {
+        std::tie(input, nextState) = multiple_shooting::initializeIntermediateNode(primalSolution_, time, nextTime, stateTrajectory.back());
       } else {  // Using initializer
         std::tie(input, nextState) =
             multiple_shooting::initializeIntermediateNode(*initializerPtr_, time, nextTime, stateTrajectory.back());
@@ -509,7 +515,8 @@ std::pair<bool, PerformanceIndex> MultipleShootingSolver::takeStep(const Perform
     const scalar_t newConstraintViolation = constraintViolation(performanceNew);
 
     const bool stepAccepted = [&]() {
-      if (newConstraintViolation > g_max) {
+      if (newConstraintViolation > std::max(g_max, baselineConstraintViolation)) {
+        // High constraint violation. Only accept decrease in constraints. Prevents new constraint violation higher than g_max
         return false;
       } else if (newConstraintViolation < g_min && baselineConstraintViolation < g_min && armijoDescentMetric < 0.0) {
         // With low violation and having a descent direction, require the armijo condition.

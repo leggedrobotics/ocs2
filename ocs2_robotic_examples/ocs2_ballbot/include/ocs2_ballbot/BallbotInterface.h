@@ -29,21 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// C++
-#include <string>
-
 // OCS2
 #include <ocs2_core/Types.h>
 #include <ocs2_core/initialization/Initializer.h>
-#include <ocs2_mpc/MPC_DDP.h>
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_mpc/MPC_Settings.h>
+#include <ocs2_oc/rollout/TimeTriggeredRollout.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
+#include <ocs2_sqp/MultipleShootingSettings.h>
 
 // Ballbot
 #include "ocs2_ballbot/dynamics/BallbotSystemDynamics.h"
-
-// SQP
-#include "ocs2_sqp/MultipleShootingSettings.h"
 
 namespace ocs2 {
 namespace ballbot {
@@ -56,9 +53,14 @@ class BallbotInterface final : public RobotInterface {
  public:
   /**
    * Constructor
-   * @param [in] taskFileFolderName: The name of the folder containing task file
+   *
+   * @note Creates directory for generated library into if it does not exist.
+   * @throw Invalid argument error if input task file does not exist.
+   *
+   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+   * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    */
-  explicit BallbotInterface(const std::string& taskFileFolderName);
+  BallbotInterface(const std::string& taskFile, const std::string& libraryFolder);
 
   /**
    * Destructor
@@ -73,33 +75,22 @@ class BallbotInterface final : public RobotInterface {
 
   mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  std::unique_ptr<MPC_DDP> getMpc();
-
   const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
+
+  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
   const Initializer& getInitializer() const override { return *ballbotInitializerPtr_; }
 
  private:
-  /**
-   * Load the settings from the path file.
-   *
-   * @param [in] taskFile: Task's file full path.
-   */
-  void loadSettings(const std::string& taskFile);
-
-  /**************
-   * Variables
-   **************/
-  std::string taskFile_;
-  std::string libraryFolder_;
-
   ddp::Settings ddpSettings_;
   mpc::Settings mpcSettings_;
   multiple_shooting::Settings sqpSettings_;
 
   OptimalControlProblem problem_;
+  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+
   std::unique_ptr<RolloutBase> rolloutPtr_;
   std::unique_ptr<Initializer> ballbotInitializerPtr_;
 

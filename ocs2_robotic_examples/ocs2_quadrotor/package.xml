@@ -13,12 +13,11 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roslib</depend>
-  <depend>tf</depend>
   <depend>pybind11_catkin</depend>
 
   <depend>ocs2_mpc</depend>
-  <depend>ocs2_ros_interfaces</depend>
   <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_robotic_assets</depend>
   <depend>ocs2_python_interface</depend>
 
 </package>

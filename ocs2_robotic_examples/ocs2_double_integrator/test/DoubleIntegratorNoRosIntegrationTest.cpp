@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
 #include <ocs2_double_integrator/DoubleIntegratorInterface.h>
+#include <ocs2_double_integrator/package_path.h>
+
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 
 using namespace ocs2;
@@ -41,18 +43,33 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
  protected:
   DoubleIntegratorIntegrationTest() {
     const bool verbose = false;
-    doubleIntegratorInterfacePtr.reset(new DoubleIntegratorInterface("mpc", verbose));
+    const std::string taskFile = ocs2::double_integrator::getPath() + "/config/mpc/task.info";
+    const std::string libFolder = ocs2::double_integrator::getPath() + "/auto_generated";
+    doubleIntegratorInterfacePtr.reset(new DoubleIntegratorInterface(taskFile, libFolder, verbose));
 
     initState = doubleIntegratorInterfacePtr->getInitialState();
     goalState = doubleIntegratorInterfacePtr->getInitialTarget();
 
     // initialize reference
-    targetTrajectories.timeTrajectory.push_back(initTime);
-    targetTrajectories.timeTrajectory.push_back(initTime + 1.0);
-    targetTrajectories.stateTrajectory.push_back(initState);
-    targetTrajectories.stateTrajectory.push_back(goalState);
-    targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
-    targetTrajectories.inputTrajectory.push_back(vector_t::Zero(INPUT_DIM));
+    TargetTrajectories targetTrajectories({initTime}, {goalState}, {vector_t::Zero(INPUT_DIM)});
+    doubleIntegratorInterfacePtr->getReferenceManagerPtr()->setTargetTrajectories(std::move(targetTrajectories));
+  }
+
+  std::unique_ptr<MPC_DDP> getMpc(bool warmStart) {
+    auto& interface = *doubleIntegratorInterfacePtr;
+    auto mpcSettings = interface.mpcSettings();
+    if (!warmStart) {
+      mpcSettings.coldStart_ = true;
+      mpcSettings.runtimeMaxNumIterations_ = mpcSettings.initMaxNumIterations_;
+      mpcSettings.runtimeMinStepLength_ = mpcSettings.initMinStepLength_;
+      mpcSettings.runtimeMaxStepLength_ = mpcSettings.initMaxStepLength_;
+    }
+
+    std::unique_ptr<MPC_DDP> mpcPtr(new MPC_DDP(mpcSettings, interface.ddpSettings(), interface.getRollout(),
+                                                interface.getOptimalControlProblem(), interface.getInitializer()));
+    mpcPtr->getSolverPtr()->setReferenceManager(interface.getReferenceManagerPtr());
+
+    return mpcPtr;
   }
 
   const scalar_t tolerance = 2e-2;
@@ -64,13 +81,11 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
   vector_t initState;
   vector_t goalState;
   std::unique_ptr<DoubleIntegratorInterface> doubleIntegratorInterfacePtr;
-  TargetTrajectories targetTrajectories;
 };
 
 TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
-  auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
+  auto mpcPtr = getMpc(true);
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
   SystemObservation observation;
   observation.time = initTime;
@@ -105,9 +120,8 @@ TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
 }
 
 TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
-  auto mpcPtr = doubleIntegratorInterfacePtr->getMpc(false);
+  auto mpcPtr = getMpc(false);
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
   SystemObservation observation;
   observation.time = initTime;
@@ -142,9 +156,8 @@ TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
 }
 
 TEST_F(DoubleIntegratorIntegrationTest, asynchronousTracking) {
-  auto mpcPtr = doubleIntegratorInterfacePtr->getMpc();
+  auto mpcPtr = getMpc(true);
   MPC_MRT_Interface mpcInterface(*mpcPtr);
-  mpcInterface.getReferenceManager().setTargetTrajectories(targetTrajectories);
 
   const scalar_t f_mrt = 100;
   const scalar_t mrtTimeIncrement = 1.0 / f_mrt;

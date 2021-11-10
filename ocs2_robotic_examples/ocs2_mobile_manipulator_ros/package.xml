@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ocs2_mobile_manipulator_ros</name>
+  <version>0.0.0</version>
+  <description>The ocs2_mobile_manipulator_ros package</description>
+
+  <maintainer email="farbod.farshidian@gmail.com">Farbod Farshidian</maintainer>
+  <maintainer email="mspieler@ethz.ch">Michael Spieler</maintainer>
+  <maintainer email="fperry@ethz.ch">Perry Franklin</maintainer>
+  <maintainer email="mittalma@ethz.ch">Mayank Mittal</maintainer>
+
+  <license>BSD3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>roslib</depend>
+  <depend>tf</depend>
+  <depend>urdf</depend>
+  <depend>kdl_parser</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>visualization_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>ocs2_core</depend>
+  <depend>ocs2_ddp</depend>
+  <depend>ocs2_mpc</depend>
+  <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_robotic_assets</depend>
+  <depend>ocs2_ros_interfaces</depend>
+  <depend>ocs2_pinocchio_interface</depend>
+  <depend>ocs2_self_collision</depend>
+  <depend>ocs2_self_collision_visualization</depend>
+  <depend>ocs2_mobile_manipulator</depend>
+  <depend>pinocchio</depend>
+
+</package>

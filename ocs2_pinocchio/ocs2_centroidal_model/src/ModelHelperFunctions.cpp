@@ -55,10 +55,10 @@ void updateCentroidalDynamics(PinocchioInterfaceTpl<SCALAR_T>& interface, const 
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
       const Eigen::Matrix<SCALAR_T, 3, 1> eulerAnglesZyx = q.template segment<3>(3);
-      const auto& mappingZyx = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAnglesZyx);
-      const auto& rotationBaseToWorld = getRotationMatrixFromZyxEulerAngles(eulerAnglesZyx);
+      const auto mappingZyx = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAnglesZyx);
+      const auto rotationBaseToWorld = getRotationMatrixFromZyxEulerAngles(eulerAnglesZyx);
       const Eigen::Matrix<SCALAR_T, 3, 1> comToBasePositionInWorld = rotationBaseToWorld * info.comToBasePositionNominal;
-      const auto& skewSymmetricMap = skewSymmetricMatrix(comToBasePositionInWorld);
+      const auto skewSymmetricMap = skewSymmetricMatrix(comToBasePositionInWorld);
       const auto mat1 = rotationBaseToWorld * info.centroidalInertiaNominal;
       const auto mat2 = rotationBaseToWorld.transpose() * mappingZyx;
       Eigen::Matrix<SCALAR_T, 6, 6> Ab = Eigen::Matrix<SCALAR_T, 6, 6>::Zero();

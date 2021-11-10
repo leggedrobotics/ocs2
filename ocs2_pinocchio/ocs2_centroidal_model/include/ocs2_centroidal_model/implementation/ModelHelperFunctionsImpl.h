@@ -128,25 +128,24 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioIn
   const auto& m = info.robotMass;
   const vector3_t eulerAngles = q.template segment<3>(3);
   const vector3_t eulerAnglesDerivatives = v.template segment<3>(3);
-  const auto& T = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAngles);
-  const auto& R = getRotationMatrixFromZyxEulerAngles(eulerAngles);
-  const auto& Rinv = R.transpose();
+  const auto T = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAngles);
+  const auto R = getRotationMatrixFromZyxEulerAngles(eulerAngles);
   matrix3_t Ibaseframe, Iworldframe;
   vector3_t rbaseframe, rworldframe;
 
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
       Iworldframe = data.Ig.inertia().matrix();
-      Ibaseframe = Rinv * Iworldframe * R;
+      Ibaseframe.noalias() = R.transpose() * (Iworldframe * R);
       rworldframe = q.template head<3>() - data.com[0];
-      rbaseframe = Rinv * rworldframe;
+      rbaseframe.noalias() = R.transpose() * rworldframe;
       break;
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
       Ibaseframe = info.centroidalInertiaNominal;
-      Iworldframe = R * Ibaseframe * Rinv;
+      Iworldframe.noalias() = R * (Ibaseframe * R.transpose());
       rbaseframe = info.comToBasePositionNominal;
-      rworldframe = R * rbaseframe;
+      rworldframe.noalias() = R * rbaseframe;
       break;
     }
     default: {
@@ -154,32 +153,30 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioIn
     }
   }
 
-  const auto& S = skewSymmetricMatrix(rworldframe);
-  const auto& dT = getMappingZyxGradient(eulerAngles);
-  const auto& dR = getRotationMatrixZyxGradient(eulerAngles);
+  const auto S = skewSymmetricMatrix(rworldframe);
+  const auto dT = getMappingZyxGradient(eulerAngles);
+  const auto dR = getRotationMatrixZyxGradient(eulerAngles);
 
-  vector3_t dr;
   std::array<matrix3_t, 3> dS;
   for (size_t i = 0; i < 3; i++) {
-    dr.noalias() = dR[i] * rbaseframe;
+    const vector3_t dr = dR[i] * rbaseframe;
     dS[i] = skewSymmetricMatrix(dr);
   }
 
-  matrix_t dhdq;
-  dhdq.setZero(6, 3);
+  matrix_t dhdq = matrix_t::Zero(6, 3);
   for (size_t i = 0; i < 3; i++) {
     dhdq.template block<3, 1>(0, i).noalias() = m * (dS[i] * T + S * dT[i]) * eulerAnglesDerivatives;
     dhdq.template block<3, 1>(3, i).noalias() =
-        (dR[i] * Ibaseframe * Rinv * T + R * Ibaseframe * dR[i].transpose() * T + Iworldframe * dT[i]) * eulerAnglesDerivatives;
+        (dR[i] * Ibaseframe * R.transpose() * T + R * Ibaseframe * dR[i].transpose() * T + Iworldframe * dT[i]) * eulerAnglesDerivatives;
   }
 
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    const auto jacobianComLinearInBaseFrame = Rinv * data.Ag.topRightCorner(3, info.actuatedDofNum) / info.robotMass;
-    const auto jacobianComAngularInBaseFrame = Rinv * Iworldframe.inverse() * data.Ag.bottomRightCorner(3, info.actuatedDofNum);
+    const auto jacobianComLinearInBaseFrame = R.transpose() * data.Ag.topRightCorner(3, info.actuatedDofNum) / info.robotMass;
+    const auto jacobianComAngularInBaseFrame = R.transpose() * Iworldframe.inverse() * data.Ag.bottomRightCorner(3, info.actuatedDofNum);
     const auto jointVelocities = v.tail(info.actuatedDofNum);
     for (size_t i = 0; i < 3; i++) {
-      dhdq.template block<3, 1>(0, i).noalias() += m * dR[i] * jacobianComLinearInBaseFrame * jointVelocities;
-      dhdq.template block<3, 1>(3, i).noalias() += dR[i] * Ibaseframe * jacobianComAngularInBaseFrame * jointVelocities;
+      dhdq.template block<3, 1>(0, i).noalias() += m * dR[i] * (jacobianComLinearInBaseFrame * jointVelocities);
+      dhdq.template block<3, 1>(3, i).noalias() += dR[i] * (Ibaseframe * (jacobianComAngularInBaseFrame * jointVelocities));
     }
   }
 

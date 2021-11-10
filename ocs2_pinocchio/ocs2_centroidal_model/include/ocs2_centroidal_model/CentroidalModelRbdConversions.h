@@ -94,7 +94,7 @@ class CentroidalModelRbdConversions final {
    * @param [in] state: ocs2 state vector
    * @param [in] input: ocs2 input vector
    * @param [in] jointAccelerations: actuated joints accelerations
-   * @param [out] rbdTorque: rigid body dynamics model torque [joint torques]
+   * @param [out] rbdTorque: rigid body dynamics model torque [base wrench, joint torques]
    */
   void computeRbdTorqueFromCentroidalModel(const vector_t& state, const vector_t& input, const vector_t& jointAccelerations,
                                            vector_t& rbdTorque);
@@ -109,7 +109,7 @@ class CentroidalModelRbdConversions final {
    * @param [in] measuredInput: measured ocs2 input (required for PD control)
    * @param [in] pGains: proportional gains (required for PD control)
    * @param [in] dGains: derivative gains (required for PD control)
-   * @param [out] rbdTorque: rigid body dynamics model torque [joint torques]
+   * @param [out] rbdTorque: rigid body dynamics model torque [base wrench, joint torques]
    */
   void computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
                                              const vector_t& desiredJointAccelerations, const vector_t& measuredState,

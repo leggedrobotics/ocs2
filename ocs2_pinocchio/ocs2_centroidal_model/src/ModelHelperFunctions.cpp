@@ -91,16 +91,12 @@ void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interf
   using vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;
   const auto& model = interface.getModel();
   auto& data = interface.getData();
-  vector_t a;
-  matrix6x_t dhdq;
-  matrix6x_t dhdotdq;
-  matrix6x_t dhdotdv;
-  matrix6x_t dhdotda;
-  a.setZero(info.generalizedCoordinatesNum);
-  dhdq.resize(6, info.generalizedCoordinatesNum);
-  dhdotdq.resize(6, info.generalizedCoordinatesNum);
-  dhdotdv.resize(6, info.generalizedCoordinatesNum);
-  dhdotda.resize(6, info.generalizedCoordinatesNum);
+
+  vector_t a = vector_t::Zero(info.generalizedCoordinatesNum);
+  matrix6x_t dhdq(6, info.generalizedCoordinatesNum);
+  matrix6x_t dhdotdq(6, info.generalizedCoordinatesNum);
+  matrix6x_t dhdotdv(6, info.generalizedCoordinatesNum);
+  matrix6x_t dhdotda(6, info.generalizedCoordinatesNum);
 
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {

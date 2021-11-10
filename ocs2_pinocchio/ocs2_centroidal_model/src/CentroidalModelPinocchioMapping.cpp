@@ -137,7 +137,7 @@ auto CentroidalModelPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t&
       pinocchio::translateForceSet(data.dHdq, data.com[0], dhdq.const_cast_derived());
       for (size_t k = 0; k < model.nv; ++k) {
         dhdq.col(k).template segment<3>(pinocchio::Force::ANGULAR) +=
-            data.hg.linear().cross(data.dFda.col(k).template segment<3>(pinocchio::Force::LINEAR)) / data.Ig.mass();
+            data.hg.linear().cross(data.dFda.template block<3, 1>(pinocchio::Force::LINEAR, k)) / data.Ig.mass();
       }
       dhdq.middleCols(3, 3) = data.dFdq.middleCols(3, 3);
       const auto Aj = A.rightCols(info.actuatedDofNum);

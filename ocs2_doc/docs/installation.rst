@@ -84,10 +84,10 @@ Optional Dependencies
     	make -j4 && sudo checkinstall
     
     This will install RaiSim at the default location of ``/usr/local/lib`` which will also be automatically detected by catkin. When asked by ``checkinstall``, change the package name to something appropriate (e.g. "raisim") to it find later for package management, such as for uninstallation (``dpkg -r <package_name>``).
-  
-* `Grid Map <https://github.com/ANYbotics/grid_map>`__ catkin package, which may be installed with ``sudo apt install ros-noetic-grid-map-msgs``.
 
-* `RaisimOgre <https://github.com/leggedrobotics/raisimOgre>`__ Visualizer for Raisim. Can be used for debugging purposes to see if conversions between OCS2 and Raisim are correct.
+    For visualization, use `RaiSim Unity <https://raisim.com/sections/RaisimUnity.html>`__, where pre-built executables are provided in the ``raisimLib/raisimUnity`` directory. For example, it can be used for debugging purposes to see if conversions between OCS2 and RaiSim are correct.
+
+* `Grid Map <https://github.com/ANYbotics/grid_map>`__ catkin package, which may be installed with ``sudo apt install ros-noetic-grid-map-msgs``.
 
 * `ONNX Runtime  <https://github.com/microsoft/onnxruntime>`__ is an inferencing and training accelerator. Here, it is used for deploying learned MPC-Net policies in C++ code. To locally install it, do the following:
 

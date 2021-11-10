@@ -87,11 +87,11 @@ std::unique_ptr<raisim::HeightMap> RaisimHeightmapRosConverter::convertGridmapTo
   return heightMap;
 }
 
-void RaisimHeightmapRosConverter::publishGridmap(const raisim::HeightMap& heightMap, const std::string& frameID) {
+void RaisimHeightmapRosConverter::publishGridmap(const raisim::HeightMap& heightMap, const std::string& frameId) {
   if (!gridmapPublisher_) {
     gridmapPublisher_.reset(new ros::Publisher(nodeHandle_.advertise<grid_map_msgs::GridMap>("/raisim_heightmap", 1, true)));
   }
-  auto gridMapMsg = convertHeightmapToGridmap(heightMap, frameID);
+  auto gridMapMsg = convertHeightmapToGridmap(heightMap, frameId);
   gridmapPublisher_->publish(gridMapMsg);
 }
 

@@ -153,8 +153,8 @@ class RaisimRollout final : public RolloutBase {
 
  private:
   // Save some constructor/function arguments required for copy constructor / cloning
-  std::string urdfFile_;
-  std::string resourcePath_;
+  const std::string urdfFile_;
+  const std::string resourcePath_;
 
   // Handles to Raisim objects
   raisim::World world_;
@@ -163,7 +163,7 @@ class RaisimRollout final : public RolloutBase {
   raisim::ArticulatedSystem* system_ = nullptr;
 
   // Handle to Raisim visualization
-  raisim::RaisimServer* server_ = nullptr;
+  std::unique_ptr<raisim::RaisimServer> serverPtr_;
 
   // Robot-specific conversion function handles
   state_to_raisim_gen_coord_gen_vel_t stateToRaisimGenCoordGenVel_;

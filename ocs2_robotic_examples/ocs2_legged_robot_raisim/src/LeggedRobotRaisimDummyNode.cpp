@@ -40,8 +40,7 @@ int main(int argc, char** argv) {
   LeggedRobotInterface interface(configName, targetCommandFile, urdf::parseURDF(urdfString));
 
   // raisim rollout
-  LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(),
-                                           interface.modelSettings());
+  LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo());
   RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
   conversions.setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
   RaisimRollout raisimRollout(

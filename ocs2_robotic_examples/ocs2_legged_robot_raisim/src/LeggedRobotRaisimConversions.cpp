@@ -57,16 +57,17 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToInput(const Eigen::
 
 Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state,
                                                                             const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
-  // get torque
+  // get RBD torque
+  vector_t rbdTorque = vector_t::Zero(18);
   const vector_t measuredState = raisimGenCoordGenVelToState(q, dq);
   const vector_t measuredInput = raisimGenCoordGenVelToInput(q, dq);
   const vector_t desiredJointAccelerations = vector_t::Zero(12);  // TODO(areske): retrieve this from controller?
-  const vector_t torque =
-      pinocchioCentroidalInverseDynamicsPDPtr_->getTorque(state, input, desiredJointAccelerations, measuredState, measuredInput);
+  centroidalModelRbdConversionsPtr_->computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations, measuredState,
+                                                                           measuredInput, pGains_, dGains_, rbdTorque);
 
   // convert to raisim
   Eigen::VectorXd generalizedForce = Eigen::VectorXd::Zero(18);
-  generalizedForce.tail<12>() = ocs2JointOrderToRaisimJointOrder((Eigen::VectorXd(12) << torque.tail<12>()).finished());
+  generalizedForce.tail<12>() = ocs2JointOrderToRaisimJointOrder((Eigen::VectorXd(12) << rbdTorque.tail<12>()).finished());
 
   // check
   if (check_ and generalizedForce.array().abs().maxCoeff() > 100) {

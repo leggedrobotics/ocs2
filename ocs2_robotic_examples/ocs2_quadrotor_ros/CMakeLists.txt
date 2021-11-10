@@ -9,6 +9,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_mpc
   ocs2_ros_interfaces
   ocs2_robotic_tools
+  ocs2_robotic_assets
   ocs2_quadrotor
 )
 

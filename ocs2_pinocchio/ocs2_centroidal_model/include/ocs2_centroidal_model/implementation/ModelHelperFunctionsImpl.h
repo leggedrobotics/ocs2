@@ -125,7 +125,7 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioIn
   using matrix3_t = Eigen::Matrix<SCALAR_T, 3, 3>;
 
   const auto& data = interface.getData();
-  const auto& m = info.robotMass;
+  const auto m = info.robotMass;
   const vector3_t eulerAngles = q.template segment<3>(3);
   const vector3_t eulerAnglesDerivatives = v.template segment<3>(3);
   const auto T = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAngles);
@@ -148,9 +148,7 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioIn
       rworldframe.noalias() = R * rbaseframe;
       break;
     }
-    default: {
-      throw std::runtime_error("The chosen centroidal model type is not supported.");
-    }
+    default: { throw std::runtime_error("The chosen centroidal model type is not supported."); }
   }
 
   const auto S = skewSymmetricMatrix(rworldframe);
@@ -165,18 +163,27 @@ Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioIn
 
   matrix_t dhdq = matrix_t::Zero(6, 3);
   for (size_t i = 0; i < 3; i++) {
-    dhdq.template block<3, 1>(0, i).noalias() = m * (dS[i] * T + S * dT[i]) * eulerAnglesDerivatives;
-    dhdq.template block<3, 1>(3, i).noalias() =
-        (dR[i] * Ibaseframe * R.transpose() * T + R * Ibaseframe * dR[i].transpose() * T + Iworldframe * dT[i]) * eulerAnglesDerivatives;
+    const vector3_t T_eulerAnglesDev = T * eulerAnglesDerivatives;
+    const vector3_t dT_eulerAnglesDev = dT[i] * eulerAnglesDerivatives;
+    const matrix3_t dR_I_Rtrans = dR[i] * Ibaseframe * R.transpose();
+
+    dhdq.template block<3, 1>(0, i).noalias() = m * (S * dT_eulerAnglesDev);
+    dhdq.template block<3, 1>(0, i).noalias() += m * (dS[i] * T_eulerAnglesDev);
+
+    dhdq.template block<3, 1>(3, i).noalias() = (dR_I_Rtrans + dR_I_Rtrans.transpose()) * T_eulerAnglesDev;
+    dhdq.template block<3, 1>(3, i).noalias() += Iworldframe * dT_eulerAnglesDev;
   }
 
   if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
-    const auto jacobianComLinearInBaseFrame = R.transpose() * data.Ag.topRightCorner(3, info.actuatedDofNum) / info.robotMass;
-    const auto jacobianComAngularInBaseFrame = R.transpose() * Iworldframe.inverse() * data.Ag.bottomRightCorner(3, info.actuatedDofNum);
     const auto jointVelocities = v.tail(info.actuatedDofNum);
+    const vector3_t comLinearVelocityInWorldFrame = (1.0 / m) * (data.Ag.topRightCorner(3, info.actuatedDofNum) * jointVelocities);
+    const vector3_t comAngularVelocityInWorldFrame =
+        Iworldframe.inverse() * (data.Ag.bottomRightCorner(3, info.actuatedDofNum) * jointVelocities);
+    const vector3_t linearMomentumInBaseFrame = m * (R.transpose() * comLinearVelocityInWorldFrame);
+    const vector3_t angularMomentumInBaseFrame = Ibaseframe * (R.transpose() * comAngularVelocityInWorldFrame);
     for (size_t i = 0; i < 3; i++) {
-      dhdq.template block<3, 1>(0, i).noalias() += m * dR[i] * (jacobianComLinearInBaseFrame * jointVelocities);
-      dhdq.template block<3, 1>(3, i).noalias() += dR[i] * (Ibaseframe * (jacobianComAngularInBaseFrame * jointVelocities));
+      dhdq.template block<3, 1>(0, i).noalias() += dR[i] * linearMomentumInBaseFrame;
+      dhdq.template block<3, 1>(3, i).noalias() += dR[i] * angularMomentumInBaseFrame;
     }
   }
 

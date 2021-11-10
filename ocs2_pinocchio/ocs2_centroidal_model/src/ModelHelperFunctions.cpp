@@ -116,9 +116,7 @@ void updateCentroidalDynamicsDerivatives(PinocchioInterfaceTpl<SCALAR_T>& interf
       pinocchio::updateFramePlacements(model, data);
       break;
     }
-    default: {
-      throw std::runtime_error("The chosen centroidal model type is not supported.");
-    }
+    default: { throw std::runtime_error("The chosen centroidal model type is not supported."); }
   }
 }
 

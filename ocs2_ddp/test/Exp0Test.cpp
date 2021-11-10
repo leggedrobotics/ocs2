@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <iostream>
 
-#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/initialization/DefaultInitializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/test/EXP0.h>
 
@@ -96,7 +96,7 @@ class Exp0 : public testing::Test {
     ddpSettings.maxNumIterations_ = 30;
     ddpSettings.minRelCost_ = 1e-3;
     ddpSettings.checkNumericalStability_ = true;
-    ddpSettings.useNominalTimeForBackwardPass_ = false;
+    ddpSettings.useNominalTimeForBackwardPass_ = true;
     ddpSettings.useFeedbackPolicy_ = true;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;
@@ -259,7 +259,8 @@ TEST_F(Exp0, ddp_hamiltonian) {
   EXPECT_TRUE(dHdu1a.isZero(precision)) << "MESSAGE for test 1a: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1a.transpose();
 
   // evaluate Hamiltonian at different state (but using feedback policy)
-  // expected outcome: true, because for a linear system the LQ approximation of H is exact and the linear feedback policy is globally optimal
+  // expected outcome: true, because for a linear system the LQ approximation of H is exact and the linear feedback policy is globally
+  // optimal
   ocs2::scalar_t querryTime = solution.timeTrajectory_.front();
   ocs2::vector_t querryState = ocs2::vector_t::Random(solution.stateTrajectory_.front().size());
   ocs2::vector_t querryInput = solution.controllerPtr_->computeInput(querryTime, querryState);

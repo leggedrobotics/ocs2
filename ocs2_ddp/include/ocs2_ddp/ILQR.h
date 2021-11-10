@@ -88,8 +88,8 @@ class ILQR : public GaussNewtonDDP {
   /****************
    *** Variables **
    ****************/
-  matrix_array2_t projectedKmTrajectoryStock_;  // projected feedback
-  vector_array2_t projectedLvTrajectoryStock_;  // projected feedforward
+  matrix_array_t projectedKmTrajectoryStock_;  // projected feedback
+  vector_array_t projectedLvTrajectoryStock_;  // projected feedforward
 
   std::vector<std::unique_ptr<DiscreteTimeRiccatiEquations>> riccatiEquationsPtrStock_;
 };

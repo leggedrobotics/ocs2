@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 static inline std::tuple<matrix_t, vector_t, scalar_t> riccatiTransversalityConditions(const ModelData& jumpModelData, const matrix_t& Sm,
-                                                                                       const vector_t& Sv, scalar_t s) {
+                                                                                       const vector_t& Sv, const scalar_t s) {
   // Sm
   const matrix_t SmTransAm = Sm.transpose() * jumpModelData.dynamics_.dfdx;
   matrix_t SmPreEvent = jumpModelData.cost_.dfdxx;

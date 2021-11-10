@@ -42,7 +42,7 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
     throw std::runtime_error("In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
   }
-
+  allSsTrajectoryStock_.resize(settings().nThreads_);
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
@@ -244,7 +244,8 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
    *  if true: the integration will produce the same time nodes set in nominalTime (=resulting from the forward pass),
    *  if false: the SsNormalized time is a result of adaptive integration.
    */
-  vector_array_t allSsTrajectory;
+  vector_array_t& allSsTrajectory = allSsTrajectoryStock_[workerIndex];
+  allSsTrajectory.clear();
   if (settings().useNominalTimeForBackwardPass_) {
     integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
                                         partitionInterval, nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal),

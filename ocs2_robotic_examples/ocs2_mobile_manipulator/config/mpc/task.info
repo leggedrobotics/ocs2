@@ -1,3 +1,17 @@
+; robot model meta-information
+model_information {
+  manipulatorModelType     1      // 0: Default-arm, 1: Wheel-based manipulator, 2: Floating-arm manipulator
+  
+  ; motion joints in the URDF to consider fixed
+  removeJoints {
+  }
+
+  ; base frame of the robot (from URDF)
+  baseFrame                "base"
+  ; end-effector frame of the robot (from URDF)
+  eeFrame                  "WRIST_2"
+}
+
 model_settings
 {
   usePreComputation             true
@@ -112,8 +126,6 @@ inputCost
 
 endEffector
 {
-  name "WRIST_2" ; name defined in the URDF
-
   ; end effector quadratic penalty scaling
   muPosition  10.0
   muOrientation  5.0
@@ -121,35 +133,37 @@ endEffector
 
 finalEndEffector
 {
-  name "WRIST_2"
   muPosition  10.0
   muOrientation  5.0
 }
 
 selfCollision
-{
+{ 
+  ; activate self-collision constraint
+  activate  true
+
   ; Self Collision raw object pairs
   collisionObjectPairs
   {
     [0] "1, 4"
-    [1] 1,6
-    [2] " 1  , 9"
+    [1] "1, 6"
+    [2] "1, 9"
   }
 
   ; Self Collision pairs
   collisionLinkPairs
   {
     [0] "arm_base, ARM"
-    [1] arm_base,ELBOW
-    [2] "arm_base  , WRIST_1"
-    [3] "link_that_doesnt_exist  , WRIST_1"
+    [1] "arm_base, ELBOW"
+    [2] "arm_base, WRIST_1"
+    [3] "link_that_doesnt_exist, WRIST_1"
   }
 
   ; minimum distance allowed between the pairs
   minimumDistance  0.1
 
   ; relaxed log barrier mu
-  mu  0.01
+  mu     1e-2
 
   ; relaxed log barrier delta
   delta  1e-3
@@ -182,8 +196,8 @@ jointVelocityLimits
   }
 
   ; relaxed log barrier mu
-  mu  0.01
+  mu      0.01
 
   ; relaxed log barrier delta
-  delta  1e-3
+  delta   1e-3
 }

@@ -9,6 +9,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ddp
   ocs2_mpc
   ocs2_robotic_tools
+  ocs2_robotic_assets
   ocs2_pinocchio_interface
   ocs2_self_collision
 )
@@ -34,6 +35,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 catkin_package(
   INCLUDE_DIRS
     include
+    ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
@@ -47,7 +49,14 @@ catkin_package(
 ## Build ##
 ###########
 
-set(FLAGS ${OCS2_CXX_FLAGS} ${pinocchio_CFLAGS_OTHER} -Wno-invalid-partial-specialization)
+set(FLAGS
+  ${OCS2_CXX_FLAGS}
+  ${pinocchio_CFLAGS_OTHER}
+  -Wno-ignored-attributes
+  -Wno-invalid-partial-specialization   # to silence warning with unsupported Eigen Tensor
+  -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR
+  -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
+)
 
 # Resolve for the package path at compile time.
 configure_file (
@@ -69,10 +78,14 @@ link_directories(
 
 # mobile maniulator interface library
 add_library(${PROJECT_NAME}
+  src/FactoryFunctions.cpp
   src/MobileManipulatorPreComputation.cpp
+  src/MobileManipulatorPinocchioMapping.cpp
   src/constraint/EndEffectorConstraint.cpp
   src/constraint/JointVelocityLimits.cpp
-  src/dynamics/MobileManipulatorDynamics.cpp
+  src/dynamics/WheelBasedMobileManipulatorDynamics.cpp
+  src/dynamics/DefaultManipulatorDynamics.cpp
+  src/dynamics/FloatingArmManipulatorDynamics.cpp
   src/MobileManipulatorInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -112,21 +125,21 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-install(DIRECTORY config urdf
+install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-############
-# Testing ##
-############
+#############
+## Testing ##
+#############
 
 # Helper macro for adding target applications
 macro(add_ocs2_test APP_NAME APP_SRC)
   catkin_add_gtest(${APP_NAME}
-      ${APP_SRC}
+    ${APP_SRC}
   )
-  target_include_directories(${APP_NAME}
-    PRIVATE ${PROJECT_BINARY_DIR}/include
+  target_include_directories(${APP_NAME} PRIVATE
+    ${PROJECT_BINARY_DIR}/include
   )
   target_link_libraries(${APP_NAME}
     gtest_main

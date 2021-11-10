@@ -134,24 +134,24 @@ auto CentroidalModelPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t&
   matrix6x_t dhdq(6, info.generalizedCoordinatesNum);
   switch (info.centroidalModelType) {
     case CentroidalModelType::FullCentroidalDynamics: {
-      // TODO: Check how to compute the correct value for dhdq
-      const pinocchio::InertiaTpl<SCALAR>& Ytot = data.oYcrb[0];
-      const typename pinocchio::InertiaTpl<SCALAR>::Vector3& com = Ytot.lever();
-      pinocchio::translateForceSet(data.dHdq, com, PINOCCHIO_EIGEN_CONST_CAST(matrix6x_t, dhdq));
-      dhdq.template leftCols<3>().setZero();
+      pinocchio::translateForceSet(data.dHdq, data.com[0], dhdq.const_cast_derived());
+      for (size_t k = 0; k < model.nv; ++k) {
+        dhdq.template block<3, 1>(pinocchio::Force::ANGULAR, k) +=
+            data.hg.linear().cross(data.dFda.template block<3, 1>(pinocchio::Force::LINEAR, k)) / data.Ig.mass();
+      }
+      dhdq.middleCols(3, 3) = data.dFdq.middleCols(3, 3);
       const auto Aj = A.rightCols(info.actuatedDofNum);
       floatingBaseVelocitiesDerivativeState.rightCols(info.generalizedCoordinatesNum).noalias() = -Ab_inv * dhdq;
       floatingBaseVelocitiesDerivativeInput.rightCols(info.actuatedDofNum).noalias() = -Ab_inv * Aj;
       break;
     }
     case CentroidalModelType::SingleRigidBodyDynamics: {
-      dhdq = data.dHdq;
+      dhdq = data.dFdq;
       floatingBaseVelocitiesDerivativeState.middleCols(6, 6).noalias() = -Ab_inv * dhdq.leftCols(6);
       break;
     }
     default: {
       throw std::runtime_error("The chosen centroidal model type is not supported.");
-      break;
     }
   }
 

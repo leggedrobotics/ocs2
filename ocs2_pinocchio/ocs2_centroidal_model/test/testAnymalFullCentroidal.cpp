@@ -131,11 +131,7 @@ inline void compareApproximation(const ocs2::VectorFunctionLinearApproximation& 
   }
 
   EXPECT_TRUE(a.f.isApprox(b.f));
-  // The gradients of the base pose time derivatives are not correct due to a wrong dh_dq_ in pinocchio
-  // EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
-  EXPECT_TRUE(a.dfdx.topRows<6>().isApprox(b.dfdx.topRows<6>()));
-  EXPECT_TRUE(a.dfdx.bottomRows<12>().isApprox(b.dfdx.bottomRows<12>()));
-  EXPECT_TRUE(a.dfdx.leftCols<9>().isApprox(b.dfdx.leftCols<9>()));
+  EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
   EXPECT_TRUE(a.dfdu.isApprox(b.dfdu));
 }
 

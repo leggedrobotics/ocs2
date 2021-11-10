@@ -13,13 +13,12 @@ TEST(LeggedRobotRaisim, Conversions) {
   std::string taskFileFolderName = "mpc";
   std::string targetCommandFile = ros::package::getPath("ocs2_legged_robot") + "/config/command/targetTrajectories.info";
   // path to urdf file
-  std::string urdfFile = ros::package::getPath("anymal_c_simple_description") + "/urdf/anymal.urdf";
+  std::string urdfFile = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf";
   // interface
   ocs2::legged_robot::LeggedRobotInterface interface(taskFileFolderName, targetCommandFile, urdf::parseURDFFile(urdfFile));
   // raisim conversions
   ocs2::RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout");
-  ocs2::legged_robot::LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(),
-                                                               interface.modelSettings(), false);
+  ocs2::legged_robot::LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), false);
   // consistency test ocs2 -> raisim -> ocs2
   for (size_t i = 0; i < 100; i++) {
     ocs2::vector_t stateIn(24);

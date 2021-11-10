@@ -27,11 +27,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include <ocs2_mobile_manipulator/definitions.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesInteractiveMarker.h>
 
 using namespace ocs2;
-using namespace mobile_manipulator;
 
 /**
  * Converts the pose of the interactive marker to TargetTrajectories.
@@ -44,7 +42,7 @@ TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position,
   const vector_t target = (vector_t(7) << position, orientation.coeffs()).finished();
   const vector_array_t stateTrajectory{target};
   // input trajectory
-  const vector_array_t inputTrajectory{vector_t::Zero(INPUT_DIM)};
+  const vector_array_t inputTrajectory{vector_t::Zero(observation.input.size())};
 
   return {timeTrajectory, stateTrajectory, inputTrajectory};
 }

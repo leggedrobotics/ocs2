@@ -336,6 +336,10 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // - state-only soft constraint cost
   LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], settings().checkNumericalStability_);
   lqapprox.approximateLQProblem(time, state, input, modelData);
+  modelData.time_ = time;
+  modelData.stateDim_ = state.rows();
+  modelData.inputDim_ = input.rows();
+  modelData.dynamicsBias_.setZero(state.rows());
   modelData.checkSizes(state.rows(), input.rows());
 
   // augment the cost with state-only equality and state-input inequality constraint terms
@@ -347,19 +351,20 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // add the state-input equality constraint cost nu(x) * g(x,u) to the Hamiltonian
   // note that nu has no approximation and is used as a constant
   const vector_t nu = getStateInputEqualityConstraintLagrangian(time, state);
-  hamiltonian.f += nu.transpose() * modelData.stateInputEqConstr_.f;
+  hamiltonian.f += nu.dot(modelData.stateInputEqConstr_.f);
   hamiltonian.dfdx.noalias() += modelData.stateInputEqConstr_.dfdx.transpose() * nu;
   hamiltonian.dfdu.noalias() += modelData.stateInputEqConstr_.dfdu.transpose() * nu;
-  // dfddx is zero for the state-input equality constraint cost
+  // dfdxx is zero for the state-input equality constraint cost
   // dfdux is zero for the state-input equality constraint cost
   // dfduu is zero for the state-input equality constraint cost
 
   // add the "future cost" dVdx(x) * f(x,u) to the Hamiltonian
   const ScalarFunctionQuadraticApproximation V = getValueFunction(time, state);
-  hamiltonian.f += V.dfdx.transpose() * modelData.dynamics_.f;
+  const matrix_t dVdxx_dfdx = V.dfdxx.transpose() * modelData.dynamics_.dfdx;
+  hamiltonian.f += V.dfdx.dot(modelData.dynamics_.f);
   hamiltonian.dfdx.noalias() += V.dfdxx.transpose() * modelData.dynamics_.f + modelData.dynamics_.dfdx.transpose() * V.dfdx;
   hamiltonian.dfdu.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdx;
-  hamiltonian.dfdxx.noalias() += V.dfdxx.transpose() * modelData.dynamics_.dfdx + modelData.dynamics_.dfdx.transpose() * V.dfdxx;
+  hamiltonian.dfdxx.noalias() += dVdxx_dfdx + dVdxx_dfdx.transpose();
   hamiltonian.dfdux.noalias() += modelData.dynamics_.dfdu.transpose() * V.dfdxx;
   // dfduu is zero for the "future cost"
 

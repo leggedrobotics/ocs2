@@ -246,6 +246,9 @@ TEST_F(Exp0, ddp_hamiltonian) {
   // get solution
   const auto solution = ddp.primalSolution(finalTime);
 
+  // define precision for tests
+  constexpr ocs2::scalar_t precision = 1e-3;
+
   // get Hamiltonian at current solution
   // expected outcome: true, because the current solution should be optimal
   ocs2::scalar_t time = solution.timeTrajectory_.front();
@@ -253,23 +256,23 @@ TEST_F(Exp0, ddp_hamiltonian) {
   ocs2::vector_t input = solution.controllerPtr_->computeInput(time, state);
   auto hamiltonian = ddp.getHamiltonian(time, state, input);
   const ocs2::vector_t dHdu1a = hamiltonian.dfdu;
-  const bool test1a = dHdu1a.isZero(1e-3);
+  EXPECT_TRUE(dHdu1a.isZero(precision)) << "MESSAGE for test 1a: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1a.transpose();
 
   // evaluate Hamiltonian at different state (but using feedback policy)
-  // expected outcome: true, because for a linear system the LQA of H is exact and the linear feedback policy is globally optimal
+  // expected outcome: true, because for a linear system the LQ approximation of H is exact and the linear feedback policy is globally optimal
   ocs2::scalar_t querryTime = solution.timeTrajectory_.front();
   ocs2::vector_t querryState = ocs2::vector_t::Random(solution.stateTrajectory_.front().size());
   ocs2::vector_t querryInput = solution.controllerPtr_->computeInput(querryTime, querryState);
   const ocs2::vector_t dHdu1b = hamiltonian.dfdux * (querryState - state) + hamiltonian.dfduu * (querryInput - input) + hamiltonian.dfdu;
-  const bool test1b = dHdu1b.isZero(1e-3);
+  EXPECT_TRUE(dHdu1b.isZero(precision)) << "MESSAGE for test 1b: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1b.transpose();
 
   // evaluate Hamiltonian at different input
-  // expected outcome: false, because for a linear system the LQA of H is exact and a random input is not optimal
+  // expected outcome: false, because for a linear system the LQ approximation of H is exact and a random input is not optimal
   querryTime = solution.timeTrajectory_.front();
   querryState = solution.stateTrajectory_.front();
   querryInput = ocs2::vector_t::Random(solution.inputTrajectory_.front().size());
   const ocs2::vector_t dHdu1c = hamiltonian.dfdux * (querryState - state) + hamiltonian.dfduu * (querryInput - input) + hamiltonian.dfdu;
-  const bool test1c = dHdu1c.isZero(1e-3);
+  EXPECT_FALSE(dHdu1c.isZero(precision)) << "MESSAGE for test 1c: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu1c.transpose();
 
   // get Hamiltonian at different state (but using feedback policy)
   // expected outcome: true, because for a linear system the linear feedback policy is globally optimal
@@ -278,7 +281,7 @@ TEST_F(Exp0, ddp_hamiltonian) {
   input = solution.controllerPtr_->computeInput(time, state);
   hamiltonian = ddp.getHamiltonian(time, state, input);
   const ocs2::vector_t dHdu2 = hamiltonian.dfdu;
-  const bool test2 = dHdu2.isZero(1e-3);
+  EXPECT_TRUE(dHdu2.isZero(precision)) << "MESSAGE for test 2: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu2.transpose();
 
   // get Hamiltonian at different input
   // expected outcome: false, because a random input is not optimal
@@ -287,13 +290,7 @@ TEST_F(Exp0, ddp_hamiltonian) {
   input = ocs2::vector_t::Random(solution.inputTrajectory_.front().size());
   hamiltonian = ddp.getHamiltonian(time, state, input);
   const ocs2::vector_t dHdu3 = hamiltonian.dfdu;
-  const bool test3 = dHdu3.isZero(1e-3);
-
-  EXPECT_TRUE(test1a) << "MESSAGE for test 1a: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1a.transpose();
-  EXPECT_TRUE(test1b) << "MESSAGE for test 1b: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1b.transpose();
-  EXPECT_FALSE(test1c) << "MESSAGE for test 1c: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu1c.transpose();
-  EXPECT_TRUE(test2) << "MESSAGE for test 2: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu2.transpose();
-  EXPECT_FALSE(test3) << "MESSAGE for test 3: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu3.transpose();
+  EXPECT_FALSE(dHdu3.isZero(precision)) << "MESSAGE for test 3: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu3.transpose();
 }
 
 /******************************************************************************************************/

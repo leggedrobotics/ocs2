@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
   RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
   conversions.setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
   RaisimRollout raisimRollout(
-      ros::package::getPath("anymal_c_simple_description") + "/urdf/anymal.urdf",
-      ros::package::getPath("anymal_c_simple_description") + "/meshes",
+      ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
+      ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
       std::bind(&LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1, std::placeholders::_2),
       std::bind(&LeggedRobotRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1, std::placeholders::_2),
       std::bind(&LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1, std::placeholders::_2,

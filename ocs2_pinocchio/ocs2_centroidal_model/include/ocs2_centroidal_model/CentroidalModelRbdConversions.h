@@ -87,6 +87,35 @@ class CentroidalModelRbdConversions final {
   void computeRbdStateFromCentroidalModel(const vector_t& state, const vector_t& input, const vector_t& jointAccelerations,
                                           vector_t& rbdState);
 
+  /**
+   * Computes the rigid body dynamics model torque from the ocs2 centroidal model input
+   * @note: Calls computeRbdTorqueFromCentroidalModelPD() with zero gains, so only returning the feedforward torque
+   *
+   * @param [in] state: ocs2 state vector
+   * @param [in] input: ocs2 input vector
+   * @param [in] jointAccelerations: actuated joints accelerations
+   * @param [out] rbdTorque: rigid body dynamics model torque [joint torques]
+   */
+  void computeRbdTorqueFromCentroidalModel(const vector_t& state, const vector_t& input, const vector_t& jointAccelerations,
+                                           vector_t& rbdTorque);
+
+  /**
+   * Computes the rigid body dynamics model torque from the ocs2 centroidal model input and adds PD feedback
+   *
+   * @param [in] desiredState: desired ocs2 state
+   * @param [in] desiredInput: desired ocs2 input
+   * @param [in] desiredJointAccelerations: desired joint accelerations
+   * @param [in] measuredState: measured ocs2 state (required for PD control)
+   * @param [in] measuredInput: measured ocs2 input (required for PD control)
+   * @param [in] pGains: proportional gains (required for PD control)
+   * @param [in] dGains: derivative gains (required for PD control)
+   * @param [out] rbdTorque: rigid body dynamics model torque [joint torques]
+   */
+  void computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
+                                             const vector_t& desiredJointAccelerations, const vector_t& measuredState,
+                                             const vector_t& measuredInput, const vector_t& pGains, const vector_t& dGains,
+                                             vector_t& rbdTorque);
+
  private:
   CentroidalModelRbdConversions(const CentroidalModelRbdConversions& other) = default;
   CentroidalModelRbdConversions& operator=(const CentroidalModelRbdConversions& rhs) = default;

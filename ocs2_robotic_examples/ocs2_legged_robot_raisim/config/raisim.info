@@ -5,26 +5,26 @@ rollout
 
   raisim_rollout
   {
-    setSimulatorStateOnRolloutRunAlways false
-    setSimulatorStateOnRolloutRunOnce true
-    controlDecimation 1
-    generateTerrain true
-    terrainRoughness 1.0
-    terrainSeed 1
-    raisimServer true
-    portNumber 8080
+    setSimulatorStateOnRolloutRunAlways   false
+    setSimulatorStateOnRolloutRunOnce     true
+    controlDecimation                     1
+    generateTerrain                       true
+    terrainRoughness                      1.0
+    terrainSeed                           1
+    raisimServer                          true
+    portNumber                            8080
 
     orderedJointNames
     {
        [0] LF_HAA
        [1] LF_HFE
        [2] LF_KFE
-       [3] RF_HAA ; LH_HAA
-       [4] RF_HFE ; LH_HFE
-       [5] RF_KFE ; LH_KFE
-       [6] LH_HAA ; RF_HAA
-       [7] LH_HFE ; RF_HFE
-       [8] LH_KFE ; RF_KFE
+       [3] RF_HAA
+       [4] RF_HFE
+       [5] RF_KFE
+       [6] LH_HAA
+       [7] LH_HFE
+       [8] LH_KFE
        [9] RH_HAA
       [10] RH_HFE
       [11] RH_KFE

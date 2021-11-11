@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
+#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h>
 
 namespace ocs2 {
@@ -43,7 +44,8 @@ namespace mobile_manipulator {
 /** Callback for caching and reference update */
 class MobileManipulatorPreComputation : public PreComputation {
  public:
-  MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface);
+  MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info);
+
   ~MobileManipulatorPreComputation() override = default;
 
   MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
@@ -57,7 +59,7 @@ class MobileManipulatorPreComputation : public PreComputation {
 
  private:
   PinocchioInterface pinocchioInterface_;
-  MobileManipulatorPinocchioMapping<scalar_t> pinocchioMapping_;
+  MobileManipulatorPinocchioMapping pinocchioMapping_;
 };
 
 }  // namespace mobile_manipulator

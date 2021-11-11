@@ -56,7 +56,7 @@ class QuadrotorInterface final : public RobotInterface {
    * @param [in] taskFile: The absolute path to the configuration file for the MPC.
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    */
-  explicit QuadrotorInterface(const std::string& taskFile, const std::string& libraryFolder);
+  QuadrotorInterface(const std::string& taskFile, const std::string& libraryFolder);
 
   /** Destructor */
   ~QuadrotorInterface() override = default;

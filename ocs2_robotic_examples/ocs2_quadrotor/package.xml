@@ -17,6 +17,7 @@
 
   <depend>ocs2_mpc</depend>
   <depend>ocs2_robotic_tools</depend>
+  <depend>ocs2_robotic_assets</depend>
   <depend>ocs2_python_interface</depend>
 
 </package>

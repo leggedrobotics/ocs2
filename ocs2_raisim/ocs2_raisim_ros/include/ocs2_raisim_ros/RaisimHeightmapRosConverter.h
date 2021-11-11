@@ -55,7 +55,7 @@ class RaisimHeightmapRosConverter {
    * @param[in] frameId: The frameId for the GridMap ROS message
    * @return The converted GridMap ROS message
    */
-  static grid_map_msgs::GridMapPtr convertHeightmapToGridmap(const raisim::HeightMap& heightMap, const std::string& = "world");
+  static grid_map_msgs::GridMapPtr convertHeightmapToGridmap(const raisim::HeightMap& heightMap, const std::string& frameId = "world");
 
   /**
    * @brief Converts a GridMap ROS message to a Raisim height map

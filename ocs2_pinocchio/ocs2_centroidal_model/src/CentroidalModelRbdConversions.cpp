@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_centroidal_model/CentroidalModelRbdConversions.h"
 
 #include <pinocchio/algorithm/centroidal.hpp>
+#include <pinocchio/algorithm/rnea.hpp>
 
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 
@@ -132,6 +133,73 @@ void CentroidalModelRbdConversions::computeRbdStateFromCentroidalModel(const vec
   rbdState.segment<3>(info.generalizedCoordinatesNum) = baseVelocity.tail<3>();
   rbdState.segment<3>(info.generalizedCoordinatesNum + 3) = baseVelocity.head<3>();
   rbdState.tail(info.actuatedDofNum) = centroidal_model::getJointVelocities(input, info).head(info.actuatedDofNum);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModel(const vector_t& state, const vector_t& input,
+                                                                        const vector_t& jointAccelerations, vector_t& rbdTorque) {
+  const auto& info = mapping_.getCentroidalModelInfo();
+  const vector_t pGains = vector_t::Zero(info.generalizedCoordinatesNum);
+  const vector_t dGains = vector_t::Zero(info.generalizedCoordinatesNum);
+  computeRbdTorqueFromCentroidalModelPD(state, input, jointAccelerations, state, input, pGains, dGains, rbdTorque);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
+                                                                          const vector_t& desiredJointAccelerations,
+                                                                          const vector_t& measuredState, const vector_t& measuredInput,
+                                                                          const vector_t& pGains, const vector_t& dGains,
+                                                                          vector_t& rbdTorque) {
+  // handles
+  auto& interface = *pinocchioInterfacePtr_;
+  const auto& info = mapping_.getCentroidalModelInfo();
+  const auto& model = pinocchioInterfacePtr_->getModel();
+  auto& data = pinocchioInterfacePtr_->getData();
+
+  // desired
+  Vector6 desiredBasePose, desiredBaseVelocity, desiredBaseAcceleration;
+  computeBaseKinematicsFromCentroidalModel(desiredState, desiredInput, desiredJointAccelerations, desiredBasePose, desiredBaseVelocity,
+                                           desiredBaseAcceleration);
+  vector_t qDesired(info.generalizedCoordinatesNum), vDesired(info.generalizedCoordinatesNum), aDesired(info.generalizedCoordinatesNum);
+  qDesired << desiredBasePose, centroidal_model::getJointAngles(desiredState, info);
+  vDesired << desiredBaseVelocity, centroidal_model::getJointVelocities(desiredInput, info);
+  aDesired << desiredBaseAcceleration, desiredJointAccelerations;
+  pinocchio::container::aligned_vector<pinocchio::Force> fextDesired(model.njoints, pinocchio::Force::Zero());
+  for (size_t i = 0; i < info.numThreeDofContacts; i++) {
+    const auto frameIndex = info.endEffectorFrameIndices[i];
+    const auto jointIndex = model.frames[frameIndex].parent;
+    const Vector3 translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
+    const Matrix3 rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
+    const Vector3 contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);
+    fextDesired[jointIndex].linear() = contactForce;
+    fextDesired[jointIndex].angular() = translationJointFrameToContactFrame.cross(contactForce);
+  }
+  for (size_t i = info.numThreeDofContacts; i < info.numThreeDofContacts + info.numSixDofContacts; i++) {
+    const auto frameIndex = info.endEffectorFrameIndices[i];
+    const auto jointIndex = model.frames[frameIndex].parent;
+    const Vector3 translationJointFrameToContactFrame = model.frames[frameIndex].placement.translation();
+    const Matrix3 rotationWorldFrameToJointFrame = data.oMi[jointIndex].rotation().transpose();
+    const Vector3 contactForce = rotationWorldFrameToJointFrame * centroidal_model::getContactForces(desiredInput, i, info);
+    const Vector3 contactTorque = rotationWorldFrameToJointFrame * centroidal_model::getContactTorques(desiredInput, i, info);
+    fextDesired[jointIndex].linear() = contactForce;
+    fextDesired[jointIndex].angular() = translationJointFrameToContactFrame.cross(contactForce) + contactTorque;
+  }
+
+  // measured
+  const vector_t qMeasured = mapping_.getPinocchioJointPosition(measuredState);
+  updateCentroidalDynamics(interface, info, qMeasured);
+  const vector_t vMeasured = mapping_.getPinocchioJointVelocity(measuredState, measuredInput);
+
+  // feedforward
+  rbdTorque = pinocchio::rnea(model, data, qDesired, vDesired, aDesired, fextDesired);
+
+  // feedback
+  rbdTorque.noalias() += pGains.cwiseProduct(qDesired - qMeasured);
+  rbdTorque.noalias() += dGains.cwiseProduct(vDesired - vMeasured);
 }
 
 }  // namespace ocs2

@@ -84,11 +84,24 @@ Optional Dependencies
     	make -j4 && sudo checkinstall
     
     This will install RaiSim at the default location of ``/usr/local/lib`` which will also be automatically detected by catkin. When asked by ``checkinstall``, change the package name to something appropriate (e.g. "raisim") to it find later for package management, such as for uninstallation (``dpkg -r <package_name>``).
-  
+
+    For visualization, use `RaiSim Unity <https://raisim.com/sections/RaisimUnity.html>`__, where pre-built executables are provided in the ``raisimLib/raisimUnity`` directory. For example, it can be used for debugging purposes to see if conversions between OCS2 and RaiSim are correct.
+
 * `Grid Map <https://github.com/ANYbotics/grid_map>`__ catkin package, which may be installed with ``sudo apt install ros-noetic-grid-map-msgs``.
 
-* `RaisimOgre <https://github.com/leggedrobotics/raisimOgre>`__ Visualizer for Raisim. Can be used for debugging purposes to see if conversions between OCS2 and Raisim are correct.
+* `ONNX Runtime  <https://github.com/microsoft/onnxruntime>`__ is an inferencing and training accelerator. Here, it is used for deploying learned MPC-Net policies in C++ code. To locally install it, do the following:
 
+    .. code-block:: bash
+
+        cd ~/Downloads
+        wget https://github.com/microsoft/onnxruntime/releases/download/v1.7.0/onnxruntime-linux-x64-1.7.0.tgz
+        tar xf onnxruntime-linux-x64-1.7.0.tgz
+        mkdir -p ~/.local/bin ~/.local/include/onnxruntime ~/.local/lib ~/.local/share/cmake/onnxruntime
+        rsync -a ~/Downloads/onnxruntime-linux-x64-1.7.0/include/ ~/.local/include/onnxruntime
+        rsync -a ~/Downloads/onnxruntime-linux-x64-1.7.0/lib/ ~/.local/lib
+        rsync -a ~/git/ocs2/ocs2_mpcnet/misc/onnxruntime/cmake/ ~/.local/share/cmake/onnxruntime
+
+    We provide custom cmake config and version files to enable ``find_package(onnxruntime)`` without modifying ``LIBRARY_PATH`` and ``LD_LIBRARY_PATH``. Note that the last command above assumes that you cloned OCS2 into the folder ``git`` in your user's home directory.
 
 .. _doxid-ocs2_doc_installation_ocs2_doc_install:
 

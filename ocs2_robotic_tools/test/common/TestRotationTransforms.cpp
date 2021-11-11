@@ -65,24 +65,24 @@ TEST(RotationTransforms, quaternionDifferenceJacobian) {
 }
 
 // Asserts that the quaterion performs the same rotation as the rotation matrix
-void testQuaternionAgainstRotationMatrix(const Eigen::Quaterniond& quat, const Eigen::Matrix3d& rotMatrix){
-  for (int i = 0; i < 10; i++){
+void testQuaternionAgainstRotationMatrix(const Eigen::Quaterniond& quat, const Eigen::Matrix3d& rotMatrix) {
+  for (int i = 0; i < 10; i++) {
     const Eigen::Vector3d preRotatePoint = Eigen::Vector3d::Random();
-    const Eigen::Vector3d postRotatePointMatrix = rotMatrix*preRotatePoint;
-    const Eigen::Vector3d postRotatePointQuat = quat*preRotatePoint;
-    ASSERT_NEAR((postRotatePointMatrix - postRotatePointQuat).norm(), 0, 1e-5)<<"rotMatrix = \n"<<rotMatrix<<"\n quat = "<<quat.coeffs().transpose();
+    const Eigen::Vector3d postRotatePointMatrix = rotMatrix * preRotatePoint;
+    const Eigen::Vector3d postRotatePointQuat = quat * preRotatePoint;
+    ASSERT_NEAR((postRotatePointMatrix - postRotatePointQuat).norm(), 0, 1e-5) << "rotMatrix = \n"
+                                                                               << rotMatrix << "\n quat = " << quat.coeffs().transpose();
   }
 }
 
-//Attempts to test all the branches in the cpp ad function
+// Attempts to test all the branches in the cpp ad function
 TEST(RotationTransforms, matrixToQuaternionCppAdSelected) {
   using ad_matrix_t = ocs2::ad_matrix_t;
   using ad_vector_t = ocs2::ad_vector_t;
   using ad_scalar_t = ocs2::ad_scalar_t;
 
-  auto adFunction = [](const ad_vector_t& x,  ad_vector_t& y) {
-    ad_matrix_t rotMatrix = ad_matrix_t::Zero(3,3);
-    rotMatrix << x;
+  auto adFunction = [](const ad_vector_t& x, ad_vector_t& y) {
+    Eigen::Map<const ad_matrix_t> rotMatrix(x.data(), 3, 3);
     y.resize(4);
     y = ocs2::matrixToQuaternion(rotMatrix).coeffs();
   };
@@ -96,11 +96,10 @@ TEST(RotationTransforms, matrixToQuaternionCppAdSelected) {
     rotMatrix << 1, 0, 0,
                  0, 1, 0,
                  0, 0, 1;
-    // clang format on
-    Eigen::VectorXd serializedRotMatrix(9);
-    serializedRotMatrix << rotMatrix;
+    // clang-format on
+    Eigen::Map<Eigen::VectorXd> serializedRotMatrix(rotMatrix.data(), 9, 1);
     const Eigen::VectorXd result = adInterface.getFunctionValue(serializedRotMatrix);
-    const Eigen::Quaterniond resultQuaternion(result[3],result[0],result[1],result[2]);
+    const Eigen::Quaterniond resultQuaternion(result[3], result[0], result[1], result[2]);
     testQuaternionAgainstRotationMatrix(resultQuaternion, rotMatrix);
   }
 
@@ -110,11 +109,10 @@ TEST(RotationTransforms, matrixToQuaternionCppAdSelected) {
     rotMatrix << 0, 0, 1,
                  0, 1, 0,
                 -1, 0, 0;
-    // clang format on
-    Eigen::VectorXd serializedRotMatrix(9);
-    serializedRotMatrix << rotMatrix;
+    // clang-format on
+    Eigen::Map<Eigen::VectorXd> serializedRotMatrix(rotMatrix.data(), 9, 1);
     const Eigen::VectorXd result = adInterface.getFunctionValue(serializedRotMatrix);
-    const Eigen::Quaterniond resultQuaternion(result[3],result[0],result[1],result[2]);
+    const Eigen::Quaterniond resultQuaternion(result[3], result[0], result[1], result[2]);
     testQuaternionAgainstRotationMatrix(resultQuaternion, rotMatrix);
   }
 
@@ -124,11 +122,10 @@ TEST(RotationTransforms, matrixToQuaternionCppAdSelected) {
     rotMatrix << 0, 0, 1,
                  0, 1, 0,
                 -1, 0, 0;
-    // clang format on
-    Eigen::VectorXd serializedRotMatrix(9);
-    serializedRotMatrix << rotMatrix;
+    // clang-format on
+    Eigen::Map<Eigen::VectorXd> serializedRotMatrix(rotMatrix.data(), 9, 1);
     const Eigen::VectorXd result = adInterface.getFunctionValue(serializedRotMatrix);
-    const Eigen::Quaterniond resultQuaternion(result[3],result[0],result[1],result[2]);
+    const Eigen::Quaterniond resultQuaternion(result[3], result[0], result[1], result[2]);
     testQuaternionAgainstRotationMatrix(resultQuaternion, rotMatrix);
   }
 
@@ -138,11 +135,10 @@ TEST(RotationTransforms, matrixToQuaternionCppAdSelected) {
     rotMatrix << 1, 0, 0,
                  0, 0, 1,
                  0,-1, 0;
-    // clang format on
-    Eigen::VectorXd serializedRotMatrix(9);
-    serializedRotMatrix << rotMatrix;
+    // clang-format on
+    Eigen::Map<Eigen::VectorXd> serializedRotMatrix(rotMatrix.data(), 9, 1);
     const Eigen::VectorXd result = adInterface.getFunctionValue(serializedRotMatrix);
-    const Eigen::Quaterniond resultQuaternion(result[3],result[0],result[1],result[2]);
+    const Eigen::Quaterniond resultQuaternion(result[3], result[0], result[1], result[2]);
     testQuaternionAgainstRotationMatrix(resultQuaternion, rotMatrix);
   }
 
@@ -152,11 +148,10 @@ TEST(RotationTransforms, matrixToQuaternionCppAdSelected) {
     rotMatrix << 0, 1, 0,
                 -1, 0, 0,
                  0, 0, 1;
-    // clang format on
-    Eigen::VectorXd serializedRotMatrix(9);
-    serializedRotMatrix << rotMatrix;
+    // clang-format on
+    Eigen::Map<Eigen::VectorXd> serializedRotMatrix(rotMatrix.data(), 9, 1);
     const Eigen::VectorXd result = adInterface.getFunctionValue(serializedRotMatrix);
-    const Eigen::Quaterniond resultQuaternion(result[3],result[0],result[1],result[2]);
+    const Eigen::Quaterniond resultQuaternion(result[3], result[0], result[1], result[2]);
     testQuaternionAgainstRotationMatrix(resultQuaternion, rotMatrix);
   }
 
@@ -166,11 +161,10 @@ TEST(RotationTransforms, matrixToQuaternionCppAdSelected) {
     rotMatrix << 0,-1, 0,
                 -1, 0, 0,
                  0, 0,-1;
-    // clang format on
-    Eigen::VectorXd serializedRotMatrix(9);
-    serializedRotMatrix << rotMatrix;
+    // clang-format on
+    Eigen::Map<Eigen::VectorXd> serializedRotMatrix(rotMatrix.data(), 9, 1);
     const Eigen::VectorXd result = adInterface.getFunctionValue(serializedRotMatrix);
-    const Eigen::Quaterniond resultQuaternion(result[3],result[0],result[1],result[2]);
+    const Eigen::Quaterniond resultQuaternion(result[3], result[0], result[1], result[2]);
     testQuaternionAgainstRotationMatrix(resultQuaternion, rotMatrix);
   }
 }
@@ -180,9 +174,8 @@ TEST(RotationTransforms, matrixToQuaternionCppAdRandom) {
   using ad_vector_t = ocs2::ad_vector_t;
   using ad_scalar_t = ocs2::ad_scalar_t;
 
-  auto adFunction = [](const ad_vector_t& x,  ad_vector_t& y) {
-    ad_matrix_t rotMatrix = ad_matrix_t::Zero(3,3);
-    rotMatrix << x;
+  auto adFunction = [](const ad_vector_t& x, ad_vector_t& y) {
+    Eigen::Map<const ad_matrix_t> rotMatrix(x.data(), 3, 3);
     y.resize(4);
     y = ocs2::matrixToQuaternion(rotMatrix).coeffs();
   };
@@ -194,17 +187,16 @@ TEST(RotationTransforms, matrixToQuaternionCppAdRandom) {
     const Eigen::Quaterniond q = Eigen::Quaterniond::UnitRandom();
 
     const auto rotMatrix = q.toRotationMatrix();
-    Eigen::VectorXd serializedRotMatrix(9);
-    serializedRotMatrix << rotMatrix;
+    Eigen::Map<const Eigen::VectorXd> serializedRotMatrix(rotMatrix.data(), 9, 1);
 
     const Eigen::VectorXd result = adInterface.getFunctionValue(serializedRotMatrix);
-    const Eigen::Quaterniond resultQuaternion(result[3],result[0],result[1],result[2]);
+    const Eigen::Quaterniond resultQuaternion(result[3], result[0], result[1], result[2]);
 
     // Assert that our original generating quaternion matches the resulting one
-    ASSERT_NEAR(ocs2::quaternionDistance(q, resultQuaternion).norm(), 0, 1e-5)<<"q = "<<q.coeffs().transpose()<<", resultQuaternion = "<<resultQuaternion.coeffs().transpose();
+    ASSERT_NEAR(ocs2::quaternionDistance(q, resultQuaternion).norm(), 0, 1e-5)
+        << "q = " << q.coeffs().transpose() << ", resultQuaternion = " << resultQuaternion.coeffs().transpose();
 
     // Assert that our resulting quaternion performs the same rotation as the rotation matrix
     testQuaternionAgainstRotationMatrix(resultQuaternion, rotMatrix);
-
   }
 }

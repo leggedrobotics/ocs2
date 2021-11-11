@@ -57,6 +57,9 @@ class RaisimRolloutSettings {
    * @param[in] dGains Gains on generalized velocity for the Raisim-internal PD controller (if controlMode != FORCE_AND_TORQUE)
    * @param[in] generateTerrain Whether or not uneven terrain should be used inside raisim
    * @param[in] terrainRoughness: z scale of the raisim heightmap
+   * @param[in] terrainSeed: Seed for generating the random terrain
+   * @param[in] raisimServer: Whether or not to launch the Raisim server, e.g. needed for visualization with Raisim Unity
+   * @param[in] portNumber: Port number for the server, e.g. change if you have multiple instances of the RaisimRollout class
    */
   explicit RaisimRolloutSettings(rollout::Settings rolloutSettings = rollout::Settings(), bool setSimulatorStateOnRolloutRunAlways = true,
                                  bool setSimulatorStateOnRolloutRunOnce = false, int controlDecimation = 1,

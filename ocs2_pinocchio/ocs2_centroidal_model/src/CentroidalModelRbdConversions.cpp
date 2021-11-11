@@ -170,6 +170,7 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
   qDesired << desiredBasePose, centroidal_model::getJointAngles(desiredState, info);
   vDesired << desiredBaseVelocity, centroidal_model::getJointVelocities(desiredInput, info);
   aDesired << desiredBaseAcceleration, desiredJointAccelerations;
+
   pinocchio::container::aligned_vector<pinocchio::Force> fextDesired(model.njoints, pinocchio::Force::Zero());
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     const auto frameIndex = info.endEffectorFrameIndices[i];
@@ -196,14 +197,12 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
   updateCentroidalDynamics(interface, info, qMeasured);
   const vector_t vMeasured = mapping_.getPinocchioJointVelocity(measuredState, measuredInput);
 
-  // feedforward
-  vector_t rbdTorque = pinocchio::rnea(model, data, qDesired, vDesired, aDesired, fextDesired);
+  // PD feedback augmentation
+  const vector_t pdFeedback = pGains.cwiseProduct(qDesired - qMeasured) + dGains.cwiseProduct(vDesired - vMeasured);
 
-  // feedback
-  rbdTorque.noalias() += pGains.cwiseProduct(qDesired - qMeasured);
-  rbdTorque.noalias() += dGains.cwiseProduct(vDesired - vMeasured);
-
-  return rbdTorque;
+  // feedforward plus PD on accelratin level
+  const vector_t aAugmented = aDesired + pdFeedback;
+  return pinocchio::rnea(model, data, qDesired, vDesired, aAugmented, fextDesired);
 }
 
 }  // namespace ocs2

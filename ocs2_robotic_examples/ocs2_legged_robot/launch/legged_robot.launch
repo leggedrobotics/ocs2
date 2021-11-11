@@ -12,8 +12,8 @@
 
     <group if="$(arg rviz)">
       <include file="$(find ocs2_legged_robot)/launch/visualize.launch">
-        <arg name="description_name" value="$(arg description_name)"/>
-        <arg name="description_file" value="$(arg description_file)"/>
+        <arg name="description_name"   value="$(arg description_name)"/>
+        <arg name="description_file"   value="$(arg description_file)"/>
       </include>
     </group>
 

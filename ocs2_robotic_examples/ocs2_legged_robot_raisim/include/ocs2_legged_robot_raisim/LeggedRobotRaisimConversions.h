@@ -4,9 +4,6 @@
 #include <raisim/object/terrain/HeightMap.hpp>
 
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
-#include <ocs2_centroidal_model/PinocchioCentroidalInverseDynamicsPD.h>
-
-#include <ocs2_legged_robot/common/ModelSettings.h>
 
 namespace ocs2 {
 namespace legged_robot {
@@ -20,15 +17,10 @@ class LeggedRobotRaisimConversions {
    * Constructor.
    * @param [in] pinocchioInterface : The predefined pinocchio interface for the robot.
    * @param [in] centroidalModelInfo : The centroidal model information.
-   * @param [in] modelSettings : The model settings.
    * @param [in] check : Whether to check if the variables coming from or going to RaiSim are reasonable (by default true).
    */
-  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, ModelSettings modelSettings,
-                               bool check = true)
-      : check_(check),
-        centroidalModelRbdConversionsPtr_(new CentroidalModelRbdConversions(pinocchioInterface, centroidalModelInfo)),
-        pinocchioCentroidalInverseDynamicsPDPtr_(
-            new PinocchioCentroidalInverseDynamicsPD(pinocchioInterface, centroidalModelInfo, modelSettings.contactNames3DoF)) {}
+  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, bool check = true)
+      : check_(check), centroidalModelRbdConversionsPtr_(new CentroidalModelRbdConversions(pinocchioInterface, centroidalModelInfo)) {}
 
   /**
    * Default destructor.
@@ -76,7 +68,10 @@ class LeggedRobotRaisimConversions {
    * @param [in] pGains : The proportional gains.
    * @param [in] dGains : The derivative gains.
    */
-  void setGains(const vector_t& pGains, const vector_t& dGains) { pinocchioCentroidalInverseDynamicsPDPtr_->setGains(pGains, dGains); }
+  void setGains(const vector_t& pGains, const vector_t& dGains) {
+    pGains_ = pGains;
+    dGains_ = dGains;
+  }
 
  protected:
   /**
@@ -117,9 +112,10 @@ class LeggedRobotRaisimConversions {
 
  private:
   bool check_;
-  Eigen::Vector3d continuousOrientation_;
   std::unique_ptr<CentroidalModelRbdConversions> centroidalModelRbdConversionsPtr_;
-  std::unique_ptr<PinocchioCentroidalInverseDynamicsPD> pinocchioCentroidalInverseDynamicsPDPtr_;
+  Eigen::Vector3d continuousOrientation_;
+  vector_t pGains_;
+  vector_t dGains_;
 };
 
 }  // namespace legged_robot

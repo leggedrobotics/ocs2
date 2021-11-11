@@ -200,7 +200,7 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
   // PD feedback augmentation
   const vector_t pdFeedback = pGains.cwiseProduct(qDesired - qMeasured) + dGains.cwiseProduct(vDesired - vMeasured);
 
-  // feedforward plus PD on accelratin level
+  // feedforward plus PD on acceleration level
   const vector_t aAugmented = aDesired + pdFeedback;
   return pinocchio::rnea(model, data, qDesired, vDesired, aAugmented, fextDesired);
 }

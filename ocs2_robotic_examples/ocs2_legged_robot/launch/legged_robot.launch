@@ -11,8 +11,10 @@
     <arg name="description_file"   default="$(find ocs2_robotic_assets)/resources/anymal_c/urdf/anymal.urdf"/>
 
     <group if="$(arg rviz)">
-      <param name="$(arg description_name)" textfile="$(arg description_file)"/>
-      <include file="$(find ocs2_legged_robot)/launch/visualize.launch"/>
+      <include file="$(find ocs2_legged_robot)/launch/visualize.launch">
+        <arg name="description_name" value="$(arg description_name)"/>
+        <arg name="description_file" value="$(arg description_file)"/>
+      </include>
     </group>
 
     <group if="$(arg multiplot)">

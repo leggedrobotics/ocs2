@@ -22,7 +22,7 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
   std::string taskFileFolderName = "mpc";
   std::string targetCommandFile = ros::package::getPath("ocs2_legged_robot") + "/config/command/targetTrajectories.info";
   // path to urdf file
-  std::string urdfFile = ros::package::getPath("anymal_c_simple_description") + "/urdf/anymal.urdf";
+  std::string urdfFile = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf";
   // set up MPC-Net rollout manager for data generation and policy evaluation
   std::vector<std::unique_ptr<MPC_BASE>> mpcPtrs;
   std::vector<std::unique_ptr<MpcnetControllerBase>> mpcnetPtrs;
@@ -49,8 +49,8 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
           leggedRobotInterfacePtrs_[i]->getPinocchioInterface(), leggedRobotInterfacePtrs_[i]->getCentroidalModelInfo(), false)));
       leggedRobotRaisimConversionsPtrs_[i]->setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
       rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(new RaisimRollout(
-          ros::package::getPath("anymal_c_simple_description") + "/urdf/anymal.urdf",
-          ros::package::getPath("anymal_c_simple_description") + "/meshes",
+          ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
+          ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
           std::bind(&LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel, leggedRobotRaisimConversionsPtrs_[i].get(),
                     std::placeholders::_1, std::placeholders::_2),
           std::bind(&LeggedRobotRaisimConversions::raisimGenCoordGenVelToState, leggedRobotRaisimConversionsPtrs_[i].get(),

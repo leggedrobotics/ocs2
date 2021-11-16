@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_legged_robot_raisim/LeggedRobotRaisimVisualizer.h"
 
+#include <ocs2_raisim_ros/RaisimHeightmapRosConverter.h>
+
 namespace ocs2 {
 namespace legged_robot {
 
@@ -37,10 +39,8 @@ namespace legged_robot {
 /******************************************************************************************************/
 LeggedRobotRaisimVisualizer::LeggedRobotRaisimVisualizer(PinocchioInterface pinocchioInterface, CentroidalModelInfo centroidalModelInfo,
                                                          const PinocchioEndEffectorKinematics& endEffectorKinematics,
-                                                         ros::NodeHandle& nodeHandle, scalar_t maxUpdateFrequency,
-                                                         const raisim::HeightMap* terrainPtr)
-    : LeggedRobotVisualizer(pinocchioInterface, centroidalModelInfo, endEffectorKinematics, nodeHandle, maxUpdateFrequency),
-      terrainPtr_(terrainPtr) {}
+                                                         ros::NodeHandle& nodeHandle, scalar_t maxUpdateFrequency)
+    : LeggedRobotVisualizer(pinocchioInterface, centroidalModelInfo, endEffectorKinematics, nodeHandle, maxUpdateFrequency) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -65,6 +65,13 @@ void LeggedRobotRaisimVisualizer::update(const SystemObservation& observation, c
     }
   }
   LeggedRobotVisualizer::update(raisimObservation, raisimPrimalSolution, raisimCommand);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LeggedRobotRaisimVisualizer::updateTerrain(double timeout) {
+  terrainPtr_ = std::move(RaisimHeightmapRosConverter::getHeightmapFromRos(timeout).first);
 }
 
 }  // namespace legged_robot

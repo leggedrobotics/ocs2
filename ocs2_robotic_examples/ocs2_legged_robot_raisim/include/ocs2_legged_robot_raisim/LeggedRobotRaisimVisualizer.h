@@ -40,14 +40,20 @@ class LeggedRobotRaisimVisualizer : public LeggedRobotVisualizer {
  public:
   LeggedRobotRaisimVisualizer(PinocchioInterface pinocchioInterface, CentroidalModelInfo centroidalModelInfo,
                               const PinocchioEndEffectorKinematics& endEffectorKinematics, ros::NodeHandle& nodeHandle,
-                              scalar_t maxUpdateFrequency = 100.0, const raisim::HeightMap* terrainPtr = nullptr);
+                              scalar_t maxUpdateFrequency = 100.0);
 
   ~LeggedRobotRaisimVisualizer() override = default;
 
   void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) override;
 
+  /**
+   * @brief Update the terrain (RaiSim height map) from ROS.
+   * @param [in] timeout : The maximum waiting time if no message is received.
+   */
+  void updateTerrain(double timeout = 5.0);
+
  private:
-  const raisim::HeightMap* terrainPtr_ = nullptr;
+  std::unique_ptr<raisim::HeightMap> terrainPtr_;
 };
 
 }  // namespace legged_robot

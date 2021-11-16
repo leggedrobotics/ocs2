@@ -105,7 +105,8 @@ int main(int argc, char** argv) {
   PinocchioEndEffectorKinematics endEffectorKinematics(interface.getPinocchioInterface(), pinocchioMapping,
                                                        interface.modelSettings().contactNames3DoF);
   std::shared_ptr<LeggedRobotRaisimVisualizer> leggedRobotRaisimVisualizer(new LeggedRobotRaisimVisualizer(
-      interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle, 100.0, terrainPtr));
+      interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle));
+  leggedRobotRaisimVisualizer->updateTerrain();
 
   // legged robot dummy
   MRT_ROS_Dummy_Loop leggedRobotDummy(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);

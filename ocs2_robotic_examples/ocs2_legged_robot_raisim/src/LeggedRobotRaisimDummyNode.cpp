@@ -75,10 +75,11 @@ int main(int argc, char** argv) {
   RaisimRollout raisimRollout(
       ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
       ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
-      std::bind(&LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel, &conversions, std::placeholders::_1, std::placeholders::_2),
-      std::bind(&LeggedRobotRaisimConversions::raisimGenCoordGenVelToState, &conversions, std::placeholders::_1, std::placeholders::_2),
-      std::bind(&LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce, &conversions, std::placeholders::_1, std::placeholders::_2,
-                std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
+      [&](const vector_t& state, const vector_t& input) { return conversions.stateToRaisimGenCoordGenVel(state, input); },
+      [&](const Eigen::VectorXd& q, const Eigen::VectorXd& dq) { return conversions.raisimGenCoordGenVelToState(q, dq); },
+      [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+        return conversions.inputToRaisimGeneralizedForce(time, input, state, q, dq);
+      },
       nullptr, raisimRolloutSettings, nullptr);
 
   // terrain

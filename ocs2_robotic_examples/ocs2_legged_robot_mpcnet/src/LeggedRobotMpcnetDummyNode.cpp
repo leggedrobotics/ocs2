@@ -26,12 +26,12 @@ int main(int argc, char** argv) {
   ::ros::removeROSArgs(argc, argv, programArgs);
   if (programArgs.size() < 7) {
     throw std::runtime_error(
-        "No robot name, config folder, target command file, description name, policy file path, or rollout type specified. Aborting.");
+        "No robot name, config folder, target command file, description file, policy file path, or rollout type specified. Aborting.");
   }
   const std::string robotName(programArgs[1]);
   const std::string configName(programArgs[2]);
   const std::string targetCommandFile(programArgs[3]);
-  const std::string descriptionName("/" + programArgs[4]);
+  const std::string descriptionFile(programArgs[4]);
   const std::string policyFilePath(programArgs[5]);
   const bool raisim = (programArgs[6] == "true") ? true : false;
 
@@ -40,11 +40,7 @@ int main(int argc, char** argv) {
   ros::NodeHandle nodeHandle;
 
   // legged robot interface
-  std::string urdfString;
-  if (!ros::param::get(descriptionName, urdfString)) {
-    std::cerr << "Param " << descriptionName << " not found; unable to generate urdf" << std::endl;
-  }
-  LeggedRobotInterface leggedRobotInterface(configName, targetCommandFile, urdf::parseURDF(urdfString));
+  LeggedRobotInterface leggedRobotInterface(configName, targetCommandFile, urdf::parseURDFFile(descriptionFile));
 
   // gait receiver
   auto gaitReceiverPtr =
@@ -63,7 +59,7 @@ int main(int argc, char** argv) {
 
   // rollout
   std::unique_ptr<RolloutBase> rolloutPtr;
-  raisim::HeightMap* terrain = nullptr;
+  raisim::HeightMap* terrainPtr = nullptr;
   std::unique_ptr<RaisimHeightmapRosConverter> heightmapPub;
   std::unique_ptr<LeggedRobotRaisimConversions> conversions;
   if (raisim) {
@@ -71,25 +67,24 @@ int main(int argc, char** argv) {
                                                        leggedRobotInterface.getCentroidalModelInfo(), false));
     RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
     conversions->setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
-    rolloutPtr.reset(
-        new RaisimRollout(ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
-                          ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
-                          std::bind(&LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel, conversions.get(), std::placeholders::_1,
-                                    std::placeholders::_2),
-                          std::bind(&LeggedRobotRaisimConversions::raisimGenCoordGenVelToState, conversions.get(), std::placeholders::_1,
-                                    std::placeholders::_2),
-                          std::bind(&LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce, conversions.get(), std::placeholders::_1,
-                                    std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
-                          nullptr, raisimRolloutSettings, nullptr));
+    rolloutPtr.reset(new RaisimRollout(
+        ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
+        ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
+        [&](const vector_t& state, const vector_t& input) { return conversions->stateToRaisimGenCoordGenVel(state, input); },
+        [&](const Eigen::VectorXd& q, const Eigen::VectorXd& dq) { return conversions->raisimGenCoordGenVelToState(q, dq); },
+        [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+          return conversions->inputToRaisimGeneralizedForce(time, input, state, q, dq);
+        },
+        nullptr, raisimRolloutSettings, nullptr));
     // terrain
     if (raisimRolloutSettings.generateTerrain_) {
       raisim::TerrainProperties terrainProperties;
       terrainProperties.zScale = raisimRolloutSettings.terrainRoughness_;
       terrainProperties.seed = raisimRolloutSettings.terrainSeed_;
-      terrain = static_cast<RaisimRollout*>(rolloutPtr.get())->generateTerrain(terrainProperties);
-      conversions->terrain_ = terrain;
+      terrainPtr = static_cast<RaisimRollout*>(rolloutPtr.get())->generateTerrain(terrainProperties);
+      conversions->setTerrain(*terrainPtr);
       heightmapPub.reset(new ocs2::RaisimHeightmapRosConverter());
-      heightmapPub->publishGridmap(*terrain, "odom");
+      heightmapPub->publishGridmap(*terrainPtr, "odom");
     }
   } else {
     rolloutPtr.reset(leggedRobotInterface.getRollout().clone());
@@ -104,9 +99,9 @@ int main(int argc, char** argv) {
                                                        leggedRobotInterface.modelSettings().contactNames3DoF);
   std::shared_ptr<LeggedRobotVisualizer> leggedRobotVisualizerPtr;
   if (raisim) {
-    leggedRobotVisualizerPtr.reset(new LeggedRobotRaisimVisualizer(leggedRobotInterface.getPinocchioInterface(),
-                                                                   leggedRobotInterface.getCentroidalModelInfo(), endEffectorKinematics,
-                                                                   nodeHandle, 100.0, terrain));
+    leggedRobotVisualizerPtr.reset(new LeggedRobotRaisimVisualizer(
+        leggedRobotInterface.getPinocchioInterface(), leggedRobotInterface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle));
+    static_cast<LeggedRobotRaisimVisualizer*>(leggedRobotVisualizerPtr.get())->updateTerrain();
   } else {
     leggedRobotVisualizerPtr.reset(new LeggedRobotVisualizer(
         leggedRobotInterface.getPinocchioInterface(), leggedRobotInterface.getCentroidalModelInfo(), endEffectorKinematics, nodeHandle));

@@ -51,12 +51,15 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
       rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(new RaisimRollout(
           ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
           ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
-          std::bind(&LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel, leggedRobotRaisimConversionsPtrs_[i].get(),
-                    std::placeholders::_1, std::placeholders::_2),
-          std::bind(&LeggedRobotRaisimConversions::raisimGenCoordGenVelToState, leggedRobotRaisimConversionsPtrs_[i].get(),
-                    std::placeholders::_1, std::placeholders::_2),
-          std::bind(&LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce, leggedRobotRaisimConversionsPtrs_[i].get(),
-                    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5),
+          [&, i](const vector_t& state, const vector_t& input) {
+            return leggedRobotRaisimConversionsPtrs_[i]->stateToRaisimGenCoordGenVel(state, input);
+          },
+          [&, i](const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+            return leggedRobotRaisimConversionsPtrs_[i]->raisimGenCoordGenVelToState(q, dq);
+          },
+          [&, i](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+            return leggedRobotRaisimConversionsPtrs_[i]->inputToRaisimGeneralizedForce(time, input, state, q, dq);
+          },
           nullptr, raisimRolloutSettings, nullptr)));
     } else {
       rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(leggedRobotInterfacePtrs_[i]->getRollout().clone()));

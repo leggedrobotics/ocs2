@@ -6,25 +6,23 @@
     <arg name="rviz"               default="true" />
     <arg name="multiplot"          default="false"/>
     <arg name="description_name"   default="legged_robot_description"/>
-    <arg name="description_file"   default="$(find anymal_c_simple_description)/urdf/anymal.urdf"/>
+    <arg name="description_file"   default="$(find ocs2_robotic_assets)/resources/anymal_c/urdf/anymal.urdf"/>
     <arg name="policy_file_path"   default="$(find ocs2_legged_robot_mpcnet)/policy/legged_robot.onnx"/>
     <arg name="raisim"             default="true"/>
     
     <group if="$(arg rviz)">
-      <include file="$(find ocs2_legged_robot)/launch/visualize.launch"/>
-    </group>
-
-    <include file="$(find anymal_c_simple_description)/launch/load.launch" pass_all_args="true">
+      <include file="$(find ocs2_legged_robot)/launch/visualize.launch">
         <arg name="description_name"   value="$(arg description_name)"/>
         <arg name="description_file"   value="$(arg description_file)"/>
-    </include>
+      </include>
+    </group>
       
     <group if="$(arg multiplot)">
       <include file="$(find ocs2_legged_robot)/launch/multiplot.launch"/>
     </group>
 
     <node pkg="ocs2_legged_robot_mpcnet" type="legged_robot_mpcnet_dummy" name="legged_robot_mpcnet_dummy"
-          output="screen" args="$(arg robot_name) $(arg config_name) $(arg target_command) $(arg description_name) $(arg policy_file_path) $(arg raisim)" launch-prefix=""/>
+          output="screen" args="$(arg robot_name) $(arg config_name) $(arg target_command) $(arg description_file) $(arg policy_file_path) $(arg raisim)" launch-prefix=""/>
 
     <node pkg="ocs2_legged_robot" type="legged_robot_target" name="legged_robot_target"
           output="screen" args="$(arg robot_name) $(arg target_command)" launch-prefix="gnome-terminal --"/>

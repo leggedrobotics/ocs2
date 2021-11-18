@@ -60,11 +60,11 @@ EndEffectorLinearConstraint::EndEffectorLinearConstraint(const EndEffectorLinear
 /******************************************************************************************************/
 void EndEffectorLinearConstraint::configure(Config&& config) {
   assert(config.b.rows() == numConstraints_);
-  assert(config.Ax.size() > 0 || config.Av.size());
-  assert(config.Ax.size() > 0 && config.Ax.rows() == numConstraints_);
-  assert(config.Ax.size() > 0 && config.Ax.cols() == 3);
-  assert(config.Av.size() > 0 && config.Av.rows() == numConstraints_);
-  assert(config.Av.size() > 0 && config.Av.cols() == 3);
+  assert(config.Ax.size() > 0 || config.Av.size() > 0);
+  assert((config.Ax.size() > 0 && config.Ax.rows() == numConstraints_) || config.Ax.size() == 0);
+  assert((config.Ax.size() > 0 && config.Ax.cols() == 3) || config.Ax.size() == 0);
+  assert((config.Av.size() > 0 && config.Av.rows() == numConstraints_) || config.Av.size() == 0);
+  assert((config.Av.size() > 0 && config.Av.cols() == 3) || config.Av.size() == 0);
   config_ = std::move(config);
 }
 

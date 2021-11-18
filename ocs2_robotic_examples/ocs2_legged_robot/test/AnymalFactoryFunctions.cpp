@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_legged_robot/common/ModelSettings.h>
 
 namespace {
-const std::string ROBOT_URDF_PATH = ros::package::getPath("anymal_c_simple_description") + "/urdf/" + "anymal.urdf";
+const std::string ROBOT_URDF_PATH = ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/" + "anymal.urdf";
 const std::string ROBOT_TASK_FILE_PATH = ros::package::getPath("ocs2_legged_robot") + "/config/mpc/" + "task.info";
 const std::string ROBOT_COMMAND_PATH = ros::package::getPath("ocs2_legged_robot") + "/config/command/" + "targetTrajectories.info";
 }  // unnamed namespace

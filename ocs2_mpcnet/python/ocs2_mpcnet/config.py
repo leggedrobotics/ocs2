@@ -4,4 +4,4 @@ import torch
 dtype = torch.float
 
 # device on which tensors will be allocated
-device = torch.device("cpu")
+device = torch.device("cuda")

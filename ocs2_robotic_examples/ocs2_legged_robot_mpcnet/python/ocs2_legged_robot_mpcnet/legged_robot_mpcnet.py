@@ -21,9 +21,9 @@ from ocs2_legged_robot_mpcnet import MpcnetInterface
 data_generation_time_step = 0.0025
 data_generation_duration = 4.0
 data_generation_data_decimation = 4
-data_generation_n_threads = 5
-data_generation_n_tasks = 10
-data_generation_n_samples = 1
+data_generation_n_threads = 12
+data_generation_n_tasks = 12
+data_generation_n_samples = 2
 data_generation_sampling_covariance = np.zeros((config.STATE_DIM, config.STATE_DIM), order='F')
 for i in range(0, 3):
     data_generation_sampling_covariance[i, i] = 0.05 ** 2  # normalized linear momentum
@@ -39,8 +39,8 @@ for i in range(12, 24):
 # settings for computing metrics by applying learned policy
 policy_evaluation_time_step = 0.0025
 policy_evaluation_duration = 4.0
-policy_evaluation_n_threads = 1
-policy_evaluation_n_tasks = 2
+policy_evaluation_n_threads = 3
+policy_evaluation_n_tasks = 3
 
 # rollout settings for data generation and policy evaluation
 raisim = True
@@ -61,7 +61,7 @@ experts_loss = ExpertsLoss()
 gating_loss = GatingLoss(torch.tensor(epsilon, device=config.device, dtype=config.dtype))
 
 # memory
-memory_capacity = 1000000
+memory_capacity = 500000
 memory = Memory(memory_capacity, config.TIME_DIM, config.STATE_DIM, config.INPUT_DIM, config.EXPERT_NUM)
 
 # policy
@@ -77,7 +77,7 @@ torch.onnx.export(model=policy, args=dummy_input, f=save_path + ".onnx")
 torch.save(obj=policy, f=save_path + ".pt")
 
 # optimizer
-batch_size = 2 ** 5
+batch_size = 2 ** 7
 learning_iterations = 100000
 learning_rate_default = 1e-3
 learning_rate_gating_net = learning_rate_default

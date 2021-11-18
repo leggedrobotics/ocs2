@@ -50,23 +50,19 @@ int main(int argc, char** argv) {
   std::vector<std::string> programArgs{};
   ::ros::removeROSArgs(argc, argv, programArgs);
   if (programArgs.size() < 5) {
-    throw std::runtime_error("No robot name, config folder, target command file, or description name specified. Aborting.");
+    throw std::runtime_error("No robot name, config folder, target command file, or description file specified. Aborting.");
   }
   const std::string robotName(programArgs[1]);
   const std::string configName(programArgs[2]);
   const std::string targetCommandFile(programArgs[3]);
-  const std::string descriptionName("/" + programArgs[4]);
+  const std::string descriptionFile(programArgs[4]);
 
   // initialize ros node
   ros::init(argc, argv, robotName + "_raisim_dummy");
   ros::NodeHandle nodeHandle;
 
   // legged robot interface
-  std::string urdfString;
-  if (!ros::param::get(descriptionName, urdfString)) {
-    std::cerr << "Param " << descriptionName << " not found; unable to generate urdf" << std::endl;
-  }
-  LeggedRobotInterface interface(configName, targetCommandFile, urdf::parseURDF(urdfString));
+  LeggedRobotInterface interface(configName, targetCommandFile, urdf::parseURDFFile(descriptionFile));
 
   // raisim rollout
   LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo());

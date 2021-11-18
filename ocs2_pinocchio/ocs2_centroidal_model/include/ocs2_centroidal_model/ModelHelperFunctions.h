@@ -103,15 +103,17 @@ std::array<Eigen::Matrix<SCALAR_T, 3, 3>, 3> getRotationMatrixZyxGradient(const 
 /**
  * Computes derivatives of centroidal momentum with respect to the base orientation (in ZYX-Euler angles)
  *
+ * @param [in] interface: pinocchio robot interface containing model + data
  * @param [in] info: centroidal model information
- * @param [in] eulerAngles: ZYX-Euler angles extracted from qPinocchio
- * @param [in] eulerAnglesDerivatives: derivatives of ZYX-Euler angles extracted from vPinocchio
+ * @param [in] q: pinocchio joint positions (generalized coordinates)
+ * @param [in] v: pinocchio joint velocities (derivatives of generalized coordinates)
  * @return Derivative of centroidal momentum w.r.t the ZYX-Euler Angles
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const CentroidalModelInfoTpl<SCALAR_T>& info,
-                                                               const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles,
-                                                               const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesDerivatives);
+Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioInterfaceTpl<SCALAR_T>& interface,
+                                                               const CentroidalModelInfoTpl<SCALAR_T>& info,
+                                                               const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& q,
+                                                               const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& v);
 
 /**
  * Returns the centroidal momentum matrix from the pinocchioInterface data

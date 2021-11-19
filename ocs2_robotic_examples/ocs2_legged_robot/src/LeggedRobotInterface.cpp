@@ -204,7 +204,9 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info, matrix_t& R) {
+matrix_t LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info) {
+  const size_t totalContactDim = 3 * info.numThreeDofContacts;
+
   vector_t initialState(centroidalModelInfo_.stateDim);
   loadData::loadEigenMatrix(taskFile, "initialState", initialState);
 
@@ -214,7 +216,6 @@ void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile
   pinocchio::computeJointJacobians(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  const size_t totalContactDim = 3 * info.numThreeDofContacts;
   matrix_t baseToFeetJacobians(totalContactDim, info.actuatedDofNum);
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     matrix_t jacobianWorldToContactPointInWorldFrame = matrix_t::Zero(6, info.generalizedCoordinatesNum);
@@ -225,9 +226,16 @@ void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile
         jacobianWorldToContactPointInWorldFrame.block(0, 6, 3, info.actuatedDofNum);
   }
 
-  R.block(totalContactDim, totalContactDim, info.actuatedDofNum, info.actuatedDofNum) =
-      (baseToFeetJacobians.transpose() * R.block(totalContactDim, totalContactDim, totalContactDim, totalContactDim) * baseToFeetJacobians)
-          .eval();
+  matrix_t R_taskspace(totalContactDim + totalContactDim, totalContactDim + totalContactDim);
+  loadData::loadEigenMatrix(taskFile, "R", R_taskspace);
+
+  matrix_t R = matrix_t::Zero(info.inputDim, info.inputDim);
+  // Contact Forces
+  R.topLeftCorner(totalContactDim, totalContactDim) = R_taskspace.topLeftCorner(totalContactDim, totalContactDim);
+  // Joint velocities
+  R.bottomRightCorner(info.actuatedDofNum, info.actuatedDofNum) =
+      baseToFeetJacobians.transpose() * R_taskspace.bottomRightCorner(totalContactDim, totalContactDim) * baseToFeetJacobians;
+  return R;
 }
 
 /******************************************************************************************************/
@@ -236,10 +244,8 @@ void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile
 std::unique_ptr<StateInputCost> LeggedRobotInterface::getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info) {
   matrix_t Q(info.stateDim, info.stateDim);
   loadData::loadEigenMatrix(taskFile, "Q", Q);
-  matrix_t R(info.inputDim, info.inputDim);
-  loadData::loadEigenMatrix(taskFile, "R", R);
 
-  initializeInputCostWeight(taskFile, info, R);
+  matrix_t R = initializeInputCostWeight(taskFile, info);
 
   if (display_) {
     std::cerr << "\n #### Base Tracking Cost Coefficients: ";

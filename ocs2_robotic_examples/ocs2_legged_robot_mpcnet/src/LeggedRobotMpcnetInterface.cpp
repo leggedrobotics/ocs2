@@ -46,7 +46,7 @@ LeggedRobotMpcnetInterface::LeggedRobotMpcnetInterface(size_t nDataGenerationThr
       RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout");
       raisimRolloutSettings.portNumber_ += i;
       leggedRobotRaisimConversionsPtrs_.push_back(std::unique_ptr<LeggedRobotRaisimConversions>(new LeggedRobotRaisimConversions(
-          leggedRobotInterfacePtrs_[i]->getPinocchioInterface(), leggedRobotInterfacePtrs_[i]->getCentroidalModelInfo(), false)));
+          leggedRobotInterfacePtrs_[i]->getPinocchioInterface(), leggedRobotInterfacePtrs_[i]->getCentroidalModelInfo())));
       leggedRobotRaisimConversionsPtrs_[i]->setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
       rolloutPtrs.push_back(std::unique_ptr<RolloutBase>(new RaisimRollout(
           ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",

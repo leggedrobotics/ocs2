@@ -123,7 +123,8 @@ void LeggedRobotInterface::setupOptimalConrolProblem(const std::string& taskFile
   // CentroidalModelInfo
   centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
       *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
-      centroidal_model::loadDefaultJointState(12, targetCommandFile), modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
+      centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, targetCommandFile),
+      modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
 
   // Swing trajectory planner
   std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(
@@ -213,18 +214,20 @@ void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile
   pinocchio::computeJointJacobians(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  matrix_t baseToFeetJacobians(3 * info.numThreeDofContacts, 12);
+  const size_t totalContactDim = 3 * info.numThreeDofContacts;
+  matrix_t baseToFeetJacobians(totalContactDim, info.actuatedDofNum);
   for (size_t i = 0; i < info.numThreeDofContacts; i++) {
     matrix_t jacobianWorldToContactPointInWorldFrame = matrix_t::Zero(6, info.generalizedCoordinatesNum);
     pinocchio::getFrameJacobian(model, data, model.getBodyId(modelSettings_.contactNames3DoF[i]), pinocchio::LOCAL_WORLD_ALIGNED,
                                 jacobianWorldToContactPointInWorldFrame);
 
-    baseToFeetJacobians.block(3 * i, 0, 3, 12) = (jacobianWorldToContactPointInWorldFrame.topRows<3>()).block(0, 6, 3, 12);
+    baseToFeetJacobians.block(3 * i, 0, 3, info.actuatedDofNum) =
+        jacobianWorldToContactPointInWorldFrame.block(0, 6, 3, info.actuatedDofNum);
   }
 
-  const size_t totalContactDim = 3 * info.numThreeDofContacts;
-  R.block(totalContactDim, totalContactDim, 12, 12) =
-      (baseToFeetJacobians.transpose() * R.block(totalContactDim, totalContactDim, 12, 12) * baseToFeetJacobians).eval();
+  R.block(totalContactDim, totalContactDim, totalContactDim, totalContactDim) =
+      (baseToFeetJacobians.transpose() * R.block(totalContactDim, totalContactDim, totalContactDim, totalContactDim) * baseToFeetJacobians)
+          .eval();
 }
 
 /******************************************************************************************************/

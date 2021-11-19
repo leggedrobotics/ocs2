@@ -225,7 +225,7 @@ void LeggedRobotInterface::initializeInputCostWeight(const std::string& taskFile
         jacobianWorldToContactPointInWorldFrame.block(0, 6, 3, info.actuatedDofNum);
   }
 
-  R.block(totalContactDim, totalContactDim, totalContactDim, totalContactDim) =
+  R.block(totalContactDim, totalContactDim, info.actuatedDofNum, info.actuatedDofNum) =
       (baseToFeetJacobians.transpose() * R.block(totalContactDim, totalContactDim, totalContactDim, totalContactDim) * baseToFeetJacobians)
           .eval();
 }

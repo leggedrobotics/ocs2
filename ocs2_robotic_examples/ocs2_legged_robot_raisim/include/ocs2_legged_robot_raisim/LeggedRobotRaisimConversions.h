@@ -46,9 +46,9 @@ class LeggedRobotRaisimConversions {
    * Constructor.
    * @param [in] pinocchioInterface : The predefined pinocchio interface for the robot.
    * @param [in] centroidalModelInfo : The centroidal model information.
-   * @param [in] check : Whether to check if the variables coming from or going to RaiSim are reasonable (by default true).
+   * @param [in] check : Whether to check if the variables coming from or going to RaiSim respect the actuator limits (by default false).
    */
-  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, bool check = true)
+  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, bool check = false)
       : check_(check), centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo) {}
 
   /**

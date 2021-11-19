@@ -235,9 +235,9 @@ R
 
 frictionConeSoftConstraint
 {
-  frictionCoefficient    0.7
+  frictionCoefficient    0.5
   
   ; relaxed log barrier parameters
-  mu                     1e-2
-  delta                  1e-3
+  mu                     0.1
+  delta                  5.0
 }

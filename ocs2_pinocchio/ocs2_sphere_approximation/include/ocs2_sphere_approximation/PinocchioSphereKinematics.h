@@ -46,11 +46,13 @@ namespace ocs2 {
  * See in the method documentation which pinocchio functions are required to update pinocchio::Data.
  *
  * Example:
+ * \code{.cpp}
  *   PinocchioSphereKinematics kinematics(pinocchioSphereInterface, mapping);
  *   pinocchio::forwardKinematics(pinocchioInterface.getModel(), pinocchioInterface.getData(), q);
  *   pinocchio::updateFramePlacements(pinocchioInterface.getModel(), pinocchioInterface.getData());
  *   kinematics.setPinocchioInterface(pinocchioInterface);
  *   const auto pos = kinematics.getPosition(x);
+ * \endcode
  */
 class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
  public:

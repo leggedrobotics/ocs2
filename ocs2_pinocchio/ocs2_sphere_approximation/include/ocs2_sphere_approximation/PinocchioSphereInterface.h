@@ -44,6 +44,14 @@ struct GeometryModel;
 
 namespace ocs2 {
 
+/**
+ * Interface for approximating collision primitives with collision spheres.
+ *
+ * This class approximates the collision primitives: box, cylinder, and sphere, with collision spheres through SphereApproximation. It
+ * parses the specified collision links from the robot description and updates the positions of the collision spheres using the pinocchio
+ * library.
+ */
+
 class PinocchioSphereInterface final {
  public:
   using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
@@ -51,8 +59,9 @@ class PinocchioSphereInterface final {
   /** Constructor
    * @param [in] pinocchioInterface : pinocchio interface
    * @param [in] collisionLinks : vector of the names of links to be approximated with spheres
-   * @param [in] maxExcess : vector of the maximum allowed excess for the sphere approximation of each link
-   * @param [in] shrinkRatio: ratio of shrinking maxExcess when recursive approximation of the cylinder base is necessary
+   * @param [in] maxExcesses : vector of maximum allowed distances between the surfaces of the collision primitives and collision spheres
+   * @param [in] shrinkRatio: shrinking ratio for maxExcess to recursively approximate the circular base of the cylinder when more than one
+   * collision sphere is required along the radial direction
    */
   PinocchioSphereInterface(const PinocchioInterface& pinocchioInterface, std::vector<std::string> collisionLinks,
                            const std::vector<scalar_t>& maxExcesses, const scalar_t shrinkRatio);

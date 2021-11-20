@@ -85,7 +85,7 @@ class PinocchioSphereInterface final {
   size_array_t getGeomObjIds() const { return geomObjIds_; };
 
   /** Get the array of the radius of each sphere */
-  scalar_array_t getSphereRadii() const { return sphereRadii_; };
+  const scalar_array_t& getSphereRadii() const { return sphereRadii_; };
 
   /** Get the array of the radius of each sphere */
   scalar_array_t& getSphereRadii() { return sphereRadii_; };

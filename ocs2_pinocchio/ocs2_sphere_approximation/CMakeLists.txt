@@ -8,12 +8,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
-
-  # visualization deps
-  roscpp
-  std_msgs
-  geometry_msgs
-  visualization_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -27,8 +21,6 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
-pkg_check_modules(hpp-fcl REQUIRED hpp-fcl)
-# requires liboctomap-dev and libassimp-dev
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -60,7 +52,6 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
-  ${hpp-fcl_INCLUDE_DIRS}
 )
 
 link_directories(

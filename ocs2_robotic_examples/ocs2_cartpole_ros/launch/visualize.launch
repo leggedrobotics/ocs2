@@ -1,7 +1,7 @@
 <launch>
-    <arg name="rviz"    default="true" />
+    <arg name="rviz"       default="true" />
     <arg name="rvizconfig" default="$(find ocs2_cartpole_ros)/rviz/cartpole.rviz" />
-    <arg name="model" default="$(find ocs2_cartpole)/urdf/cartpole.urdf"/>
+    <arg name="model"      default="$(find ocs2_robotic_assets)/resources/cartpole/urdf/cartpole.urdf"/>
     
     <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
     

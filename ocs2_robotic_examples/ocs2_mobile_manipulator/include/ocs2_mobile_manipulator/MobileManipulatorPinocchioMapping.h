@@ -29,46 +29,75 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_mobile_manipulator/definitions.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
+
+#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
 template <typename SCALAR>
-class MobileManipulatorPinocchioMapping final : public PinocchioStateInputMapping<SCALAR> {
+class MobileManipulatorPinocchioMappingTpl;
+
+using MobileManipulatorPinocchioMapping = MobileManipulatorPinocchioMappingTpl<scalar_t>;
+using MobileManipulatorPinocchioMappingCppAd = MobileManipulatorPinocchioMappingTpl<ad_scalar_t>;
+
+/**
+ * Pinocchio state and input mapping.
+ */
+template <typename SCALAR>
+class MobileManipulatorPinocchioMappingTpl final : public PinocchioStateInputMapping<SCALAR> {
  public:
   using Base = PinocchioStateInputMapping<SCALAR>;
   using typename Base::matrix_t;
   using typename Base::vector_t;
 
-  MobileManipulatorPinocchioMapping() = default;
-  ~MobileManipulatorPinocchioMapping() override = default;
-  MobileManipulatorPinocchioMapping<SCALAR>* clone() const override { return new MobileManipulatorPinocchioMapping<SCALAR>(*this); }
+  /**
+   * Constructor
+   * @param [in] info : mobile manipulator model information.
+   */
+  explicit MobileManipulatorPinocchioMappingTpl(ManipulatorModelInfo info);
 
-  vector_t getPinocchioJointPosition(const vector_t& state) const override { return state; }
+  ~MobileManipulatorPinocchioMappingTpl() override = default;
+  MobileManipulatorPinocchioMappingTpl<SCALAR>* clone() const override;
 
-  vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override {
-    vector_t dxdt(STATE_DIM);
-    const auto theta = state(2);
-    const auto v = input(0);  // forward velocity in base frame
-    dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(6);
-    return dxdt;
-  }
+  /**
+   * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state.
+   *
+   * @param [in] state: system state vector
+   * @return pinocchio joint positions, which are also the robot's generalized positions with a ZYX-Euler angle
+   * parameterization of the base orientation
+   */
+  vector_t getPinocchioJointPosition(const vector_t& state) const override;
 
-  std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override {
-    matrix_t dfdu(Jv.rows(), INPUT_DIM);
-    Eigen::Matrix<SCALAR, 3, 2> dvdu_base;
-    const SCALAR theta = state(2);
-    // clang-format off
-    dvdu_base << cos(theta), 0,
-                 sin(theta), 0,
-                 0, 1.0;
-    // clang-format on
-    dfdu.template leftCols<2>() = Jv.template leftCols<3>() * dvdu_base;
-    dfdu.template rightCols<6>() = Jv.template rightCols<6>();
-    return {Jq, dfdu};
-  }
+  /**
+   * Computes the vector of generalized velocities (vPinocchio) used by pinocchio functions from the robot state and input.
+   *
+   * @param [in] state: system state vector
+   * @param [in] input: system input vector
+   * @return pinocchio joint velocities, which are also the time derivatives of the pinocchio joint positions
+   */
+  vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override;
+
+  /**
+   * Maps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu.
+   *
+   * @param [in] state: system state vector
+   * @param [in] Jq: jacobian with respect to pinocchio joint positions
+   * @param [in] Jv: jacobian with respect to pinocchio joint velocities
+   * @return a pair {dfdx, dfdu} containing the jacobians with respect to the system state and input
+   */
+  std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
+
+  /**
+   * Returns the mobile manipulator model info.
+   */
+  const ManipulatorModelInfo& getManipulatorModelInfo() const { return modelInfo_; }
+
+ private:
+  MobileManipulatorPinocchioMappingTpl(const MobileManipulatorPinocchioMappingTpl& rhs) = default;
+
+  const ManipulatorModelInfo modelInfo_;
 };
 
 }  // namespace mobile_manipulator

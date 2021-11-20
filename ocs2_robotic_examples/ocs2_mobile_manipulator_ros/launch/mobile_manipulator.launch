@@ -1,20 +1,31 @@
 <launch>
-    <arg name="rviz"       default="true" />
-    <arg name="task_name"  default="mpc"/>
-    <arg name="debug"      default="false" />
+      <!-- Enable rviz visualization -->
+      <arg name="rviz" default="true" />
+      <!-- Set nodes on debug mode -->
+      <arg name="debug" default="false" />
 
-    <group if="$(arg rviz)">
-      <include file="$(find ocs2_mobile_manipulator_ros)/launch/visualize.launch"/>
-    </group>
+      <!-- The URDF model of the robot -->
+      <arg name="urdfFile" default="$(find ocs2_robotic_assets)/resources/mobile_manipulator/urdf/mobile_manipulator.urdf" />
+      <!-- The task file for the mpc. -->
+      <arg name="taskFile" default="$(find ocs2_mobile_manipulator)/config/mpc/task.info" />
+      <!-- The library folder to generate CppAD codegen into -->
+      <arg name="libFolder" default="$(find ocs2_mobile_manipulator)/auto_generated" />
 
-    <node if="$(arg debug)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_mpc_node" name="mobile_manipulator_mpc_node"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal -- gdb -ex run --args"/>
-    <node unless="$(arg debug)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_mpc_node" name="mobile_manipulator_mpc_node"
-          output="screen" args="$(arg task_name)" launch-prefix=""/>
+      <!-- make the files into global parameters -->
+      <param name="urdfFile" value="$(arg urdfFile)" />
+      <param name="taskFile" value="$(arg taskFile)" />
+      <param name="libFolder" value="$(arg libFolder)" />
 
-    <node pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_dummy_mrt_node" name="mobile_manipulator_dummy_mrt_node"
-          output="screen" args="$(arg task_name)" launch-prefix="gnome-terminal --"/>
+      <group if="$(arg rviz)">
+            <include file="$(find ocs2_mobile_manipulator_ros)/launch/visualize.launch">
+                  <arg name="urdf_file" value="$(arg urdfFile)" />
+            </include>
+      </group>
 
-    <node if="$(arg rviz)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_target" name="mobile_manipulator_target"
-          output="screen" args="$(arg task_name)"/>
+      <node if="$(arg debug)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_mpc_node" name="mobile_manipulator_mpc_node" output="screen" launch-prefix="gnome-terminal -- gdb -ex run --args" />
+      <node unless="$(arg debug)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_mpc_node" name="mobile_manipulator_mpc_node" output="screen" launch-prefix="" />
+
+      <node pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_dummy_mrt_node" name="mobile_manipulator_dummy_mrt_node" output="screen" launch-prefix="gnome-terminal --" />
+
+      <node if="$(arg rviz)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_target" name="mobile_manipulator_target" output="screen" />
 </launch>

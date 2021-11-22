@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 
-#include <ocs2_mobile_manipulator/definitions.h>
+#include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
 namespace ocs2 {
@@ -59,7 +59,7 @@ class MobileManipulatorInterface final : public RobotInterface {
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    * @param [in] urdfFile: The absolute path to the URDF file for the robot.
    */
-  explicit MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
+  MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
 
   const vector_t& getInitialState() { return initialState_; }
 
@@ -77,8 +77,7 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
-  /** MobileManipulator PinocchioInterface factory */
-  static PinocchioInterface buildPinocchioInterface(const std::string& urdfFile);
+  const ManipulatorModelInfo& getManipulatorModelInfo() const { return manipulatorModelInfo_; }
 
  private:
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
@@ -100,8 +99,9 @@ class MobileManipulatorInterface final : public RobotInterface {
   std::unique_ptr<Initializer> initializerPtr_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  ManipulatorModelInfo manipulatorModelInfo_;
 
-  vector_t initialState_{STATE_DIM};
+  vector_t initialState_;
 };
 
 }  // namespace mobile_manipulator

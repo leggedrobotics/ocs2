@@ -1,8 +1,12 @@
 <?xml version="1.0" ?>
 
 <launch>
-    <arg name="rviz"    default="true" />
-    <arg name="rvizconfig" default="$(find ocs2_legged_robot)/rviz/legged_robot.rviz" />
+    <arg name="rviz"               default="true"/>
+    <arg name="rvizconfig"         default="$(find ocs2_legged_robot)/rviz/legged_robot.rviz"/>
+    <arg name="description_name"   default="legged_robot_description"/>
+    <arg name="description_file"   default="$(find ocs2_robotic_assets)/resources/anymal_c/urdf/anymal.urdf"/>
+
+    <param name="$(arg description_name)" textfile="$(arg description_file)"/>
 
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rvizconfig)" output="screen" if="$(arg rviz)"/>
 </launch>

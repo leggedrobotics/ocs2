@@ -40,38 +40,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
+#include <ocs2_self_collision/loadStdVectorOfPair.h>
 
+#include <ocs2_mobile_manipulator/AccessHelperFunctions.h>
+#include <ocs2_mobile_manipulator/FactoryFunctions.h>
+#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-#include <ocs2_mobile_manipulator/definitions.h>
-
 #include <ocs2_mobile_manipulator_ros/MobileManipulatorDummyVisualization.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-Eigen::VectorXd getArmJointPositions(Eigen::VectorXd state) {
-  return state.tail(6);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-Eigen::Vector3d getBasePosition(Eigen::VectorXd state) {
-  Eigen::Vector3d position;
-  position << state(0), state(1), 0.0;
-  return position;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-Eigen::Quaterniond getBaseOrientation(Eigen::VectorXd state) {
-  return Eigen::Quaterniond(Eigen::AngleAxisd(state(2), Eigen::Vector3d::UnitZ()));
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -113,13 +93,30 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
 
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
-
-  const std::string urdfPath = ros::package::getPath("ocs2_mobile_manipulator") + "/urdf/mobile_manipulator.urdf";
-  PinocchioInterface pinocchioInterface = MobileManipulatorInterface::buildPinocchioInterface(urdfPath);
-  // TODO(perry) get the collision pairs from the task.info file to match the current mpc setup
-  PinocchioGeometryInterface geomInterface(pinocchioInterface, {{1, 4}, {1, 6}});
-
-  geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
+  // Get ROS parameter
+  std::string urdfFile, taskFile;
+  nodeHandle.getParam("/urdfFile", urdfFile);
+  nodeHandle.getParam("/taskFile", taskFile);
+  // read manipulator type
+  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+  // read the joints to make fixed
+  std::vector<std::string> removeJointNames;
+  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+  // read if self-collision checking active
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  bool activateSelfCollision = true;
+  loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
+  // create pinocchio interface
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames));
+  // activate markers for self-collision visualization
+  if (activateSelfCollision) {
+    std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+    loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", collisionObjectPairs, true);
+    PinocchioGeometryInterface geomInterface(pinocchioInterface, collisionObjectPairs);
+    // set geometry visualization markers
+    geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
+  }
 }
 
 /******************************************************************************************************/
@@ -132,7 +129,9 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
   publishObservation(timeStamp, observation);
   publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
   publishOptimizedTrajectory(timeStamp, policy);
-  geometryVisualization_->publishDistances(observation.state);
+  if (geometryVisualization_ != nullptr) {
+    geometryVisualization_->publishDistances(observation.state);
+  }
 }
 
 /******************************************************************************************************/
@@ -140,21 +139,23 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) {
   // publish world -> base transform
-  const auto position = getBasePosition(observation.state);
-  const auto orientation = getBaseOrientation(observation.state);
+  const auto r_world_base = getBasePosition(observation.state, modelInfo_);
+  const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(observation.state, modelInfo_);
 
   geometry_msgs::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
-  base_tf.child_frame_id = "base";
-  base_tf.transform.translation = ros_msg_helpers::getVectorMsg(position);
-  base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(orientation);
+  base_tf.child_frame_id = modelInfo_.baseFrame;
+  base_tf.transform.translation = ros_msg_helpers::getVectorMsg(r_world_base);
+  base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(q_world_base);
   tfBroadcaster_.sendTransform(base_tf);
 
   // publish joints transforms
-  const auto j_arm = getArmJointPositions(observation.state);
-  std::map<std::string, scalar_t> jointPositions{{"SH_ROT", j_arm(0)}, {"SH_FLE", j_arm(1)}, {"EL_FLE", j_arm(2)},
-                                                 {"EL_ROT", j_arm(3)}, {"WR_FLE", j_arm(4)}, {"WR_ROT", j_arm(5)}};
+  const auto j_arm = getArmJointAngles(observation.state, modelInfo_);
+  std::map<std::string, scalar_t> jointPositions;
+  for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) {
+    jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
+  }
   robotStatePublisherPtr_->publishTransforms(jointPositions, timeStamp);
 }
 
@@ -202,7 +203,7 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) {
     pinocchio::forwardKinematics(model, data, state);
     pinocchio::updateFramePlacements(model, data);
-    const auto eeIndex = model.getBodyId("WRIST_2");
+    const auto eeIndex = model.getBodyId(modelInfo_.eeFrame);
     const vector_t eePosition = data.oMf[eeIndex].translation();
     endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
   });
@@ -212,9 +213,14 @@ void MobileManipulatorDummyVisualization::publishOptimizedTrajectory(const ros::
 
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) {
+    // extract from observation
+    const auto r_world_base = getBasePosition(state, modelInfo_);
+    const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, modelInfo_);
+
+    // convert to ros message
     geometry_msgs::Pose pose;
-    pose.position = ros_msg_helpers::getPointMsg(getBasePosition(state));
-    pose.orientation = ros_msg_helpers::getOrientationMsg(getBaseOrientation(state));
+    pose.position = ros_msg_helpers::getPointMsg(r_world_base);
+    pose.orientation = ros_msg_helpers::getOrientationMsg(q_world_base);
     baseTrajectory.push_back(pose.position);
     poseArray.poses.push_back(std::move(pose));
   });

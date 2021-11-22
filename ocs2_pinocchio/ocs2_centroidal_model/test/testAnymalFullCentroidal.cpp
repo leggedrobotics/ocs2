@@ -29,20 +29,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
+#include <pinocchio/multibody/data.hpp>
+#include <pinocchio/multibody/model.hpp>
+
 #include "ocs2_centroidal_model/FactoryFunctions.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamicsAD.h"
-#include "ocs2_centroidal_model/example/anymal/definitions.h"
 
-#include <pinocchio/multibody/data.hpp>
-#include <pinocchio/multibody/model.hpp>
+#include "ocs2_centroidal_model/test/definitions.h"
 
 using namespace ocs2;
 using namespace centroidal_model;
 
 TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdf) {
-  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfPath);
+  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfFile);
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t numJoints = model.nq - 6;
@@ -61,7 +62,7 @@ TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdf) {
 }
 
 TEST(AnymalFullCentroidalModelTestInit, InitModelFromUrdfAD) {
-  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfPath);
+  PinocchioInterface pinocchioInterface = createPinocchioInterface(anymalUrdfFile);
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const size_t nq = model.nq;
@@ -84,7 +85,7 @@ class TestAnymalFullCentroidalModel : public testing::Test {
  public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
   TestAnymalFullCentroidalModel() {
-    pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfPath)));
+    pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfFile)));
 
     size_t nq = pinocchioInterfacePtr->getModel().nq;
     const size_t numJoints = nq - 6;
@@ -96,8 +97,8 @@ class TestAnymalFullCentroidalModel : public testing::Test {
     anymalKinoCentroidalDynamicsPtr = std::make_shared<PinocchioCentroidalDynamics>(info);
     anymalKinoCentroidalDynamicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
-    anymalKinoCentroidalDynamicsAdPtr = std::make_shared<PinocchioCentroidalDynamicsAD>(
-        *pinocchioInterfacePtr, info, "AnymalFullCentroidalTestAD", anymalCppAdModelPath, true, false);
+    anymalKinoCentroidalDynamicsAdPtr =
+        std::make_shared<PinocchioCentroidalDynamicsAD>(*pinocchioInterfacePtr, info, "AnymalFullCentroidalTestAD");
     srand(0);
     time = 0.0;
     state = ocs2::vector_t::Random(anymal::STATE_DIM);
@@ -130,11 +131,7 @@ inline void compareApproximation(const ocs2::VectorFunctionLinearApproximation& 
   }
 
   EXPECT_TRUE(a.f.isApprox(b.f));
-  // The gradients of the base pose time derivatives are not correct due to a wrong dh_dq_ in pinocchio
-  // EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
-  EXPECT_TRUE(a.dfdx.topRows<6>().isApprox(b.dfdx.topRows<6>()));
-  EXPECT_TRUE(a.dfdx.bottomRows<12>().isApprox(b.dfdx.bottomRows<12>()));
-  EXPECT_TRUE(a.dfdx.leftCols<9>().isApprox(b.dfdx.leftCols<9>()));
+  EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
   EXPECT_TRUE(a.dfdu.isApprox(b.dfdu));
 }
 

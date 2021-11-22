@@ -101,8 +101,7 @@ find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   message(STATUS "Run clang tooling for target ocs2_ballbot")
   add_clang_tooling(
-    TARGETS
-        ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME}
     SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
@@ -124,7 +123,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-install(DIRECTORY urdf config
+install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -140,8 +139,8 @@ install(TARGETS BallbotPyBindings
 catkin_add_gtest(test_BallbotPyBindings
   test/testBallbotPyBindings.cpp
 )
-target_include_directories(test_BallbotPyBindings 
-  PRIVATE ${PROJECT_BINARY_DIR}/include
+target_include_directories(test_BallbotPyBindings PRIVATE
+  ${PROJECT_BINARY_DIR}/include
 )
 target_link_libraries(test_BallbotPyBindings
   ${PROJECT_NAME}

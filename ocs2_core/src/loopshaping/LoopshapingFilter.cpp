@@ -54,6 +54,11 @@ Filter::Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D)
       numOutputs_(C_.rows()) {
   checkSize();
 
+  // precompute row + column scaling
+  diagCC_ = c_ * matrix_t::Ones(c_.cols(), c_.rows()) * c_;
+  diagDC_ = d_ * matrix_t::Ones(d_.cols(), c_.rows()) * c_;
+  diagDD_ = d_ * matrix_t::Ones(d_.cols(), d_.rows()) * d_;
+
   // Prepare inv(A)
   if (A_.size() > 0) {
     Aqr_.compute(A_);

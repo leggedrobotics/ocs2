@@ -47,16 +47,21 @@ class Filter {
   size_t getNumInputs() const { return numInputs_; };
   size_t getNumOutputs() const { return numOutputs_; };
 
-  const matrix_t& getA() const { return A_; };
-  const matrix_t& getB() const { return B_; };
-  const matrix_t& getC() const { return C_; };
-  const matrix_t& getD() const { return D_; };
+  const matrix_t& getA() const { return A_; }
+  const matrix_t& getB() const { return B_; }
+  const matrix_t& getC() const { return C_; }
+  const matrix_t& getD() const { return D_; }
 
   /// Get the diagonal of the filter matrices
-  const diag_matrix_t& getAdiag() const { return a_; };
-  const diag_matrix_t& getBdiag() const { return b_; };
-  const diag_matrix_t& getCdiag() const { return c_; };
-  const diag_matrix_t& getDdiag() const { return d_; };
+  const diag_matrix_t& getAdiag() const { return a_; }
+  const diag_matrix_t& getBdiag() const { return b_; }
+  const diag_matrix_t& getCdiag() const { return c_; }
+  const diag_matrix_t& getDdiag() const { return d_; }
+
+  /// Get the equivalent element-wise scaling for pre- and post multiplying with diagonal matrices.
+  const matrix_t& getScalingCdiagCdiag() const { return diagCC_; }
+  const matrix_t& getScalingDdiagCdiag() const { return diagDC_; }
+  const matrix_t& getScalingDdiagDdiag() const { return diagDD_; }
 
   void print() const;
 
@@ -68,6 +73,7 @@ class Filter {
 
   matrix_t A_, B_, C_, D_;
   diag_matrix_t a_, b_, c_, d_;
+  matrix_t diagCC_, diagDC_, diagDD_;
   size_t numStates_ = 0;
   size_t numInputs_ = 0;
   size_t numOutputs_ = 0;

@@ -9,6 +9,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   cmake_modules
   ocs2_core
   ocs2_mpc
+  ocs2_robotic_assets
   ocs2_robotic_tools
   ocs2_ddp
   ocs2_pinocchio_interface
@@ -18,7 +19,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   urdf
   kdl_parser
   robot_state_publisher
-  anymal_c_simple_description
 )
 
 find_package(catkin REQUIRED COMPONENTS

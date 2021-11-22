@@ -120,43 +120,48 @@ VectorFunctionQuadraticApproximation LoopshapingConstraintEliminatePattern::getQ
   h.dfdxx.resize(numConstraints);
   h.dfduu.resize(numConstraints);
   h.dfdux.resize(numConstraints);
-  matrix_t dfduu_C;  // temporary variable
-  for (size_t i = 0; i < numConstraints; i++) {
-    // dfdxx
-    h.dfdxx[i].resize(stateDim, stateDim);
-    h.dfdxx[i].topLeftCorner(sysStateDim, sysStateDim) = h_system.dfdxx[i];
-    if (isDiagonal) {
-      h.dfdxx[i].topRightCorner(sysStateDim, filtStateDim).noalias() = h_system.dfdux[i].transpose() * s_filter.getCdiag();
-      dfduu_C.noalias() = h_system.dfduu[i] * s_filter.getCdiag();
-      h.dfdxx[i].bottomRightCorner(filtStateDim, filtStateDim).noalias() = s_filter.getCdiag() * dfduu_C;
-    } else {
-      h.dfdxx[i].topRightCorner(sysStateDim, filtStateDim).noalias() = h_system.dfdux[i].transpose() * s_filter.getC();
+
+  if (isDiagonal) {
+    for (size_t i = 0; i < numConstraints; i++) {
+      // dfdxx
+      h.dfdxx[i].resize(stateDim, stateDim);
+      h.dfdxx[i].topLeftCorner(sysStateDim, sysStateDim) = h_system.dfdxx[i];
+      h.dfdxx[i].bottomLeftCorner(filtStateDim, sysStateDim).noalias() = s_filter.getCdiag() * h_system.dfdux[i];
+      h.dfdxx[i].topRightCorner(sysStateDim, filtStateDim) = h.dfdxx[i].bottomLeftCorner(filtStateDim, sysStateDim).transpose();
+      h.dfdxx[i].bottomRightCorner(filtStateDim, filtStateDim) = s_filter.getScalingCdiagCdiag().cwiseProduct(h_system.dfduu[i]);
+
+      // dfduu
+      h.dfduu[i] = s_filter.getScalingDdiagDdiag().cwiseProduct(h_system.dfduu[i]);
+
+      // dfdux
+      h.dfdux[i].resize(inputDim, stateDim);
+      h.dfdux[i].leftCols(sysStateDim).noalias() = s_filter.getDdiag() * h_system.dfdux[i];
+      h.dfdux[i].rightCols(filtStateDim) = s_filter.getScalingDdiagCdiag().cwiseProduct(h_system.dfduu[i]);
+    }
+
+    return h;
+  } else {
+    matrix_t dfduu_C;  // temporary variable
+    for (size_t i = 0; i < numConstraints; i++) {
+      // dfdxx
+      h.dfdxx[i].resize(stateDim, stateDim);
+      h.dfdxx[i].topLeftCorner(sysStateDim, sysStateDim) = h_system.dfdxx[i];
+      h.dfdxx[i].bottomLeftCorner(filtStateDim, sysStateDim) = s_filter.getC().transpose() * h_system.dfdux[i];
+      h.dfdxx[i].topRightCorner(sysStateDim, filtStateDim).noalias() = h.dfdxx[i].bottomLeftCorner(filtStateDim, sysStateDim).transpose();
       dfduu_C.noalias() = h_system.dfduu[i] * s_filter.getC();
       h.dfdxx[i].bottomRightCorner(filtStateDim, filtStateDim).noalias() = s_filter.getC().transpose() * dfduu_C;
-    }
-    if (filtStateDim > 0) {
-      h.dfdxx[i].bottomLeftCorner(filtStateDim, sysStateDim) = h.dfdxx[i].topRightCorner(sysStateDim, filtStateDim).transpose();
-    }
 
-    // dfduu
-    if (isDiagonal) {
-      h.dfduu[i].noalias() = s_filter.getDdiag() * h_system.dfduu[i] * s_filter.getDdiag();
-    } else {
+      // dfduu
       h.dfduu[i].noalias() = s_filter.getD().transpose() * h_system.dfduu[i] * s_filter.getD();
-    }
 
-    // dfdux
-    h.dfdux[i].resize(inputDim, stateDim);
-    if (isDiagonal) {
-      h.dfdux[i].leftCols(sysStateDim).noalias() = s_filter.getDdiag() * h_system.dfdux[i];
-      h.dfdux[i].rightCols(filtStateDim).noalias() = s_filter.getDdiag() * dfduu_C;
-    } else {
+      // dfdux
+      h.dfdux[i].resize(inputDim, stateDim);
       h.dfdux[i].leftCols(sysStateDim).noalias() = s_filter.getD().transpose() * h_system.dfdux[i];
       h.dfdux[i].rightCols(filtStateDim).noalias() = s_filter.getD().transpose() * dfduu_C;
     }
-  }
 
-  return h;
+    return h;
+  }
 }
 
 }  // namespace ocs2

@@ -116,30 +116,77 @@ std::array<Eigen::Matrix<SCALAR_T, 3, 3>, 3> getRotationMatrixZyxGradient(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const CentroidalModelInfoTpl<SCALAR_T>& info,
-                                                               const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles,
-                                                               const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesDerivatives) {
-  const auto& T = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAngles);
-  const auto& R = getRotationMatrixFromZyxEulerAngles(eulerAngles);
-  const Eigen::Matrix<SCALAR_T, 3, 1> r = R * info.comToBasePositionNominal;
-  const auto& S = skewSymmetricMatrix(r);
-  Eigen::Matrix<SCALAR_T, 6, 3> dhdq = Eigen::Matrix<SCALAR_T, 6, 3>::Zero();
-  const auto& dT = getMappingZyxGradient(eulerAngles);
-  const auto& dR = getRotationMatrixZyxGradient(eulerAngles);
-  std::array<Eigen::Matrix<SCALAR_T, 3, 3>, 3> dS;
-  Eigen::Matrix<SCALAR_T, 3, 1> dr;
+Eigen::Matrix<SCALAR_T, 6, 3> getCentroidalMomentumZyxGradient(const PinocchioInterfaceTpl<SCALAR_T>& interface,
+                                                               const CentroidalModelInfoTpl<SCALAR_T>& info,
+                                                               const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& q,
+                                                               const Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>& v) {
+  using matrix_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, Eigen::Dynamic>;
+  using vector3_t = Eigen::Matrix<SCALAR_T, 3, 1>;
+  using matrix3_t = Eigen::Matrix<SCALAR_T, 3, 3>;
+
+  const auto& data = interface.getData();
+  const auto m = info.robotMass;
+  const vector3_t eulerAngles = q.template segment<3>(3);
+  const vector3_t eulerAnglesDerivatives = v.template segment<3>(3);
+  const auto T = getMappingFromEulerAnglesZyxDerivativeToGlobalAngularVelocity(eulerAngles);
+  const auto R = getRotationMatrixFromZyxEulerAngles(eulerAngles);
+  matrix3_t Ibaseframe, Iworldframe;
+  vector3_t rbaseframe, rworldframe;
+
+  switch (info.centroidalModelType) {
+    case CentroidalModelType::FullCentroidalDynamics: {
+      Iworldframe = data.Ig.inertia().matrix();
+      Ibaseframe.noalias() = R.transpose() * (Iworldframe * R);
+      rworldframe = q.template head<3>() - data.com[0];
+      rbaseframe.noalias() = R.transpose() * rworldframe;
+      break;
+    }
+    case CentroidalModelType::SingleRigidBodyDynamics: {
+      Ibaseframe = info.centroidalInertiaNominal;
+      Iworldframe.noalias() = R * (Ibaseframe * R.transpose());
+      rbaseframe = info.comToBasePositionNominal;
+      rworldframe.noalias() = R * rbaseframe;
+      break;
+    }
+    default: {
+      throw std::runtime_error("The chosen centroidal model type is not supported.");
+    }
+  }
+
+  const auto S = skewSymmetricMatrix(rworldframe);
+  const auto dT = getMappingZyxGradient(eulerAngles);
+  const auto dR = getRotationMatrixZyxGradient(eulerAngles);
+
+  std::array<matrix3_t, 3> dS;
   for (size_t i = 0; i < 3; i++) {
-    dr.noalias() = dR[i] * info.comToBasePositionNominal;
+    const vector3_t dr = dR[i] * rbaseframe;
     dS[i] = skewSymmetricMatrix(dr);
   }
 
-  const auto& m = info.robotMass;
-  const auto& I = info.centroidalInertiaNominal;
-  const auto& Rtranspose = R.transpose();
+  matrix_t dhdq = matrix_t::Zero(6, 3);
   for (size_t i = 0; i < 3; i++) {
-    dhdq.template block<3, 1>(0, i).noalias() = m * (dS[i] * T + S * dT[i]) * eulerAnglesDerivatives;
-    dhdq.template block<3, 1>(3, i).noalias() =
-        (dR[i] * I * Rtranspose * T + R * I * dR[i].transpose() * T + R * I * Rtranspose * dT[i]) * eulerAnglesDerivatives;
+    const vector3_t T_eulerAnglesDev = T * eulerAnglesDerivatives;
+    const vector3_t dT_eulerAnglesDev = dT[i] * eulerAnglesDerivatives;
+    const matrix3_t dR_I_Rtrans = dR[i] * Ibaseframe * R.transpose();
+
+    dhdq.template block<3, 1>(0, i).noalias() = m * (S * dT_eulerAnglesDev);
+    dhdq.template block<3, 1>(0, i).noalias() += m * (dS[i] * T_eulerAnglesDev);
+
+    dhdq.template block<3, 1>(3, i).noalias() = (dR_I_Rtrans + dR_I_Rtrans.transpose()) * T_eulerAnglesDev;
+    dhdq.template block<3, 1>(3, i).noalias() += Iworldframe * dT_eulerAnglesDev;
+  }
+
+  if (info.centroidalModelType == CentroidalModelType::FullCentroidalDynamics) {
+    const auto jointVelocities = v.tail(info.actuatedDofNum);
+    const vector3_t comLinearVelocityInWorldFrame = (1.0 / m) * (data.Ag.topRightCorner(3, info.actuatedDofNum) * jointVelocities);
+    const vector3_t comAngularVelocityInWorldFrame =
+        Iworldframe.inverse() * (data.Ag.bottomRightCorner(3, info.actuatedDofNum) * jointVelocities);
+    const vector3_t linearMomentumInBaseFrame = m * (R.transpose() * comLinearVelocityInWorldFrame);
+    const vector3_t angularMomentumInBaseFrame = Ibaseframe * (R.transpose() * comAngularVelocityInWorldFrame);
+    for (size_t i = 0; i < 3; i++) {
+      dhdq.template block<3, 1>(0, i).noalias() += dR[i] * linearMomentumInBaseFrame;
+      dhdq.template block<3, 1>(3, i).noalias() += dR[i] * angularMomentumInBaseFrame;
+    }
   }
 
   return dhdq;

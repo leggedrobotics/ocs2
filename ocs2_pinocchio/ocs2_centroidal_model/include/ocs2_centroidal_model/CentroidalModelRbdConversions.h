@@ -97,21 +97,20 @@ class CentroidalModelRbdConversions final {
   vector_t computeRbdTorqueFromCentroidalModel(const vector_t& state, const vector_t& input, const vector_t& jointAccelerations);
 
   /**
-   * Computes the rigid body dynamics model torque from the ocs2 centroidal model input and adds PD feedback.
-   * @note: PD controller is added on the acceleration level.
+   * Computes the rigid body dynamics model torque from the ocs2 centroidal model input and adds PD feedback
+   * @note: PD controller is added on the acceleration level
    *
    * @param [in] desiredState: desired ocs2 switched-model state vector
    * @param [in] desiredInput: desired ocs2 switched-model input vector
    * @param [in] desiredJointAccelerations: desired joint accelerations
-   * @param [in] measuredState: measured ocs2 state (required for PD control)
-   * @param [in] measuredInput: measured ocs2 input (required for PD control)
+   * @param [in] measuredRbdState: measured rigid body dynamics model state (required for PD control)
    * @param [in] pGains: proportional gains for [base, joint] tracking
    * @param [in] dGains: derivative gains for [base, joint] tracking
    * @return rigid body dynamics model torque [base wrench, joint torques]
    */
   vector_t computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
-                                                 const vector_t& desiredJointAccelerations, const vector_t& measuredState,
-                                                 const vector_t& measuredInput, const vector_t& pGains, const vector_t& dGains);
+                                                 const vector_t& desiredJointAccelerations, const vector_t& measuredRbdState,
+                                                 const vector_t& pGains, const vector_t& dGains);
 
  private:
   CentroidalModelRbdConversions(const CentroidalModelRbdConversions& other) = default;

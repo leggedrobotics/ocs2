@@ -144,9 +144,10 @@ vector_t CentroidalModelRbdConversions::computeRbdStateFromCentroidalModel(const
 vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModel(const vector_t& state, const vector_t& input,
                                                                             const vector_t& jointAccelerations) {
   const auto& info = mapping_.getCentroidalModelInfo();
+  const vector_t measuredRbdState = vector_t::Zero(2 * info.generalizedCoordinatesNum);
   const vector_t pGains = vector_t::Zero(info.generalizedCoordinatesNum);
   const vector_t dGains = vector_t::Zero(info.generalizedCoordinatesNum);
-  return computeRbdTorqueFromCentroidalModelPD(state, input, jointAccelerations, state, input, pGains, dGains);
+  return computeRbdTorqueFromCentroidalModelPD(state, input, jointAccelerations, measuredRbdState, pGains, dGains);
 }
 
 /******************************************************************************************************/
@@ -154,8 +155,8 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModel(cons
 /******************************************************************************************************/
 vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
                                                                               const vector_t& desiredJointAccelerations,
-                                                                              const vector_t& measuredState, const vector_t& measuredInput,
-                                                                              const vector_t& pGains, const vector_t& dGains) {
+                                                                              const vector_t& measuredRbdState, const vector_t& pGains,
+                                                                              const vector_t& dGains) {
   // handles
   auto& interface = *pinocchioInterfacePtr_;
   const auto& info = mapping_.getCentroidalModelInfo();
@@ -193,9 +194,14 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
   }
 
   // measured
-  const vector_t qMeasured = mapping_.getPinocchioJointPosition(measuredState);
-  updateCentroidalDynamics(interface, info, qMeasured);
-  const vector_t vMeasured = mapping_.getPinocchioJointVelocity(measuredState, measuredInput);
+  vector_t qMeasured(info.generalizedCoordinatesNum), vMeasured(info.generalizedCoordinatesNum);
+  qMeasured.head<3>() = measuredRbdState.segment<3>(3);
+  qMeasured.segment<3>(3) = measuredRbdState.head<3>();
+  qMeasured.tail(info.actuatedDofNum) = measuredRbdState.segment(6, info.actuatedDofNum);
+  vMeasured.head<3>() = measuredRbdState.segment<3>(info.generalizedCoordinatesNum + 3);
+  vMeasured.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
+      qMeasured.segment<3>(3), measuredRbdState.segment<3>(info.generalizedCoordinatesNum));
+  vMeasured.tail(info.actuatedDofNum) = measuredRbdState.segment(info.generalizedCoordinatesNum + 6, info.actuatedDofNum);
 
   // PD feedback augmentation
   const vector_t pdFeedback = pGains.cwiseProduct(qDesired - qMeasured) + dGains.cwiseProduct(vDesired - vMeasured);

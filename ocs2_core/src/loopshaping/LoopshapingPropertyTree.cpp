@@ -41,7 +41,7 @@ Filter readSISOFilter(const boost::property_tree::ptree& pt, std::string filterN
   const auto numZeros = pt.get<size_t>(filterName + ".numZeros", 0);
   const auto scaling = pt.get<scalar_t>(filterName + ".scaling", 1.0);
   const size_t numStates = invert ? numZeros : numPoles;
-  const size_t numInputs = 1.0;
+  const size_t numInputs = 1;
 
   // Setup Filter, convention a0*s^n + a1*s^(n-1) + ... + an
   vector_t numerator(numZeros + 1);

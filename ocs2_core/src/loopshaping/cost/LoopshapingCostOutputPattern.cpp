@@ -62,44 +62,44 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::getQuadraticA
   ScalarFunctionQuadraticApproximation L;
   L.f = L_system.f + 0.5 * u_filter.dot(Ru_filter);
 
-  L.dfdx.resize(stateDim);
-  L.dfdx.head(sysStateDim) = L_system.dfdx;
   if (isDiagonal) {
-    L.dfdx.tail(filtStateDim).noalias() = r_filter.getCdiag().diagonal().cwiseProduct(Ru_filter);
+    L.dfdx.resize(stateDim);
+    L.dfdx.head(sysStateDim) = L_system.dfdx;
+    L.dfdx.tail(filtStateDim) = r_filter.getCdiag().diagonal().cwiseProduct(Ru_filter);
+
+    L.dfdxx.setZero(stateDim, stateDim);
+    L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+    L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim) = r_filter.getScalingCdiagCdiag().cwiseProduct(Rfilter);
+
+    L.dfdu = L_system.dfdu + r_filter.getDdiag().diagonal().cwiseProduct(Ru_filter);
+    L.dfduu = L_system.dfduu + r_filter.getScalingDdiagDdiag().cwiseProduct(Rfilter);
+
+    L.dfdux.resize(inputDim, stateDim);
+    L.dfdux.leftCols(sysStateDim) = L_system.dfdux;
+    L.dfdux.rightCols(filtStateDim) = r_filter.getScalingDdiagCdiag().cwiseProduct(Rfilter);
+
+    return L;
   } else {
+    L.dfdx.resize(stateDim);
+    L.dfdx.head(sysStateDim) = L_system.dfdx;
     L.dfdx.tail(filtStateDim).noalias() = r_filter.getC().transpose() * Ru_filter;
-  }
 
-  L.dfdxx.setZero(stateDim, stateDim);
-  L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
-  matrix_t dfduu_C;  // temporary variable, reused in other equation.
-  if (isDiagonal) {
-    dfduu_C.noalias() = Rfilter * r_filter.getCdiag();
-    L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim).noalias() = r_filter.getCdiag() * dfduu_C;
-  } else {
-    dfduu_C.noalias() = Rfilter * r_filter.getC();
+    L.dfdxx.setZero(stateDim, stateDim);
+    L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+    matrix_t dfduu_C = Rfilter * r_filter.getC();
     L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim).noalias() = r_filter.getC().transpose() * dfduu_C;
-  }
 
-  L.dfdu = std::move(L_system.dfdu);
-  L.dfduu = std::move(L_system.dfduu);
-  if (isDiagonal) {
-    L.dfdu.noalias() += r_filter.getDdiag().diagonal().cwiseProduct(Ru_filter);
-    L.dfduu.noalias() += r_filter.getDdiag() * Rfilter * r_filter.getDdiag();
-  } else {
+    L.dfdu = std::move(L_system.dfdu);
     L.dfdu.noalias() += r_filter.getD().transpose() * Ru_filter;
+    L.dfduu = std::move(L_system.dfduu);
     L.dfduu.noalias() += r_filter.getD().transpose() * Rfilter * r_filter.getD();
-  }
 
-  L.dfdux.resize(inputDim, stateDim);
-  L.dfdux.leftCols(sysStateDim) = L_system.dfdux;
-  if (isDiagonal) {
-    L.dfdux.rightCols(filtStateDim).noalias() = r_filter.getDdiag() * dfduu_C;
-  } else {
+    L.dfdux.resize(inputDim, stateDim);
+    L.dfdux.leftCols(sysStateDim) = L_system.dfdux;
     L.dfdux.rightCols(filtStateDim).noalias() = r_filter.getD().transpose() * dfduu_C;
-  }
 
-  return L;
+    return L;
+  }
 }
 
 }  // namespace ocs2

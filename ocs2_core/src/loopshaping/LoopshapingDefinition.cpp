@@ -35,6 +35,12 @@ namespace ocs2 {
 
 LoopshapingDefinition::LoopshapingDefinition(LoopshapingType loopshapingType, Filter filter, matrix_t costMatrix)
     : loopshapingType_(loopshapingType), filter_(std::move(filter)), R_(std::move(costMatrix)) {
+  if (filter_.getNumStates() == 0) {
+    throw std::runtime_error(
+        "[LoopshapingDefinition] The definition has zero extra states. This would be equivalent to a constant scaling. Using loopshaping "
+        "does not make sense");
+  }
+
   // Detect diagonal formulation if all involved matrices are diagonal
   diagonal_ = filter_.getA().isDiagonal() && filter_.getB().isDiagonal() && filter_.getC().isDiagonal() && filter_.getD().isDiagonal();
 

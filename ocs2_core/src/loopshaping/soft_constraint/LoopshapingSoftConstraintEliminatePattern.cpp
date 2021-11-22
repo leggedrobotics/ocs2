@@ -57,52 +57,54 @@ ScalarFunctionQuadraticApproximation LoopshapingSoftConstraintEliminatePattern::
   // f
   L.f = L_system.f;
 
-  // dfdx
-  L.dfdx.resize(stateDim);
-  L.dfdx.head(sysStateDim) = L_system.dfdx;
   if (isDiagonal) {
-    L.dfdx.tail(filtStateDim).noalias() = s_filter.getCdiag().diagonal().cwiseProduct(L_system.dfdu);
+    // dfdx
+    L.dfdx.resize(stateDim);
+    L.dfdx.head(sysStateDim) = L_system.dfdx;
+    L.dfdx.tail(filtStateDim) = s_filter.getCdiag().diagonal().cwiseProduct(L_system.dfdu);
+
+    // dfdxx
+    L.dfdxx.resize(stateDim, stateDim);
+    L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+    L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim).noalias() = s_filter.getCdiag() * L_system.dfdux;
+    L.dfdxx.topRightCorner(sysStateDim, filtStateDim) = L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim).transpose();
+    L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim) = s_filter.getScalingCdiagCdiag().cwiseProduct(L_system.dfduu);
+
+    // dfdu & dfduu
+    L.dfdu = s_filter.getDdiag().diagonal().cwiseProduct(L_system.dfdu);
+    L.dfduu = s_filter.getScalingDdiagDdiag().cwiseProduct(L_system.dfduu);
+
+    // dfdux
+    L.dfdux.resize(inputDim, stateDim);
+    L.dfdux.leftCols(sysStateDim).noalias() = s_filter.getDdiag() * L_system.dfdux;
+    L.dfdux.rightCols(filtStateDim) = s_filter.getScalingDdiagCdiag().cwiseProduct(L_system.dfduu);
+
+    return L;
   } else {
+    // dfdx
+    L.dfdx.resize(stateDim);
+    L.dfdx.head(sysStateDim) = L_system.dfdx;
     L.dfdx.tail(filtStateDim).noalias() = s_filter.getC().transpose() * L_system.dfdu;
-  }
 
-  // dfdxx
-  L.dfdxx.resize(stateDim, stateDim);
-  L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
-  matrix_t dfduu_C;  // temporary variable, reused in other equation.
-  if (isDiagonal) {
-    L.dfdxx.topRightCorner(sysStateDim, filtStateDim).noalias() = L_system.dfdux.transpose() * s_filter.getCdiag();
-    dfduu_C.noalias() = L_system.dfduu * s_filter.getCdiag();
-    L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim).noalias() = s_filter.getCdiag() * dfduu_C;
-  } else {
-    L.dfdxx.topRightCorner(sysStateDim, filtStateDim).noalias() = L_system.dfdux.transpose() * s_filter.getC();
-    dfduu_C.noalias() = L_system.dfduu * s_filter.getC();
+    // dfdxx
+    L.dfdxx.resize(stateDim, stateDim);
+    L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+    L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim) = s_filter.getC().transpose() * L_system.dfdux;
+    L.dfdxx.topRightCorner(sysStateDim, filtStateDim).noalias() = L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim).transpose();
+    matrix_t dfduu_C = L_system.dfduu * s_filter.getC();
     L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim).noalias() = s_filter.getC().transpose() * dfduu_C;
-  }
-  if (filtStateDim > 0) {
-    L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim) = L.dfdxx.topRightCorner(sysStateDim, filtStateDim).transpose();
-  }
 
-  // dfdu & dfduu
-  if (isDiagonal) {
-    L.dfdu.noalias() = s_filter.getDdiag().diagonal().cwiseProduct(L_system.dfdu);
-    L.dfduu.noalias() = s_filter.getDdiag() * L_system.dfduu * s_filter.getDdiag();
-  } else {
+    // dfdu & dfduu
     L.dfdu.noalias() = s_filter.getD().transpose() * L_system.dfdu;
     L.dfduu.noalias() = s_filter.getD().transpose() * L_system.dfduu * s_filter.getD();
-  }
 
-  // dfdux
-  L.dfdux.resize(inputDim, stateDim);
-  if (isDiagonal) {
-    L.dfdux.leftCols(sysStateDim).noalias() = s_filter.getDdiag() * L_system.dfdux;
-    L.dfdux.rightCols(filtStateDim).noalias() = s_filter.getDdiag() * dfduu_C;
-  } else {
+    // dfdux
+    L.dfdux.resize(inputDim, stateDim);
     L.dfdux.leftCols(sysStateDim).noalias() = s_filter.getD().transpose() * L_system.dfdux;
     L.dfdux.rightCols(filtStateDim).noalias() = s_filter.getD().transpose() * dfduu_C;
-  }
 
-  return L;
+    return L;
+  }
 }
 
 }  // namespace ocs2

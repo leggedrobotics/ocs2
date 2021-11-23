@@ -73,14 +73,6 @@ class LeggedRobotRaisimConversions {
   vector_t raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
 
   /**
-   * @brief Convert RaiSim generalized coordinates and velocities to ocs2 input.
-   * @param [in] q : The generalized coordinate.
-   * @param [in] dq : The generalized velocity.
-   * @return The corresponding ocs2 input (includes state-information due to the kinematic leg model).
-   */
-  vector_t raisimGenCoordGenVelToInput(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
-
-  /**
    * @brief Convert ocs2 control input to RaiSim generalized force.
    * @param [in] time : The current time.
    * @param [in] input : The control computed by the ocs2 controller.
@@ -110,12 +102,26 @@ class LeggedRobotRaisimConversions {
 
  protected:
   /**
+   * @brief Convert ocs2 RBD state to generalized coordinate and generalized velocity used by RaiSim.
+   * @param [in] rbdState : The ocs2 RBD state to be converted.
+   * @return The {q, dq} pair that represents the simulator state.
+   */
+  std::pair<Eigen::VectorXd, Eigen::VectorXd> rbdStateToRaisimGenCoordGenVel(const vector_t& rbdState);
+
+  /**
    * @brief Convert RaiSim generalized coordinates and velocities to ocs2 RBD state.
    * @param [in] q : The generalized coordinate.
    * @param [in] dq : The generalized velocity.
    * @return The corresponding RBD state.
    */
   vector_t raisimGenCoordGenVelToRbdState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq);
+
+  /**
+   * @brief Convert ocs2 RBD torque to RaiSim generalized force.
+   * @param [in] rbdTorque : The ocs2 RBD torque to be converted.
+   * @return The generalized forces to be applied to the system.
+   */
+  Eigen::VectorXd rbdTorqueToRaisimGeneralizedForce(const vector_t& rbdTorque);
 
   /**
    * @brief Convert RaiSim joint variables to ocs2 joint variables.

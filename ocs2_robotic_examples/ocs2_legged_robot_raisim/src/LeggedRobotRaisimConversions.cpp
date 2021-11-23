@@ -42,6 +42,40 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::stateT
   // get RBD state
   vector_t rbdState = centroidalModelRbdConversions_.computeRbdStateFromCentroidalModel(state, input);
 
+  // convert to generalized coordinate and generalized velocity
+  return rbdStateToRaisimGenCoordGenVel(rbdState);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+  // get RBD state
+  vector_t rbdState = raisimGenCoordGenVelToRbdState(q, dq);
+
+  // convert to state
+  return centroidalModelRbdConversions_.computeCentroidalStateFromRbdModel(rbdState);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state,
+                                                                            const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+  // get RBD torque
+  const vector_t desiredJointAccelerations = vector_t::Zero(12);  // TODO(areske): retrieve this from controller?
+  const vector_t measuredRbdState = raisimGenCoordGenVelToRbdState(q, dq);
+  vector_t rbdTorque = centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations,
+                                                                                            measuredRbdState, pGains_, dGains_);
+
+  // convert to generalized force
+  return rbdTorqueToRaisimGeneralizedForce(rbdTorque);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::rbdStateToRaisimGenCoordGenVel(const vector_t& rbdState) {
   // set continuous orientation
   continuousOrientation_ = rbdState.head<3>();
 
@@ -60,58 +94,15 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::stateT
     q(2) += terrainPtr_->getHeight(q(0), q(1));
   }
 
-  return {q, dq};
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
-  // get RBD state
-  vector_t rbdState = raisimGenCoordGenVelToRbdState(q, dq);
-
-  // convert to state
-  vector_t state = centroidalModelRbdConversions_.computeCentroidalStateFromRbdModel(rbdState);
-
-  return state;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToInput(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
-  // convert to input
-  vector_t input = vector_t::Zero(24);
-  // TODO(areske): retrieve measured contact forces from RaiSim?
-  input.tail<12>() = raisimJointOrderToOcs2JointOrder(dq.tail<12>());
-
-  return input;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state,
-                                                                            const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
-  // get RBD torque
-  const vector_t desiredJointAccelerations = vector_t::Zero(12);  // TODO(areske): retrieve this from controller?
-  const vector_t measuredRbdState = raisimGenCoordGenVelToRbdState(q, dq);
-  vector_t rbdTorque = centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations,
-                                                                                            measuredRbdState, pGains_, dGains_);
-
-  // convert to raisim
-  Eigen::VectorXd generalizedForce = Eigen::VectorXd::Zero(18);
-  generalizedForce.tail<12>() = ocs2JointOrderToRaisimJointOrder(rbdTorque.tail<12>());
-
   // check
-  if (check_ && generalizedForce.array().abs().maxCoeff() > 80.0) {
+  if (check_ && (q.tail<12>().array().abs().maxCoeff() > 3.0 * M_PI || dq.tail<12>().array().abs().maxCoeff() > 7.5)) {
     std::stringstream ss;
-    ss << "LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce -- RaiSim input violates actuator limits:"
-       << "\ngeneralizedForce = " << generalizedForce.transpose();
+    ss << "LeggedRobotRaisimConversions::rbdStateToRaisimGenCoordGenVel -- RaiSim state violates actuator limits:"
+       << "\nq = " << q.transpose() << "\ndq = " << dq.transpose();
     throw std::runtime_error(ss.str());
   }
 
-  return generalizedForce;
+  return {q, dq};
 }
 
 /******************************************************************************************************/
@@ -144,6 +135,25 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToRbdState(const Eige
   }
 
   return rbdState;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::VectorXd LeggedRobotRaisimConversions::rbdTorqueToRaisimGeneralizedForce(const vector_t& rbdTorque) {
+  // convert to generalized force
+  Eigen::VectorXd generalizedForce = Eigen::VectorXd::Zero(18);
+  generalizedForce.tail<12>() = ocs2JointOrderToRaisimJointOrder(rbdTorque.tail<12>());
+
+  // check
+  if (check_ && generalizedForce.array().abs().maxCoeff() > 80.0) {
+    std::stringstream ss;
+    ss << "LeggedRobotRaisimConversions::rbdTorqueToRaisimGeneralizedForce -- RaiSim input violates actuator limits:"
+       << "\ngeneralizedForce = " << generalizedForce.transpose();
+    throw std::runtime_error(ss.str());
+  }
+
+  return generalizedForce;
 }
 
 /******************************************************************************************************/

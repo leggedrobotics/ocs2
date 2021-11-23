@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_double_integrator/DoubleIntegratorInterface.h>
 #include <ocs2_double_integrator/package_path.h>
 
+#include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 
 using namespace ocs2;
@@ -74,7 +75,6 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
 
   const scalar_t tolerance = 2e-2;
   const scalar_t f_mpc = 10.0;
-  const scalar_t mpcIncrement = 1.0 / f_mpc;
   const scalar_t initTime = 1234.5;  // start from a random time
   const scalar_t finalTime = initTime + 5.0;
 
@@ -95,8 +95,7 @@ TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
 
   // run MPC for N iterations
   auto time = initTime;
-  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-  for (size_t i = 0; i < N; i++) {
+  while (time < finalTime) {
     // run MPC
     mpcInterface.advanceMpc();
     time += 1.0 / f_mpc;
@@ -131,8 +130,7 @@ TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
 
   // run MPC for N iterations
   auto time = initTime;
-  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-  for (size_t i = 0; i < N; i++) {
+  while (time < finalTime) {
     // run MPC
     mpcInterface.advanceMpc();
     time += 1.0 / f_mpc;
@@ -177,7 +175,7 @@ TEST_F(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   auto mpcThread = std::thread([&]() {
     while (mpcRunning) {
       try {
-        ocs2::executeAndSleep([&]() { mpcMrtInterface.advanceMpc(); }, f_mpc);
+        ocs2::executeAndSleep([&]() { mpcInterface.advanceMpc(); }, f_mpc);
       } catch (const std::exception& e) {
         mpcRunning = false;
         std::cerr << "EXCEPTION " << e.what() << std::endl;
@@ -194,8 +192,7 @@ TEST_F(DoubleIntegratorIntegrationTest, asynchronousTracking) {
 
           // Evaluate the policy
           mpcInterface.updatePolicy();
-          mpcInterface.evaluatePolicy(observation.time, vector_t::Zero(modelInfo.stateDim), observation.state, observation.input,
-                                      observation.mode);
+          mpcInterface.evaluatePolicy(observation.time, vector_t::Zero(STATE_DIM), observation.state, observation.input, observation.mode);
 
           // use optimal state for the next observation:
           mpcInterface.setCurrentObservation(observation);

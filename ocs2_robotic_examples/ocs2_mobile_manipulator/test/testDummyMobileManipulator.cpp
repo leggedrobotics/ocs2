@@ -170,42 +170,40 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
     mpcInterface.advanceMpc();
   }
 
-  // run MRT in a thread
-  std::atomic_bool trackerRunning{true};
-  auto tracker = [&]() {
-    while (trackerRunning) {
-      {
-        ocs2::executeAndSleep(
-            [&]() {
-              time += 1.0 / f_mrt;
-
-              // Evaluate the policy
-              mpcInterface.updatePolicy();
-              mpcInterface.evaluatePolicy(time, vector_t::Zero(modelInfo.stateDim), observation.state, observation.input, observation.mode);
-
-              // use optimal state for the next observation:
-              mpcInterface.setCurrentObservation(observation);
-            },
-            f_mrt);
+  // Run MPC in a thread
+  std::atomic_bool mpcRunning{true};
+  auto mpcThread = std::thread([&]() {
+    while (mpcRunning) {
+      try {
+        ocs2::executeAndSleep([&]() { mpcMrtInterface.advanceMpc(); }, f_mpc);
+      } catch (const std::exception& e) {
+        mpcRunning = false;
+        std::cerr << "EXCEPTION " << e.what() << std::endl;
+        EXPECT_TRUE(false);
       }
     }
-  };
-  std::thread trackerThread(tracker);
+  });
 
-  try {
-    // run MPC for N iterations
-    const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-    for (size_t i = 0; i < N; i++) {
-      ocs2::executeAndSleep([&]() { mpcInterface.advanceMpc(); }, f_mpc);
-    }
-  } catch (const std::exception& e) {
-    std::cerr << "EXCEPTION " << e.what() << std::endl;
-    EXPECT_TRUE(false);
+  // run MRT
+  while (observation.time < finalTime) {
+    ocs2::executeAndSleep(
+        [&]() {
+          observation.time += 1.0 / f_mrt;
+
+          // Evaluate the policy
+          mpcInterface.updatePolicy();
+          mpcInterface.evaluatePolicy(observation.time, vector_t::Zero(modelInfo.stateDim), observation.state, observation.input,
+                                      observation.mode);
+
+          // use optimal state for the next observation:
+          mpcInterface.setCurrentObservation(observation);
+        },
+        f_mrt);
   }
 
-  trackerRunning = false;
-  if (trackerThread.joinable()) {
-    trackerThread.join();
+  mpcRunning = false;
+  if (mpcThread.joinable()) {
+    mpcThread.join();
   }
 
   verifyTrackingQuality(observation.state);

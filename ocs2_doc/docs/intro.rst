@@ -7,10 +7,10 @@ Introduction
 **S**\ witched **S**\ ystems (OCS2). The toolbox provides an efficient 
 implementation of the following algorithms:
 
-* **SLQ**\: Continuous-time domin DDP
+* **SLQ**\: Continuous-time domain DDP
 * **iLQR**\: Discrete-time domain DDP
 * **SQP**\: Multiple-shooting algorithm based on `HPIPM <href="https://github.com/giaf/hpipm"/>`__
-* **PISOC**\: Path integral stochatic optimal control
+* **PISOC**\: Path integral stochastic optimal control
 
 OCS2 handles general path constraints through Augmented Lagrangian or 
 relaxed barrier methods. To facilitate the application of OCS2 in robotic 

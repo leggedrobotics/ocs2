@@ -97,7 +97,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
   }
 
   static constexpr scalar_t tolerance = 1e-2;
-  static constexpr scalar_t f_mpc = 20.0;
+  static constexpr scalar_t f_mpc = 10.0;
   static constexpr scalar_t initTime = 1234.5;  // start from a random time
   static constexpr scalar_t finalTime = initTime + 5.0;
 

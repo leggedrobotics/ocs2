@@ -40,7 +40,7 @@ namespace legged_robot {
 std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel(const vector_t& state,
                                                                                                       const vector_t& input) {
   // get RBD state
-  vector_t rbdState = centroidalModelRbdConversions_.computeRbdStateFromCentroidalModel(state, input);
+  const vector_t rbdState = centroidalModelRbdConversions_.computeRbdStateFromCentroidalModel(state, input);
 
   // convert to generalized coordinate and generalized velocity
   return rbdStateToRaisimGenCoordGenVel(rbdState);
@@ -51,7 +51,7 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::stateT
 /******************************************************************************************************/
 vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
   // get RBD state
-  vector_t rbdState = raisimGenCoordGenVelToRbdState(q, dq);
+  const vector_t rbdState = raisimGenCoordGenVelToRbdState(q, dq);
 
   // convert to state
   return centroidalModelRbdConversions_.computeCentroidalStateFromRbdModel(rbdState);
@@ -65,8 +65,8 @@ Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(doub
   // get RBD torque
   const vector_t desiredJointAccelerations = vector_t::Zero(12);  // TODO(areske): retrieve this from controller?
   const vector_t measuredRbdState = raisimGenCoordGenVelToRbdState(q, dq);
-  vector_t rbdTorque = centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations,
-                                                                                            measuredRbdState, pGains_, dGains_);
+  const vector_t rbdTorque = centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations,
+                                                                                                  measuredRbdState, pGains_, dGains_);
 
   // convert to generalized force
   return rbdTorqueToRaisimGeneralizedForce(rbdTorque);
@@ -80,13 +80,13 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::rbdSta
   continuousOrientation_ = rbdState.head<3>();
 
   // convert to generalized coordinate
-  Eigen::VectorXd q(3 + 4 + 12);
-  Eigen::Quaterniond quaternion = getQuaternionFromEulerAnglesZyx(continuousOrientation_);
+  Eigen::VectorXd q(19);
+  const Eigen::Quaterniond quaternion = getQuaternionFromEulerAnglesZyx(continuousOrientation_);
   q << rbdState.segment<3>(3), quaternion.w(), quaternion.x(), quaternion.y(), quaternion.z(),
       ocs2JointOrderToRaisimJointOrder(rbdState.segment<12>(6));
 
   // convert to generalized velocity
-  Eigen::VectorXd dq(3 + 3 + 12);
+  Eigen::VectorXd dq(18);
   dq << rbdState.segment<3>(21), rbdState.segment<3>(18), ocs2JointOrderToRaisimJointOrder(rbdState.tail<12>());
 
   // height relative to terrain
@@ -118,14 +118,14 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToRbdState(const Eige
   }
 
   // get continuous orientation
-  Eigen::Quaterniond quaternion(q(3), q(4), q(5), q(6));
+  const Eigen::Quaterniond quaternion(q(3), q(4), q(5), q(6));
   Eigen::Vector3d orientation = quaternion.toRotationMatrix().eulerAngles(2, 1, 0);
   ocs2::makeEulerAnglesUnique(orientation);
   const auto yaw = findOrientationClostestToReference(orientation[0], continuousOrientation_[0]);
   continuousOrientation_ << yaw, orientation[1], orientation[2];
 
   // convert to RBD state
-  vector_t rbdState = vector_t::Zero(36);
+  vector_t rbdState(36);
   rbdState << continuousOrientation_, q.head<3>(), raisimJointOrderToOcs2JointOrder(q.tail<12>()), dq.segment<3>(3), dq.head<3>(),
       raisimJointOrderToOcs2JointOrder(dq.tail<12>());
 

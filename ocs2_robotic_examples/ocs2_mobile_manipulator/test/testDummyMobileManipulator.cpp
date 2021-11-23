@@ -97,8 +97,7 @@ class MobileManipulatorIntegrationTest : public testing::Test {
   }
 
   static constexpr scalar_t tolerance = 1e-2;
-  static constexpr scalar_t f_mpc = 10.0;
-  static constexpr scalar_t mpcIncrement = 1.0 / f_mpc;
+  static constexpr scalar_t f_mpc = 20.0;
   static constexpr scalar_t initTime = 1234.5;  // start from a random time
   static constexpr scalar_t finalTime = initTime + 5.0;
 
@@ -112,7 +111,6 @@ class MobileManipulatorIntegrationTest : public testing::Test {
 
 constexpr scalar_t MobileManipulatorIntegrationTest::tolerance;
 constexpr scalar_t MobileManipulatorIntegrationTest::f_mpc;
-constexpr scalar_t MobileManipulatorIntegrationTest::mpcIncrement;
 constexpr scalar_t MobileManipulatorIntegrationTest::initTime;
 constexpr scalar_t MobileManipulatorIntegrationTest::finalTime;
 
@@ -128,8 +126,7 @@ TEST_F(MobileManipulatorIntegrationTest, synchronousTracking) {
 
   // run MPC for N iterations
   auto time = initTime;
-  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-  for (size_t i = 0; i < N; i++) {
+  while (time < finalTime) {
     // run MPC
     mpcInterface.advanceMpc();
     time += 1.0 / f_mpc;
@@ -156,7 +153,7 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
   auto mpcPtr = getMpc();
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
-  const scalar_t f_mrt = 10.0;  // Hz
+  const scalar_t f_mrt = 100.0;  // Hz
 
   // Set initial observation
   SystemObservation observation;
@@ -175,7 +172,7 @@ TEST_F(MobileManipulatorIntegrationTest, asynchronousTracking) {
   auto mpcThread = std::thread([&]() {
     while (mpcRunning) {
       try {
-        ocs2::executeAndSleep([&]() { mpcMrtInterface.advanceMpc(); }, f_mpc);
+        ocs2::executeAndSleep([&]() { mpcInterface.advanceMpc(); }, f_mpc);
       } catch (const std::exception& e) {
         mpcRunning = false;
         std::cerr << "EXCEPTION " << e.what() << std::endl;

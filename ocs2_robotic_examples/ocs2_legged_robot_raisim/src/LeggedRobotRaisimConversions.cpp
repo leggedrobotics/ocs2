@@ -40,10 +40,7 @@ namespace legged_robot {
 std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::stateToRaisimGenCoordGenVel(const vector_t& state,
                                                                                                       const vector_t& input) {
   // get RBD state
-  vector_t rbdState = vector_t::Zero(36);
-  const vector_t jointAccelerations = vector_t::Zero(12);
-  centroidalModelRbdConversions_.computeRbdStateFromCentroidalModel(state, input, jointAccelerations, rbdState);
-  // note: joint accelerations are only needed to compute the base acceleration, which is not relevant for the RBD state
+  vector_t rbdState = centroidalModelRbdConversions_.computeRbdStateFromCentroidalModel(state, input);
 
   // set continuous orientation
   continuousOrientation_ = rbdState.head<3>();
@@ -74,8 +71,7 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToState(const Eigen::
   vector_t rbdState = raisimGenCoordGenVelToRbdState(q, dq);
 
   // convert to state
-  vector_t state = vector_t::Zero(24);
-  centroidalModelRbdConversions_.computeCentroidalStateFromRbdModel(rbdState, state);
+  vector_t state = centroidalModelRbdConversions_.computeCentroidalStateFromRbdModel(rbdState);
 
   return state;
 }
@@ -98,12 +94,10 @@ vector_t LeggedRobotRaisimConversions::raisimGenCoordGenVelToInput(const Eigen::
 Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(double time, const vector_t& input, const vector_t& state,
                                                                             const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
   // get RBD torque
-  vector_t rbdTorque = vector_t::Zero(18);
-  const vector_t measuredState = raisimGenCoordGenVelToState(q, dq);
-  const vector_t measuredInput = raisimGenCoordGenVelToInput(q, dq);
   const vector_t desiredJointAccelerations = vector_t::Zero(12);  // TODO(areske): retrieve this from controller?
-  centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations, measuredState,
-                                                                       measuredInput, pGains_, dGains_, rbdTorque);
+  const vector_t measuredRbdState = raisimGenCoordGenVelToRbdState(q, dq);
+  vector_t rbdTorque = centroidalModelRbdConversions_.computeRbdTorqueFromCentroidalModelPD(state, input, desiredJointAccelerations,
+                                                                                            measuredRbdState, pGains_, dGains_);
 
   // convert to raisim
   Eigen::VectorXd generalizedForce = Eigen::VectorXd::Zero(18);

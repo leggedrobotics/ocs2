@@ -58,7 +58,7 @@ TEST(LeggedRobotRaisim, Conversions) {
     Eigen::VectorXd q, dq;
     std::tie(q, dq) = conversions.stateToRaisimGenCoordGenVel(stateIn, inputIn);
 
-    const ocs2::vector_t stateOut = conversions.raisimGenCoordGenVelToState(q, dq);
+    ocs2::vector_t stateOut = conversions.raisimGenCoordGenVelToState(q, dq);
 
     bool test = stateIn.isApprox(stateOut);
     EXPECT_TRUE(test);
@@ -73,7 +73,8 @@ TEST(LeggedRobotRaisim, Conversions) {
     dqIn.setRandom(18);
 
     ocs2::vector_t state = conversions.raisimGenCoordGenVelToState(qIn, dqIn);
-    ocs2::vector_t input = conversions.raisimGenCoordGenVelToInput(qIn, dqIn);
+    ocs2::vector_t input = ocs2::vector_t::Zero(24);
+    input.tail<12>() = conversions.raisimJointOrderToOcs2JointOrder(dqIn.tail<12>());
 
     Eigen::VectorXd qOut, dqOut;
     std::tie(qOut, dqOut) = conversions.stateToRaisimGenCoordGenVel(state, input);

@@ -75,6 +75,24 @@ Eigen::VectorXd LeggedRobotRaisimConversions::inputToRaisimGeneralizedForce(doub
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t LeggedRobotRaisimConversions::raisimJointOrderToOcs2JointOrder(const Eigen::VectorXd& raisimJoint) {
+  vector_t ocs2Joint(12);
+  ocs2Joint << raisimJoint.head<3>(), raisimJoint.segment<3>(6), raisimJoint.segment<3>(3), raisimJoint.tail<3>();
+  return ocs2Joint;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::VectorXd LeggedRobotRaisimConversions::ocs2JointOrderToRaisimJointOrder(const vector_t& ocs2Joint) {
+  Eigen::VectorXd raisimJoint(12);
+  raisimJoint << ocs2Joint.head<3>(), ocs2Joint.segment<3>(6), ocs2Joint.segment<3>(3), ocs2Joint.tail<3>();
+  return raisimJoint;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::pair<Eigen::VectorXd, Eigen::VectorXd> LeggedRobotRaisimConversions::rbdStateToRaisimGenCoordGenVel(const vector_t& rbdState) {
   // set continuous orientation
   continuousOrientation_ = rbdState.head<3>();
@@ -154,24 +172,6 @@ Eigen::VectorXd LeggedRobotRaisimConversions::rbdTorqueToRaisimGeneralizedForce(
   }
 
   return generalizedForce;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t LeggedRobotRaisimConversions::raisimJointOrderToOcs2JointOrder(const Eigen::VectorXd& raisimJoint) {
-  vector_t ocs2Joint(12);
-  ocs2Joint << raisimJoint.head<3>(), raisimJoint.segment<3>(6), raisimJoint.segment<3>(3), raisimJoint.tail<3>();
-  return ocs2Joint;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-Eigen::VectorXd LeggedRobotRaisimConversions::ocs2JointOrderToRaisimJointOrder(const vector_t& ocs2Joint) {
-  Eigen::VectorXd raisimJoint(12);
-  raisimJoint << ocs2Joint.head<3>(), ocs2Joint.segment<3>(6), ocs2Joint.segment<3>(3), ocs2Joint.tail<3>();
-  return raisimJoint;
 }
 
 /******************************************************************************************************/

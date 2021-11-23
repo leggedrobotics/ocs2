@@ -85,6 +85,22 @@ class LeggedRobotRaisimConversions {
                                                 const Eigen::VectorXd& dq);
 
   /**
+   * @brief Convert RaiSim joint variables to ocs2 joint variables.
+   * @note This can be removed if changing the RaiSim joint order works eventually.
+   * @param [in] raisimJoint : The joint variables in RaiSim order.
+   * @return The joint variables in ocs2 order.
+   */
+  vector_t raisimJointOrderToOcs2JointOrder(const Eigen::VectorXd& raisimJoint);
+
+  /**
+   * @brief Convert ocs2 joint variables to RaiSim joint variables.
+   * @note This can be removed if changing the RaiSim joint order works eventually.
+   * @param [in] ocs2Joint : The joint variables in ocs2 order.
+   * @return The joint variables in RaiSim order.
+   */
+  Eigen::VectorXd ocs2JointOrderToRaisimJointOrder(const vector_t& ocs2Joint);
+
+  /**
    * @brief Set the terrain.
    * @param [in] terrain : The terrain represented by a RaiSim height map.
    */
@@ -122,22 +138,6 @@ class LeggedRobotRaisimConversions {
    * @return The generalized forces to be applied to the system.
    */
   Eigen::VectorXd rbdTorqueToRaisimGeneralizedForce(const vector_t& rbdTorque);
-
-  /**
-   * @brief Convert RaiSim joint variables to ocs2 joint variables.
-   * @note This can be removed if changing the RaiSim joint order works eventually.
-   * @param [in] raisimJoint : The joint variables in RaiSim order.
-   * @return The joint variables in ocs2 order.
-   */
-  vector_t raisimJointOrderToOcs2JointOrder(const Eigen::VectorXd& raisimJoint);
-
-  /**
-   * @brief Convert ocs2 joint variables to RaiSim joint variables.
-   * @note This can be removed if changing the RaiSim joint order works eventually.
-   * @param [in] ocs2Joint : The joint variables in ocs2 order.
-   * @return The joint variables in RaiSim order.
-   */
-  Eigen::VectorXd ocs2JointOrderToRaisimJointOrder(const vector_t& ocs2Joint);
 
   /**
    * @brief Find yaw angle that is closest to continuous reference yaw angle.

@@ -86,7 +86,7 @@ class LeggedRobotInterface final : public RobotInterface {
                                  const ::urdf::ModelInterfaceSharedPtr& urdfTree);
 
   std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info);
-  void initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info, matrix_t& R);
+  matrix_t initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info);
 
   std::pair<scalar_t, RelaxedBarrierPenalty::Config> loadFrictionConeSettings(const std::string& taskFile) const;
   std::unique_ptr<StateInputCost> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,

@@ -171,25 +171,11 @@ void GaussNewtonDDP::reset() {
   initializeConstraintPenalties();
 
   // very important, these are variables that are carried in between iterations
-  nominalControllersStock_.clear();
-  nominalTimeTrajectoriesStock_.clear();
-  nominalPostEventIndicesStock_.clear();
-  nominalStateTrajectoriesStock_.clear();
-  nominalInputTrajectoriesStock_.clear();
+  nominalPrimalData_.clear();
+  dualData_.clear();
 
-  cachedControllersStock_.clear();
-  cachedTimeTrajectoriesStock_.clear();
-  cachedPostEventIndicesStock_.clear();
-  cachedStateTrajectoriesStock_.clear();
-  cachedInputTrajectoriesStock_.clear();
-  cachedModelDataTrajectoriesStock_.clear();
-  cachedModelDataEventTimesStock_.clear();
-  cachedProjectedModelDataTrajectoriesStock_.clear();
-  cachedRiccatiModificationTrajectoriesStock_.clear();
-  cachedSsTimeTrajectoryStock_.clear();
-  cachedsTrajectoryStock_.clear();
-  cachedSvTrajectoryStock_.clear();
-  cachedSmTrajectoryStock_.clear();
+  cachedPrimalData_.clear();
+  cachedDualData_.clear();
 
   // reset timers
   initializationTimer_.reset();
@@ -239,13 +225,15 @@ const std::vector<PerformanceIndex>& GaussNewtonDDP::getIterationsLog() const {
 /******************************************************************************************************/
 void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const {
   // total number of nodes
-  int N = nominalTimeTrajectoriesStock_.size();
+  const int N = optimizedPrimalData_.timeTrajectory.size();
 
-  auto upperBound = [](const scalar_array_t& array, scalar_t value) {
-    auto firstLargerValueIterator = std::upper_bound(array.begin(), array.end(), value);
-    return static_cast<int>(firstLargerValueIterator - array.begin());
+  auto getRequestedDataLength = [](const scalar_array_t& timeTrajectory, scalar_t time) {
+    int index = std::distance(timeTrajectory.cbegin(), std::upper_bound(timeTrajectory.cbegin(), timeTrajectory.cend(), time));
+    // PR#519 fix solution time window to include 1 point beyond requested time
+    index += index != timeTrajectory.size() ? 1 : 0;
+    return index;
   };
-
+  const int length = getRequestedDataLength(optimizedPrimalData_.timeTrajectory, finalTime);
   // fill trajectories
   primalSolutionPtr->timeTrajectory_.clear();
   primalSolutionPtr->timeTrajectory_.reserve(N);
@@ -253,21 +241,20 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   primalSolutionPtr->stateTrajectory_.reserve(N);
   primalSolutionPtr->inputTrajectory_.clear();
   primalSolutionPtr->inputTrajectory_.reserve(N);
-  // length of the copy
-  const int length = upperBound(nominalTimeTrajectoriesStock_, finalTime);
-  primalSolutionPtr->timeTrajectory_.insert(primalSolutionPtr->timeTrajectory_.end(), nominalTimeTrajectoriesStock_.begin(),
-                                            nominalTimeTrajectoriesStock_.begin() + length);
-  primalSolutionPtr->stateTrajectory_.insert(primalSolutionPtr->stateTrajectory_.end(), nominalStateTrajectoriesStock_.begin(),
-                                             nominalStateTrajectoriesStock_.begin() + length);
-  primalSolutionPtr->inputTrajectory_.insert(primalSolutionPtr->inputTrajectory_.end(), nominalInputTrajectoriesStock_.begin(),
-                                             nominalInputTrajectoriesStock_.begin() + length);
+
+  primalSolutionPtr->timeTrajectory_.insert(primalSolutionPtr->timeTrajectory_.end(), optimizedPrimalData_.timeTrajectory.begin(),
+                                            optimizedPrimalData_.timeTrajectory.begin() + length);
+  primalSolutionPtr->stateTrajectory_.insert(primalSolutionPtr->stateTrajectory_.end(), optimizedPrimalData_.stateTrajectory.begin(),
+                                             optimizedPrimalData_.stateTrajectory.begin() + length);
+  primalSolutionPtr->inputTrajectory_.insert(primalSolutionPtr->inputTrajectory_.end(), optimizedPrimalData_.inputTrajectory.begin(),
+                                             optimizedPrimalData_.inputTrajectory.begin() + length);
 
   // fill controller
   if (ddpSettings_.useFeedbackPolicy_) {
     primalSolutionPtr->controllerPtr_.reset(new LinearController);
     // length of the copy
-    const int length = upperBound(nominalControllersStock_.timeStamp_, finalTime);
-    primalSolutionPtr->controllerPtr_->concatenate(&nominalControllersStock_, 0, length);
+    const int length = getRequestedDataLength(optimizedPrimalData_.controller.timeStamp_, finalTime);
+    primalSolutionPtr->controllerPtr_->concatenate(&optimizedPrimalData_.controller, 0, length);
 
   } else {
     primalSolutionPtr->controllerPtr_.reset(
@@ -281,22 +268,37 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionImpl(
+    const scalar_t& time, const vector_t& state, const PrimalDataContainer& primalData,
+    const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const {
   ScalarFunctionQuadraticApproximation valueFunction;
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedSsTimeTrajectoryStock_);
-  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, cachedSmTrajectoryStock_);
-  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, cachedSvTrajectoryStock_);
-  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, cachedsTrajectoryStock_);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.timeTrajectory);
+  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, valueFunctionTrajectory, scalar_function_approximation::f);
+  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, valueFunctionTrajectory, scalar_function_approximation::dfdx);
+  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, valueFunctionTrajectory, scalar_function_approximation::dfdxx);
 
   // Re-center around query state
-  const vector_t xNominal =
-      LinearInterpolation::interpolate(time, cachedNominalTimeTrajectoriesStock_, cachedNominalStateTrajectoriesStock_);
+  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, primalData.stateTrajectory);
   const vector_t deltaX = state - xNominal;
   const vector_t SmDeltaX = valueFunction.dfdxx * deltaX;
   valueFunction.f += deltaX.dot(0.5 * SmDeltaX + valueFunction.dfdx);
   valueFunction.dfdx += SmDeltaX;  // Adapt dfdx after f!
 
   return valueFunction;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionFromCache(scalar_t time, const vector_t& state) const {
+  return getValueFunctionImpl(time, state, cachedPrimalData_, cachedDualData_.valueFunctionTrajectory);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
+  return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
 }
 
 /******************************************************************************************************/
@@ -313,7 +315,7 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   // - state-only soft constraint cost
   LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], settings().checkNumericalStability_);
   lqapprox.approximateLQProblem(time, state, input, modelData);
-  modelData.checkSizes(state.rows(), input.rows());
+  // modelData.checkSizes(state.rows(), input.rows());
 
   // augment the cost with state-only equality and state-input inequality constraint terms
   augmentCostWorker(0, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0, modelData);
@@ -347,22 +349,24 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, cachedTimeTrajectoriesStock_);
-  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_);
+vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t time, const vector_t& state,
+                                                                       const PrimalDataContainer& primalData,
+                                                                       const DualDataContainer& dualData) const {
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.timeTrajectory);
+  const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, primalData.stateTrajectory);
 
-  const matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_, model_data::dynamics_dfdu);
-  const matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_, model_data::cost_dfdux);
-  const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, cachedModelDataTrajectoriesStock_, model_data::cost_dfdu);
+  const matrix_t Bm = LinearInterpolation::interpolate(indexAlpha, primalData.modelDataTrajectory, model_data::dynamics_dfdu);
+  const matrix_t Pm = LinearInterpolation::interpolate(indexAlpha, primalData.modelDataTrajectory, model_data::cost_dfdux);
+  const vector_t Rv = LinearInterpolation::interpolate(indexAlpha, primalData.modelDataTrajectory, model_data::cost_dfdu);
 
   const vector_t EvProjected =
-      LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_, model_data::stateInputEqConstr_f);
+      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstr_f);
   const matrix_t CmProjected =
-      LinearInterpolation::interpolate(indexAlpha, cachedProjectedModelDataTrajectoriesStock_, model_data::stateInputEqConstr_dfdx);
+      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstr_dfdx);
   const matrix_t Hm =
-      LinearInterpolation::interpolate(indexAlpha, cachedRiccatiModificationTrajectoriesStock_, riccati_modification::hamiltonianHessian);
-  const matrix_t DmDagger = LinearInterpolation::interpolate(indexAlpha, cachedRiccatiModificationTrajectoriesStock_,
-                                                             riccati_modification::constraintRangeProjector);
+      LinearInterpolation::interpolate(indexAlpha, dualData.riccatiModificationTrajectory, riccati_modification::hamiltonianHessian);
+  const matrix_t DmDagger =
+      LinearInterpolation::interpolate(indexAlpha, dualData.riccatiModificationTrajectory, riccati_modification::constraintRangeProjector);
 
   const vector_t deltaX = state - xNominal;
   const vector_t costate = getValueFunction(time, state).dfdx;
@@ -375,7 +379,7 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time
   temp.noalias() -= Bm.transpose() * costate;
   temp.noalias() += Hm * err;
 
-  const vector_t nu = DmDagger.transpose() * temp;
+  vector_t nu = DmDagger.transpose() * temp;
 
   return nu;
 }
@@ -383,7 +387,16 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {}
+vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
+  return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianFromCache(scalar_t time, const vector_t& state) const {
+  return getStateInputEqualityConstraintLagrangianImpl(time, state, cachedPrimalData_, cachedDualData_);
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -391,8 +404,8 @@ void GaussNewtonDDP::rewindOptimizer(size_t firstIndex) {}
 void GaussNewtonDDP::retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                                   const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                                   size_array_t& normalizedPostEventIndices) {
-  // Although the rightmost point is excluded from the current interval, i.e. it won't be written into the dual solution array, it(+1) is
-  // still needed to start the backward pass
+  // Although the rightmost point is excluded from the current interval, i.e. it won't be written into the dual solution array, we still
+  // the following two (+1) are essential to start the backward pass
   auto firstTimeItr = timeTrajectory.begin() + partitionInterval.first;
   auto lastTimeItr = timeTrajectory.begin() + partitionInterval.second + 1;
   const int N = partitionInterval.second - partitionInterval.first + 1;
@@ -423,29 +436,24 @@ void GaussNewtonDDP::adjustController(const scalar_array_t& newEventTimes, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::setupOptimizer(size_t numPartitions) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeArray(scalar_array_t timeArray, int numWorkers) {
+std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeTrajectory(const scalar_array_t& timeTrajectory,
+                                                                                         int numWorkers) {
   scalar_array_t desiredPartitionPoints;
-  const scalar_t duration = timeArray.back() - timeArray.front();
-
   desiredPartitionPoints.resize(numWorkers + 1);
-  desiredPartitionPoints.front() = timeArray.front();
-  const scalar_t increment = duration / static_cast<scalar_t>(numWorkers);
-  for (size_t i = 0; i < desiredPartitionPoints.size() - 2; i++) {
-    desiredPartitionPoints[i + 1] = desiredPartitionPoints[i] + increment;
+  desiredPartitionPoints.front() = timeTrajectory.front();
+
+  const scalar_t increment = (timeTrajectory.back() - timeTrajectory.front()) / static_cast<scalar_t>(numWorkers);
+  for (size_t i = 1u; i < desiredPartitionPoints.size() - 1; i++) {
+    desiredPartitionPoints[i] = desiredPartitionPoints[i - 1] + increment;
   }
-  desiredPartitionPoints.back() = timeArray.back();
+  desiredPartitionPoints.back() = timeTrajectory.back();
 
   std::vector<std::pair<int, int>> partitionIntervals;
   int startPos = 0;
   int endPos;
   for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
     const scalar_t& time = desiredPartitionPoints[i];
-    endPos = std::distance(timeArray.begin(), std::lower_bound(timeArray.begin(), timeArray.end(), time));
+    endPos = std::distance(timeTrajectory.begin(), std::lower_bound(timeTrajectory.begin(), timeTrajectory.end(), time));
     if (endPos != startPos) {
       partitionIntervals.emplace_back(startPos, endPos);
       startPos = endPos;
@@ -464,31 +472,36 @@ void GaussNewtonDDP::runParallel(std::function<void(void)> taskFunction, size_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t GaussNewtonDDP::rolloutInitialTrajectory(LinearController& controllersStock, scalar_array_t& timeTrajectoriesStock,
-                                                  size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
-                                                  vector_array_t& inputTrajectoriesStock,
-                                                  std::vector<ModelData>& modelDataTrajectoriesStock,
-                                                  std::vector<ModelData>& modelDataEventTimesStock, size_t workerIndex /*= 0*/) {
-  // Get event times
+scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalData, size_t workerIndex /*= 0*/) {
+  // get event times
   const scalar_array_t& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
 
-  // Prepare outputs
-  timeTrajectoriesStock.clear();
-  postEventIndicesStock.clear();
-  stateTrajectoriesStock.clear();
-  inputTrajectoriesStock.clear();
-  modelDataTrajectoriesStock.clear();
-  modelDataEventTimesStock.clear();
+  // prepare outputs
+  // cannot use PrimalDataContainer::clear() as the controller need to be preserved.
+  auto& timeTrajectory = primalData.timeTrajectory;
+  auto& postEventIndices = primalData.postEventIndices;
+  auto& stateTrajectory = primalData.stateTrajectory;
+  auto& inputTrajectory = primalData.inputTrajectory;
+  auto& modelDataTrajectory = primalData.modelDataTrajectory;
+  auto& modelDataEventTimes = primalData.modelDataEventTimes;
+
+  auto& controller = primalData.controller;
+
+  timeTrajectory.clear();
+  postEventIndices.clear();
+  stateTrajectory.clear();
+  inputTrajectory.clear();
+  modelDataTrajectory.clear();
+  modelDataEventTimes.clear();
 
   // Find until where we have a controller available for the rollout
-  scalar_t controllerAvailableTill = controllersStock.empty() ? initTime_ : controllersStock.timeStamp_.back();
+  scalar_t controllerAvailableTill = controller.empty() ? initTime_ : controller.timeStamp_.back();
 
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
               << "\tcontroller available till t = " << controllerAvailableTill << "\n";
   }
 
-  size_t numSteps = 0;
   vector_t xCurrent = initState_;
   // Start and end of rollout segment
   const scalar_t t0 = initTime_;
@@ -499,8 +512,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(LinearController& controllersS
   const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
 
   if (ddpSettings_.debugPrintRollout_) {
-    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] partition "
-              << "0"
+    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory]"
               << " for t = [" << t0 << ", " << tf << "]\n";
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
       std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]\n";
@@ -513,19 +525,19 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(LinearController& controllersS
   // Rollout with controller
   if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
     xCurrent = dynamicsForwardRolloutPtrStock_[workerIndex]->run(controllerRolloutFromTo.first, xCurrent, controllerRolloutFromTo.second,
-                                                                 &controllersStock, eventTimes, timeTrajectoriesStock,
-                                                                 postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock);
+                                                                 &controller, eventTimes, timeTrajectory, postEventIndices, stateTrajectory,
+                                                                 inputTrajectory);
   }
 
   // Finish rollout with operating points
   if (operatingPointsFromTo.first < operatingPointsFromTo.second) {
     // Remove last point of the controller rollout if it is directly past an event. Here where we want to use the initializer
     // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
-    if (!postEventIndicesStock.empty() && postEventIndicesStock.back() == (timeTrajectoriesStock.size() - 1)) {
+    if (!postEventIndices.empty() && postEventIndices.back() == (timeTrajectory.size() - 1)) {
       // Start new integration at the time point after the event
-      timeTrajectoriesStock.pop_back();
-      stateTrajectoriesStock.pop_back();
-      inputTrajectoriesStock.pop_back();
+      timeTrajectory.pop_back();
+      stateTrajectory.pop_back();
+      inputTrajectory.pop_back();
       // eventsPastTheEndIndeces is not removed because we need to mark the start of the operatingPointTrajectory as being after an event.
     }
 
@@ -539,37 +551,34 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(LinearController& controllersS
 
     // Add controller rollout length to event past the indeces
     for (auto& eventIndex : eventsPastTheEndIndecesTail) {
-      eventIndex += stateTrajectoriesStock.size();  // This size of this trajectory part was missing when counting events in the tail
+      eventIndex += stateTrajectory.size();  // This size of this trajectory part was missing when counting events in the tail
     }
 
     // Concatenate the operating points to the rollout
-    timeTrajectoriesStock.insert(timeTrajectoriesStock.end(), timeTrajectoryTail.begin(), timeTrajectoryTail.end());
-    postEventIndicesStock.insert(postEventIndicesStock.end(), eventsPastTheEndIndecesTail.begin(), eventsPastTheEndIndecesTail.end());
-    stateTrajectoriesStock.insert(stateTrajectoriesStock.end(), stateTrajectoryTail.begin(), stateTrajectoryTail.end());
-    inputTrajectoriesStock.insert(inputTrajectoriesStock.end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
+    timeTrajectory.insert(timeTrajectory.end(), timeTrajectoryTail.begin(), timeTrajectoryTail.end());
+    postEventIndices.insert(postEventIndices.end(), eventsPastTheEndIndecesTail.begin(), eventsPastTheEndIndecesTail.end());
+    stateTrajectory.insert(stateTrajectory.end(), stateTrajectoryTail.begin(), stateTrajectoryTail.end());
+    inputTrajectory.insert(inputTrajectory.end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
   }
 
   // update model data trajectory
-  modelDataTrajectoriesStock.resize(timeTrajectoriesStock.size());
-  for (size_t k = 0; k < timeTrajectoriesStock.size(); k++) {
-    modelDataTrajectoriesStock[k].time_ = timeTrajectoriesStock[k];
-    modelDataTrajectoriesStock[k].stateDim_ = stateTrajectoriesStock[k].size();
-    modelDataTrajectoriesStock[k].inputDim_ = inputTrajectoriesStock[k].size();
-    modelDataTrajectoriesStock[k].dynamicsBias_.setZero(stateTrajectoriesStock[k].size());
+  modelDataTrajectory.resize(timeTrajectory.size());
+  for (size_t k = 0; k < timeTrajectory.size(); k++) {
+    modelDataTrajectory[k].time_ = timeTrajectory[k];
+    modelDataTrajectory[k].stateDim_ = stateTrajectory[k].size();
+    modelDataTrajectory[k].inputDim_ = inputTrajectory[k].size();
+    modelDataTrajectory[k].dynamicsBias_.setZero(stateTrajectory[k].size());
   }
 
   // update model data at event times
-  modelDataEventTimesStock.resize(postEventIndicesStock.size());
-  for (size_t ke = 0; ke < postEventIndicesStock.size(); ke++) {
-    const auto index = postEventIndicesStock[ke] - 1;
-    modelDataEventTimesStock[ke].time_ = timeTrajectoriesStock[index];
-    modelDataEventTimesStock[ke].stateDim_ = stateTrajectoriesStock[index].size();
-    modelDataEventTimesStock[ke].inputDim_ = inputTrajectoriesStock[index].size();
-    modelDataEventTimesStock[ke].dynamicsBias_.setZero(stateTrajectoriesStock[index].size());
+  modelDataEventTimes.resize(postEventIndices.size());
+  for (size_t ke = 0; ke < postEventIndices.size(); ke++) {
+    const auto index = postEventIndices[ke] - 1;
+    modelDataEventTimes[ke].time_ = timeTrajectory[index];
+    modelDataEventTimes[ke].stateDim_ = stateTrajectory[index].size();
+    modelDataEventTimes[ke].inputDim_ = inputTrajectory[index].size();
+    modelDataEventTimes[ke].dynamicsBias_.setZero(stateTrajectory[index].size());
   }
-
-  // total number of steps
-  numSteps += timeTrajectoriesStock.size();
 
   if (!xCurrent.allFinite()) {
     throw std::runtime_error("System became unstable during the rollout.");
@@ -578,13 +587,12 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(LinearController& controllersS
   // debug print
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "\n++++++++++++++++++++++++++++++\n";
-    std::cerr << "Partition: "
-              << "0";
+    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << timeTrajectory.front() << ", " << timeTrajectory.back() << "]";
     std::cerr << "\n++++++++++++++++++++++++++++++\n";
-    RolloutBase::display(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, &inputTrajectoriesStock);
+    RolloutBase::display(timeTrajectory, postEventIndices, stateTrajectory, &inputTrajectory);
   }
   // average time step
-  return (controllerAvailableTill - initTime_) / numSteps;
+  return (controllerAvailableTill - initTime_) / static_cast<double>(timeTrajectory.size());
 }
 
 /******************************************************************************************************/
@@ -621,151 +629,119 @@ scalar_t GaussNewtonDDP::calculateRolloutMerit(const PerformanceIndex& performan
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
-  // clear partitions
-  SsTimeTrajectoryStock_.clear();
-  SmTrajectoryStock_.clear();
-  SvTrajectoryStock_.clear();
-  sTrajectoryStock_.clear();
-
-  const auto outputN = nominalTimeTrajectoriesStock_.size();
-  SsTimeTrajectoryStock_.resize(outputN);
-  SmTrajectoryStock_.resize(outputN);
-  SvTrajectoryStock_.resize(outputN);
-  sTrajectoryStock_.resize(outputN);
+scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
+  // pre-allocate memory for dual solution
+  const size_t outputN = nominalPrimalData_.timeTrajectory.size();
+  dualData_.valueFunctionTrajectory.clear();
+  dualData_.valueFunctionTrajectory.resize(outputN);
 
   // solve it sequentially for the first iteration
   if (totalNumIterations_ == 0) {
-    std::pair<int, int> partitionInterval{0, nominalTimeTrajectoriesStock_.size() - 1};
-    solveRiccatiEquationsForPartitions(0, partitionInterval, SmFinal, SvFinal, sFinal);
-
+    const std::pair<int, int> partitionInterval{0, outputN - 1};
+    riccatiEquationsWorker(0, partitionInterval, finalValueFunction);
   } else {  // solve it in parallel
-    // distribution of the sequential tasks (e.g. Riccati solver) in between threads
+    // do equal-time partitions based on available thread resource
     std::vector<std::pair<int, int>> partitionIntervals =
-        getPartitionIntervalsFromTimeArray(nominalTimeTrajectoriesStock_, ddpSettings_.nThreads_);
+        getPartitionIntervalsFromTimeTrajectory(nominalPrimalData_.timeTrajectory, ddpSettings_.nThreads_);
 
-    // correct the end of parrtition's final values based on the cached values
-    matrix_array_t SmFinalStock_(partitionIntervals.size());
-    vector_array_t SvFinalStock_(partitionIntervals.size());
-    scalar_array_t sFinalStock_(partitionIntervals.size());
+    // hold the final value function of each partition
+    std::vector<ScalarFunctionQuadraticApproximation> finalValueFunctionOfEachPartition(partitionIntervals.size());
 
-    SmFinalStock_.back() = SmFinal;
-    SvFinalStock_.back() = SvFinal;
-    sFinalStock_.back() = sFinal;
+    finalValueFunctionOfEachPartition.back() = finalValueFunction;
+
     for (size_t i = 0; i < partitionIntervals.size() - 1; i++) {
-      const vector_t& xFinalUpdated = nominalStateTrajectoriesStock_[partitionIntervals[i + 1].first];
-      const auto interpolatedFinalValueFunc =
-          getValueFunction(nominalTimeTrajectoriesStock_[partitionIntervals[i + 1].first], xFinalUpdated);
-      SmFinalStock_[i] = interpolatedFinalValueFunc.dfdxx;
-      SvFinalStock_[i] = interpolatedFinalValueFunc.dfdx;
-      sFinalStock_[i] = interpolatedFinalValueFunc.f;
+      const int startIndexOfNextPartition = partitionIntervals[i + 1].first;
+      const vector_t& xFinalUpdated = nominalPrimalData_.stateTrajectory[startIndexOfNextPartition];
+      finalValueFunctionOfEachPartition[i] =
+          getValueFunctionFromCache(nominalPrimalData_.timeTrajectory[startIndexOfNextPartition], xFinalUpdated);
     }  // end of loop
 
     nextTaskId_ = 0;
     std::function<void(void)> task = [&] {
       const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
       const auto& partitionInterval = partitionIntervals[taskId];
-      solveRiccatiEquationsForPartitions(taskId, partitionInterval, SmFinalStock_[taskId], SvFinalStock_[taskId], sFinalStock_[taskId]);
+      riccatiEquationsWorker(taskId, partitionInterval, finalValueFunctionOfEachPartition[taskId]);
     };
     runParallel(task, partitionIntervals.size());
   }
 
-  SsTimeTrajectoryStock_.back() = nominalTimeTrajectoriesStock_.back();
-  SmTrajectoryStock_.back() = SmFinal;
-  SvTrajectoryStock_.back() = SvFinal;
-  sTrajectoryStock_.back() = sFinal;
+  // the last index of the partition is excluded, so the final value function is filled manually
+  dualData_.valueFunctionTrajectory.back() = finalValueFunction;
 
   // testing the numerical stability of the Riccati equations
   if (ddpSettings_.checkNumericalStability_) {
-    int N = SsTimeTrajectoryStock_.size();
+    int N = nominalPrimalData_.timeTrajectory.size();
     for (int k = N - 1; k >= 0; k--) {
       try {
-        if (!SmTrajectoryStock_[k].allFinite()) {
+        const ScalarFunctionQuadraticApproximation& valueFunction = dualData_.valueFunctionTrajectory[k];
+        if (!valueFunction.dfdxx.allFinite()) {
           throw std::runtime_error("Sm is unstable.");
         }
-        if (LinearAlgebra::eigenvalues(SmTrajectoryStock_[k]).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
+        if (LinearAlgebra::eigenvalues(valueFunction.dfdxx).real().minCoeff() < -Eigen::NumTraits<scalar_t>::epsilon()) {
           throw std::runtime_error("Sm matrix is not positive semi-definite. It's smallest eigenvalue is " +
-                                   std::to_string(LinearAlgebra::eigenvalues(SmTrajectoryStock_[k]).real().minCoeff()) + ".");
+                                   std::to_string(LinearAlgebra::eigenvalues(valueFunction.dfdxx).real().minCoeff()) + ".");
         }
-        if (!SvTrajectoryStock_[k].allFinite()) {
+        if (!valueFunction.dfdx.allFinite()) {
           throw std::runtime_error("Sv is unstable.");
         }
-        if (sTrajectoryStock_[k] != sTrajectoryStock_[k]) {
+        if (std::isnan(valueFunction.f)) {
           throw std::runtime_error("s is unstable");
         }
       } catch (const std::exception& error) {
-        std::cerr << "what(): " << error.what() << " at time " << SsTimeTrajectoryStock_[k] << " [sec].\n";
+        std::cerr << "what(): " << error.what() << " at time " << nominalPrimalData_.timeTrajectory[k] << " [sec].\n";
         for (int kp = k; kp < k + 10; kp++) {
           if (kp >= N) {
             continue;
           }
-          std::cerr << "Sm[" << SsTimeTrajectoryStock_[kp] << "]:\n" << SmTrajectoryStock_[kp].norm() << "\n";
-          std::cerr << "Sv[" << SsTimeTrajectoryStock_[kp] << "]:\t" << SvTrajectoryStock_[kp].transpose().norm() << "\n";
-          std::cerr << "s[" << SsTimeTrajectoryStock_[kp] << "]:\t" << sTrajectoryStock_[kp] << "\n";
+          std::cerr << "Sm[" << nominalPrimalData_.timeTrajectory[kp] << "]:\n"
+                    << dualData_.valueFunctionTrajectory[kp].dfdxx.norm() << "\n";
+          std::cerr << "Sv[" << nominalPrimalData_.timeTrajectory[kp] << "]:\t"
+                    << dualData_.valueFunctionTrajectory[kp].dfdx.transpose().norm() << "\n";
+          std::cerr << "s[" << nominalPrimalData_.timeTrajectory[kp] << "]:\t" << dualData_.valueFunctionTrajectory[kp].f << "\n";
         }
         throw;
       }
     }  // end of k loop
   }
 
-  // total number of call
-  size_t numSteps = SsTimeTrajectoryStock_.size();
-
   // average time step
-  return (finalTime_ - initTime_) / numSteps;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void GaussNewtonDDP::solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& partitionInterval, matrix_t SmFinal,
-                                                        vector_t SvFinal, scalar_t sFinal) {
-  riccatiEquationsWorker(taskId, partitionInterval, SmFinal, SvFinal, sFinal);
+  return (finalTime_ - initTime_) / outputN;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::calculateController() {
-  const auto N = SsTimeTrajectoryStock_.size();
+  const size_t N = nominalPrimalData_.timeTrajectory.size();
 
-  nominalControllersStock_.timeStamp_ = SsTimeTrajectoryStock_;
-  nominalControllersStock_.gainArray_.resize(N);
-  nominalControllersStock_.biasArray_.resize(N);
-  nominalControllersStock_.deltaBiasArray_.resize(N);
+  unoptimizedController_.clear();
+  unoptimizedController_.timeStamp_ = nominalPrimalData_.timeTrajectory;
+  unoptimizedController_.gainArray_.resize(N);
+  unoptimizedController_.biasArray_.resize(N);
+  unoptimizedController_.deltaBiasArray_.resize(N);
 
   // perform the calculateControllerWorker for partition i
   nextTimeIndex_ = 0;
-  nextTaskId_ = 0;
-  std::function<void(void)> task = [this] {
-    int N = SsTimeTrajectoryStock_.size();
+  std::function<void(void)> task = [this, N] {
     int timeIndex;
-    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
     // get next time index (atomic)
     while ((timeIndex = nextTimeIndex_++) < N) {
-      calculateControllerWorker(taskId, 0, timeIndex);
+      calculateControllerWorker(timeIndex, nominalPrimalData_, dualData_, unoptimizedController_);
     }
   };
   runParallel(task, ddpSettings_.nThreads_);
 
   // if the final time is not an event time change the last control to the second to the last
-  const auto& timeTrajectory = nominalTimeTrajectoriesStock_;
-  const auto& postEventIndices = nominalPostEventIndicesStock_;
-  if (postEventIndices.empty() || postEventIndices.back() != timeTrajectory.size() - 1) {
-    auto& ctrl = nominalControllersStock_;
+  if (nominalPrimalData_.postEventIndices.empty() ||
+      nominalPrimalData_.postEventIndices.back() != nominalPrimalData_.timeTrajectory.size() - 1) {
+    LinearController& ctrl = unoptimizedController_;
     if (ctrl.size() > 1) {
-      const auto secondToLastIndex = ctrl.size() - 2;
+      const size_t secondToLastIndex = ctrl.size() - 2u;
       ctrl.gainArray_.back() = ctrl.gainArray_[secondToLastIndex];
       ctrl.biasArray_.back() = ctrl.biasArray_[secondToLastIndex];
       ctrl.deltaBiasArray_.back() = ctrl.deltaBiasArray_[secondToLastIndex];
     }
-    // else if (finalActivePartition_ > initActivePartition_) {
-    //   const auto secondToLastCtrl = nominalControllersStock_[finalActivePartition_ - 1];
-    //   ctrl.gainArray_.back() = secondToLastCtrl.gainArray_.back();
-    //   ctrl.biasArray_.back() = secondToLastCtrl.biasArray_.back();
-    //   ctrl.deltaBiasArray_.back() = secondToLastCtrl.deltaBiasArray_.back();
-    // }
   }
 }
 
@@ -775,16 +751,16 @@ void GaussNewtonDDP::calculateController() {
 void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const {
   maxDeltaUffNorm = 0.0;
   maxDeltaUeeNorm = 0.0;
-  for (size_t k = 0; k < nominalControllersStock_.timeStamp_.size(); k++) {
-    maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalControllersStock_.deltaBiasArray_[k].norm());
+  for (size_t k = 0; k < nominalPrimalData_.controller.timeStamp_.size(); k++) {
+    maxDeltaUffNorm = std::max(maxDeltaUffNorm, nominalPrimalData_.controller.deltaBiasArray_[k].norm());
 
-    const auto& time = nominalControllersStock_.timeStamp_[k];
-    const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalTimeTrajectoriesStock_);
-    const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, nominalStateTrajectoriesStock_);
-    const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, nominalInputTrajectoriesStock_);
-    const vector_t deltaUee = nominalInput - nominalControllersStock_.gainArray_[k] * nominalState - nominalControllersStock_.biasArray_[k];
+    const auto time = nominalPrimalData_.controller.timeStamp_[k];
+    const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalPrimalData_.timeTrajectory);
+    const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, nominalPrimalData_.stateTrajectory);
+    const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, nominalPrimalData_.inputTrajectory);
+    const vector_t deltaUee =
+        nominalInput - nominalPrimalData_.controller.gainArray_[k] * nominalState - nominalPrimalData_.controller.biasArray_[k];
     maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
-
   }  // end of k loop
 }
 
@@ -796,20 +772,23 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
    * compute and augment the LQ approximation of intermediate times for the partition i
    */
   // perform the LQ approximation for intermediate times at partition i
-  approximateIntermediateLQ(nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-                            nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_);
+  approximateIntermediateLQ(nominalPrimalData_.timeTrajectory, nominalPrimalData_.postEventIndices, nominalPrimalData_.stateTrajectory,
+                            nominalPrimalData_.inputTrajectory, nominalPrimalData_.modelDataTrajectory);
 
   // augment the intermediate cost by performing augmentCostWorker for the partition i
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
-  std::function<void(void)> task = [this] {
+
+  const size_t N = nominalPrimalData_.timeTrajectory.size();
+  std::function<void(void)> task = [this, N] {
     size_t timeIndex;
     size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
     // get next time index is atomic
-    while ((timeIndex = nextTimeIndex_++) < nominalTimeTrajectoriesStock_.size()) {
+    while ((timeIndex = nextTimeIndex_++) < N) {
       // augment cost
-      augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0, modelDataTrajectoriesStock_[timeIndex]);
+      augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateEqConstrPenaltyCoeff, 0.0,
+                        nominalPrimalData_.modelDataTrajectory[timeIndex]);
     }
   };
   runParallel(task, ddpSettings_.nThreads_);
@@ -818,27 +797,27 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
    * compute and augment the LQ approximation of the event times for the partition.
    * also call shiftHessian on the event time's cost 2nd order derivative.
    */
-  const size_t NE = nominalPostEventIndicesStock_.size();
+  const size_t NE = nominalPrimalData_.postEventIndices.size();
   if (NE > 0) {
-    // perform the approximateEventsLQWorker for partition i
     nextTimeIndex_ = 0;
     nextTaskId_ = 0;
-    std::function<void(void)> task = [this] {
+    std::function<void(void)> task = [this, NE] {
       int timeIndex;
       const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
       LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[taskId], ddpSettings_.checkNumericalStability_);
 
-      // get next time index is atomic
-      while ((timeIndex = nextTimeIndex_++) < nominalPostEventIndicesStock_.size()) {
-        auto& modelData = modelDataEventTimesStock_[timeIndex];
+      // nextTimeIndex_ is atomic
+      while ((timeIndex = nextTimeIndex_++) < NE) {
+        ModelData& modelData = nominalPrimalData_.modelDataEventTimes[timeIndex];
 
-        // execute approximateLQ for the given partition and event time index
-        const size_t k = nominalPostEventIndicesStock_[timeIndex] - 1;
-        lqapprox.approximateLQProblemAtEventTime(nominalTimeTrajectoriesStock_[k], nominalStateTrajectoriesStock_[k], modelData);
+        // execute approximateLQ for the pre-event node
+        const size_t preEventIndex = nominalPrimalData_.postEventIndices[timeIndex] - 1;
+        lqapprox.approximateLQProblemAtEventTime(nominalPrimalData_.timeTrajectory[preEventIndex],
+                                                 nominalPrimalData_.stateTrajectory[preEventIndex], modelData);
         // augment cost
         augmentCostWorker(taskId, constraintPenaltyCoefficients_.stateFinalEqConstrPenaltyCoeff, 0.0, modelData);
-        // shift Hessian for event times
+        // shift Hessian
         if (ddpSettings_.strategy_ == search_strategy::Type::LINE_SEARCH) {
           hessian_correction::shiftHessian(ddpSettings_.lineSearch_.hessianCorrectionStrategy_, modelData.cost_.dfdxx,
                                            ddpSettings_.lineSearch_.hessianCorrectionMultiple_);
@@ -853,7 +832,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
    */
   ModelData heuristicsModelData;
   LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[0], ddpSettings_.checkNumericalStability_);
-  lqapprox.approximateLQProblemAtFinalTime(nominalTimeTrajectoriesStock_.back(), nominalStateTrajectoriesStock_.back(),
+  lqapprox.approximateLQProblemAtFinalTime(nominalPrimalData_.timeTrajectory.back(), nominalPrimalData_.stateTrajectory.back(),
                                            heuristicsModelData);
   heuristics_ = std::move(heuristicsModelData.cost_);
 
@@ -1052,38 +1031,27 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost) {
+void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData) {
+  dstPrimalData.clear();
   auto performanceIndex = performanceIndex_;
-  scalar_array_t timeTrajectoriesStock;
-  size_array_t postEventIndicesStock;
-  vector_array_t stateTrajectoriesStock;
-  vector_array_t inputTrajectoriesStock;
-  std::vector<ModelData> modelDataTrajectoriesStock;
-  std::vector<ModelData> modelDataEventTimesStock;
 
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
 
-  bool success = searchStrategyPtr_->run(lqModelExpectedCost, modeSchedule, nominalControllersStock_, performanceIndex,
-                                         timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock,
-                                         modelDataTrajectoriesStock, modelDataEventTimesStock, avgTimeStepFP_);
+  bool success =
+      searchStrategyPtr_->run(lqModelExpectedCost, modeSchedule, unoptimizedController_, performanceIndex, dstPrimalData.timeTrajectory,
+                              dstPrimalData.postEventIndices, dstPrimalData.stateTrajectory, dstPrimalData.inputTrajectory,
+                              dstPrimalData.modelDataTrajectory, dstPrimalData.modelDataEventTimes, avgTimeStepFP_);
 
   // accept or reject the search
   if (success) {
     // update nominal trajectories
     performanceIndex_ = performanceIndex;
-    nominalTimeTrajectoriesStock_.swap(timeTrajectoriesStock);
-    nominalPostEventIndicesStock_.swap(postEventIndicesStock);
-    nominalStateTrajectoriesStock_.swap(stateTrajectoriesStock);
-    nominalInputTrajectoriesStock_.swap(inputTrajectoriesStock);
-    modelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock);
-    modelDataEventTimesStock_.swap(modelDataEventTimesStock);
-    // clear the feedforward increments
-    nominalControllersStock_.deltaBiasArray_.clear();
+    // unoptimizedController_ is now optimized. Regarding the controller, search is an in-place operation
+    unoptimizedController_.deltaBiasArray_.clear();
+    swap(dstPrimalData.controller, unoptimizedController_);
   } else {
-    // swap back the cached optimized trajectories
-    swapDataToCache();
-    // replace the cached controller as the nominal
-    swap(nominalControllersStock_, cachedControllersStock_);
+    // If fail, copy the entire cache back. To keep the consistence of cached data, all cache should be left untouched.
+    dstPrimalData = cachedPrimalData_;
   }
 }
 
@@ -1141,27 +1109,10 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t stateEqConstraintISE, sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::swapDataToCache() {
-  cachedTimeTrajectoriesStock_.swap(nominalTimeTrajectoriesStock_);
-  cachedPostEventIndicesStock_.swap(nominalPostEventIndicesStock_);
-  cachedStateTrajectoriesStock_.swap(nominalStateTrajectoriesStock_);
-  cachedInputTrajectoriesStock_.swap(nominalInputTrajectoriesStock_);
-  cachedModelDataTrajectoriesStock_.swap(modelDataTrajectoriesStock_);
-  cachedModelDataEventTimesStock_.swap(modelDataEventTimesStock_);
-  cachedProjectedModelDataTrajectoriesStock_.swap(projectedModelDataTrajectoriesStock_);
-  cachedRiccatiModificationTrajectoriesStock_.swap(riccatiModificationTrajectoriesStock_);
+  nominalPrimalData_.swap(cachedPrimalData_);
+  dualData_.swap(cachedDualData_);
 }
 
-void GaussNewtonDDP::swapDualSolutionsToCache() {
-  cachedSsTimeTrajectoryStock_.swap(SsTimeTrajectoryStock_);
-  cachedsTrajectoryStock_.swap(sTrajectoryStock_);
-  cachedSvTrajectoryStock_.swap(SvTrajectoryStock_);
-  cachedSmTrajectoryStock_.swap(SmTrajectoryStock_);
-}
-
-void GaussNewtonDDP::cacheNominalTrajectories() {
-  cachedNominalTimeTrajectoriesStock_ = nominalTimeTrajectoriesStock_;
-  cachedNominalStateTrajectoriesStock_ = nominalStateTrajectoriesStock_;
-}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -1195,41 +1146,7 @@ void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
   //     // input
   //     correctcachedTrajectoryTail(timeSegment, nominalInputTrajectoriesStock_[i], cachedInputTrajectoriesStock_[i]);
 
-  //     // debugging checks for the added tail
-  //     if (ddpSettings_.debugCaching_) {
-  //       for (int k = timeSegment.first + 1; k < nominalTimeTrajectoriesStock_[i].size(); k++) {
-  //         const auto indexAlpha = LinearInterpolation::timeSegment(nominalTimeTrajectoriesStock_[i][k], cachedTimeTrajectoriesStock_[i]);
-
-  //         const vector_t stateCached = LinearInterpolation::interpolate(indexAlpha, cachedStateTrajectoriesStock_[i]);
-  //         if (!stateCached.isApprox(nominalStateTrajectoriesStock_[i][k])) {
-  //           throw std::runtime_error("The tail of the cached state trajectory is not correctly set.");
-  //         }
-
-  //         const vector_t inputCached = LinearInterpolation::interpolate(indexAlpha, cachedInputTrajectoriesStock_[i]);
-  //         if (!inputCached.isApprox(nominalInputTrajectoriesStock_[i][k])) {
-  //           throw std::runtime_error("The tail of the cached input trajectory is not correctly set.");
-  //         }
-  //       }  // end of k loop
-  //     }
   //   }
-
-  //   // check for the event time indices
-  //   if (ddpSettings_.debugCaching_) {
-  //     auto postEvent = nominalPostEventIndicesStock_[i].rbegin();
-  //     auto cachedPostEvent = cachedPostEventIndicesStock_[i].rbegin();
-  //     for (; postEvent != nominalPostEventIndicesStock_[i].rend(); ++postEvent) {
-  //       // nominal trajectory should have less event since it spans a shorter time period
-  //       if (nominalTimeTrajectoriesStock_[i][*postEvent] != cachedTimeTrajectoriesStock_[i][*cachedPostEvent]) {
-  //         throw std::runtime_error("Cached post event indexes are in correct.");
-  //       }
-  //       // check for the repeated time
-  //       if (nominalTimeTrajectoriesStock_[i][*postEvent - 1] != cachedTimeTrajectoriesStock_[i][*cachedPostEvent - 1]) {
-  //         throw std::runtime_error("Cached post event indexes are biased by -1.");
-  //       }
-  //       ++cachedPostEvent;
-  //     }  // end of postEvent loop
-  //   }
-
   // }  // end of i loop
 }
 
@@ -1246,22 +1163,22 @@ void GaussNewtonDDP::runInit() {
     constexpr size_t taskId = 0;
     constexpr scalar_t stepLength = 0.0;
     // perform a rollout
-    const auto avgTimeStep = rolloutInitialTrajectory(
-        nominalControllersStock_, nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-        nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, taskId);
+    const auto avgTimeStep = rolloutInitialTrajectory(nominalPrimalData_, taskId);
     scalar_t heuristicsValue = 0.0;
 
-    searchStrategyPtr_->rolloutCostAndConstraints(
-        optimalControlProblemStock_[taskId], nominalTimeTrajectoriesStock_, nominalPostEventIndicesStock_, nominalStateTrajectoriesStock_,
-        nominalInputTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, heuristicsValue);
+    searchStrategyPtr_->rolloutCostAndConstraints(optimalControlProblemStock_[taskId], nominalPrimalData_.timeTrajectory,
+                                                  nominalPrimalData_.postEventIndices, nominalPrimalData_.stateTrajectory,
+                                                  nominalPrimalData_.inputTrajectory, nominalPrimalData_.modelDataTrajectory,
+                                                  nominalPrimalData_.modelDataEventTimes, heuristicsValue);
 
     // This is necessary for:
     // + The moving horizon (MPC) application
     // + The very first call of the algorithm where there is no previous nominal trajectories.
     correctInitcachedNominalTrajectories();
 
-    performanceIndex_ = searchStrategyPtr_->calculateRolloutPerformanceIndex(
-        *penaltyPtr_, nominalTimeTrajectoriesStock_, modelDataTrajectoriesStock_, modelDataEventTimesStock_, heuristicsValue);
+    performanceIndex_ = searchStrategyPtr_->calculateRolloutPerformanceIndex(*penaltyPtr_, nominalPrimalData_.timeTrajectory,
+                                                                             nominalPrimalData_.modelDataTrajectory,
+                                                                             nominalPrimalData_.modelDataEventTimes, heuristicsValue);
 
     // calculates rollout merit
     performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
@@ -1290,14 +1207,13 @@ void GaussNewtonDDP::runInit() {
 
   // solve Riccati equations
   backwardPassTimer_.startTimer();
-  avgTimeStepBP_ = solveSequentialRiccatiEquations(heuristics_.dfdxx, heuristics_.dfdx, heuristics_.f);
+  avgTimeStepBP_ = solveSequentialRiccatiEquations(heuristics_);
   backwardPassTimer_.endTimer();
 
   // calculate controller
   computeControllerTimer_.startTimer();
-  // cache controller
-  swap(cachedControllersStock_, nominalControllersStock_);
-  // update nominal controller
+  // calculate controller. Result is stored in an intermediate variable. The optimized controller, the one after searching, will be
+  // swapped back to corresponding primalDataContainer in the search stage
   calculateController();
   computeControllerTimer_.endTimer();
 
@@ -1320,7 +1236,7 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 
   // finding the optimal stepLength
   searchStrategyTimer_.startTimer();
-  runSearchStrategy(lqModelExpectedCost);
+  runSearchStrategy(lqModelExpectedCost, nominalPrimalData_);
   searchStrategyTimer_.endTimer();
 
   // update the constraint penalty coefficients
@@ -1334,14 +1250,13 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 
   // solve Riccati equations
   backwardPassTimer_.startTimer();
-  avgTimeStepBP_ = solveSequentialRiccatiEquations(heuristics_.dfdxx, heuristics_.dfdx, heuristics_.f);
+  avgTimeStepBP_ = solveSequentialRiccatiEquations(heuristics_);
   backwardPassTimer_.endTimer();
 
   // calculate controller
   computeControllerTimer_.startTimer();
-  // cache controller
-  swap(cachedControllersStock_, nominalControllersStock_);
-  // update nominal controller
+  // calculate controller. Result is stored in an intermediate variable. The optimized controller, the one after searching, will be
+  // swapped back to corresponding primalDataContainer in the search stage
   calculateController();
   computeControllerTimer_.endTimer();
 
@@ -1370,7 +1285,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                             const std::vector<ControllerBase*>& controllersPtrStock) {
+                             const std::vector<ControllerBase*>& externalNominalController) {
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
@@ -1394,15 +1309,15 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   // In the later case 2 scenarios are possible: either the internal controller is already set (such as the MPC case
   // where the warm starting option is set true) or the internal controller is empty in which instead of performing
   // a rollout the operating trajectories will be used.
-  if (!controllersPtrStock.empty() && !controllersPtrStock[0]->empty()) {
-    nominalControllersStock_.clear();
+  if (!externalNominalController.empty() && !externalNominalController.front()->empty()) {
+    optimizedPrimalData_.controller.clear();
 
     // ensure initial controllers are of the right type, then assign
-    const LinearController* linearCtrlPtr = dynamic_cast<const LinearController*>(controllersPtrStock[0]);
+    const LinearController* linearCtrlPtr = dynamic_cast<const LinearController*>(externalNominalController.front());
     if (linearCtrlPtr == nullptr) {
       throw std::runtime_error("GaussNewtonDDP::run -- controller must be a LinearController.");
     }
-    nominalControllersStock_ = *linearCtrlPtr;
+    optimizedPrimalData_.controller = *linearCtrlPtr;
   }
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1420,9 +1335,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   performanceIndexHistory_.clear();
 
   // check if after the truncation the internal controller is empty
-  bool unreliableControllerIncrement = nominalControllersStock_.empty();
+  bool unreliableControllerIncrement = nominalPrimalData_.controller.empty();
   // initialize the search strategy
-  searchStrategyPtr_->initalize(initTime_, initState_, finalTime_, scalar_array_t{initTime_, finalTime_}, 0, 0);
+  searchStrategyPtr_->initalize(initTime_, initState_, finalTime_);
 
   // set cost desired trajectories
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
@@ -1437,12 +1352,13 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n###################\n";
   }
 
-  // cache the nominal trajectories before the new rollout (time, state, input, ...)
+  // KEEP THE ORDER!!
+  // first swap nominal trajectories (time, state, input, ...) to cache before new rollout
   swapDataToCache();
-  swapDualSolutionsToCache();
+  // second swap the optimized primal data to nominal data container - only the optimized controller is used here
+  nominalPrimalData_.swap(optimizedPrimalData_);
   // run DDP initializer and update the member variables
   runInit();
-  cacheNominalTrajectories();
 
   // increment iteration counter
   totalNumIterations_++;
@@ -1464,17 +1380,17 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
     }
 
-    // cache the nominal trajectories before the new rollout (time, state, input, ...)
-    swapDataToCache();
-    swapDualSolutionsToCache();
     performanceIndexHistory_.push_back(performanceIndex_);
 
     // run the an iteration of the DDP algorithm and update the member variables
     // the controller which is designed solely based on operation trajectories possibly has invalid feedforward.
     // Therefore the expected cost/merit (calculated by the Riccati solution) is not reliable as well.
-    const scalar_t lqModelExpectedCost = unreliableControllerIncrement ? performanceIndex_.merit : sTrajectoryStock_.front();
+    const scalar_t lqModelExpectedCost =
+        unreliableControllerIncrement ? performanceIndex_.merit : dualData_.valueFunctionTrajectory.front().f;
+
+    // cache the nominal trajectories before the new rollout (time, state, input, ...)
+    swapDataToCache();
     runIteration(lqModelExpectedCost);
-    cacheNominalTrajectories();
 
     // increment iteration counter
     totalNumIterations_++;
@@ -1496,14 +1412,12 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
   }
 
-  // cache the nominal trajectories before the new rollout (time, state, input, ...)
-  swapDataToCache();
   performanceIndexHistory_.push_back(performanceIndex_);
 
   // finding the final optimal stepLength and getting the optimal trajectories and controller
   searchStrategyTimer_.startTimer();
-  const scalar_t lqModelExpectedCost = sTrajectoryStock_.front();
-  runSearchStrategy(lqModelExpectedCost);
+  const scalar_t lqModelExpectedCost = dualData_.valueFunctionTrajectory.front().f;
+  runSearchStrategy(lqModelExpectedCost, optimizedPrimalData_);
   searchStrategyTimer_.endTimer();
 
   performanceIndexHistory_.push_back(performanceIndex_);

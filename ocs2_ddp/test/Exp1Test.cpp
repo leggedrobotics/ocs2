@@ -146,72 +146,70 @@ constexpr ocs2::scalar_t Exp1::expectedStateEqConstraintISE;
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-// TEST_F(Exp1, ddp_hamiltonian) {
-//   // ddp settings
-//   auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
-//   ddpSettings.useFeedbackPolicy_ = true;
+TEST_F(Exp1, ddp_hamiltonian) {
+  // ddp settings
+  auto ddpSettings = getSettings(ocs2::ddp::Algorithm::SLQ, 2, ocs2::search_strategy::Type::LINE_SEARCH);
+  ddpSettings.useFeedbackPolicy_ = true;
 
-//   // instantiate
-//   ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
-//   ddp.setReferenceManager(referenceManagerPtr);
+  // instantiate
+  ocs2::SLQ ddp(ddpSettings, *rolloutPtr, *problemPtr, *initializerPtr);
+  ddp.setReferenceManager(referenceManagerPtr);
 
-//   // run ddp
-//   ddp.run(startTime, initState, finalTime, partitioningTimes);
-//   // get solution
-//   const auto solution = ddp.primalSolution(finalTime);
+  // run ddp
+  ddp.run(startTime, initState, finalTime, partitioningTimes);
+  // get solution
+  const auto solution = ddp.primalSolution(finalTime);
 
-//   // define precision for tests
-//   constexpr ocs2::scalar_t precision = ocs2::numeric_traits::weakEpsilon<ocs2::scalar_t>();
-//   // note: in the following highly non-linear system means more than quadratic in the state
+  // define precision for tests
+  constexpr ocs2::scalar_t precision = ocs2::numeric_traits::weakEpsilon<ocs2::scalar_t>();
+  // note: in the following highly non-linear system means more than quadratic in the state
 
-//   // get Hamiltonian at current solution
-//   // expected outcome: true, because the current solution should be optimal
-//   ocs2::scalar_t time = solution.timeTrajectory_.front();
-//   ocs2::vector_t state = solution.stateTrajectory_.front();
-//   ocs2::vector_t input = solution.controllerPtr_->computeInput(time, state);
-//   auto hamiltonian = ddp.getHamiltonian(time, state, input);
-//   const ocs2::vector_t dHdu1a = hamiltonian.dfdu;
-//   EXPECT_TRUE(dHdu1a.isZero(precision)) << "MESSAGE for test 1a: Derivative of Hamiltonian w.r.t. to u is not zero: " <<
-//   dHdu1a.transpose();
+  // get Hamiltonian at current solution
+  // expected outcome: true, because the current solution should be optimal
+  ocs2::scalar_t time = solution.timeTrajectory_.front();
+  ocs2::vector_t state = solution.stateTrajectory_.front();
+  ocs2::vector_t input = solution.controllerPtr_->computeInput(time, state);
+  auto hamiltonian = ddp.getHamiltonian(time, state, input);
+  const ocs2::vector_t dHdu1a = hamiltonian.dfdu;
+  EXPECT_TRUE(dHdu1a.isZero(precision)) << "MESSAGE for test 1a: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1a.transpose();
 
-//   // evaluate Hamiltonian at different state (but using feedback policy)
-//   // expected outcome: true, because for a highly non-linear system the LQ approximation of H is not exact,
-//   //                         however since the subsystems' dynamics are control-affine and the cost is quadratic w.r.t. to input,
-//   //                         this looks like a LQR problem and the linear feedback policy appears to be globally optimal
-//   ocs2::scalar_t querryTime = solution.timeTrajectory_.front();
-//   ocs2::vector_t querryState = ocs2::vector_t::Random(solution.stateTrajectory_.front().size());
-//   ocs2::vector_t querryInput = solution.controllerPtr_->computeInput(querryTime, querryState);
-//   const ocs2::vector_t dHdu1b = hamiltonian.dfdux * (querryState - state) + hamiltonian.dfduu * (querryInput - input) + hamiltonian.dfdu;
-//   EXPECT_TRUE(dHdu1b.isZero(precision)) << "MESSAGE for test 1b: Derivative of Hamiltonian w.r.t. to u is not zero: " <<
-//   dHdu1b.transpose();
+  // evaluate Hamiltonian at different state (but using feedback policy)
+  // expected outcome: true, because for a highly non-linear system the LQ approximation of H is not exact,
+  //                         however since the subsystems' dynamics are control-affine and the cost is quadratic w.r.t. to input,
+  //                         this looks like a LQR problem and the linear feedback policy appears to be globally optimal
+  ocs2::scalar_t querryTime = solution.timeTrajectory_.front();
+  ocs2::vector_t querryState = ocs2::vector_t::Random(solution.stateTrajectory_.front().size());
+  ocs2::vector_t querryInput = solution.controllerPtr_->computeInput(querryTime, querryState);
+  const ocs2::vector_t dHdu1b = hamiltonian.dfdux * (querryState - state) + hamiltonian.dfduu * (querryInput - input) + hamiltonian.dfdu;
+  EXPECT_TRUE(dHdu1b.isZero(precision)) << "MESSAGE for test 1b: Derivative of Hamiltonian w.r.t. to u is not zero: " << dHdu1b.transpose();
 
-//   // evaluate Hamiltonian at different input
-//   // expected outcome: false, because for a highly non-linear system the LQ approximation of H is not exact
-//   //                          but still a random input does not appear to be optimal
-//   querryTime = solution.timeTrajectory_.front();
-//   querryState = solution.stateTrajectory_.front();
-//   querryInput = ocs2::vector_t::Random(solution.inputTrajectory_.front().size());
-//   const ocs2::vector_t dHdu1c = hamiltonian.dfdux * (querryState - state) + hamiltonian.dfduu * (querryInput - input) + hamiltonian.dfdu;
-//   EXPECT_FALSE(dHdu1c.isZero(precision)) << "MESSAGE for test 1c: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu1c.transpose();
+  // evaluate Hamiltonian at different input
+  // expected outcome: false, because for a highly non-linear system the LQ approximation of H is not exact
+  //                          but still a random input does not appear to be optimal
+  querryTime = solution.timeTrajectory_.front();
+  querryState = solution.stateTrajectory_.front();
+  querryInput = ocs2::vector_t::Random(solution.inputTrajectory_.front().size());
+  const ocs2::vector_t dHdu1c = hamiltonian.dfdux * (querryState - state) + hamiltonian.dfduu * (querryInput - input) + hamiltonian.dfdu;
+  EXPECT_FALSE(dHdu1c.isZero(precision)) << "MESSAGE for test 1c: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu1c.transpose();
 
-//   // get Hamiltonian at different state (but using feedback policy)
-//   // expected outcome: false, because for a highly non-linear system the linear feedback policy is not globally optimal
-//   time = solution.timeTrajectory_.front();
-//   state = ocs2::vector_t::Random(solution.stateTrajectory_.front().size());
-//   input = solution.controllerPtr_->computeInput(time, state);
-//   hamiltonian = ddp.getHamiltonian(time, state, input);
-//   const ocs2::vector_t dHdu2 = hamiltonian.dfdu;
-//   EXPECT_FALSE(dHdu2.isZero(precision)) << "MESSAGE for test 2: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu2.transpose();
+  // get Hamiltonian at different state (but using feedback policy)
+  // expected outcome: false, because for a highly non-linear system the linear feedback policy is not globally optimal
+  time = solution.timeTrajectory_.front();
+  state = ocs2::vector_t::Random(solution.stateTrajectory_.front().size());
+  input = solution.controllerPtr_->computeInput(time, state);
+  hamiltonian = ddp.getHamiltonian(time, state, input);
+  const ocs2::vector_t dHdu2 = hamiltonian.dfdu;
+  EXPECT_FALSE(dHdu2.isZero(precision)) << "MESSAGE for test 2: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu2.transpose();
 
-//   // get Hamiltonian at different input
-//   // expected outcome: false, because a random input is not optimal
-//   time = solution.timeTrajectory_.front();
-//   state = solution.stateTrajectory_.front();
-//   input = ocs2::vector_t::Random(solution.inputTrajectory_.front().size());
-//   hamiltonian = ddp.getHamiltonian(time, state, input);
-//   const ocs2::vector_t dHdu3 = hamiltonian.dfdu;
-//   EXPECT_FALSE(dHdu3.isZero(precision)) << "MESSAGE for test 3: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu3.transpose();
-// }
+  // get Hamiltonian at different input
+  // expected outcome: false, because a random input is not optimal
+  time = solution.timeTrajectory_.front();
+  state = solution.stateTrajectory_.front();
+  input = ocs2::vector_t::Random(solution.inputTrajectory_.front().size());
+  hamiltonian = ddp.getHamiltonian(time, state, input);
+  const ocs2::vector_t dHdu3 = hamiltonian.dfdu;
+  EXPECT_FALSE(dHdu3.isZero(precision)) << "MESSAGE for test 3: Derivative of Hamiltonian w.r.t. to u is zero: " << dHdu3.transpose();
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

@@ -71,6 +71,80 @@ class GaussNewtonDDP : public SolverBase {
   };
 
   /**
+   * Primal data container
+   *
+   * The design philosophy behind is to keep all member variables consistent. All (time, post, .., modelDataEventTime)
+   * trajectories should be the rollout result of the controller
+   *
+   * There is one exception that breaks the consistency. When using an external controller to initialize the controller, it is obvious that
+   * the rest of member variables are not the result of the controller. But they will be cleared and populated runInit is called.
+   */
+  struct PrimalDataContainer {
+    scalar_array_t timeTrajectory;
+    size_array_t postEventIndices;
+    vector_array_t stateTrajectory;
+    vector_array_t inputTrajectory;
+    // intermediate model data trajectory
+    std::vector<ModelData> modelDataTrajectory;
+    // event times model data
+    std::vector<ModelData> modelDataEventTimes;
+    // the one used to rollout the rest of (state, input...) trajectories
+    LinearController controller;
+
+    inline void swap(PrimalDataContainer& other) {
+      timeTrajectory.swap(other.timeTrajectory);
+      postEventIndices.swap(other.postEventIndices);
+      stateTrajectory.swap(other.stateTrajectory);
+      inputTrajectory.swap(other.inputTrajectory);
+      modelDataTrajectory.swap(other.modelDataTrajectory);
+      modelDataEventTimes.swap(other.modelDataEventTimes);
+
+      ::ocs2::swap(controller, other.controller);
+    }
+
+    inline void clear() {
+      timeTrajectory.clear();
+      postEventIndices.clear();
+      stateTrajectory.clear();
+      inputTrajectory.clear();
+      modelDataTrajectory.clear();
+      modelDataEventTimes.clear();
+
+      controller.clear();
+    }
+  };
+
+  /**
+   * Dual data container
+   *
+   * The design philosophy behind is to keep all member variables consistent. valueFunctionTrajectory is the direct result of
+   * (projectedModelData,riccatiModification) trajectories.
+   *
+   */
+  struct DualDataContainer {
+    // projected model data trajectory
+    std::vector<ModelData> projectedModelDataTrajectory;
+
+    // Riccati modification
+    std::vector<riccati_modification::Data> riccatiModificationTrajectory;
+
+    // Riccati solution coefficients
+    std::vector<ScalarFunctionQuadraticApproximation> valueFunctionTrajectory;
+
+    inline void swap(DualDataContainer& other) {
+      projectedModelDataTrajectory.swap(other.projectedModelDataTrajectory);
+      riccatiModificationTrajectory.swap(other.riccatiModificationTrajectory);
+      valueFunctionTrajectory.swap(other.valueFunctionTrajectory);
+    }
+
+    inline void clear() {
+      projectedModelDataTrajectory.clear();
+      riccatiModificationTrajectory.clear();
+      valueFunctionTrajectory.clear();
+    }
+  };
+
+  /**
    * Constructor
 
    * @param [in] ddpSettings: Structure containing the settings for the Gauss-Newton DDP algorithm.
@@ -106,7 +180,7 @@ class GaussNewtonDDP : public SolverBase {
 
   vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
 
-  void rewindOptimizer(size_t firstIndex) override;
+  void rewindOptimizer(size_t firstIndex) override{};
 
   std::string getBenchmarkingInfo() const override;
 
@@ -123,12 +197,27 @@ class GaussNewtonDDP : public SolverBase {
   const ddp::Settings& settings() const { return ddpSettings_; }
 
   /**
-   * Computes the normalized time for Riccati backward pass.
+   * Retrieve time and post event trajectories of the current partition from the entire time and post event trajectories.
+   * The resulting time and event indics are normalized to start integration from back.
    *
-   * @param [in] timeTrajectory: The time trajectory.
-   * @param [in] postEventIndices: The post event indices.
-   * @param [out] normalizedTimeTrajectory: The reversed and negated timeTrajectory.
-   * @param [out] normalizedPostEventIndices: The corresponding post event indices of normalizedTimeTrajectory.
+   *
+   * The riccati equations are solved backwards in time
+   * the normalizedTimeTrajectory time is therefore filled with negative time in the reverse order, for example:
+   * nominalTime =      [0.0, 1.0, 2.0, ..., 10.0]
+   * normalizedTime = [-10.0, ..., -2.0, -1.0, -0.0]
+   *
+   * The event indices are counted from the back the current partition, for example:
+   * nominalTime =      [0.0, 1.0, 2.0(*), 3.0, 4.0(*)]
+   * eventIndices = [2, 4]
+   *
+   * normalizedTime = [-4.0, -3.0(*), -2.0, -1.0(*), -0.0]
+   * normalizedeventIndices = [1, 3]
+   *
+   * @param [in] partitionInterval
+   * @param [in] timeTrajectory
+   * @param [in] postEventIndices
+   * @param [out] normalizedTimeTrajectory
+   * @param [out] normalizedPostEventIndices
    */
   static void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                            const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
@@ -148,7 +237,7 @@ class GaussNewtonDDP : public SolverBase {
    *
    * @param [in] numPartitions: number of partitions.
    */
-  virtual void setupOptimizer(size_t numPartitions);
+  virtual void setupOptimizer(size_t numPartitions){};
 
   /**
    * Helper to run task multiple times in parallel (blocking)
@@ -207,50 +296,105 @@ class GaussNewtonDDP : public SolverBase {
   virtual void calculateController();
 
   /**
-   * Calculates controller at a given partition and a node.
+   * Calculate controller for the timeIndex by using primal and dual and write the result back to dstController
    *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: Time partition index
-   * @param [in] timeIndex: Time index in the partition
+   * @param [in] timeIndex
+   * @param [in] primalData
+   * @param [in] dualData
+   * @param [out] dstController
    */
-  virtual void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) = 0;
+  virtual void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
+                                         LinearController& dstController) = 0;
 
   /**
-   * Solves Riccati equations for all the partitions.
+   * Solves Riccati equations.
    *
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   *
+   * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
    * @return average time step
    */
-  virtual scalar_t solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) = 0;
+  virtual scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) = 0;
 
   /**
    * The implementation for solving Riccati equations for all the partitions.
    *
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   *
+   * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
    * @return average time step
    */
-  scalar_t solveSequentialRiccatiEquationsImpl(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal);
+  scalar_t solveSequentialRiccatiEquationsImpl(const ScalarFunctionQuadraticApproximation& finalValueFunction);
 
   /**
-   * Solves a set of Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
+   * Solves a Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
    *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] partitionIndex: The requested partition index to solve Riccati equations.
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
+   * @param [in] workerIndex
+   * @param [in] partitionInterval
+   * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
    */
-  virtual void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval, const matrix_t& SmFinal,
-                                      const vector_t& SvFinal, const scalar_t& sFinal) = 0;
+  virtual void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
+                                      const ScalarFunctionQuadraticApproximation& finalValueFunction) = 0;
 
  private:
-  std::vector<std::pair<int, int>> getPartitionIntervalsFromTimeArray(scalar_array_t timeArray, int numWorkers);
+  /**
+   * @brief Get the State Input Equality Constraint Lagrangian Impl object
+   *
+   * @param [in] time
+   * @param [in] state
+   * @param [in] primalData
+   * @param [in] dualData
+   * @return vector_t
+   */
+  vector_t getStateInputEqualityConstraintLagrangianImpl(scalar_t time, const vector_t& state, const PrimalDataContainer& primalData,
+                                                         const DualDataContainer& dualData) const;
+  /**
+   * @brief Get the State Input Equality Constraint Lagrangian From Cache object
+   *
+   * @param [in] time
+   * @param [in] state
+   * @return vector_t
+   */
+  vector_t getStateInputEqualityConstraintLagrangianFromCache(scalar_t time, const vector_t& state) const;
+
+  /**
+   * Get the Value Function at time(time) from valueFunctionTrajectory. The the gradient od the value function will be corrected by using
+   * the hessian together with the difference between the current state and the corresponding state stored in the primalData.
+   *
+   * @param [in] time
+   * @param [in] state
+   * @param [in] primalData
+   * @param [in] valueFunctionTrajectory
+   * @return value function
+   */
+  ScalarFunctionQuadraticApproximation getValueFunctionImpl(
+      const scalar_t& time, const vector_t& state, const PrimalDataContainer& primalData,
+      const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const;
+
+  /**
+   * @brief Get the Value Function From Cache
+   *
+   * @param [in] time
+   * @param [in] state
+   * @return ScalarFunctionQuadraticApproximation
+   */
+  ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const;
+
+  /**
+   * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
+   *
+   * Pay attention, the rightmost index of the end partition is (..., timeArray.size() - 1) , as the last value function is filled manually.
+   * The reason is though we don’t write to the end index, we do have to read it. Adding the last index to the final partition will
+   * cause a segmentation fault. There is no trivial method to distinguish the final partition from other partitions because, by design,
+   * partitions should be treated equally.
+   *
+   * Every time point that is equal or larger to the desiredPartitionPoint should be included in that partition. This logic here is the same
+   * as the event times.
+   *
+   * The last time of desiredPartitionPoints is filled manually. There is no round-off error involved. So it is safe to use == for
+   * floating-point numbers. The last time point is naturally included by using std::lower_bound.
+   *
+   * @param [in] timeTrajectory: time trajectory that will be divided
+   * @param [in] numWorkers: number of worker i.e. number of partitions
+   * @return array of index pairs indicating the start and end of each partition
+   */
+  std::vector<std::pair<int, int>> getPartitionIntervalsFromTimeTrajectory(const scalar_array_t& timeTrajectory, int numWorkers);
 
   /**
    * Forward integrate the system dynamics with given controller and operating trajectories. In general, it uses the
@@ -258,21 +402,12 @@ class GaussNewtonDDP : public SolverBase {
    * However, if the provided controller does not cover the period [initTime, finalTime], it extrapolates (zero-order)
    * the controller until the next event time where after it uses the operating trajectories.
    *
-   * @param [in] controllersStock: Array of control policies.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
+   * @param [in] primalData: primalData
    * @param [in] workerIndex: Working thread (default is 0).
    *
    * @return average time step.
    */
-  scalar_t rolloutInitialTrajectory(LinearController& controllersStock, scalar_array_t& timeTrajectoriesStock,
-                                    size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
-                                    vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
-                                    std::vector<ModelData>& modelDataEventTimesStock, size_t workerIndex = 0);
+  scalar_t rolloutInitialTrajectory(PrimalDataContainer& primalData, size_t workerIndex = 0);
 
   /**
    * Display rollout info and scores.
@@ -282,21 +417,10 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Calculates the merit function based on the performance index .
    *
-   * @param [in] The performance index which includes the uninitialized merit, cost, and ISEs of constraints.
+   * @param [in] performanceIndex: The performance index which includes the uninitialized merit, cost, and ISEs of constraints.
    * @return The merit function
    */
   scalar_t calculateRolloutMerit(const PerformanceIndex& performanceIndex) const;
-
-  /**
-   * Solves Riccati equations for the partitions assigned to the given thread.
-   * @param [in] taskId: Thread ID
-   * @param [in] indexPeriod: The pair of initial and final partitions which indicates the partitions assigned to the thread.
-   * @param [in] SmFinal: The final Sm for Riccati equation.
-   * @param [in] SvFinal: The final Sv for Riccati equation.
-   * @param [in] sFinal: The final s for Riccati equation.
-   */
-  void solveRiccatiEquationsForPartitions(size_t taskId, const std::pair<int, int>& indexPeriod, matrix_t SmFinal, vector_t SvFinal,
-                                          scalar_t sFinal);
 
   /**
    * Calculates max feedforward update norm and max type-1 error update norm.
@@ -365,19 +489,18 @@ class GaussNewtonDDP : public SolverBase {
   void updateConstraintPenalties(scalar_t stateEqConstraintISE, scalar_t stateEqFinalConstraintSSE, scalar_t stateInputEqConstraintISE);
 
   /**
-   * Runs the search strategy. It ony updates the controller or nominal trajectories is search was successful.
+   * Runs the search strategy. It updates the controller and the corresponding trajectories only when the search is successful.
+   * If fail, the cached primal data will be written to dstPrimalData.
+   *
    * @param [in] lqModelExpectedCost: The expected cost based on the LQ model optimization.
+   * @param [out] dstPrimalData: Optimized primal data container if it is an final search. otherwise nominal data container
    */
-  void runSearchStrategy(scalar_t lqModelExpectedCost);
+  void runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataContainer& dstPrimalData);
 
   /**
-   * Caches the iteration's data.
+   * swap both primal and dual data cache
    */
   void swapDataToCache();
-
-  void swapDualSolutionsToCache();
-
-  void cacheNominalTrajectories();
 
   /**
    * Corrects the initial caching of the nominal trajectories.
@@ -429,6 +552,10 @@ class GaussNewtonDDP : public SolverBase {
                const std::vector<ControllerBase*>& controllersPtrStock) override;
 
  protected:
+  PrimalDataContainer nominalPrimalData_, optimizedPrimalData_;
+  // controller that is calculated directly from dual solution. It is unoptimized because it haven't gone through searching.
+  LinearController unoptimizedController_;
+
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};
   std::atomic_size_t nextTimeIndex_{0};
@@ -440,32 +567,7 @@ class GaussNewtonDDP : public SolverBase {
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
   std::vector<OptimalControlProblem> optimalControlProblemStock_;
 
-  // optimized controller
-  LinearController nominalControllersStock_;
-
-  // optimized trajectories
-  scalar_array_t nominalTimeTrajectoriesStock_;
-  size_array_t nominalPostEventIndicesStock_;
-  vector_array_t nominalStateTrajectoriesStock_;
-  vector_array_t nominalInputTrajectoriesStock_;
-
-  // intermediate model data trajectory
-  std::vector<ModelData> modelDataTrajectoriesStock_;
-
-  // event times model data
-  std::vector<ModelData> modelDataEventTimesStock_;
-
-  // projected model data trajectory
-  std::vector<ModelData> projectedModelDataTrajectoriesStock_;
-
-  // Riccati modification
-  std::vector<riccati_modification::Data> riccatiModificationTrajectoriesStock_;
-
-  // Riccati solution coefficients
-  scalar_array_t SsTimeTrajectoryStock_;
-  scalar_array_t sTrajectoryStock_;
-  vector_array_t SvTrajectoryStock_;
-  matrix_array_t SmTrajectoryStock_;
+  DualDataContainer dualData_;
 
  private:
   ddp::Settings ddpSettings_;
@@ -488,24 +590,8 @@ class GaussNewtonDDP : public SolverBase {
 
   // used for caching the nominal trajectories for which the LQ problem is
   // constructed and solved before terminating run()
-  LinearController cachedControllersStock_;
-  scalar_array_t cachedTimeTrajectoriesStock_;
-  size_array_t cachedPostEventIndicesStock_;
-  vector_array_t cachedStateTrajectoriesStock_;
-  vector_array_t cachedInputTrajectoriesStock_;
-
-  std::vector<ModelData> cachedModelDataTrajectoriesStock_;
-  std::vector<ModelData> cachedModelDataEventTimesStock_;
-  std::vector<ModelData> cachedProjectedModelDataTrajectoriesStock_;
-  std::vector<riccati_modification::Data> cachedRiccatiModificationTrajectoriesStock_;
-
-  scalar_array_t cachedSsTimeTrajectoryStock_;
-  scalar_array_t cachedsTrajectoryStock_;
-  vector_array_t cachedSvTrajectoryStock_;
-  matrix_array_t cachedSmTrajectoryStock_;
-  // cached nominal trajectories from previous (preserved between consecutive iteration)
-  scalar_array_t cachedNominalTimeTrajectoriesStock_;
-  vector_array_t cachedNominalStateTrajectoriesStock_;
+  PrimalDataContainer cachedPrimalData_;
+  DualDataContainer cachedDualData_;
 
   ScalarFunctionQuadraticApproximation heuristics_;
 

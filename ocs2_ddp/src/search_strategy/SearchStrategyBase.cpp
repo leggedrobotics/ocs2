@@ -38,16 +38,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SearchStrategyBase::initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
-                                   const scalar_array_t& partitioningTimes, size_t initActivePartition, size_t finalActivePartition) {
+void SearchStrategyBase::initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   initTime_ = initTime;
   initState_ = initState;
   finalTime_ = finalTime;
-
-  partitioningTimes_ = partitioningTimes;
-  numPartitions_ = partitioningTimes_.size() - 1;
-  initActivePartition_ = initActivePartition;
-  finalActivePartition_ = finalActivePartition;
 }
 
 /******************************************************************************************************/
@@ -100,12 +94,9 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
 
   // debug print
   if (baseSettings_.debugPrintRollout) {
-    for (size_t i = 0; i < numPartitions_; i++) {
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      std::cerr << " Partition: " << i;
-      std::cerr << "\n++++++++++++++++++++++++++++++\n";
-      RolloutBase::display(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, &inputTrajectoriesStock);
-    }
+    std::cerr << "\n++++++++++++++++++++++++++++++\n";
+    std::cerr << "\n++++++++++++++++++++++++++++++\n";
+    RolloutBase::display(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, &inputTrajectoriesStock);
   }
 
   if (!xCurrent.allFinite()) {

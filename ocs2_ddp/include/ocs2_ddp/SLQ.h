@@ -67,12 +67,13 @@ class SLQ final : public GaussNewtonDDP {
                                  const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
                                  std::vector<ModelData>& modelDataTrajectory) override;
 
-  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+  void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
+                                 LinearController& dstController) override;
 
-  scalar_t solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) override;
+  scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
-  void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval, const matrix_t& SmFinal,
-                              const vector_t& SvFinal, const scalar_t& sFinal) override;
+  void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
+                              const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
   /**
    * Integrates the riccati equation and generates the value function at the times set in nominal Time Trajectory.

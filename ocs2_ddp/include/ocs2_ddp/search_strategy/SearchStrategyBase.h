@@ -72,12 +72,8 @@ class SearchStrategyBase {
    * @param [in] initTime: The initial time.
    * @param [in] initState: The initial state.
    * @param [in] finalTime: The final time.
-   * @param [in] partitioningTimes: The partitioning times between subsystems.
-   * @param [in] initActivePartition: The first active time partition based on the initTime.
-   * @param [in] finalActivePartition: The last active time partition based on the finalTime.
    */
-  void initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes,
-                 size_t initActivePartition, size_t finalActivePartition);
+  void initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime);
 
   /**
    * Resets the class to its state after construction.
@@ -197,7 +193,7 @@ class SearchStrategyBase {
   /**
    * Calculates the integral of the squared (IS) norm of the controller update.
    *
-   * @param [in] controllersStock: An array of controllers.
+   * @param [in] controller: Input controller.
    * @return The integral of the squared (IS) norm of the controller update.
    */
   scalar_t calculateControllerUpdateIS(const LinearController& controller) const;
@@ -206,11 +202,6 @@ class SearchStrategyBase {
   scalar_t initTime_;
   scalar_t finalTime_;
   vector_t initState_;
-
-  size_t initActivePartition_ = 0;
-  size_t finalActivePartition_ = 0;
-  size_t numPartitions_ = 0;
-  scalar_array_t partitioningTimes_;
 };
 
 }  // namespace ocs2

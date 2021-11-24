@@ -59,16 +59,15 @@ class ILQR : public GaussNewtonDDP {
   ~ILQR() override = default;
 
  protected:
-  void setupOptimizer(size_t numPartitions) override;
+  scalar_t solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
-  scalar_t solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) override;
-
-  void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval, const matrix_t& SmFinal,
-                              const vector_t& SvFinal, const scalar_t& sFinal) override;
+  void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
+                              const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
   void calculateController() override;
 
-  void calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) override;
+  void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
+                                 LinearController& dstController) override;
 
   matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 

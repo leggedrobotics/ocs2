@@ -76,7 +76,8 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     ocs2::vector_array_t inputTrajectoryTemp(N);
     std::copy(nominalTrajectory.inputTrajectory.begin(), nominalTrajectory.inputTrajectory.end(), inputTrajectoryTemp.begin());
     inputTrajectoryTemp.push_back(inputTrajectoryTemp.back());
-    operatingPointsPtr.reset(new ocs2::OperatingPoints(nominalTrajectory.timeTrajectory, nominalTrajectory.stateTrajectory, inputTrajectoryTemp));
+    operatingPointsPtr.reset(
+        new ocs2::OperatingPoints(nominalTrajectory.timeTrajectory, nominalTrajectory.stateTrajectory, inputTrajectoryTemp));
 
     // rollout settings
     const ocs2::rollout::Settings rolloutSettings = []() {
@@ -108,8 +109,7 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     // cost
     problemPtr->costPtr->add("cost", ocs2::getOcs2Cost(ocs2::getRandomCost(STATE_DIM, INPUT_DIM)));
     problemPtr->finalCostPtr->add("finalCost", ocs2::getOcs2StateCost(ocs2::getRandomCost(STATE_DIM, 0)));
-    targetTrajectories =
-        ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
+    targetTrajectories = ocs2::TargetTrajectories({0.0}, {ocs2::vector_t::Random(STATE_DIM)}, {ocs2::vector_t::Random(INPUT_DIM)});
 
     // constraint
     if (std::get<1>(GetParam()) == Constraining::CONSTARINED) {

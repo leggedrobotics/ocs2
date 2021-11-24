@@ -143,39 +143,40 @@ void ILQR::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, size_t timeIndex) {
+void ILQR::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
+                                     LinearController& dstController) {
   const auto k = timeIndex;
 
-  const auto& nominalState = BASE::nominalStateTrajectoriesStock_[k];
-  const auto& nominalInput = BASE::nominalInputTrajectoriesStock_[k];
+  const auto& nominalState = primalData.stateTrajectory[k];
+  const auto& nominalInput = primalData.inputTrajectory[k];
 
-  const auto& EvProjected = BASE::projectedModelDataTrajectoriesStock_[k].stateInputEqConstr_.f;
-  const auto& CmProjected = BASE::projectedModelDataTrajectoriesStock_[k].stateInputEqConstr_.dfdx;
+  const auto& EvProjected = dualData.projectedModelDataTrajectory[k].stateInputEqConstr_.f;
+  const auto& CmProjected = dualData.projectedModelDataTrajectory[k].stateInputEqConstr_.dfdx;
 
-  const auto& Qu = BASE::riccatiModificationTrajectoriesStock_[k].constraintNullProjector_;
+  const auto& Qu = dualData.riccatiModificationTrajectory[k].constraintNullProjector_;
 
   // feedback gains
-  BASE::nominalControllersStock_.gainArray_[k] = -CmProjected;
-  BASE::nominalControllersStock_.gainArray_[k].noalias() += Qu * projectedKmTrajectoryStock_[k];
+  dstController.gainArray_[k] = -CmProjected;
+  dstController.gainArray_[k].noalias() += Qu * projectedKmTrajectoryStock_[k];
 
   // bias input
-  BASE::nominalControllersStock_.biasArray_[k] = nominalInput;
+  dstController.biasArray_[k] = nominalInput;
   // std::cerr << k << std::endl;
-  BASE::nominalControllersStock_.biasArray_[k].noalias() -= BASE::nominalControllersStock_.gainArray_[k] * nominalState;
-  BASE::nominalControllersStock_.deltaBiasArray_[k] = -EvProjected;
-  BASE::nominalControllersStock_.deltaBiasArray_[k].noalias() += Qu * projectedLvTrajectoryStock_[k];
+  dstController.biasArray_[k].noalias() -= dstController.gainArray_[k] * nominalState;
+  dstController.deltaBiasArray_[k] = -EvProjected;
+  dstController.deltaBiasArray_[k].noalias() += Qu * projectedLvTrajectoryStock_[k];
 
   // checking the numerical stability of the controller parameters
   if (settings().checkNumericalStability_) {
     try {
-      if (!BASE::nominalControllersStock_.gainArray_[k].allFinite()) {
+      if (!dstController.gainArray_[k].allFinite()) {
         throw std::runtime_error("Feedback gains are unstable.");
       }
-      if (!BASE::nominalControllersStock_.deltaBiasArray_[k].allFinite()) {
+      if (!dstController.deltaBiasArray_[k].allFinite()) {
         throw std::runtime_error("feedForwardControl is unstable.");
       }
     } catch (const std::exception& error) {
-      std::cerr << "what(): " << error.what() << " at time " << BASE::nominalControllersStock_.timeStamp_[k] << " [sec]." << std::endl;
+      std::cerr << "what(): " << error.what() << " at time " << dstController.timeStamp_[k] << " [sec]." << std::endl;
     }
   }
 }
@@ -183,17 +184,17 @@ void ILQR::calculateControllerWorker(size_t workerIndex, size_t partitionIndex, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-scalar_t ILQR::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const vector_t& SvFinal, const scalar_t& sFinal) {
-  auto N = BASE::nominalTimeTrajectoriesStock_.size();
+scalar_t ILQR::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
+  const size_t N = BASE::nominalPrimalData_.timeTrajectory.size();
   projectedLvTrajectoryStock_.resize(N);
   projectedKmTrajectoryStock_.resize(N);
 
-  BASE::riccatiModificationTrajectoriesStock_.resize(N);
-  BASE::projectedModelDataTrajectoriesStock_.resize(N);
+  BASE::dualData_.riccatiModificationTrajectory.resize(N);
+  BASE::dualData_.projectedModelDataTrajectory.resize(N);
 
-  const auto& finalModelData = BASE::modelDataTrajectoriesStock_[N - 1];
-  auto& finalRiccatiModification = BASE::riccatiModificationTrajectoriesStock_[N - 1];
-  auto& finalProjectedModelData = BASE::projectedModelDataTrajectoriesStock_[N - 1];
+  const auto& finalModelData = BASE::nominalPrimalData_.modelDataTrajectory[N - 1];
+  auto& finalRiccatiModification = BASE::dualData_.riccatiModificationTrajectory[N - 1];
+  auto& finalProjectedModelData = BASE::dualData_.projectedModelDataTrajectory[N - 1];
   auto& finalProjectedLvFinal = projectedLvTrajectoryStock_[N - 1];
   auto& finalProjectedKmFinal = projectedKmTrajectoryStock_[N - 1];
 
@@ -202,13 +203,13 @@ scalar_t ILQR::solveSequentialRiccatiEquations(const matrix_t& SmFinal, const ve
 
   // projected feedforward
   finalProjectedLvFinal = -finalProjectedModelData.cost_.dfdu - finalRiccatiModification.deltaGv_;
-  finalProjectedLvFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * SvFinal;
+  finalProjectedLvFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * finalValueFunction.dfdx;
 
   // projected feedback
   finalProjectedKmFinal = -finalProjectedModelData.cost_.dfdux - finalRiccatiModification.deltaGm_;
-  finalProjectedKmFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * SmFinal;
+  finalProjectedKmFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * finalValueFunction.dfdxx;
 
-  return BASE::solveSequentialRiccatiEquationsImpl(SmFinal, SvFinal, sFinal);
+  return BASE::solveSequentialRiccatiEquationsImpl(finalValueFunction);
 }
 
 /******************************************************************************************************/
@@ -224,23 +225,20 @@ matrix_t ILQR::computeHamiltonianHessian(const ModelData& modelData, const matri
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval, const matrix_t& SmFinal,
-                                  const vector_t& SvFinal, const scalar_t& sFinal) {
-  const auto firstEventItr =
-      std::upper_bound(BASE::nominalPostEventIndicesStock_.begin(), BASE::nominalPostEventIndicesStock_.end(), partitionInterval.first);
-  const auto lastEventItr =
-      std::upper_bound(BASE::nominalPostEventIndicesStock_.begin(), BASE::nominalPostEventIndicesStock_.end(), partitionInterval.second);
+void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
+                                  const ScalarFunctionQuadraticApproximation& finalValueFunction) {
+  // dind all events belonging to the current partition
+  const auto& postEventIndices = BASE::nominalPrimalData_.postEventIndices;
+  const auto firstEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.first);
+  const auto lastEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.second);
 
-  // final temporal values
-  matrix_t SmFinalTemp = SmFinal;
-  vector_t SvFinalTemp = SvFinal;
-  scalar_t sFinalTemp = sFinal;
+  // final temporal values. Used to store pre-jump value
+  ScalarFunctionQuadraticApproximation finalValueTemp = finalValueFunction;
+
   /*
    * solving the Riccati equations
    */
-  const matrix_t* SmNext = &SmFinalTemp;
-  const vector_t* SvNext = &SvFinalTemp;
-  const scalar_t* sNext = &sFinalTemp;
+  const ScalarFunctionQuadraticApproximation* valueFunctionNext = &finalValueTemp;
 
   int curIndex = partitionInterval.second - 1;
   auto nextEventItr = lastEventItr - 1;
@@ -248,57 +246,51 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
   while (curIndex >= stopIndex) {
     auto& curProjectedLv = projectedLvTrajectoryStock_[curIndex];
     auto& curProjectedKm = projectedKmTrajectoryStock_[curIndex];
-    auto& curProjectedModelData = BASE::projectedModelDataTrajectoriesStock_[curIndex];
-    auto& curRiccatiModification = BASE::riccatiModificationTrajectoriesStock_[curIndex];
-    auto& curModelData = BASE::modelDataTrajectoriesStock_[curIndex];
+    auto& curProjectedModelData = BASE::dualData_.projectedModelDataTrajectory[curIndex];
+    auto& curRiccatiModification = BASE::dualData_.riccatiModificationTrajectory[curIndex];
+    auto& curModelData = BASE::nominalPrimalData_.modelDataTrajectory[curIndex];
 
-    auto& curSm = BASE::SmTrajectoryStock_[curIndex];
-    auto& curSv = BASE::SvTrajectoryStock_[curIndex];
-    auto& curs = BASE::sTrajectoryStock_[curIndex];
+    auto& curSm = BASE::dualData_.valueFunctionTrajectory[curIndex].dfdxx;
+    auto& curSv = BASE::dualData_.valueFunctionTrajectory[curIndex].dfdx;
+    auto& curs = BASE::dualData_.valueFunctionTrajectory[curIndex].f;
 
-    BASE::SsTimeTrajectoryStock_[curIndex] = BASE::nominalTimeTrajectoriesStock_[curIndex];
-    BASE::computeProjectionAndRiccatiModification(curModelData, *SmNext, curProjectedModelData, curRiccatiModification);
+    BASE::computeProjectionAndRiccatiModification(curModelData, valueFunctionNext->dfdxx, curProjectedModelData, curRiccatiModification);
 
-    riccatiEquationsPtrStock_[workerIndex]->computeMap(curProjectedModelData, curRiccatiModification, *SmNext, *SvNext, *sNext,
-                                                       curProjectedKm, curProjectedLv, curSm, curSv, curs);
-    SmNext = &curSm;
-    SvNext = &curSv;
-    sNext = &curs;
+    riccatiEquationsPtrStock_[workerIndex]->computeMap(curProjectedModelData, curRiccatiModification, valueFunctionNext->dfdxx,
+                                                       valueFunctionNext->dfdx, valueFunctionNext->f, curProjectedKm, curProjectedLv, curSm,
+                                                       curSv, curs);
+    valueFunctionNext = &(BASE::dualData_.valueFunctionTrajectory[curIndex]);
 
     if (std::distance(firstEventItr, nextEventItr) >= 0 && curIndex == *nextEventItr) {
       // move to pre-event index
       --curIndex;
 
-      const int index = std::distance(BASE::nominalPostEventIndicesStock_.begin(), nextEventItr);
-      std::tie(SmFinalTemp, SvFinalTemp, sFinalTemp) =
-          riccatiTransversalityConditions(BASE::modelDataEventTimesStock_[index], curSm, curSv, curs);
+      const int index = std::distance(postEventIndices.begin(), nextEventItr);
+      std::tie(finalValueTemp.dfdxx, finalValueTemp.dfdx, finalValueTemp.f) =
+          riccatiTransversalityConditions(BASE::nominalPrimalData_.modelDataEventTimes[index], curSm, curSv, curs);
 
-      BASE::sTrajectoryStock_[curIndex] = sFinalTemp;
-      BASE::SvTrajectoryStock_[curIndex] = SvFinalTemp;
-      BASE::SmTrajectoryStock_[curIndex] = SmFinalTemp;
+      BASE::dualData_.valueFunctionTrajectory[curIndex] = finalValueTemp;
 
-      // continuous-time for final step
-      const auto& finalModelData = BASE::modelDataTrajectoriesStock_[curIndex];
-      auto& finalRiccatiModification = BASE::riccatiModificationTrajectoriesStock_[curIndex];
-      auto& finalProjectedModelData = BASE::projectedModelDataTrajectoriesStock_[curIndex];
+      const auto& finalModelData = BASE::nominalPrimalData_.modelDataTrajectory[curIndex];
+      auto& finalRiccatiModification = BASE::dualData_.riccatiModificationTrajectory[curIndex];
+      auto& finalProjectedModelData = BASE::dualData_.projectedModelDataTrajectory[curIndex];
       auto& finalProjectedLvFinal = projectedLvTrajectoryStock_[curIndex];
       auto& finalProjectedKmFinal = projectedKmTrajectoryStock_[curIndex];
 
-      BASE::SsTimeTrajectoryStock_[curIndex] = BASE::nominalTimeTrajectoriesStock_[curIndex];
       const auto SmDummy = matrix_t::Zero(finalModelData.stateDim_, finalModelData.stateDim_);
       BASE::computeProjectionAndRiccatiModification(finalModelData, SmDummy, finalProjectedModelData, finalRiccatiModification);
 
       // projected feedforward
       finalProjectedLvFinal = -finalProjectedModelData.cost_.dfdu - finalRiccatiModification.deltaGv_;
-      finalProjectedLvFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * BASE::SvTrajectoryStock_[curIndex];
+      finalProjectedLvFinal.noalias() -=
+          finalProjectedModelData.dynamics_.dfdu.transpose() * BASE::dualData_.valueFunctionTrajectory[curIndex].dfdx;
 
       // projected feedback
       finalProjectedKmFinal = -finalProjectedModelData.cost_.dfdux - finalRiccatiModification.deltaGm_;
-      finalProjectedKmFinal.noalias() -= finalProjectedModelData.dynamics_.dfdu.transpose() * BASE::SmTrajectoryStock_[curIndex];
+      finalProjectedKmFinal.noalias() -=
+          finalProjectedModelData.dynamics_.dfdu.transpose() * BASE::dualData_.valueFunctionTrajectory[curIndex].dfdxx;
 
-      SmNext = &SmFinalTemp;
-      SvNext = &SvFinalTemp;
-      sNext = &sFinalTemp;
+      valueFunctionNext = &finalValueTemp;
 
       --nextEventItr;
     }
@@ -306,10 +298,4 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
     --curIndex;
   }  // while
 }
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ILQR::setupOptimizer(size_t numPartitions) {}
-
 }  // namespace ocs2

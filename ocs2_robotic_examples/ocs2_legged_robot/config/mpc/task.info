@@ -82,7 +82,6 @@ ddp
   inequalityConstraintDelta       5.0
 
   preComputeRiccatiTerms          true
-  useNominalTimeForBackwardPass   true
 
   useFeedbackPolicy               false
 

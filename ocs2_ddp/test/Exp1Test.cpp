@@ -99,7 +99,6 @@ class Exp1 : public testing::TestWithParam<std::tuple<ocs2::search_strategy::Typ
     ddpSettings.absTolODE_ = 1e-10;
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
-    ddpSettings.useNominalTimeForBackwardPass_ = true;
     ddpSettings.useFeedbackPolicy_ = false;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;

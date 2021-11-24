@@ -81,7 +81,6 @@ TEST(HybridSlqTest, state_rollout_slq) {
   ddpSettings.absTolODE_ = 1e-10;
   ddpSettings.relTolODE_ = 1e-7;
   ddpSettings.maxNumStepsPerSecond_ = 10000;
-  ddpSettings.useNominalTimeForBackwardPass_ = true;
   ddpSettings.useFeedbackPolicy_ = true;
   ddpSettings.debugPrintRollout_ = false;
   ddpSettings.strategy_ = search_strategy::Type::LINE_SEARCH;

@@ -192,7 +192,6 @@ class DDPCorrectness : public testing::TestWithParam<std::tuple<ocs2::search_str
     ddpSettings.relTolODE_ = 1e-7;
     ddpSettings.maxNumStepsPerSecond_ = 10000;
     ddpSettings.minRelCost_ = 1e-3;
-    ddpSettings.useNominalTimeForBackwardPass_ = false;
     ddpSettings.nThreads_ = numPartitions;
     ddpSettings.maxNumIterations_ = 2 + (numPartitions - 1);  // need an extra iteration for each added time partition
     ddpSettings.strategy_ = strategy;

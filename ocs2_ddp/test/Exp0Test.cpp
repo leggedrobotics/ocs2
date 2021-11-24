@@ -96,7 +96,6 @@ class Exp0 : public testing::Test {
     ddpSettings.maxNumIterations_ = 30;
     ddpSettings.minRelCost_ = 1e-3;
     ddpSettings.checkNumericalStability_ = true;
-    ddpSettings.useNominalTimeForBackwardPass_ = true;
     ddpSettings.useFeedbackPolicy_ = true;
     ddpSettings.debugPrintRollout_ = false;
     ddpSettings.strategy_ = strategy;

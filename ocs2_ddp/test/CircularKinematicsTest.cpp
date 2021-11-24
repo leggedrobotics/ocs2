@@ -96,7 +96,6 @@ class CircularKinematicsTest : public testing::TestWithParam<std::tuple<ocs2::se
     ddpSettings.constraintPenaltyInitialValue_ = 2.0;
     ddpSettings.constraintPenaltyIncreaseRate_ = 1.5;
     ddpSettings.preComputeRiccatiTerms_ = false;
-    ddpSettings.useNominalTimeForBackwardPass_ = true;
     ddpSettings.strategy_ = strategy;
     ddpSettings.lineSearch_.minStepLength_ = 0.01;
     ddpSettings.lineSearch_.hessianCorrectionStrategy_ = ocs2::hessian_correction::Strategy::CHOLESKY_MODIFICATION;

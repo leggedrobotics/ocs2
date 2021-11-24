@@ -43,7 +43,6 @@ ddp
   inequalityConstraintDelta     1.1
 
   preComputeRiccatiTerms        true
-  useNominalTimeForBackwardPass false
 
   useFeedbackPolicy             false
 

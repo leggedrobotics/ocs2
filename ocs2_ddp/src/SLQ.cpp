@@ -244,22 +244,12 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
    *  the SsNormalized time is therefore filled with negative time in the reverse order, for example:
    *  nominalTime = [0.0, 1.0, 2.0, ..., 10.0]
    *  SsNormalized = [-10.0, ..., -2.0, -1.0, -0.0]
-   *
-   *  Depending on settings_.useNominalTimeForBackwardPass_:
-   *  if true: the integration will produce the same time nodes set in nominalTime (=resulting from the forward pass),
-   *  if false: the SsNormalized time is a result of adaptive integration.
    */
   vector_array_t& allSsTrajectory = allSsTrajectoryStock_[workerIndex];
   allSsTrajectory.clear();
-  if (settings().useNominalTimeForBackwardPass_) {
-    integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
-                                        partitionInterval, nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal),
-                                        SsNormalizedTime, SsNormalizedPostEventIndices, allSsTrajectory);
-  } else {
-    integrateRiccatiEquationAdaptiveTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex],
-                                         nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
-                                         SsNormalizedPostEventIndices, allSsTrajectory);
-  }
+  integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex], partitionInterval,
+                                      nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
+                                      SsNormalizedPostEventIndices, allSsTrajectory);
 
   // De-normalize time and convert value function to matrix format
   size_t outputN = SsNormalizedTime.size();

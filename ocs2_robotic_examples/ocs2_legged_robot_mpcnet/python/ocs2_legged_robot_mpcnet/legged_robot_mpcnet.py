@@ -78,7 +78,7 @@ torch.save(obj=policy, f=save_path + ".pt")
 
 # optimizer
 batch_size = 2 ** 7
-learning_iterations = 100000
+learning_iterations = 50000
 learning_rate_default = 1e-3
 learning_rate_gating_net = learning_rate_default
 learning_rate_expert_nets = learning_rate_default
@@ -86,16 +86,14 @@ optimizer = torch.optim.Adam([{'params': policy.gating_net.parameters(), 'lr': l
                               {'params': policy.expert_nets.parameters(), 'lr': learning_rate_expert_nets}],
                              lr=learning_rate_default, amsgrad=True)
 
-# weights for ["stance", "trot_1", "trot_2", "dynamic_diagonal_walk_1", "dynamic_diagonal_walk_2",
-#              "static_walk_1", "static_walk_2", "static_walk_3", "static_walk_4"]
-weights = [1, 2, 2, 2, 2, 1, 1, 1, 1]
+# weights for ["stance", "trot_1", "trot_2"]
+weights = [1, 2, 2]
 
 
 def start_data_generation(alpha, policy):
     policy_file_path = "/tmp/data_generation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
     torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
-    choices = random.choices(["stance", "trot_1", "trot_2", "dynamic_diagonal_walk_1", "dynamic_diagonal_walk_2",
-                              "static_walk_1", "static_walk_2", "static_walk_3", "static_walk_4"], k=data_generation_n_tasks, weights=weights)
+    choices = random.choices(["stance", "trot_1", "trot_2"], k=data_generation_n_tasks, weights=weights)
     initial_observations, mode_schedules, target_trajectories = helper.get_tasks(data_generation_n_tasks, data_generation_duration, choices)
     mpcnet_interface.startDataGeneration(alpha, policy_file_path, data_generation_time_step, data_generation_data_decimation,
                                          data_generation_n_samples, data_generation_sampling_covariance,
@@ -105,8 +103,7 @@ def start_data_generation(alpha, policy):
 def start_policy_evaluation(policy):
     policy_file_path = "/tmp/policy_evaluation_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".onnx"
     torch.onnx.export(model=policy, args=dummy_input, f=policy_file_path)
-    choices = random.choices(["stance", "trot_1", "trot_2", "dynamic_diagonal_walk_1", "dynamic_diagonal_walk_2",
-                              "static_walk_1", "static_walk_2", "static_walk_3", "static_walk_4"], k=policy_evaluation_n_tasks, weights=weights)
+    choices = random.choices(["stance", "trot_1", "trot_2"], k=policy_evaluation_n_tasks, weights=weights)
     initial_observations, mode_schedules, target_trajectories = helper.get_tasks(policy_evaluation_n_tasks, policy_evaluation_duration, choices)
     mpcnet_interface.startPolicyEvaluation(policy_file_path, policy_evaluation_time_step,
                                            initial_observations, mode_schedules, target_trajectories)

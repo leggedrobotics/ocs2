@@ -27,7 +27,7 @@ STATE_DIM = 24
 INPUT_DIM = 24
 
 # expert number
-EXPERT_NUM = 8
+EXPERT_NUM = 3
 
 # default state
 default_state = [0.0, 0.0, 0.0,
@@ -77,7 +77,3 @@ expert_for_mode = dict([(i, None) for i in range(16)])
 expert_for_mode[15] = 0
 expert_for_mode[6] = 1
 expert_for_mode[9] = 2
-expert_for_mode[7] = 3
-expert_for_mode[11] = 4
-expert_for_mode[13] = 5
-expert_for_mode[14] = 6

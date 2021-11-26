@@ -78,7 +78,7 @@ torch.save(obj=policy, f=save_path + ".pt")
 
 # optimizer
 batch_size = 2 ** 7
-learning_iterations = 50000
+learning_iterations = 100000
 learning_rate_default = 1e-3
 learning_rate_gating_net = learning_rate_default
 learning_rate_expert_nets = learning_rate_default

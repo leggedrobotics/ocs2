@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_double_integrator/DoubleIntegratorInterface.h>
 #include <ocs2_double_integrator/package_path.h>
 
+#include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 
 using namespace ocs2;
@@ -74,7 +75,6 @@ class DoubleIntegratorIntegrationTest : public testing::Test {
 
   const scalar_t tolerance = 2e-2;
   const scalar_t f_mpc = 10.0;
-  const scalar_t mpcIncrement = 1.0 / f_mpc;
   const scalar_t initTime = 1234.5;  // start from a random time
   const scalar_t finalTime = initTime + 5.0;
 
@@ -95,8 +95,7 @@ TEST_F(DoubleIntegratorIntegrationTest, synchronousTracking) {
 
   // run MPC for N iterations
   auto time = initTime;
-  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-  for (size_t i = 0; i < N; i++) {
+  while (time < finalTime) {
     // run MPC
     mpcInterface.advanceMpc();
     time += 1.0 / f_mpc;
@@ -131,8 +130,7 @@ TEST_F(DoubleIntegratorIntegrationTest, coldStartMPC) {
 
   // run MPC for N iterations
   auto time = initTime;
-  const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-  for (size_t i = 0; i < N; i++) {
+  while (time < finalTime) {
     // run MPC
     mpcInterface.advanceMpc();
     time += 1.0 / f_mpc;
@@ -160,55 +158,52 @@ TEST_F(DoubleIntegratorIntegrationTest, asynchronousTracking) {
   MPC_MRT_Interface mpcInterface(*mpcPtr);
 
   const scalar_t f_mrt = 100;
-  const scalar_t mrtTimeIncrement = 1.0 / f_mrt;
 
-  scalar_t time = initTime;
-  size_t mode;
-  vector_t optimalState = initState;
-  vector_t optimalInput;
+  SystemObservation observation;
+  observation.time = initTime;
+  observation.state = initState;
+  observation.input.setZero(INPUT_DIM);
 
-  // run MRT in a thread
-  std::mutex timeStateMutex;
-  std::atomic_bool trackerRunning{true};
-  auto tracker = [&]() {
-    while (trackerRunning) {
-      {
-        std::lock_guard<std::mutex> lock(timeStateMutex);
-        time += mrtTimeIncrement;
-        if (mpcInterface.initialPolicyReceived()) {
-          mpcInterface.updatePolicy();
-          mpcInterface.evaluatePolicy(time, vector_t::Zero(STATE_DIM), optimalState, optimalInput, mode);
-        }
-        if (std::abs(time - finalTime) < 0.005) {
-          ASSERT_NEAR(optimalState(0), goalState(0), tolerance);
-        }
-      }
-      usleep(uint(mrtTimeIncrement * 1e6));
-    }
-  };
-  std::thread trackerThread(tracker);
-
-  try {
-    // run MPC for N iterations
-    SystemObservation observation;
-    const auto N = static_cast<size_t>(f_mpc * (finalTime - initTime));
-    for (size_t i = 0; i < N; i++) {
-      {
-        std::lock_guard<std::mutex> lock(timeStateMutex);
-        // use optimal state for the next observation:
-        observation.time = time;
-        observation.state = optimalState;
-        observation.input.setZero(INPUT_DIM);
-      }
-      mpcInterface.setCurrentObservation(observation);
-      mpcInterface.advanceMpc();
-
-      usleep(uint(mpcIncrement * 1e6));
-    }
-  } catch (const std::exception& e) {
-    std::cerr << "EXCEPTION " << e.what() << std::endl;
-    EXPECT_TRUE(false);
+  // Wait for the first policy
+  mpcInterface.setCurrentObservation(observation);
+  while (!mpcInterface.initialPolicyReceived()) {
+    mpcInterface.advanceMpc();
   }
-  trackerRunning = false;
-  trackerThread.join();
+
+  // Run MPC in a thread
+  std::atomic_bool mpcRunning{true};
+  auto mpcThread = std::thread([&]() {
+    while (mpcRunning) {
+      try {
+        ocs2::executeAndSleep([&]() { mpcInterface.advanceMpc(); }, f_mpc);
+      } catch (const std::exception& e) {
+        mpcRunning = false;
+        std::cerr << "EXCEPTION " << e.what() << std::endl;
+        EXPECT_TRUE(false);
+      }
+    }
+  });
+
+  // run MRT
+  while (observation.time < finalTime) {
+    ocs2::executeAndSleep(
+        [&]() {
+          observation.time += 1.0 / f_mrt;
+
+          // Evaluate the policy
+          mpcInterface.updatePolicy();
+          mpcInterface.evaluatePolicy(observation.time, vector_t::Zero(STATE_DIM), observation.state, observation.input, observation.mode);
+
+          // use optimal state for the next observation:
+          mpcInterface.setCurrentObservation(observation);
+        },
+        f_mrt);
+  }
+
+  mpcRunning = false;
+  if (mpcThread.joinable()) {
+    mpcThread.join();
+  }
+
+  ASSERT_NEAR(observation.state(0), goalState(0), tolerance);
 }

@@ -55,8 +55,8 @@ class CentroidalModelRbdConversions final {
   /**
    * Computes the floating-base generalized positions, velocities, and accelerations.
    *
-   * @param [in] state: ocs2 state vector
-   * @param [in] input: ocs2 input vector
+   * @param [in] state: ocs2 switched-model state vector
+   * @param [in] input: ocs2 switched-model input vector
    * @param [in] jointAccelerations: actuated joints accelerations
    * @param [out] basePose: [base position, base orientation (EulerAngles-ZYX)] expressed in the world frame
    * @param [out] baseVelocity: [base linear velocity, base angular velocity] expressed in the world frame
@@ -71,21 +71,46 @@ class CentroidalModelRbdConversions final {
    * @note: The inputted rbdState contains non-local base velocities (expressed in world frame)
    *
    * @param [in] rbdState: rigid body dynamics model state [base pose, joint positions, base twist, joint velocities]
-   * @param [out] state: ocs2 state vector
+   * @return ocs2 switched-model state vector
    */
-  void computeCentroidalStateFromRbdModel(const vector_t& rbdState, vector_t& state);
+  vector_t computeCentroidalStateFromRbdModel(const vector_t& rbdState);
 
   /**
    * Computes the rigid body dynamics model state from the ocs2 centroidal model state
    * @note: The outputted rbdState contains non-local base velocities (expressed in world frame)
    *
-   * @param [in] state: ocs2 state vector
-   * @param [in] input: ocs2 input vector
-   * @param [in] jointAccelerations: actuated joints accelerations
-   * @param [out] rbdState: rigid body dynamics model state [base pose, joint positions, base twist, joint velocities]
+   * @param [in] state: ocs2 switched-model state vector
+   * @param [in] input: ocs2 switched-model input vector
+   * @return rigid body dynamics model state [base pose, joint positions, base twist, joint velocities]
    */
-  void computeRbdStateFromCentroidalModel(const vector_t& state, const vector_t& input, const vector_t& jointAccelerations,
-                                          vector_t& rbdState);
+  vector_t computeRbdStateFromCentroidalModel(const vector_t& state, const vector_t& input);
+
+  /**
+   * Computes the rigid body dynamics model torque from the ocs2 centroidal model input
+   * @note: Calls computeRbdTorqueFromCentroidalModelPD() with zero gains, so only returning the feedforward torque
+   *
+   * @param [in] state: ocs2 switched-model state vector
+   * @param [in] input: ocs2 switched-model input vector
+   * @param [in] jointAccelerations: actuated joints accelerations
+   * @return rigid body dynamics model torque [base wrench, joint torques]
+   */
+  vector_t computeRbdTorqueFromCentroidalModel(const vector_t& state, const vector_t& input, const vector_t& jointAccelerations);
+
+  /**
+   * Computes the rigid body dynamics model torque from the ocs2 centroidal model input and adds PD feedback
+   * @note: PD controller is added on the acceleration level
+   *
+   * @param [in] desiredState: desired ocs2 switched-model state vector
+   * @param [in] desiredInput: desired ocs2 switched-model input vector
+   * @param [in] desiredJointAccelerations: desired joint accelerations
+   * @param [in] measuredRbdState: measured rigid body dynamics model state (required for PD control)
+   * @param [in] pGains: proportional gains for [base, joint] tracking
+   * @param [in] dGains: derivative gains for [base, joint] tracking
+   * @return rigid body dynamics model torque [base wrench, joint torques]
+   */
+  vector_t computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
+                                                 const vector_t& desiredJointAccelerations, const vector_t& measuredRbdState,
+                                                 const vector_t& pGains, const vector_t& dGains);
 
  private:
   CentroidalModelRbdConversions(const CentroidalModelRbdConversions& other) = default;
@@ -93,13 +118,6 @@ class CentroidalModelRbdConversions final {
 
   PinocchioInterface* pinocchioInterfacePtr_;
   CentroidalModelPinocchioMapping mapping_;
-
-  Matrix6 Adot_;
-  Vector6 qbaseDdot_;
-  Vector6 centroidalMomentum_;
-  Vector3 derivativeEulerAnglesZyx_;
-  Vector3 baseAngularVelocityInWorld_;
-  Vector3 baseAngularAccelerationInWorld_;
 };
 
 }  // namespace ocs2

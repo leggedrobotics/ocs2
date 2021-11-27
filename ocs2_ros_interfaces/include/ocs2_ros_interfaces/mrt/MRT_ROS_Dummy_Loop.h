@@ -80,14 +80,25 @@ class MRT_ROS_Dummy_Loop {
   virtual void modifyObservation(SystemObservation& observation) {}
 
  private:
+  /**
+   * Runs a loop where mpc optimizations are synchronized with the forward simulation of the system
+   */
+  void synchronizedDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
+
+  /**
+   * Runs a loop where mpc optimizations and simulation of the system are asynchronous.
+   * The simulation runs as the specified mrtFrequency, and the MPC runs as fast as possible.
+   */
+  void realtimeDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
+
+  /** Forward simulates the system from current observation*/
+  SystemObservation forwardSimulation(const SystemObservation& currentObservation);
+
   MRT_ROS_Interface& mrt_;
+  std::vector<std::shared_ptr<DummyObserver>> observers_;
+
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
-
-  bool realtimeLoop_;
-
-  SystemObservation observation_;
-  std::vector<std::shared_ptr<DummyObserver>> observers_;
 };
 
 }  // namespace ocs2

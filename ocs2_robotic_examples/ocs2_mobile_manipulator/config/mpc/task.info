@@ -84,8 +84,6 @@ mpc
   debugPrint                     false
   coldStart                      false
 
-  useParallelRiccatiSolver       true  ; use disjoint riccati solver in MP case and recedingHorizon fashion
-
   solutionTimeWindow             0.2   ; [s]
 
   mpcDesiredFrequency            100   ; [Hz]

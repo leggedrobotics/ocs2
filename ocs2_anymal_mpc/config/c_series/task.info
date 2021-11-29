@@ -184,8 +184,6 @@ mpc
   debugPrint                      false
   coldStart                       false
 
-  useParallelRiccatiSolver        true ; use disjoint riccati solver in multi-thread case
-
   solutionTimeWindow              -1  ; [s]
 
   mpcDesiredFrequency             20  ; [Hz]

@@ -103,12 +103,12 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
 void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                     LinearController& dstController) {
   const size_t k = timeIndex;
-  const auto time = primalData.timeTrajectory[k];
+  const auto time = primalData.primalSolution.timeTrajectory_[k];
 
   // interpolate
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.timeTrajectory);
-  const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, primalData.stateTrajectory);
-  const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, primalData.inputTrajectory);
+  const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.primalSolution.timeTrajectory_);
+  const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.stateTrajectory_);
+  const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.inputTrajectory_);
 
   // BmProjected
   const matrix_t projectedBm =
@@ -172,7 +172,7 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
 scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
   // fully compute the riccatiModifications and projected modelData
   // number of the intermediate LQ variables
-  const size_t N = BASE::nominalPrimalData_.timeTrajectory.size();
+  const size_t N = BASE::nominalPrimalData_.primalSolution.timeTrajectory_.size();
 
   BASE::dualData_.riccatiModificationTrajectory.resize(N);
   BASE::dualData_.projectedModelDataTrajectory.resize(N);
@@ -213,11 +213,11 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
   riccatiEquationsPtrStock_[workerIndex]->setData(
-      &(BASE::nominalPrimalData_.timeTrajectory), &(BASE::dualData_.projectedModelDataTrajectory),
+      &(BASE::nominalPrimalData_.primalSolution.timeTrajectory_), &(BASE::dualData_.projectedModelDataTrajectory),
       &(BASE::nominalPrimalData_.postEventIndices), &(BASE::nominalPrimalData_.modelDataEventTimes),
       &(BASE::dualData_.riccatiModificationTrajectory));
 
-  const auto& nominalTimeTrajectory = BASE::nominalPrimalData_.timeTrajectory;
+  const auto& nominalTimeTrajectory = BASE::nominalPrimalData_.primalSolution.timeTrajectory_;
   const auto& nominalEventsPastTheEndIndices = BASE::nominalPrimalData_.postEventIndices;
 
   auto& valueFunctionTrajectory = BASE::dualData_.valueFunctionTrajectory;

@@ -66,6 +66,15 @@ struct ModeSchedule {
    */
   size_t modeAtTime(scalar_t time) const;
 
+  /**
+   * Clear modeSchedule
+   *
+   */
+  inline void clear() {
+    eventTimes.clear();
+    modeSequence.clear();
+  }
+
   std::vector<scalar_t> eventTimes;  // event times of size N - 1
   std::vector<size_t> modeSequence;  // mode sequence of size N
 };

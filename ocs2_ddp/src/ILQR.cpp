@@ -147,8 +147,8 @@ void ILQR::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer
                                      LinearController& dstController) {
   const auto k = timeIndex;
 
-  const auto& nominalState = primalData.stateTrajectory[k];
-  const auto& nominalInput = primalData.inputTrajectory[k];
+  const auto& nominalState = primalData.primalSolution.stateTrajectory_[k];
+  const auto& nominalInput = primalData.primalSolution.inputTrajectory_[k];
 
   const auto& EvProjected = dualData.projectedModelDataTrajectory[k].stateInputEqConstr_.f;
   const auto& CmProjected = dualData.projectedModelDataTrajectory[k].stateInputEqConstr_.dfdx;
@@ -185,7 +185,7 @@ void ILQR::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer
 /******************************************************************************************************/
 /***************************************************************************************************** */
 scalar_t ILQR::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
-  const size_t N = BASE::nominalPrimalData_.timeTrajectory.size();
+  const size_t N = BASE::nominalPrimalData_.primalSolution.timeTrajectory_.size();
   projectedLvTrajectoryStock_.resize(N);
   projectedKmTrajectoryStock_.resize(N);
 

@@ -87,6 +87,22 @@ struct PrimalSolution {
    */
   PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
 
+  inline void swap(PrimalSolution& other) {
+    timeTrajectory_.swap(other.timeTrajectory_);
+    stateTrajectory_.swap(other.stateTrajectory_);
+    inputTrajectory_.swap(other.inputTrajectory_);
+    ::ocs2::swap(modeSchedule_, other.modeSchedule_);
+    controllerPtr_.swap(other.controllerPtr_);
+  }
+
+  inline void clear() {
+    timeTrajectory_.clear();
+    stateTrajectory_.clear();
+    inputTrajectory_.clear();
+    modeSchedule_.clear();
+    controllerPtr_.reset();
+  }
+
   scalar_array_t timeTrajectory_;
   vector_array_t stateTrajectory_;
   vector_array_t inputTrajectory_;

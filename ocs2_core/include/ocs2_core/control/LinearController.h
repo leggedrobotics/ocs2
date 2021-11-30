@@ -81,6 +81,8 @@ class LinearController final : public ControllerBase {
 
   void concatenate(const ControllerBase* nextController, int index, int length) override;
 
+  const scalar_array_t& getTimeStamp() const override { return timeStamp_; };
+
   int size() const override;
 
   ControllerType getType() const override;

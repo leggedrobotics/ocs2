@@ -80,37 +80,25 @@ class GaussNewtonDDP : public SolverBase {
    * the rest of member variables are not the result of the controller. But they will be cleared and populated runInit is called.
    */
   struct PrimalDataContainer {
-    scalar_array_t timeTrajectory;
+    PrimalSolution primalSolution;
     size_array_t postEventIndices;
-    vector_array_t stateTrajectory;
-    vector_array_t inputTrajectory;
     // intermediate model data trajectory
     std::vector<ModelData> modelDataTrajectory;
     // event times model data
     std::vector<ModelData> modelDataEventTimes;
-    // the one used to rollout the rest of (state, input...) trajectories
-    LinearController controller;
 
     inline void swap(PrimalDataContainer& other) {
-      timeTrajectory.swap(other.timeTrajectory);
+      primalSolution.swap(other.primalSolution);
       postEventIndices.swap(other.postEventIndices);
-      stateTrajectory.swap(other.stateTrajectory);
-      inputTrajectory.swap(other.inputTrajectory);
       modelDataTrajectory.swap(other.modelDataTrajectory);
       modelDataEventTimes.swap(other.modelDataEventTimes);
-
-      ::ocs2::swap(controller, other.controller);
     }
 
     inline void clear() {
-      timeTrajectory.clear();
+      primalSolution.clear();
       postEventIndices.clear();
-      stateTrajectory.clear();
-      inputTrajectory.clear();
       modelDataTrajectory.clear();
       modelDataEventTimes.clear();
-
-      controller.clear();
     }
   };
 
@@ -403,11 +391,12 @@ class GaussNewtonDDP : public SolverBase {
    * the controller until the next event time where after it uses the operating trajectories.
    *
    * @param [in] primalData: primalData
-   * @param [in] workerIndex: Working thread (default is 0).
+   * @param [in] controller: nominal controller used to rollout (time, state, input...) trajectories
+   * @param [in] workerIndex: working thread (default is 0).
    *
    * @return average time step.
    */
-  scalar_t rolloutInitialTrajectory(PrimalDataContainer& primalData, size_t workerIndex = 0);
+  scalar_t rolloutInitialTrajectory(PrimalDataContainer& primalData, ControllerBase* controller, size_t workerIndex = 0);
 
   /**
    * Display rollout info and scores.
@@ -554,7 +543,7 @@ class GaussNewtonDDP : public SolverBase {
  protected:
   PrimalDataContainer nominalPrimalData_, optimizedPrimalData_;
   // controller that is calculated directly from dual solution. It is unoptimized because it haven't gone through searching.
-  LinearController unoptimizedController_;
+  std::unique_ptr<ControllerBase> unoptimizedControllerPtr_;
 
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};

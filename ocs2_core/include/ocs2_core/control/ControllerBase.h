@@ -130,6 +130,8 @@ class ControllerBase {
     throw std::runtime_error("ControllerBase::flatten: not implemented.");
   }
 
+  virtual const scalar_array_t& getTimeStamp() const = 0;
+
  protected:
   /** Copy constructor */
   ControllerBase(const ControllerBase& rhs) = default;

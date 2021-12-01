@@ -113,4 +113,9 @@ bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitS
                      [](size_t mode) { return mode == ModeNumber::STANCE; });
 }
 
+bool isStanding(const GaitSchedule& gaitSchedule) {
+  const auto& modeSequence = gaitSchedule.getCurrentGait().modeSequence;
+  return std::all_of(modeSequence.begin(), modeSequence.end(), [](size_t mode) { return mode == ModeNumber::STANCE; });
+}
+
 }  // namespace switched_model

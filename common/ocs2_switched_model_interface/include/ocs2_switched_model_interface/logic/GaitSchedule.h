@@ -76,4 +76,6 @@ class GaitSchedule {
 
 bool isStandingDuringTimeHorizon(scalar_t timeHorizon, const GaitSchedule& gaitSchedule);
 
+bool isStanding(const GaitSchedule& gaitSchedule);
+
 }  // namespace switched_model

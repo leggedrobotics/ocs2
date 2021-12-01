@@ -268,9 +268,9 @@ tracking_cost_weights
     joint_velocity_HAA      0.02;
     joint_velocity_HFE      0.02;
     joint_velocity_KFE      0.01;
-    foot_velocity_x          1.0;
-    foot_velocity_y          1.0;
-    foot_velocity_z          1.0;
+    foot_velocity_x         10.0;
+    foot_velocity_y         10.0;
+    foot_velocity_z         10.0;
     contact_force_x        0.001;
     contact_force_y        0.001;
     contact_force_z        0.001;

@@ -1,7 +1,8 @@
 motionList
 {
     [0] walking
-    [1] walking_v3
-    [2] walking_low
-    [3] inplace
+    [1] walking_1_3_speed
+    [2] walking_2_3_speed
+    [3] walking_inplace
+    [4] mocap_20211126
 }

@@ -43,9 +43,21 @@ void SwingTrajectoryPlanner::updateSwingMotions(scalar_t initTime, scalar_t fina
   for (int leg = 0; leg < NUM_CONTACT_POINTS; leg++) {
     const auto& contactTimings = contactTimingsPerLeg[leg];
 
-    // Update last contacts if this leg is ever in contact
-    if (!contactTimings.empty() && startsWithStancePhase(contactTimings)) {
-      updateLastContact(leg, contactTimings.front().end, feetPositions[leg], *terrainModel_);
+    // Update last contacts
+    if (!contactTimings.empty()) {
+      if (startsWithStancePhase(contactTimings)) {
+        // If currently in contact -> update expected liftoff.
+        if (hasEndTime(contactTimings.front())) {
+          updateLastContact(leg, contactTimings.front().end, feetPositions[leg], *terrainModel_);
+        } else {  // Expected liftoff unknown, set to end of horizon
+          updateLastContact(leg, finalTime, feetPositions[leg], *terrainModel_);
+        }
+      } else {
+        // If currently in swing -> verify that liftoff was before the horizon. If not, assume liftoff happened exactly at initTime
+        if (lastContacts_[leg].first > initTime) {
+          updateLastContact(leg, initTime, feetPositions[leg], *terrainModel_);
+        }
+      }
     }
 
     // Nominal footholds / terrain planes

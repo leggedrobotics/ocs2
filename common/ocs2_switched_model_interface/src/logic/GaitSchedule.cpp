@@ -57,7 +57,13 @@ void GaitSchedule::setGaitSequenceAtTime(const GaitSequence& gaitSequence, scala
     newActiveGait->duration *= newPhase;
   }
 
-  gaitSchedule_.erase(newActiveGait + 1, gaitSchedule_.end());
+  // Check if duration was set to zero
+  if (newActiveGait->duration > 0.0) {  // keep newActiveGait and delete the ones after
+    gaitSchedule_.erase(newActiveGait + 1, gaitSchedule_.end());
+  } else {  // delete newActiveGait and the ones after
+    gaitSchedule_.erase(newActiveGait, gaitSchedule_.end());
+  }
+
   gaitSchedule_.insert(gaitSchedule_.end(), gaitSequence.begin(), gaitSequence.end());
 }
 

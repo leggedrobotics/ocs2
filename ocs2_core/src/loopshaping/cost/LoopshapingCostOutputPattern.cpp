@@ -86,7 +86,7 @@ ScalarFunctionQuadraticApproximation LoopshapingCostOutputPattern::getQuadraticA
 
     L.dfdxx.setZero(stateDim, stateDim);
     L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
-    matrix_t dfduu_C = Rfilter * r_filter.getC();
+    const matrix_t dfduu_C = Rfilter * r_filter.getC();
     L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim).noalias() = r_filter.getC().transpose() * dfduu_C;
 
     L.dfdu = std::move(L_system.dfdu);

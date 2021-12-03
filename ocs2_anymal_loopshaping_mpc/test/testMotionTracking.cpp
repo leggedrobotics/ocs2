@@ -167,5 +167,5 @@ TEST_F(TestAnymalLoopshapingMpc, motion_tracking) {
   const switched_model::vector3_t finalBasePosition = observation.state.segment<3>(3);
   const switched_model::vector3_t finalRefBasePosition =
       ocs2::LinearInterpolation::interpolate(finalTime, motionData.first.timeTrajectory, motionData.first.stateTrajectory).segment<3>(3);
-  ASSERT_LT((finalBasePosition - finalRefBasePosition).norm(), 0.25); 
+  ASSERT_LT((finalBasePosition - finalRefBasePosition).norm(), 0.25);
 }

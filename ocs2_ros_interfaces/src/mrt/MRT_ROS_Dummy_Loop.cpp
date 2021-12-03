@@ -81,6 +81,12 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
   size_t loopCounter = 0;
   SystemObservation currentObservation = initObservation;
 
+  // Helper function to check if policy is updated and starts at the given time.
+  const auto policyUpdatedForTime = [this](scalar_t time) {
+    const scalar_t tol = 0.1;  // policy must start within this fraction of dt
+    return mrt_.updatePolicy() && std::abs(mrt_.getPolicy().timeTrajectory_.front() - time) < (tol / mpcDesiredFrequency_);
+  };
+
   ros::WallRate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) {
     std::cout << "### Current time " << currentObservation.time << "\n";
@@ -91,10 +97,10 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
     // Update the MPC policy if it is time to do so
     if (loopCounter % mpcUpdateRatio == 0) {
       // Wait for the policy to be updated
-      while (!mrt_.updatePolicy() && ros::ok() && ros::master::check()) {
+      while (!policyUpdatedForTime(currentObservation.time) && ros::ok() && ros::master::check()) {
         mrt_.spinMRT();
       }
-      std::cout << "<<< New MPC policy received at " << currentObservation.time << "\n";
+      std::cout << "<<< New MPC policy starting at " << mrt_.getPolicy().timeTrajectory_.front() << "\n";
     }
 
     // Forward simulation
@@ -136,7 +142,7 @@ void MRT_ROS_Dummy_Loop::realtimeDummyLoop(const SystemObservation& initObservat
 
     // Update the policy if a new on was received
     if (mrt_.updatePolicy()) {
-      std::cout << "<<< New MPC policy received at " << currentObservation.time << "\n";
+      std::cout << "<<< New MPC policy starting at " << mrt_.getPolicy().timeTrajectory_.front() << "\n";
     }
 
     // Forward simulation

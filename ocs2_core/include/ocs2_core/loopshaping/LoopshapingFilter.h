@@ -66,6 +66,7 @@ class Filter {
   void print() const;
 
   void findEquilibriumForOutput(const vector_t& y, vector_t& x, vector_t& u) const;
+  void findEquilibriumForOutputGivenState(const vector_t& y, const vector_t& x, vector_t& u) const;
   void findEquilibriumForInput(const vector_t& u, vector_t& x, vector_t& y) const;
 
  private:
@@ -78,6 +79,7 @@ class Filter {
   size_t numInputs_ = 0;
   size_t numOutputs_ = 0;
   Eigen::ColPivHouseholderQR<matrix_t> Aqr_;
+  Eigen::ColPivHouseholderQR<matrix_t> Dqr_;
   Eigen::ColPivHouseholderQR<matrix_t> ABCDqr_;
 };
 

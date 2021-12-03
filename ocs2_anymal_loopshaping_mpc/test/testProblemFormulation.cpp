@@ -12,7 +12,7 @@
 class TestAnymalLoopshapingModel : public ::testing::Test {
  public:
   TestAnymalLoopshapingModel() {
-    const std::string robotName("chip");
+    const std::string robotName("chimera");
     const std::string configName("c_series");
     const std::string path(__FILE__);
     const std::string dir = path.substr(0, path.find_last_of("/"));

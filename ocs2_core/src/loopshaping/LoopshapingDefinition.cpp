@@ -93,6 +93,17 @@ vector_t LoopshapingDefinition::getFilteredInput(const vector_t& state, const ve
   }
 };
 
+vector_t LoopshapingDefinition::filterFlowMap(const vector_t& filterState, const vector_t& input) const {
+  // Same equation for both loopshaping types
+  if (diagonal_) {
+    return filter_.getAdiag().diagonal().cwiseProduct(filterState) + filter_.getBdiag().diagonal().cwiseProduct(input);
+  } else {
+    vector_t filterStateDerivative = filter_.getA() * filterState;
+    filterStateDerivative.noalias() += filter_.getB() * input;
+    return filterStateDerivative;
+  }
+}
+
 vector_t LoopshapingDefinition::concatenateSystemAndFilterState(const vector_t& systemState, const vector_t& filterState) const {
   vector_t state(systemState.rows() + filter_.getNumStates());
   state << systemState, filterState;
@@ -120,6 +131,20 @@ void LoopshapingDefinition::getFilterEquilibrium(const vector_t& systemInput, ve
       break;
     default:
       throw std::runtime_error("[LoopshapingDefinition::getFilterEquilibrium] invalid loopshaping type");
+  }
+}
+
+void LoopshapingDefinition::getFilterEquilibriumGivenState(const vector_t& systemInput, const vector_t& filterState,
+                                                           vector_t& filterInput) const {
+  switch (loopshapingType_) {
+    case LoopshapingType::outputpattern:
+      filterInput = getFilteredInput(systemInput, filterState);
+      break;
+    case LoopshapingType::eliminatepattern:
+      filter_.findEquilibriumForOutputGivenState(systemInput, filterState, filterInput);
+      break;
+    default:
+      throw std::runtime_error("[LoopshapingDefinition::getFilterEquilibriumGivenState] invalid loopshaping type");
   }
 }
 

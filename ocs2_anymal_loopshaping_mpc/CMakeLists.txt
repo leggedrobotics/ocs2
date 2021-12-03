@@ -104,6 +104,7 @@ install(DIRECTORY config launch
 # Build unit tests
 catkin_add_gtest(${PROJECT_NAME}_test
   test/testProblemFormulation.cpp
+  test/testMotionTracking.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
   ${PROJECT_NAME}

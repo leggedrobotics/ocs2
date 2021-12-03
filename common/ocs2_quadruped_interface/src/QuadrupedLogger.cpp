@@ -48,12 +48,12 @@ std::string QuadrupedLogger::getLogHeader() const {
          "base_positionInWorld_x" << delim <<
          "base_positionInWorld_y" << delim <<
          "base_positionInWorld_z" << delim <<
-         "base_linearvelocityInBase_x" << delim <<
-         "base_linearvelocityInBase_y" << delim <<
-         "base_linearvelocityInBase_z" << delim <<
          "base_angularvelocityInBase_x" << delim <<
          "base_angularvelocityInBase_y" << delim <<
-         "base_angularvelocityInBase_z" << delim;
+         "base_angularvelocityInBase_z" << delim <<
+         "base_linearvelocityInBase_x" << delim <<
+         "base_linearvelocityInBase_y" << delim <<
+         "base_linearvelocityInBase_z" << delim;
   // clang-format on
   for (const auto& name : namesPerLeg("jointAngle", {"HAA", "HFE", "KFE"})) {
     header << name << delim;

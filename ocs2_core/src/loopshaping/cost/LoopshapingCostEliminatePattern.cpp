@@ -95,7 +95,7 @@ ScalarFunctionQuadraticApproximation LoopshapingCostEliminatePattern::getQuadrat
     L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
     L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim) = s_filter.getC().transpose() * L_system.dfdux;
     L.dfdxx.topRightCorner(sysStateDim, filtStateDim).noalias() = L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim).transpose();
-    matrix_t dfduu_C = L_system.dfduu * s_filter.getC();
+    const matrix_t dfduu_C = L_system.dfduu * s_filter.getC();
     L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim).noalias() = s_filter.getC().transpose() * dfduu_C;
 
     // dfdu & dfduu

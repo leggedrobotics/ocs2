@@ -38,34 +38,13 @@ void LoopshapingFilterDynamics::integrate(scalar_t dt, const vector_t& input) {
 
   vector_array_t stateTrajectory;
   Observer observer(&stateTrajectory);
-  integrator_->integrateAdaptive(ode_fun, observer, filter_state_, 0.0, dt, dt);
+  integrator_->integrateAdaptive(ode_fun, observer, filterState_, 0.0, dt, dt);
 
-  filter_state_ = stateTrajectory.back();
+  filterState_ = stateTrajectory.back();
 }
 
-vector_t LoopshapingFilterDynamics::computeFlowMap(scalar_t time, const vector_t& filter_state, const vector_t& input) const {
-  const bool isDiagonal = loopshapingDefinition_->isDiagonal();
-  const auto& filter = loopshapingDefinition_->getInputFilter();
-  switch (loopshapingDefinition_->getType()) {
-    case LoopshapingType::outputpattern:
-      if (isDiagonal) {
-        return filter.getAdiag().diagonal().cwiseProduct(filter_state) + filter.getBdiag().diagonal().cwiseProduct(input);
-      } else {
-        vector_t filterStateDerivative = filter.getA() * filter_state;
-        filterStateDerivative.noalias() += filter.getB() * input;
-        return filterStateDerivative;
-      }
-    case LoopshapingType::eliminatepattern:
-      if (isDiagonal) {
-        return filter.getAdiag().diagonal().cwiseProduct(filter_state) + filter.getBdiag().diagonal().cwiseProduct(input);
-      } else {
-        vector_t filterStateDerivative = filter.getA() * filter_state;
-        filterStateDerivative.noalias() += filter.getB() * input;
-        return filterStateDerivative;
-      }
-    default:
-      throw std::runtime_error("[LoopshapingFilterDynamics::computeFlowMap] invalid loopshaping type");
-  }
+vector_t LoopshapingFilterDynamics::computeFlowMap(scalar_t time, const vector_t& filterState, const vector_t& input) const {
+  return loopshapingDefinition_->filterFlowMap(filterState, input);
 }
 
 }  // namespace ocs2

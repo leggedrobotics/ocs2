@@ -64,6 +64,9 @@ Filter::Filter(matrix_t A, matrix_t B, matrix_t C, matrix_t D)
     Aqr_.compute(A_);
   }
 
+  // Prepare inv(D)
+  Dqr_.compute(D_);
+
   // Prepare inv([A, B; C, D])
   matrix_t ABCD(numStates_ + numInputs_, numStates_ + numInputs_);
   ABCD << A_, B_, C_, D_;
@@ -98,6 +101,14 @@ void Filter::findEquilibriumForOutput(const vector_t& y, vector_t& x, vector_t& 
 
   x = x_u.head(numStates_);
   u = x_u.tail(numInputs_);
+}
+
+void Filter::findEquilibriumForOutputGivenState(const vector_t& y, const vector_t& x, vector_t& u) const {
+  // Solve (given y, x)
+  //  y =  [  C    D  ] [x; u]
+  vector_t tmp = y;
+  tmp.noalias() -= C_ * x;
+  u = Dqr_.solve(tmp);
 }
 
 void Filter::findEquilibriumForInput(const vector_t& u, vector_t& x, vector_t& y) const {

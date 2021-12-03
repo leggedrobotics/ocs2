@@ -101,6 +101,13 @@ class LoopshapingDefinition {
   vector_t getFilteredInput(const vector_t& state, const vector_t& input) const;
 
   /**
+   * @param filterState : state of the loopshaping filter
+   * @param input : input of the augmented system
+   * @return time derivative of the filter state
+   */
+  vector_t filterFlowMap(const vector_t& filterState, const vector_t& input) const;
+
+  /**
    * @param systemState : state of the original system
    * @param filterState : state of the loopshaping filter
    * @return state of the augmented system
@@ -121,6 +128,14 @@ class LoopshapingDefinition {
    * @param filterInput (return) : the filtered input
    */
   void getFilterEquilibrium(const vector_t& systemInput, vector_t& filterState, vector_t& filterInput) const;
+
+  /**
+   * Finds a loopshaping input such that they are in equilibrium with a given system input
+   * @param systemInput : input of the original system
+   * @param filterState : state of the loopshaping filter
+   * @param filterInput (return) : the filtered input
+   */
+  void getFilterEquilibriumGivenState(const vector_t& systemInput, const vector_t& filterState, vector_t& filterInput) const;
 
  private:
   Filter filter_;

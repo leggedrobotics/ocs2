@@ -230,16 +230,4 @@ struct VectorFunctionQuadraticApproximation {
 
 std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f);
 
-namespace scalar_function_approximation {
-inline const scalar_t& f(const std::vector<ocs2::ScalarFunctionQuadraticApproximation>& vec, size_t ind) {
-  return vec[ind].f;
-}
-inline const vector_t& dfdx(const std::vector<ocs2::ScalarFunctionQuadraticApproximation>& vec, size_t ind) {
-  return vec[ind].dfdx;
-}
-inline const matrix_t& dfdxx(const std::vector<ocs2::ScalarFunctionQuadraticApproximation>& vec, size_t ind) {
-  return vec[ind].dfdxx;
-}
-}  // namespace scalar_function_approximation
-
 }  // namespace ocs2

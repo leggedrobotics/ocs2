@@ -274,11 +274,18 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionImpl(
     const scalar_t& time, const vector_t& state, const PrimalDataContainer& primalData,
     const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const {
+  // result
   ScalarFunctionQuadraticApproximation valueFunction;
   const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.primalSolution.timeTrajectory_);
-  valueFunction.f = LinearInterpolation::interpolate(indexAlpha, valueFunctionTrajectory, scalar_function_approximation::f);
-  valueFunction.dfdx = LinearInterpolation::interpolate(indexAlpha, valueFunctionTrajectory, scalar_function_approximation::dfdx);
-  valueFunction.dfdxx = LinearInterpolation::interpolate(indexAlpha, valueFunctionTrajectory, scalar_function_approximation::dfdxx);
+  valueFunction.f = LinearInterpolation::interpolate(
+      indexAlpha, valueFunctionTrajectory,
+      +[](const std::vector<ocs2::ScalarFunctionQuadraticApproximation>& vec, size_t ind) -> const scalar_t& { return vec[ind].f; });
+  valueFunction.dfdx = LinearInterpolation::interpolate(
+      indexAlpha, valueFunctionTrajectory,
+      +[](const std::vector<ocs2::ScalarFunctionQuadraticApproximation>& vec, size_t ind) -> const vector_t& { return vec[ind].dfdx; });
+  valueFunction.dfdxx = LinearInterpolation::interpolate(
+      indexAlpha, valueFunctionTrajectory,
+      +[](const std::vector<ocs2::ScalarFunctionQuadraticApproximation>& vec, size_t ind) -> const matrix_t& { return vec[ind].dfdxx; });
 
   // Re-center around query state
   const vector_t xNominal = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.stateTrajectory_);
@@ -386,9 +393,7 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
   temp.noalias() -= Bm.transpose() * costate;
   temp.noalias() += Hm * err;
 
-  vector_t nu = DmDagger.transpose() * temp;
-
-  return nu;
+  return DmDagger.transpose() * temp;
 }
 
 /******************************************************************************************************/
@@ -396,13 +401,6 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
 /******************************************************************************************************/
 vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
   return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianFromCache(scalar_t time, const vector_t& state) const {
-  return getStateInputEqualityConstraintLagrangianImpl(time, state, cachedPrimalData_, cachedDualData_);
 }
 
 /******************************************************************************************************/
@@ -1141,37 +1139,10 @@ void GaussNewtonDDP::swapDataToCache() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::correctInitcachedNominalTrajectories() {
-  // TODO:
-  // for each partition
-  // for (size_t i = initActivePartition_; i <= finalActivePartition_; i++) {
-  //   if (cachedTimeTrajectoriesStock_[i].empty()) {
-  //     cachedPostEventIndicesStock_[i] = nominalPostEventIndicesStock_[i];
-  //     cachedTimeTrajectoriesStock_[i] = nominalTimeTrajectoriesStock_[i];
-  //     cachedStateTrajectoriesStock_[i] = nominalStateTrajectoriesStock_[i];
-  //     cachedInputTrajectoriesStock_[i] = nominalInputTrajectoriesStock_[i];
-
-  //   } else if (cachedTimeTrajectoriesStock_[i].back() < nominalTimeTrajectoriesStock_[i].back()) {
-  //     // find the time segment
-  //     const scalar_t finalTime = cachedTimeTrajectoriesStock_[i].back() + numeric_traits::weakEpsilon<scalar_t>();
-  //     const auto timeSegment = LinearInterpolation::timeSegment(finalTime, nominalTimeTrajectoriesStock_[i]);
-
-  //     // post event index
-  //     const int sizeBeforeCorrection = cachedTimeTrajectoriesStock_[i].size();
-  //     for (auto ind : nominalPostEventIndicesStock_[i]) {
-  //       if (ind > timeSegment.first) {
-  //         cachedPostEventIndicesStock_[i].push_back(ind - timeSegment.first + sizeBeforeCorrection);
-  //       }
-  //     }
-
-  //     // time
-  //     correctcachedTrajectoryTail(timeSegment, nominalTimeTrajectoriesStock_[i], cachedTimeTrajectoriesStock_[i]);
-  //     // state
-  //     correctcachedTrajectoryTail(timeSegment, nominalStateTrajectoriesStock_[i], cachedStateTrajectoriesStock_[i]);
-  //     // input
-  //     correctcachedTrajectoryTail(timeSegment, nominalInputTrajectoriesStock_[i], cachedInputTrajectoriesStock_[i]);
-
-  //   }
-  // }  // end of i loop
+  // TODO: Cache Rectification Take care of the case where the end system of the cached trajectories is different from the system in the
+  // partition points. Usually, the cached value used to start each partition are aligned with the partition points in time, so there won't
+  // be problems. But sometimes, in MPC setup, horizon shifts a lot between consecutive solve that the end value of the cache is needed to
+  // start the second to last partition. Here, the time is not aligned, and we have to rectify cache to match state, input dimensions.
 }
 
 /******************************************************************************************************/

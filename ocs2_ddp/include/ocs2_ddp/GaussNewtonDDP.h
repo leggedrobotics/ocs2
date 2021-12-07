@@ -201,11 +201,11 @@ class GaussNewtonDDP : public SolverBase {
    * normalizedTime = [-4.0, -3.0(*), -2.0, -1.0(*), -0.0]
    * normalizedeventIndices = [1, 3]
    *
-   * @param [in] partitionInterval
-   * @param [in] timeTrajectory
-   * @param [in] postEventIndices
-   * @param [out] normalizedTimeTrajectory
-   * @param [out] normalizedPostEventIndices
+   * @param [in] partitionInterval: Current active interval
+   * @param [in] timeTrajectory: The whole time trajectory
+   * @param [in] postEventIndices: The post event index array
+   * @param [out] normalizedTimeTrajectory: Nomalized time trajectory of the current interval
+   * @param [out] normalizedPostEventIndices: Nomalized ost event index array of the current interval
    */
   static void retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                            const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
@@ -286,10 +286,10 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Calculate controller for the timeIndex by using primal and dual and write the result back to dstController
    *
-   * @param [in] timeIndex
-   * @param [in] primalData
-   * @param [in] dualData
-   * @param [out] dstController
+   * @param [in] timeIndex: The current time index
+   * @param [in] primalData: Primal data used to calculate controller
+   * @param [in] dualData: Dual data used to calculate controller
+   * @param [out] dstController: The destination controller
    */
   virtual void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                          LinearController& dstController) = 0;
@@ -313,8 +313,8 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Solves a Riccati equations and type_1 constraints error correction compensation for the partition in the given index.
    *
-   * @param [in] workerIndex
-   * @param [in] partitionInterval
+   * @param [in] workerIndex: Current worker index
+   * @param [in] partitionInterval: Current active interval
    * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
    */
   virtual void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
@@ -322,33 +322,25 @@ class GaussNewtonDDP : public SolverBase {
 
  private:
   /**
-   * @brief Get the State Input Equality Constraint Lagrangian Impl object
+   * Get the State Input Equality Constraint Lagrangian Impl object
    *
-   * @param [in] time
-   * @param [in] state
-   * @param [in] primalData
-   * @param [in] dualData
+   * @param [in] time: Query time
+   * @param [in] state: Current state
+   * @param [in] primalData: Primal Data
+   * @param [in] dualData: DualData
    * @return vector_t
    */
   vector_t getStateInputEqualityConstraintLagrangianImpl(scalar_t time, const vector_t& state, const PrimalDataContainer& primalData,
                                                          const DualDataContainer& dualData) const;
-  /**
-   * @brief Get the State Input Equality Constraint Lagrangian From Cache object
-   *
-   * @param [in] time
-   * @param [in] state
-   * @return vector_t
-   */
-  vector_t getStateInputEqualityConstraintLagrangianFromCache(scalar_t time, const vector_t& state) const;
 
   /**
    * Get the Value Function at time(time) from valueFunctionTrajectory. The the gradient od the value function will be corrected by using
    * the hessian together with the difference between the current state and the corresponding state stored in the primalData.
    *
-   * @param [in] time
-   * @param [in] state
-   * @param [in] primalData
-   * @param [in] valueFunctionTrajectory
+   * @param [in] time: Query time
+   * @param [in] state: Current state
+   * @param [in] primalData: Primal Data
+   * @param [in] valueFunctionTrajectory: Dual Data
    * @return value function
    */
   ScalarFunctionQuadraticApproximation getValueFunctionImpl(
@@ -358,8 +350,8 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * @brief Get the Value Function From Cache
    *
-   * @param [in] time
-   * @param [in] state
+   * @param [in] time: Query time
+   * @param [in] state: Current state
    * @return ScalarFunctionQuadraticApproximation
    */
   ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const;

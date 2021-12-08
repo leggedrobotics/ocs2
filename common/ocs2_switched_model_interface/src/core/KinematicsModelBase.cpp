@@ -22,6 +22,16 @@ feet_array_t<vector3_s_t<SCALAR_T>> KinematicsModelBase<SCALAR_T>::positionBaseT
 }
 
 template <typename SCALAR_T>
+vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::legRootInOriginFrame(size_t footIndex,
+                                                                          const base_coordinate_s_t<SCALAR_T>& basePose) const {
+  const vector3_s_t<SCALAR_T> o_basePosition = getPositionInOrigin(basePose);
+
+  const vector3_s_t<SCALAR_T> b_baseTolegRoot = baseTolegRootInBaseFrame(footIndex);
+  const vector3_s_t<SCALAR_T> o_baseTolegRoot = rotateVectorBaseToOrigin<SCALAR_T>(b_baseTolegRoot, getOrientation(basePose));
+  return o_baseTolegRoot + o_basePosition;
+}
+
+template <typename SCALAR_T>
 vector3_s_t<SCALAR_T> KinematicsModelBase<SCALAR_T>::footPositionInOriginFrame(size_t footIndex,
                                                                                const base_coordinate_s_t<SCALAR_T>& basePose,
                                                                                const joint_coordinate_s_t<SCALAR_T>& jointPositions) const {

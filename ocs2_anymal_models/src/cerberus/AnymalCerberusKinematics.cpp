@@ -18,6 +18,32 @@ AnymalCerberusKinematics<SCALAR_T>* AnymalCerberusKinematics<SCALAR_T>::clone() 
 }
 
 template <typename SCALAR_T>
+switched_model::vector3_s_t<SCALAR_T> AnymalCerberusKinematics<SCALAR_T>::baseTolegRootInBaseFrame(size_t footIndex) const {
+  using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;
+
+  switch (footIndex) {
+    case LF: {
+      typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LF_HAA fr_trunk_X_fr_LF_haa_;
+      return fr_trunk_X_fr_LF_haa_.template topRightCorner<3, 1>();
+    }
+    case RF: {
+      typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RF_HAA fr_trunk_X_fr_RF_haa_;
+      return fr_trunk_X_fr_RF_haa_.template topRightCorner<3, 1>();
+    }
+    case LH: {
+      typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_LH_HAA fr_trunk_X_fr_LH_haa_;
+      return fr_trunk_X_fr_LH_haa_.template topRightCorner<3, 1>();
+    }
+    case RH: {
+      typename iit::cerberus::tpl::HomogeneousTransforms<trait_t>::Type_fr_base_X_fr_RH_HAA fr_trunk_X_fr_RH_haa_;
+      return fr_trunk_X_fr_RH_haa_.template topRightCorner<3, 1>();
+    }
+    default:
+      throw std::runtime_error("Not defined foot index.");
+  }
+}
+
+template <typename SCALAR_T>
 switched_model::vector3_s_t<SCALAR_T> AnymalCerberusKinematics<SCALAR_T>::positionBaseToFootInBaseFrame(
     size_t footIndex, const switched_model::joint_coordinate_s_t<SCALAR_T>& jointPositions) const {
   using trait_t = typename iit::rbd::tpl::TraitSelector<SCALAR_T>::Trait;

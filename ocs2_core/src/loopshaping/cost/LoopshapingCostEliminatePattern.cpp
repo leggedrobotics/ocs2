@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Ruben Grandia. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,67 +39,78 @@ ScalarFunctionQuadraticApproximation LoopshapingCostEliminatePattern::getQuadrat
   }
 
   const bool isDiagonal = loopshapingDefinition_->isDiagonal();
-  const scalar_t gamma = loopshapingDefinition_->gamma_;
   const auto& s_filter = loopshapingDefinition_->getInputFilter();
   const auto& preCompLS = cast<LoopshapingPreComputation>(preComp);
   const auto& x_system = preCompLS.getSystemState();
   const auto& u_system = preCompLS.getSystemInput();
   const auto& x_filter = preCompLS.getFilterState();
   const auto& u_filter = preCompLS.getFilteredInput();
+  const auto stateDim = x.rows();
+  const auto inputDim = u.rows();
+  const auto sysStateDim = x_system.rows();
+  const auto filtStateDim = x_filter.rows();
+
+  const auto& Rfilter = loopshapingDefinition_->costMatrix();
+  vector_t Ru_filter = Rfilter * u_filter;
 
   const auto L_system =
       StateInputCostCollection::getQuadraticApproximation(t, x_system, u_system, targetTrajectories, preCompLS.getSystemPreComputation());
 
-  const auto L_filter = StateInputCostCollection::getQuadraticApproximation(t, x_system, u_filter, targetTrajectories,
-                                                                            preCompLS.getFilteredSystemPreComputation());
+  ScalarFunctionQuadraticApproximation L;
 
-  ScalarFunctionQuadraticApproximation L(x.rows(), u.rows());
-  L.f = gamma * L_filter.f + (1.0 - gamma) * L_system.f;
+  // f
+  L.f = L_system.f + 0.5 * u_filter.dot(Ru_filter);
 
-  // dfdx
-  L.dfdx.head(x_system.rows()).noalias() = gamma * L_filter.dfdx + (1.0 - gamma) * L_system.dfdx;
   if (isDiagonal) {
-    L.dfdx.tail(x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getCdiag().diagonal().cwiseProduct(L_system.dfdu);
-  } else {
-    L.dfdx.tail(x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getC().transpose() * L_system.dfdu;
-  }
+    // dfdx
+    L.dfdx.resize(stateDim);
+    L.dfdx.head(sysStateDim) = L_system.dfdx;
+    L.dfdx.tail(filtStateDim) = s_filter.getCdiag().diagonal().cwiseProduct(L_system.dfdu);
 
-  // dfdxx
-  L.dfdxx.topLeftCorner(x_system.rows(), x_system.rows()).noalias() = gamma * L_filter.dfdxx + (1.0 - gamma) * L_system.dfdxx;
-  matrix_t dfduu_C;  // temporary variable, reused in other equation.
-  if (isDiagonal) {
-    L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()).noalias() = (1.0 - gamma) * L_system.dfdux.transpose() * s_filter.getCdiag();
-    dfduu_C.noalias() = L_system.dfduu * s_filter.getCdiag();
-    L.dfdxx.bottomRightCorner(x_filter.rows(), x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getCdiag() * dfduu_C;
-  } else {
-    L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()).noalias() = (1.0 - gamma) * L_system.dfdux.transpose() * s_filter.getC();
-    dfduu_C.noalias() = L_system.dfduu * s_filter.getC();
-    L.dfdxx.bottomRightCorner(x_filter.rows(), x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getC().transpose() * dfduu_C;
-  }
-  L.dfdxx.bottomLeftCorner(x_filter.rows(), x_system.rows()) = L.dfdxx.topRightCorner(x_system.rows(), x_filter.rows()).transpose();
+    // dfdxx
+    L.dfdxx.resize(stateDim, stateDim);
+    L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+    L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim).noalias() = s_filter.getCdiag() * L_system.dfdux;
+    L.dfdxx.topRightCorner(sysStateDim, filtStateDim) = L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim).transpose();
+    L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim) = s_filter.getScalingCdiagCdiag().cwiseProduct(L_system.dfduu);
 
-  // dfdu & dfduu
-  L.dfdu = gamma * L_filter.dfdu;
-  L.dfduu = gamma * L_filter.dfduu;
-  if (isDiagonal) {
-    L.dfdu.noalias() += (1.0 - gamma) * s_filter.getDdiag().diagonal().cwiseProduct(L_system.dfdu);
-    L.dfduu.noalias() += (1.0 - gamma) * s_filter.getDdiag() * L_system.dfduu * s_filter.getDdiag();
-  } else {
-    L.dfdu.noalias() += (1.0 - gamma) * s_filter.getD().transpose() * L_system.dfdu;
-    L.dfduu.noalias() += (1.0 - gamma) * s_filter.getD().transpose() * L_system.dfduu * s_filter.getD();
-  }
+    // dfdu & dfduu
+    L.dfdu = Ru_filter + s_filter.getDdiag().diagonal().cwiseProduct(L_system.dfdu);
+    L.dfduu = Rfilter + s_filter.getScalingDdiagDdiag().cwiseProduct(L_system.dfduu);
 
-  // dfdux
-  L.dfdux.leftCols(x_system.rows()) = gamma * L_filter.dfdux;
-  if (isDiagonal) {
-    L.dfdux.leftCols(x_system.rows()).noalias() += (1.0 - gamma) * s_filter.getDdiag() * L_system.dfdux;
-    L.dfdux.rightCols(x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getDdiag() * dfduu_C;
-  } else {
-    L.dfdux.leftCols(x_system.rows()).noalias() += (1.0 - gamma) * s_filter.getD().transpose() * L_system.dfdux;
-    L.dfdux.rightCols(x_filter.rows()).noalias() = (1.0 - gamma) * s_filter.getD().transpose() * dfduu_C;
-  }
+    // dfdux
+    L.dfdux.resize(inputDim, stateDim);
+    L.dfdux.leftCols(sysStateDim).noalias() = s_filter.getDdiag() * L_system.dfdux;
+    L.dfdux.rightCols(filtStateDim) = s_filter.getScalingDdiagCdiag().cwiseProduct(L_system.dfduu);
 
-  return L;
+    return L;
+  } else {
+    // dfdx
+    L.dfdx.resize(stateDim);
+    L.dfdx.head(sysStateDim) = L_system.dfdx;
+    L.dfdx.tail(filtStateDim).noalias() = s_filter.getC().transpose() * L_system.dfdu;
+
+    // dfdxx
+    L.dfdxx.resize(stateDim, stateDim);
+    L.dfdxx.topLeftCorner(sysStateDim, sysStateDim) = L_system.dfdxx;
+    L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim) = s_filter.getC().transpose() * L_system.dfdux;
+    L.dfdxx.topRightCorner(sysStateDim, filtStateDim).noalias() = L.dfdxx.bottomLeftCorner(filtStateDim, sysStateDim).transpose();
+    const matrix_t dfduu_C = L_system.dfduu * s_filter.getC();
+    L.dfdxx.bottomRightCorner(filtStateDim, filtStateDim).noalias() = s_filter.getC().transpose() * dfduu_C;
+
+    // dfdu & dfduu
+    L.dfdu = std::move(Ru_filter);
+    L.dfdu.noalias() += s_filter.getD().transpose() * L_system.dfdu;
+    L.dfduu = Rfilter;
+    L.dfduu.noalias() += s_filter.getD().transpose() * L_system.dfduu * s_filter.getD();
+
+    // dfdux
+    L.dfdux.resize(inputDim, stateDim);
+    L.dfdux.leftCols(sysStateDim).noalias() = s_filter.getD().transpose() * L_system.dfdux;
+    L.dfdux.rightCols(filtStateDim).noalias() = s_filter.getD().transpose() * dfduu_C;
+
+    return L;
+  }
 }
 
 }  // namespace ocs2

@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Ruben Grandia. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraint.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintEliminatePattern.h>
-#include <ocs2_core/loopshaping/constraint/LoopshapingConstraintInputPattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingConstraintOutputPattern.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingStateConstraint.h>
 #include <ocs2_core/loopshaping/constraint/LoopshapingStateInputConstraint.h>
@@ -54,9 +53,6 @@ std::unique_ptr<StateInputConstraintCollection> create(const StateInputConstrain
     case LoopshapingType::outputpattern:
       return std::unique_ptr<StateInputConstraintCollection>(
           new LoopshapingConstraintOutputPattern(systemConstraint, std::move(loopshapingDefinition)));
-    case LoopshapingType::inputpattern:
-      return std::unique_ptr<StateInputConstraintCollection>(
-          new LoopshapingConstraintInputPattern(systemConstraint, std::move(loopshapingDefinition)));
     case LoopshapingType::eliminatepattern:
       return std::unique_ptr<StateInputConstraintCollection>(
           new LoopshapingConstraintEliminatePattern(systemConstraint, std::move(loopshapingDefinition)));

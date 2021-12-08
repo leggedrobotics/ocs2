@@ -81,6 +81,7 @@ add_library(${PROJECT_NAME}
 	src/core/ModelSettings.cpp
 	src/core/SwitchedModelPrecomputation.cpp
 	src/core/SwitchedModelStateEstimator.cpp
+	src/core/TorqueApproximation.cpp
 )
 add_dependencies(${PROJECT_NAME}
 	${${PROJECT_NAME}_EXPORTED_TARGETS}

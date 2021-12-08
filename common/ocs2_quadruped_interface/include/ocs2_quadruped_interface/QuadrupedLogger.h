@@ -56,12 +56,6 @@ class QuadrupedLogger : public ocs2::DummyObserver {
   std::string getLogHeader() const;
   int getNumColumns() const;
 
-  /**
-   * Approximate joint torques with J(q)^T F, i.e. neglecting leg dynamics.
-   */
-  feet_array_t<vector3_t> approximateTorques(const joint_coordinate_t& jointPositions,
-                                             const feet_array_t<vector3_t>& contactForcesInBase) const;
-
   std::string logFileName_;
   std::vector<std::string> additionalColumns_;
 

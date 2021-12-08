@@ -8,6 +8,7 @@
 
 #include <ocs2_switched_model_interface/core/MotionPhaseDefinition.h>
 #include <ocs2_switched_model_interface/core/Rotations.h>
+#include <ocs2_switched_model_interface/core/TorqueApproximation.h>
 
 namespace switched_model {
 
@@ -113,7 +114,7 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
   }
 
   // Torques
-  const auto torques = approximateTorques(qJoints, contactForcesInBase);
+  const auto torques = torqueApproximation(qJoints, contactForcesInBase, *kinematicModel_);
 
   // Fill log
   vector_t logEntry(getNumColumns());
@@ -140,16 +141,6 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
   // clang-format on
 
   buffer_.push_back(std::move(logEntry));
-}
-
-feet_array_t<vector3_t> QuadrupedLogger::approximateTorques(const joint_coordinate_t& jointPositions,
-                                                            const feet_array_t<vector3_t>& contactForcesInBase) const {
-  feet_array_t<vector3_t> torques;
-  for (int leg = 0; leg < NUM_CONTACT_POINTS; ++leg) {
-    kinematic_model_t::joint_jacobian_t b_baseToFootJacobian = kinematicModel_->baseToFootJacobianInBaseFrame(leg, jointPositions);
-    torques[leg] = b_baseToFootJacobian.block<3, 3>(3, 3 * leg).transpose() * contactForcesInBase[leg];
-  }
-  return torques;
 }
 
 std::vector<std::string> QuadrupedLogger::namesPerLeg(const std::string& prefix, const std::vector<std::string>& postfixes) {

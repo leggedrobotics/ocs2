@@ -256,7 +256,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
   if (ddpSettings_.useFeedbackPolicy_) {
     primalSolutionPtr->controllerPtr_.reset(new LinearController);
     // length of the copy
-    const int length = getRequestedDataLength(optimizedPrimalData_.primalSolution.controllerPtr_->getTimeStamp(), finalTime);
+    const int length = getRequestedDataLength(getLinearController(optimizedPrimalData_).timeStamp_, finalTime);
     primalSolutionPtr->controllerPtr_->concatenate(optimizedPrimalData_.primalSolution.controllerPtr_.get(), 0, length);
 
   } else {
@@ -499,7 +499,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   modelDataEventTimes.clear();
 
   // Find until where we have a controller available for the rollout
-  scalar_t controllerAvailableTill = controller->empty() ? initTime_ : controller->getTimeStamp().back();
+  scalar_t controllerAvailableTill = controller->empty() ? initTime_ : static_cast<LinearController*>(controller)->timeStamp_.back();
 
   if (ddpSettings_.debugPrintRollout_) {
     std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << initTime_ << ", " << finalTime_ << "]\n"
@@ -718,13 +718,12 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
 /******************************************************************************************************/
 void GaussNewtonDDP::calculateController() {
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
-  if (!unoptimizedControllerPtr_) {
+
+  if (unoptimizedControllerPtr_ == nullptr) {
     unoptimizedControllerPtr_.reset(new LinearController);
   }
-  LinearController* linearController = dynamic_cast<LinearController*>(unoptimizedControllerPtr_.get());
-  if (linearController == nullptr) {
-    throw std::runtime_error("[calculateController] Controller cannot be cast into linear controller");
-  }
+  LinearController* linearController = static_cast<LinearController*>(unoptimizedControllerPtr_.get());
+
   linearController->clear();
   linearController->timeStamp_ = nominalPrimalData_.primalSolution.timeTrajectory_;
   linearController->gainArray_.resize(N);
@@ -762,15 +761,12 @@ void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm,
   maxDeltaUffNorm = 0.0;
   maxDeltaUeeNorm = 0.0;
 
-  const LinearController* linearController = dynamic_cast<const LinearController*>(unoptimizedControllerPtr_.get());
-  if (linearController == nullptr) {
-    throw std::runtime_error("[calculateControllerUpdateMaxNorm] Controller cannot be cast into linear controller");
-  }
+  const LinearController* linearController = static_cast<const LinearController*>(unoptimizedControllerPtr_.get());
 
-  for (size_t k = 0; k < linearController->getTimeStamp().size(); k++) {
+  for (size_t k = 0; k < linearController->timeStamp_.size(); k++) {
     maxDeltaUffNorm = std::max(maxDeltaUffNorm, linearController->deltaBiasArray_[k].norm());
 
-    const auto time = linearController->getTimeStamp()[k];
+    const auto time = linearController->timeStamp_[k];
     const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalPrimalData_.primalSolution.timeTrajectory_);
     const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, nominalPrimalData_.primalSolution.stateTrajectory_);
     const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, nominalPrimalData_.primalSolution.inputTrajectory_);
@@ -1054,10 +1050,7 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataC
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
   dstPrimalData.primalSolution.modeSchedule_ = this->getReferenceManager().getModeSchedule();
 
-  LinearController* linearController = dynamic_cast<LinearController*>(unoptimizedControllerPtr_.get());
-  if (linearController == nullptr) {
-    throw std::runtime_error("[runSearchStrategy] Controller cannot be cast into linear controller");
-  }
+  LinearController* linearController = static_cast<LinearController*>(unoptimizedControllerPtr_.get());
 
   bool success = searchStrategyPtr_->run(lqModelExpectedCost, modeSchedule, *linearController, performanceIndex,
                                          dstPrimalData.primalSolution.timeTrajectory_, dstPrimalData.postEventIndices,

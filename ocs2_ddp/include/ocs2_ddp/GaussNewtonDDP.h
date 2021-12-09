@@ -348,6 +348,17 @@ class GaussNewtonDDP : public SolverBase {
       const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const;
 
   /**
+   * Static cast ControllerBase into LinearController
+   *
+   * @param primalData: Primal Data
+   * @return reference of LinearController
+   */
+  LinearController& getLinearController(const PrimalDataContainer& primalData) const {
+    assert(dynamic_cast<LinearController*>(primalData.primalSolution.controllerPtr_.get()) != nullptr);
+    return static_cast<LinearController&>(*primalData.primalSolution.controllerPtr_);
+  }
+
+  /**
    * @brief Get the Value Function From Cache
    *
    * @param [in] time: Query time

@@ -48,6 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/RolloutBase.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 
+#include "ocs2_ddp/DDP_Data.h"
 #include "ocs2_ddp/DDP_Settings.h"
 #include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 #include "ocs2_ddp/search_strategy/SearchStrategyBase.h"
@@ -68,68 +69,6 @@ class GaussNewtonDDP : public SolverBase {
 
     scalar_t stateInputEqConstrPenaltyTol = 1e-3;
     scalar_t stateInputEqConstrPenaltyCoeff = 0.0;
-  };
-
-  /**
-   * Primal data container
-   *
-   * The design philosophy behind is to keep all member variables consistent. All (time, post, .., modelDataEventTime)
-   * trajectories should be the rollout result of the controller
-   *
-   * There is one exception that breaks the consistency. When using an external controller to initialize the controller, it is obvious that
-   * the rest of member variables are not the result of the controller. But they will be cleared and populated runInit is called.
-   */
-  struct PrimalDataContainer {
-    PrimalSolution primalSolution;
-    size_array_t postEventIndices;
-    // intermediate model data trajectory
-    std::vector<ModelData> modelDataTrajectory;
-    // event times model data
-    std::vector<ModelData> modelDataEventTimes;
-
-    inline void swap(PrimalDataContainer& other) {
-      primalSolution.swap(other.primalSolution);
-      postEventIndices.swap(other.postEventIndices);
-      modelDataTrajectory.swap(other.modelDataTrajectory);
-      modelDataEventTimes.swap(other.modelDataEventTimes);
-    }
-
-    inline void clear() {
-      primalSolution.clear();
-      postEventIndices.clear();
-      modelDataTrajectory.clear();
-      modelDataEventTimes.clear();
-    }
-  };
-
-  /**
-   * Dual data container
-   *
-   * The design philosophy behind is to keep all member variables consistent. valueFunctionTrajectory is the direct result of
-   * (projectedModelData,riccatiModification) trajectories.
-   *
-   */
-  struct DualDataContainer {
-    // projected model data trajectory
-    std::vector<ModelData> projectedModelDataTrajectory;
-
-    // Riccati modification
-    std::vector<riccati_modification::Data> riccatiModificationTrajectory;
-
-    // Riccati solution coefficients
-    std::vector<ScalarFunctionQuadraticApproximation> valueFunctionTrajectory;
-
-    inline void swap(DualDataContainer& other) {
-      projectedModelDataTrajectory.swap(other.projectedModelDataTrajectory);
-      riccatiModificationTrajectory.swap(other.riccatiModificationTrajectory);
-      valueFunctionTrajectory.swap(other.valueFunctionTrajectory);
-    }
-
-    inline void clear() {
-      projectedModelDataTrajectory.clear();
-      riccatiModificationTrajectory.clear();
-      valueFunctionTrajectory.clear();
-    }
   };
 
   /**

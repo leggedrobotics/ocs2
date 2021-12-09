@@ -114,7 +114,7 @@ void QuadrupedLogger::addLine(const ocs2::SystemObservation& observation, const 
   }
 
   // Torques
-  const auto torques = torqueApproximation(qJoints, contactForcesInBase, *kinematicModel_);
+  const feet_array_t<vector3_t> torques = toArray(torqueApproximation(qJoints, contactForcesInBase, *kinematicModel_));
 
   // Fill log
   vector_t logEntry(getNumColumns());

@@ -4,6 +4,8 @@
 
 #include "ocs2_switched_model_interface/core/SwitchedModelPrecomputation.h"
 
+#include <ocs2_switched_model_interface/core/TorqueApproximation.h>
+
 namespace switched_model {
 
 SwitchedModelPreComputation::SwitchedModelPreComputation(const SwingTrajectoryPlanner& swingTrajectoryPlanner,
@@ -80,18 +82,21 @@ void SwitchedModelPreComputation::intermediateLinearOutputs(const ad_com_model_t
   const base_coordinate_ad_t baseTwist = getBaseLocalVelocities(x);
   const joint_coordinate_ad_t qJoints = getJointPositions(x);
   const joint_coordinate_ad_t dqJoints = getJointVelocities(u);
+  const feet_array_t<vector3_ad_t> contactForcesInBase = toArray<ad_scalar_t>(u.head<3 * NUM_CONTACT_POINTS>());
 
   const auto o_feetPositionsAsArray = adKinematicsModel.feetPositionsInOriginFrame(basePose, qJoints);
   const auto o_footVelocitiesAsArray = adKinematicsModel.feetVelocitiesInOriginFrame(basePose, baseTwist, qJoints, dqJoints);
+  const auto jointTorques = torqueApproximation(qJoints, contactForcesInBase, adKinematicsModel);
   const auto o_collisions = adKinematicsModel.collisionSpheresInOriginFrame(basePose, qJoints);
 
-  const int numberOfOutputs = 3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS + 3 * o_collisions.size();
+  const int numberOfOutputs = 3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE + 3 * o_collisions.size();
   outputs.resize(numberOfOutputs);
 
   outputs.head<3 * NUM_CONTACT_POINTS>() = fromArray(o_feetPositionsAsArray);
   outputs.segment<3 * NUM_CONTACT_POINTS>(3 * NUM_CONTACT_POINTS) = fromArray(o_footVelocitiesAsArray);
+  outputs.segment<JOINT_COORDINATE_SIZE>(3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS) = jointTorques;
 
-  int i = 3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS;
+  int i = 3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS + JOINT_COORDINATE_SIZE;
   for (const auto& sphere : o_collisions) {
     outputs.segment<3>(i) = sphere.position;
     i += 3;
@@ -122,9 +127,12 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputs(scalar_t t, co
     feetVelocitiesInOriginFrame_[leg] = intermediateLinearOutputs.segment<3>(indexInOutputs);
   }
 
+  // Read joint Torques
+  jointTorques_ = intermediateLinearOutputs.segment<JOINT_COORDINATE_SIZE>(3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS);
+
   // Read collision bodies (excluding the feet)
   for (int collisionIndex = 0; collisionIndex < collisionRadii_.size(); ++collisionIndex) {
-    const int indexInOutputs = 3 * (NUM_CONTACT_POINTS + NUM_CONTACT_POINTS + collisionIndex);
+    const int indexInOutputs = JOINT_COORDINATE_SIZE + 3 * (NUM_CONTACT_POINTS + NUM_CONTACT_POINTS + collisionIndex);
     collisionSpheresInOriginFrame_.push_back({intermediateLinearOutputs.segment<3>(indexInOutputs), collisionRadii_[collisionIndex]});
   }
 }
@@ -154,9 +162,16 @@ void SwitchedModelPreComputation::updateIntermediateLinearOutputDerivatives(scal
     feetVelocitiesInOriginFrameDerivative_[leg].dfdu = intermediateLinearOutputDerivatives.block<3, INPUT_DIM>(indexInOutputs, STATE_DIM);
   }
 
+  // Read joint Torques
+  jointTorquesDerivative_.f = jointTorques_;
+  jointTorquesDerivative_.dfdx =
+      intermediateLinearOutputDerivatives.block<JOINT_COORDINATE_SIZE, STATE_DIM>(3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS, 0);
+  jointTorquesDerivative_.dfdu = intermediateLinearOutputDerivatives.block<JOINT_COORDINATE_SIZE, INPUT_DIM>(
+      3 * NUM_CONTACT_POINTS + 3 * NUM_CONTACT_POINTS, STATE_DIM);
+
   // Read collision bodies (excluding the feet)
   for (int collisionIndex = 0; collisionIndex < collisionRadii_.size(); ++collisionIndex) {
-    const int indexInOutputs = 3 * (NUM_CONTACT_POINTS + NUM_CONTACT_POINTS + collisionIndex);
+    const int indexInOutputs = JOINT_COORDINATE_SIZE + 3 * (NUM_CONTACT_POINTS + NUM_CONTACT_POINTS + collisionIndex);
     collisionSpheresDerivative_.push_back(intermediateLinearOutputDerivatives.block<3, STATE_DIM>(indexInOutputs, 0));
   }
 }

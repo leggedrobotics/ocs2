@@ -21,6 +21,8 @@ class SwitchedModelPreComputationMockup;
 
 class SwitchedModelPreComputation : public ocs2::PreComputation {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   using com_model_t = ComModelBase<scalar_t>;
   using ad_com_model_t = ComModelBase<ad_scalar_t>;
   using kinematic_model_t = KinematicsModelBase<ocs2::scalar_t>;
@@ -49,6 +51,7 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   // Precomputation access : any(cost, constraint, softConstraint)
   const vector3_t& footPositionInOriginFrame(size_t leg) const { return feetPositionInOriginFrame_[leg]; }
   const vector3_t& footVelocityInOriginFrame(size_t leg) const { return feetVelocitiesInOriginFrame_[leg]; }
+  const joint_coordinate_t& jointTorques() const { return jointTorques_; }
   const std::vector<kinematic_model_t::CollisionSphere>& collisionSpheresInOriginFrame() const { return collisionSpheresInOriginFrame_; }
 
   // Precomputation access : any(cost, constraint, softConstraint) + (derivatives)
@@ -56,6 +59,7 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   const VectorFunctionLinearApproximation& footVelocityInOriginFrameDerivative(size_t leg) const {
     return feetVelocitiesInOriginFrameDerivative_[leg];
   }
+  const VectorFunctionLinearApproximation& jointTorquesDerivative() const { return jointTorquesDerivative_; }
   const std::vector<matrix_t>& collisionSpheresInOriginFrameStateDerivative() const { return collisionSpheresDerivative_; }
 
  protected:
@@ -82,6 +86,8 @@ class SwitchedModelPreComputation : public ocs2::PreComputation {
   feet_array_t<matrix_t> feetPositionInOriginFrameStateDerivative_;
   feet_array_t<vector3_t> feetVelocitiesInOriginFrame_;
   feet_array_t<VectorFunctionLinearApproximation> feetVelocitiesInOriginFrameDerivative_;
+  joint_coordinate_t jointTorques_;
+  VectorFunctionLinearApproximation jointTorquesDerivative_;
   std::vector<kinematic_model_t::CollisionSphere> collisionSpheresInOriginFrame_;
   std::vector<matrix_t> collisionSpheresDerivative_;
 
@@ -103,6 +109,8 @@ class SwitchedModelPreComputationMockup : public SwitchedModelPreComputation {
   VectorFunctionLinearApproximation& feetVelocitiesInOriginFrameDerivative(size_t leg) {
     return feetVelocitiesInOriginFrameDerivative_[leg];
   }
+  joint_coordinate_t jointTorques() { return jointTorques_; }
+  VectorFunctionLinearApproximation& jointTorquesDerivative() { return jointTorquesDerivative_; }
   std::vector<kinematic_model_t::CollisionSphere>& collisionSpheresInOriginFrame() { return collisionSpheresInOriginFrame_; }
   std::vector<matrix_t>& collisionSpheresDerivative() { return collisionSpheresDerivative_; }
 };

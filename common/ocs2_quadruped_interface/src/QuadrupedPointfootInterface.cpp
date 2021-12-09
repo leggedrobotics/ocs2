@@ -8,6 +8,7 @@
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_ddp/ContinuousTimeLqr.h>
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
+#include <ocs2_switched_model_interface/core/TorqueApproximation.h>
 
 namespace switched_model {
 
@@ -18,6 +19,12 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   const auto& settings = modelSettings();
   const auto& costWeights = costSettings();
 
+  // nominal values
+  const auto stanceFlags = switched_model::constantFeetArray(true);
+  const auto uSystemForWeightCompensation = weightCompensatingInputs(getComModel(), stanceFlags, switched_model::vector3_t::Zero());
+  const auto jointTorquesForWeightCompensation = torqueApproximation(
+      getJointPositions(getInitialState()), toArray<scalar_t>(uSystemForWeightCompensation.head<3 * NUM_CONTACT_POINTS>()), kinematicModel);
+
   problemPtr_->preComputationPtr = createPrecomputation();
 
   // Cost terms
@@ -25,6 +32,7 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   problemPtr_->stateSoftConstraintPtr->add("FootPlacementCost", createFootPlacementCost());
   problemPtr_->stateSoftConstraintPtr->add("CollisionAvoidanceCost", createCollisionAvoidanceCost());
   problemPtr_->softConstraintPtr->add("JointLimitCost", createJointLimitsSoftConstraint());
+  problemPtr_->softConstraintPtr->add("TorqueLimitCost", createTorqueLimitsSoftConstraint(jointTorquesForWeightCompensation));
 
   // Dynamics
   problemPtr_->dynamicsPtr = createDynamics();
@@ -42,14 +50,13 @@ QuadrupedPointfootInterface::QuadrupedPointfootInterface(const kinematic_model_t
   timeTriggeredRolloutPtr_.reset(new ocs2::TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings()));
 
   // Initialize cost to be able to query it
-  const auto stanceFlags = switched_model::constantFeetArray(true);
-  const auto uSystemForWeightCompensation = weightCompensatingInputs(getComModel(), stanceFlags, switched_model::vector3_t::Zero());
   ocs2::TargetTrajectories targetTrajectories({0.0}, {getInitialState()}, {uSystemForWeightCompensation});
   problemPtr_->targetTrajectoriesPtr = &targetTrajectories;
 
   getSwitchedModelModeScheduleManagerPtr()->setTargetTrajectories(targetTrajectories);
   getSwitchedModelModeScheduleManagerPtr()->preSolverRun(0.0, 1.0, getInitialState());
-  const auto lqrSolution = ocs2::continuous_time_lqr::solve(*problemPtr_, 0.0, getInitialState(), uSystemForWeightCompensation);
+  auto lqrSolution = ocs2::continuous_time_lqr::solve(*problemPtr_, 0.0, getInitialState(), uSystemForWeightCompensation);
+  lqrSolution.valueFunction *= 10.0;
   std::unique_ptr<ocs2::StateCost> terminalCost(new ocs2::QuadraticStateCost(lqrSolution.valueFunction));
   problemPtr_->finalCostPtr->add("lqr_terminal_cost", std::move(terminalCost));
 

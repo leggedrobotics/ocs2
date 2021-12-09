@@ -58,6 +58,7 @@ add_library(${PROJECT_NAME}
 	src/cost/JointLimitsSoftConstraint.cpp
 	src/cost/LinearStateInequalitySoftConstraint.cpp
 	src/cost/MotionTrackingCost.cpp
+	src/cost/TorqueLimitsSoftConstraint.cpp
 	src/foot_planner/CubicSpline.cpp
 	src/foot_planner/FootPhase.cpp
 	src/foot_planner/QuinticSplineSwing.cpp
@@ -144,8 +145,9 @@ target_link_libraries(test_${PROJECT_NAME}_core
 
 catkin_add_gtest(test_${PROJECT_NAME}_cost
 	test/cost/testFootplacementCost.cpp
-	test/cost/testJointLimitsSoftConstraint.cpp
 	test/cost/testFrictionConeCost.cpp
+	test/cost/testJointLimitsSoftConstraint.cpp
+	test/cost/testTorqueLimitsSoftConstraint.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}_cost
 	${PROJECT_NAME}

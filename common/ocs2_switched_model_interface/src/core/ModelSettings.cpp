@@ -56,14 +56,18 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaJointsPosition_, prefix + "deltaJointsPosition", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.muJointsVelocity_, prefix + "muJointsVelocity", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaJointsVelocity_, prefix + "deltaJointsVelocity", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.muJointsTorque_, prefix + "muJointsTorque", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaJointsTorque_, prefix + "deltaJointsTorque", verbose);
   ocs2::loadData::loadEigenMatrix(filename, prefix + "joint_lower_limits", modelSettings.lowerJointLimits_);
   ocs2::loadData::loadEigenMatrix(filename, prefix + "joint_upper_limits", modelSettings.upperJointLimits_);
   ocs2::loadData::loadEigenMatrix(filename, prefix + "joint_velocity_limits", modelSettings.jointVelocityLimits);
+  ocs2::loadData::loadEigenMatrix(filename, prefix + "joint_torque_limits", modelSettings.jointTorqueLimits);
 
   if (verbose) {
     std::cerr << " joint lower limits: " << modelSettings.lowerJointLimits_.transpose() << "\n";
     std::cerr << " joint upper limits: " << modelSettings.upperJointLimits_.transpose() << "\n";
     std::cerr << " joint velocity limits: " << modelSettings.jointVelocityLimits.transpose() << "\n";
+    std::cerr << " joint torque limits: " << modelSettings.jointTorqueLimits.transpose() << "\n";
   }
 
   if (verbose) {

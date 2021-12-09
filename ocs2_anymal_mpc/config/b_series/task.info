@@ -18,6 +18,8 @@ model_settings
   deltaJointsPosition           0.01
   muJointsVelocity              0.1
   deltaJointsVelocity           0.01
+  muJointsTorque                1.0
+  deltaJointsTorque             1.0
 
   joint_lower_limits
   {
@@ -65,6 +67,22 @@ model_settings
      (9,0)    7.0       ; RH_HAA
      (10,0)   7.0       ; RH_HFE
      (11,0)   7.0       ; RH_KFE
+  }
+
+  joint_torque_limits
+  {
+     (0,0)   55.0       ; LF_HAA
+     (1,0)   55.0       ; LF_HFE
+     (2,0)   55.0       ; LF_KFE
+     (3,0)   55.0       ; RF_HAA
+     (4,0)   55.0       ; RF_HFE
+     (5,0)   55.0       ; RF_KFE
+     (6,0)   55.0       ; LH_HAA
+     (7,0)   55.0       ; LH_HFE
+     (8,0)   55.0       ; LH_KFE
+     (9,0)   55.0       ; RH_HAA
+     (10,0)  55.0       ; RH_HFE
+     (11,0)  55.0       ; RH_KFE
   }
 
   swing_trajectory_settings

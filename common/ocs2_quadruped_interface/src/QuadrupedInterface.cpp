@@ -18,6 +18,7 @@
 #include <ocs2_switched_model_interface/cost/FrictionConeCost.h>
 #include <ocs2_switched_model_interface/cost/JointLimitsSoftConstraint.h>
 #include <ocs2_switched_model_interface/cost/MotionTrackingCost.h>
+#include <ocs2_switched_model_interface/cost/TorqueLimitsSoftConstraint.h>
 #include <ocs2_switched_model_interface/dynamics/ComKinoSystemDynamicsAd.h>
 #include <ocs2_switched_model_interface/foot_planner/SwingTrajectoryPlanner.h>
 #include <ocs2_switched_model_interface/initialization/ComKinoInitializer.h>
@@ -95,6 +96,11 @@ std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createJointLimitsSoftC
       {modelSettings().lowerJointLimits_, modelSettings().upperJointLimits_}, modelSettings().jointVelocityLimits,
       {modelSettings().muJointsPosition_, modelSettings().deltaJointsPosition_},
       {modelSettings().muJointsVelocity_, modelSettings().muJointsVelocity_}));
+}
+
+std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createTorqueLimitsSoftConstraint(const joint_coordinate_t& nominalTorques) const {
+  return std::unique_ptr<ocs2::StateInputCost>(new TorqueLimitsSoftConstraint(
+      modelSettings().jointTorqueLimits, {modelSettings().muJointsTorque_, modelSettings().deltaJointsTorque_}, nominalTorques));
 }
 
 std::unique_ptr<ocs2::SystemDynamicsBase> QuadrupedInterface::createDynamics() const {

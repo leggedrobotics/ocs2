@@ -32,6 +32,9 @@ struct SwingTrajectoryPlannerSettings {
   scalar_t previousFootholdDeadzone = 0.0;      // previous foothold is taken if the new reference is within this threshold. [m]
   scalar_t previousFootholdTimeDeadzone = 0.0;  // previous foothold is taken if the contact phase is starting withing this time. [s]
   scalar_t invertedPendulumHeight = 0.5;        // height used for the inverted pendulum foothold adjustment
+
+  scalar_t nominalLegExtension = 0.55;     // Leg extension beyond this length [m] will be penalized in terrain selection
+  scalar_t legOverExtensionPenalty = 5.0;  // Weight of the leg overextension penalty
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
@@ -68,6 +71,8 @@ class SwingTrajectoryPlanner {
   std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> selectNominalFootholdTerrain(
       int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
       const comkino_state_t& currentState, scalar_t finalTime, const TerrainModel& terrainModel) const;
+  scalar_t kinematicPenalty(const vector3_t& footPositionInWorld, const vector3_t& hipInWorldAtTouchdown,
+                            const vector3_t& hipInWorldAtLiftoff) const;
 
   SwingTrajectoryPlannerSettings settings_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;

@@ -200,16 +200,11 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
   int contactCount = 0;
   for (const auto& contactPhase : contactTimings) {
     if (hasStartTime(contactPhase)) {
-      const auto middleContactTime = [&] {
-        if (hasEndTime(contactPhase)) {
-          return 0.5 * (contactPhase.start + contactPhase.end);
-        } else {
-          return 0.5 * (contactPhase.start + std::max(finalTime, contactPhase.start));
-        }
-      }();
+      const scalar_t contactEndTime = hasEndTime(contactPhase) ? contactPhase.end : std::max(finalTime, contactPhase.start);
+      const scalar_t middleContactTime = 0.5 * (contactEndTime + contactPhase.start);
 
       // Compute foot position from cost desired trajectory
-      vector_t state = targetTrajectories.getDesiredState(middleContactTime);
+      const vector_t state = targetTrajectories.getDesiredState(middleContactTime);
       const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
       const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
       vector3_t referenceFootholdPositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
@@ -239,13 +234,22 @@ std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> SwingTrajectoryPla
       const vector3_t nominalFootholdPositionInWorld =
           lambda * previousFootholdPositionInWorld + (1.0 - lambda) * referenceFootholdPositionInWorld;
 
+      // kinematic penalty = w * (overExtensionTouchdown^2 + overExtensionLiftoff^2)
+      const vector3_t hipInWorldTouchdown =
+          kinematicsModel_->legRootInOriginFrame(leg, targetTrajectories.getDesiredState(contactPhase.start).head<BASE_COORDINATE_SIZE>());
+      const vector3_t hipInWorldLiftoff =
+          kinematicsModel_->legRootInOriginFrame(leg, targetTrajectories.getDesiredState(contactEndTime).head<BASE_COORDINATE_SIZE>());
+      auto scoringFunction = [&](const vector3_t& footPositionInWorld) {
+        return this->kinematicPenalty(footPositionInWorld, hipInWorldTouchdown, hipInWorldLiftoff);
+      };
+
       if (contactPhase.start < finalTime) {
-        ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld);
+        ConvexTerrain convexTerrain = terrainModel.getConvexTerrainAtPositionInWorld(nominalFootholdPositionInWorld, scoringFunction);
         nominalFootholdTerrain.push_back(convexTerrain);
         heuristicFootholds.push_back(nominalFootholdPositionInWorld);
       } else {  // After the horizon -> we are only interested in the position and orientation
         ConvexTerrain convexTerrain;
-        convexTerrain.plane = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(nominalFootholdPositionInWorld);
+        convexTerrain.plane = terrainModel.getLocalTerrainAtPositionInWorldAlongGravity(nominalFootholdPositionInWorld, scoringFunction);
         nominalFootholdTerrain.push_back(convexTerrain);
         heuristicFootholds.push_back(nominalFootholdPositionInWorld);
       }
@@ -290,6 +294,20 @@ void SwingTrajectoryPlanner::updateLastContact(int leg, scalar_t expectedLiftOff
   lastContacts_[leg] = {expectedLiftOff, lastContactTerrain};
 }
 
+scalar_t SwingTrajectoryPlanner::kinematicPenalty(const vector3_t& footPositionInWorld, const vector3_t& hipInWorldAtTouchdown,
+                                                  const vector3_t& hipInWorldAtLiftoff) const {
+  // Touchdown
+  const scalar_t legExtensionTouchdown = (footPositionInWorld - hipInWorldAtTouchdown).norm();
+  const scalar_t overExtensionTouchdown = std::max(legExtensionTouchdown - settings_.nominalLegExtension, 0.0);
+
+  // liftOff
+  const scalar_t legExtensionLiftoff = (footPositionInWorld - hipInWorldAtLiftoff).norm();
+  const scalar_t overExtensionLiftoff = std::max(legExtensionLiftoff - settings_.nominalLegExtension, 0.0);
+
+  return settings_.legOverExtensionPenalty *
+         (overExtensionTouchdown * overExtensionTouchdown + overExtensionLiftoff * overExtensionLiftoff);
+}
+
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {
   SwingTrajectoryPlannerSettings settings{};
 
@@ -315,6 +333,8 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdDeadzone, prefix + "previousFootholdDeadzone", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.previousFootholdTimeDeadzone, prefix + "previousFootholdTimeDeadzone", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.invertedPendulumHeight, prefix + "invertedPendulumHeight", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.nominalLegExtension, prefix + "nominalLegExtension", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.legOverExtensionPenalty, prefix + "legOverExtensionPenalty", verbose);
 
   if (verbose) {
     std::cerr << " #### ==================================================" << std::endl;

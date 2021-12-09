@@ -22,10 +22,23 @@ class TerrainModel {
   TerrainModel& operator=(const TerrainModel&) = delete;
 
   /** Returns a linear approximation of the terrain at the query point projected along gravity onto the terrain  */
-  virtual TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const = 0;
+  // TODO: change name and remove "alongGravity"
+  TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const {
+    return getLocalTerrainAtPositionInWorldAlongGravity(positionInWorld, [](const vector3_t&) { return 0.0; });
+  }
 
-  virtual ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const {
-    return {getLocalTerrainAtPositionInWorldAlongGravity(positionInWorld), {}};
+  /// Penalty function needs to return values >= 0
+  virtual TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld,
+                                                                    std::function<scalar_t(const vector3_t&)> penaltyFunction) const = 0;
+
+  ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const {
+    return getConvexTerrainAtPositionInWorld(positionInWorld, [](const vector3_t&) { return 0.0; });
+  }
+
+  /// Penalty function needs to return values >= 0
+  virtual ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld,
+                                                          std::function<scalar_t(const vector3_t&)> penaltyFunction) const {
+    return {getLocalTerrainAtPositionInWorldAlongGravity(positionInWorld, std::move(penaltyFunction)), {}};
   }
 
   /** Returns the signed distance field for this terrain if one is available */

@@ -18,7 +18,8 @@ class PlanarTerrainModel : public TerrainModel {
   explicit PlanarTerrainModel(TerrainPlane terrainPlane);
   ~PlanarTerrainModel() override = default;
 
-  TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const override;
+  TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld,
+                                                            std::function<scalar_t(const vector3_t&)> penaltyFunction) const override;
 
   vector3_t getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
 

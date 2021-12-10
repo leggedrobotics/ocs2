@@ -126,7 +126,8 @@ std::unique_ptr<ocs2::StateInputConstraint> QuadrupedInterface::createEndEffecto
 }
 
 std::unique_ptr<ocs2::StateInputCost> QuadrupedInterface::createFrictionConeCost(size_t leg) const {
-  FrictionConeConstraint::Config frictionConfig(modelSettings().frictionCoefficient_);
+  FrictionConeConstraint::Config frictionConfig(modelSettings().frictionCoefficient_, modelSettings().coneRegularization_,
+                                                modelSettings().gripperForce_);
   std::unique_ptr<ocs2::PenaltyBase> penalty(
       new ocs2::RelaxedBarrierPenalty({modelSettings().muFrictionCone_, modelSettings().deltaFrictionCone_}));
   return std::unique_ptr<ocs2::StateInputCost>(

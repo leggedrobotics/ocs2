@@ -79,7 +79,8 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
 
   void reset() override;
 
-  bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controllersStock, PerformanceIndex& performanceIndex,
+  bool run(scalar_t expectedCost, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
+           const ModeSchedule& modeSchedule, LinearController& controllersStock, PerformanceIndex& performanceIndex,
            scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
            vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
            std::vector<ModelData>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) override;

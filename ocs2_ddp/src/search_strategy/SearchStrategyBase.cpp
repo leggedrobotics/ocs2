@@ -38,15 +38,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SearchStrategyBase::initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  initTime_ = initTime;
-  initState_ = initState;
-  finalTime_ = finalTime;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, LinearController& controllersStock,
                                                scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock,
                                                vector_array_t& stateTrajectoriesStock, vector_array_t& inputTrajectoriesStock,
@@ -60,15 +51,9 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
   modelDataTrajectoriesStock.clear();
   modelDataEventTimesStock.clear();
 
-  size_t numSteps = 0;
-  vector_t xCurrent = initState_;
-  // start and end of rollout segment
-  const scalar_t t0 = initTime_;
-  const scalar_t tf = finalTime_;
-
   // Rollout with controller
-  xCurrent = rollout.run(t0, xCurrent, tf, &controllersStock, modeSchedule.eventTimes, timeTrajectoriesStock, postEventIndicesStock,
-                         stateTrajectoriesStock, inputTrajectoriesStock);
+  vector_t xCurrent = rollout.run(initTime_, initState_, finalTime_, &controllersStock, modeSchedule.eventTimes, timeTrajectoriesStock,
+                                  postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock);
 
   // update model data trajectory
   modelDataTrajectoriesStock.resize(timeTrajectoriesStock.size());
@@ -90,7 +75,7 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
   }
 
   // total number of steps
-  numSteps += timeTrajectoriesStock.size();
+  size_t numSteps = timeTrajectoriesStock.size();
 
   // debug print
   if (baseSettings_.debugPrintRollout) {

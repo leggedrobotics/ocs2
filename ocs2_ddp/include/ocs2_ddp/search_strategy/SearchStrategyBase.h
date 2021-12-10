@@ -67,15 +67,6 @@ class SearchStrategyBase {
   SearchStrategyBase& operator=(const SearchStrategyBase&) = delete;
 
   /**
-   * Initializes the strategy.
-   *
-   * @param [in] initTime: The initial time.
-   * @param [in] initState: The initial state.
-   * @param [in] finalTime: The final time.
-   */
-  void initalize(scalar_t initTime, const vector_t& initState, scalar_t finalTime);
-
-  /**
    * Resets the class to its state after construction.
    */
   virtual void reset() = 0;
@@ -96,11 +87,11 @@ class SearchStrategyBase {
    * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
    * @return whether the search was successful or failed.
    */
-  virtual bool run(scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controllersStock,
-                   PerformanceIndex& performanceIndex, scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock,
-                   vector_array_t& stateTrajectoriesStock, vector_array_t& inputTrajectoriesStock,
-                   std::vector<ModelData>& modelDataTrajectoriesStock, std::vector<ModelData>& modelDataEventTimesStock,
-                   scalar_t& avgTimeStepFP) = 0;
+  virtual bool run(scalar_t expectedCost, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
+                   const ModeSchedule& modeSchedule, LinearController& controllersStock, PerformanceIndex& performanceIndex,
+                   scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
+                   vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
+                   std::vector<ModelData>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -197,8 +188,8 @@ class SearchStrategyBase {
    * @return The integral of the squared (IS) norm of the controller update.
    */
   scalar_t calculateControllerUpdateIS(const LinearController& controller) const;
-  search_strategy::Settings baseSettings_;
 
+  search_strategy::Settings baseSettings_;
   scalar_t initTime_;
   scalar_t finalTime_;
   vector_t initState_;

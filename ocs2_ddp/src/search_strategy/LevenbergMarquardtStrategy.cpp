@@ -58,13 +58,18 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controllersStock,
+bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
+                                     const ModeSchedule& modeSchedule, LinearController& controllersStock,
                                      PerformanceIndex& performanceIndex, scalar_array_t& timeTrajectoriesStock,
                                      size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
                                      vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
                                      std::vector<ModelData>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
-  constexpr size_t taskId = 0;
+  // initialize time and state variables
+  initState_ = initState;
+  initTime_ = initTime;
+  finalTime_ = finalTime;
 
+  constexpr size_t taskId = 0;
   // previous merit and the expected reduction
   const auto prevMerit = performanceIndex.merit;
   const auto expectedReduction = performanceIndex.merit - expectedCost;

@@ -1052,8 +1052,8 @@ void GaussNewtonDDP::runSearchStrategy(scalar_t lqModelExpectedCost, PrimalDataC
 
   LinearController* linearController = static_cast<LinearController*>(unoptimizedControllerPtr_.get());
 
-  bool success = searchStrategyPtr_->run(lqModelExpectedCost, modeSchedule, *linearController, performanceIndex,
-                                         dstPrimalData.primalSolution.timeTrajectory_, dstPrimalData.postEventIndices,
+  bool success = searchStrategyPtr_->run(lqModelExpectedCost, initTime_, initState_, finalTime_, modeSchedule, *linearController,
+                                         performanceIndex, dstPrimalData.primalSolution.timeTrajectory_, dstPrimalData.postEventIndices,
                                          dstPrimalData.primalSolution.stateTrajectory_, dstPrimalData.primalSolution.inputTrajectory_,
                                          dstPrimalData.modelDataTrajectory, dstPrimalData.modelDataEventTimes, avgTimeStepFP_);
 
@@ -1329,8 +1329,6 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // check if after the truncation the internal controller is empty
   bool unreliableControllerIncrement = optimizedPrimalData_.primalSolution.controllerPtr_->empty();
-  // initialize the search strategy
-  searchStrategyPtr_->initalize(initTime_, initState_, finalTime_);
 
   // set cost desired trajectories
   for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {

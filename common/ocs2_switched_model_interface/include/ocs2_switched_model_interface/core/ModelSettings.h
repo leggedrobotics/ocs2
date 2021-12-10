@@ -19,6 +19,8 @@ struct ModelSettings {
 
   // Friction Cone
   scalar_t frictionCoefficient_ = 1.0;
+  scalar_t coneRegularization_ = 25.0;
+  scalar_t gripperForce_ = 0.0;
   scalar_t muFrictionCone_ = 0.1;
   scalar_t deltaFrictionCone_ = 5.0;
 

@@ -46,6 +46,8 @@ ModelSettings loadModelSettings(const std::string& filename, bool verbose) {
   ocs2::loadData::loadPtreeValue(pt, modelSettings.simplifyDynamics_, prefix + "simplifyDynamics", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.recompileLibraries_, prefix + "recompileLibraries", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.frictionCoefficient_, prefix + "frictionCoefficient", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.coneRegularization_, prefix + "coneRegularization", verbose);
+  ocs2::loadData::loadPtreeValue(pt, modelSettings.gripperForce_, prefix + "gripperForce", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.muFrictionCone_, prefix + "muFrictionCone", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.deltaFrictionCone_, prefix + "deltaFrictionCone", verbose);
   ocs2::loadData::loadPtreeValue(pt, modelSettings.muFootPlacement_, prefix + "muFootPlacement", verbose);

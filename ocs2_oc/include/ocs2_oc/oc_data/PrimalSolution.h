@@ -100,7 +100,9 @@ struct PrimalSolution {
     stateTrajectory_.clear();
     inputTrajectory_.clear();
     modeSchedule_.clear();
-    controllerPtr_.reset();
+    if (controllerPtr_) {
+      controllerPtr_->clear();
+    }
   }
 
   scalar_array_t timeTrajectory_;

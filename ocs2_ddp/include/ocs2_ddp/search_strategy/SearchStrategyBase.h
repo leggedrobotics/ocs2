@@ -43,6 +43,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_oc/rollout/RolloutBase.h>
 
+#include <ocs2_ddp/DDP_Data.h>
+
 #include "StrategySettings.h"
 
 namespace ocs2 {
@@ -74,24 +76,21 @@ class SearchStrategyBase {
   /**
    * Finds the optimal trajectories, controller, and performance index based on the given controller and its increment.
    *
+   * @param [in] initTime: Initial time
+   * @param [in] initState: Initial state
+   * @param [in] finalTime: Final time
    * @param [in] expectedCost: The expected cost based on the LQ model optimization.
-   * @param [in] modeSchedule: The mode schedule.
-   * @param [in,out] controllersStock: Array of control policies.
-   * @param [in, out] performanceIndex: The current performanceIndex which will be updated to the optimal one.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
+   * @param [in] ModeSchedule The current mode schedule.
+   * @param [in, out] controller: Control policies.
+   * @param [out] performanceIndex: The current performanceIndex which will be updated to the optimal one.
+   * @param [out] dstPrimalData: Resulting time, state, input... trajectories. Attention: Controller inside PrimalDataContainer is NOT
+   * optimized. Instead, controller parameter holds the optimized controller.
    * @param [out] avgTimeStepFP: The average time-step used during forward rollout.
    * @return whether the search was successful or failed.
    */
-  virtual bool run(scalar_t expectedCost, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                   const ModeSchedule& modeSchedule, LinearController& controllersStock, PerformanceIndex& performanceIndex,
-                   scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
-                   vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
-                   std::vector<ModelData>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) = 0;
+  virtual bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
+                   const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
+                   PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -130,34 +129,22 @@ class SearchStrategyBase {
    * Evaluates cost and constraints along the given time trajectories.
    *
    * @param [in] problem: A reference to the optimal control problem.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [in] postEventIndicesStock: Array of the post-event indices.
-   * @param [in] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [in] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
+   * @param [in, out] primalData: Primal Data.
    * @param [out] heuristicsValue: The Heuristics function value.
    */
-  void rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array_t& timeTrajectoriesStock,
-                                 const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectoriesStock,
-                                 const vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
-                                 std::vector<ModelData>& modelDataEventTimesStock, scalar_t& heuristicsValue) const;
+  void rolloutCostAndConstraints(OptimalControlProblem& problem, PrimalDataContainer& primalData, scalar_t& heuristicsValue) const;
 
   /**
    * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
    *
    * @param [in] ineqConstrPenalty: A reference to the inequality constraints penalty function.
-   * @param [in] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [in] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [in] modelDataEventTimesStock: Array of model data at event times.
+   * @param [in] primalData: Primal Data.
    * @param [in] heuristicsValue: The Heuristics function value.
    *
    * @return The cost, merit function and ISEs of constraints for the trajectory.
    */
-  PerformanceIndex calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
-                                                    const scalar_array_t& timeTrajectoriesStock,
-                                                    const std::vector<ModelData>& modelDataTrajectoriesStock,
-                                                    const std::vector<ModelData>& modelDataEventTimesStock, scalar_t heuristicsValue) const;
+  PerformanceIndex calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty, const PrimalDataContainer& primalData,
+                                                    scalar_t heuristicsValue) const;
 
  protected:
   /**
@@ -166,20 +153,13 @@ class SearchStrategyBase {
    *
    * @param [in] rollout: A reference to the rollout class.
    * @param [in] modeSchedule: The mode schedule
-   * @param [in] controllersStock: Array of control policies.
-   * @param [out] timeTrajectoriesStock: Array of trajectories containing the output time trajectory stamp.
-   * @param [out] postEventIndicesStock: Array of the post-event indices.
-   * @param [out] stateTrajectoriesStock: Array of trajectories containing the output state trajectory.
-   * @param [out] inputTrajectoriesStock: Array of trajectories containing the output control input trajectory.
-   * @param [out] modelDataTrajectoriesStock: Array of trajectories containing the model data trajectory.
-   * @param [out] modelDataEventTimesStock: Array of model data at event times.
+   * @param [in] controller: Control policies.
+   * @param [out] dstPrimalData: Resulting primal data.
    *
    * @return average time step.
    */
-  scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, LinearController& controllersStock,
-                             scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock,
-                             vector_array_t& stateTrajectoriesStock, vector_array_t& inputTrajectoriesStock,
-                             std::vector<ModelData>& modelDataTrajectoriesStock, std::vector<ModelData>& modelDataEventTimesStock) const;
+  scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, LinearController& controller,
+                             PrimalDataContainer& dstPrimalData) const;
 
   /**
    * Calculates the integral of the squared (IS) norm of the controller update.

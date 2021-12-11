@@ -287,17 +287,6 @@ class GaussNewtonDDP : public SolverBase {
       const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const;
 
   /**
-   * Static cast ControllerBase into LinearController
-   *
-   * @param primalData: Primal Data
-   * @return reference of LinearController
-   */
-  LinearController& getLinearController(const PrimalDataContainer& primalData) const {
-    assert(dynamic_cast<LinearController*>(primalData.primalSolution.controllerPtr_.get()) != nullptr);
-    return static_cast<LinearController&>(*primalData.primalSolution.controllerPtr_);
-  }
-
-  /**
    * @brief Get the Value Function From Cache
    *
    * @param [in] time: Query time
@@ -331,6 +320,9 @@ class GaussNewtonDDP : public SolverBase {
    * given control policies and initial state, to integrate the system dynamics in the time period [initTime, finalTime].
    * However, if the provided controller does not cover the period [initTime, finalTime], it extrapolates (zero-order)
    * the controller until the next event time where after it uses the operating trajectories.
+   *
+   * Attention: Do NOT pass the controllerPtr of the same primalData used for the first parameter to the second parameter, as all
+   * member variables(including controller) of primal data will be cleared.
    *
    * @param [in] primalData: primalData
    * @param [in] controller: nominal controller used to rollout (time, state, input...) trajectories
@@ -485,7 +477,7 @@ class GaussNewtonDDP : public SolverBase {
  protected:
   PrimalDataContainer nominalPrimalData_, optimizedPrimalData_;
   // controller that is calculated directly from dual solution. It is unoptimized because it haven't gone through searching.
-  std::unique_ptr<ControllerBase> unoptimizedControllerPtr_;
+  LinearController unoptimizedController_;
 
   // multi-threading helper variables
   std::atomic_size_t nextTaskId_{0};

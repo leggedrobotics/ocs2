@@ -34,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 #include "ocs2_ddp/riccati_equations/RiccatiModification.h"
 
+#include <ocs2_core/control/LinearController.h>
+
 namespace ocs2 {
 
 /**
@@ -65,6 +67,11 @@ struct PrimalDataContainer {
     postEventIndices.clear();
     modelDataTrajectory.clear();
     modelDataEventTimes.clear();
+  }
+
+  LinearController& getLinearController() const {
+    assert(dynamic_cast<LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
+    return static_cast<LinearController&>(*primalSolution.controllerPtr_);
   }
 };
 

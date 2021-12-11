@@ -58,12 +58,9 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
-                                     const ModeSchedule& modeSchedule, LinearController& controllersStock,
-                                     PerformanceIndex& performanceIndex, scalar_array_t& timeTrajectoriesStock,
-                                     size_array_t& postEventIndicesStock, vector_array_t& stateTrajectoriesStock,
-                                     vector_array_t& inputTrajectoriesStock, std::vector<ModelData>& modelDataTrajectoriesStock,
-                                     std::vector<ModelData>& modelDataEventTimesStock, scalar_t& avgTimeStepFP) {
+bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
+                                     const scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controller,
+                                     PerformanceIndex& performanceIndex, PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) {
   // initialize time and state variables
   initState_ = initState;
   initTime_ = initTime;
@@ -76,24 +73,20 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const scalar_t initT
 
   // do a full step rollout
   const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
-  for (size_t k = 0; k < controllersStock.size(); k++) {
-    controllersStock.biasArray_[k] += stepLength * controllersStock.deltaBiasArray_[k];
+  for (size_t k = 0; k < controller.size(); k++) {
+    controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
   }
 
   try {
     // perform a rollout
-    const auto avgTimeStep =
-        rolloutTrajectory(rolloutRef_, modeSchedule, controllersStock, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                          inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock);
+    const auto avgTimeStep = rolloutTrajectory(rolloutRef_, modeSchedule, controller, dstPrimalData);
     scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(optimalControlProblemRef_, timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock,
-                              inputTrajectoriesStock, modelDataTrajectoriesStock, modelDataEventTimesStock, heuristicsValue);
+    rolloutCostAndConstraints(optimalControlProblemRef_, dstPrimalData, heuristicsValue);
 
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
 
-    performanceIndex = calculateRolloutPerformanceIndex(ineqConstrPenaltyRef_, timeTrajectoriesStock, modelDataTrajectoriesStock,
-                                                        modelDataEventTimesStock, heuristicsValue);
+    performanceIndex = calculateRolloutPerformanceIndex(ineqConstrPenaltyRef_, dstPrimalData, heuristicsValue);
 
     // calculates rollout merit
     performanceIndex.merit = meritFunc_(performanceIndex);
@@ -193,8 +186,6 @@ bool LevenbergMarquardtStrategy::run(scalar_t expectedCost, const scalar_t initT
   if (levenbergMarquardtModule_.pho >= settings_.minAcceptedPho_) {
     // accept the solution
     levenbergMarquardtModule_.numSuccessiveRejections = 0;
-    // update nominal controller: just clear the feedforward increments
-    controllersStock.deltaBiasArray_.clear();
     return true;
 
   } else {

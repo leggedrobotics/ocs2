@@ -38,50 +38,52 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, LinearController& controllersStock,
-                                               scalar_array_t& timeTrajectoriesStock, size_array_t& postEventIndicesStock,
-                                               vector_array_t& stateTrajectoriesStock, vector_array_t& inputTrajectoriesStock,
-                                               std::vector<ModelData>& modelDataTrajectoriesStock,
-                                               std::vector<ModelData>& modelDataEventTimesStock) const {
+scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, LinearController& controller,
+                                               PrimalDataContainer& dstPrimalData) const {
+  assert(dstPrimalData.primalSolution.controllerPtr_.get() != &controller);
   // prepare outputs
-  timeTrajectoriesStock.clear();
-  postEventIndicesStock.clear();
-  stateTrajectoriesStock.clear();
-  inputTrajectoriesStock.clear();
-  modelDataTrajectoriesStock.clear();
-  modelDataEventTimesStock.clear();
+  dstPrimalData.clear();
+  // fill mode schedule
+  dstPrimalData.primalSolution.modeSchedule_ = modeSchedule;
+  // create alias
+  auto& timeTrajectory = dstPrimalData.primalSolution.timeTrajectory_;
+  auto& stateTrajectory = dstPrimalData.primalSolution.stateTrajectory_;
+  auto& inputTrajectory = dstPrimalData.primalSolution.inputTrajectory_;
+  auto& postEventIndices = dstPrimalData.postEventIndices;
+  auto& modelDataTrajectory = dstPrimalData.modelDataTrajectory;
+  auto& modelDataEventTimes = dstPrimalData.modelDataEventTimes;
 
   // Rollout with controller
-  vector_t xCurrent = rollout.run(initTime_, initState_, finalTime_, &controllersStock, modeSchedule.eventTimes, timeTrajectoriesStock,
-                                  postEventIndicesStock, stateTrajectoriesStock, inputTrajectoriesStock);
+  vector_t xCurrent = rollout.run(initTime_, initState_, finalTime_, &controller, modeSchedule.eventTimes, timeTrajectory, postEventIndices,
+                                  stateTrajectory, inputTrajectory);
 
   // update model data trajectory
-  modelDataTrajectoriesStock.resize(timeTrajectoriesStock.size());
-  for (size_t k = 0; k < timeTrajectoriesStock.size(); k++) {
-    modelDataTrajectoriesStock[k].time_ = timeTrajectoriesStock[k];
-    modelDataTrajectoriesStock[k].stateDim_ = stateTrajectoriesStock[k].size();
-    modelDataTrajectoriesStock[k].inputDim_ = inputTrajectoriesStock[k].size();
-    modelDataTrajectoriesStock[k].dynamicsBias_.setZero(stateTrajectoriesStock[k].size());
+  modelDataTrajectory.resize(timeTrajectory.size());
+  for (size_t k = 0; k < timeTrajectory.size(); k++) {
+    modelDataTrajectory[k].time_ = timeTrajectory[k];
+    modelDataTrajectory[k].stateDim_ = stateTrajectory[k].size();
+    modelDataTrajectory[k].inputDim_ = inputTrajectory[k].size();
+    modelDataTrajectory[k].dynamicsBias_.setZero(stateTrajectory[k].size());
   }
 
   // update model data at event times
-  modelDataEventTimesStock.resize(postEventIndicesStock.size());
-  for (size_t ke = 0; ke < postEventIndicesStock.size(); ke++) {
-    const auto index = postEventIndicesStock[ke] - 1;
-    modelDataEventTimesStock[ke].time_ = timeTrajectoriesStock[index];
-    modelDataEventTimesStock[ke].stateDim_ = stateTrajectoriesStock[index].size();
-    modelDataEventTimesStock[ke].inputDim_ = inputTrajectoriesStock[index].size();
-    modelDataEventTimesStock[ke].dynamicsBias_.setZero(stateTrajectoriesStock[index].size());
+  modelDataEventTimes.resize(postEventIndices.size());
+  for (size_t ke = 0; ke < postEventIndices.size(); ke++) {
+    const auto index = postEventIndices[ke] - 1;
+    modelDataEventTimes[ke].time_ = timeTrajectory[index];
+    modelDataEventTimes[ke].stateDim_ = stateTrajectory[index].size();
+    modelDataEventTimes[ke].inputDim_ = inputTrajectory[index].size();
+    modelDataEventTimes[ke].dynamicsBias_.setZero(stateTrajectory[index].size());
   }
 
   // total number of steps
-  size_t numSteps = timeTrajectoriesStock.size();
+  size_t numSteps = timeTrajectory.size();
 
   // debug print
   if (baseSettings_.debugPrintRollout) {
     std::cerr << "\n++++++++++++++++++++++++++++++\n";
     std::cerr << "\n++++++++++++++++++++++++++++++\n";
-    RolloutBase::display(timeTrajectoriesStock, postEventIndicesStock, stateTrajectoriesStock, &inputTrajectoriesStock);
+    RolloutBase::display(timeTrajectory, postEventIndices, stateTrajectory, &inputTrajectory);
   }
 
   if (!xCurrent.allFinite()) {
@@ -95,19 +97,24 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& problem, const scalar_array_t& timeTrajectoriesStock,
-                                                   const size_array_t& postEventIndicesStock, const vector_array_t& stateTrajectoriesStock,
-                                                   const vector_array_t& inputTrajectoriesStock,
-                                                   std::vector<ModelData>& modelDataTrajectoriesStock,
-                                                   std::vector<ModelData>& modelDataEventTimesStock, scalar_t& heuristicsValue) const {
+void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& problem, PrimalDataContainer& primalData,
+                                                   scalar_t& heuristicsValue) const {
+  // create alias
   auto& preComputation = *problem.preComputationPtr;
 
-  auto eventsPastTheEndItr = postEventIndicesStock.begin();
-  for (size_t k = 0; k < timeTrajectoriesStock.size(); k++) {
-    const auto t = timeTrajectoriesStock[k];
-    const auto& x = stateTrajectoriesStock[k];
-    const auto& u = inputTrajectoriesStock[k];
-    auto& modelData = modelDataTrajectoriesStock[k];
+  const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
+  const auto& postEventIndices = primalData.postEventIndices;
+  const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
+  const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  auto& modelDataTrajectory = primalData.modelDataTrajectory;
+  auto& modelDataEventTimes = primalData.modelDataEventTimes;
+
+  auto nextPostEventIndexItr = postEventIndices.begin();
+  for (size_t k = 0; k < timeTrajectory.size(); k++) {
+    const auto t = timeTrajectory[k];
+    const auto& x = stateTrajectory[k];
+    const auto& u = inputTrajectory[k];
+    auto& modelData = modelDataTrajectory[k];
 
     preComputation.request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u);
 
@@ -124,9 +131,9 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
     modelData.ineqConstr_.f = problem.inequalityConstraintPtr->getValue(t, x, u, preComputation);
 
     // event time cost and constraints
-    if (eventsPastTheEndItr != postEventIndicesStock.end() && k + 1 == *eventsPastTheEndItr) {
-      const auto ke = std::distance(postEventIndicesStock.begin(), eventsPastTheEndItr);
-      auto& modelDataEvent = modelDataEventTimesStock[ke];
+    if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) {
+      const auto ke = std::distance(postEventIndices.begin(), nextPostEventIndexItr);
+      auto& modelDataEvent = modelDataEventTimes[ke];
 
       preComputation.requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x);
 
@@ -136,59 +143,60 @@ void SearchStrategyBase::rolloutCostAndConstraints(OptimalControlProblem& proble
       // pre-jump constraint
       modelDataEvent.stateEqConstr_.f = problem.preJumpEqualityConstraintPtr->getValue(t, x, preComputation);
 
-      eventsPastTheEndItr++;
+      nextPostEventIndexItr++;
     }
   }  // end of k loop
 
   // calculate the Heuristics function at the final time
-  const auto t = timeTrajectoriesStock.back();
-  const auto& x = stateTrajectoriesStock.back();
-  preComputation.requestFinal(Request::Cost + Request::SoftConstraint, t, x);
-  heuristicsValue = computeFinalCost(problem, t, x);
+  preComputation.requestFinal(Request::Cost + Request::SoftConstraint, timeTrajectory.back(), stateTrajectory.back());
+  heuristicsValue = computeFinalCost(problem, timeTrajectory.back(), stateTrajectory.back());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 PerformanceIndex SearchStrategyBase::calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty,
-                                                                      const scalar_array_t& timeTrajectoriesStock,
-                                                                      const std::vector<ModelData>& modelDataTrajectoriesStock,
-                                                                      const std::vector<ModelData>& modelDataEventTimesStock,
+                                                                      const PrimalDataContainer& primalData,
                                                                       scalar_t heuristicsValue) const {
+  // create alias
+  const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
+  const auto& modelDataTrajectory = primalData.modelDataTrajectory;
+  const auto& modelDataEventTimes = primalData.modelDataEventTimes;
+
   PerformanceIndex performanceIndex;
   // total cost
-  scalar_array_t costTrajectory(timeTrajectoriesStock.size());
-  std::transform(modelDataTrajectoriesStock.begin(), modelDataTrajectoriesStock.end(), costTrajectory.begin(),
+  scalar_array_t costTrajectory(timeTrajectory.size());
+  std::transform(modelDataTrajectory.begin(), modelDataTrajectory.end(), costTrajectory.begin(),
                  [](const ModelData& m) { return m.cost_.f; });
-  performanceIndex.totalCost += trapezoidalIntegration(timeTrajectoriesStock, costTrajectory);
+  performanceIndex.totalCost += trapezoidalIntegration(timeTrajectory, costTrajectory);
 
   // state equality constraint's ISE
-  scalar_array_t stateEqualityNorm2Trajectory(timeTrajectoriesStock.size());
-  std::transform(modelDataTrajectoriesStock.begin(), modelDataTrajectoriesStock.end(), stateEqualityNorm2Trajectory.begin(),
+  scalar_array_t stateEqualityNorm2Trajectory(timeTrajectory.size());
+  std::transform(modelDataTrajectory.begin(), modelDataTrajectory.end(), stateEqualityNorm2Trajectory.begin(),
                  [](const ModelData& m) { return m.stateEqConstr_.f.squaredNorm(); });
-  performanceIndex.stateEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock, stateEqualityNorm2Trajectory);
+  performanceIndex.stateEqConstraintISE += trapezoidalIntegration(timeTrajectory, stateEqualityNorm2Trajectory);
 
   // state-input equality constraint's ISE
-  scalar_array_t stateInputEqualityNorm2Trajectory(timeTrajectoriesStock.size());
-  std::transform(modelDataTrajectoriesStock.begin(), modelDataTrajectoriesStock.end(), stateInputEqualityNorm2Trajectory.begin(),
+  scalar_array_t stateInputEqualityNorm2Trajectory(timeTrajectory.size());
+  std::transform(modelDataTrajectory.begin(), modelDataTrajectory.end(), stateInputEqualityNorm2Trajectory.begin(),
                  [](const ModelData& m) { return m.stateInputEqConstr_.f.squaredNorm(); });
-  performanceIndex.stateInputEqConstraintISE += trapezoidalIntegration(timeTrajectoriesStock, stateInputEqualityNorm2Trajectory);
+  performanceIndex.stateInputEqConstraintISE += trapezoidalIntegration(timeTrajectory, stateInputEqualityNorm2Trajectory);
 
   // inequality constraints violation ISE
-  scalar_array_t inequalityNorm2Trajectory(timeTrajectoriesStock.size());
-  std::transform(modelDataTrajectoriesStock.begin(), modelDataTrajectoriesStock.end(), inequalityNorm2Trajectory.begin(),
+  scalar_array_t inequalityNorm2Trajectory(timeTrajectory.size());
+  std::transform(modelDataTrajectory.begin(), modelDataTrajectory.end(), inequalityNorm2Trajectory.begin(),
                  [this](const ModelData& m) { return m.ineqConstr_.f.cwiseMin(0.0).squaredNorm(); });
-  performanceIndex.inequalityConstraintISE += trapezoidalIntegration(timeTrajectoriesStock, inequalityNorm2Trajectory);
+  performanceIndex.inequalityConstraintISE += trapezoidalIntegration(timeTrajectory, inequalityNorm2Trajectory);
 
   // inequality constraints penalty
-  scalar_array_t inequalityPenaltyTrajectory(timeTrajectoriesStock.size());
-  std::transform(modelDataTrajectoriesStock.begin(), modelDataTrajectoriesStock.end(), inequalityPenaltyTrajectory.begin(),
+  scalar_array_t inequalityPenaltyTrajectory(timeTrajectory.size());
+  std::transform(modelDataTrajectory.begin(), modelDataTrajectory.end(), inequalityPenaltyTrajectory.begin(),
                  [&](const ModelData& m) { return ineqConstrPenalty.getValue(m.time_, m.ineqConstr_.f); });
 
-  performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectoriesStock, inequalityPenaltyTrajectory);
+  performanceIndex.inequalityConstraintPenalty += trapezoidalIntegration(timeTrajectory, inequalityPenaltyTrajectory);
 
   // final cost and constraints
-  for (const auto& me : modelDataEventTimesStock) {
+  for (const auto& me : modelDataEventTimes) {
     performanceIndex.totalCost += me.cost_.f;
     performanceIndex.stateEqFinalConstraintSSE += me.stateEqConstr_.f.squaredNorm();
   }

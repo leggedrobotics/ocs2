@@ -104,33 +104,26 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
                                     LinearController& dstController) {
   const auto time = primalData.primalSolution.timeTrajectory_[timeIndex];
 
-  // interpolate
-  const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.primalSolution.timeTrajectory_);
-  const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.stateTrajectory_);
-  const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.inputTrajectory_);
+  const vector_t& nominalState = primalData.primalSolution.stateTrajectory_[timeIndex];
+  const vector_t& nominalInput = primalData.primalSolution.inputTrajectory_[timeIndex];
 
   // BmProjected
-  const matrix_t projectedBm =
-      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::dynamics_dfdu);
+  const matrix_t& projectedBm = dualData.projectedModelDataTrajectory[timeIndex].dynamics_.dfdu;
+
   // PmProjected
-  const matrix_t projectedPm = LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::cost_dfdux);
+  const matrix_t& projectedPm = dualData.projectedModelDataTrajectory[timeIndex].cost_.dfdux;
   // RvProjected
-  const vector_t projectedRv = LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::cost_dfdu);
+  const vector_t& projectedRv = dualData.projectedModelDataTrajectory[timeIndex].cost_.dfdu;
   // EvProjected
-  const vector_t EvProjected =
-      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstr_f);
+  const vector_t& EvProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstr_.f;
   // CmProjected
-  const matrix_t CmProjected =
-      LinearInterpolation::interpolate(indexAlpha, dualData.projectedModelDataTrajectory, model_data::stateInputEqConstr_dfdx);
+  const matrix_t& CmProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstr_.dfdx;
   // projector
-  const matrix_t Qu =
-      LinearInterpolation::interpolate(indexAlpha, dualData.riccatiModificationTrajectory, riccati_modification::constraintNullProjector);
+  const matrix_t& Qu = dualData.riccatiModificationTrajectory[timeIndex].constraintNullProjector_;
   // deltaGm, projected feedback
-  matrix_t projectedKm =
-      LinearInterpolation::interpolate(indexAlpha, dualData.riccatiModificationTrajectory, riccati_modification::deltaGm);
+  matrix_t projectedKm = dualData.riccatiModificationTrajectory[timeIndex].deltaGm_;
   // deltaGv, projected feedforward
-  vector_t projectedLv =
-      LinearInterpolation::interpolate(indexAlpha, dualData.riccatiModificationTrajectory, riccati_modification::deltaGv);
+  vector_t projectedLv = dualData.riccatiModificationTrajectory[timeIndex].deltaGv_;
 
   // projectedKm = projectedPm + projectedBm^t * Sm
   projectedKm = -(projectedKm + projectedPm);

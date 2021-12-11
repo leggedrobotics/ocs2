@@ -145,38 +145,37 @@ void ILQR::calculateController() {
 /******************************************************************************************************/
 void ILQR::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                      LinearController& dstController) {
-  const auto k = timeIndex;
+  const auto& nominalState = primalData.primalSolution.stateTrajectory_[timeIndex];
+  const auto& nominalInput = primalData.primalSolution.inputTrajectory_[timeIndex];
 
-  const auto& nominalState = primalData.primalSolution.stateTrajectory_[k];
-  const auto& nominalInput = primalData.primalSolution.inputTrajectory_[k];
+  const auto& EvProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstr_.f;
+  const auto& CmProjected = dualData.projectedModelDataTrajectory[timeIndex].stateInputEqConstr_.dfdx;
 
-  const auto& EvProjected = dualData.projectedModelDataTrajectory[k].stateInputEqConstr_.f;
-  const auto& CmProjected = dualData.projectedModelDataTrajectory[k].stateInputEqConstr_.dfdx;
-
-  const auto& Qu = dualData.riccatiModificationTrajectory[k].constraintNullProjector_;
+  const auto& Qu = dualData.riccatiModificationTrajectory[timeIndex].constraintNullProjector_;
 
   // feedback gains
-  dstController.gainArray_[k] = -CmProjected;
-  dstController.gainArray_[k].noalias() += Qu * projectedKmTrajectoryStock_[k];
+  dstController.gainArray_[timeIndex] = -CmProjected;
+  dstController.gainArray_[timeIndex].noalias() += Qu * projectedKmTrajectoryStock_[timeIndex];
 
   // bias input
-  dstController.biasArray_[k] = nominalInput;
-  // std::cerr << k << std::endl;
-  dstController.biasArray_[k].noalias() -= dstController.gainArray_[k] * nominalState;
-  dstController.deltaBiasArray_[k] = -EvProjected;
-  dstController.deltaBiasArray_[k].noalias() += Qu * projectedLvTrajectoryStock_[k];
+  dstController.biasArray_[timeIndex] = nominalInput;
+  // std::cerr << timeIndex << std::endl;
+  dstController.biasArray_[timeIndex].noalias() -= dstController.gainArray_[timeIndex] * nominalState;
+  dstController.deltaBiasArray_[timeIndex] = -EvProjected;
+  dstController.deltaBiasArray_[timeIndex].noalias() += Qu * projectedLvTrajectoryStock_[timeIndex];
 
   // checking the numerical stability of the controller parameters
   if (settings().checkNumericalStability_) {
     try {
-      if (!dstController.gainArray_[k].allFinite()) {
+      if (!dstController.gainArray_[timeIndex].allFinite()) {
         throw std::runtime_error("Feedback gains are unstable.");
       }
-      if (!dstController.deltaBiasArray_[k].allFinite()) {
+      if (!dstController.deltaBiasArray_[timeIndex].allFinite()) {
         throw std::runtime_error("feedForwardControl is unstable.");
       }
     } catch (const std::exception& error) {
-      std::cerr << "what(): " << error.what() << " at time " << dstController.timeStamp_[k] << " [sec]." << std::endl;
+      std::cerr << "what(): " << error.what() << " at time " << dstController.timeStamp_[timeIndex] << " [sec]." << std::endl;
+      throw;
     }
   }
 }

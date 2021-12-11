@@ -102,8 +102,7 @@ void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const 
 /******************************************************************************************************/
 void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                     LinearController& dstController) {
-  const size_t k = timeIndex;
-  const auto time = primalData.primalSolution.timeTrajectory_[k];
+  const auto time = primalData.primalSolution.timeTrajectory_[timeIndex];
 
   // interpolate
   const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.primalSolution.timeTrajectory_);
@@ -135,33 +134,34 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
 
   // projectedKm = projectedPm + projectedBm^t * Sm
   projectedKm = -(projectedKm + projectedPm);
-  projectedKm.noalias() -= projectedBm.transpose() * dualData.valueFunctionTrajectory[k].dfdxx;
+  projectedKm.noalias() -= projectedBm.transpose() * dualData.valueFunctionTrajectory[timeIndex].dfdxx;
 
   // projectedLv = projectedRv + projectedBm^t * Sv
   projectedLv = -(projectedLv + projectedRv);
-  projectedLv.noalias() -= projectedBm.transpose() * dualData.valueFunctionTrajectory[k].dfdx;
+  projectedLv.noalias() -= projectedBm.transpose() * dualData.valueFunctionTrajectory[timeIndex].dfdx;
 
   // feedback gains
-  dstController.gainArray_[k] = -CmProjected;
-  dstController.gainArray_[k].noalias() += Qu * projectedKm;
+  dstController.gainArray_[timeIndex] = -CmProjected;
+  dstController.gainArray_[timeIndex].noalias() += Qu * projectedKm;
 
   // bias input
-  dstController.biasArray_[k] = nominalInput;
-  dstController.biasArray_[k].noalias() -= dstController.gainArray_[k] * nominalState;
-  dstController.deltaBiasArray_[k] = -EvProjected;
-  dstController.deltaBiasArray_[k].noalias() += Qu * projectedLv;
+  dstController.biasArray_[timeIndex] = nominalInput;
+  dstController.biasArray_[timeIndex].noalias() -= dstController.gainArray_[timeIndex] * nominalState;
+  dstController.deltaBiasArray_[timeIndex] = -EvProjected;
+  dstController.deltaBiasArray_[timeIndex].noalias() += Qu * projectedLv;
 
   // checking the numerical stability of the controller parameters
   if (settings().checkNumericalStability_) {
     try {
-      if (!dstController.gainArray_[k].allFinite()) {
+      if (!dstController.gainArray_[timeIndex].allFinite()) {
         throw std::runtime_error("Feedback gains are unstable.");
       }
-      if (!dstController.deltaBiasArray_[k].allFinite()) {
+      if (!dstController.deltaBiasArray_[timeIndex].allFinite()) {
         throw std::runtime_error("feedForwardControl is unstable.");
       }
     } catch (const std::exception& error) {
       std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
+      throw;
     }
   }
 }
@@ -181,7 +181,7 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
     // perform the computeRiccatiModificationTerms for partition i
     BASE::nextTimeIndex_ = 0;
     BASE::nextTaskId_ = 0;
-    auto task = [this, N] {
+    auto task = [this, N]() {
       int timeIndex;
       const auto SmDummy = matrix_t::Zero(0, 0);
 
@@ -223,8 +223,7 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
   auto& valueFunctionTrajectory = BASE::dualData_.valueFunctionTrajectory;
 
   // Convert final value of value function in vector format
-  vector_t allSsFinal =
-      ContinuousTimeRiccatiEquations::convert2Vector(finalValueFunction.dfdxx, finalValueFunction.dfdx, finalValueFunction.f);
+  vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(finalValueFunction);
 
   scalar_array_t& SsNormalizedTime = SsNormalizedTimeTrajectoryStock_[workerIndex];
   SsNormalizedTime.clear();
@@ -246,9 +245,7 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
   // De-normalize time and convert value function to matrix format
   size_t outputN = SsNormalizedTime.size();
   for (size_t k = partitionInterval.first; k < partitionInterval.second; k++) {
-    ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k + partitionInterval.first],
-                                                   valueFunctionTrajectory[k].dfdxx, valueFunctionTrajectory[k].dfdx,
-                                                   valueFunctionTrajectory[k].f);
+    ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k + partitionInterval.first], valueFunctionTrajectory[k]);
   }  // end of k loop
 }
 

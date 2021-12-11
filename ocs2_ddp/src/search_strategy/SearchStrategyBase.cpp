@@ -76,9 +76,6 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
     modelDataEventTimes[ke].dynamicsBias_.setZero(stateTrajectory[index].size());
   }
 
-  // total number of steps
-  size_t numSteps = timeTrajectory.size();
-
   // debug print
   if (baseSettings_.debugPrintRollout) {
     std::cerr << "\n++++++++++++++++++++++++++++++\n";
@@ -91,7 +88,7 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
   }
 
   // average time step
-  return (finalTime_ - initTime_) / numSteps;
+  return (finalTime_ - initTime_) / timeTrajectory.size();
 }
 
 /******************************************************************************************************/

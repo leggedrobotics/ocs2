@@ -83,7 +83,7 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
   const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };
 
   /** Get IDs (names) of the links which the spheres approximate */
-  const std::vector<std::string>& getIds() const override;
+  const std::vector<std::string>& getIds() const override { return linkIds_; };
 
   /** Get the sphere center position vectors.
    * @note requires pinocchioInterface to be updated with:

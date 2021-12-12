@@ -94,13 +94,6 @@ PinocchioSphereKinematicsCppAd* PinocchioSphereKinematicsCppAd::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const std::vector<std::string>& PinocchioSphereKinematicsCppAd::getIds() const {
-  return linkIds_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 ad_vector_t PinocchioSphereKinematicsCppAd::getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                                              const PinocchioStateInputMapping<ad_scalar_t>& mapping,
                                                              const std::vector<SphereApproxParam>& sphereApproxParams,

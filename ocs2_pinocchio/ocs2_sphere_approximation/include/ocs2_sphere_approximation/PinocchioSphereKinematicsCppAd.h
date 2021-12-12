@@ -85,7 +85,7 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
 
   const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };
 
-  const std::vector<std::string>& getIds() const override;
+  const std::vector<std::string>& getIds() const override { return linkIds_; };
 
   std::vector<vector3_t> getPosition(const vector_t& state) const override;
   std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override {

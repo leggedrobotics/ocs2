@@ -78,13 +78,6 @@ PinocchioSphereKinematics* PinocchioSphereKinematics::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const std::vector<std::string>& PinocchioSphereKinematics::getIds() const {
-  return linkIds_;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 auto PinocchioSphereKinematics::getPosition(const vector_t& state) const -> std::vector<vector3_t> {
   if (pinocchioInterfacePtr_ == nullptr) {
     throw std::runtime_error("[PinocchioSphereKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");

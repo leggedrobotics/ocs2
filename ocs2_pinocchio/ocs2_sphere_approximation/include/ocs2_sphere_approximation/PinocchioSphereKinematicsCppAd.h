@@ -52,6 +52,16 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
   using EndEffectorKinematics<scalar_t>::matrix3x_t;
   using EndEffectorKinematics<scalar_t>::quaternion_t;
 
+  struct SphereApproxParam {
+    SphereApproxParam(vector3_t placementTranslation, quaternion_t placementOrientation, std::vector<vector3_t> sphereCentersToObjectCenter)
+        : placementTranslation(std::move(placementTranslation)),
+          placementOrientation(std::move(placementOrientation)),
+          sphereCentersToObjectCenter(std::move(sphereCentersToObjectCenter)) {}
+    vector3_t placementTranslation;
+    quaternion_t placementOrientation;
+    std::vector<vector3_t> sphereCentersToObjectCenter;
+  };
+
   /** Constructor
    * @param [in] pinocchioInterface pinocchio interface.
    * @param [in] pinocchioSphereInterface pinocchio sphere interface
@@ -98,14 +108,13 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
  private:
   PinocchioSphereKinematicsCppAd(const PinocchioSphereKinematicsCppAd& rhs);
 
-  vector_t concatSphereApproxParams() const;
+  std::vector<SphereApproxParam> createSphereApproxParams() const;
   ad_vector_t getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                               const ad_vector_t& state, const ad_vector_t& sphereApproxParams);
+                               const std::vector<SphereApproxParam>& sphereApproxParams, const ad_vector_t& state);
 
   std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
 
   PinocchioSphereInterface pinocchioSphereInterface_;
-  vector_t sphereApproxParams_;
   std::vector<std::string> linkIds_;
 };
 

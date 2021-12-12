@@ -87,52 +87,56 @@ void SphereApproximation::approximateBox(const vector_t& sides) {
   // Number of spheres along x, y, z
   vector_t numSpheres(3);
 
-  if (caseIdx == 0) {
-    distances = sides / 2;
+  switch (caseIdx) {
+    case 0:
+      distances = sides / 2;
+      numSpheres = vector_t::Ones(3);
 
-    numSpheres = vector_t::Ones(3);
+      // No re-calculation of the distances is required
+      break;
+    case 1: {
+      scalar_t dist = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(sides[idxSorted[0]] / 2, 2)) / std::sqrt(2);
 
-    // No re-calculation of the distances is required
+      if (dist >= sides[idxSorted[1]] / 2) {
+        distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
+        distances[idxSorted[1]] = sides[idxSorted[1]] / 2;
+        distances[idxSorted[2]] =
+            std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[idxSorted[0]], 2) - std::pow(distances[idxSorted[1]], 2));
 
-  } else if (caseIdx == 1) {
-    scalar_t dist = std::sqrt(std::pow(sphereRadius_, 2) - std::pow(sides[idxSorted[0]] / 2, 2)) / std::sqrt(2);
+        numSpheres[idxSorted[0]] = numSpheres[idxSorted[1]] = 1;
+        numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
 
-    if (dist >= sides[idxSorted[1]] / 2) {
-      distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
-      distances[idxSorted[1]] = sides[idxSorted[1]] / 2;
-      distances[idxSorted[2]] =
-          std::sqrt(std::pow(sphereRadius_, 2) - std::pow(distances[idxSorted[0]], 2) - std::pow(distances[idxSorted[1]], 2));
+        // Re-calculate the distances
+        distances[idxSorted[2]] = std::max(sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]), sphereRadius_ - maxExcess_);
 
-      numSpheres[idxSorted[0]] = numSpheres[idxSorted[1]] = 1;
-      numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
+      } else {
+        distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
+        distances[idxSorted[1]] = distances[idxSorted[2]] = dist;
 
-      // Re-calculate the distances
-      distances[idxSorted[2]] = std::max(sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]), sphereRadius_ - maxExcess_);
+        numSpheres[idxSorted[0]] = 1;
+        numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+        numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
 
-    } else {
-      distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
-      distances[idxSorted[1]] = distances[idxSorted[2]] = dist;
+        // Re-calculate the distances
+        distances[idxSorted[1]] = distances[idxSorted[2]] =
+            std::max(sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]), sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]));
+      }
+      break;
+    }
+    case 2:
+      distances = (sphereRadius_ - maxExcess_) * vector_t::Ones(3);
 
-      numSpheres[idxSorted[0]] = 1;
+      numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
       numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
       numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
 
       // Re-calculate the distances
-      distances[idxSorted[1]] = distances[idxSorted[2]] =
-          std::max(sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]), sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]]));
-    }
-  } else {
-    distances = (sphereRadius_ - maxExcess_) * vector_t::Ones(3);
-
-    numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
-    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
-    numSpheres[idxSorted[2]] = std::ceil(sides[idxSorted[2]] / (2 * distances[idxSorted[2]]));
-
-    // Re-calculate the distances
-    distances = std::max({sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]),
-                          sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]])}) *
-                vector_t::Ones(3);
+      distances = std::max({sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]),
+                            sides[idxSorted[2]] / (2 * numSpheres[idxSorted[2]])}) *
+                  vector_t::Ones(3);
+      break;
   }
+
   // re-calculate the sphere radius
   sphereRadius_ = distances.norm();
 
@@ -238,29 +242,31 @@ void SphereApproximation::approximateRectanglularCrossSection(const vector_t& si
   initSphereRadii << sides.norm() / 2, sides[idxSorted[0]] / 2 + maxExcess, std::sqrt(2) * maxExcess / (std::sqrt(2) - 1);
   sphereRadius = initSphereRadii.minCoeff(&caseIdx);
 
-  if (caseIdx == 0) {
-    distances = sides / 2;
+  switch (caseIdx) {
+    case 0:
+      distances = sides / 2;
+      numSpheres = vector_t::Ones(2);
+      break;
+    case 1:
+      distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
+      distances[idxSorted[1]] = std::sqrt(std::pow(sphereRadius, 2) - std::pow(distances[idxSorted[0]], 2));
 
-    numSpheres = vector_t::Ones(2);
+      numSpheres[idxSorted[0]] = 1;
+      numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
 
-  } else if (caseIdx == 1) {
-    distances[idxSorted[0]] = sides[idxSorted[0]] / 2;
-    distances[idxSorted[1]] = std::sqrt(std::pow(sphereRadius, 2) - std::pow(distances[idxSorted[0]], 2));
+      // Re-calculate the distances
+      distances[idxSorted[1]] = sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]);
+      break;
+    case 2:
+      distances = (sphereRadius - maxExcess) * vector_t::Ones(2);
 
-    numSpheres[idxSorted[0]] = 1;
-    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
+      numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
+      numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
 
-    // Re-calculate the distances
-    distances[idxSorted[1]] = sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]]);
-  } else {
-    distances = (sphereRadius - maxExcess) * vector_t::Ones(2);
-
-    numSpheres[idxSorted[0]] = std::ceil(sides[idxSorted[0]] / (2 * distances[idxSorted[0]]));
-    numSpheres[idxSorted[1]] = std::ceil(sides[idxSorted[1]] / (2 * distances[idxSorted[1]]));
-
-    // Re-calculate the distances
-    distances = std::max(sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]])) *
-                vector_t::Ones(2);
+      // Re-calculate the distances
+      distances = std::max(sides[idxSorted[0]] / (2 * numSpheres[idxSorted[0]]), sides[idxSorted[1]] / (2 * numSpheres[idxSorted[1]])) *
+                  vector_t::Ones(2);
+      break;
   }
   sphereRadius = distances.norm();
 }

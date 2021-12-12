@@ -37,26 +37,26 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SphereApproximation::SphereApproximation(const size_t geomObjId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess,
-                                         const scalar_t shrinkRatio)
+SphereApproximation::SphereApproximation(const hpp::fcl::CollisionGeometry& geometry, size_t geomObjId, scalar_t maxExcess,
+                                         scalar_t shrinkRatio)
     : geomObjId_(geomObjId), maxExcess_(maxExcess), shrinkRatio_(shrinkRatio) {
   if (shrinkRatio <= 0.0 || shrinkRatio >= 1.0) {
     throw std::runtime_error("[SphereApproximation] shrinkRation must be larger than 0.0 and smaller than 1.0!");
   }
-  const auto& nodeType = geometryPtr->getNodeType();
+  const auto& nodeType = geometry.getNodeType();
   switch (nodeType) {
     case hpp::fcl::NODE_TYPE::GEOM_BOX: {
-      const auto* boxPtr = dynamic_cast<const hpp::fcl::Box*>(geometryPtr);
+      const auto* boxPtr = dynamic_cast<const hpp::fcl::Box*>(&geometry);
       approximateBox(boxPtr->halfSide * 2);
       break;
     }
     case hpp::fcl::NODE_TYPE::GEOM_CYLINDER: {
-      const auto* cylinderPtr = dynamic_cast<const hpp::fcl::Cylinder*>(geometryPtr);
+      const auto* cylinderPtr = dynamic_cast<const hpp::fcl::Cylinder*>(&geometry);
       approximateCylinder(cylinderPtr->radius, cylinderPtr->halfLength * 2);
       break;
     }
     case hpp::fcl::NODE_TYPE::GEOM_SPHERE: {
-      const auto* spherePtr = dynamic_cast<const hpp::fcl::Sphere*>(geometryPtr);
+      const auto* spherePtr = dynamic_cast<const hpp::fcl::Sphere*>(&geometry);
       numSpheres_ = 1;
       sphereRadius_ = spherePtr->radius;
       sphereCentersToObjectCenter_.resize(1);

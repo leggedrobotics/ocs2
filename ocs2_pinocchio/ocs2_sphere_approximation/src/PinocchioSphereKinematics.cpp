@@ -52,7 +52,7 @@ PinocchioSphereKinematics::PinocchioSphereKinematics(PinocchioSphereInterface pi
   const auto& collisionLinks = pinocchioSphereInterface_.getCollisionLinks();
   const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
   size_t count = 0;
-  for (size_t i = 0; i < pinocchioSphereInterface.getNumApproximations(); i++) {
+  for (size_t i = 0; i < pinocchioSphereInterface.getNumPrimitiveShapes(); i++) {
     std::fill(linkIds_.begin() + count, linkIds_.begin() + count + numSpheres[i], collisionLinks[i]);
     count += numSpheres[i];
   }
@@ -90,9 +90,7 @@ auto PinocchioSphereKinematics::getPosition(const vector_t& state) const -> std:
     throw std::runtime_error("[PinocchioSphereKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
-  std::vector<vector3_t> sphereCentersInWorldFrame = pinocchioSphereInterface_.computeSphereCentersInWorldFrame(*pinocchioInterfacePtr_);
-
-  return sphereCentersInWorldFrame;
+  return pinocchioSphereInterface_.computeSphereCentersInWorldFrame(*pinocchioInterfacePtr_);
 }
 
 /******************************************************************************************************/
@@ -114,14 +112,14 @@ std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematics::getPos
   std::vector<VectorFunctionLinearApproximation> positions;
 
   const auto& geometryModel = pinocchioSphereInterface_.getGeometryModel();
-  const size_t numApproximations = pinocchioSphereInterface_.getNumApproximations();
+  const size_t numPrimitiveShapes = pinocchioSphereInterface_.getNumPrimitiveShapes();
   const auto geomObjIds = pinocchioSphereInterface_.getGeomObjIds();
   const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
 
   size_t count = 0;
-  for (size_t i = 0; i < numApproximations; i++) {
+  for (size_t i = 0; i < numPrimitiveShapes; i++) {
     const auto& parentJointId = geometryModel.geometryObjects[geomObjIds[i]].parentJoint;
-    const vector3_t jointPosition = data.oMi[parentJointId].translation();
+    const vector3_t& jointPosition = data.oMi[parentJointId].translation();
     matrix_t jointJacobian = matrix_t::Zero(6, model.nv);
     pinocchio::getJointJacobian(model, data, parentJointId, rf, jointJacobian);
 

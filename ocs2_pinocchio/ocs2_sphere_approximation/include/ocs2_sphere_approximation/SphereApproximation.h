@@ -53,12 +53,11 @@ class SphereApproximation {
 
   /** Constructor
    * @param [in] geomObjectId : index of the geometry object in GeoemtryModel
-   * @param [in] geometryPtr : pointer to the geometry stored in GeometryModel
+   * @param [in] geometry : geometry stored in GeometryModel
    * @param [in] maxExcess : maximum allowed excess from the object surface to the sphere surface
    * @param [in] shrinkRatio: ratio of shrinking maxExcess when recursive approximation of the cylinder base is necessary
    */
-  SphereApproximation(const size_t geomObjectId, const hpp::fcl::CollisionGeometry* geometryPtr, const scalar_t maxExcess,
-                      const scalar_t shrinkRatio);
+  SphereApproximation(const hpp::fcl::CollisionGeometry& geometry, size_t geomObjectId, scalar_t maxExcess, scalar_t shrinkRatio);
 
   /** Get the index of the geometry object stored in GeometryModel */
   size_t getGeomObjId() const { return geomObjId_; };
@@ -73,15 +72,15 @@ class SphereApproximation {
   scalar_t getSphereRadius() const { return sphereRadius_; };
 
   /** Get the positions of the sphere centers w.r.t the object center */
-  std::vector<vector3_t> getSphereCentersToObjectCenter() const { return sphereCentersToObjectCenter_; };
+  const std::vector<vector3_t>& getSphereCentersToObjectCenter() const { return sphereCentersToObjectCenter_; };
 
  private:
   void approximateBox(const vector_t& sides);
-  void approximateCylinder(const scalar_t radius, const scalar_t length);
-  void approximateRectanglularCrossSection(const vector_t& sides, const size_array_t& idxSorted, const scalar_t maxExcess,
-                                           scalar_t& sphereRadius, vector_t& numSpheres, vector_t& distances);
-  bool approximateCircleBase(const scalar_t radiusBase, const scalar_t radiusSphereCrossSection, const scalar_t maxExcessR, scalar_t& shift,
-                             scalar_t& alpha, scalar_t& numCircles);
+  void approximateCylinder(scalar_t radius, scalar_t length);
+  void approximateRectanglularCrossSection(const vector_t& sides, const size_array_t& idxSorted, scalar_t maxExcess, scalar_t& sphereRadius,
+                                           vector_t& numSpheres, vector_t& distances);
+  bool approximateCircleBase(scalar_t radiusBase, scalar_t radiusSphereCrossSection, scalar_t maxExcessR, scalar_t& shift, scalar_t& alpha,
+                             scalar_t& numCircles);
 
   const size_t geomObjId_;
   const scalar_t maxExcess_;

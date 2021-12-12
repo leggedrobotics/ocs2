@@ -54,7 +54,7 @@ PinocchioSphereKinematicsCppAd::PinocchioSphereKinematicsCppAd(const PinocchioIn
   const auto& collisionLinks = pinocchioSphereInterface_.getCollisionLinks();
   const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
   size_t count = 0;
-  for (size_t i = 0; i < pinocchioSphereInterface.getNumApproximations(); i++) {
+  for (size_t i = 0; i < pinocchioSphereInterface.getNumPrimitiveShapes(); i++) {
     std::fill(linkIds_.begin() + count, linkIds_.begin() + count + numSpheres[i], collisionLinks[i]);
     count += numSpheres[i];
   }

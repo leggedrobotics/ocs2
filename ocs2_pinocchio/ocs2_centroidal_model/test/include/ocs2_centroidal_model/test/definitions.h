@@ -102,5 +102,25 @@ inline void visualMatrixCompare(const ocs2::matrix_t& A, const ocs2::matrix_t& B
   }
 }
 
+inline void compareApproximation(const ocs2::VectorFunctionLinearApproximation& a, const ocs2::VectorFunctionLinearApproximation& b,
+                                 double tol = 1e-6) {
+  if (!a.f.isApprox(b.f)) {
+    std::cerr << "compare dynamics\n";
+    visualMatrixCompare(a.f.transpose(), b.f.transpose(), tol);
+  }
+  if (!a.dfdx.isApprox(b.dfdx)) {
+    std::cerr << "compare dfdx\n";
+    visualMatrixCompare(a.dfdx, b.dfdx, tol);
+  }
+  if (!a.dfdu.isApprox(b.dfdu)) {
+    std::cerr << "compare dfdu\n";
+    visualMatrixCompare(a.dfdu, b.dfdu, tol);
+  }
+
+  EXPECT_TRUE(a.f.isApprox(b.f));
+  EXPECT_TRUE(a.dfdx.isApprox(b.dfdx));
+  EXPECT_TRUE(a.dfdu.isApprox(b.dfdu));
+}
+
 }  // namespace centroidal_model
 }  // namespace ocs2

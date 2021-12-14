@@ -82,8 +82,9 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
   SystemObservation currentObservation = initObservation;
 
   // Helper function to check if policy is updated and starts at the given time.
+  // Due to ROS message conversion delay and very fast MPC loop, we might get an old policy instead of the latest one. 
   const auto policyUpdatedForTime = [this](scalar_t time) {
-    const scalar_t tol = 0.1;  // policy must start within this fraction of dt
+    constexpr scalar_t tol = 0.1;  // policy must start within this fraction of dt
     return mrt_.updatePolicy() && std::abs(mrt_.getPolicy().timeTrajectory_.front() - time) < (tol / mpcDesiredFrequency_);
   };
 

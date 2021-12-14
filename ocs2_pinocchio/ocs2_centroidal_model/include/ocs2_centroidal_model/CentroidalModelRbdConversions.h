@@ -68,7 +68,7 @@ class CentroidalModelRbdConversions final {
   /**
    * Computes the ocs2 centroidal model state from the rigid body dynamics model state.
    * @note: In rbdState, orientations precede positions and angular velocities precede linear velocities
-   * @note: The inputted rbdState contains non-local base velocities (expressed in world frame)
+   * @note: The input rbdState contains non-local base velocities (expressed in world frame)
    *
    * @param [in] rbdState: rigid body dynamics model state [base pose, joint positions, base twist, joint velocities]
    * @return ocs2 switched-model state vector
@@ -77,7 +77,7 @@ class CentroidalModelRbdConversions final {
 
   /**
    * Computes the rigid body dynamics model state from the ocs2 centroidal model state
-   * @note: The outputted rbdState contains non-local base velocities (expressed in world frame)
+   * @note: The output rbdState contains non-local base velocities (expressed in world frame)
    *
    * @param [in] state: ocs2 switched-model state vector
    * @param [in] input: ocs2 switched-model input vector

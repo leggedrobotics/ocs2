@@ -48,9 +48,9 @@ class CentroidalModelRbdConversions final {
   /**
    * Constructor
    * @param [in] pinocchioInterface: predefined pinocchio interface for a robot
-   * @param [in] CentroidalModelInfo : The centroidal model information.
+   * @param [in] CentroidalModelInfo: The centroidal model information.
    */
-  CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info);
+  CentroidalModelRbdConversions(PinocchioInterface pinocchioInterface, const CentroidalModelInfo& info);
 
   /**
    * Computes the floating-base generalized positions, velocities, and accelerations.
@@ -116,7 +116,7 @@ class CentroidalModelRbdConversions final {
   CentroidalModelRbdConversions(const CentroidalModelRbdConversions& other) = default;
   CentroidalModelRbdConversions& operator=(const CentroidalModelRbdConversions& rhs) = default;
 
-  PinocchioInterface* pinocchioInterfacePtr_;
+  PinocchioInterface pinocchioInterface_;
   CentroidalModelPinocchioMapping mapping_;
 };
 

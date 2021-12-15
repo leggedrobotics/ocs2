@@ -46,10 +46,14 @@ class LeggedRobotRaisimConversions final {
    * Constructor.
    * @param [in] pinocchioInterface : The predefined pinocchio interface for the robot.
    * @param [in] centroidalModelInfo : The centroidal model information.
+   * @param [in] initialState : The initial switched model state.
    * @param [in] check : Whether to check if the variables coming from or going to RaiSim respect the actuator limits (by default false).
    */
-  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo, bool check = false)
-      : check_(check), centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo) {}
+  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo,
+                               const vector_t& initialState, bool check = false)
+      : check_(check),
+        continuousOrientation_(initialState.segment<3>(9)),
+        centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo) {}
 
   /**
    * @brief Convert OCS2 switched model state to generalized coordinate and generalized velocity used by RaiSim.
@@ -157,8 +161,8 @@ class LeggedRobotRaisimConversions final {
 
  private:
   const bool check_;
-  CentroidalModelRbdConversions centroidalModelRbdConversions_;
   Eigen::Vector3d continuousOrientation_;
+  CentroidalModelRbdConversions centroidalModelRbdConversions_;
   const raisim::HeightMap* terrainPtr_ = nullptr;
 };
 

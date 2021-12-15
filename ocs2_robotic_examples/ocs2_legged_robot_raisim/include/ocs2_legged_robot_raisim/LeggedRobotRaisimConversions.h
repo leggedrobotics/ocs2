@@ -160,8 +160,6 @@ class LeggedRobotRaisimConversions final {
   CentroidalModelRbdConversions centroidalModelRbdConversions_;
   Eigen::Vector3d continuousOrientation_;
   const raisim::HeightMap* terrainPtr_ = nullptr;
-  vector_t pGains_;
-  vector_t dGains_;
 };
 
 }  // namespace legged_robot

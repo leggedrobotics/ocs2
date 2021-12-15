@@ -30,7 +30,7 @@ rollout
       [11] RH_KFE
     }
 
-    controlMode 0
+    controlMode 0 ; 0: FORCE_AND_TORQUE, 1: PD_PLUS_FEEDFORWARD_TORQUE
 
     pGains
     {

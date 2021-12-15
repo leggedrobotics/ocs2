@@ -117,8 +117,7 @@ install(
 
 catkin_add_gtest(${PROJECT_NAME}_test
   # test/testAccessMethods.cpp
-  test/testAnymalCentroidalModelInfo.cpp
-  test/testAnymalCentroidalDynamics.cpp
+  test/testAnymalCentroidalModel.cpp
 )
 target_include_directories(${PROJECT_NAME}_test PRIVATE
   test/include

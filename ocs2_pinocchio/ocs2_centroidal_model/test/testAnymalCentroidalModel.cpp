@@ -42,10 +42,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace centroidal_model;
 
-class TestAnymalCentroidalDynamics : public ::testing::TestWithParam<CentroidalModelType> {
+class TestAnymalCentroidalModel : public ::testing::TestWithParam<CentroidalModelType> {
  public:
   using Matrix6x = Eigen::Matrix<scalar_t, 6, Eigen::Dynamic>;
-  TestAnymalCentroidalDynamics() {
+  TestAnymalCentroidalModel() {
     srand(0);
     pinocchioInterfacePtr.reset(new PinocchioInterface(createPinocchioInterface(anymalUrdfFile)));
   }
@@ -68,13 +68,23 @@ class TestAnymalCentroidalDynamics : public ::testing::TestWithParam<CentroidalM
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
 };
 
-constexpr scalar_t TestAnymalCentroidalDynamics::tol;
-constexpr size_t TestAnymalCentroidalDynamics::numTests;
+constexpr scalar_t TestAnymalCentroidalModel::tol;
+constexpr size_t TestAnymalCentroidalModel::numTests;
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TEST_P(TestAnymalCentroidalDynamics, flowMap) {
+TEST_P(TestAnymalCentroidalModel, info) {
+  const CentroidalModelType type = GetParam();
+  const auto info = createInfo(type);
+  EXPECT_EQ(info.stateDim, anymal::STATE_DIM);
+  EXPECT_EQ(info.inputDim, anymal::INPUT_DIM);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_P(TestAnymalCentroidalModel, dynamis_flowMap) {
   const CentroidalModelType type = GetParam();
   auto mappingPtr = createMapping(type);
   const auto& info = mappingPtr->getCentroidalModelInfo();
@@ -84,7 +94,7 @@ TEST_P(TestAnymalCentroidalDynamics, flowMap) {
   anymalDynamicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
 
   // CppAD model
-  const std::string modelName = "Anymal" + toString(type) + "AdTest";
+  const std::string modelName = "TestAnymal" + toString(type) + "Ad";
   std::unique_ptr<PinocchioCentroidalDynamicsAD> anymalDynamicsAdPtr(
       new PinocchioCentroidalDynamicsAD(*pinocchioInterfacePtr, createInfo(type), modelName));
 
@@ -116,6 +126,6 @@ TEST_P(TestAnymalCentroidalDynamics, flowMap) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-INSTANTIATE_TEST_CASE_P(TestAnymalCentroidalDynamicsWithParam, TestAnymalCentroidalDynamics,
+INSTANTIATE_TEST_CASE_P(TestAnymalCentroidalModelWithParam, TestAnymalCentroidalModel,
                         testing::ValuesIn({CentroidalModelType::FullCentroidalDynamics, CentroidalModelType::SingleRigidBodyDynamics}),
-                        [](const testing::TestParamInfo<TestAnymalCentroidalDynamics::ParamType>& info) { return toString(info.param); });
+                        [](const testing::TestParamInfo<TestAnymalCentroidalModel::ParamType>& info) { return toString(info.param); });

@@ -98,6 +98,19 @@ class CentroidalModelRbdConversions final {
 
   /**
    * Computes the rigid body dynamics model torque from the ocs2 centroidal model input and adds PD feedback
+   * @note: Calls computeRbdTorqueFromCentroidalModelPD() with gains loaded from settings
+   *
+   * @param [in] desiredState: desired ocs2 switched-model state vector
+   * @param [in] desiredInput: desired ocs2 switched-model input vector
+   * @param [in] desiredJointAccelerations: desired joint accelerations
+   * @param [in] measuredRbdState: measured rigid body dynamics model state (required for PD control)
+   * @return rigid body dynamics model torque [base wrench, joint torques]
+   */
+  vector_t computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
+                                                 const vector_t& desiredJointAccelerations, const vector_t& measuredRbdState);
+
+  /**
+   * Computes the rigid body dynamics model torque from the ocs2 centroidal model input and adds PD feedback
    * @note: PD controller is added on the acceleration level
    *
    * @param [in] desiredState: desired ocs2 switched-model state vector
@@ -112,12 +125,25 @@ class CentroidalModelRbdConversions final {
                                                  const vector_t& desiredJointAccelerations, const vector_t& measuredRbdState,
                                                  const vector_t& pGains, const vector_t& dGains);
 
+  /**
+   * Load settings from a configuration file
+   *
+   * @param [in] fileName: File name which contains the configuration data
+   * @param [in] fieldName: Field name which contains the configuration data
+   * @param [in] verbose: Flag to determine whether to print out the loaded settings or not
+   */
+  void loadSettings(const std::string& fileName, const std::string& fieldName, bool verbose = true);
+
  private:
   CentroidalModelRbdConversions(const CentroidalModelRbdConversions& other) = default;
   CentroidalModelRbdConversions& operator=(const CentroidalModelRbdConversions& rhs) = default;
 
   PinocchioInterface* pinocchioInterfacePtr_;
   CentroidalModelPinocchioMapping mapping_;
+
+  // settings
+  vector_t pGains_;
+  vector_t dGains_;
 };
 
 }  // namespace ocs2

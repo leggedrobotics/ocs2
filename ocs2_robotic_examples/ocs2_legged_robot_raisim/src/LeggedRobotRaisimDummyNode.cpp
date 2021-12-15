@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
   // raisim rollout
   LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo());
   RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
-  conversions.setGains(raisimRolloutSettings.pGains_, raisimRolloutSettings.dGains_);
+  conversions.loadSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout", true);
   RaisimRollout raisimRollout(
       ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/urdf/anymal.urdf",
       ros::package::getPath("ocs2_robotic_assets") + "/resources/anymal_c/meshes",
@@ -76,7 +76,10 @@ int main(int argc, char** argv) {
       [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
         return conversions.inputToRaisimGeneralizedForce(time, input, state, q, dq);
       },
-      nullptr, raisimRolloutSettings, nullptr);
+      nullptr, raisimRolloutSettings,
+      [&](double time, const vector_t& input, const vector_t& state, const Eigen::VectorXd& q, const Eigen::VectorXd& dq) {
+        return conversions.inputToRaisimPdTargets(time, input, state, q, dq);
+      });
 
   // terrain
   raisim::HeightMap* terrainPtr = nullptr;

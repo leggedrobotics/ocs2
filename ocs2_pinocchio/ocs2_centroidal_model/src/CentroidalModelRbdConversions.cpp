@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/centroidal.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
 
+#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 
 #include "ocs2_centroidal_model/AccessHelperFunctions.h"
@@ -47,6 +48,8 @@ namespace ocs2 {
 CentroidalModelRbdConversions::CentroidalModelRbdConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info)
     : pinocchioInterfacePtr_(&pinocchioInterface), mapping_(std::move(info)) {
   mapping_.setPinocchioInterface(pinocchioInterface);
+  pGains_ = vector_t::Zero(mapping_.getCentroidalModelInfo().generalizedCoordinatesNum);
+  dGains_ = vector_t::Zero(mapping_.getCentroidalModelInfo().generalizedCoordinatesNum);
 }
 
 /******************************************************************************************************/
@@ -155,6 +158,15 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModel(cons
 /******************************************************************************************************/
 vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
                                                                               const vector_t& desiredJointAccelerations,
+                                                                              const vector_t& measuredRbdState) {
+  return computeRbdTorqueFromCentroidalModelPD(desiredState, desiredInput, desiredJointAccelerations, measuredRbdState, pGains_, dGains_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(const vector_t& desiredState, const vector_t& desiredInput,
+                                                                              const vector_t& desiredJointAccelerations,
                                                                               const vector_t& measuredRbdState, const vector_t& pGains,
                                                                               const vector_t& dGains) {
   // handles
@@ -209,6 +221,30 @@ vector_t CentroidalModelRbdConversions::computeRbdTorqueFromCentroidalModelPD(co
   // feedforward plus PD on acceleration level
   const vector_t aAugmented = aDesired + pdFeedback;
   return pinocchio::rnea(model, data, qDesired, vDesired, aAugmented, fextDesired);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void CentroidalModelRbdConversions::loadSettings(const std::string& fileName, const std::string& fieldName, bool verbose) {
+  if (verbose) {
+    std::cerr << "\n#### CentroidalModelRbdConversionsSettings:\n";
+    std::cerr << "#### =============================================================================" << std::endl;
+  }
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(fileName, pt);
+  const std::string centroidalModelRbdConversionsFieldName = fieldName + ".centroidal_model_rbd_conversions";
+
+  std::vector<scalar_t> pGainsVec, dGainsVec;
+  loadData::loadStdVector(fileName, centroidalModelRbdConversionsFieldName + ".pGains", pGainsVec, verbose);
+  if (!pGainsVec.empty()) {
+    pGains_ = Eigen::Map<vector_t>(pGainsVec.data(), pGainsVec.size());
+  }
+  loadData::loadStdVector(fileName, centroidalModelRbdConversionsFieldName + ".dGains", dGainsVec, verbose);
+  if (!dGainsVec.empty()) {
+    dGains_ = Eigen::Map<vector_t>(dGainsVec.data(), dGainsVec.size());
+  }
 }
 
 }  // namespace ocs2

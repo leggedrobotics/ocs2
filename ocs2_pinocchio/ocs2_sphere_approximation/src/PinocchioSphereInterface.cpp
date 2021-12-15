@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/fcl.hpp>
 #include <pinocchio/multibody/geometry.hpp>
-#include <pinocchio/multibody/model.hpp>
+//#include <pinocchio/multibody/model.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
 #include <urdf_parser/urdf_parser.h>
@@ -75,6 +75,29 @@ PinocchioSphereInterface::PinocchioSphereInterface(const PinocchioInterface& pin
     }
   }
 }
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioSphereInterface::~PinocchioSphereInterface() = default;
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioSphereInterface::PinocchioSphereInterface(const PinocchioSphereInterface& rhs)
+    : geometryModelPtr_(new pinocchio::GeometryModel(*rhs.geometryModelPtr_)),
+      collisionLinks_(rhs.collisionLinks_),
+      sphereApproximations_(rhs.sphereApproximations_),
+      numPrimitiveShapes_(rhs.numPrimitiveShapes_),
+      numSpheresInTotal_(rhs.numSpheresInTotal_),
+      numSpheres_(rhs.numSpheres_),
+      geomObjIds_(rhs.geomObjIds_),
+      sphereRadii_(rhs.sphereRadii_) {}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+PinocchioSphereInterface::PinocchioSphereInterface(PinocchioSphereInterface&& rhs) = default;
 
 /******************************************************************************************************/
 /******************************************************************************************************/

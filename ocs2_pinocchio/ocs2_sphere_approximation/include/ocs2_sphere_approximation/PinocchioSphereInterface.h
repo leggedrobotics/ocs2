@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <pinocchio/multibody/model.hpp>
+
 #include <utility>
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
@@ -38,9 +40,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <hpp/fcl/collision_data.h>
 
 /* Forward declaration of pinocchio geometry types */
-namespace pinocchio {
-struct GeometryModel;
-}  // namespace pinocchio
+// namespace pinocchio {
+// struct GeometryModel;
+//}  // namespace pinocchio
 
 namespace ocs2 {
 
@@ -65,6 +67,10 @@ class PinocchioSphereInterface final {
    */
   PinocchioSphereInterface(const PinocchioInterface& pinocchioInterface, std::vector<std::string> collisionLinks,
                            const std::vector<scalar_t>& maxExcesses, scalar_t shrinkRatio);
+  ~PinocchioSphereInterface();
+
+  PinocchioSphereInterface(const PinocchioSphereInterface& rhs);
+  PinocchioSphereInterface(PinocchioSphereInterface&& rhs);
 
   /** Compute the sphere center positions in world frame
    *
@@ -112,7 +118,7 @@ class PinocchioSphereInterface final {
   // Construction helpers
   void buildGeomFromPinocchioInterface(const PinocchioInterface& pinocchioInterface, pinocchio::GeometryModel& geomModel);
 
-  std::shared_ptr<pinocchio::GeometryModel> geometryModelPtr_;
+  std::unique_ptr<pinocchio::GeometryModel> geometryModelPtr_;
 
   // Sphere approximation for environment collision
   const std::vector<std::string> collisionLinks_;

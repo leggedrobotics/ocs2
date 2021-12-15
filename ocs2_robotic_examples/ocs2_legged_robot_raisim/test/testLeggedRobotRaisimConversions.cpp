@@ -60,8 +60,7 @@ TEST(LeggedRobotRaisim, Conversions) {
 
     ocs2::vector_t stateOut = conversions.raisimGenCoordGenVelToState(q, dq);
 
-    bool test = stateIn.isApprox(stateOut);
-    EXPECT_TRUE(test);
+    EXPECT_TRUE(stateIn.isApprox(stateOut));
   }
   // consistency test raisim -> ocs2 -> raisim
   for (size_t i = 0; i < 100; i++) {
@@ -84,9 +83,7 @@ TEST(LeggedRobotRaisim, Conversions) {
       qOut.segment<4>(3) *= -1.0;
     }
 
-    bool test = qIn.isApprox(qOut);
-    EXPECT_TRUE(test);
-    test = dqIn.isApprox(dqOut);
-    EXPECT_TRUE(test);
+    EXPECT_TRUE(qIn.isApprox(qOut));
+    EXPECT_TRUE(dqIn.isApprox(dqOut));
   }
 }

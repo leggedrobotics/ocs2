@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/model.hpp>
 
+#include "ocs2_centroidal_model/CentroidalModelRbdConversions.h"
 #include "ocs2_centroidal_model/FactoryFunctions.h"
 #include "ocs2_centroidal_model/ModelHelperFunctions.h"
 #include "ocs2_centroidal_model/PinocchioCentroidalDynamics.h"
@@ -90,13 +91,12 @@ TEST_P(TestAnymalCentroidalModel, dynamis_flowMap) {
   const auto& info = mappingPtr->getCentroidalModelInfo();
 
   // Analytical model
-  std::unique_ptr<PinocchioCentroidalDynamics> anymalDynamicsPtr(new PinocchioCentroidalDynamics(createInfo(type)));
-  anymalDynamicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
+  PinocchioCentroidalDynamics anymalDynamics(createInfo(type));
+  anymalDynamics.setPinocchioInterface(*pinocchioInterfacePtr);
 
   // CppAD model
   const std::string modelName = "TestAnymal" + toString(type) + "Ad";
-  std::unique_ptr<PinocchioCentroidalDynamicsAD> anymalDynamicsAdPtr(
-      new PinocchioCentroidalDynamicsAD(*pinocchioInterfacePtr, createInfo(type), modelName));
+  PinocchioCentroidalDynamicsAD anymalDynamicsAd(*pinocchioInterfacePtr, createInfo(type), modelName);
 
   for (size_t i = 0; i < numTests; i++) {
     const scalar_t time = 0.0;
@@ -106,20 +106,44 @@ TEST_P(TestAnymalCentroidalModel, dynamis_flowMap) {
     const vector_t qPinocchio = mappingPtr->getPinocchioJointPosition(state);
     updateCentroidalDynamics(*pinocchioInterfacePtr, info, qPinocchio);
 
-    const auto stateDerivative = anymalDynamicsPtr->getValue(time, state, input);
-    const auto stateDerivativeAd = anymalDynamicsAdPtr->getValue(time, state, input);
+    const auto stateDerivative = anymalDynamics.getValue(time, state, input);
+    const auto stateDerivativeAd = anymalDynamicsAd.getValue(time, state, input);
 
     const vector_t vPinocchio = mappingPtr->getPinocchioJointVelocity(state, input);
     updateCentroidalDynamicsDerivatives(*pinocchioInterfacePtr, info, qPinocchio, vPinocchio);
 
-    const auto linearApproximation = anymalDynamicsPtr->getLinearApproximation(time, state, input);
-    const auto linearApproximationAd = anymalDynamicsAdPtr->getLinearApproximation(time, state, input);
+    const auto linearApproximation = anymalDynamics.getLinearApproximation(time, state, input);
+    const auto linearApproximationAd = anymalDynamicsAd.getLinearApproximation(time, state, input);
 
     EXPECT_TRUE(stateDerivative.isApprox(stateDerivativeAd, tol));
     EXPECT_TRUE(stateDerivative.isApprox(linearApproximation.f, tol));
     EXPECT_TRUE(linearApproximationAd.f.isApprox(linearApproximation.f, tol));
     EXPECT_TRUE(linearApproximationAd.dfdx.isApprox(linearApproximation.dfdx, tol));
     EXPECT_TRUE(linearApproximationAd.dfdu.isApprox(linearApproximation.dfdu, tol));
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+TEST_P(TestAnymalCentroidalModel, rbd_conversion) {
+  // FIXME (farbod): It currently only checks for FCD
+  //  const CentroidalModelType type = GetParam();
+  const CentroidalModelType type = CentroidalModelType::FullCentroidalDynamics;
+  const auto info = createInfo(type);
+
+  // Analytical model
+  CentroidalModelRbdConversions rbdConversions(*pinocchioInterfacePtr, info);
+
+  // ocs2 --> rbd --> ocs2
+  for (size_t i = 0; i < numTests; i++) {
+    const vector_t state = 10.0 * vector_t::Random(anymal::STATE_DIM);
+    const vector_t input = 10000.0 * vector_t::Random(anymal::INPUT_DIM);
+
+    const vector_t rbdState = rbdConversions.computeRbdStateFromCentroidalModel(state, input);
+    const vector_t reconstructedState = rbdConversions.computeCentroidalStateFromRbdModel(rbdState);
+
+    EXPECT_TRUE(state.isApprox(reconstructedState, tol));
   }
 }
 

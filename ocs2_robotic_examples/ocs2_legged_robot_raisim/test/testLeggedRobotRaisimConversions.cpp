@@ -47,7 +47,8 @@ TEST(LeggedRobotRaisim, Conversions) {
   ocs2::legged_robot::LeggedRobotInterface interface(taskFileFolderName, targetCommandFile, urdf::parseURDFFile(urdfFile));
   // raisim conversions
   ocs2::RaisimRolloutSettings raisimRolloutSettings(ros::package::getPath("ocs2_legged_robot_raisim") + "/config/raisim.info", "rollout");
-  ocs2::legged_robot::LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(), false);
+  ocs2::legged_robot::LeggedRobotRaisimConversions conversions(interface.getPinocchioInterface(), interface.getCentroidalModelInfo(),
+                                                               interface.getInitialState());
   // consistency test ocs2 -> raisim -> ocs2
   for (size_t i = 0; i < 100; i++) {
     ocs2::vector_t stateIn(24);

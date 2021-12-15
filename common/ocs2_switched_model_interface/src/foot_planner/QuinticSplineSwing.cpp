@@ -30,6 +30,12 @@ scalar_t QuinticSpline::acceleration(scalar_t time) const {
   return (c_[0] * 20.0 * tau3 + c_[1] * 12.0 * tau2 + c_[2] * 6.0 * tau1 + c_[3] * 2.0) / (dt_ * dt_);
 }
 
+scalar_t QuinticSpline::jerk(scalar_t time) const {
+  const scalar_t tau1 = normalizedTime(time);
+  const scalar_t tau2 = tau1 * tau1;
+  return (c_[0] * 60.0 * tau2 + c_[1] * 24.0 * tau1 + c_[2] * 6.0) / (dt_ * dt_ * dt_);
+}
+
 scalar_t QuinticSpline::normalizedTime(scalar_t t) const {
   return (t - t0_) / dt_;
 }
@@ -88,6 +94,10 @@ scalar_t QuinticSwing::velocity(scalar_t time) const {
 
 scalar_t QuinticSwing::acceleration(scalar_t time) const {
   return (time < midTime_) ? leftSpline_.acceleration(time) : rightSpline_.acceleration(time);
+}
+
+scalar_t QuinticSwing::jerk(scalar_t time) const {
+  return (time < midTime_) ? leftSpline_.jerk(time) : rightSpline_.jerk(time);
 }
 
 }  // namespace switched_model

@@ -26,4 +26,8 @@ vector3_t SwingSpline3d::acceleration(scalar_t time) const {
   return {x_.acceleration(time), y_.acceleration(time), z_.acceleration(time)};
 }
 
+vector3_t SwingSpline3d::jerk(scalar_t time) const {
+  return {x_.jerk(time), y_.jerk(time), z_.jerk(time)};
+}
+
 }  // namespace switched_model

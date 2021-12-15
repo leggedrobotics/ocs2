@@ -38,12 +38,21 @@ TEST(TestQuinticSwing, interpolating) {
   QuinticSwing quinticSwing(start, mid, end);
 
   double tol = 1e-9;
+  double eps = std::numeric_limits<double>::epsilon();
   EXPECT_LT(std::abs(quinticSwing.position(start.time) - start.position), tol);
   EXPECT_LT(std::abs(quinticSwing.velocity(start.time) - start.velocity), tol);
   EXPECT_LT(std::abs(quinticSwing.position(mid.time) - mid.position), tol);
   EXPECT_LT(std::abs(quinticSwing.velocity(mid.time) - mid.velocity), tol);
   EXPECT_LT(std::abs(quinticSwing.position(end.time) - end.position), tol);
   EXPECT_LT(std::abs(quinticSwing.velocity(end.time) - end.velocity), tol);
+
+  // Start-end acceleration
+  EXPECT_DOUBLE_EQ(quinticSwing.acceleration(start.time), 0.0);
+  EXPECT_DOUBLE_EQ(quinticSwing.acceleration(end.time), 0.0);
+
+  // Continuity
+  EXPECT_LT(std::abs(quinticSwing.acceleration(mid.time + eps) - quinticSwing.acceleration(mid.time - eps)), tol);
+  EXPECT_LT(std::abs(quinticSwing.jerk(mid.time + eps) - quinticSwing.jerk(mid.time - eps)), tol);
 }
 
 TEST(TestQuinticSwing3d, interpolating) {
@@ -53,10 +62,19 @@ TEST(TestQuinticSwing3d, interpolating) {
   SwingSpline3d swingNode3D(start, mid, end);
 
   double tol = 1e-9;
+  double eps = std::numeric_limits<double>::epsilon();
   EXPECT_LT((swingNode3D.position(start.time) - start.position).norm(), tol);
   EXPECT_LT((swingNode3D.velocity(start.time) - start.velocity).norm(), tol);
   EXPECT_LT((swingNode3D.position(mid.time) - mid.position).norm(), tol);
   EXPECT_LT((swingNode3D.velocity(mid.time) - mid.velocity).norm(), tol);
   EXPECT_LT((swingNode3D.position(end.time) - end.position).norm(), tol);
   EXPECT_LT((swingNode3D.velocity(end.time) - end.velocity).norm(), tol);
+
+  // Start-end acceleration
+  EXPECT_DOUBLE_EQ(swingNode3D.acceleration(start.time).norm(), 0.0);
+  EXPECT_DOUBLE_EQ(swingNode3D.acceleration(end.time).norm(), 0.0);
+
+  // Continuity
+  EXPECT_LT((swingNode3D.acceleration(mid.time + eps) - swingNode3D.acceleration(mid.time - eps)).norm(), tol);
+  EXPECT_LT((swingNode3D.jerk(mid.time + eps) - swingNode3D.jerk(mid.time - eps)).norm(), tol);
 }

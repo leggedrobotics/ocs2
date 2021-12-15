@@ -44,6 +44,9 @@ class QuinticSpline {
   /** returns d2y/dt2(t) */
   scalar_t acceleration(scalar_t time) const;
 
+  /** returns d3y/dt3(t) */
+  scalar_t jerk(scalar_t time) const;
+
  private:
   scalar_t normalizedTime(scalar_t t) const;
 
@@ -104,6 +107,9 @@ class QuinticSwing {
 
   /** returns d2z/dt2(t) */
   scalar_t acceleration(scalar_t time) const;
+
+  /** returns d3z/dt3(t) */
+  scalar_t jerk(scalar_t time) const;
 
  private:
   scalar_t midTime_;

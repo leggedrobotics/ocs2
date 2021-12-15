@@ -39,6 +39,9 @@ class SwingSpline3d {
   /** returns d2p/dt2(t) */
   vector3_t acceleration(scalar_t time) const;
 
+  /** returns d3p/dt3(t) */
+  vector3_t jerk(scalar_t time) const;
+
  private:
   QuinticSwing x_;
   QuinticSwing y_;

@@ -207,13 +207,6 @@ scalar_t GaussNewtonDDP::getFinalTime() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const scalar_array_t& GaussNewtonDDP::getPartitioningTimes() const {
-  return scalar_array_t{initTime_, finalTime_};
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 const PerformanceIndex& GaussNewtonDDP::getPerformanceIndeces() const {
   return performanceIndex_;
 }
@@ -234,7 +227,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 
   auto getRequestedDataLength = [](const scalar_array_t& timeTrajectory, scalar_t time) {
     int index = std::distance(timeTrajectory.cbegin(), std::upper_bound(timeTrajectory.cbegin(), timeTrajectory.cend(), time));
-    // PR#519 fix solution time window to include 1 point beyond requested time
+    // fix solution time window to include 1 point beyond requested time
     index += index != timeTrajectory.size() ? 1 : 0;
     return index;
   };
@@ -277,7 +270,7 @@ void GaussNewtonDDP::getPrimalSolution(scalar_t finalTime, PrimalSolution* prima
 /******************************************************************************************************/
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionImpl(
-    const scalar_t& time, const vector_t& state, const PrimalDataContainer& primalData,
+    const scalar_t time, const vector_t& state, const PrimalDataContainer& primalData,
     const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const {
   // result
   ScalarFunctionQuadraticApproximation valueFunction;
@@ -300,20 +293,6 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionImpl(
   valueFunction.dfdx += SmDeltaX;  // Adapt dfdx after f!
 
   return valueFunction;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionFromCache(scalar_t time, const vector_t& state) const {
-  return getValueFunctionImpl(time, state, cachedPrimalData_, cachedDualData_.valueFunctionTrajectory);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunction(scalar_t time, const vector_t& state) const {
-  return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
 }
 
 /******************************************************************************************************/
@@ -404,13 +383,6 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const {
-  return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void GaussNewtonDDP::retrieveActiveNormalizedTime(const std::pair<int, int>& partitionInterval, const scalar_array_t& timeTrajectory,
                                                   const size_array_t& postEventIndices, scalar_array_t& normalizedTimeTrajectory,
                                                   size_array_t& normalizedPostEventIndices) {
@@ -448,8 +420,7 @@ void GaussNewtonDDP::adjustController(const scalar_array_t& newEventTimes, const
 /******************************************************************************************************/
 std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeTrajectory(const scalar_array_t& timeTrajectory,
                                                                                          int numWorkers) {
-  scalar_array_t desiredPartitionPoints;
-  desiredPartitionPoints.resize(numWorkers + 1);
+  scalar_array_t desiredPartitionPoints(numWorkers + 1);
   desiredPartitionPoints.front() = timeTrajectory.front();
 
   const scalar_t increment = (timeTrajectory.back() - timeTrajectory.front()) / static_cast<scalar_t>(numWorkers);
@@ -459,8 +430,9 @@ std::vector<std::pair<int, int>> GaussNewtonDDP::getPartitionIntervalsFromTimeTr
   desiredPartitionPoints.back() = timeTrajectory.back();
 
   std::vector<std::pair<int, int>> partitionIntervals;
-  int startPos = 0;
-  int endPos;
+  partitionIntervals.reserve(desiredPartitionPoints.size());
+
+  int endPos, startPos = 0;
   for (size_t i = 1u; i < desiredPartitionPoints.size(); i++) {
     const scalar_t& time = desiredPartitionPoints[i];
     endPos = std::distance(timeTrajectory.begin(), std::lower_bound(timeTrajectory.begin(), timeTrajectory.end(), time));
@@ -516,8 +488,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
   const std::pair<scalar_t, scalar_t> operatingPointsFromTo{controllerRolloutFromTo.second, tf};
 
   if (ddpSettings_.debugPrintRollout_) {
-    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory]"
-              << " for t = [" << t0 << ", " << tf << "]\n";
+    std::cerr << "[GaussNewtonDDP::rolloutInitialTrajectory] for t = [" << t0 << ", " << tf << "]\n";
     if (controllerRolloutFromTo.first < controllerRolloutFromTo.second) {
       std::cerr << "\twill use controller for t = [" << controllerRolloutFromTo.first << ", " << controllerRolloutFromTo.second << "]\n";
     }
@@ -596,7 +567,7 @@ scalar_t GaussNewtonDDP::rolloutInitialTrajectory(PrimalDataContainer& primalDat
     RolloutBase::display(timeTrajectory, postEventIndices, stateTrajectory, &inputTrajectory);
   }
   // average time step
-  return (controllerAvailableTill - initTime_) / static_cast<double>(timeTrajectory.size());
+  return (controllerAvailableTill - initTime_) / static_cast<scalar_t>(timeTrajectory.size());
 }
 
 /******************************************************************************************************/
@@ -639,6 +610,12 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
   dualData_.valueFunctionTrajectory.clear();
   dualData_.valueFunctionTrajectory.resize(outputN);
 
+  // the last index of the partition is excluded, namely [first, last), so the value function approximation of the end point of the end
+  // partition is filled manually.
+  // For other partitions except the last one, the end points are filled in the solving stage of the next partition. For example,
+  // [first1,last1), [first2(last1), last2).
+  dualData_.valueFunctionTrajectory.back() = finalValueFunction;
+
   // solve it sequentially for the first iteration
   if (totalNumIterations_ == 0) {
     const std::pair<int, int> partitionInterval{0, outputN - 1};
@@ -650,9 +627,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
 
     // hold the final value function of each partition
     std::vector<ScalarFunctionQuadraticApproximation> finalValueFunctionOfEachPartition(partitionIntervals.size());
-
     finalValueFunctionOfEachPartition.back() = finalValueFunction;
-
     for (size_t i = 0; i < partitionIntervals.size() - 1; i++) {
       const int startIndexOfNextPartition = partitionIntervals[i + 1].first;
       const vector_t& xFinalUpdated = nominalPrimalData_.primalSolution.stateTrajectory_[startIndexOfNextPartition];
@@ -661,23 +636,19 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
     }  // end of loop
 
     nextTaskId_ = 0;
-    std::function<void(void)> task = [&] {
+    auto task = [this, &partitionIntervals, &finalValueFunctionOfEachPartition]() {
       const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
-      const auto& partitionInterval = partitionIntervals[taskId];
-      riccatiEquationsWorker(taskId, partitionInterval, finalValueFunctionOfEachPartition[taskId]);
+      riccatiEquationsWorker(taskId, partitionIntervals[taskId], finalValueFunctionOfEachPartition[taskId]);
     };
     runParallel(task, partitionIntervals.size());
   }
-
-  // the last index of the partition is excluded, so the final value function is filled manually
-  dualData_.valueFunctionTrajectory.back() = finalValueFunction;
 
   // testing the numerical stability of the Riccati equations
   if (ddpSettings_.checkNumericalStability_) {
     int N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
     for (int k = N - 1; k >= 0; k--) {
       try {
-        const ScalarFunctionQuadraticApproximation& valueFunction = dualData_.valueFunctionTrajectory[k];
+        const auto& valueFunction = dualData_.valueFunctionTrajectory[k];
         if (!valueFunction.dfdxx.allFinite()) {
           throw std::runtime_error("Sm is unstable.");
         }
@@ -710,7 +681,7 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
   }
 
   // average time step
-  return (finalTime_ - initTime_) / outputN;
+  return (finalTime_ - initTime_) / static_cast<scalar_t>(outputN);
 }
 
 /******************************************************************************************************/
@@ -725,7 +696,6 @@ void GaussNewtonDDP::calculateController() {
   unoptimizedController_.biasArray_.resize(N);
   unoptimizedController_.deltaBiasArray_.resize(N);
 
-  // perform the calculateControllerWorker for partition i
   nextTimeIndex_ = 0;
   auto task = [this, N] {
     int timeIndex;
@@ -737,14 +707,32 @@ void GaussNewtonDDP::calculateController() {
   runParallel(task, ddpSettings_.nThreads_);
 
   // if the final time is not an event time change the last control to the second to the last
-  if (nominalPrimalData_.postEventIndices.empty() ||
-      nominalPrimalData_.postEventIndices.back() != nominalPrimalData_.primalSolution.timeTrajectory_.size() - 1) {
-    LinearController& ctrl = unoptimizedController_;
-    if (ctrl.size() > 1) {
-      const size_t secondToLastIndex = ctrl.size() - 2u;
-      ctrl.gainArray_.back() = ctrl.gainArray_[secondToLastIndex];
-      ctrl.biasArray_.back() = ctrl.biasArray_[secondToLastIndex];
-      ctrl.deltaBiasArray_.back() = ctrl.deltaBiasArray_[secondToLastIndex];
+  const bool finalTimeIsNotAnEvent =
+      nominalPrimalData_.postEventIndices.empty() ||
+      (nominalPrimalData_.postEventIndices.back() != nominalPrimalData_.primalSolution.timeTrajectory_.size() - 1);
+  // finalTimeIsNotAnEvent && there are at least two time stamps
+  if (finalTimeIsNotAnEvent && unoptimizedController_.size() >= 2) {
+    const size_t secondToLastIndex = unoptimizedController_.size() - 2u;
+    unoptimizedController_.gainArray_.back() = unoptimizedController_.gainArray_[secondToLastIndex];
+    unoptimizedController_.biasArray_.back() = unoptimizedController_.biasArray_[secondToLastIndex];
+    unoptimizedController_.deltaBiasArray_.back() = unoptimizedController_.deltaBiasArray_[secondToLastIndex];
+  }
+
+  // checking the numerical stability of the controller parameters
+  if (settings().checkNumericalStability_) {
+    for (int timeIndex = 0; timeIndex < unoptimizedController_.size(); timeIndex++) {
+      std::stringstream errorDescription;
+      if (!unoptimizedController_.gainArray_[timeIndex].allFinite()) {
+        errorDescription << "Feedback gains are unstable!\n";
+      }
+      if (!unoptimizedController_.deltaBiasArray_[timeIndex].allFinite()) {
+        errorDescription << "Feedforward control is unstable!\n";
+      }
+      if (errorDescription.tellp() != 0) {
+        std::stringstream errorMessage;
+        errorMessage << "At time " << unoptimizedController_.timeStamp_[timeIndex] << " [sec].\n" << errorDescription.str();
+        throw std::runtime_error(errorMessage.str());
+      }
     }
   }
 }
@@ -752,20 +740,19 @@ void GaussNewtonDDP::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const {
+void GaussNewtonDDP::calculateControllerUpdateMaxNorm(const LinearController& controller, const PrimalDataContainer& primalData,
+                                                      scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const {
   maxDeltaUffNorm = 0.0;
   maxDeltaUeeNorm = 0.0;
 
-  const LinearController& linearController = unoptimizedController_;
+  for (size_t k = 0; k < controller.timeStamp_.size(); k++) {
+    maxDeltaUffNorm = std::max(maxDeltaUffNorm, controller.deltaBiasArray_[k].norm());
 
-  for (size_t k = 0; k < linearController.timeStamp_.size(); k++) {
-    maxDeltaUffNorm = std::max(maxDeltaUffNorm, linearController.deltaBiasArray_[k].norm());
-
-    const auto time = linearController.timeStamp_[k];
-    const auto indexAlpha = LinearInterpolation::timeSegment(time, nominalPrimalData_.primalSolution.timeTrajectory_);
-    const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, nominalPrimalData_.primalSolution.stateTrajectory_);
-    const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, nominalPrimalData_.primalSolution.inputTrajectory_);
-    const vector_t deltaUee = nominalInput - linearController.gainArray_[k] * nominalState - linearController.biasArray_[k];
+    const auto time = controller.timeStamp_[k];
+    const auto indexAlpha = LinearInterpolation::timeSegment(time, primalData.primalSolution.timeTrajectory_);
+    const vector_t nominalState = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.stateTrajectory_);
+    const vector_t nominalInput = LinearInterpolation::interpolate(indexAlpha, primalData.primalSolution.inputTrajectory_);
+    const vector_t deltaUee = nominalInput - controller.gainArray_[k] * nominalState - controller.biasArray_[k];
     maxDeltaUeeNorm = std::max(maxDeltaUeeNorm, deltaUee.norm());
   }  // end of k loop
 }
@@ -775,19 +762,17 @@ void GaussNewtonDDP::calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm,
 /******************************************************************************************************/
 void GaussNewtonDDP::approximateOptimalControlProblem() {
   /*
-   * compute and augment the LQ approximation of intermediate times for the partition i
+   * compute and augment the LQ approximation of intermediate times
    */
-  // perform the LQ approximation for intermediate times at partition i
-  approximateIntermediateLQ(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.postEventIndices,
-                            nominalPrimalData_.primalSolution.stateTrajectory_, nominalPrimalData_.primalSolution.inputTrajectory_,
-                            nominalPrimalData_.modelDataTrajectory);
+  // perform the LQ approximation for intermediate times
+  approximateIntermediateLQ(nominalPrimalData_);
 
-  // augment the intermediate cost by performing augmentCostWorker for the partition i
+  // augment the intermediate cost by performing augmentCostWorker
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
 
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
-  std::function<void(void)> task = [this, N] {
+  auto task = [this, N]() {
     size_t timeIndex;
     size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
@@ -801,14 +786,14 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
   runParallel(task, ddpSettings_.nThreads_);
 
   /*
-   * compute and augment the LQ approximation of the event times for the partition.
+   * compute and augment the LQ approximation of the event times.
    * also call shiftHessian on the event time's cost 2nd order derivative.
    */
   const size_t NE = nominalPrimalData_.postEventIndices.size();
   if (NE > 0) {
     nextTimeIndex_ = 0;
     nextTaskId_ = 0;
-    std::function<void(void)> task = [this, NE] {
+    auto task = [this, NE]() {
       int timeIndex;
       const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
@@ -1274,10 +1259,6 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
   }
 
-  if (partitioningTimes.empty()) {
-    throw std::runtime_error("There should be at least one time partition.");
-  }
-
   if (!initState.allFinite()) {
     throw std::runtime_error("DDP: Initial state is not finite (time: " + std::to_string(initTime) + " [sec]).");
   }
@@ -1347,7 +1328,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "\n###################\n";
 
       scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-      calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
+      calculateControllerUpdateMaxNorm(unoptimizedController_, nominalPrimalData_, maxDeltaUffNorm, maxDeltaUeeNorm);
       std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
     }
 
@@ -1379,7 +1360,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << "\n###################\n";
 
     scalar_t maxDeltaUffNorm, maxDeltaUeeNorm;
-    calculateControllerUpdateMaxNorm(maxDeltaUffNorm, maxDeltaUeeNorm);
+    calculateControllerUpdateMaxNorm(unoptimizedController_, nominalPrimalData_, maxDeltaUffNorm, maxDeltaUeeNorm);
     std::cerr << "max feedforward norm: " << maxDeltaUffNorm << "\n";
   }
 

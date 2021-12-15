@@ -63,9 +63,7 @@ class SLQ final : public GaussNewtonDDP {
  protected:
   matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 
-  void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                 const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                 std::vector<ModelData>& modelDataTrajectory) override;
+  void approximateIntermediateLQ(PrimalDataContainer& primalData) override;
 
   void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                  LinearController& dstController) override;

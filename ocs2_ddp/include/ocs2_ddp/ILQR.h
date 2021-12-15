@@ -64,16 +64,12 @@ class ILQR : public GaussNewtonDDP {
   void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
                               const ScalarFunctionQuadraticApproximation& finalValueFunction) override;
 
-  void calculateController() override;
-
   void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                  LinearController& dstController) override;
 
   matrix_t computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const override;
 
-  void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                 const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                 std::vector<ModelData>& modelDataTrajectory) override;
+  void approximateIntermediateLQ(PrimalDataContainer& primalData) override;
 
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.

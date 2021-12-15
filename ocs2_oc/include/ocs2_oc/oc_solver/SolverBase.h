@@ -150,13 +150,6 @@ class SolverBase {
   virtual scalar_t getFinalTime() const = 0;
 
   /**
-   * Returns the partitioning times
-   *
-   * @return partitioning times
-   */
-  virtual const scalar_array_t& getPartitioningTimes() const = 0;
-
-  /**
    * @brief Returns the optimized policy data.
    *
    * @param [in] finalTime: The final time.

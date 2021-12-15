@@ -93,19 +93,21 @@ class GaussNewtonDDP : public SolverBase {
 
   scalar_t getFinalTime() const override;
 
-  const scalar_array_t& getPartitioningTimes() const override;
-
   const PerformanceIndex& getPerformanceIndeces() const override;
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
-  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override;
+  ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
+    return getValueFunctionImpl(time, state, optimizedPrimalData_, dualData_.valueFunctionTrajectory);
+  }
 
   ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) const override;
 
-  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override;
+  vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
+    return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, dualData_);
+  }
 
   void rewindOptimizer(size_t firstIndex) override{};
 
@@ -200,15 +202,9 @@ class GaussNewtonDDP : public SolverBase {
   /**
    * Calculates an LQ approximate of the optimal control problem for the nodes.
    *
-   * @param [in] timeTrajectory: The time trajectory.
-   * @param [in] postEventIndices: The post event indices.
-   * @param [in] stateTrajectory: The state trajectory.
-   * @param [in] inputTrajectory: The input trajectory.
-   * @param modelDataTrajectory: The model data trajectory.
+   * @param [in,out] primalData: The primal Data
    */
-  virtual void approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                         const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                         std::vector<ModelData>& modelDataTrajectory) = 0;
+  virtual void approximateIntermediateLQ(PrimalDataContainer& primalData) = 0;
 
   /**
    * Calculates the controller. This method uses the following variables:
@@ -220,7 +216,7 @@ class GaussNewtonDDP : public SolverBase {
    * around the new nominal trajectory and improves the constraints as well as
    * the increment to the feed-forward control input.
    */
-  virtual void calculateController();
+  void calculateController();
 
   /**
    * Calculate controller for the timeIndex by using primal and dual and write the result back to dstController
@@ -283,7 +279,7 @@ class GaussNewtonDDP : public SolverBase {
    * @return value function
    */
   ScalarFunctionQuadraticApproximation getValueFunctionImpl(
-      const scalar_t& time, const vector_t& state, const PrimalDataContainer& primalData,
+      const scalar_t time, const vector_t& state, const PrimalDataContainer& primalData,
       const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const;
 
   /**
@@ -293,7 +289,9 @@ class GaussNewtonDDP : public SolverBase {
    * @param [in] state: Current state
    * @return ScalarFunctionQuadraticApproximation
    */
-  ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const;
+  ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const {
+    return getValueFunctionImpl(time, state, cachedPrimalData_, cachedDualData_.valueFunctionTrajectory);
+  }
 
   /**
    * Get the Partition Intervals From Time Trajectory. Intervals are defined as [start, end).
@@ -351,7 +349,17 @@ class GaussNewtonDDP : public SolverBase {
    * @param maxDeltaUffNorm: max feedforward update norm.
    * @param maxDeltaUeeNorm: max type-1 error update norm.
    */
-  void calculateControllerUpdateMaxNorm(scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const;
+
+  /**
+   * Calculates max feedforward update norm and max type-1 error update norm.
+   *
+   * @param [in] controller: Control policy
+   * @param [in] primalData: Primal data using to generate the controller.
+   * @param [out] maxDeltaUffNorm: max feedforward update norm.
+   * @param [out] maxDeltaUeeNorm: max type-1 error update norm.
+   */
+  void calculateControllerUpdateMaxNorm(const LinearController& controller, const PrimalDataContainer& primalData,
+                                        scalar_t& maxDeltaUffNorm, scalar_t& maxDeltaUeeNorm) const;
 
   /**
    * Approximates the nonlinear problem as a linear-quadratic problem around the

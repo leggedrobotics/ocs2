@@ -73,9 +73,14 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                    const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                    std::vector<ModelData>& modelDataTrajectory) {
+void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+  // create alias
+  const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
+  const auto& postEventIndices = primalData.postEventIndices;
+  const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
+  const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  auto& modelDataTrajectory = primalData.modelDataTrajectory;
+
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {
@@ -142,21 +147,6 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
   dstController.biasArray_[timeIndex].noalias() -= dstController.gainArray_[timeIndex] * nominalState;
   dstController.deltaBiasArray_[timeIndex] = -EvProjected;
   dstController.deltaBiasArray_[timeIndex].noalias() += Qu * projectedLv;
-
-  // checking the numerical stability of the controller parameters
-  if (settings().checkNumericalStability_) {
-    try {
-      if (!dstController.gainArray_[timeIndex].allFinite()) {
-        throw std::runtime_error("Feedback gains are unstable.");
-      }
-      if (!dstController.deltaBiasArray_[timeIndex].allFinite()) {
-        throw std::runtime_error("feedForwardControl is unstable.");
-      }
-    } catch (const std::exception& error) {
-      std::cerr << "what(): " << error.what() << " at time " << time << " [sec]." << std::endl;
-      throw;
-    }
-  }
 }
 
 /******************************************************************************************************/
@@ -176,7 +166,7 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
     BASE::nextTaskId_ = 0;
     auto task = [this, N]() {
       int timeIndex;
-      const auto SmDummy = matrix_t::Zero(0, 0);
+      const matrix_t SmDummy = matrix_t::Zero(0, 0);
 
       // get next time index is atomic
       while ((timeIndex = BASE::nextTimeIndex_++) < N) {

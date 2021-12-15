@@ -79,12 +79,6 @@ vector_t ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, cons
 
   return allSs;
 }
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t ContinuousTimeRiccatiEquations::convert2Vector(const ScalarFunctionQuadraticApproximation& valueFunction) {
-  return ContinuousTimeRiccatiEquations::convert2Vector(valueFunction.dfdxx, valueFunction.dfdx, valueFunction.f);
-}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -111,13 +105,6 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const vector_t& allSs, matri
 
   /* extract s as the last element */
   s = allSs.template tail<1>()(0);
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::convert2Matrix(const vector_t& allSs, ScalarFunctionQuadraticApproximation& valueFunction) {
-  ContinuousTimeRiccatiEquations::convert2Matrix(allSs, valueFunction.dfdxx, valueFunction.dfdx, valueFunction.f);
 }
 
 /******************************************************************************************************/

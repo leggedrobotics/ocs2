@@ -140,7 +140,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    * @param [in] valueFunction: value function approximation
    * @return Single vector constructed by concatenating Sm, Sv and s.
    */
-  static vector_t convert2Vector(const ScalarFunctionQuadraticApproximation& valueFunction);
+  static vector_t convert2Vector(const ScalarFunctionQuadraticApproximation& valueFunction) {
+    return ContinuousTimeRiccatiEquations::convert2Vector(valueFunction.dfdxx, valueFunction.dfdx, valueFunction.f);
+  }
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.
@@ -158,7 +160,9 @@ class ContinuousTimeRiccatiEquations final : public OdeBase {
    * @param [in] allSs: Single vector constructed by concatenating Sm, Sv and s.
    * @param [out] valueFunction: value function approximation
    */
-  static void convert2Matrix(const vector_t& allSs, ScalarFunctionQuadraticApproximation& valueFunction);
+  static void convert2Matrix(const vector_t& allSs, ScalarFunctionQuadraticApproximation& valueFunction) {
+    ContinuousTimeRiccatiEquations::convert2Matrix(allSs, valueFunction.dfdxx, valueFunction.dfdx, valueFunction.f);
+  }
 
   /**
    * Sets coefficients of the model.

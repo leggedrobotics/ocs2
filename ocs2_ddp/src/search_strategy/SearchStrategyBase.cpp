@@ -88,7 +88,7 @@ scalar_t SearchStrategyBase::rolloutTrajectory(RolloutBase& rollout, const ModeS
   }
 
   // average time step
-  return (finalTime_ - initTime_) / timeTrajectory.size();
+  return (finalTime_ - initTime_) / static_cast<scalar_t>(timeTrajectory.size());
 }
 
 /******************************************************************************************************/

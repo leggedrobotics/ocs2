@@ -60,9 +60,14 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::approximateIntermediateLQ(const scalar_array_t& timeTrajectory, const size_array_t& postEventIndices,
-                                     const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                     std::vector<ModelData>& modelDataTrajectory) {
+void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+  // create alias
+  const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
+  const auto& postEventIndices = primalData.postEventIndices;
+  const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
+  const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  auto& modelDataTrajectory = primalData.modelDataTrajectory;
+
   BASE::nextTimeIndex_ = 0;
   BASE::nextTaskId_ = 0;
   std::function<void(void)> task = [&] {
@@ -136,13 +141,6 @@ void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelDa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::calculateController() {
-  BASE::calculateController();
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void ILQR::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
                                      LinearController& dstController) {
   const auto& nominalState = primalData.primalSolution.stateTrajectory_[timeIndex];
@@ -159,45 +157,29 @@ void ILQR::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer
 
   // bias input
   dstController.biasArray_[timeIndex] = nominalInput;
-  // std::cerr << timeIndex << std::endl;
   dstController.biasArray_[timeIndex].noalias() -= dstController.gainArray_[timeIndex] * nominalState;
   dstController.deltaBiasArray_[timeIndex] = -EvProjected;
   dstController.deltaBiasArray_[timeIndex].noalias() += Qu * projectedLvTrajectoryStock_[timeIndex];
-
-  // checking the numerical stability of the controller parameters
-  if (settings().checkNumericalStability_) {
-    try {
-      if (!dstController.gainArray_[timeIndex].allFinite()) {
-        throw std::runtime_error("Feedback gains are unstable.");
-      }
-      if (!dstController.deltaBiasArray_[timeIndex].allFinite()) {
-        throw std::runtime_error("feedForwardControl is unstable.");
-      }
-    } catch (const std::exception& error) {
-      std::cerr << "what(): " << error.what() << " at time " << dstController.timeStamp_[timeIndex] << " [sec]." << std::endl;
-      throw;
-    }
-  }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
 scalar_t ILQR::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
-  const size_t N = BASE::nominalPrimalData_.primalSolution.timeTrajectory_.size();
+  const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
   projectedLvTrajectoryStock_.resize(N);
   projectedKmTrajectoryStock_.resize(N);
 
-  BASE::dualData_.riccatiModificationTrajectory.resize(N);
-  BASE::dualData_.projectedModelDataTrajectory.resize(N);
+  dualData_.riccatiModificationTrajectory.resize(N);
+  dualData_.projectedModelDataTrajectory.resize(N);
 
-  const auto& finalModelData = BASE::nominalPrimalData_.modelDataTrajectory[N - 1];
-  auto& finalRiccatiModification = BASE::dualData_.riccatiModificationTrajectory[N - 1];
-  auto& finalProjectedModelData = BASE::dualData_.projectedModelDataTrajectory[N - 1];
-  auto& finalProjectedLvFinal = projectedLvTrajectoryStock_[N - 1];
-  auto& finalProjectedKmFinal = projectedKmTrajectoryStock_[N - 1];
+  const auto& finalModelData = nominalPrimalData_.modelDataTrajectory.back();
+  auto& finalRiccatiModification = dualData_.riccatiModificationTrajectory.back();
+  auto& finalProjectedModelData = dualData_.projectedModelDataTrajectory.back();
+  auto& finalProjectedLvFinal = projectedLvTrajectoryStock_.back();
+  auto& finalProjectedKmFinal = projectedKmTrajectoryStock_.back();
 
-  const auto SmDummy = matrix_t::Zero(finalModelData.stateDim_, finalModelData.stateDim_);
+  const matrix_t SmDummy = matrix_t::Zero(finalModelData.stateDim_, finalModelData.stateDim_);
   BASE::computeProjectionAndRiccatiModification(finalModelData, SmDummy, finalProjectedModelData, finalRiccatiModification);
 
   // projected feedforward
@@ -226,7 +208,7 @@ matrix_t ILQR::computeHamiltonianHessian(const ModelData& modelData, const matri
 /******************************************************************************************************/
 void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
                                   const ScalarFunctionQuadraticApproximation& finalValueFunction) {
-  // dind all events belonging to the current partition
+  // find all events belonging to the current partition
   const auto& postEventIndices = BASE::nominalPrimalData_.postEventIndices;
   const auto firstEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.first);
   const auto lastEventItr = std::upper_bound(postEventIndices.begin(), postEventIndices.end(), partitionInterval.second);
@@ -247,7 +229,7 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
     auto& curProjectedKm = projectedKmTrajectoryStock_[curIndex];
     auto& curProjectedModelData = BASE::dualData_.projectedModelDataTrajectory[curIndex];
     auto& curRiccatiModification = BASE::dualData_.riccatiModificationTrajectory[curIndex];
-    auto& curModelData = BASE::nominalPrimalData_.modelDataTrajectory[curIndex];
+    const auto& curModelData = BASE::nominalPrimalData_.modelDataTrajectory[curIndex];
 
     auto& curSm = BASE::dualData_.valueFunctionTrajectory[curIndex].dfdxx;
     auto& curSv = BASE::dualData_.valueFunctionTrajectory[curIndex].dfdx;
@@ -276,7 +258,7 @@ void ILQR::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>&
       auto& finalProjectedLvFinal = projectedLvTrajectoryStock_[curIndex];
       auto& finalProjectedKmFinal = projectedKmTrajectoryStock_[curIndex];
 
-      const auto SmDummy = matrix_t::Zero(finalModelData.stateDim_, finalModelData.stateDim_);
+      const matrix_t SmDummy = matrix_t::Zero(finalModelData.stateDim_, finalModelData.stateDim_);
       BASE::computeProjectionAndRiccatiModification(finalModelData, SmDummy, finalProjectedModelData, finalRiccatiModification);
 
       // projected feedforward

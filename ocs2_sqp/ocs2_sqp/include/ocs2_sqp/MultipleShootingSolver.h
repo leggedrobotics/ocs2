@@ -88,7 +88,7 @@ class MultipleShootingSolver : public SolverBase {
   const unsigned long long int& getRewindCounter() const override {
     throw std::runtime_error("[MultipleShootingSolver] no rewind counter");
   };
-  const scalar_array_t& getPartitioningTimes() const override { return partitionTime_; };
+  const scalar_array_t& getPartitioningTimes() const { return partitionTime_; };
 
  private:
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const scalar_array_t& partitioningTimes) override;

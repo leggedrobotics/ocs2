@@ -113,3 +113,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ############
 # Testing ##
 ############
+catkin_add_gtest(${PACKAGE_NAME}_test
+  test/testPinocchioSphereKinematics.cpp
+)
+
+target_link_libraries(${PACKAGE_NAME}_test
+  gtest_main
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)

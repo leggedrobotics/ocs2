@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /**
- * This is an MPC implementation with DDP (SLQ or ILQR) optimal control solvers.
+ * This is an MPC implementation with GaussNewton DDP (SLQ or ILQR) optimal control solvers.
  */
-class MPC_DDP final : public MPC_BASE {
+class GaussNewtonDDP_MPC final : public MPC_BASE {
  public:
   /**
    * Constructor
@@ -51,8 +51,8 @@ class MPC_DDP final : public MPC_BASE {
    * @param [in] optimalControlProblem: The optimal control problem definition.
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
-  MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
-          const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
+  GaussNewtonDDP_MPC(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
+                     const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
       : MPC_BASE(std::move(mpcSettings)) {
     switch (ddpSettings.algorithm_) {
       case ddp::Algorithm::SLQ:
@@ -67,7 +67,7 @@ class MPC_DDP final : public MPC_BASE {
   }
 
   /** Default destructor. */
-  ~MPC_DDP() override = default;
+  ~GaussNewtonDDP_MPC() override = default;
 
   GaussNewtonDDP* getSolverPtr() override { return ddpPtr_.get(); }
   const GaussNewtonDDP* getSolverPtr() const override { return ddpPtr_.get(); }

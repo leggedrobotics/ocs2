@@ -99,6 +99,7 @@ model_settings
     previousFootholdFactor        0.2
     previousFootholdDeadzone      0.025
     previousFootholdTimeDeadzone  0.20
+    swingTrajectoryFromReference  0
   }
 }
 

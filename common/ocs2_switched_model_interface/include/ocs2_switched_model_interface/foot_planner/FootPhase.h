@@ -108,14 +108,27 @@ class SwingPhase final : public FootPhase {
   };
 
   struct SwingProfile {
-    /// Desired swing height in Z direction of the world
-    scalar_t swingHeight = 0.1;
-    /// Shapes the swing profile, the XY velocity at the apex is set to be: apexVelocityFactor * swingdistance / dt
-    scalar_t apexVelocityFactor = 3.0;
+    struct Node {
+      /// Time progress in the swing phase in [0, 1]
+      scalar_t phase = 0.5;
+      /// Swing height in normal direction
+      scalar_t swingHeight = 0.1;
+      /// Velocity in normal direction
+      scalar_t normalVelocity = 0.0;
+      /// Swing progress in tangential direction in [0, 1]
+      scalar_t tangentialProgress = 0.5;
+      /// Tangantial velocity as a factor of the average velocity. The tangential velocity will be: velocityFactor * swingdistance / dt
+      scalar_t tangentialVelocityFactor = 1.0;
+    };
+
+    /// Height / velocity profile
+    std::vector<Node> nodes;
     /// Desired SDF clearance at the middle of the swing phase.
     scalar_t sdfMidswingMargin = 0.0;
     /// Desired SDF clearance at liftoff and touchdown. Slight negative margin allows a bit of ground penetration
     scalar_t sdfStartEndMargin = -0.02;
+    /// Limits the amount of additional swing height from terrain adaptation
+    scalar_t maxSwingHeightAdaptation = 0.3;
   };
 
   /**

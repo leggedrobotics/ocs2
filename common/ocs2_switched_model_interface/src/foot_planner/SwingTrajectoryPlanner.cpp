@@ -13,7 +13,9 @@ namespace switched_model {
 
 SwingTrajectoryPlanner::SwingTrajectoryPlanner(SwingTrajectoryPlannerSettings settings,
                                                const KinematicsModelBase<scalar_t>& kinematicsModel)
-    : settings_(std::move(settings)), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {}
+    : settings_(std::move(settings)), kinematicsModel_(kinematicsModel.clone()), terrainModel_(nullptr) {
+  setDefaultSwingProfile();
+}
 
 void SwingTrajectoryPlanner::updateTerrain(std::unique_ptr<TerrainModel> terrainModel) {
   terrainModel_ = std::move(terrainModel);
@@ -89,6 +91,8 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
   std::vector<scalar_t> eventTimes;
   std::vector<std::unique_ptr<FootPhase>> footPhases;
 
+  SwingPhase::SwingProfile swingProfile = defaultSwingProfile_;
+
   // First swing phase
   if (startsWithSwingPhase(contactTimings)) {
     SwingPhase::SwingEvent liftOff{lastContacts_[leg].first, settings_.liftOffVelocity, &lastContacts_[leg].second};
@@ -100,13 +104,12 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
         return SwingPhase::SwingEvent{finalTime + settings_.touchdownAfterHorizon, 0.0, nullptr};
       }
     }();
-    const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
-    liftOff.velocity *= scaling;
-    touchDown.velocity *= scaling;
 
-    SwingPhase::SwingProfile swingProfile;
-    swingProfile.swingHeight = scaling * settings_.swingHeight;
-    swingProfile.sdfMidswingMargin = scaling * settings_.sdfMidswingMargin;
+    if (settings_.swingTrajectoryFromReference) {
+      swingProfile.nodes = extractSwingProfileFromReference(leg, liftOff, touchDown);
+    }
+
+    applySwingMotionScaling(liftOff, touchDown, swingProfile);
 
     footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
   }
@@ -139,13 +142,12 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
           return SwingPhase::SwingEvent{finalTime + settings_.touchdownAfterHorizon, 0.0, nullptr};
         }
       }();
-      const scalar_t scaling = getSwingMotionScaling(liftOff.time, touchDown.time);
-      liftOff.velocity *= scaling;
-      touchDown.velocity *= scaling;
 
-      SwingPhase::SwingProfile swingProfile;
-      swingProfile.swingHeight = scaling * settings_.swingHeight;
-      swingProfile.sdfMidswingMargin = scaling * settings_.sdfMidswingMargin;
+      if (settings_.swingTrajectoryFromReference) {
+        swingProfile.nodes = extractSwingProfileFromReference(leg, liftOff, touchDown);
+      }
+
+      applySwingMotionScaling(liftOff, touchDown, swingProfile);
 
       eventTimes.push_back(currentContactTiming.end);
       footPhases.emplace_back(new SwingPhase(liftOff, touchDown, swingProfile, terrainModel_.get(), settings_.errorGain));
@@ -155,11 +157,24 @@ auto SwingTrajectoryPlanner::generateSwingTrajectories(int leg, const std::vecto
   return std::make_pair(eventTimes, std::move(footPhases));
 }
 
-scalar_t SwingTrajectoryPlanner::getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const {
-  if (std::isnan(liftoffTime) || std::isnan(touchDownTime)) {
-    return 1.0;
-  } else {
-    return std::min(1.0, (touchDownTime - liftoffTime) / settings_.swingTimeScale);
+void SwingTrajectoryPlanner::applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
+                                                     SwingPhase::SwingProfile& swingProfile) const {
+  const scalar_t scaling = [&]() {
+    if (std::isnan(liftOff.time) || std::isnan(touchDown.time)) {
+      return 1.0;
+    } else {
+      return std::min(1.0, (touchDown.time - liftOff.time) / settings_.swingTimeScale);
+    }
+  }();
+
+  if (scaling < 1.0) {
+    liftOff.velocity *= scaling;
+    touchDown.velocity *= scaling;
+    swingProfile.sdfMidswingMargin = scaling * settings_.sdfMidswingMargin;
+    for (auto& node : swingProfile.nodes) {
+      node.swingHeight *= scaling;
+      node.normalVelocity *= scaling;
+    }
   }
 }
 
@@ -308,6 +323,71 @@ scalar_t SwingTrajectoryPlanner::kinematicPenalty(const vector3_t& footPositionI
          (overExtensionTouchdown * overExtensionTouchdown + overExtensionLiftoff * overExtensionLiftoff);
 }
 
+std::vector<SwingPhase::SwingProfile::Node> SwingTrajectoryPlanner::extractSwingProfileFromReference(
+    int leg, const SwingPhase::SwingEvent& liftoff, const SwingPhase::SwingEvent& touchdown) const {
+  const scalar_t swingDuration = touchdown.time - liftoff.time;
+  const vector3_t swingVector = touchdown.terrainPlane->positionInWorld - liftoff.terrainPlane->positionInWorld;
+  const scalar_t swingDistance = swingVector.norm();
+  vector3_t swingTrajectoryNormal = swingVector.cross(vector3_t(0.0, 0.0, 1.0).cross(swingVector)).normalized();
+
+  // degenerate normal if there is no horizontal displacement
+  if (swingVector.head<2>().norm() < 0.01) {
+    swingTrajectoryNormal = vector3_t::UnitZ();
+  }
+
+  // Define where to sample the reference
+  std::vector<scalar_t> samplingPhases = {0.25, 0.5, 0.75};
+
+  std::vector<SwingPhase::SwingProfile::Node> swingNodes;
+  for (const scalar_t phase : samplingPhases) {
+    const scalar_t t = liftoff.time + phase * swingDuration;
+    const auto& state = targetTrajectories_.getDesiredState(t);
+    const auto& input = targetTrajectories_.getDesiredInput(t);
+
+    // Compute foot position and velocity from reference desired trajectory
+    const base_coordinate_t desiredBasePose = state.head<BASE_COORDINATE_SIZE>();
+    const base_coordinate_t desiredBaseTwist = state.segment<BASE_COORDINATE_SIZE>(BASE_COORDINATE_SIZE);
+    const joint_coordinate_t desiredJointPositions = state.segment<JOINT_COORDINATE_SIZE>(2 * BASE_COORDINATE_SIZE);
+    const joint_coordinate_t desiredJointVelocities = input.segment<JOINT_COORDINATE_SIZE>(3 * NUM_CONTACT_POINTS);
+    const vector3_t referenceFootpositionInWorld = kinematicsModel_->footPositionInOriginFrame(leg, desiredBasePose, desiredJointPositions);
+    const vector3_t footpositionRelativeToLiftoff = referenceFootpositionInWorld - liftoff.terrainPlane->positionInWorld;
+    const vector3_t referenceFootvelocityInWorld =
+        kinematicsModel_->footVelocityInOriginFrame(leg, desiredBasePose, desiredBaseTwist, desiredJointPositions, desiredJointVelocities);
+
+    // Convert to the swing profile relative coordinates
+    SwingPhase::SwingProfile::Node node;
+    node.phase = phase;
+    if (swingDistance > 0.01) {
+      node.tangentialProgress = footpositionRelativeToLiftoff.dot(swingVector) / (swingDistance * swingDistance);
+      node.tangentialVelocityFactor = referenceFootvelocityInWorld.dot(swingVector) * swingDuration / (swingDistance * swingDistance);
+    } else {
+      node.tangentialProgress = 0.0;
+      node.tangentialVelocityFactor = 0.0;
+    }
+    // position = liftoff + progress towards touchdown + height offset in normal direction. >> solve for height
+    node.swingHeight = swingTrajectoryNormal.dot(footpositionRelativeToLiftoff - node.tangentialProgress * swingVector);
+    node.normalVelocity = referenceFootvelocityInWorld.dot(swingTrajectoryNormal);
+
+    swingNodes.push_back(node);
+  }
+
+  return swingNodes;
+}
+
+void SwingTrajectoryPlanner::setDefaultSwingProfile() {
+  defaultSwingProfile_ = SwingPhase::SwingProfile();
+  defaultSwingProfile_.sdfMidswingMargin = settings_.sdfMidswingMargin;
+  defaultSwingProfile_.maxSwingHeightAdaptation = 2.0 * settings_.swingHeight;
+
+  SwingPhase::SwingProfile::Node midPoint;
+  midPoint.phase = 0.5;
+  midPoint.swingHeight = settings_.swingHeight;
+  midPoint.normalVelocity = 0.0;
+  midPoint.tangentialProgress = 0.6;
+  midPoint.tangentialVelocityFactor = 2.0;
+  defaultSwingProfile_.nodes.push_back(midPoint);
+}
+
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose) {
   SwingTrajectoryPlannerSettings settings{};
 
@@ -335,6 +415,7 @@ SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& fi
   ocs2::loadData::loadPtreeValue(pt, settings.invertedPendulumHeight, prefix + "invertedPendulumHeight", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.nominalLegExtension, prefix + "nominalLegExtension", verbose);
   ocs2::loadData::loadPtreeValue(pt, settings.legOverExtensionPenalty, prefix + "legOverExtensionPenalty", verbose);
+  ocs2::loadData::loadPtreeValue(pt, settings.swingTrajectoryFromReference, prefix + "swingTrajectoryFromReference", verbose);
 
   if (verbose) {
     std::cerr << " #### ==================================================" << std::endl;

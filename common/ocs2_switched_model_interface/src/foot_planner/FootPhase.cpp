@@ -110,8 +110,6 @@ SwingPhase::SwingPhase(SwingEvent liftOff, SwingEvent touchDown, const SwingProf
 }
 
 void SwingPhase::setFullSwing(const SwingProfile& swingProfile, const TerrainModel* terrainModel) {
-  const scalar_t swingHeight = swingProfile.swingHeight;
-  const scalar_t apexVelocityFactor = swingProfile.apexVelocityFactor;
   const scalar_t sdfMidswingMargin = swingProfile.sdfMidswingMargin;
   const scalar_t sdfStartEndMargin = swingProfile.sdfStartEndMargin;
   const scalar_t swingDuration = (touchDown_.time - liftOff_.time);
@@ -127,24 +125,18 @@ void SwingPhase::setFullSwing(const SwingProfile& swingProfile, const TerrainMod
   const SwingNode3d end{touchDown_.time, touchDownPositionInWorld, touchDownVelocityInWorld};
 
   // Apex
-  SwingNode3d apex;
-  apex.time = 0.5 * (start.time + end.time);
+  std::vector<SwingNode3d> swingPoints = {start};
   const vector3_t swingVector = touchDownPositionInWorld - liftOffPositionInWorld;
   if (swingVector.head<2>().norm() > 0.01) {
-    const vector3_t middleStraightlinePoint = 0.5 * (liftOffPositionInWorld + touchDownPositionInWorld);
-
     // Get a unit vector perpendicular to the swing vector and in the plane formed by the World-Z axis and the swing vector.
     const vector3_t swingTrajectoryNormal = swingVector.cross(vector3_t(0.0, 0.0, 1.0).cross(swingVector)).normalized();
 
-    // Blind swing height
-    apex.position = middleStraightlinePoint + swingHeight * swingTrajectoryNormal;
-
     // Terrain adaptation if information is available
+    scalar_t maxObstacleHeight = 0.0;
     if (terrainModel != nullptr) {
       const auto heightProfile = terrainModel->getHeightProfileAlongLine(liftOffPositionInWorld, touchDownPositionInWorld);
 
       // Find the maximum obstacle. An obstacle is a height point sticking out above the line between liftoff and touchdown.
-      scalar_t maxObstacleHeight = 0.0;
       for (const auto& point : heightProfile) {
         const scalar_t pointProgress = point[0];
         const scalar_t pointHeight = point[1];
@@ -155,21 +147,35 @@ void SwingPhase::setFullSwing(const SwingProfile& swingProfile, const TerrainMod
         }
       }
       // Clip max obstacle to two times swing height to protect against outliers. (Total swing height will be max 3 * swing height)
-      maxObstacleHeight = std::min(maxObstacleHeight, 2.0 * swingHeight);
-
-      apex.position += maxObstacleHeight * swingTrajectoryNormal;
+      maxObstacleHeight = std::min(maxObstacleHeight, swingProfile.maxSwingHeightAdaptation);
     }
 
-    // Velocity at apex points purely in swing direction
-    apex.velocity = apexVelocityFactor / swingDuration * swingVector;
+    for (const auto& node : swingProfile.nodes) {
+      SwingNode3d midPoint;
+      midPoint.time = liftOff_.time + node.phase * swingDuration;
+      // position = liftoff + progress towards touchdown + height offset in normal direction
+      midPoint.position =
+          liftOffPositionInWorld + node.tangentialProgress * swingVector + (maxObstacleHeight + node.swingHeight) * swingTrajectoryNormal;
+      // velocity = factor * average velocity between liftoff and touchdown + velocity in normal direction
+      midPoint.velocity = node.tangentialVelocityFactor / swingDuration * swingVector + node.normalVelocity * swingTrajectoryNormal;
+      swingPoints.push_back(midPoint);
+    }
   } else {  // (cases where target is above or intersecting with current position)
     // No point in checking the terrain. Start and end point will fall in the same cell.
-    apex.position = touchDownPositionInWorld;
-    apex.position.z() = std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z()) + swingHeight;
-    apex.velocity = vector3_t::Zero();
+    for (const auto& node : swingProfile.nodes) {
+      SwingNode3d midPoint;
+      midPoint.time = liftOff_.time + node.phase * swingDuration;
+      midPoint.position = touchDownPositionInWorld;
+      midPoint.position.z() = std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z()) + node.swingHeight;
+      midPoint.velocity = vector3_t::Zero();
+      midPoint.velocity.z() = node.normalVelocity;
+      swingPoints.push_back(midPoint);
+    }
   }
 
-  motion_.reset(new SwingSpline3d(start, apex, end));
+  swingPoints.push_back(end);
+
+  motion_.reset(new SwingSpline3d(swingPoints));
 
   // Terrain clearance
   if (terrainModel != nullptr && terrainModel->getSignedDistanceField() != nullptr) {
@@ -187,9 +193,9 @@ void SwingPhase::setFullSwing(const SwingProfile& swingProfile, const TerrainMod
 }
 
 void SwingPhase::setHalveSwing(const SwingProfile& swingProfile, const TerrainModel* terrainModel) {
-  const scalar_t swingHeight = swingProfile.swingHeight;
   const scalar_t sdfMidswingMargin = swingProfile.sdfMidswingMargin;
   const scalar_t sdfStartEndMargin = swingProfile.sdfStartEndMargin;
+  const scalar_t swingDuration = (touchDown_.time - liftOff_.time);
 
   // liftoff conditions
   const auto& liftOffPositionInWorld = liftOff_.terrainPlane->positionInWorld;
@@ -198,14 +204,24 @@ void SwingPhase::setHalveSwing(const SwingProfile& swingProfile, const TerrainMo
 
   // touchdown conditions
   touchDown_.terrainPlane = liftOff_.terrainPlane;
-  const vector3_t touchDownPositionInWorld = liftOffPositionInWorld + vector3_t(0.0, 0.0, swingHeight);
+  const vector3_t touchDownPositionInWorld = liftOffPositionInWorld + vector3_t(0.0, 0.0, swingProfile.nodes.back().swingHeight);
   const vector3_t touchDownVelocityInWorld = vector3_t::Zero();
   const SwingNode3d end{touchDown_.time, touchDownPositionInWorld, touchDownVelocityInWorld};
 
-  const SwingNode3d apex{0.5 * (liftOff_.time + touchDown_.time), touchDownPositionInWorld, touchDownVelocityInWorld};
+  std::vector<SwingNode3d> swingPoints = {start};
+  for (const auto& node : swingProfile.nodes) {
+    SwingNode3d midPoint;
+    midPoint.time = liftOff_.time + node.phase * swingDuration;
+    midPoint.position = touchDownPositionInWorld;
+    midPoint.position.z() = std::max(liftOffPositionInWorld.z(), touchDownPositionInWorld.z()) + node.swingHeight;
+    midPoint.velocity = vector3_t::Zero();
+    midPoint.velocity.z() = node.normalVelocity;
+    swingPoints.push_back(midPoint);
+  }
+  swingPoints.push_back(end);
 
   // The two motions are equal and defined in the liftoff plane
-  motion_.reset(new SwingSpline3d(start, apex, end));
+  motion_.reset(new SwingSpline3d(swingPoints));
 
   {  // Terrain clearance
     if (terrainModel != nullptr && terrainModel->getSignedDistanceField() != nullptr) {

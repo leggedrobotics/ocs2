@@ -35,6 +35,8 @@ struct SwingTrajectoryPlannerSettings {
 
   scalar_t nominalLegExtension = 0.55;     // Leg extension beyond this length [m] will be penalized in terrain selection
   scalar_t legOverExtensionPenalty = 5.0;  // Weight of the leg overextension penalty
+
+  bool swingTrajectoryFromReference = false;  // Flag to take the swing trajectory from the reference trajectory
 };
 
 SwingTrajectoryPlannerSettings loadSwingTrajectorySettings(const std::string& filename, bool verbose = true);
@@ -67,14 +69,19 @@ class SwingTrajectoryPlanner {
   void updateLastContact(int leg, scalar_t expectedLiftOff, const vector3_t& currentFootPosition, const TerrainModel& terrainModel);
   std::pair<std::vector<scalar_t>, std::vector<std::unique_ptr<FootPhase>>> generateSwingTrajectories(
       int leg, const std::vector<ContactTiming>& contactTimings, scalar_t finalTime) const;
-  scalar_t getSwingMotionScaling(scalar_t liftoffTime, scalar_t touchDownTime) const;
   std::pair<std::vector<ConvexTerrain>, std::vector<vector3_t>> selectNominalFootholdTerrain(
       int leg, const std::vector<ContactTiming>& contactTimings, const ocs2::TargetTrajectories& targetTrajectories, scalar_t initTime,
       const comkino_state_t& currentState, scalar_t finalTime, const TerrainModel& terrainModel) const;
   scalar_t kinematicPenalty(const vector3_t& footPositionInWorld, const vector3_t& hipInWorldAtTouchdown,
                             const vector3_t& hipInWorldAtLiftoff) const;
+  void applySwingMotionScaling(SwingPhase::SwingEvent& liftOff, SwingPhase::SwingEvent& touchDown,
+                               SwingPhase::SwingProfile& swingProfile) const;
+  std::vector<SwingPhase::SwingProfile::Node> extractSwingProfileFromReference(int leg, const SwingPhase::SwingEvent& liftoff,
+                                                                               const SwingPhase::SwingEvent& touchdown) const;
+  void setDefaultSwingProfile();
 
   SwingTrajectoryPlannerSettings settings_;
+  SwingPhase::SwingProfile defaultSwingProfile_;
   std::unique_ptr<KinematicsModelBase<scalar_t>> kinematicsModel_;
 
   feet_array_t<std::pair<scalar_t, TerrainPlane>> lastContacts_;

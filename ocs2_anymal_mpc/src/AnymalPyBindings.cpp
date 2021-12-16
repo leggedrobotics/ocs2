@@ -10,7 +10,7 @@
 namespace anymal {
 
 AnymalPyBindings::AnymalPyBindings(const std::string& taskFile, const std::string& libraryFolder, const std::string urdfFile)
-    : configName_(taskFile), robotName_("chip") {
+    : configName_(taskFile), robotName_("camel") {
   auto anymalInterface = getAnymalInterface(stringToAnymalModel(robotName_), getConfigFolder(configName_));
   const auto mpcSettings = ocs2::mpc::loadSettings(getTaskFilePath(configName_));
   const auto ddpSettings = ocs2::ddp::loadSettings(getTaskFilePath(configName_));

@@ -15,9 +15,9 @@
 #include <ocs2_anymal_models/chimera/AnymalChimeraCom.h>
 #include <ocs2_anymal_models/chimera/AnymalChimeraKinematics.h>
 #include <ocs2_anymal_models/chimera/WholebodyDynamicsChimera.h>
-#include <ocs2_anymal_models/chip/AnymalChipCom.h>
-#include <ocs2_anymal_models/chip/AnymalChipKinematics.h>
-#include <ocs2_anymal_models/chip/WholebodyDynamicsChip.h>
+#include <ocs2_anymal_models/camel/AnymalCamelCom.h>
+#include <ocs2_anymal_models/camel/AnymalCamelKinematics.h>
+#include <ocs2_anymal_models/camel/WholebodyDynamicsCamel.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsCom.h>
 #include <ocs2_anymal_models/wheels/AnymalWheelsKinematics.h>
 #include <ocs2_anymal_models/wheels_chimera/AnymalWheelsChimeraCom.h>
@@ -28,14 +28,14 @@ namespace anymal {
 std::string toString(AnymalModel model) {
   static const std::unordered_map<AnymalModel, std::string> map{
       {AnymalModel::Bear, "bear"}, {AnymalModel::Cerberus, "cerberus"}, {AnymalModel::Chimera, "chimera"},
-      {AnymalModel::Chip, "chip"}, {AnymalModel::Wheels, "wheels"},     {AnymalModel::WheelsChimera, "wheels_chimera"}};
+      {AnymalModel::Camel, "camel"}, {AnymalModel::Wheels, "wheels"},     {AnymalModel::WheelsChimera, "wheels_chimera"}};
   return map.at(model);
 }
 
 AnymalModel stringToAnymalModel(const std::string& name) {
   static const std::unordered_map<std::string, AnymalModel> map{
       {"bear", AnymalModel::Bear}, {"cerberus", AnymalModel::Cerberus}, {"chimera", AnymalModel::Chimera},
-      {"chip", AnymalModel::Chip}, {"wheels", AnymalModel::Wheels},     {"wheels_chimera", AnymalModel::WheelsChimera}};
+      {"camel", AnymalModel::Camel}, {"wheels", AnymalModel::Wheels},     {"wheels_chimera", AnymalModel::WheelsChimera}};
   return map.at(name);
 }
 
@@ -47,8 +47,8 @@ std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>> getAnymalKi
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalCerberusKinematics());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalChimeraKinematics());
-    case AnymalModel::Chip:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalChipKinematics());
+    case AnymalModel::Camel:
+      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalCamelKinematics());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::scalar_t>>(new AnymalWheelsKinematics());
     case AnymalModel::WheelsChimera:
@@ -66,8 +66,8 @@ std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>> getAnyma
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalCerberusKinematicsAd());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalChimeraKinematicsAd());
-    case AnymalModel::Chip:
-      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalChipKinematicsAd());
+    case AnymalModel::Camel:
+      return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalCamelKinematicsAd());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::KinematicsModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsKinematicsAd());
     case AnymalModel::WheelsChimera:
@@ -85,8 +85,8 @@ std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>> getAnymalComModel(
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalCerberusCom());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalChimeraCom());
-    case AnymalModel::Chip:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalChipCom());
+    case AnymalModel::Camel:
+      return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalCamelCom());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::scalar_t>>(new AnymalWheelsCom());
     case AnymalModel::WheelsChimera:
@@ -104,8 +104,8 @@ std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>> getAnymalComMod
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalCerberusComAd());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalChimeraComAd());
-    case AnymalModel::Chip:
-      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalChipComAd());
+    case AnymalModel::Camel:
+      return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalCamelComAd());
     case AnymalModel::Wheels:
       return std::unique_ptr<switched_model::ComModelBase<ocs2::ad_scalar_t>>(new AnymalWheelsComAd());
     case AnymalModel::WheelsChimera:
@@ -123,8 +123,8 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>> getWholebodyD
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCerberus());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsChimera());
-    case AnymalModel::Chip:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsChip());
+    case AnymalModel::Camel:
+      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::scalar_t>>(new WholebodyDynamicsCamel());
     case AnymalModel::Wheels:
       throw std::runtime_error("[getWholebodyDynamics] not implemented for wheels");
     case AnymalModel::WheelsChimera:
@@ -142,8 +142,8 @@ std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>> getWholebo
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsCerberusAd());
     case AnymalModel::Chimera:
       return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsChimeraAd());
-    case AnymalModel::Chip:
-      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsChipAd());
+    case AnymalModel::Camel:
+      return std::unique_ptr<switched_model::WholebodyDynamics<ocs2::ad_scalar_t>>(new WholebodyDynamicsCamelAd());
     case AnymalModel::Wheels:
       throw std::runtime_error("[getWholebodyDynamicsAd] not implemented for wheels");
     case AnymalModel::WheelsChimera:

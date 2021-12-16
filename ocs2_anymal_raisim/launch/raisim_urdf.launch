@@ -16,9 +16,9 @@
     <param name="/anymal_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_chimera/2020-05-20/urdf/anymal_minimal.urdf"/>
   </group>
 
-  <!-- Load chip description -->
-  <group if="$(eval arg('robot_name') == 'chip')">
-    <param name="/anymal_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_chip/2020-05-11/urdf/anymal_minimal.urdf"/>
+  <!-- Load camel description -->
+  <group if="$(eval arg('robot_name') == 'camel')">
+    <param name="/anymal_raisim_urdf" textfile="$(find sim2real_models)/models/anymal/anymal_camel/2020-05-11/urdf/anymal_minimal.urdf"/>
   </group>
 
 </launch>

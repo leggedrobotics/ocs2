@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -36,9 +36,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 LoopshapingPreComputation::LoopshapingPreComputation(const PreComputation& systemPreComputation,
                                                      std::shared_ptr<LoopshapingDefinition> loopshapingDefinition)
-    : systemPreCompPtr_(systemPreComputation.clone()),
-      filteredSystemPreCompPtr_(systemPreComputation.clone()),
-      loopshapingDefinition_(std::move(loopshapingDefinition)) {}
+    : systemPreCompPtr_(systemPreComputation.clone()), loopshapingDefinition_(std::move(loopshapingDefinition)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -46,7 +44,6 @@ LoopshapingPreComputation::LoopshapingPreComputation(const PreComputation& syste
 LoopshapingPreComputation::LoopshapingPreComputation(const LoopshapingPreComputation& other)
     : loopshapingDefinition_(other.loopshapingDefinition_) {
   systemPreCompPtr_.reset(other.systemPreCompPtr_->clone());
-  filteredSystemPreCompPtr_.reset(other.filteredSystemPreCompPtr_->clone());
 }
 
 /******************************************************************************************************/
@@ -66,10 +63,6 @@ void LoopshapingPreComputation::request(RequestSet request, scalar_t t, const ve
   filterInput_ = loopshapingDefinition_->getFilteredInput(x, u);
 
   systemPreCompPtr_->request(request, t, systemState_, systemInput_);
-  if (request.contains(Request::Cost)) {
-    // state-input cost function is evaluated on both u_system and u_filter.
-    filteredSystemPreCompPtr_->request(request, t, systemState_, filterInput_);
-  }
 }
 
 /******************************************************************************************************/

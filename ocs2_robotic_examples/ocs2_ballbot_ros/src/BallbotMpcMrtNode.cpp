@@ -41,14 +41,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_core/thread_support/SetThreadPriority.h>
-#include <ocs2_mpc/MPC_DDP.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_msgs/mpc_observation.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
 #include <ocs2_ballbot/BallbotInterface.h>
-
 #include "ocs2_ballbot_ros/BallbotDummyVisualization.h"
 
 /**
@@ -88,8 +87,8 @@ int main(int argc, char** argv) {
    */
 
   // MPC
-  ocs2::MPC_DDP mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
-                    ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
+  ocs2::GaussNewtonDDP_MPC mpc(ballbotInterface.mpcSettings(), ballbotInterface.ddpSettings(), ballbotInterface.getRollout(),
+                               ballbotInterface.getOptimalControlProblem(), ballbotInterface.getInitializer());
 
   // ROS ReferenceManager. This gives us the command interface. Requires the observations to be published
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(

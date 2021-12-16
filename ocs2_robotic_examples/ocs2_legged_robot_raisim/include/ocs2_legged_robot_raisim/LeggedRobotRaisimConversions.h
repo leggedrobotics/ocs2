@@ -49,11 +49,11 @@ class LeggedRobotRaisimConversions final {
    * @param [in] initialState : The initial switched model state.
    * @param [in] check : Whether to check if the variables coming from or going to RaiSim respect the actuator limits (by default false).
    */
-  LeggedRobotRaisimConversions(PinocchioInterface& pinocchioInterface, CentroidalModelInfo centroidalModelInfo,
+  LeggedRobotRaisimConversions(PinocchioInterface pinocchioInterface, const CentroidalModelInfo& centroidalModelInfo,
                                const vector_t& initialState, bool check = false)
       : check_(check),
         continuousOrientation_(initialState.segment<3>(9)),
-        centroidalModelRbdConversions_(pinocchioInterface, centroidalModelInfo) {}
+        centroidalModelRbdConversions_(std::move(pinocchioInterface), centroidalModelInfo) {}
 
   /**
    * @brief Convert OCS2 switched model state to generalized coordinate and generalized velocity used by RaiSim.

@@ -706,7 +706,8 @@ void GaussNewtonDDP::calculateController() {
   };
   runParallel(task, ddpSettings_.nThreads_);
 
-  // if the final time is not an event time change the last control to the second to the last
+  // Since the controller for the last timestamp is invalid, if the last time is not the event time, use the control policy of the second to
+  // last time for the last time
   const bool finalTimeIsNotAnEvent =
       nominalPrimalData_.postEventIndices.empty() ||
       (nominalPrimalData_.postEventIndices.back() != nominalPrimalData_.primalSolution.timeTrajectory_.size() - 1);

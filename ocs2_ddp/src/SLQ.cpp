@@ -81,17 +81,17 @@ void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
   const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
   auto& modelDataTrajectory = primalData.modelDataTrajectory;
 
-  BASE::nextTimeIndex_ = 0;
-  BASE::nextTaskId_ = 0;
-  std::function<void(void)> task = [&] {
+  nextTimeIndex_ = 0;
+  nextTaskId_ = 0;
+  auto task = [&]() {
     size_t timeIndex;
-    size_t taskId = BASE::nextTaskId_++;  // assign task ID (atomic)
+    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
     // get next time index is atomic
-    while ((timeIndex = BASE::nextTimeIndex_++) < timeTrajectory.size()) {
+    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
       // execute approximateLQ for the given partition and time index
 
-      LinearQuadraticApproximator lqapprox(BASE::optimalControlProblemStock_[taskId], BASE::settings().checkNumericalStability_);
+      LinearQuadraticApproximator lqapprox(optimalControlProblemStock_[taskId], settings().checkNumericalStability_);
 
       lqapprox.approximateLQProblem(timeTrajectory[timeIndex], stateTrajectory[timeIndex], inputTrajectory[timeIndex],
                                     modelDataTrajectory[timeIndex]);
@@ -99,7 +99,7 @@ void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
     }
   };
 
-  BASE::runParallel(task, settings().nThreads_);
+  runParallel(task, settings().nThreads_);
 }
 
 /******************************************************************************************************/
@@ -155,30 +155,30 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
 scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
   // fully compute the riccatiModifications and projected modelData
   // number of the intermediate LQ variables
-  const size_t N = BASE::nominalPrimalData_.primalSolution.timeTrajectory_.size();
+  const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
 
-  BASE::dualData_.riccatiModificationTrajectory.resize(N);
-  BASE::dualData_.projectedModelDataTrajectory.resize(N);
+  dualData_.riccatiModificationTrajectory.resize(N);
+  dualData_.projectedModelDataTrajectory.resize(N);
 
   if (N > 0) {
     // perform the computeRiccatiModificationTerms for partition i
-    BASE::nextTimeIndex_ = 0;
-    BASE::nextTaskId_ = 0;
+    nextTimeIndex_ = 0;
+    nextTaskId_ = 0;
     auto task = [this, N]() {
       int timeIndex;
       const matrix_t SmDummy = matrix_t::Zero(0, 0);
 
       // get next time index is atomic
-      while ((timeIndex = BASE::nextTimeIndex_++) < N) {
-        BASE::computeProjectionAndRiccatiModification(BASE::nominalPrimalData_.modelDataTrajectory[timeIndex], SmDummy,
-                                                      BASE::dualData_.projectedModelDataTrajectory[timeIndex],
-                                                      BASE::dualData_.riccatiModificationTrajectory[timeIndex]);
+      while ((timeIndex = nextTimeIndex_++) < N) {
+        computeProjectionAndRiccatiModification(nominalPrimalData_.modelDataTrajectory[timeIndex], SmDummy,
+                                                dualData_.projectedModelDataTrajectory[timeIndex],
+                                                dualData_.riccatiModificationTrajectory[timeIndex]);
       }
     };
-    BASE::runParallel(task, settings().nThreads_);
+    runParallel(task, settings().nThreads_);
   }
 
-  return BASE::solveSequentialRiccatiEquationsImpl(finalValueFunction);
+  return solveSequentialRiccatiEquationsImpl(finalValueFunction);
 }
 
 /******************************************************************************************************/
@@ -195,15 +195,14 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
                                  const ScalarFunctionQuadraticApproximation& finalValueFunction) {
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
-  riccatiEquationsPtrStock_[workerIndex]->setData(
-      &(BASE::nominalPrimalData_.primalSolution.timeTrajectory_), &(BASE::dualData_.projectedModelDataTrajectory),
-      &(BASE::nominalPrimalData_.postEventIndices), &(BASE::nominalPrimalData_.modelDataEventTimes),
-      &(BASE::dualData_.riccatiModificationTrajectory));
+  riccatiEquationsPtrStock_[workerIndex]->setData(&(nominalPrimalData_.primalSolution.timeTrajectory_),
+                                                  &(dualData_.projectedModelDataTrajectory), &(nominalPrimalData_.postEventIndices),
+                                                  &(nominalPrimalData_.modelDataEventTimes), &(dualData_.riccatiModificationTrajectory));
 
-  const auto& nominalTimeTrajectory = BASE::nominalPrimalData_.primalSolution.timeTrajectory_;
-  const auto& nominalEventsPastTheEndIndices = BASE::nominalPrimalData_.postEventIndices;
+  const auto& nominalTimeTrajectory = nominalPrimalData_.primalSolution.timeTrajectory_;
+  const auto& nominalEventsPastTheEndIndices = nominalPrimalData_.postEventIndices;
 
-  auto& valueFunctionTrajectory = BASE::dualData_.valueFunctionTrajectory;
+  auto& valueFunctionTrajectory = dualData_.valueFunctionTrajectory;
 
   // Convert final value of value function in vector format
   vector_t allSsFinal = ContinuousTimeRiccatiEquations::convert2Vector(finalValueFunction);
@@ -241,8 +240,8 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
                                               scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
                                               vector_array_t& allSsTrajectory) {
   // normalized time and post event indices
-  BASE::retrieveActiveNormalizedTime(partitionInterval, nominalTimeTrajectory, nominalEventsPastTheEndIndices, SsNormalizedTime,
-                                     SsNormalizedPostEventIndices);
+  retrieveActiveNormalizedTime(partitionInterval, nominalTimeTrajectory, nominalEventsPastTheEndIndices, SsNormalizedTime,
+                               SsNormalizedPostEventIndices);
   // Extract sizes
   const int nominalTimeSize = SsNormalizedTime.size();
   const int numEvents = SsNormalizedPostEventIndices.size();

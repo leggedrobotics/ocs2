@@ -7,12 +7,24 @@
 namespace switched_model {
 
 SwingSpline3d::SwingSpline3d(const SwingNode3d& start, const SwingNode3d& mid, const SwingNode3d& end)
-    : x_({start.time, start.position.x(), start.velocity.x()}, {mid.time, mid.position.x(), mid.velocity.x()},
-         {end.time, end.position.x(), end.velocity.x()}),
-      y_({start.time, start.position.y(), start.velocity.y()}, {mid.time, mid.position.y(), mid.velocity.y()},
-         {end.time, end.position.y(), end.velocity.y()}),
-      z_({start.time, start.position.z(), start.velocity.z()}, {mid.time, mid.position.z(), mid.velocity.z()},
-         {end.time, end.position.z(), end.velocity.z()}) {}
+    : SwingSpline3d(std::vector<SwingNode3d>{start, mid, end}) {}
+
+SwingSpline3d::SwingSpline3d(const std::vector<SwingNode3d>& nodes) {
+  std::vector<SwingNode> x;
+  x.reserve(nodes.size());
+  std::vector<SwingNode> y;
+  y.reserve(nodes.size());
+  std::vector<SwingNode> z;
+  y.reserve(nodes.size());
+  for (const auto& node : nodes) {
+    x.push_back({node.time, node.position.x(), node.velocity.x()});
+    y.push_back({node.time, node.position.y(), node.velocity.y()});
+    z.push_back({node.time, node.position.z(), node.velocity.z()});
+  }
+  x_ = QuinticSwing(x);
+  y_ = QuinticSwing(y);
+  z_ = QuinticSwing(z);
+}
 
 vector3_t SwingSpline3d::position(scalar_t time) const {
   return {x_.position(time), y_.position(time), z_.position(time)};

@@ -47,12 +47,40 @@ TEST(TestQuinticSwing, interpolating) {
   EXPECT_LT(std::abs(quinticSwing.velocity(end.time) - end.velocity), tol);
 
   // Start-end acceleration
-  EXPECT_DOUBLE_EQ(quinticSwing.acceleration(start.time), 0.0);
-  EXPECT_DOUBLE_EQ(quinticSwing.acceleration(end.time), 0.0);
+  EXPECT_LT(std::abs(quinticSwing.acceleration(start.time)), tol);
+  EXPECT_LT(std::abs(quinticSwing.acceleration(end.time)), tol);
 
   // Continuity
   EXPECT_LT(std::abs(quinticSwing.acceleration(mid.time + eps) - quinticSwing.acceleration(mid.time - eps)), tol);
   EXPECT_LT(std::abs(quinticSwing.jerk(mid.time + eps) - quinticSwing.jerk(mid.time - eps)), tol);
+}
+
+TEST(TestQuinticSwing, multipleNodes) {
+  // Set some random nodes to interpolate
+  std::vector<SwingNode> nodes = {{0.5, 0.1, 0.2}};
+  for (int i = 1; i < 10; ++i) {
+    nodes.push_back({nodes.back().time + i * 0.1, (i - 5) * 0.1, (i - 3) * 0.4});
+  }
+  QuinticSwing quinticSwing(nodes);
+
+  double tol = 1e-9;
+  double eps = std::numeric_limits<double>::epsilon();
+  for (const auto& node : nodes) {
+    // interpolation
+    EXPECT_LT(std::abs(quinticSwing.position(node.time) - node.position), tol);
+    EXPECT_LT(std::abs(quinticSwing.velocity(node.time) - node.velocity), tol);
+
+    // Get pre and post node time (and clamp to interval)
+    const scalar_t minTime = std::max(node.time - eps, nodes.front().time);
+    const scalar_t plusTime = std::min(node.time + eps, nodes.back().time);
+    // Continuity
+    EXPECT_LT(std::abs(quinticSwing.acceleration(plusTime) - quinticSwing.acceleration(minTime)), tol);
+    EXPECT_LT(std::abs(quinticSwing.jerk(plusTime) - quinticSwing.jerk(minTime)), tol);
+  }
+
+  // Start-end acceleration
+  EXPECT_LT(std::abs(quinticSwing.acceleration(nodes.front().time)), tol);
+  EXPECT_LT(std::abs(quinticSwing.acceleration(nodes.back().time)), tol);
 }
 
 TEST(TestQuinticSwing3d, interpolating) {
@@ -71,8 +99,8 @@ TEST(TestQuinticSwing3d, interpolating) {
   EXPECT_LT((swingNode3D.velocity(end.time) - end.velocity).norm(), tol);
 
   // Start-end acceleration
-  EXPECT_DOUBLE_EQ(swingNode3D.acceleration(start.time).norm(), 0.0);
-  EXPECT_DOUBLE_EQ(swingNode3D.acceleration(end.time).norm(), 0.0);
+  EXPECT_LT(swingNode3D.acceleration(start.time).norm(), tol);
+  EXPECT_LT(swingNode3D.acceleration(end.time).norm(), tol);
 
   // Continuity
   EXPECT_LT((swingNode3D.acceleration(mid.time + eps) - swingNode3D.acceleration(mid.time - eps)).norm(), tol);

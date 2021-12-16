@@ -30,6 +30,11 @@ class SwingSpline3d {
    */
   SwingSpline3d(const SwingNode3d& start, const SwingNode3d& mid, const SwingNode3d& end);
 
+  /**
+   * Construct a swing trajectory through the provided nodes (at least 3)
+   */
+  explicit SwingSpline3d(const std::vector<SwingNode3d>& nodes);
+
   /** returns p(t) */
   vector3_t position(scalar_t time) const;
 

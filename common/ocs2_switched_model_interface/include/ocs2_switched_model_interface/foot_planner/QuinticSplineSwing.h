@@ -23,8 +23,8 @@ class QuinticSpline {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  /** Default constructor creates a flat spline, y(t) = 0.0 */
-  QuinticSpline() : c_(vector6_t::Zero()), t0_(0.0), dt_(0.0) {}
+  /** Default constructor creates a flat spline, y(t) = 0.0 for t in [-1e30, 1e30]*/
+  QuinticSpline() : c_(vector6_t::Zero()), t0_(-1e30), dt_(2e30) {}
 
   /**
    * Constructs a quintic spline. See class description for the definition.
@@ -61,13 +61,13 @@ class QuinticSpline {
 };
 
 /**
- * Implements a swing trajectory based on two quintic splines
- * The trajectory is made with the following 12 conditions
+ * Implements a swing trajectory based on (at least 2) quintic splines
+ * The trajectory is made with the following conditions
  *  start:
  *      position = given
  *      velocity = given
  *      acceleration = 0.0
- *  Mid:
+ *  Mid (can be multiple):
  *      position = given & continuous
  *      velocity = given & continuous
  *      acceleration = continuous
@@ -79,7 +79,10 @@ class QuinticSpline {
  */
 class QuinticSwing {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  /**
+   * trajectory of constant zero
+   */
+  QuinticSwing();
 
   /**
    * Construct a swing trajectory with given boundary conditions
@@ -99,6 +102,13 @@ class QuinticSwing {
    */
   QuinticSwing(const SwingNode& start, const SwingNode& mid, const SwingNode& end);
 
+  /**
+   * Construct a swing trajectory with through the given nodes. At least 3 need to be passed (such that there are at least 2 splines)
+   *
+   * @param nodes : each node is a waypoint in time, position, and velocity. Vector needs to be sorted in time.
+   */
+  explicit QuinticSwing(const std::vector<SwingNode>& nodes);
+
   /** returns z(t) */
   scalar_t position(scalar_t time) const;
 
@@ -112,9 +122,8 @@ class QuinticSwing {
   scalar_t jerk(scalar_t time) const;
 
  private:
-  scalar_t midTime_;
-  QuinticSpline leftSpline_;
-  QuinticSpline rightSpline_;
+  std::vector<scalar_t> nodeTimes;
+  std::vector<QuinticSpline> splines;
 };
 
 }  // namespace switched_model

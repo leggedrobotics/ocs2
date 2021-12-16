@@ -127,9 +127,7 @@ TEST_P(TestAnymalCentroidalModel, dynamis_flowMap) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 TEST_P(TestAnymalCentroidalModel, rbd_conversion) {
-  // FIXME (farbod): It currently only checks for FCD
-  //  const CentroidalModelType type = GetParam();
-  const CentroidalModelType type = CentroidalModelType::FullCentroidalDynamics;
+  const CentroidalModelType type = GetParam();
   const auto info = createInfo(type);
 
   // Analytical model

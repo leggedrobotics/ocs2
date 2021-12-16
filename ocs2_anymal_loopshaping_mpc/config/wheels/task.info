@@ -264,13 +264,13 @@ initialRobotState
 tracking_cost_weights
 {
     ; Base
-    roll                   200.0;
-    pitch                  200.0;
-    yaw                    200.0;
+    roll                   100.0;
+    pitch                  300.0;
+    yaw                    300.0;
     base_position_x       1000.0;
     base_position_y       1000.0;
     base_position_z       1500.0;
-    base_angular_vel_x      30.0;
+    base_angular_vel_x      10.0;
     base_angular_vel_y      30.0;
     base_angular_vel_z      30.0;
     base_linear_vel_x       15.0;

@@ -11,7 +11,7 @@
 class TestAnymalModel : public ::testing::Test {
  public:
   TestAnymalModel() {
-    const std::string robotName("chip");
+    const std::string robotName("camel");
     const std::string configName("c_series");
     const std::string path(__FILE__);
     const std::string dir = path.substr(0, path.find_last_of("/"));

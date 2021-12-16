@@ -18,7 +18,7 @@
   <exec_depend>anymal_b</exec_depend>
   <exec_depend>anymal_cerberus_rsl</exec_depend>
   <exec_depend>anymal_chimera_rsl</exec_depend>
-  <exec_depend>anymal_chip_rsl</exec_depend>
+  <exec_depend>anymal_camel_rsl</exec_depend>
   <exec_depend>anymal_wheels_description</exec_depend>
   <exec_depend>urdf2robcogen</exec_depend>
 

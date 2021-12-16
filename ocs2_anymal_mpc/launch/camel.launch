@@ -1,0 +1,8 @@
+<launch>
+
+  <include file="$(find ocs2_anymal_mpc)/launch/mpc.launch">
+   <arg name="robot_name"           value="camel"/>
+   <arg name="config_name"          value="c_series"/>
+  </include>
+
+</launch>

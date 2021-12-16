@@ -25,9 +25,9 @@
     </include>
   </group>
 
-  <!-- Load chip description -->
-  <group if="$(eval arg('robot_name') == 'chip')">
-    <include file="$(find anymal_chip_rsl)/launch/load_urdf.launch">
+  <!-- Load camel description -->
+  <group if="$(eval arg('robot_name') == 'camel')">
+    <include file="$(find anymal_camel_rsl)/launch/load_urdf.launch">
         <arg name="description_name"     value="$(arg description_name)"/>
     </include>
   </group>

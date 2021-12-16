@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,60 +31,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-const std::string TestConfiguration_r_filter::fileName = "loopshaping_r.conf";
-constexpr size_t TestConfiguration_r_filter::FULL_STATE_DIM;
-constexpr size_t TestConfiguration_r_filter::FULL_INPUT_DIM;
-constexpr size_t TestConfiguration_r_filter::SYSTEM_STATE_DIM;
-constexpr size_t TestConfiguration_r_filter::SYSTEM_INPUT_DIM;
-constexpr size_t TestConfiguration_r_filter::FILTER_STATE_DIM;
-constexpr size_t TestConfiguration_r_filter::FILTER_INPUT_DIM;
+LoopshapingTestConfiguration::LoopshapingTestConfiguration(const std::string& configName) {
+  // Load loopshaping definition
+  const std::string settingsFile = getAbsolutePathToConfigurationFile(configName);
+  loopshapingDefinition_ = loopshaping_property_tree::load(settingsFile);
 
-const std::string TestConfiguration_r_simple_filter::fileName = "loopshaping_r_simple.conf";
-constexpr size_t TestConfiguration_r_simple_filter::FULL_STATE_DIM;
-constexpr size_t TestConfiguration_r_simple_filter::FULL_INPUT_DIM;
-constexpr size_t TestConfiguration_r_simple_filter::SYSTEM_STATE_DIM;
-constexpr size_t TestConfiguration_r_simple_filter::SYSTEM_INPUT_DIM;
-constexpr size_t TestConfiguration_r_simple_filter::FILTER_STATE_DIM;
-constexpr size_t TestConfiguration_r_simple_filter::FILTER_INPUT_DIM;
+  systemStateDim_ = 1;  // Doesn't matter, just there to create a different size augmented state.
+  filterStateDim_ = loopshapingDefinition_->getInputFilter().getNumStates();
+  inputDim_ = loopshapingDefinition_->getInputFilter().getNumInputs();
 
-const std::string TestConfiguration_r_ballbot_filter::fileName = "loopshaping_r_ballbot.conf";
-constexpr size_t TestConfiguration_r_ballbot_filter::FULL_STATE_DIM;
-constexpr size_t TestConfiguration_r_ballbot_filter::FULL_INPUT_DIM;
-constexpr size_t TestConfiguration_r_ballbot_filter::SYSTEM_STATE_DIM;
-constexpr size_t TestConfiguration_r_ballbot_filter::SYSTEM_INPUT_DIM;
-constexpr size_t TestConfiguration_r_ballbot_filter::FILTER_STATE_DIM;
-constexpr size_t TestConfiguration_r_ballbot_filter::FILTER_INPUT_DIM;
+  // Set up state and input
+  t = 0.5;
+  const scalar_t eps = 1e-2;
+  getRandomStateInput(systemStateDim_, filterStateDim_, inputDim_, x_sys_, u_sys_, x_filter_, u_filter_, x_, u_);
+  getRandomStateInput(systemStateDim_, filterStateDim_, inputDim_, x_sys_disturbance_, u_sys_disturbance_, x_filter_disturbance_,
+                      u_filter_disturbance_, x_disturbance_, u_disturbance_, eps);
 
-const std::string TestConfiguration_s_filter::fileName = "loopshaping_s.conf";
-constexpr size_t TestConfiguration_s_filter::FULL_STATE_DIM;
-constexpr size_t TestConfiguration_s_filter::FULL_INPUT_DIM;
-constexpr size_t TestConfiguration_s_filter::SYSTEM_STATE_DIM;
-constexpr size_t TestConfiguration_s_filter::SYSTEM_INPUT_DIM;
-constexpr size_t TestConfiguration_s_filter::FILTER_STATE_DIM;
-constexpr size_t TestConfiguration_s_filter::FILTER_INPUT_DIM;
+  preComp_sys_.reset(new PreComputation);
+  preComp_.reset(new LoopshapingPreComputation(*preComp_sys_, loopshapingDefinition_));
+};
 
-const std::string TestConfiguration_s_simple_filter::fileName = "loopshaping_s_simple.conf";
-constexpr size_t TestConfiguration_s_simple_filter::FULL_STATE_DIM;
-constexpr size_t TestConfiguration_s_simple_filter::FULL_INPUT_DIM;
-constexpr size_t TestConfiguration_s_simple_filter::SYSTEM_STATE_DIM;
-constexpr size_t TestConfiguration_s_simple_filter::SYSTEM_INPUT_DIM;
-constexpr size_t TestConfiguration_s_simple_filter::FILTER_STATE_DIM;
-constexpr size_t TestConfiguration_s_simple_filter::FILTER_INPUT_DIM;
+void LoopshapingTestConfiguration::getRandomStateInput(size_t systemStateDim, size_t filterStateDim, size_t inputDim, vector_t& x_sys,
+                                                       vector_t& u_sys, vector_t& x_filter, vector_t& u_filter, vector_t& x, vector_t& u,
+                                                       scalar_t range) {
+  // Set random state
+  x.setRandom(systemStateDim + filterStateDim);
+  u.setRandom(inputDim);
 
-const std::string TestConfiguration_s_eliminate_filter::fileName = "loopshaping_s_eliminate.conf";
-constexpr size_t TestConfiguration_s_eliminate_filter::FULL_STATE_DIM;
-constexpr size_t TestConfiguration_s_eliminate_filter::FULL_INPUT_DIM;
-constexpr size_t TestConfiguration_s_eliminate_filter::SYSTEM_STATE_DIM;
-constexpr size_t TestConfiguration_s_eliminate_filter::SYSTEM_INPUT_DIM;
-constexpr size_t TestConfiguration_s_eliminate_filter::FILTER_STATE_DIM;
-constexpr size_t TestConfiguration_s_eliminate_filter::FILTER_INPUT_DIM;
+  // Scale the randomness
+  x *= range;
+  u *= range;
 
-const std::string TestConfiguration_s_simple_eliminate_filter::fileName = "loopshaping_s_simple_eliminate.conf";
-constexpr size_t TestConfiguration_s_simple_eliminate_filter::FULL_STATE_DIM;
-constexpr size_t TestConfiguration_s_simple_eliminate_filter::FULL_INPUT_DIM;
-constexpr size_t TestConfiguration_s_simple_eliminate_filter::SYSTEM_STATE_DIM;
-constexpr size_t TestConfiguration_s_simple_eliminate_filter::SYSTEM_INPUT_DIM;
-constexpr size_t TestConfiguration_s_simple_eliminate_filter::FILTER_STATE_DIM;
-constexpr size_t TestConfiguration_s_simple_eliminate_filter::FILTER_INPUT_DIM;
+  // Retreive system and filter state
+  x_sys = loopshapingDefinition_->getSystemState(x);
+  u_sys = loopshapingDefinition_->getSystemInput(x, u);
+  x_filter = loopshapingDefinition_->getFilterState(x);
+  u_filter = loopshapingDefinition_->getFilteredInput(x, u);
+}
 
 }  // namespace ocs2

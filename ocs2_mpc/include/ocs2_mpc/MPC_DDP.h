@@ -30,7 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ddp/GaussNewtonDDP.h>
+#include <ocs2_ddp/ILQR.h>
+#include <ocs2_ddp/SLQ.h>
 
 #include "ocs2_mpc/MPC_BASE.h"
 
@@ -39,7 +40,7 @@ namespace ocs2 {
 /**
  * This is an MPC implementation with DDP (SLQ or ILQR) optimal control solvers.
  */
-class MPC_DDP : public MPC_BASE {
+class MPC_DDP final : public MPC_BASE {
  public:
   /**
    * Constructor
@@ -51,19 +52,34 @@ class MPC_DDP : public MPC_BASE {
    * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
    */
   MPC_DDP(mpc::Settings mpcSettings, ddp::Settings ddpSettings, const RolloutBase& rollout,
-          const OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
+          const OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
+      : MPC_BASE(std::move(mpcSettings)) {
+    switch (ddpSettings.algorithm_) {
+      case ddp::Algorithm::SLQ:
+        ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
+        break;
+      case ddp::Algorithm::ILQR:
+        ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
+        break;
+      default:
+        throw std::runtime_error("Undefined ddp::Algorithm type!");
+    }
+  }
 
   /** Default destructor. */
   ~MPC_DDP() override = default;
 
   GaussNewtonDDP* getSolverPtr() override { return ddpPtr_.get(); }
-
   const GaussNewtonDDP* getSolverPtr() const override { return ddpPtr_.get(); }
 
- protected:
-  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
-
  private:
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
+    if (settings().coldStart_) {
+      ddpPtr_->reset();
+    }
+    ddpPtr_->run(initTime, initState, finalTime);
+  }
+
   std::unique_ptr<GaussNewtonDDP> ddpPtr_;
 };
 

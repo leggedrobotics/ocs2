@@ -55,11 +55,6 @@ namespace ocs2 {
 GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
                                const Initializer& initializer)
     : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
-  // infeasible learning rate adjustment scheme
-  if (!numerics::almost_ge(ddpSettings_.lineSearch_.maxStepLength_, ddpSettings_.lineSearch_.minStepLength_)) {
-    throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
-  }
-
   // Dynamics, Constraints, derivatives, and cost
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
   initializerRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
@@ -166,28 +161,26 @@ std::string GaussNewtonDDP::getBenchmarkingInfo() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void GaussNewtonDDP::reset() {
-  totalNumIterations_ = 0;
-
-  performanceIndexHistory_.clear();
-
-  avgTimeStepFP_ = 0.0;
-  avgTimeStepBP_ = 0.0;
-
-  // reset search strategy
+  // search strategy
   searchStrategyPtr_->reset();
+
+  // very important, these are variables that are carried in between iterations
+  nominalPrimalData_.clear();
+  optimizedPrimalData_.clear();
+  cachedPrimalData_.clear();
+  dualData_.clear();
+  cachedDualData_.clear();
 
   // initialize Augmented Lagrangian parameters
   initializeConstraintPenalties();
 
-  // very important, these are variables that are carried in between iterations
-  optimizedPrimalData_.clear();
-  nominalPrimalData_.clear();
-  dualData_.clear();
+  // performance measures
+  avgTimeStepFP_ = 0.0;
+  avgTimeStepBP_ = 0.0;
+  totalNumIterations_ = 0;
+  performanceIndexHistory_.clear();
 
-  cachedPrimalData_.clear();
-  cachedDualData_.clear();
-
-  // reset timers
+  // benchmarking timers
   initializationTimer_.reset();
   linearQuadraticApproximationTimer_.reset();
   backwardPassTimer_.reset();

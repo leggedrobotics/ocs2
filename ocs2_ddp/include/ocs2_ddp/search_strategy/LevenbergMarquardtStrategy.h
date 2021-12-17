@@ -100,7 +100,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
     size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
   };
 
-  levenberg_marquardt::Settings settings_;
+  const levenberg_marquardt::Settings settings_;
   LevenbergMarquardtModule levenbergMarquardtModule_;
 
   RolloutBase& rolloutRef_;

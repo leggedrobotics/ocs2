@@ -287,7 +287,7 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
       spreadingValueIndices_.push_back(oldPreEventIndex);
     }
 
-    if (newPostEventIndices[j] != 0 && newPostEventIndices[j] != oldTimeTrajectory.size()) {
+    if (newPostEventIndices[j] != 0 && newPostEventIndices[j] < eraseFromIndex_) {
       updatedPostEventIndices_.push_back(newPostEventIndices[j]);
       updatedMatchedventTimes_.push_back(newMatchedEventTimes[j]);
     }
@@ -312,6 +312,7 @@ void TrajectorySpreading::adjustTimings(scalar_array_t& timeTrajectory, size_arr
   postEventIndices = updatedPostEventIndices_;
 
   for (size_t i = 0; i < updatedPostEventIndices_.size(); i++) {
+    assert(updatedPostEventIndices_[i] < timeTrajectory.size());
     constexpr auto eps = numeric_traits::weakEpsilon<scalar_t>();
     timeTrajectory[updatedPostEventIndices_[i] - 1] = updatedMatchedventTimes_[i];
     timeTrajectory[updatedPostEventIndices_[i]] = std::min(updatedMatchedventTimes_[i] + eps, timeTrajectory.back());

@@ -83,7 +83,7 @@ class TrajectorySpreadingTest : public testing::Test {
     controllerPtr.reset(new ocs2::LinearController(cntTimeStamp, uff, k));
 
     // trajectory spreading
-    trajectorySpreadingPtr.reset(new ocs2::TrajectorySpreading(true));
+    trajectorySpreadingPtr.reset(new ocs2::TrajectorySpreading(false));
   }
 
   /******************************************************************************************************/
@@ -184,7 +184,8 @@ class TrajectorySpreadingTest : public testing::Test {
       const ocs2::scalar_t finalTime = spreadResult.timeTrajectory.back();
 
       const auto startEventItr = std::upper_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), initTime);
-      const auto endEventItr = std::upper_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), finalTime);
+      // If the last time coincides with the event time, the time point is dropped because the it cannot be pre-event.
+      const auto endEventItr = std::lower_bound(updatedModeSchedule.eventTimes.begin(), updatedModeSchedule.eventTimes.end(), finalTime);
 
       ocs2::size_array_t postEventIndice(endEventItr - startEventItr);
       std::transform(startEventItr, endEventItr, postEventIndice.begin(), [&spreadResult](ocs2::scalar_t time) {
@@ -453,7 +454,7 @@ TEST_F(TrajectorySpreadingTest, in_to_out_front_1) {
   const ocs2::size_array_t updatedModeSequence{0, 1, 2, 3, 1};
 
   const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{1.3, 2.4};
-  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period, 0);
+  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
 }
 
 TEST_F(TrajectorySpreadingTest, in_to_out_front_2) {
@@ -464,7 +465,7 @@ TEST_F(TrajectorySpreadingTest, in_to_out_front_2) {
   const ocs2::size_array_t updatedModeSequence{1, 2, 3, 1};
 
   const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{1.3, 2.4};
-  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period, 0);
+  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
 }
 
 TEST_F(TrajectorySpreadingTest, in_to_out_back_1) {
@@ -475,7 +476,7 @@ TEST_F(TrajectorySpreadingTest, in_to_out_back_1) {
   const ocs2::size_array_t updatedModeSequence{0, 1, 2, 3, 1};
 
   const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{1.3, 2};
-  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period, 0);
+  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
 }
 
 TEST_F(TrajectorySpreadingTest, in_to_out_back_2) {
@@ -486,7 +487,7 @@ TEST_F(TrajectorySpreadingTest, in_to_out_back_2) {
   const ocs2::size_array_t updatedModeSequence{1, 2, 3, 1};
 
   const std::pair<ocs2::scalar_t, ocs2::scalar_t> period{1.3, 2.4};
-  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period, 0);
+  checkResults({eventTimes, modeSequence}, {updatedEventTimes, updatedModeSequence}, period);
 }
 
 TEST_F(TrajectorySpreadingTest, anymal_test) {

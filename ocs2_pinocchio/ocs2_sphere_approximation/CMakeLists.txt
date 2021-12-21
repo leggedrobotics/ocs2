@@ -119,6 +119,7 @@ catkin_add_gtest(${PACKAGE_NAME}_test
 
 target_link_libraries(${PACKAGE_NAME}_test
   gtest_main
+  roslib
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/multibody/geometry.hpp>
 
 #include <ocs2_pinocchio_interface/urdf.h>
 #include <ocs2_sphere_approximation/PinocchioSphereKinematics.h>

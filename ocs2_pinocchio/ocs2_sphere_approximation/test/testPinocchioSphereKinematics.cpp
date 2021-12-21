@@ -45,8 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using vector3_t = Eigen::Matrix<ocs2::scalar_t, 3, 1>;
 
-//#include "ManipulatorArmUrdf.h"
-
 template <typename SCALAR>
 class DummyMapping final : public ocs2::PinocchioStateInputMapping<SCALAR> {
  public:
@@ -73,18 +71,13 @@ class TestSphereKinematics : public ::testing::Test {
 
   TestSphereKinematics() {
     const std::string urdfFile = ros::package::getPath("ocs2_sphere_approximation") + "/urdf/dummy.urdf";
-    std::cerr << "urdfFile string created\n";
     pinocchioInterfacePtr.reset(new ocs2::PinocchioInterface(ocs2::getPinocchioInterfaceFromUrdfFile(urdfFile)));
-    std::cerr << "PinocchioInterfacePtr reset\n";
     pinocchioSphereInterfacePtr.reset(new ocs2::PinocchioSphereInterface(
         *pinocchioInterfacePtr, {"base", "shoulder", "upperarm", "forearm"}, {0.20, 0.10, 0.05, 0.05}, 0.7));
-    std::cerr << "PinocchioSphereInterfacePtr reset\n";
     sphereKinematicsPtr.reset(new ocs2::PinocchioSphereKinematics(*pinocchioSphereInterfacePtr, pinocchioMapping));
-    std::cerr << "PinocchioKinematics ptr reset\n";
     sphereKinematicsCppAdPtr.reset(new ocs2::PinocchioSphereKinematicsCppAd(
         *pinocchioInterfacePtr, *pinocchioSphereInterfacePtr, pinocchioMappingCppAd, pinocchioInterfacePtr->getModel().njoints, 0,
         "pinocchio_sphere_kinematics", "/tmp/ocs2", true, true));
-    std::cerr << "PinocchioKinematicsCppAd ptr reset\n";
 
     x.resize(pinocchioInterfacePtr->getModel().njoints);
     // taken form config/mpc/task.info
@@ -154,8 +147,6 @@ TEST_F(TestSphereKinematics, testKinematicsPosition) {
   sphereKinematicsPtr->setPinocchioInterface(*pinocchioInterfacePtr);
   const vector3_t spherePos = sphereKinematicsPtr->getPosition(x)[0];
   const ocs2::VectorFunctionLinearApproximation spherePosLin = sphereKinematicsPtr->getPositionLinearApproximation(x)[0];
-  std::cerr << "spherePos =\n" << spherePos.transpose() << "\n";
-  std::cerr << "spherePosLin.f =\n" << spherePosLin.f << "\n";
 
   EXPECT_TRUE(spherePos.isApprox(spherePos));
   EXPECT_TRUE(spherePos.isApprox(spherePosLin.f));

@@ -100,6 +100,7 @@ class TrajectorySpreading {
   bool debugCaching_ = false;
 
   size_t eraseFromIndex_;
+  std::pair<size_t, size_t> keepEventDataInInterval_;
 
   size_array_t beginIndices_;
   size_array_t endIndices_;
@@ -113,7 +114,10 @@ class TrajectorySpreading {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename T>
-void TrajectorySpreading::adjustEventsArray(std::vector<T>& trajectory) const {}
+void TrajectorySpreading::adjustEventsArray(std::vector<T>& trajectory) const {
+  trajectory.erase(trajectory.begin() + keepEventDataInInterval_.second, trajectory.end());
+  trajectory.erase(trajectory.begin(), trajectory.begin() + keepEventDataInInterval_.first);
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

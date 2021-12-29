@@ -46,18 +46,17 @@ class TrajectorySpreading {
   ~TrajectorySpreading() = default;
 
   /**
-   * Sets the class before trajectory spreading.
-   * @param [in] modeSchedule: The mode schedule associated to the trajectories which should be adjusted.
-   * @param [in] updatedModeSchedule: The new mode schedule.
-   * @param [in] updatedInitialTime: The time from which adjustment should take place.
-   * @param [in] timeTrajectory: The time stamp of the trajectories.
-   * @param [in] postEventIndicesStockPtr: The post event indices of the trajectories.
+   * Initialize trajectory spreading strategy. Run it before invoking other member functions
+   *
+   * @param oldModeSchedule: The old mode schedule associated to the trajectories which should be adjusted.
+   * @param newModeSchedule: The new mode schedule that should be adpted to.
+   * @param oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
    */
-  void set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory,
-           const size_array_t& oldPostEventIndices);
+  void set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule, const scalar_array_t& oldTimeTrajectory);
 
   /**
    * Adjust continuous-time trajectory.
+   *
    * @tparam data type.
    * @param trajectory: trajectory for rectification.
    */
@@ -66,6 +65,7 @@ class TrajectorySpreading {
 
   /**
    * Adjust event-time data.
+   *
    * @tparam data type.
    * @param trajectory: trajectory for rectification.
    */
@@ -74,8 +74,9 @@ class TrajectorySpreading {
 
   /**
    * Adjust time stamp of the trajectories and post event indices of the trajectories.
+   *
    * @param [out] timeTrajectory: The time stamp of the trajectories.
-   * @param [out] postEventIndicesStockPtr: The post event indices of the trajectories.
+   * @param [out] postEventIndices: The post event indices of the trajectories.
    */
   void adjustTimings(scalar_array_t& timeTrajectory, size_array_t& postEventIndices) const;
 
@@ -90,8 +91,23 @@ class TrajectorySpreading {
     return std::distance(timeTrajectory.begin(), std::lower_bound(timeTrajectory.begin(), timeTrajectory.end(), queryTime));
   }
 
-  void computeSpreadingStrategy(const scalar_array_t& timeTrajectory, const scalar_array_t& matchedEventTimes,
-                                const scalar_array_t& matchedUpdatedEventTimes);
+  /**
+   * Computing spreading strategy based on the correspondence between the old event time and the new event time.
+   *
+   * @param oldTimeTrajectory: The old time trajectories that is associated with the old mode schedule.
+   * @param oldMatchedEventTimes: The old event time that need adjustment potentially.
+   * @param newMatchedEventTimes: The corresponding new event time.
+   */
+  void computeSpreadingStrategy(const scalar_array_t& oldTimeTrajectory, const scalar_array_t& oldMatchedEventTimes,
+                                const scalar_array_t& newMatchedEventTimes);
+
+  /**
+   * Finding post event indices of an array of event time for the given time trajectory.
+   *
+   * @param eventTimes: An array of event time.
+   * @param timeTrajectory: Time trajectory.
+   * @return An array containing post event indices of the given event time.
+   */
   size_array_t findPostEventIndices(const scalar_array_t& eventTimes, const scalar_array_t& timeTrajectory) const;
 
   /***********
@@ -99,8 +115,8 @@ class TrajectorySpreading {
    ***********/
   bool debugCaching_ = false;
 
-  size_t eraseFromIndex_;
-  std::pair<size_t, size_t> keepEventDataInInterval_;
+  size_t eraseFromIndex_;                             /**< The first index to erase **/
+  std::pair<size_t, size_t> keepEventDataInInterval_; /**< Keep event data within [first, second) **/
 
   size_array_t beginIndices_;
   size_array_t endIndices_;
@@ -115,6 +131,7 @@ class TrajectorySpreading {
 /******************************************************************************************************/
 template <typename T>
 void TrajectorySpreading::adjustEventsArray(std::vector<T>& trajectory) const {
+  // erase tail first to avoid extra copy
   trajectory.erase(trajectory.begin() + keepEventDataInInterval_.second, trajectory.end());
   trajectory.erase(trajectory.begin(), trajectory.begin() + keepEventDataInInterval_.first);
 }

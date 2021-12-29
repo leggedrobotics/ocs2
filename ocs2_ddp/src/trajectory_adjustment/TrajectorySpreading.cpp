@@ -49,7 +49,7 @@ std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& ind) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSchedule& newModeSchedule,
-                              const scalar_array_t& oldTimeTrajectory, const size_array_t& oldPostEventIndices) {
+                              const scalar_array_t& oldTimeTrajectory) {
   // step 1: What modes do the original primal solution contain?
   const scalar_t oldInitTime = oldTimeTrajectory.front();
   const scalar_t oldFinalTime = oldTimeTrajectory.back();
@@ -277,10 +277,10 @@ void TrajectorySpreading::set(const ModeSchedule& oldModeSchedule, const ModeSch
 /******************************************************************************************************/
 void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTimeTrajectory, const scalar_array_t& oldMatchedEventTimes,
                                                    const scalar_array_t& newMatchedEventTimes) {
-  // finds the indices of the event times
+  // finds the indices of the post event time
   size_array_t oldPostEventIndices = findPostEventIndices(oldMatchedEventTimes, oldTimeTrajectory);
 
-  // finds the indices of the update event times
+  // finds the indices of the new post event time
   size_array_t newPostEventIndices = findPostEventIndices(newMatchedEventTimes, oldTimeTrajectory);
 
   // spreading periods and value indices
@@ -288,12 +288,20 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
   endIndices_.clear();
   spreadingValueIndices_.clear();
 
-  // newPostEventIndices_.clear();
-  // newMatchedventTimes_.clear();
   for (size_t j = 0; j < oldPostEventIndices.size(); j++) {
     const size_t oldPreEventIndex = oldPostEventIndices[j] - 1;
 
-    // backward
+    /**
+     * Backward spreading
+     *
+     * |- - - - - - - - * - - - - - -|  Old event
+     *           _______|
+     *          /
+     * |- -  - * - |(erase from here)| New event
+     *
+     *
+     * The end index should be smaller or equal to the index of the first erased time stamp
+     */
     if (newPostEventIndices[j] < oldPostEventIndices[j]) {
       const size_t endIndex = std::min(oldPostEventIndices[j], eraseFromIndex_);
       beginIndices_.push_back(newPostEventIndices[j]);
@@ -301,7 +309,20 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
       spreadingValueIndices_.push_back(oldPostEventIndices[j]);
 
     }
-    // forward
+
+    /**
+     * Forward spreading
+     *
+     * |- * - - (*) - - * - - - -|  Old event
+     *    |      |__________
+     *    |_________        |
+     *              |       |
+     * |- - - - - - * - - -(*) - - | New event
+     *
+     *
+     * The begin index should be larger than the previous new event index when overlapping occurs in the forward spreadind case. Otherwise
+     * the current mode will override the previous mode resulting in wrong mode sequence.
+     */
     else if (newPostEventIndices[j] > oldPostEventIndices[j]) {
       const size_t beginIndex = (j == 0 ? oldPostEventIndices[j] : std::max(oldPostEventIndices[j], newPostEventIndices[j - 1]));
       beginIndices_.push_back(beginIndex);
@@ -309,6 +330,8 @@ void TrajectorySpreading::computeSpreadingStrategy(const scalar_array_t& oldTime
       spreadingValueIndices_.push_back(oldPreEventIndex);
     }
 
+    // the first index can be post event index but it is meaningless to store it in the indices array.
+    // similarly, the last index can be pre event index but it is meaningless to store it in the indices array.
     if (newPostEventIndices[j] != 0 && newPostEventIndices[j] < eraseFromIndex_) {
       updatedPostEventIndices_.push_back(newPostEventIndices[j]);
       updatedMatchedventTimes_.push_back(newMatchedEventTimes[j]);

@@ -111,7 +111,7 @@ class TrajectorySpreadingTest : public testing::Test {
   /******************************************************************************************************/
   Result spreadRollout(const ocs2::ModeSchedule& modeSchedule, const ocs2::ModeSchedule& updatedModeSchedule, const Result& in) {
     // set
-    trajectorySpreadingPtr->set(modeSchedule, updatedModeSchedule, in.timeTrajectory, in.postEventsIndeces);
+    trajectorySpreadingPtr->set(modeSchedule, updatedModeSchedule, in.timeTrajectory);
 
     Result out = in;
     trajectorySpreadingPtr->adjustTimings(out.timeTrajectory, out.postEventsIndeces);
@@ -207,7 +207,7 @@ class TrajectorySpreadingTest : public testing::Test {
     }
     // test postEventsIndeces end
 
-    // test timeTrajectory stateTrajectory
+    // test timeTrajectory & stateTrajectory
     // initial time should NOT be changed as long as the time trajectory is non-empty
     if (!spreadResult.timeTrajectory.empty()) {
       EXPECT_TRUE(std::abs(spreadResult.timeTrajectory.front() - period.first) < ocs2::numeric_traits::limitEpsilon<ocs2::scalar_t>());
@@ -216,31 +216,6 @@ class TrajectorySpreadingTest : public testing::Test {
     auto eventIndexActualItr = spreadResult.postEventsIndeces.begin();
     auto eventTimeReferenceInd = ocs2::lookup::findIndexInTimeArray(updatedModeSchedule.eventTimes, period.first);
     for (size_t k = 0; k < spreadResult.timeTrajectory.size(); k++) {
-      if (false) {
-        ocs2::scalar_t diffTime = std::abs(result.timeTrajectory[k] - spreadResult.timeTrajectory[k]);
-        ocs2::scalar_t diffState = (result.stateTrajectory[k] - spreadResult.stateTrajectory[k]).norm();
-        if (diffTime != 0 || diffState != 0) {
-          std::cerr << "\n";
-
-          std::cerr << "\033[0;33m[" << std::setw(2) << k << "]\033[0m";
-
-          std::cerr << "Diff(Time, state): ";
-          if (diffTime != 0) {
-            std::cerr << "\033[0;31m";
-          }
-          std::cerr << diffTime << "\033[0m, ";
-
-          if (diffState != 0) {
-            std::cerr << "\033[0;31m";
-          }
-          std::cerr << diffState << "\033[0m   ";
-
-          std::cerr << "Time:      " << spreadResult.timeTrajectory[k] << "\n";
-          const auto nextIndex = std::min(k + 1, result.timeTrajectory.size() - 1);
-          std::cerr << "Next Time in the original trajectory:           " << result.timeTrajectory[nextIndex] << "\n";
-        }
-      }
-
       // time should be monotonic sequence
       if (k > 0) {
         EXPECT_TRUE(spreadResult.timeTrajectory[k - 1] < spreadResult.timeTrajectory[k]);
@@ -262,6 +237,7 @@ class TrajectorySpreadingTest : public testing::Test {
       EXPECT_TRUE(updatedModeSchedule.modeAtTime(spreadResult.timeTrajectory[k]) == spreadResult.modeTrajectory[k]);
     }  // end of k loop
 
+    // test postEventsIndeces
     EXPECT_TRUE(spreadResult.postEventsIndeces.size() == spreadResult.eventDataArray.size());
     for (int k = 0; k < spreadResult.postEventsIndeces.size(); k++) {
       const size_t preEventIndex = spreadResult.postEventsIndeces[k] - 1;

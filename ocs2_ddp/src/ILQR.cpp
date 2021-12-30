@@ -47,6 +47,8 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
 
+  sensitivityDiscretizer_ = selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+
   for (size_t i = 0; i < settings().nThreads_; i++) {
     bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
@@ -93,7 +95,8 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
       }
 
       if (!numerics::almost_eq(timeStep, 0.0)) {
-        discreteLQWorker(taskId, timeStep, continuousTimeModelData, modelDataTrajectory[timeIndex]);
+        discreteLQWorker(*optimalControlProblemStock_[taskId].dynamicsPtr, timeTrajectory[timeIndex], stateTrajectory[timeIndex],
+                         inputTrajectory[timeIndex], timeStep, continuousTimeModelData, modelDataTrajectory[timeIndex]);
       } else {
         modelDataTrajectory[timeIndex] = continuousTimeModelData;
       }
@@ -106,13 +109,12 @@ void ILQR::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData) {
+void ILQR::discreteLQWorker(ocs2::SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input,
+                            scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData) {
   /*
    * linearize system dynamics
    */
-  modelData.dynamics_.dfdx = matrix_t::Identity(continuousTimeModelData.stateDim_, continuousTimeModelData.stateDim_) +
-                             continuousTimeModelData.dynamics_.dfdx * timeStep;
-  modelData.dynamics_.dfdu = continuousTimeModelData.dynamics_.dfdu * timeStep;
+  modelData.dynamics_ = sensitivityDiscretizer_(system, time, state, input, timeStep);
   modelData.dynamics_.f.setZero(continuousTimeModelData.stateDim_);
 
   /*

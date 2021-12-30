@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/integration/SensitivityIntegrator.h>
 
 #include "GaussNewtonDDP.h"
 #include "riccati_equations/DiscreteTimeRiccatiEquations.h"
@@ -74,11 +75,16 @@ class ILQR : public GaussNewtonDDP {
   /**
    * Calculates the discrete-time LQ approximation from the continuous-time LQ approximation.
    *
-   * @param [in] workerIndex: Working agent index.
-   * @param [in] continuousTimeModelData: Time partition index.
-   * @param [out] modelData: Time index in the partition.
+   * @param [in] system: system dynamic.
+   * @param [in] time: time t_k.
+   * @param [in] state: state x_k.
+   * @param [in] input: input u_k.
+   * @param [in] timeStep: Time step between the x_{k} and x_{k+1}.
+   * @param [in] continuousTimeModelData: continuous time model data.
+   * @param [out] modelData: Discretized mode data.
    */
-  void discreteLQWorker(size_t workerIndex, scalar_t timeStep, const ModelData& continuousTimeModelData, ModelData& modelData);
+  void discreteLQWorker(ocs2::SystemDynamicsBase& system, scalar_t time, const vector_t& state, const vector_t& input, scalar_t timeStep,
+                        const ModelData& continuousTimeModelData, ModelData& modelData);
 
   /****************
    *** Variables **
@@ -86,6 +92,7 @@ class ILQR : public GaussNewtonDDP {
   matrix_array_t projectedKmTrajectoryStock_;  // projected feedback
   vector_array_t projectedLvTrajectoryStock_;  // projected feedforward
 
+  DynamicsSensitivityDiscretizer sensitivityDiscretizer_;
   std::vector<std::unique_ptr<DiscreteTimeRiccatiEquations>> riccatiEquationsPtrStock_;
 };
 

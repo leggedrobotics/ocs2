@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 
+#include <ocs2_ddp/DDP_HelperFunctions.h>
 #include <ocs2_ddp/HessianCorrection.h>
 #include <ocs2_ddp/search_strategy/LineSearchStrategy.h>
 
@@ -40,24 +41,22 @@ namespace ocs2 {
 LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
                                        std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                                        std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock,
-                                       MultidimensionalPenalty& ineqConstrPenaltyRef,
                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       threadPoolRef_(threadPoolRef),
       rolloutRefStock_(std::move(rolloutRefStock)),
       optimalControlProblemRefStock_(std::move(optimalControlProblemRefStock)),
-      ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
       meritFunc_(std::move(meritFunc)),
-      primalDataStock_(threadPoolRef.numThreads() + 1) {
+      temporaryMemories_(threadPoolRef.numThreads() + 1) {
   // infeasible learning rate adjustment scheme
   if (!numerics::almost_ge(settings_.maxStepLength_, settings_.minStepLength_)) {
     throw std::runtime_error("The maximum learning rate is smaller than the minimum learning rate.");
   }
 
   // Initialize controller
-  for (auto& primalData : primalDataStock_) {
-    primalData.primalSolution.controllerPtr_.reset(new LinearController);
+  for (auto& temporaryMemory : temporaryMemories_) {
+    temporaryMemory.primalSolution.controllerPtr_.reset(new LinearController);
   }
 }
 
@@ -66,12 +65,7 @@ LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, l
 /******************************************************************************************************/
 bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
                              const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-                             PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) {
-  // initialize time and state variables
-  initState_ = initState;
-  initTime_ = initTime;
-  finalTime_ = finalTime;
-
+                             PrimalSolution& dstPrimalSolution, Metrics& metrics, scalar_t& avgTimeStepFP) {
   // number of line search iterations (the if statements order is important)
   size_t maxNumOfLineSearches = 0;
   if (numerics::almost_eq(settings_.minStepLength_, settings_.maxStepLength_)) {
@@ -89,14 +83,23 @@ bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState,
   constexpr scalar_t stepLength = 0.0;
   try {
     // perform a rollout
-    const auto avgTimeStep = rolloutTrajectory(rolloutRefStock_[taskId], modeSchedule, controller, dstPrimalData);
-    scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(optimalControlProblemRefStock_[taskId], dstPrimalData, heuristicsValue);
-
+    const auto avgTimeStep =
+        rolloutTrajectory(rolloutRefStock_[taskId], initTime, initState, finalTime, modeSchedule, controller, dstPrimalSolution);
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
+    // debug print
+    if (baseSettings_.debugPrintRollout) {
+      std::cerr << "\n++++++++++++++++++++++++++++++\n";
+      std::cerr << "\n++++++++++++++++++++++++++++++\n";
+      RolloutBase::display(dstPrimalSolution.timeTrajectory_, dstPrimalSolution.postEventIndices_, dstPrimalSolution.stateTrajectory_,
+                           &dstPrimalSolution.inputTrajectory_);
+    }
 
-    performanceIndex = calculateRolloutPerformanceIndex(ineqConstrPenaltyRef_, dstPrimalData, heuristicsValue);
+    // rollout cost and constraints
+    computeRolloutMetrics(optimalControlProblemRefStock_[taskId], dstPrimalSolution, metrics);
+
+    performanceIndex = computeRolloutPerformanceIndex(dstPrimalSolution.timeTrajectory_, metrics);
+
     // calculates rollout merit
     performanceIndex.merit = meritFunc_(performanceIndex);
 
@@ -118,7 +121,7 @@ bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState,
 
   // initialize lineSearchModule
   lineSearchModule_.baselineMerit = performanceIndex.merit;
-  lineSearchModule_.initControllerUpdateIS = calculateControllerUpdateIS(controller);
+  lineSearchModule_.initControllerUpdateIS = computeControllerUpdateIS(controller);
   lineSearchModule_.modeSchedulePtr = &modeSchedule;
   lineSearchModule_.initController = controller;  // this will serve to initialize the workers
   lineSearchModule_.alphaExpNext = 0;
@@ -126,11 +129,12 @@ bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState,
 
   lineSearchModule_.stepLengthStar = 0.0;
   lineSearchModule_.performanceIndexStarPtr = &performanceIndex;
-  lineSearchModule_.primalDataStarPtr = &dstPrimalData;
+  lineSearchModule_.primalSolutionStarPtr = &dstPrimalSolution;
+  lineSearchModule_.metricsStarPtr = &metrics;
   lineSearchModule_.controllerStarPtr = &controller;
 
   nextTaskId_ = 0;
-  auto task = [this](int) { lineSearchTask(); };
+  auto task = [&](int) { lineSearchTask(initTime, initState, finalTime); };
   threadPoolRef_.runParallel(task, threadPoolRef_.numThreads());
 
   // revitalize all integrators
@@ -151,14 +155,15 @@ bool LineSearchStrategy::run(const scalar_t initTime, const vector_t& initState,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LineSearchStrategy::lineSearchTask() {
-  size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+void LineSearchStrategy::lineSearchTask(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime) {
+  // assign task ID (atomic)
+  size_t taskId = nextTaskId_++;
 
-  PrimalDataContainer& primalData = primalDataStock_[taskId];
-  // local search forward simulation's variables
-  PerformanceIndex performanceIndex;
-  // clear buffer
-  primalData.clear();
+  auto& problem = optimalControlProblemRefStock_[taskId];
+  auto& temporaryMemory = temporaryMemories_[taskId];
+  auto& performanceIndex = temporaryMemory.performanceIndex;
+  auto& primalSolution = temporaryMemory.primalSolution;
+  auto& metrics = temporaryMemory.metrics;
 
   while (true) {
     size_t alphaExp = lineSearchModule_.alphaExpNext++;
@@ -187,21 +192,21 @@ void LineSearchStrategy::lineSearchTask() {
 
     // modifying uff by local increments
     LinearController controller = lineSearchModule_.initController;
-
     for (size_t k = 0; k < controller.size(); k++) {
       controller.biasArray_[k] += stepLength * controller.deltaBiasArray_[k];
     }
 
     try {
       // perform a rollout
-      const auto avgTimeStep = rolloutTrajectory(rolloutRefStock_[taskId], *lineSearchModule_.modeSchedulePtr, controller, primalData);
-      scalar_t heuristicsValue = 0.0;
-      rolloutCostAndConstraints(optimalControlProblemRefStock_[taskId], primalData, heuristicsValue);
-
+      const auto avgTimeStep = rolloutTrajectory(rolloutRefStock_[taskId], initTime, initState, finalTime,
+                                                 *lineSearchModule_.modeSchedulePtr, controller, primalSolution);
       // compute average time step of forward rollout
       avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
 
-      performanceIndex = calculateRolloutPerformanceIndex(ineqConstrPenaltyRef_, primalData, heuristicsValue);
+      // rollout cost and constraints
+      computeRolloutMetrics(problem, primalSolution, metrics);
+
+      performanceIndex = computeRolloutPerformanceIndex(primalSolution.timeTrajectory_, metrics);
 
       // calculates rollout merit
       performanceIndex.merit = meritFunc_(performanceIndex);
@@ -240,7 +245,8 @@ void LineSearchStrategy::lineSearchTask() {
       if (armijoCondition && stepLength > lineSearchModule_.stepLengthStar) {
         lineSearchModule_.stepLengthStar = stepLength;
         *lineSearchModule_.performanceIndexStarPtr = performanceIndex;
-        lineSearchModule_.primalDataStarPtr->swap(primalData);
+        lineSearchModule_.primalSolutionStarPtr->swap(primalSolution);
+        swap(*lineSearchModule_.metricsStarPtr, metrics);
         swap(*lineSearchModule_.controllerStarPtr, controller);
 
         // whether to stop all other thread.

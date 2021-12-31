@@ -88,13 +88,16 @@ struct ModelData {
   ScalarFunctionQuadraticApproximation cost_;
 
   // state equality constraints
-  VectorFunctionLinearApproximation stateEqConstr_;
+  ScalarFunctionQuadraticApproximation stateEqConstr_;
 
   // state-input equality constraints
   VectorFunctionLinearApproximation stateInputEqConstr_;
 
-  // inequality constraints
-  VectorFunctionQuadraticApproximation ineqConstr_;
+  // state inequality constraints
+  ScalarFunctionQuadraticApproximation stateIneqConstr_;
+
+  // state-input inequality constraints
+  ScalarFunctionQuadraticApproximation stateInputIneqConstr_;
 };
 
 std::ostream& operator<<(std::ostream& out, const ModelData& data);

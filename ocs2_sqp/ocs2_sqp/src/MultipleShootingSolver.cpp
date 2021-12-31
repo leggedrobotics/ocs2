@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
 
 #include "ocs2_sqp/MultipleShootingInitialization.h"
 #include "ocs2_sqp/MultipleShootingTranscription.h"

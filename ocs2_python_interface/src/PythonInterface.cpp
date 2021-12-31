@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_python_interface/PythonInterface.h"
 
 #include <ocs2_core/misc/LinearAlgebra.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
+#include <ocs2_core/penalties/MultidimensionalPenalty.h>
 
 #include <ocs2_oc/approximate_model/LinearQuadraticApproximator.h>
 
@@ -136,7 +136,7 @@ scalar_t PythonInterface::cost(scalar_t t, Eigen::Ref<const vector_t> x, Eigen::
 
   if (penalty_ != nullptr) {
     const auto h = problem_.inequalityConstraintPtr->getValue(t, x, u, preComputation);
-    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    MultidimensionalPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     L += softConstraintPenalty.getValue(t, h);
   }
 
@@ -160,7 +160,7 @@ ScalarFunctionQuadraticApproximation PythonInterface::costQuadraticApproximation
 
   if (penalty_ != nullptr) {
     const auto h = problem_.inequalityConstraintPtr->getQuadraticApproximation(t, x, u, preComputation);
-    SoftConstraintPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
+    MultidimensionalPenalty softConstraintPenalty(std::unique_ptr<PenaltyBase>(penalty_->clone()));
     cost += softConstraintPenalty.getQuadraticApproximation(t, h);
   }
 

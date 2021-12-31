@@ -82,14 +82,12 @@
 #include <ocs2_core/model_data/ModelDataLinearInterpolation.h>
 
 // soft_constraint
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
-#include <ocs2_core/soft_constraint/penalties/QuadraticPenalty.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
-#include <ocs2_core/soft_constraint/penalties/SmoothAbsolutePenalty.h>
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
+
+// penalties
+#include <ocs2_core/penalties/MultidimensionalPenalty.h>
+#include <ocs2_core/penalties/Penalties.h>
 
 // dummy target for clang toolchain
 int main() {

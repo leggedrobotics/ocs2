@@ -134,14 +134,11 @@ add_library(${PROJECT_NAME}
   src/model_data/ModelData.cpp
   src/misc/LinearAlgebra.cpp
   src/misc/Log.cpp
-  src/soft_constraint/SoftConstraintPenalty.cpp
   src/soft_constraint/StateSoftConstraint.cpp
   src/soft_constraint/StateInputSoftConstraint.cpp
-  src/soft_constraint/penalties/DoubleSidedPenalty.cpp
-  src/soft_constraint/penalties/QuadraticPenalty.cpp
-  src/soft_constraint/penalties/SmoothAbsolutePenalty.cpp
-  src/soft_constraint/penalties/RelaxedBarrierPenalty.cpp
-  src/soft_constraint/penalties/SquaredHingePenalty.cpp
+  src/penalties/MultidimensionalPenalty.cpp
+  src/penalties/penalties/RelaxedBarrierPenalty.cpp
+  src/penalties/penalties/SquaredHingePenalty.cpp
   src/thread_support/ThreadPool.cpp
 )
 target_link_libraries(${PROJECT_NAME}

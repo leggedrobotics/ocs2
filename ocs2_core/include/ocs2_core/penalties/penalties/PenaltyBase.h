@@ -29,40 +29,59 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/soft_constraint/penalties/PenaltyBase.h>
+#include <string>
+
+#include <ocs2_core/Types.h>
 
 namespace ocs2 {
 
 /**
- * Implements the Quadratic function for a single equality constraint \f$ h = 0 \f$
- *
- * \f[
- *   p(h) = \frac{\mu}{2} x^2.
- * \f]
- *
- * where \f$ \mu > 0 \f$ is a user defined parameter.
+ * The penalty function interface class is used to penalize constraint violation by adding a penalty term to the cost function.
+ * We assume that the penalty function is convex. In general, the penalty is a function of time and constraint violation.
  */
-class QuadraticPenalty final : public PenaltyBase {
+class PenaltyBase {
  public:
-  /**
-   * Constructor
-   * @param [in] mu: Scaling of the cost.
-   */
-  explicit QuadraticPenalty(scalar_t mu) : mu_(mu) {}
+  /** Default constructor */
+  PenaltyBase() = default;
 
   /** Default destructor */
-  ~QuadraticPenalty() override = default;
+  virtual ~PenaltyBase() = default;
 
-  QuadraticPenalty* clone() const override { return new QuadraticPenalty(*this); }
+  /** Clones the class */
+  virtual PenaltyBase* clone() const = 0;
 
-  scalar_t getValue(scalar_t t, scalar_t h) const override;
-  scalar_t getDerivative(scalar_t t, scalar_t h) const override;
-  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
+  /** Get the name of the penalty function. This method is only used during error handling. */
+  virtual std::string name() const = 0;
 
- private:
-  QuadraticPenalty(const QuadraticPenalty& other) = default;
+  /**
+   * Compute the penalty value at a certain constraint value.
+   *
+   * @param [in] t: The time that the constraint is evaluated.
+   * @param [in] h: Constraint value.
+   * @return penalty cost.
+   */
+  virtual scalar_t getValue(scalar_t t, scalar_t h) const = 0;
 
-  scalar_t mu_;
+  /**
+   * Compute the penalty derivative at a certain constraint value.
+   *
+   * @param [in] t: The time that the constraint is evaluated.
+   * @param [in] h: Constraint value.
+   * @return penalty derivative with respect to constraint value.
+   */
+  virtual scalar_t getDerivative(scalar_t t, scalar_t h) const = 0;
+
+  /**
+   * Compute the penalty second derivative at a certain constraint value.
+   *
+   * @param [in] t: The time that the constraint is evaluated.
+   * @param [in] h: Constraint value.
+   * @return penalty second derivative with respect to constraint value.
+   */
+  virtual scalar_t getSecondDerivative(scalar_t t, scalar_t h) const = 0;
+
+ protected:
+  PenaltyBase(const PenaltyBase& other) = default;
 };
 
 }  // namespace ocs2

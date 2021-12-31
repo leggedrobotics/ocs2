@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/Penalties.h>
 
 /******************************************************************************************************/
 /******************************************************************************************************/

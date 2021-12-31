@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_core/soft_constraint/penalties/SquaredHingePenalty.h>
+#include <ocs2_core/penalties/penalties/SquaredHingePenalty.h>
 
 namespace ocs2 {
 

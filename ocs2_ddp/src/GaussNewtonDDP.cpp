@@ -36,8 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 #include <ocs2_core/misc/LinearAlgebra.h>
 #include <ocs2_core/misc/Lookup.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
-#include <ocs2_core/soft_constraint/penalties/RelaxedBarrierPenalty.h>
+#include <ocs2_core/penalties/penalties/RelaxedBarrierPenalty.h>
 
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
 #include <ocs2_oc/rollout/InitializerRollout.h>
@@ -74,7 +73,7 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
   // initialize penalty functions
   std::unique_ptr<PenaltyBase> penaltyFunction(new RelaxedBarrierPenalty(
       RelaxedBarrierPenalty::Config(ddpSettings_.inequalityConstraintMu_, ddpSettings_.inequalityConstraintDelta_)));
-  penaltyPtr_.reset(new SoftConstraintPenalty(std::move(penaltyFunction)));
+  penaltyPtr_.reset(new MultidimensionalPenalty(std::move(penaltyFunction)));
 
   // initialize Augmented Lagrangian parameters
   initializeConstraintPenalties();

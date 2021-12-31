@@ -37,15 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/reference/ModeSchedule.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
-
-#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
-#include <ocs2_oc/rollout/RolloutBase.h>
 
-#include <ocs2_ddp/DDP_Data.h>
-
-#include "StrategySettings.h"
+#include "ocs2_ddp/DDP_Data.h"
+#include "ocs2_ddp/search_strategy/StrategySettings.h"
 
 namespace ocs2 {
 
@@ -60,11 +55,7 @@ class SearchStrategyBase {
    */
   explicit SearchStrategyBase(search_strategy::Settings baseSettings) : baseSettings_(std::move(baseSettings)) {}
 
-  /**
-   * Default destructor.
-   */
   virtual ~SearchStrategyBase() = default;
-
   SearchStrategyBase(const SearchStrategyBase&) = delete;
   SearchStrategyBase& operator=(const SearchStrategyBase&) = delete;
 
@@ -90,7 +81,7 @@ class SearchStrategyBase {
    */
   virtual bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
                    const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-                   PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) = 0;
+                   PrimalSolution& dstPrimalSolution, Metrics& metrics, scalar_t& avgTimeStepFP) = 0;
 
   /**
    * Checks convergence of the main loop of DDP.
@@ -125,54 +116,8 @@ class SearchStrategyBase {
    */
   virtual matrix_t augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const = 0;
 
-  /**
-   * Evaluates cost and constraints along the given time trajectories.
-   *
-   * @param [in] problem: A reference to the optimal control problem.
-   * @param [in, out] primalData: Primal Data.
-   * @param [out] heuristicsValue: The Heuristics function value.
-   */
-  void rolloutCostAndConstraints(OptimalControlProblem& problem, PrimalDataContainer& primalData, scalar_t& heuristicsValue) const;
-
-  /**
-   * Calculates constraints ISE (Integral of Square Error), cost function integral, and the merit function.
-   *
-   * @param [in] ineqConstrPenalty: A reference to the inequality constraints penalty function.
-   * @param [in] primalData: Primal Data.
-   * @param [in] heuristicsValue: The Heuristics function value.
-   *
-   * @return The cost, merit function and ISEs of constraints for the trajectory.
-   */
-  PerformanceIndex calculateRolloutPerformanceIndex(const SoftConstraintPenalty& ineqConstrPenalty, const PrimalDataContainer& primalData,
-                                                    scalar_t heuristicsValue) const;
-
  protected:
-  /**
-   * Forward integrate the system dynamics with given controller. It uses the given control policies and initial state,
-   * to integrate the system dynamics in time period [initTime, finalTime].
-   *
-   * @param [in] rollout: A reference to the rollout class.
-   * @param [in] modeSchedule: The mode schedule
-   * @param [in] controller: Control policies.
-   * @param [out] dstPrimalData: Resulting primal data.
-   *
-   * @return average time step.
-   */
-  scalar_t rolloutTrajectory(RolloutBase& rollout, const ModeSchedule& modeSchedule, LinearController& controller,
-                             PrimalDataContainer& dstPrimalData) const;
-
-  /**
-   * Calculates the integral of the squared (IS) norm of the controller update.
-   *
-   * @param [in] controller: Input controller.
-   * @return The integral of the squared (IS) norm of the controller update.
-   */
-  scalar_t calculateControllerUpdateIS(const LinearController& controller) const;
-
-  search_strategy::Settings baseSettings_;
-  scalar_t initTime_;
-  scalar_t finalTime_;
-  vector_t initState_;
+  const search_strategy::Settings baseSettings_;
 };
 
 }  // namespace ocs2

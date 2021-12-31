@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/model_data/ModelData.h>
-#include <ocs2_core/soft_constraint/SoftConstraintPenalty.h>
 #include <ocs2_core/thread_support/ThreadPool.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
@@ -62,12 +61,10 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
    * @param [in] settings: The Levenberg Marquardt settings.
    * @param [in] rolloutRef: A reference to the rollout.
    * @param [in] optimalControlProblemRef: A reference to the optimal control problem.
-   * @param [in] ineqConstrPenaltyRef: A reference to the inequality constraints penalty.
    * @param [in] meritFunc: the merit function which gets the PerformanceIndex and returns the merit function value.
    */
   LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings, RolloutBase& rolloutRefStock,
-                             OptimalControlProblem& optimalControlProblemRef, SoftConstraintPenalty& ineqConstrPenalty,
-                             std::function<scalar_t(const PerformanceIndex&)> meritFunc);
+                             OptimalControlProblem& optimalControlProblemRef, std::function<scalar_t(const PerformanceIndex&)> meritFunc);
 
   /**
    * Default destructor.
@@ -81,7 +78,7 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
 
   bool run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime, const scalar_t expectedCost,
            const ModeSchedule& modeSchedule, LinearController& controller, PerformanceIndex& performanceIndex,
-           PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) override;
+           PrimalSolution& dstPrimalSolution, Metrics& metrics, scalar_t& avgTimeStepFP) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
                                                 const PerformanceIndex& currentPerformanceIndex) const override;
@@ -100,12 +97,11 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
     size_t numSuccessiveRejections = 0;           // the number of successive rejections of solution.
   };
 
-  levenberg_marquardt::Settings settings_;
+  const levenberg_marquardt::Settings settings_;
   LevenbergMarquardtModule levenbergMarquardtModule_;
 
   RolloutBase& rolloutRef_;
   OptimalControlProblem& optimalControlProblemRef_;
-  SoftConstraintPenalty& ineqConstrPenaltyRef_;
   std::function<scalar_t(PerformanceIndex)> meritFunc_;
 
   scalar_t avgTimeStepFP_ = 0.0;

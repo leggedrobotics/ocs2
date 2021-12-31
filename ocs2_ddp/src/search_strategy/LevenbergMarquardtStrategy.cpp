@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
 
+#include <ocs2_ddp/DDP_HelperFunctions.h>
 #include <ocs2_ddp/HessianCorrection.h>
 #include <ocs2_ddp/search_strategy/LevenbergMarquardtStrategy.h>
 
@@ -39,13 +40,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 LevenbergMarquardtStrategy::LevenbergMarquardtStrategy(search_strategy::Settings baseSettings, levenberg_marquardt::Settings settings,
                                                        RolloutBase& rolloutRef, OptimalControlProblem& optimalControlProblemRef,
-                                                       SoftConstraintPenalty& ineqConstrPenaltyRef,
                                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
     : SearchStrategyBase(std::move(baseSettings)),
       settings_(std::move(settings)),
       rolloutRef_(rolloutRef),
       optimalControlProblemRef_(optimalControlProblemRef),
-      ineqConstrPenaltyRef_(ineqConstrPenaltyRef),
       meritFunc_(std::move(meritFunc)) {}
 
 /******************************************************************************************************/
@@ -60,13 +59,10 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& initState, const scalar_t finalTime,
                                      const scalar_t expectedCost, const ModeSchedule& modeSchedule, LinearController& controller,
-                                     PerformanceIndex& performanceIndex, PrimalDataContainer& dstPrimalData, scalar_t& avgTimeStepFP) {
-  // initialize time and state variables
-  initState_ = initState;
-  initTime_ = initTime;
-  finalTime_ = finalTime;
-
+                                     PerformanceIndex& performanceIndex, PrimalSolution& dstPrimalSolution, Metrics& metrics,
+                                     scalar_t& avgTimeStepFP) {
   constexpr size_t taskId = 0;
+
   // previous merit and the expected reduction
   const auto prevMerit = performanceIndex.merit;
   const auto expectedReduction = performanceIndex.merit - expectedCost;
@@ -79,14 +75,20 @@ bool LevenbergMarquardtStrategy::run(const scalar_t initTime, const vector_t& in
 
   try {
     // perform a rollout
-    const auto avgTimeStep = rolloutTrajectory(rolloutRef_, modeSchedule, controller, dstPrimalData);
-    scalar_t heuristicsValue = 0.0;
-    rolloutCostAndConstraints(optimalControlProblemRef_, dstPrimalData, heuristicsValue);
-
+    const auto avgTimeStep = rolloutTrajectory(rolloutRef_, initTime, initState, finalTime, modeSchedule, controller, dstPrimalSolution);
     // compute average time step of forward rollout
     avgTimeStepFP_ = 0.9 * avgTimeStepFP_ + 0.1 * avgTimeStep;
+    // debug print
+    if (baseSettings_.debugPrintRollout) {
+      std::cerr << "\n++++++++++++++++++++++++++++++\n";
+      std::cerr << "\n++++++++++++++++++++++++++++++\n";
+      RolloutBase::display(dstPrimalSolution.timeTrajectory_, dstPrimalSolution.postEventIndices_, dstPrimalSolution.stateTrajectory_,
+                           &dstPrimalSolution.inputTrajectory_);
+    }
 
-    performanceIndex = calculateRolloutPerformanceIndex(ineqConstrPenaltyRef_, dstPrimalData, heuristicsValue);
+    computeRolloutMetrics(optimalControlProblemRef_, dstPrimalSolution, metrics);
+
+    performanceIndex = computeRolloutPerformanceIndex(dstPrimalSolution.timeTrajectory_, metrics);
 
     // calculates rollout merit
     performanceIndex.merit = meritFunc_(performanceIndex);
